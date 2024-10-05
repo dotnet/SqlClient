@@ -18,6 +18,7 @@ using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -116,7 +117,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     flags |= 4;
                 }
-                if (null != p.Value)
+                if (p.Value != null)
                 {
                     flags |= 8;
                 }
@@ -395,7 +396,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.SqlCompareOptions;
                 }
@@ -465,7 +466,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 MetaType metatype = _metaType;
-                if ((null == metatype) || (metatype.DbType != value))
+                if (metatype == null || (metatype.DbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromDbType(value);
@@ -513,7 +514,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.LCID;
                 }
@@ -608,7 +609,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.InvalidSqlDbType(value);
                 }
-                if ((null == metatype) || (metatype.SqlDbType != value))
+                if (metatype == null || (metatype.SqlDbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromSqlDbType(value, value == SqlDbType.Structured);
@@ -741,7 +742,7 @@ namespace Microsoft.Data.SqlClient
                 _coercedValue = null;
                 _valueAsINullable = _value as INullable;
                 SetFlag(SqlParameterFlags.IsSqlParameterSqlType, _valueAsINullable != null);
-                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
+                SetFlag(SqlParameterFlags.IsNull, _value == null || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
             }
@@ -844,7 +845,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
         [ResCategory("DataCategory_Update")]
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
 #endif
         public override bool SourceColumnNullMapping
@@ -897,7 +898,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null == _coercedValue)
+                if (_coercedValue == null)
                 {
                     GetCoercedValue();
                 }
@@ -950,7 +951,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert(null != _internalMetaType, "null InternalMetaType");
+                Debug.Assert(_internalMetaType != null, "null InternalMetaType");
                 return _internalMetaType;
             }
             set => _internalMetaType = value;
@@ -1001,7 +1002,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks the parameter name for the @ prefix and appends it if it is missing, then apends the parameter name
+        /// Checks the parameter name for the @ prefix and appends it if it is missing, then appends the parameter name
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>
@@ -1215,7 +1216,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (null != dt.PrimaryKey && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1346,7 +1347,7 @@ namespace Microsoft.Data.SqlClient
                             if (hasDefault)
                             {
                                 // May have already created props list in unique key handling
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1375,7 +1376,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 // May have already created props list
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1489,7 +1490,7 @@ namespace Microsoft.Data.SqlClient
                 // But assert no holes to be sure.
                 foreach (SmiExtendedMetaData md in fields)
                 {
-                    Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
+                    Debug.Assert(md != null, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
 #endif
 
@@ -1563,6 +1564,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NVarChar:
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
+                        case SqlDbTypeExtensions.Json:
                             {
                                 coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType)) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
@@ -1877,7 +1879,7 @@ namespace Microsoft.Data.SqlClient
         private SqlDbType GetMetaSqlDbTypeOnly()
         {
             MetaType metaType = _metaType;
-            if (null == metaType)
+            if (metaType == null)
             { // infer the type from the value
                 metaType = MetaType.GetDefaultMetaType();
             }
@@ -1892,7 +1894,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return _metaType;
             }
-            if (null != _value && DBNull.Value != _value)
+            if (_value != null && DBNull.Value != _value)
             {
                 // We have a value set by the user then just use that value
                 // char and char[] are not directly supported so we convert those values to string
@@ -1977,7 +1979,7 @@ namespace Microsoft.Data.SqlClient
                 !ADP.IsDirection(this, ParameterDirection.ReturnValue) &&
                 (!metaType.IsFixed) &&
                 !ShouldSerializeSize() &&
-                ((null == _value) || Convert.IsDBNull(_value)) &&
+                (_value == null || Convert.IsDBNull(_value)) &&
                 (SqlDbType != SqlDbType.Timestamp) &&
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
@@ -2220,7 +2222,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
-            Debug.Assert(null != destinationType, "null destinationType");
+            Debug.Assert(destinationType != null, "null destinationType");
 
             coercedToDataFeed = false;
             typeChanged = false;
@@ -2245,6 +2247,10 @@ namespace Microsoft.Data.SqlClient
                         if (currentType == typeof(SqlXml))
                         {
                             value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                        }
+                        else if (currentType == typeof(SqlJson))
+                        {
+                            value = (value as SqlJson).Value;
                         }
                         else if (currentType == typeof(SqlString))
                         {
@@ -2422,7 +2428,7 @@ namespace Microsoft.Data.SqlClient
         // of this and use a simple regex to do the parsing
         internal static string[] ParseTypeName(string typeName, bool isUdtTypeName)
         {
-            Debug.Assert(null != typeName, "null typename passed to ParseTypeName");
+            Debug.Assert(typeName != null, "null typename passed to ParseTypeName");
 
             try
             {

@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool hitException = false;
             try
             {
-                if (null == _tx || null == _tx.Connection)
+                if (_tx == null || _tx.Connection == null)
                 {
                     _tx = _dstConn.BeginTransaction();
                     _dstcmd.Transaction = _tx;
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                while (null != e.InnerException)
+                while (e.InnerException != null)
                 {
                     e = e.InnerException;
                 }

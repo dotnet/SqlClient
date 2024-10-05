@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NET8_0_OR_GREATER
+
 using System.ComponentModel;
 using System.Globalization;
 using System.Net.Security;
@@ -404,8 +406,7 @@ namespace System.Net
 
         public static object QueryContextAttributes(SSPIInterface secModule, SafeDeleteContext securityContext, Interop.SspiCli.ContextAttribute contextAttribute)
         {
-            int errorCode;
-            return QueryContextAttributes(secModule, securityContext, contextAttribute, out errorCode);
+            return QueryContextAttributes(secModule, securityContext, contextAttribute, out _);
         }
 
         public static object QueryContextAttributes(SSPIInterface secModule, SafeDeleteContext securityContext, Interop.SspiCli.ContextAttribute contextAttribute, out int errorCode)
@@ -595,3 +596,5 @@ namespace System.Net
         }
     } // class SSPIWrapper
 }
+
+#endif

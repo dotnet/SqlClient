@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data.Common;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -86,10 +87,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NETCOREAPP
-        [ActiveIssue("27824")] // When specifying instance name and port number, this method call always returns false
+#if NET6_0_OR_GREATER
         [ConditionalFact(nameof(IsSPNPortNumberTestForTCP))]
-        public static void PortNumberInSPNTestForTCP()
+        public static void SPNTestForTCPMustReturnPortNumber()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
             SqlConnectionStringBuilder builder = new(connectionString);
@@ -98,11 +98,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(port > 0, "Named instance must have a valid port number.");
             builder.DataSource = $"{builder.DataSource},{port}";
 
-            PortNumberInSPNTest(builder.ConnectionString, port);
+            PortNumberInSPNTest(connectionString: builder.ConnectionString, expectedPortNumber: port);
+        }
+
+        [ConditionalFact(nameof(IsSPNPortNumberTestForNP))]
+        public static void SPNTestForNPMustReturnNamedInstance()
+        {
+            string connectionString = DataTestUtility.NPConnectionString;
+            SqlConnectionStringBuilder builder = new(connectionString);
+
+            DataTestUtility.ParseDataSource(builder.DataSource, out _, out _, out string instanceName);
+
+            Assert.True(!string.IsNullOrEmpty(instanceName), "Instance name must be included in data source.");
+            PortNumberInSPNTest(connectionString: builder.ConnectionString, expectedInstanceName: instanceName.ToUpper());
         }
 #endif
 
-        private static void PortNumberInSPNTest(string connectionString, int expectedPortNumber)
+        private static void PortNumberInSPNTest(string connectionString, int expectedPortNumber = 0, string expectedInstanceName = null)
         {
             if (DataTestUtility.IsIntegratedSecuritySetup())
             {
@@ -124,20 +136,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
 
-                string spnInfo = GetSPNInfo(builder.DataSource);
-                Assert.Matches(@"MSSQLSvc\/.*:[\d]", spnInfo);
-
-                string[] spnStrs = spnInfo.Split(':');
-                int portInSPN = 0;
-                if (spnStrs.Length > 1)
+                string spnInfo = GetSPNInfo(builder.DataSource, instanceName);
+                if (expectedPortNumber > 0)
                 {
-                    int.TryParse(spnStrs[1], out portInSPN);
+                    Assert.Matches(@"MSSQLSvc\/.*:[\d]", spnInfo);
+                    string[] spnStrs = spnInfo.Split(':');
+                    int portInSPN = 0;
+                    if (spnStrs.Length > 1)
+                    {
+                        int.TryParse(spnStrs[1], out portInSPN);
+                    }
+                    Assert.Equal(expectedPortNumber, portInSPN);
                 }
-                Assert.Equal(expectedPortNumber, portInSPN);
+                else
+                {
+                    string[] spnStrs = spnInfo.Split(':');
+                    Assert.Equal(expectedInstanceName, spnStrs[1].ToUpper());
+                }
             }
         }
 
-        private static string GetSPNInfo(string dataSource)
+        private static string GetSPNInfo(string dataSource, string inInstanceName)
         {
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
@@ -178,9 +197,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             PropertyInfo serverInfo = dataSrcInfo.GetType().GetProperty("ServerName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             string serverName = serverInfo.GetValue(dataSrcInfo, null).ToString();
-
+            // Set the instance name from the data source
+            PropertyInfo instanceNameToSetInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            instanceNameToSetInfo.SetValue(dataSrcInfo, inInstanceName, null);
+            // Ensure that the instance name is set
             PropertyInfo instanceNameInfo = dataSrcInfo.GetType().GetProperty("InstanceName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString();
+            string instanceName = instanceNameInfo.GetValue(dataSrcInfo, null).ToString().ToUpper();
 
             object port = getPortByInstanceNameInfo.Invoke(ssrpObj, parameters: new object[] { serverName, instanceName, timeoutTimerObj, false, 0 });
 
@@ -205,6 +227,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                  && DataTestUtility.IsNotAzureSynapse());
         }
 
+        private static bool IsSPNPortNumberTestForNP()
+        {
+            return (IsInstanceNameValid(DataTestUtility.NPConnectionString)
+                 && DataTestUtility.IsUsingManagedSNI()
+                 && DataTestUtility.IsNotAzureServer()
+                 && DataTestUtility.IsNotAzureSynapse());
+        }
         private static bool IsInstanceNameValid(string connectionString)
         {
             string instanceName = "";

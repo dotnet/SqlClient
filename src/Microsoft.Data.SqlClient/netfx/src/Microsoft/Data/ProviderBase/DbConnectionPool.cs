@@ -19,8 +19,7 @@ namespace Microsoft.Data.ProviderBase
     using System.Threading.Tasks;
     using Microsoft.Data.Common;
     using Microsoft.Data.SqlClient;
-
-    using SysTx = System.Transactions;
+    using System.Transactions;
 
     sealed internal class DbConnectionPool
     {
@@ -36,15 +35,15 @@ namespace Microsoft.Data.ProviderBase
         // copy as part of the value.
         sealed private class TransactedConnectionList : List<DbConnectionInternal>
         {
-            private SysTx.Transaction _transaction;
-            internal TransactedConnectionList(int initialAllocation, SysTx.Transaction tx) : base(initialAllocation)
+            private Transaction _transaction;
+            internal TransactedConnectionList(int initialAllocation, Transaction tx) : base(initialAllocation)
             {
                 _transaction = tx;
             }
 
             internal void Dispose()
             {
-                if (null != _transaction)
+                if (_transaction != null)
                 {
                     _transaction.Dispose();
                 }
@@ -69,7 +68,7 @@ namespace Microsoft.Data.ProviderBase
         sealed private class TransactedConnectionPool
         {
 
-            Dictionary<SysTx.Transaction, TransactedConnectionList> _transactedCxns;
+            Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
 
             DbConnectionPool _pool;
 
@@ -78,9 +77,9 @@ namespace Microsoft.Data.ProviderBase
 
             internal TransactedConnectionPool(DbConnectionPool pool)
             {
-                Debug.Assert(null != pool, "null pool?");
+                Debug.Assert(pool != null, "null pool?");
                 _pool = pool;
-                _transactedCxns = new Dictionary<SysTx.Transaction, TransactedConnectionList>();
+                _transactedCxns = new Dictionary<Transaction, TransactedConnectionList>();
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactedConnectionPool|RES|CPOOL> {0}, Constructed for connection pool {1}", ObjectID, _pool.ObjectID);
             }
 
@@ -100,9 +99,9 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            internal DbConnectionInternal GetTransactedObject(SysTx.Transaction transaction)
+            internal DbConnectionInternal GetTransactedObject(Transaction transaction)
             {
-                Debug.Assert(null != transaction, "null transaction?");
+                Debug.Assert(transaction != null, "null transaction?");
 
                 DbConnectionInternal transactedObject = null;
 
@@ -138,17 +137,17 @@ namespace Microsoft.Data.ProviderBase
                     }
                 }
 
-                if (null != transactedObject)
+                if (transactedObject != null)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.GetTransactedObject|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Popped.", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                 }
                 return transactedObject;
             }
 
-            internal void PutTransactedObject(SysTx.Transaction transaction, DbConnectionInternal transactedObject)
+            internal void PutTransactedObject(Transaction transaction, DbConnectionInternal transactedObject)
             {
-                Debug.Assert(null != transaction, "null transaction?");
-                Debug.Assert(null != transactedObject, "null transactedObject?");
+                Debug.Assert(transaction != null, "null transaction?");
+                Debug.Assert(transactedObject != null, "null transactedObject?");
 
                 TransactedConnectionList connections;
                 bool txnFound = false;
@@ -179,7 +178,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     // create the transacted pool, making sure to clone the associated transaction
                     //   for use as a key in our internal dictionary of transactions and connections
-                    SysTx.Transaction transactionClone = null;
+                    Transaction transactionClone = null;
                     TransactedConnectionList newConnections = null;
 
                     try
@@ -220,7 +219,7 @@ namespace Microsoft.Data.ProviderBase
                     }
                     finally
                     {
-                        if (null != transactionClone)
+                        if (transactionClone != null)
                         {
                             if (newConnections != null)
                             {
@@ -243,7 +242,7 @@ namespace Microsoft.Data.ProviderBase
 
             }
 
-            internal void TransactionEnded(SysTx.Transaction transaction, DbConnectionInternal transactedObject)
+            internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactedConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
                 TransactedConnectionList connections;
@@ -311,9 +310,8 @@ namespace Microsoft.Data.ProviderBase
 
         }
 
-        private sealed class PoolWaitHandles : DbBuffer
+        private sealed class PoolWaitHandles
         {
-
             private readonly Semaphore _poolSemaphore;
             private readonly ManualResetEvent _errorEvent;
 
@@ -322,63 +320,19 @@ namespace Microsoft.Data.ProviderBase
             // Using an AutoResetEvent does not have that complication.
             private readonly Semaphore _creationSemaphore;
 
-            private readonly SafeHandle _poolHandle;
-            private readonly SafeHandle _errorHandle;
-            private readonly SafeHandle _creationHandle;
-
-            private readonly int _releaseFlags;
+            private readonly WaitHandle[] _handlesWithCreate;
+            private readonly WaitHandle[] _handlesWithoutCreate;
 
             [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
             [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-            internal PoolWaitHandles() : base(3 * IntPtr.Size)
+            internal PoolWaitHandles()
             {
-                bool mustRelease1 = false, mustRelease2 = false, mustRelease3 = false;
-
                 _poolSemaphore = new Semaphore(0, MAX_Q_SIZE);
                 _errorEvent = new ManualResetEvent(false);
                 _creationSemaphore = new Semaphore(1, 1);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    // because SafeWaitHandle doesn't have reliability contract
-                    _poolHandle = _poolSemaphore.SafeWaitHandle;
-                    _errorHandle = _errorEvent.SafeWaitHandle;
-                    _creationHandle = _creationSemaphore.SafeWaitHandle;
-
-                    _poolHandle.DangerousAddRef(ref mustRelease1);
-                    _errorHandle.DangerousAddRef(ref mustRelease2);
-                    _creationHandle.DangerousAddRef(ref mustRelease3);
-
-                    Debug.Assert(0 == SEMAPHORE_HANDLE, "SEMAPHORE_HANDLE");
-                    Debug.Assert(1 == ERROR_HANDLE, "ERROR_HANDLE");
-                    Debug.Assert(2 == CREATION_HANDLE, "CREATION_HANDLE");
-
-                    WriteIntPtr(SEMAPHORE_HANDLE * IntPtr.Size, _poolHandle.DangerousGetHandle());
-                    WriteIntPtr(ERROR_HANDLE * IntPtr.Size, _errorHandle.DangerousGetHandle());
-                    WriteIntPtr(CREATION_HANDLE * IntPtr.Size, _creationHandle.DangerousGetHandle());
-                }
-                finally
-                {
-                    if (mustRelease1)
-                    {
-                        _releaseFlags |= 1;
-                    }
-                    if (mustRelease2)
-                    {
-                        _releaseFlags |= 2;
-                    }
-                    if (mustRelease3)
-                    {
-                        _releaseFlags |= 4;
-                    }
-                }
-            }
-
-            internal SafeHandle CreationHandle
-            {
-                [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-                get { return _creationHandle; }
+                _handlesWithCreate = new WaitHandle[] { _poolSemaphore, _errorEvent, _creationSemaphore };
+                _handlesWithoutCreate = new WaitHandle[] { _poolSemaphore, _errorEvent };
             }
 
             internal Semaphore CreationSemaphore
@@ -396,23 +350,9 @@ namespace Microsoft.Data.ProviderBase
                 get { return _poolSemaphore; }
             }
 
-            protected override bool ReleaseHandle()
+            internal WaitHandle[] GetHandles(bool withCreate)
             {
-                // NOTE: The SafeHandle class guarantees this will be called exactly once.
-                // we know we can touch these other managed objects because of our original DangerousAddRef
-                if (0 != (1 & _releaseFlags))
-                {
-                    _poolHandle.DangerousRelease();
-                }
-                if (0 != (2 & _releaseFlags))
-                {
-                    _errorHandle.DangerousRelease();
-                }
-                if (0 != (4 & _releaseFlags))
-                {
-                    _creationHandle.DangerousRelease();
-                }
-                return base.ReleaseHandle();
+                return withCreate ? _handlesWithCreate : _handlesWithoutCreate;
             }
         }
 
@@ -426,10 +366,7 @@ namespace Microsoft.Data.ProviderBase
         private const int CREATION_HANDLE = (int)0x2;
         private const int BOGUS_HANDLE = (int)0x3;
 
-        private const int WAIT_OBJECT_0 = 0;
-        private const int WAIT_TIMEOUT = (int)0x102;
         private const int WAIT_ABANDONED = (int)0x80;
-        private const int WAIT_FAILED = -1;
 
         private const int ERROR_WAIT_DEFAULT = 5 * 1000; // 5 seconds
 
@@ -486,9 +423,9 @@ namespace Microsoft.Data.ProviderBase
                             DbConnectionPoolProviderInfo connectionPoolProviderInfo)
         {
             Debug.Assert(ADP.s_isWindowsNT, "Attempting to construct a connection pool on Win9x?");
-            Debug.Assert(null != connectionPoolGroup, "null connectionPoolGroup");
+            Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
-            if ((null != identity) && identity.IsRestricted)
+            if (identity != null && identity.IsRestricted)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
@@ -648,7 +585,7 @@ namespace Microsoft.Data.ProviderBase
 
         private bool UsingIntegrateSecurity
         {
-            get { return (null != _identity && DbConnectionPoolIdentity.NoIdentity != _identity); }
+            get { return _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity; }
         }
 
         private void CleanupCallback(Object state)
@@ -772,7 +709,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     obj = _objectList[i];
 
-                    if (null != obj)
+                    if (obj != null)
                     {
                         obj.DoNotPoolThisConnection();
                     }
@@ -851,7 +788,7 @@ namespace Microsoft.Data.ProviderBase
             try
             {
                 newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
-                if (null == newObj)
+                if (newObj == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
                 }
@@ -1014,8 +951,8 @@ namespace Microsoft.Data.ProviderBase
                             // the transaction asynchronously completing on a second
                             // thread.
 
-                            SysTx.Transaction transaction = obj.EnlistedTransaction;
-                            if (null != transaction)
+                            Transaction transaction = obj.EnlistedTransaction;
+                            if (transaction != null)
                             {
                                 // NOTE: we're not locking on _state, so it's possible that its
                                 //   value could change between the conditional check and here.
@@ -1212,7 +1149,7 @@ namespace Microsoft.Data.ProviderBase
 
                                 bool allowCreate = true;
                                 bool onlyOneCheckConnection = false;
-                                ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as System.Transactions.Transaction);
+                                ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
                                 timeout = !TryGetConnection(next.Owner, delay, allowCreate, onlyOneCheckConnection, next.UserOptions, out connection);
                             }
 #if DEBUG
@@ -1336,7 +1273,7 @@ namespace Microsoft.Data.ProviderBase
         private bool TryGetConnection(DbConnection owningObject, uint waitForMultipleObjectsTimeout, bool allowCreate, bool onlyOneCheckConnection, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             DbConnectionInternal obj = null;
-            SysTx.Transaction transaction = null;
+            Transaction transaction = null;
 
             PerformanceCounters.SoftConnectsPerSecond.Increment();
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Getting connection.", ObjectID);
@@ -1348,39 +1285,26 @@ namespace Microsoft.Data.ProviderBase
                 obj = GetFromTransactedPool(out transaction);
             }
 
-            if (null == obj)
+            if (obj == null)
             {
                 Interlocked.Increment(ref _waitCount);
-                uint waitHandleCount = allowCreate ? 3u : 2u;
 
                 do
                 {
                     int waitResult = BOGUS_HANDLE;
-                    int releaseSemaphoreResult = 0;
 
-                    bool mustRelease = false;
-                    int waitForMultipleObjectsExHR = 0;
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        _waitHandles.DangerousAddRef(ref mustRelease);
-
                         // We absolutely must have the value of waitResult set, 
                         // or we may leak the mutex in async abort cases.
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            Debug.Assert(2 == waitHandleCount || 3 == waitHandleCount, "unexpected waithandle count");
                         }
                         finally
                         {
-                            waitResult = SafeNativeMethods.WaitForMultipleObjectsEx(waitHandleCount, _waitHandles.DangerousGetHandle(), false, waitForMultipleObjectsTimeout, false);
-
-                            // VSTFDEVDIV 479551 - call GetHRForLastWin32Error immediately after after the native call
-                            if (waitResult == WAIT_FAILED)
-                            {
-                                waitForMultipleObjectsExHR = Marshal.GetHRForLastWin32Error();
-                            }
+                            waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(allowCreate), unchecked((int)waitForMultipleObjectsTimeout));
                         }
 
                         // From the WaitAny docs: "If more than one object became signaled during
@@ -1391,14 +1315,13 @@ namespace Microsoft.Data.ProviderBase
 
                         switch (waitResult)
                         {
-                            case WAIT_TIMEOUT:
+                            case WaitHandle.WaitTimeout:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait timed out.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
                                 connection = null;
                                 return false;
 
                             case ERROR_HANDLE:
-
                                 // Throw the error that PoolCreateRequest stashed.
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Errors are set.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
@@ -1412,7 +1335,7 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 catch
                                 {
-                                    if (null == obj)
+                                    if (obj == null)
                                     {
                                         Interlocked.Decrement(ref _waitCount);
                                     }
@@ -1422,13 +1345,13 @@ namespace Microsoft.Data.ProviderBase
                                 {
                                     // SQLBUDT #386664 - ensure that we release this waiter, regardless
                                     // of any exceptions that may be thrown.
-                                    if (null != obj)
+                                    if (obj != null)
                                     {
                                         Interlocked.Decrement(ref _waitCount);
                                     }
                                 }
 
-                                if (null == obj)
+                                if (obj == null)
                                 {
                                     // If we were not able to create an object, check to see if
                                     // we reached MaxPoolSize.  If so, we will no longer wait on
@@ -1443,7 +1366,7 @@ namespace Microsoft.Data.ProviderBase
                                         {
                                             // modify handle array not to wait on creation mutex anymore
                                             Debug.Assert(2 == CREATION_HANDLE, "creation handle changed value");
-                                            waitHandleCount = 2;
+                                            allowCreate = false;
                                         }
                                     }
                                 }
@@ -1488,13 +1411,6 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 break;
 
-                            case WAIT_FAILED:
-                                Debug.Assert(waitForMultipleObjectsExHR != 0, "WaitForMultipleObjectsEx failed but waitForMultipleObjectsExHR remained 0");
-                                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Wait failed.", ObjectID);
-                                Interlocked.Decrement(ref _waitCount);
-                                Marshal.ThrowExceptionForHR(waitForMultipleObjectsExHR);
-                                goto default; // if ThrowExceptionForHR didn't throw for some reason
-
                             case (WAIT_ABANDONED + SEMAPHORE_HANDLE):
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Semaphore handle abandonded.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
@@ -1520,32 +1436,20 @@ namespace Microsoft.Data.ProviderBase
                     {
                         if (CREATION_HANDLE == waitResult)
                         {
-                            int result = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
-                            if (0 == result)
-                            { // failure case
-                                releaseSemaphoreResult = Marshal.GetHRForLastWin32Error();
-                            }
+                            _waitHandles.CreationSemaphore.Release(1);
                         }
-                        if (mustRelease)
-                        {
-                            _waitHandles.DangerousRelease();
-                        }
-                    }
-                    if (0 != releaseSemaphoreResult)
-                    {
-                        Marshal.ThrowExceptionForHR(releaseSemaphoreResult); // will only throw if (hresult < 0)
                     }
 
                     // Do not use this pooled connection if access token is about to expire soon before we can connect.
-                    if (null != obj && obj.IsAccessTokenExpired)
+                    if (obj != null && obj.IsAccessTokenExpired)
                     {
                         DestroyObject(obj);
                         obj = null;
                     }
-                } while (null == obj);
+                } while (obj == null);
             }
 
-            if (null != obj)
+            if (obj != null)
             {
                 PrepareConnection(owningObject, obj, transaction);
             }
@@ -1554,7 +1458,7 @@ namespace Microsoft.Data.ProviderBase
             return true;
         }
 
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, SysTx.Transaction transaction)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction)
         {
             lock (obj)
             {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
@@ -1623,7 +1527,7 @@ namespace Microsoft.Data.ProviderBase
             //  checked bits.  The assert is benign, so we're commenting it out.  
             //Debug.Assert(obj != null, "GetFromGeneralPool called with nothing in the pool!");
 
-            if (null != obj)
+            if (obj != null)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromGeneralPool|RES|CPOOL> {0}, Connection {1}, Popped from general pool.", ObjectID, obj.ObjectID);
                 PerformanceCounters.NumberOfFreeConnections.Decrement();
@@ -1631,16 +1535,16 @@ namespace Microsoft.Data.ProviderBase
             return (obj);
         }
 
-        private DbConnectionInternal GetFromTransactedPool(out SysTx.Transaction transaction)
+        private DbConnectionInternal GetFromTransactedPool(out Transaction transaction)
         {
             transaction = ADP.GetCurrentTransaction();
             DbConnectionInternal obj = null;
 
-            if (null != transaction && null != _transactedConnectionPool)
+            if (transaction != null && _transactedConnectionPool != null)
             {
                 obj = _transactedConnectionPool.GetTransactedObject(transaction);
 
-                if (null != obj)
+                if (obj != null)
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", ObjectID, obj.ObjectID);
                     PerformanceCounters.NumberOfFreeConnections.Decrement();
@@ -1708,15 +1612,11 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 return;
                             }
-                            bool mustRelease = false;
                             int waitResult = BOGUS_HANDLE;
-                            uint timeout = (uint)CreationTimeout;
 
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-                                _waitHandles.DangerousAddRef(ref mustRelease);
-
                                 // Obtain creation mutex so we're the only one creating objects
                                 // and we must have the wait result
                                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -1724,9 +1624,9 @@ namespace Microsoft.Data.ProviderBase
                                 { }
                                 finally
                                 {
-                                    waitResult = SafeNativeMethods.WaitForSingleObjectEx(_waitHandles.CreationHandle.DangerousGetHandle(), timeout, false);
+                                    waitResult = WaitHandle.WaitAny(_waitHandles.GetHandles(withCreate: true), CreationTimeout);
                                 }
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (CREATION_HANDLE == waitResult)
                                 {
                                     DbConnectionInternal newObj;
 
@@ -1735,12 +1635,22 @@ namespace Microsoft.Data.ProviderBase
                                     {
                                         while (NeedToReplenish)
                                         {
-                                            // Don't specify any user options because there is no outer connection associated with the new connection
-                                            newObj = CreateObject(owningObject: null, userOptions: null, oldConnection: null);
-
+                                            try
+                                            {
+                                                // Don't specify any user options because there is no outer connection associated with the new connection
+                                                newObj = CreateObject(owningObject: null, userOptions: null, oldConnection: null);
+                                            }
+                                            catch
+                                            {
+                                                // Catch all the exceptions occuring during CreateObject so that they 
+                                                // don't emerge as unhandled on the thread pool and don't crash applications
+                                                // The error is handled in CreateObject and surfaced to the caller of the Connection Pool
+                                                // using the ErrorEvent. Hence it is OK to swallow all exceptions here.
+                                                break;
+                                            }
                                             // We do not need to check error flag here, since we know if
                                             // CreateObject returned null, we are in error case.
-                                            if (null != newObj)
+                                            if (newObj != null)
                                             {
                                                 PutNewObject(newObj);
                                             }
@@ -1751,7 +1661,7 @@ namespace Microsoft.Data.ProviderBase
                                         }
                                     }
                                 }
-                                else if (WAIT_TIMEOUT == waitResult)
+                                else if (WaitHandle.WaitTimeout == waitResult)
                                 {
                                     // do not wait forever and potential block this worker thread
                                     // instead wait for a period of time and just requeue to try again
@@ -1778,14 +1688,10 @@ namespace Microsoft.Data.ProviderBase
                             }
                             finally
                             {
-                                if (WAIT_OBJECT_0 == waitResult)
+                                if (CREATION_HANDLE == waitResult)
                                 {
                                     // reuse waitResult and ignore its value
-                                    waitResult = SafeNativeMethods.ReleaseSemaphore(_waitHandles.CreationHandle.DangerousGetHandle(), 1, IntPtr.Zero);
-                                }
-                                if (mustRelease)
-                                {
-                                    _waitHandles.DangerousRelease();
+                                    _waitHandles.CreationSemaphore.Release(1);
                                 }
                             }
                         }
@@ -1800,7 +1706,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutNewObject(DbConnectionInternal obj)
         {
-            Debug.Assert(null != obj, "why are we adding a null object to the pool?");
+            Debug.Assert(obj != null, "why are we adding a null object to the pool?");
 
             // VSTFDEVDIV 742887 - When another thread is clearing this pool, it
             // will set _cannotBePooled for all connections in this pool without prejudice which
@@ -1817,7 +1723,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutObject(DbConnectionInternal obj, object owningObject)
         {
-            Debug.Assert(null != obj, "null obj?");
+            Debug.Assert(obj != null, "null obj?");
 
             PerformanceCounters.SoftDisconnectsPerSecond.Increment();
 
@@ -1845,7 +1751,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PutObjectFromTransactedPool(DbConnectionInternal obj)
         {
-            Debug.Assert(null != obj, "null pooledObject?");
+            Debug.Assert(obj != null, "null pooledObject?");
             Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
 
             // called by the transacted connection pool , once it's removed the
@@ -1893,7 +1799,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     DbConnectionInternal obj = _objectList[i];
 
-                    if (null != obj)
+                    if (obj != null)
                     {
                         bool locked = false;
 
@@ -1963,7 +1869,7 @@ namespace Microsoft.Data.ProviderBase
             // deactivate timer callbacks
             Timer t = _cleanupTimer;
             _cleanupTimer = null;
-            if (null != t)
+            if (t != null)
             {
                 t.Dispose();
             }
@@ -1973,10 +1879,10 @@ namespace Microsoft.Data.ProviderBase
         //   that is implemented inside DbConnectionPool. This method's counterpart (PutTransactedObject) should
         //   only be called from DbConnectionPool.DeactivateObject and thus the plumbing to provide access to 
         //   other objects is unnecessary (hence the asymmetry of Ended but no Begin)
-        internal void TransactionEnded(SysTx.Transaction transaction, DbConnectionInternal transactedObject)
+        internal void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            Debug.Assert(null != transaction, "null transaction?");
-            Debug.Assert(null != transactedObject, "null transactedObject?");
+            Debug.Assert(transaction != null, "null transaction?");
+            Debug.Assert(transactedObject != null, "null transactedObject?");
 
             // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.          
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectID, transaction.GetHashCode(), transactedObject.ObjectID);
@@ -1986,7 +1892,7 @@ namespace Microsoft.Data.ProviderBase
             // the connection from it's list, then we put the connection back in
             // general circulation.
             TransactedConnectionPool transactedConnectionPool = _transactedConnectionPool;
-            if (null != transactedConnectionPool)
+            if (transactedConnectionPool != null)
             {
                 transactedConnectionPool.TransactionEnded(transaction, transactedObject);
             }

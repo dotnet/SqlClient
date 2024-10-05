@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         private const string TCPConnectionString = "TCPConnectionString";
         private const string NPConnectionString = "NPConnectionString";
         private const string TCPConnectionStringAASSGX = "TCPConnectionStringAASSGX";
-        private const string TCPConnectionStringAASVBS = "TCPConnectionStringAASVBS";
         private const string TCPConnectionStringHGSVBS = "TCPConnectionStringHGSVBS";
 
         /// <summary>
@@ -124,10 +123,6 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 {
                     s_activeConnectionStrings.Add(TCPConnectionStringAASSGX, s_configJson.TCPConnectionStringAASSGX);
                 }
-                if (!string.IsNullOrEmpty(s_configJson.TCPConnectionStringAASVBS))
-                {
-                    s_activeConnectionStrings.Add(TCPConnectionStringAASVBS, s_configJson.TCPConnectionStringAASVBS);
-                }
                 if (!string.IsNullOrEmpty(s_configJson.TCPConnectionStringHGSVBS))
                 {
                     s_activeConnectionStrings.Add(TCPConnectionStringHGSVBS, s_configJson.TCPConnectionStringHGSVBS);
@@ -147,9 +142,6 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     break;
                 case TCPConnectionStringAASSGX:
                     s_configJson.TCPConnectionStringAASSGX = builder.ConnectionString;
-                    break;
-                case TCPConnectionStringAASVBS:
-                    s_configJson.TCPConnectionStringAASVBS = builder.ConnectionString;
                     break;
                 case TCPConnectionStringHGSVBS:
                     s_configJson.TCPConnectionStringHGSVBS = builder.ConnectionString;

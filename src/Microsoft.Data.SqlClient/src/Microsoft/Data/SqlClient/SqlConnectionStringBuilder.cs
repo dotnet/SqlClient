@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient
         private string _certificate = DbConnectionStringDefaults.Certificate;
 #endif
 #else
-        internal const int DeprecatedKeywordsCount = 3;
+        internal const int DeprecatedKeywordsCount = 5;
 #endif
         #endregion //Fields
 
@@ -363,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                     return MinPoolSize;
                 case Keywords.MultiSubnetFailover:
                     return MultiSubnetFailover;
-                //          case Keywords.NamedConnection:          return NamedConnection;
                 case Keywords.PacketSize:
                     return PacketSize;
                 case Keywords.Password:
@@ -638,7 +637,7 @@ namespace Microsoft.Data.SqlClient
 
         private Exception UnsupportedKeyword(string keyword)
         {
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
             for (int index = 0; index < s_notSupportedKeywords.Length; index++)
             {
                 if (string.Equals(keyword, s_notSupportedKeywords[index], StringComparison.OrdinalIgnoreCase))
@@ -912,17 +911,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #else    
-        private static readonly string[] s_notSupportedKeywords = new string[DeprecatedKeywordsCount] {
+        private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
+            DbConnectionStringKeywords.TransparentNetworkIPResolution,
+            DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION,
         };
 
-        private static readonly string[] s_notSupportedNetworkLibraryKeywords = new string[] {
+        private static readonly string[] s_notSupportedNetworkLibraryKeywords = {
             DbConnectionStringKeywords.NetworkLibrary,
 
             DbConnectionStringSynonyms.NET,
-            DbConnectionStringSynonyms.NETWORK
+            DbConnectionStringSynonyms.NETWORK,
         };
 #endif
         #endregion //Private Methods
@@ -1520,7 +1521,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryCount
@@ -1539,7 +1540,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryInterval

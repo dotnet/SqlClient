@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_makeReadAsyncBlocking;
         private static Tristate s_useMinimumLoginTimeout;
 
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
         static LocalAppContextSwitches()
         {
             IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
-        /// would return an empty byte array. This switch contols whether to preserve that behaviour on newer versions
+        /// would return an empty byte array. This switch controls whether to preserve that behaviour on newer versions
         /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned.
         /// This app context switch defaults to 'false'.
         /// </summary>

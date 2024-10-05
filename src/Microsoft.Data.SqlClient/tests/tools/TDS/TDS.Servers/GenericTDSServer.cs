@@ -119,7 +119,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Create TDS prelogin packet
             TDSPreLoginToken preLoginToken = new TDSPreLoginToken(Arguments.ServerVersion, serverResponse, false); // TDS server doesn't support MARS
 
-            // Cache the recieved Nonce into the session
+            // Cache the received Nonce into the session
             (session as GenericTDSServerSession).ClientNonce = preLoginRequest.Nonce;
 
             // Check if the server has been started up as requiring FedAuth when choosing between SSPI and FedAuth
@@ -230,6 +230,12 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 // Save the fed auth library to be used
                                 (session as GenericTDSServerSession).FederatedAuthenticationLibrary = federatedAuthenticationOption.Library;
 
+                                break;
+                            }
+                        case TDSFeatureID.JsonSupport:
+                            {
+                                // Enable Json Support
+                                session.IsJsonSupportEnabled = true;
                                 break;
                             }
                         default:
@@ -542,6 +548,32 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                 // Serialize feature extnesion token into the response
                 responseMessage.Add(featureExtActToken);
+            }
+
+            // Check if Json is supported
+            if (session.IsJsonSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = (byte)1;
+
+                // Create Json support as a generic feature extension option
+                TDSFeatureExtAckGenericOption jsonSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.JsonSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(jsonSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(jsonSupportOption);
+                }
             }
 
             // Create DONE token

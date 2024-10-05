@@ -10216,6 +10216,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The certificate provided by the server does not match the certificate provided by the ServerCertificate option..
+        /// </summary>
+        internal static string SQL_RemoteCertificateDoesNotMatchServerCertificate {
+            get {
+                return ResourceManager.GetString("SQL_RemoteCertificateDoesNotMatchServerCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Certificate name mismatch. The provided &apos;DataSource&apos; or &apos;HostNameInCertificate&apos; does not match the name in the certificate..
         /// </summary>
         internal static string SQL_RemoteCertificateNameMismatch {
@@ -10475,7 +10484,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamNotSupportOnColumnType", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///    Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json.
+        /// </summary>
+        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support reading..
         /// </summary>
@@ -10500,15 +10518,6 @@ namespace System {
         internal static string SQL_StreamWriteNotSupported {
             get {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Not supported in .Net Standard 2.0..
-        /// </summary>
-        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
-            get {
-                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2_0", resourceCulture);
             }
         }
         

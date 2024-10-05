@@ -66,7 +66,7 @@ namespace Microsoft.Data.Common
 
         private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
         { // used by DBDataPermission
-            Debug.Assert(null != connectionOptions, "null connectionOptions");
+            Debug.Assert(connectionOptions != null, "null connectionOptions");
             switch (behavior)
             {
                 case KeyRestrictionBehavior.PreventUsage:
@@ -147,7 +147,7 @@ namespace Microsoft.Data.Common
 
         internal bool IsEmpty
         {
-            get { return (null == _keychain); }
+            get { return _keychain == null; }
         }
 
         internal NameValuePair KeyChain
@@ -160,10 +160,10 @@ namespace Microsoft.Data.Common
             get
             {
                 string restrictions = _restrictions;
-                if (null == restrictions)
+                if (restrictions == null)
                 {
                     string[] restrictionValues = _restrictionValues;
-                    if ((null != restrictionValues) && (0 < restrictionValues.Length))
+                    if (restrictionValues != null && (0 < restrictionValues.Length))
                     {
                         StringBuilder builder = new StringBuilder();
                         for (int i = 0; i < restrictionValues.Length; ++i)
@@ -183,7 +183,7 @@ namespace Microsoft.Data.Common
                         restrictions = builder.ToString();
                     }
                 }
-                return ((null != restrictions) ? restrictions : "");
+                return (restrictions != null ? restrictions : "");
             }
         }
 
@@ -202,7 +202,7 @@ namespace Microsoft.Data.Common
             KeyRestrictionBehavior behavior = _behavior;
             string[] restrictionValues = null;
 
-            if (null == entry)
+            if (entry == null)
             {
                 //Debug.WriteLine("0 entry AllowNothing");
                 behavior = KeyRestrictionBehavior.AllowOnly;
@@ -287,7 +287,7 @@ namespace Microsoft.Data.Common
 
             // verify _hasPassword & _parsetable are in sync between Everett/Whidbey
             Debug.Assert(!_hasPassword || ContainsKey(KEY.Password) || ContainsKey(KEY.Pwd), "OnDeserialized password mismatch this");
-            Debug.Assert(null == entry || !entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
+            Debug.Assert(entry == null || !entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
 
             DBConnectionString value = new DBConnectionString(this, restrictionValues, behavior);
             ValidateCombinedSet(this, value);
@@ -367,7 +367,7 @@ namespace Microsoft.Data.Common
         private bool IsRestrictedKeyword(string key)
         {
             // restricted if not found
-            return ((null == _restrictionValues) || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
+            return (_restrictionValues == null || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
         }
 
         internal bool IsSupersetOf(DBConnectionString entry)
@@ -380,7 +380,7 @@ namespace Microsoft.Data.Common
                 case KeyRestrictionBehavior.AllowOnly:
                     // every key must either be in the restricted connection string or in the allowed keywords
                     // keychain may contain duplicates, but it is better than GetEnumerator on _parsetable.Keys
-                    for (NameValuePair current = entry.KeyChain; null != current; current = current.Next)
+                    for (NameValuePair current = entry.KeyChain; current != null; current = current.Next)
                     {
                         if (!ContainsKey(current.Name) && IsRestrictedKeyword(current.Name))
                         {
@@ -390,7 +390,7 @@ namespace Microsoft.Data.Common
                     break;
                 case KeyRestrictionBehavior.PreventUsage:
                     // every key can not be in the restricted keywords (even if in the restricted connection string)
-                    if (null != _restrictionValues)
+                    if (_restrictionValues != null)
                     {
                         foreach (string restriction in _restrictionValues)
                         {
@@ -415,7 +415,7 @@ namespace Microsoft.Data.Common
             {
                 if (0 > Array.BinarySearch(preventusage, allowonly[i], StringComparer.Ordinal))
                 {
-                    if (null == newlist)
+                    if (newlist == null)
                     {
                         newlist = new List<string>();
                     }
@@ -423,7 +423,7 @@ namespace Microsoft.Data.Common
                 }
             }
             string[] restrictionValues = null;
-            if (null != newlist)
+            if (newlist != null)
             {
                 restrictionValues = newlist.ToArray();
             }
@@ -438,7 +438,7 @@ namespace Microsoft.Data.Common
             {
                 if (0 <= Array.BinarySearch(b, a[i], StringComparer.Ordinal))
                 {
-                    if (null == newlist)
+                    if (newlist == null)
                     {
                         newlist = new List<string>();
                     }
@@ -457,8 +457,8 @@ namespace Microsoft.Data.Common
         static private string[] NoDuplicateUnion(string[] a, string[] b)
         {
 #if DEBUG
-            Debug.Assert(null != a && 0 < a.Length, "empty a");
-            Debug.Assert(null != b && 0 < b.Length, "empty b");
+            Debug.Assert(a != null && 0 < a.Length, "empty a");
+            Debug.Assert(b != null && 0 < b.Length, "empty b");
             Verify(a);
             Verify(b);
 #endif
@@ -494,14 +494,14 @@ namespace Microsoft.Data.Common
             {
                 int startPosition = nextStartPosition;
 
-                string keyname, keyvalue; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
-                nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out keyvalue);
+                string keyname; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
+                nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
                 if (!ADP.IsEmpty(keyname))
                 {
 #if DEBUG
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> KeyName='{0}'", keyname);
 #endif
-                    string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname); // MDAC 85144
+                    string realkeyname = synonyms != null ? (string)synonyms[keyname] : keyname; // MDAC 85144
                     if (ADP.IsEmpty(realkeyname))
                     {
                         throw ADP.KeywordNotSupported(keyname);
@@ -540,7 +540,7 @@ namespace Microsoft.Data.Common
                     count = 0;
                     for (int i = 0; i < restrictions.Length; ++i)
                     {
-                        if (null != restrictions[i])
+                        if (restrictions[i] != null)
                         {
                             tmp[count++] = restrictions[i];
                         }
@@ -555,7 +555,7 @@ namespace Microsoft.Data.Common
         [ConditionalAttribute("DEBUG")]
         private static void Verify(string[] restrictionValues)
         {
-            if (null != restrictionValues)
+            if (restrictionValues != null)
             {
                 for (int i = 1; i < restrictionValues.Length; ++i)
                 {

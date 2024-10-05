@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                     byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
                     Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
                     spnBuffer[0] = srvSPN;
-                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.", nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
                 }
                 else
                 {
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient
 
             DisposeCounters();
 
-            if (null != sessionHandle || null != packetHandle)
+            if (sessionHandle != null || packetHandle != null)
             {
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();
@@ -271,6 +271,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
+
+        internal override Guid? SessionId => default;
 
         internal override bool IsPacketEmpty(PacketHandle readPacket)
         {
@@ -398,9 +400,6 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SNINativeMethodWrapper.SNISetInfo(Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
-            => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer[0]);
-
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
@@ -410,7 +409,7 @@ namespace Microsoft.Data.SqlClient
             {
                 protocolVersion = (int)SslProtocols.Tls12;
             }
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
@@ -427,13 +426,14 @@ namespace Microsoft.Data.SqlClient
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
             {
-#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
+#pragma warning disable CS0618, CA5397
                 protocolVersion = (int)SslProtocols.Ssl3;
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL2_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Ssl2;
-#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning restore CS0618, CA5397
             }
             else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
             {
@@ -450,6 +450,8 @@ namespace Microsoft.Data.SqlClient
                 // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
             }
         }
+
+        internal override SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
 
         internal sealed class WritePacketCache : IDisposable
         {

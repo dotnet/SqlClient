@@ -1,0 +1,17 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  - group: Release Variables
+
+  - name: NugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)
+  - name: PreviewNugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
+  - name: AssemblyFileVersion
+    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  - name: nuspecPath
+    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'

@@ -3,17 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.Caching;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Keys;
+using Microsoft.Extensions.Caching.Memory;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     class CertificateUtility
@@ -98,11 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             object sqlSymmetricKeyCache = SqlSymmetricKeyCacheGetInstance.Invoke(null, null);
             MemoryCache cache = SqlSymmetricKeyCacheFieldCache.GetValue(sqlSymmetricKeyCache) as MemoryCache;
-
-            foreach (KeyValuePair<String, object> item in cache)
-            {
-                cache.Remove(item.Key);
-            }
+            ClearCache(cache);
         }
 
         /// <summary>
@@ -141,8 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static async Task SetupAKVKeysAsync()
         {
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            KeyClient keyClient = new KeyClient(DataTestUtility.AKVBaseUri, clientSecretCredential);
+            KeyClient keyClient = new KeyClient(DataTestUtility.AKVBaseUri, DataTestUtility.GetTokenCredential());
             AsyncPageable<KeyProperties> keys = keyClient.GetPropertiesOfKeysAsync();
             IAsyncEnumerator<KeyProperties> enumerator = keys.GetAsyncEnumerator();
 
@@ -306,6 +302,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         cmd.CommandText = "dbcc traceon(4053, -1)"; // traceon disables feature
                     }
                     cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private static void ClearCache(MemoryCache cache)
+        {
+            // Get the Clear method of the cache and use it if available. This is available in Microsoft.Extensions.Caching 8.0
+            MethodInfo clearMethod = cache.GetType().GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
+            if (clearMethod != null)
+            {
+                clearMethod.Invoke(cache, null);
+            }
+            else
+            {
+                // Otherwise, use the Remove function to remove all entries using all keys in the cache gathered using reflection.
+                PropertyInfo cacheEntriesCollectionDefinition = typeof(MemoryCache).GetProperty("EntriesCollection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                ICollection cacheEntriesCollection = (ICollection)cacheEntriesCollectionDefinition.GetValue(cache);
+                List<ICacheEntry> cacheCollectionValues = new List<ICacheEntry>();
+
+                foreach (object cacheItem in cacheEntriesCollection)
+                {
+                    ICacheEntry cacheItemValue = (ICacheEntry)cacheItem.GetType().GetProperty("Value").GetValue(cacheItem, null);
+                    cache.Remove(cacheItemValue.Key);
                 }
             }
         }

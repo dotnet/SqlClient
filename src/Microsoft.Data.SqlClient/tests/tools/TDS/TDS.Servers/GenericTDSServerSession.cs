@@ -108,6 +108,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// </summary>
         public bool IsSessionRecoveryEnabled { get; set; }
 
+        /// <summary>
+        /// Indicates whether this session supports Json column type
+        /// </summary>
+        public bool IsJsonSupportEnabled { get; set; }
+
         #region Session Options
 
         /// <summary>

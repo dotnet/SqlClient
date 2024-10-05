@@ -1,0 +1,54 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: AssemblyFileVersion
+    type: string
+    default: $(AssemblyFileVersion)
+  
+  - name: Configuration
+    type: string
+    default: '$(Configuration)'
+
+  - name: packageRefMdsVersion
+    type: string
+    default: ''
+
+  - name: product
+    default: MDS
+    values:
+    - MDS
+    - AKV
+    - MSS
+
+steps:
+- task: DownloadSecureFile@1
+  displayName: 'Download Key Pair'
+  inputs:
+    secureFile: netfxKeypair.snk
+    retryCount: 5
+
+- ${{ if eq(parameters.product, 'MDS') }}:
+  - task: MSBuild@1
+    displayName: 'BuildAllConfigurations using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '${{parameters.Configuration }}'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+
+- ${{ if eq(parameters.product, 'AKV') }}:
+  - task: MSBuild@1
+    displayName: 'BuildAKVNetFx using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '${{parameters.Configuration }}'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetFx -p:NugetPackageVersion=${{parameters.packageRefMdsVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+
+  - task: MSBuild@1
+    displayName: 'BuildAKVNetCoreAllOS using build.proj'
+    inputs:
+      solution: '**/build.proj'
+      configuration: '${{parameters.Configuration }}'
+      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetCoreAllOS -p:NugetPackageVersion=${{parameters.packageRefMdsVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'

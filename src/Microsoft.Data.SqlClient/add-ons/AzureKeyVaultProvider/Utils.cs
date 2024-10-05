@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal static void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
-            if (null == encryptionAlgorithm)
+            if (encryptionAlgorithm == null)
             {
                 throw ADP.NullAlgorithm(isSystemOp);
             }
@@ -124,8 +124,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static ArgumentException InvalidAKVPath(string masterKeyPath, bool isSystemOp)
         {
-            string errorMessage = null == masterKeyPath ? Strings.NullAkvPath
-                                                        : string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvPathTemplate, masterKeyPath);
+            string errorMessage = masterKeyPath == null
+                ? Strings.NullAkvPath
+                : string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvPathTemplate, masterKeyPath);
             if (isSystemOp)
             {
                 return new ArgumentNullException(Constants.AeParamMasterKeyPath, errorMessage);

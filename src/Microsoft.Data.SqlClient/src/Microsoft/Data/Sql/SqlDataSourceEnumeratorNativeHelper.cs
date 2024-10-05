@@ -25,7 +25,7 @@ namespace Microsoft.Data.Sql
         /// <returns></returns>
         internal static DataTable GetDataSources()
         {
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
             (new NamedPermissionSet("FullTrust")).Demand(); // SQLBUDT 244304
 #endif
             char[] buffer = null;
@@ -37,13 +37,13 @@ namespace Microsoft.Data.Sql
             bool more = true;
             bool failure = false;
             IntPtr handle = ADP.s_ptrZero;
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
                 long s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(ADP.DefaultCommandTimeout);
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                 try
@@ -114,7 +114,7 @@ namespace Microsoft.Data.Sql
             string isClustered = null;
             string version = null;
             string[] serverinstanceslist = serverInstances.Split(EndOfServerInstanceDelimiter_Native);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of recieved server instances are {2}",
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of received server instances are {2}",
                                                    nameof(SqlDataSourceEnumeratorNativeHelper), nameof(ParseServerEnumString), serverinstanceslist.Length);
 
             // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 

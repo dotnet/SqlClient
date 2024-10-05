@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>套接字未引发预期的“{0}”，错误代码为“{1}”。</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0 不支持。</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>服务器正在尝试使用此平台不支持的功能。</value>
   </data>
@@ -4739,5 +4736,8 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>验证证书时证书不可用。</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>服务器提供的证书与 ServerCertificate 选项提供的证书不匹配。</value>
   </data>
 </root>

@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNISecGenClientContextWrapper")]
         internal static extern unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
-            [In, Out] byte[] pIn,
+            [In, Out] byte* pIn,
             uint cbIn,
             [In, Out] byte[] pOut,
             [In] ref uint pcbOut,

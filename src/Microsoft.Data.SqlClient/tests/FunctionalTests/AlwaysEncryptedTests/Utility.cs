@@ -304,8 +304,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         internal static Object GetSqlCipherMetadata(ushort ordinal, byte cipherAlgorithmId, string cipherAlgorithmName, byte encryptionType, byte normalizationRuleVersion)
         {
-            Assert.True(null != SqlCipherMetadataConstructor);
-            Assert.True(null != SqlTceCipherInfoEntryConstructor);
+            Assert.True(SqlCipherMetadataConstructor != null);
+            Assert.True(SqlTceCipherInfoEntryConstructor != null);
             Object entry = SqlTceCipherInfoEntryConstructor.Invoke(new object[] { 1 });// this param is "ordinal"
             Object[] parameters = new Object[] { entry, ordinal, cipherAlgorithmId, cipherAlgorithmName, encryptionType, normalizationRuleVersion };
             return SqlCipherMetadataConstructor.Invoke(parameters);
@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             SqlConnection conn = new SqlConnection();
             FieldInfo field = conn.GetType().GetField("s_globalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.True(null != field);
+            Assert.True(field != null);
             field.SetValue(conn, null);
         }
         #endregion

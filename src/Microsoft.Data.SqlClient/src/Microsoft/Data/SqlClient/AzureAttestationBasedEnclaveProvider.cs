@@ -6,11 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.Caching;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Protocols;
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
         // such as https://sql.azure.attest.com/.well-known/openid-configuration
         private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
 
-        private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache("OpenIdConnectConfigurationCache");
+        private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache(new MemoryCacheOptions());
         #endregion
 
         #region Internal methods
@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient
         // It also caches that information for 1 day to avoid DDOS attacks.
         private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
         {
-            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache[url] as OpenIdConnectConfiguration;
+            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache.Get<OpenIdConnectConfiguration>(url);
             if (forceUpdate || openIdConnectConfig == null)
             {
                 // Compute the meta data endpoint
@@ -348,7 +348,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
-                OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
+                };
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, options);
             }
 
             return openIdConnectConfig;
@@ -405,9 +409,8 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                SecurityToken validatedToken;
                 JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-                var token = handler.ValidateToken(attestationToken, validationParameters, out validatedToken);
+                var token = handler.ValidateToken(attestationToken, validationParameters, out _);
                 isSignatureValid = true;
             }
             catch (SecurityTokenExpiredException securityException)
