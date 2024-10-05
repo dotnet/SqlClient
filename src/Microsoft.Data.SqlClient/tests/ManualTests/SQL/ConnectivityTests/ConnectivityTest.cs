@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
-                InitialCatalog = "DoesNotExist0982532435423",
+                InitialCatalog = DataTestUtility.GetUniqueNameForSqlServer("DoesNotExist", false),
                 Pooling = false,
                 ConnectTimeout = 15
             };
@@ -408,7 +408,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             await Assert.ThrowsAsync<SqlException>(async () => await sqlConnection.OpenAsync(CancellationToken.None));
             timer.Stop();
             duration = timer.Elapsed;
-            Assert.True(duration.Seconds > 5, $"Connection OpenAsync() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");             //    sqlConnection.OpenAsync();
+            Assert.True(duration.Seconds > 5, $"Connection OpenAsync() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
