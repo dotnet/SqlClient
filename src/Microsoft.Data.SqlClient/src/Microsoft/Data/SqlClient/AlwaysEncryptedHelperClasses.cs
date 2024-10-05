@@ -11,8 +11,8 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <summary>
-    /// <para> Represents a single encrypted value for a CEK. It contains the encrypted CEK,
-    ///  the store type, name,the key path and encryption algorithm.</para>
+    /// Represents a single encrypted value for a CEK. It contains the encrypted CEK,
+    ///  the store type, name,the key path and encryption algorithm.
     /// </summary>
     internal class SqlEncryptionKeyInfo
     {
@@ -27,10 +27,10 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <summary>
-    /// <para> Encapsulates one entry in the CipherInfo table sent as part of Colmetadata.
+    /// Encapsulates one entry in the CipherInfo table sent as part of Colmetadata.
     /// The same CEK is encrypted multiple times with different master keys (for master key
     /// rotation scenario) We need to keep all these around until we can resolve the CEK
-    /// using the correct master key.</para>
+    /// using the correct master key.
     /// </summary>
     internal class SqlTceCipherInfoEntry
     {
@@ -192,9 +192,9 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <summary> 
-    /// <para> Represents a table with various CEKs used in a resultset. Each entry corresponds to one (unique) CEK. The CEK
+    /// Represents a table with various CEKs used in a resultset. Each entry corresponds to one (unique) CEK. The CEK
     /// may have been encrypted using multiple master keys (giving us multiple CEK values). All these values form one single
-    /// entry in this table.</para>
+    /// entry in this table.
     ///</summary>
     internal class SqlTceCipherInfoTable
     {
@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal partial class _SqlMetaDataSet
+    internal sealed partial class _SqlMetaDataSet
     {
         internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
 
@@ -468,7 +468,7 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Class encapsulating additional information when sending encrypted input parameters.
     /// </summary>
-    sealed internal class SqlColumnEncryptionInputParameterInfo
+    internal sealed class SqlColumnEncryptionInputParameterInfo
     {
         /// <summary>
         /// Metadata of the parameter to write the TYPE_INFO of the unencrypted column data type.

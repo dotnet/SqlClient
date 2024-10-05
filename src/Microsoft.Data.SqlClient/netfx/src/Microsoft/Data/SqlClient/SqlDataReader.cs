@@ -1678,15 +1678,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (_metaData == null || _metaData._schemaTable == null)
+                    if (_metaData == null || _metaData.schemaTable == null)
                     {
                         if (this.MetaData != null)
                         {
-                            _metaData._schemaTable = BuildSchemaTable();
-                            Debug.Assert(_metaData._schemaTable != null, "No schema information yet!");
+                            _metaData.schemaTable = BuildSchemaTable();
+                            Debug.Assert(_metaData.schemaTable != null, "No schema information yet!");
                         }
                     }
-                    return _metaData?._schemaTable;
+                    return _metaData?.schemaTable;
                 }
                 finally
                 {
@@ -4847,7 +4847,7 @@ namespace Microsoft.Data.SqlClient
             _tableNames = null;
             if (_metaData != null)
             {
-                _metaData._schemaTable = null;
+                _metaData.schemaTable = null;
                 _data = SqlBuffer.CreateBufferArray(metaData.Length);
             }
 

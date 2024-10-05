@@ -1300,7 +1300,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+            string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
