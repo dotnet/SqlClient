@@ -10,7 +10,7 @@ using Microsoft.SqlServer.TDS.Servers;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    internal class TestTdsServer : GenericTDSServer, IDisposable
+    internal class TestRoutingTdsServer : RoutingTDSServer, IDisposable
     {
         private const int DefaultConnectionTimeout = 5;
 
@@ -18,18 +18,15 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private SqlConnectionStringBuilder _connectionStringBuilder;
 
-        public TestTdsServer(TDSServerArguments args) : base(args) { }
+        public TestRoutingTdsServer(RoutingTDSServerArguments args) : base(args) { }
 
-        public TestTdsServer(QueryEngine engine, TDSServerArguments args) : base(args)
+        public static TestRoutingTdsServer StartTestServer(IPEndPoint destinationEndpoint, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
         {
-            Engine = engine;
-        }
-
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
-        {
-            TDSServerArguments args = new TDSServerArguments()
+            RoutingTDSServerArguments args = new RoutingTDSServerArguments()
             {
                 Log = enableLog ? Console.Out : null,
+                RoutingTCPHost = destinationEndpoint.Address.ToString() == IPAddress.Any.ToString() ? IPAddress.Loopback.ToString() : destinationEndpoint.Address.ToString(),
+                RoutingTCPPort = (ushort)destinationEndpoint.Port,
             };
 
             if (enableFedAuth)
@@ -41,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 args.Encryption = SqlServer.TDS.PreLogin.TDSPreLoginTokenEncryptionType.None;
             }
 
-            TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
+            TestRoutingTdsServer server = new TestRoutingTdsServer(args);
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
@@ -56,11 +53,6 @@ namespace Microsoft.Data.SqlClient.Tests
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             server.Endpoint = server._endpoint.ServerEndPoint;
             return server;
-        }
-
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
-        {
-            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, excludeEncryption, methodName);
         }
 
         public void Dispose() => _endpoint?.Stop();
