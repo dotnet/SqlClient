@@ -763,11 +763,10 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: true);
 
-            TdsOperationStatus result;
-
             // VSTS DEVDIV2 380446: It is possible that read attempt we are cleaning after ended with partially
             // processed header (if it falls between network packets). In this case the first thing to do is to
             // finish reading the header, otherwise code will start treating unread header as TDS payload.
+            TdsOperationStatus result;
             if (_stateObj._partialHeaderBytesRead > 0)
             {
                 result = _stateObj.TryProcessHeader();
@@ -1868,7 +1867,6 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.AsyncOperationPending();
             }
 
-            TdsOperationStatus result;
             int value;
             SqlStatistics statistics = null;
             Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
@@ -1877,7 +1875,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SetTimeout(timeoutMilliseconds ?? _defaultTimeoutMilliseconds);
 
-                result = TryReadColumnHeader(i);
+                TdsOperationStatus result = TryReadColumnHeader(i);
                 if (result != TdsOperationStatus.Done)
                 {
                     throw SQL.SynchronousCallMayNotPend();
@@ -2161,7 +2159,9 @@ namespace Microsoft.Data.SqlClient
 
                 // if dataIndex outside of data range, return 0
                 if (ndataIndex < 0 || ndataIndex >= cchars)
+                {
                     return 0;
+                }
 
                 try
                 {
@@ -3708,10 +3708,10 @@ namespace Microsoft.Data.SqlClient
                     if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                     {
                         byte token;
-                        TdsOperationStatus debugResult = _stateObj.TryPeekByte(out token);
-                        if (debugResult != TdsOperationStatus.Done)
+                        result = _stateObj.TryPeekByte(out token);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return debugResult;
+                            return result;
                         }
 
                         Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
@@ -4309,7 +4309,6 @@ namespace Microsoft.Data.SqlClient
 
             if (metaData != null)
             {
-                TdsOperationStatus result;
                 // we are done consuming metadata only if there is no moreInfo
                 if (!moreInfo)
                 {
@@ -4320,7 +4319,7 @@ namespace Microsoft.Data.SqlClient
                       // Peek, and if row token present, set _hasRows true since there is a
                       // row in the result
                         byte b;
-                        result = _stateObj.TryPeekByte(out b);
+                        TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -5304,16 +5303,21 @@ namespace Microsoft.Data.SqlClient
                 reader.PrepareForAsyncContinuation();
             }
 
-            TdsOperationStatus result;
             if (typeof(T) == typeof(Stream) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(XmlReader))
             {
-                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady && reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done)
+                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    bool internalReadSuccess = false;
+                    internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done;
+
+                    if (internalReadSuccess)
+                    {
+                        return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
                 }
             }
 
-            result = reader.TryReadColumn(columnIndex, setTimeout: false);
+            TdsOperationStatus result = reader.TryReadColumn(columnIndex, setTimeout: false);
             if (result == TdsOperationStatus.Done)
             {
                 return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));

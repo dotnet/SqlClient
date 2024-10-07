@@ -491,6 +491,7 @@ namespace Microsoft.Data.SqlClient
         internal void Bind(TdsParserStateObject stateObj)
         {
             Debug.Assert(stateObj != null, "null stateobject");
+
             Debug.Assert(_snapshot == null, "Should not change during execution of asynchronous command");
 
             stateObj.Owner = this;
@@ -876,10 +877,10 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj.HasPendingData)
             {
                 byte token;
-                TdsOperationStatus debugResult = _stateObj.TryPeekByte(out token);
-                if (debugResult != TdsOperationStatus.Done)
+                result = _stateObj.TryPeekByte(out token);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return debugResult;
+                    return result;
                 }
 
                 Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
@@ -1569,7 +1570,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         override public Type GetProviderSpecificFieldType(int i)
@@ -2160,6 +2161,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(index + length <= buffer.Length, "Buffer too small");
 
             bytesRead = 0;
+            TdsOperationStatus result;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -2184,7 +2186,7 @@ namespace Microsoft.Data.SqlClient
                         if (_metaData[i].metaType.IsPlp)
                         {
                             // Read in data
-                            TdsOperationStatus result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                            result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
                             _columnDataBytesRead += bytesRead;
                             if (result != TdsOperationStatus.Done)
                             {
@@ -2206,7 +2208,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             // Read data (not exceeding the total amount of data available)
                             int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                            TdsOperationStatus result = _stateObj.TryReadByteArray(buffer.AsSpan(start: index), bytesToRead, out bytesRead);
+                            result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
                             _columnDataBytesRead += bytesRead;
                             _sharedState._columnDataBytesRemaining -= bytesRead;
                             return result;
@@ -2911,7 +2913,6 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             SqlJson json = _data[i].IsNull ? SqlJson.Null : _data[i].SqlJson;
-
             return json;
         }
 
@@ -3771,7 +3772,6 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             TdsOperationStatus result = TryNextResult(out more);
-
             if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
@@ -3999,7 +3999,6 @@ namespace Microsoft.Data.SqlClient
         // user must call Read() to position on the first row
         private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
-            TdsOperationStatus result;
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.Read|API> {0}", ObjectID))
             {
@@ -4017,6 +4016,7 @@ namespace Microsoft.Data.SqlClient
 #else
                 {
 #endif //DEBUG
+                        TdsOperationStatus result;
                         statistics = SqlStatistics.StartTimer(Statistics);
 
                         if (_parser != null)
@@ -4476,13 +4476,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         bool isNull;
                         ulong dataLength;
-                        result = _parser.TryProcessColumnHeader(
-                                columnMetaData,
-                                _stateObj,
-                                _sharedState._nextColumnHeaderToRead,
-                                out isNull,
-                                out dataLength
-                            );
+                        result = _parser.TryProcessColumnHeader(columnMetaData, _stateObj, _sharedState._nextColumnHeaderToRead, out isNull, out dataLength);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4508,13 +4502,9 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // If we're in sequential mode try to read the data and then if it succeeds update shared
                                 // state so there are no remaining bytes and advance the next column to read
-                                result = _parser.TryReadSqlValue(
-                                        _data[_sharedState._nextColumnDataToRead],
-                                        columnMetaData,
-                                        (int)dataLength, _stateObj,
+                                result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                         _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                        columnMetaData.column
-                                    );
+                                        columnMetaData.column);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     // will read UDTs as VARBINARY.
@@ -4817,6 +4807,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._accumulateInfoEvents = false;
                     }
+
                     result = _stateObj.TryPeekByte(out b);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -4921,6 +4912,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _stateObj._accumulateInfoEvents = false;
                             }
+
                             result = _stateObj.TryPeekByte(out b);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -5126,7 +5118,7 @@ namespace Microsoft.Data.SqlClient
                 context.Reader.PrepareForAsyncContinuation();
             }
 
-            if (context._reader.TryNextResult(out bool more) == TdsOperationStatus.Done)
+            if (context.Reader.TryNextResult(out bool more) == TdsOperationStatus.Done)
             {
                 // completed 
                 return more ? ADP.TrueTask : ADP.FalseTask;
@@ -5236,7 +5228,7 @@ namespace Microsoft.Data.SqlClient
             // Prepare for stateObj timeout
             reader.SetTimeout(reader._defaultTimeoutMilliseconds);
 
-            if (reader.TryReadColumnHeader(context.columnIndex) == TdsOperationStatus.Done)
+            if (reader.TryReadColumnHeader(context._columnIndex) == TdsOperationStatus.Done)
             {
                 // Only once we have read up to where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
 
@@ -5331,7 +5323,7 @@ namespace Microsoft.Data.SqlClient
             SetTimeout(_defaultTimeoutMilliseconds);
 
             // Try to read without any continuations (all the data may already be in the stateObj's buffer)
-            TdsOperationStatus filledBuffer = context._reader.TryGetBytesInternalSequential(
+            TdsOperationStatus filledBuffer = context.Reader.TryGetBytesInternalSequential(
                 context._columnIndex,
                 context._buffer,
                 context._index + context._totalBytesRead,
@@ -5544,7 +5536,7 @@ namespace Microsoft.Data.SqlClient
             {
                 reader.PrepareForAsyncContinuation();
             }
-            TdsOperationStatus result;
+
             if (hasReadRowToken || (reader.TryReadInternal(true, out hasMoreData) == TdsOperationStatus.Done))
             {
                 // If there are no more rows, or this is Sequential Access, then we are done
@@ -5564,7 +5556,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // if non-sequentialaccess then read entire row before returning
-                    result = reader.TryReadColumn(reader._metaData.Length - 1, true);
+                    TdsOperationStatus result = reader.TryReadColumn(reader._metaData.Length - 1, true);
                     if (result == TdsOperationStatus.Done)
                     {
                         // completed 
