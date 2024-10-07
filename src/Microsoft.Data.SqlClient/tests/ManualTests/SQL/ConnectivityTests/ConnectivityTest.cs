@@ -369,7 +369,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InitialCatalog = "DoesNotExist0982532435423",
                 Pooling = false,
-                ConnectTimeout = 15
+                ConnectTimeout = 15,
+                ConnectRetryCount = 3
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
@@ -394,7 +395,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InitialCatalog = DataTestUtility.GetUniqueNameForSqlServer("DoesNotExist", false),
                 Pooling = false,
-                ConnectTimeout = 15
+                ConnectTimeout = 15,
+                ConnectRetryCount = 3
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
