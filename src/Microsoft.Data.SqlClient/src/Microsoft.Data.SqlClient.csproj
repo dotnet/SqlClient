@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<OutputType>ClassLibrary</OutputType>
 		<TargetFrameworks>net6.0;net8.0;net462</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="System.Buffers" Version="4.5.1" />
-	  <PackageReference Include="System.Memory" Version="4.5.5" />
+	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
+	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
 	</ItemGroup>
 
 </Project>

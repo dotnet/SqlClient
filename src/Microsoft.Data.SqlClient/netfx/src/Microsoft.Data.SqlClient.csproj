@@ -832,7 +832,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <PackageReference Include="System.Memory">
-      <Version>4.5.5</Version>
+      <Version>$(SystemMemoryVersion)</Version>
     </PackageReference>
     <PackageReference Include="System.Text.Encodings.Web">
       <Version>$(SystemTextEncodingsWebVersion)</Version>
