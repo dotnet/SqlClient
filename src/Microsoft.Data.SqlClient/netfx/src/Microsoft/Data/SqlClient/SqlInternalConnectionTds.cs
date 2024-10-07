@@ -140,11 +140,6 @@ namespace Microsoft.Data.SqlClient
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
-        // Certificate auth calbacks.
-        ServerCertificateValidationCallback _serverCallback;
-        ClientCertificateRetrievalCallback _clientCallback;
-        SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
-
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
 
@@ -430,11 +425,8 @@ namespace Microsoft.Data.SqlClient
                 bool redirectedUserInstance,
                 SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
                 SessionData reconnectSessionData = null,
-                ServerCertificateValidationCallback serverCallback = null,
-                ClientCertificateRetrievalCallback clientCallback = null,
                 DbConnectionPool pool = null,
                 string accessToken = null,
-                SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
                 bool applyTransientFaultHandling = false,
                 Func<SqlAuthenticationParameters, CancellationToken,
                 Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
@@ -495,10 +487,6 @@ namespace Microsoft.Data.SqlClient
             _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-
-            _serverCallback = serverCallback;
-            _clientCallback = clientCallback;
-            _originalNetworkAddressInfo = originalNetworkAddressInfo;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -1641,7 +1629,7 @@ namespace Microsoft.Data.SqlClient
 
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
         private void LoginFailure()
@@ -2316,9 +2304,6 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions,
                             withFailover,
                             isFirstTransparentAttempt,
-                            _serverCallback,
-                            _clientCallback,
-                            _originalNetworkAddressInfo != null,
                             disableTnir);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);

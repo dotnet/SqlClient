@@ -182,8 +182,6 @@ namespace Microsoft.Data.SqlClient
 
         private static EncryptionOptions _sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
 
-        private static SNINativeMethodWrapper.SqlClientCertificateDelegate _clientCertificateCallback = new SNINativeMethodWrapper.SqlClientCertificateDelegate(ClientCertificateDelegate);
-
         private EncryptionOptions _encryptionOption = _sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
@@ -493,9 +491,6 @@ namespace Microsoft.Data.SqlClient
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
-                              ServerCertificateValidationCallback serverCallback,
-                              ClientCertificateRetrievalCallback clientCallback,
-                              bool useOriginalAddressInfo,
                               bool disableTnir)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
@@ -503,7 +498,6 @@ namespace Microsoft.Data.SqlClient
             bool trustServerCert = connectionOptions.TrustServerCertificate;
             bool integratedSecurity = connectionOptions.IntegratedSecurity;
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
-            string certificate = connectionOptions.Certificate;
             string hostNameInCertificate = connectionOptions.HostNameInCertificate;
             string serverCertificateFilename = connectionOptions.ServerCertificate;
 
@@ -714,11 +708,7 @@ namespace Microsoft.Data.SqlClient
                 instanceName,
                 encrypt,
                 integratedSecurity,
-                !string.IsNullOrEmpty(certificate),
-                useOriginalAddressInfo,
-                serverCertificateFilename,
-                serverCallback,
-                clientCallback);
+                serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -731,8 +721,6 @@ namespace Microsoft.Data.SqlClient
                 encrypt,
                 trustServerCert,
                 integratedSecurity,
-                serverCallback,
-                clientCallback,
                 out marsCapable,
                 out _connHandler._fedAuthRequired,
                 isTlsFirst,
@@ -780,19 +768,13 @@ namespace Microsoft.Data.SqlClient
                     instanceName,
                     encrypt,
                     integratedSecurity,
-                    !string.IsNullOrEmpty(certificate),
-                    useOriginalAddressInfo,
-                    serverCertificateFilename,
-                    serverCallback,
-                    clientCallback);
+                    serverCertificateFilename);
 
                 status = ConsumePreLoginHandshake(
                     authType,
                     encrypt,
                     trustServerCert,
                     integratedSecurity,
-                    serverCallback,
-                    clientCallback,
                     out marsCapable,
                     out _connHandler._fedAuthRequired,
                     isTlsFirst,
@@ -1043,18 +1025,14 @@ namespace Microsoft.Data.SqlClient
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
-            bool clientCertificate,
-            bool useCtaip,
-            string serverCertificate,
-            ServerCertificateValidationCallback serverCallback,
-            ClientCertificateRetrievalCallback clientCallback)
+            string serverCertificate)
         {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificate, serverCallback, clientCallback);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificate);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
@@ -1131,20 +1109,6 @@ namespace Microsoft.Data.SqlClient
                                 payload[payloadLength] = (byte)EncryptionOptions.OFF;
                                 _encryptionOption = EncryptionOptions.OFF;
                             }
-
-                            // Inform server of user request.
-                            if (clientCertificate)
-                            {
-                                payload[payloadLength] |= (byte)EncryptionOptions.CLIENT_CERT;
-                                _encryptionOption |= EncryptionOptions.CLIENT_CERT;
-                            }
-                        }
-
-                        // Add CTAIP if requested.
-                        if (useCtaip)
-                        {
-                            payload[payloadLength] |= (byte)EncryptionOptions.CTAIP;
-                            _encryptionOption |= EncryptionOptions.CTAIP;
                         }
 
                         payloadLength += 1;
@@ -1236,7 +1200,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate, ServerCertificateValidationCallback serverCallback, ClientCertificateRetrievalCallback clientCallback)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate)
         {
             uint error = 0;
 
@@ -1258,27 +1222,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.clientCertificateCallback = null;
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificate) ? null : serverCertificate;
 
-            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
-            {
-
-                string certificate = _connHandler.ConnectionOptions.Certificate;
-
-                if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
-                {
-                    authInfo.certId = certificate.Substring(8);
-                }
-                else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
-                {
-                    authInfo.certId = certificate.Substring(5);
-                    authInfo.certHash = true;
-                }
-
-                if (clientCallback != null)
-                {
-                    authInfo.clientCertificateCallbackContext = clientCallback;
-                    authInfo.clientCertificateCallback = _clientCertificateCallback;
-                }
-            }
+            Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
             error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
 
@@ -1315,25 +1259,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // Validate server certificate
-            if (serverCallback != null)
-            {
-                X509Certificate2 serverCert = null;
-
-                error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                bool valid = serverCallback(serverCert);
-                if (!valid)
-                {
-                    throw SQL.InvalidServerCertificate();
-                }
-            }
-
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
         }
@@ -1343,8 +1268,6 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionEncryptOption encrypt,
             bool trustServerCert,
             bool integratedSecurity,
-            ServerCertificateValidationCallback serverCallback,
-            ClientCertificateRetrievalCallback clientCallback,
             out bool marsCapable,
             out bool fedAuthRequired,
             bool tlsFirst,
@@ -1401,7 +1324,6 @@ namespace Microsoft.Data.SqlClient
             int payloadLength = 0;
             int option = payload[offset++];
             bool serverSupportsEncryption = false;
-            bool serverSupportsCTAIP = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -1489,9 +1411,6 @@ namespace Microsoft.Data.SqlClient
                                 break;
                         }
 
-                        // Check if the server will accept CTAIP.
-                        serverSupportsCTAIP = (serverOption & EncryptionOptions.CTAIP) != 0;
-
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
@@ -1572,13 +1491,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 && !serverSupportsCTAIP)
-            {
-                _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
-                _physicalStateObj.Dispose();
-                ThrowExceptionAndWarning(_physicalStateObj);
-            }
-
             if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
                 (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
             {
@@ -1589,18 +1501,13 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                if (serverCallback != null)
-                {
-                    trustServerCert = true;
-                }
-
                 // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
 
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                    | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+                    | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename, serverCallback, clientCallback);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -14162,33 +14069,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return instance.GetType().ToString();
-            }
-        }
-
-        private static IntPtr ClientCertificateDelegate(IntPtr ptrContext)
-        {
-            GCHandle clientDelegate = GCHandle.FromIntPtr(ptrContext);
-
-            try
-            {
-                ClientCertificateRetrievalCallback clientCallback = (ClientCertificateRetrievalCallback)clientDelegate.Target;
-
-                X509Certificate2 cert = clientCallback();
-                if (cert != null)
-                {
-                    return cert.Handle;
-                }
-                else
-                {
-                    return IntPtr.Zero;
-                }
-            }
-            catch
-            {
-                // Currently  exceptions are not marshalled back.
-                //
-                Debug.Assert(false);
-                return IntPtr.Zero;
             }
         }
     }    // tdsparser
