@@ -8,7 +8,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
-using SysTx = System.Transactions;
+using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -42,11 +42,11 @@ namespace Microsoft.Data.SqlClient
                 // with info messages here.
                 SqlException exception = ProcessMessages(false, ignoreNonFatalMessages);
 
-                if (null != exception)
+                if (exception != null)
                 {
                     // SQLBUVSTS 225982, query for connection once to avoid race condition between GC (that may collect the connection) and the user thread
                     SqlConnection connection = _connection.Connection;
-                    if (null != connection && connection.FireInfoMessageEventOnUserErrors)
+                    if (connection != null && connection.FireInfoMessageEventOnUserErrors)
                     {
                         connection.OnInfoMessage(new SqlInfoMessageEventArgs(exception));
                     }
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
 
             internal EventSink(SqlInternalConnectionSmi connection)
             {
-                Debug.Assert(null != connection, "null connection?");
+                Debug.Assert(connection != null, "null connection?");
                 _connection = connection;
             }
 
@@ -110,13 +110,13 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions, SmiContext smiContext) : base(connectionOptions)
         {
-            Debug.Assert(null != smiContext, "null smiContext?");
+            Debug.Assert(smiContext != null, "null smiContext?");
 
             _smiContext = smiContext;
             _smiContext.OutOfScope += new EventHandler(OnOutOfScope);
 
             _smiConnection = _smiContext.ContextConnection;
-            Debug.Assert(null != _smiConnection, "null SmiContext.ContextConnection?");
+            Debug.Assert(_smiConnection != null, "null SmiContext.ContextConnection?");
 
             _smiEventSink = new EventSink(this);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.ctor|ADV> {0}, constructed new SMI internal connection", ObjectID);
@@ -222,22 +222,22 @@ namespace Microsoft.Data.SqlClient
         // Context transactions SHOULD be considered enlisted.
         //   This works for now only because we can't unenlist from the context transaction
         // DON'T START USING THIS ANYWHERE EXCEPT IN InternalTransaction and in InternalConnectionSmi!!!
-        private SysTx.Transaction ContextTransaction
+        private Transaction ContextTransaction
         {
             get;
             set;
         }
 
-        private SysTx.Transaction InternalEnlistedTransaction
+        private Transaction InternalEnlistedTransaction
         {
             get
             {
                 // Workaround to access context transaction without rewriting connection pool & internalconnections properly.
                 // This SHOULD be a simple wrapper around EnlistedTransaction.
                 //   This works for now only because we can't unenlist from the context transaction
-                SysTx.Transaction tx = EnlistedTransaction;
+                Transaction tx = EnlistedTransaction;
 
-                if (null == tx)
+                if (tx == null)
                 {
                     tx = ContextTransaction;
                 }
@@ -246,7 +246,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void Activate(SysTx.Transaction transaction)
+        override protected void Activate(Transaction transaction)
         {
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
         }
@@ -266,14 +266,18 @@ namespace Microsoft.Data.SqlClient
 
         internal void AutomaticEnlistment()
         {
-            SysTx.Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
-            SysTx.Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
+            Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
+            Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
             long contextTransactionId = _smiContext.ContextTransactionId;
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, contextTransactionId=0x{1}, contextTransaction={2}, currentSystemTransaction={3}.", ObjectID, contextTransactionId, (null != contextTransaction) ? contextTransaction.GetHashCode() : 0, (null != currentSystemTransaction) ? currentSystemTransaction.GetHashCode() : 0);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, contextTransactionId=0x{1}, contextTransaction={2}, currentSystemTransaction={3}.",
+                ObjectID,
+                contextTransactionId,
+                contextTransaction != null ? contextTransaction.GetHashCode() : 0,
+                currentSystemTransaction != null ? currentSystemTransaction.GetHashCode() : 0);
 
             if (SqlInternalTransaction.NullTransactionId != contextTransactionId)
             {
-                if (null != currentSystemTransaction && contextTransaction != currentSystemTransaction)
+                if (currentSystemTransaction != null && contextTransaction != currentSystemTransaction)
                 {
                     throw SQL.NestedTransactionScopesNotSupported();    // can't use TransactionScope(RequiresNew) inside a Sql Transaction.
                 }
@@ -282,7 +286,7 @@ namespace Microsoft.Data.SqlClient
                 _currentTransaction = new SqlInternalTransaction(this, TransactionType.Context, null, contextTransactionId);
                 ContextTransaction = contextTransaction;
             }
-            else if (null == currentSystemTransaction)
+            else if (currentSystemTransaction == null)
             {
                 _currentTransaction = null;  // there really isn't a transaction.
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, no transaction.", ObjectID);
@@ -311,7 +315,7 @@ namespace Microsoft.Data.SqlClient
                 base.Enlist(null);
             }
 
-            if (null != _currentTransaction)
+            if (_currentTransaction != null)
             {
                 if (_currentTransaction.IsContext)
                 {
@@ -357,12 +361,19 @@ namespace Microsoft.Data.SqlClient
         override internal void ExecuteTransaction(
                     TransactionRequest transactionRequest,
                     string transactionName,
-                    IsolationLevel iso,
+                    System.Data.IsolationLevel iso,
                     SqlInternalTransaction internalTransaction,
                     bool isDelegateControlRequest)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> {0}, transactionRequest={1}, " +
-                "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.", ObjectID, transactionRequest, transactionName , iso, (null != internalTransaction) ? internalTransaction.ObjectID : 0, (null != internalTransaction) ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                "<sc.SqlInternalConnectionSmi.ExecuteTransaction|ADV> {0}, transactionRequest={1}, " +
+                "transactionName='{2}', isolationLevel={3}, internalTransaction=#{4} transactionId=0x{5}.",
+                ObjectID,
+                transactionRequest,
+                transactionName,
+                iso,
+                internalTransaction != null ? internalTransaction.ObjectID : 0,
+                internalTransaction != null ? internalTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
 
             switch (transactionRequest)
             {
@@ -378,28 +389,28 @@ namespace Microsoft.Data.SqlClient
                         _pendingTransaction = null;
                     }
 
-                    Debug.Assert(_smiEventSink.HasMessages || null != _currentTransaction, "begin transaction without TransactionStarted event?");
+                    Debug.Assert(_smiEventSink.HasMessages || _currentTransaction != null, "begin transaction without TransactionStarted event?");
                     break;
 
                 case TransactionRequest.Commit:
-                    Debug.Assert(null != _currentTransaction, "commit transaction without TransactionStarted event?");
+                    Debug.Assert(_currentTransaction != null, "commit transaction without TransactionStarted event?");
 
                     _smiConnection.CommitTransaction(_currentTransaction.TransactionId, _smiEventSink);
                     break;
 
                 case TransactionRequest.Promote:
-                    Debug.Assert(null != _currentTransaction, "promote transaction without TransactionStarted event?");
+                    Debug.Assert(_currentTransaction != null, "promote transaction without TransactionStarted event?");
                     PromotedDTCToken = _smiConnection.PromoteTransaction(_currentTransaction.TransactionId, _smiEventSink);
                     break;
 
                 case TransactionRequest.Rollback:
                 case TransactionRequest.IfRollback:
-                    Debug.Assert(null != _currentTransaction, "rollback/ifrollback transaction without TransactionStarted event?");
+                    Debug.Assert(_currentTransaction != null, "rollback/ifrollback transaction without TransactionStarted event?");
                     _smiConnection.RollbackTransaction(_currentTransaction.TransactionId, transactionName, _smiEventSink);
                     break;
 
                 case TransactionRequest.Save:
-                    Debug.Assert(null != _currentTransaction, "save transaction without TransactionStarted event?");
+                    Debug.Assert(_currentTransaction != null, "save transaction without TransactionStarted event?");
                     _smiConnection.CreateTransactionSavePoint(_currentTransaction.TransactionId, transactionName, _smiEventSink);
                     break;
 
@@ -417,7 +428,7 @@ namespace Microsoft.Data.SqlClient
 
             _smiEventSink.ProcessMessagesAndThrow();
 
-            if (null != whereAbouts)
+            if (whereAbouts != null)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.GetDTCAddress|ADV> whereAbouts = {0}, Length = {1}", whereAbouts, (ushort)whereAbouts.Length);
             }
@@ -429,13 +440,13 @@ namespace Microsoft.Data.SqlClient
             return whereAbouts;
         }
 
-        internal void GetCurrentTransactionPair(out long transactionId, out SysTx.Transaction transaction)
+        internal void GetCurrentTransactionPair(out long transactionId, out Transaction transaction)
         {
             // SQLBU 214740: Transaction state could change between obtaining tranid and transaction
             //  due to background SqlDelegatedTransaction processing. Lock the connection to prevent that.
             lock (this)
             {
-                transactionId = (null != CurrentTransaction) ? CurrentTransaction.TransactionId : 0;
+                transactionId = CurrentTransaction != null ? CurrentTransaction.TransactionId : 0;
                 transaction = null;
                 if (0 != transactionId)
                 {
@@ -458,7 +469,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                if (null != owningObject && 1 == _isInUse)
+                if (owningObject != null && 1 == _isInUse)
                 {
                     // SQLBU 369953
                     //  for various reasons, the owning object may no longer be connection to this
@@ -478,7 +489,7 @@ namespace Microsoft.Data.SqlClient
         override protected void PropagateTransactionCookie(byte[] transactionCookie)
         {
 
-            if (null != transactionCookie)
+            if (transactionCookie != null)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.PropagateTransactionCookie|ADV> transactionCookie", transactionCookie, (UInt16)transactionCookie.Length);
             }
@@ -499,7 +510,7 @@ namespace Microsoft.Data.SqlClient
             //  Basically, we have to make the delegated transaction (if there is one) aware of the situation.
 
             SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-            if (null != delegatedTransaction)
+            if (delegatedTransaction != null)
             {
                 delegatedTransaction.Transaction.Rollback();    // just to make sure...
                 DelegatedTransaction = null;   // He's dead, Jim.
@@ -514,7 +525,7 @@ namespace Microsoft.Data.SqlClient
             // When we get notification of a completed transaction
             // we null out the current transaction.
 
-            if (null != _currentTransaction)
+            if (_currentTransaction != null)
             {
 #if DEBUG
                 // Check null for case where Begin and Rollback obtained in the same message.
@@ -535,11 +546,11 @@ namespace Microsoft.Data.SqlClient
             // the current transaction, then we store the token in it.
             // if there isn't a pending transaction, then it's either
             // a TSQL transaction or a distributed transaction.
-            Debug.Assert(null == _currentTransaction, "non-null current transaction with an env change");
+            Debug.Assert(_currentTransaction == null, "non-null current transaction with an env change");
             _currentTransaction = _pendingTransaction;
             _pendingTransaction = null;
 
-            if (null != _currentTransaction)
+            if (_currentTransaction != null)
             {
                 _currentTransaction.TransactionId = transactionId;   // this is defined as a ULongLong in the server and in the TDS Spec.
             }
@@ -554,7 +565,7 @@ namespace Microsoft.Data.SqlClient
         override internal void ValidateConnectionForExecute(SqlCommand command)
         {
             SqlDataReader reader = FindLiveReader(null);
-            if (null != reader)
+            if (reader != null)
             {
                 // if MARS is on, then a datareader associated with the command exists
                 // or if MARS is off, then a datareader exists

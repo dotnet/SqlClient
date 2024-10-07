@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434; //port SQL Server Browser
-        private const int RecieveMAXTimeoutsForCLNT_BCAST_EX = 15000; //Default max time for response wait
-        private const int RecieveTimeoutsForCLNT_BCAST_EX = 1000; //subsequent wait time for response after intial wait 
+        private const int ReceiveMAXTimeoutsForCLNT_BCAST_EX = 15000; //Default max time for response wait
+        private const int ReceiveTimeoutsForCLNT_BCAST_EX = 1000; //subsequent wait time for response after intial wait 
         private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;//(SVR_RESP + RESP_SIZE) https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1
         private const int ValidResponseSizeForCLNT_BCAST_EX = 4096; //valid reponse size should be less than 4096
         private const int FirstTimeoutForCLNT_BCAST_EX = 5000;//wait for first response for 5 seconds
@@ -383,11 +383,11 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Sends request to server, and recieves response from server (SQLBrowser) on port 1434 by UDP
+        /// Sends request to server, and receives response from server (SQLBrowser) on port 1434 by UDP
         /// Request (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/a3035afa-c268-4699-b8fd-4f351e5c8e9e)
         /// Response (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1) 
         /// </summary>
-        /// <returns>string constaning list of SVR_RESP(just RESP_DATA)</returns>
+        /// <returns>string containing list of SVR_RESP(just RESP_DATA)</returns>
         internal static string SendBroadcastUDPRequest()
         {
             StringBuilder response = new StringBuilder();
@@ -407,9 +407,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     sw.Start();
                     try
                     {
-                        while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= RecieveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
+                        while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= ReceiveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
                         {
-                            currentTimeOut = RecieveTimeoutsForCLNT_BCAST_EX;
+                            currentTimeOut = ReceiveTimeoutsForCLNT_BCAST_EX;
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
                             if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                             {

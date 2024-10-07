@@ -8,9 +8,9 @@
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
-    <DefineConstants Condition="$(ReferenceType.Contains('NetStandard'))">NETSTANDARDREFERNCE</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
@@ -32,6 +32,7 @@
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
     <Compile Include="SqlAuthenticationProviderTest.cs" />
+    <Compile Include="SqlBufferTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
     <Compile Include="SqlCommandSetTest.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
@@ -91,9 +92,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHosting)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
+    <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
@@ -114,16 +116,20 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
-    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
-    <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ContentWithTargetPath Include="..\tools\Microsoft.Data.SqlClient.TestUtilities\xunit.runner.json">

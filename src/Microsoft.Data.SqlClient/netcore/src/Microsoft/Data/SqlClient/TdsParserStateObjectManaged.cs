@@ -21,11 +21,7 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private SNIMarsConnection? _marsConnection;
         private SNIHandle? _sessionHandle;
-#if NET7_0_OR_GREATER
-        private NegotiateAuthentication? _negotiateAuth = null;
-#else
-        private SspiClientContextStatus? _sspiClientContextStatus;
-#endif
+
         public TdsParserStateObjectManaged(TdsParser parser) : base(parser) { }
 
         internal TdsParserStateObjectManaged(TdsParser parser, TdsParserStateObject physicalConnection, bool async) :
@@ -232,6 +228,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromManagedPacket(null);
 
+        internal override Guid? SessionId => _sessionHandle?.ConnectionId;
+
         internal override bool IsPacketEmpty(PacketHandle packet) => packet.ManagedPacket == null;
 
         internal override void ReleasePacket(PacketHandle syncReadPacket)
@@ -389,30 +387,6 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_SUCCESS;
         }
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff,
-                                                         uint receivedLength,
-                                                         ref byte[] sendBuff,
-                                                         ref uint sendLength,
-                                                         byte[][] _sniSpnBuffer)
-        {
-#if NET7_0_OR_GREATER
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = Encoding.Unicode.GetString(_sniSpnBuffer[0]) });
-            sendBuff = _negotiateAuth.GetOutgoingBlob(receivedBuff, out NegotiateAuthenticationStatusCode statusCode)!;
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}, StatusCode={1}", _sessionHandle?.ConnectionId, statusCode);
-            if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
-            {
-                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
-            }
-#else
-            _sspiClientContextStatus ??= new SspiClientContextStatus();
-
-            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}", _sessionHandle?.ConnectionId);
-#endif            
-            sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
-            return 0;
-        }
-
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
             protocolVersion = GetSessionSNIHandleHandleOrThrow().ProtocolVersion;
@@ -432,5 +406,12 @@ namespace Microsoft.Data.SqlClient.SNI
         [DoesNotReturn]
         [MethodImpl(MethodImplOptions.NoInlining)] // this forces the exception throwing code not to be inlined for performance
         private void ThrowClosedConnection() => throw ADP.ClosedConnectionError();
+
+        internal override SSPIContextProvider CreateSSPIContextProvider()
+#if NET8_0_OR_GREATER
+            => new NegotiateSSPIContextProvider();
+#else
+            => new ManagedSSPIContextProvider();
+#endif
     }
 }

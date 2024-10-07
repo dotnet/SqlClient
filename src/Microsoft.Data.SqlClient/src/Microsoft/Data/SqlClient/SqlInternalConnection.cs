@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
-#if NETCOREAPP || NETSTANDARD
+#if NET6_0_OR_GREATER
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
         internal SqlCommand.ExecuteXmlReaderAsyncCallContext CachedCommandExecuteXmlReaderAsyncContext;
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalConnection(SqlConnectionString connectionOptions) : base()
         {
-            Debug.Assert(null != connectionOptions, "null connectionOptions?");
+            Debug.Assert(connectionOptions != null, "null connectionOptions?");
             _connectionOptions = connectionOptions;
         }
 
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-                return ((null != delegatedTransaction) && (delegatedTransaction.IsActive));
+                return delegatedTransaction != null && (delegatedTransaction.IsActive);
             }
         }
 
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlInternalTransaction currentTransaction = CurrentTransaction;
-                bool result = (null != currentTransaction && currentTransaction.IsLocal);
+                bool result = currentTransaction != null && currentTransaction.IsLocal;
                 return result;
             }
         }
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlInternalTransaction currentTransaction = CurrentTransaction;
-                bool result = (null != currentTransaction && currentTransaction.HasParentTransaction);
+                bool result = currentTransaction != null && currentTransaction.HasParentTransaction;
                 return result;
             }
         }
@@ -196,19 +196,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
+
+#if NETFRAMEWORK
 
         abstract internal bool Is2000
         {
             get;
         }
 
+
         abstract internal bool Is2005OrNewer
         {
             get;
         }
-
+#endif
         internal bool IsAzureSQLConnection
         {
             get
@@ -220,7 +222,6 @@ namespace Microsoft.Data.SqlClient
                 _isAzureSQLConnection = value;
             }
         }
-#endif
 
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {
@@ -324,7 +325,7 @@ namespace Microsoft.Data.SqlClient
             // Note: unlocked, potentially multi-threaded code, so pull delegate to local to
             //  ensure it doesn't change between test and call.
             SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
-            if (null != delegatedTransaction)
+            if (delegatedTransaction != null)
             {
                 delegatedTransaction.TransactionEnded(transaction);
             }
@@ -359,7 +360,7 @@ namespace Microsoft.Data.SqlClient
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 #endif // NETFRAMEWORK
                     SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-                    if (null != referenceCollection)
+                    if (referenceCollection != null)
                     {
                         referenceCollection.Deactivate();
                     }
@@ -430,7 +431,7 @@ namespace Microsoft.Data.SqlClient
             // Sys.Tx keeps the connection alive until the transaction is completed.
             Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
-            if (null == tx)
+            if (tx == null)
             {
                 if (IsEnlistedInTransaction)
                 {
@@ -466,7 +467,7 @@ namespace Microsoft.Data.SqlClient
 
         private void EnlistNonNull(Transaction tx)
         {
-            Debug.Assert(null != tx, "null transaction?");
+            Debug.Assert(tx != null, "null transaction?");
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object {0}, Transaction Id {1}, attempting to delegate.", ObjectID, tx?.TransactionInformation?.LocalIdentifier);
             bool hasDelegatedTransaction = false;
 
@@ -581,7 +582,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    if (null == _whereAbouts)
+                    if (_whereAbouts == null)
                     {
                         byte[] dtcAddress = GetDTCAddress();
                         _whereAbouts = dtcAddress ?? throw SQL.CannotGetDTCAddress();
@@ -612,7 +613,7 @@ namespace Microsoft.Data.SqlClient
             // In either case, when we're working with a 2005 or newer server
             // we better have a current transaction by now.
 
-            Debug.Assert(null != CurrentTransaction, "delegated/enlisted transaction with null current transaction?");
+            Debug.Assert(CurrentTransaction != null, "delegated/enlisted transaction with null current transaction?");
         }
 
         internal void EnlistNull()
@@ -644,7 +645,7 @@ namespace Microsoft.Data.SqlClient
             // In either case, when we're working with a 2005 or newer server
             // we better not have a current transaction at this point.
 
-            Debug.Assert(null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!
+            Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");   // verify it!
         }
 
         override public void EnlistTransaction(Transaction transaction)
@@ -663,7 +664,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.LocalTransactionPresent();
             }
 
-            if (null != transaction && transaction.Equals(EnlistedTransaction))
+            if (transaction != null && transaction.Equals(EnlistedTransaction))
             {
                 // No-op if this is the current transaction
                 return;
@@ -735,7 +736,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlDataReader reader = null;
             SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (null != referenceCollection)
+            if (referenceCollection != null)
             {
                 reader = referenceCollection.FindLiveReader(command);
             }
@@ -747,7 +748,7 @@ namespace Microsoft.Data.SqlClient
         static private byte[] GetTransactionCookie(Transaction transaction, byte[] whereAbouts)
         {
             byte[] transactionCookie = null;
-            if (null != transaction)
+            if (transaction != null)
             {
                 transactionCookie = TransactionInterop.GetExportCookie(transaction, whereAbouts);
             }
@@ -768,7 +769,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlConnection connection = Connection;
-            if (null != connection)
+            if (connection != null)
             {
                 connection.OnError(exception, breakConnection, wrapCloseInAction);
             }
@@ -787,10 +788,10 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
         {
-            if (null != connection)
+            if (connection != null)
             {
                 SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     return innerConnection.Parser;
                 }
@@ -802,7 +803,7 @@ namespace Microsoft.Data.SqlClient
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         static internal void BestEffortCleanup(TdsParser target)
         {
-            if (null != target)
+            if (target != null)
             {
                 target.BestEffortCleanup();
             }

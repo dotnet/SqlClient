@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             string[] numOfServerInstances = serverInstances.Split(SqlDataSourceEnumeratorUtil.s_endOfServerInstanceDelimiter_Managed, System.StringSplitOptions.None);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of recieved server instances are {2}",
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of received server instances are {2}",
                                                    nameof(SqlDataSourceEnumeratorManagedHelper), nameof(ParseServerEnumString), numOfServerInstances.Length);
 
             foreach (string currentServerInstance in numOfServerInstances)

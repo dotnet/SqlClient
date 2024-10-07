@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="flags">SMUX header flags</param>
         private void SendControlPacket(SNISMUXFlags flags)
         {
-            using (TrySNIEventScope.Create("SNIMarsHandle.SendControlPacket | SNI | INFO | SCOPE | Entering Scope {0}"))
+            using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 SNIPacket packet = RentPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
 #if DEBUG
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private uint InternalSendAsync(SNIPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without smux reservation in InternalSendAsync");
-            using (TrySNIEventScope.Create("SNIMarsHandle.InternalSendAsync | SNI | INFO | SCOPE | Entering Scope {0}"))
+            using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 lock (this)
                 {

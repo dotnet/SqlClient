@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void VerifySensitivityClassification(SqlDataReader reader, bool rankEnabled = false)
         {
-            if (null != reader.SensitivityClassification)
+            if (reader.SensitivityClassification != null)
             {
                 for (int columnPos = 0; columnPos < reader.SensitivityClassification.ColumnSensitivities.Count;
                         columnPos++)
