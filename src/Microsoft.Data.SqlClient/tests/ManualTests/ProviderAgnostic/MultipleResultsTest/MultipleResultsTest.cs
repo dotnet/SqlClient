@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                Debug.Assert(null != e, "PrintException: null exception");
+                Debug.Assert(e != null, "PrintException: null exception");
 
                 _globalBuilder.Length = 0;
                 _globalBuilder.Append(e.GetType().Name).Append(": ");
@@ -195,14 +195,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Console.WriteLine(e.StackTrace);
                 }
-                if (null != values)
+                if (values != null)
                 {
                     foreach (string value in values)
                     {
                         Console.WriteLine(value);
                     }
                 }
-                if (null != e.InnerException)
+                if (e.InnerException != null)
                 {
                     PrintException(e.InnerException.GetType(), e.InnerException);
                 }
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private string AssemblyFilter(StreamWriter writer)
         {
-            if (null == _outputBuilder)
+            if (_outputBuilder == null)
             {
                 _outputBuilder = new StringBuilder();
             }
@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void AssemblyFilter(StringBuilder builder)
         {
             string[] filter = _outputFilter;
-            if (null == filter)
+            if (filter == null)
             {
                 filter = new string[5];
                 string tmp = typeof(System.Guid).AssemblyQualifiedName;

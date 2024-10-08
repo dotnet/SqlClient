@@ -37,8 +37,8 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 Transaction currentEnlistedTransaction = _enlistedTransaction;
-                if (((null == currentEnlistedTransaction) && (null != value))
-                    || ((null != currentEnlistedTransaction) && !currentEnlistedTransaction.Equals(value)))
+                if ((currentEnlistedTransaction == null && value != null)
+                    || (currentEnlistedTransaction != null && !currentEnlistedTransaction.Equals(value)))
                 {  // WebData 20000024
 
                     // Pay attention to the order here:
@@ -53,7 +53,7 @@ namespace Microsoft.Data.ProviderBase
                     Transaction previousTransactionClone = null;
                     try
                     {
-                        if (null != value)
+                        if (value != null)
                         {
                             valueClone = value.Clone();
                         }
@@ -88,12 +88,12 @@ namespace Microsoft.Data.ProviderBase
                         // we really need to dispose our clones; they may have
                         // native resources and GC may not happen soon enough.
                         // VSDevDiv 479564: don't dispose if still holding reference in _enlistedTransaction
-                        if (null != previousTransactionClone &&
+                        if (previousTransactionClone != null &&
                                 !object.ReferenceEquals(previousTransactionClone, _enlistedTransaction))
                         {
                             previousTransactionClone.Dispose();
                         }
-                        if (null != valueClone && !object.ReferenceEquals(valueClone, _enlistedTransaction))
+                        if (valueClone != null && !object.ReferenceEquals(valueClone, _enlistedTransaction))
                         {
                             valueClone.Dispose();
                         }
@@ -104,7 +104,7 @@ namespace Microsoft.Data.ProviderBase
                     // against multiple concurrent calls to enlist, which really
                     // isn't supported anyway.
 
-                    if (null != value)
+                    if (value != null)
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.set_EnlistedTransaction|RES|CPOOL> {0}, Transaction {1}, Enlisting.", ObjectID, value.GetHashCode());
                         TransactionOutcomeEnlist(value);
@@ -251,7 +251,7 @@ namespace Microsoft.Data.ProviderBase
             //     if the DbConnectionInternal derived class needs to close the connection it should
             //     delegate to the DbConnection if one exists or directly call dispose
             //         DbConnection owningObject = (DbConnection)Owner;
-            //         if (null != owningObject) {
+            //         if (owningObject != null) {
             //             owningObject.Close(); // force the closed state on the outer object.
             //         }
             //         else {
@@ -261,8 +261,8 @@ namespace Microsoft.Data.ProviderBase
             ////////////////////////////////////////////////////////////////
             // DON'T MESS WITH THIS CODE UNLESS YOU KNOW WHAT YOU'RE DOING!
             ////////////////////////////////////////////////////////////////
-            Debug.Assert(null != owningObject, "null owningObject");
-            Debug.Assert(null != connectionFactory, "null connectionFactory");
+            Debug.Assert(owningObject != null, "null owningObject");
+            Debug.Assert(connectionFactory != null, "null connectionFactory");
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.CloseConnection|RES|CPOOL> {0} Closing.", ObjectID);
 
             // if an exception occurs after the state change but before the try block
@@ -288,7 +288,7 @@ namespace Microsoft.Data.ProviderBase
                         // The singleton closed classes won't have owners and
                         // connection pools, and we won't want to put them back
                         // into the pool.
-                        if (null != connectionPool)
+                        if (connectionPool != null)
                         {
                             connectionPool.PutObject(this, owningObject);   // PutObject calls Deactivate for us...
                                                                             // NOTE: Before we leave the PutObject call, another
@@ -354,13 +354,13 @@ namespace Microsoft.Data.ProviderBase
 
                 DbConnectionPool pool = Pool;
 
-                if (null == pool)
+                if (pool == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectWithoutPool);      // pooled connection does not have a pool
                 }
                 pool.PutObjectFromTransactedPool(this);
             }
-            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out DbConnection _))
+            else if (-1 == _pooledCount && !_owningObject.TryGetTarget(out _))
             {
                 // When _pooledCount is -1 and the owning object no longer exists,
                 // it indicates a closed (or leaked), non-pooled connection so 
@@ -468,7 +468,7 @@ namespace Microsoft.Data.ProviderBase
             DetachTransaction(transaction, false);
 
             DbConnectionPool pool = Pool;
-            if (null != pool)
+            if (pool != null)
             {
                 pool.TransactionEnded(transaction, this);
             }

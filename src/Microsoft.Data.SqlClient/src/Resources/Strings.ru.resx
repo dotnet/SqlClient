@@ -411,8 +411,8 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>Репликация</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
-    <value>Устойчивость подключений</value>
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
+    <value>Connection Resiliency</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>Коллекция, содержащая особую информацию пользователя.</value>
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>Атрибут IsDataSet отсутствует во входной схеме Schema.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>Не удается определить элемент DataSet. Атрибут IsDataSet присутствует несколько раз.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet не сериализует типы, в которых реализован интерфейс IDynamicMetaObjectProvider, но не реализован интерфейс IXmlSerializable.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>Ожидалось {0}, но фактически в позиции {2} находится маркер {1}.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>Невозможно выполнить преобразование из {0} в {1}.</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>Невозможно привести значение "{0}" к типу: {1}.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>Недопустимое имя столбца [{0}].</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>Невозможно вычислить. Выражение "{0}" не является составным.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>Выражение фильтра "{0}" не задает логический терм Boolean.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>Недопустимое имя типа "{0}".</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded и SetModified могут вызываться только для DataRows с неизмененным DataRowState.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>Порядковый номер "{0}" превышает максимальное значение.</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet не поддерживает System.Nullable&lt;&gt;.</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>Несоответствие столбцов в PrimaryKey: &lt;target&gt;.{0} относительно &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>Невозможно присоединить отношение Relation {0} из-за несоответствия столбцов в ключах.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>В конечной таблице {0} отсутствует определение столбца {1}.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>Коллекция изменена, возможно операция перечисления не будет выполнена.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>Простой тип "{0}" уже определен с другим "{1}".</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>Недопустимая нумерация.</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Невозможно удалить столбец, т.к. он встроен в этот dataSet.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>Невозможно удалить отношение, т.к. оно встроено в этот dataSet.</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>Происходит при каждом изменении любого свойства этого элемента управления.</value>
@@ -1719,8 +1719,8 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Происходит при каждом изменении принадлежности этой коллекции.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
-    <value>Невозможно получить значение, поскольку оно равно DBNull.</value>
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
+    <value>Cannot get value because it is DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>Свойству "{0}" необходима Microsoft WindowsNT или другая операционная система на ее основе.</value>
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>Для обновления требуется, чтобы клон команды имел объект подключения. Свойство Connection для клона команды не инициализировано.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>Для обновления требуется подключение.</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Для элемента Update требуется, чтобы команда {0}Command имела открытый объект подключения {1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>поле "{0}" отмечено как несериализованное</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>Тип поля "{0}" имеет макет с явно заданным смещением, что недопустимо в собственном формате Native.</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>Многозначные ссылки на сборку должны иметь ненулевой идентификатор сборки.</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>При установлении соединения с SQL Server произошла ошибка, связанная с сетью или с определенным экземпляром. Сервер не найден или недоступен. Убедитесь, что имя экземпляра указано правильно и что на SQL Server разрешены удаленные соединения.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>Клиенту не удалось установить соединение из-за ошибки, возникшей во время инициализации соединения до входа в систему. Возможны следующие причины ошибки: клиент попытался соединиться с неподдерживаемой версией SQL Server; сервер был слишком загружен и не мог принимать новые соединения; ресурсы сервера были ограничены (недостаточно памяти или превышено допустимое число соединений).</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>Подключение к серверу успешно установлено, но затем произошла ошибка в процессе подтверждения, предшествующего входу.</value>
@@ -4399,7 +4399,7 @@
     <value>Объект словаря, содержащий имена серверов SQL Server и пути к их доверенным главным ключам столбцов.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Перенаправление выполнено два или более раза. Для одного имени входа поддерживается только одно перенаправление.</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Соединение с зеркальным экземпляром SQL Server с параметром ApplicationIntent, установленным в значение ReadOnly, не поддерживается.</value>
@@ -4425,8 +4425,8 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>Сервер не сохранил SSL-шифрование при попытке восстановления, восстановление соединения невозможно.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
-    <value>Сервер не сохранил точную версию TDS клиента, запрошенную в ходе попытки восстановления. Восстановление соединения невозможно.</value>
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
+    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>Произошел разрыв подключения и восстановление невозможно. Драйвер клиента предпринял  один или несколько раз попытку восстановить подключение, но все они не удались. Увеличьте значение ConnectRetryCount, чтобы увеличить количество попыток восстановления.</value>
@@ -4736,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Сертификат недоступен при проверке сертификата.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>

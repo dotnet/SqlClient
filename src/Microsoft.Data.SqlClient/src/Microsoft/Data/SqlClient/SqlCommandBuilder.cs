@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
-            if (null == command)
+            if (command == null)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }

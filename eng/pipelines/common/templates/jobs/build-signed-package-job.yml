@@ -7,7 +7,7 @@ parameters:
   - name: symbolsFolder
     type: string
     default: symbols
-  
+
   - name: softwareFolder
     type: string
     default: software
@@ -15,13 +15,20 @@ parameters:
   - name: publishSymbols
     type: boolean
 
+  - name: isPreview
+    type: boolean
+
 jobs:
 - job: build_signed_package
+  displayName: 'Build Signed MDS Package'
   pool:
     type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
     
   variables:
-  - template: ../../../libraries/variables.yml@self 
+  - template: ../../../libraries/variables.yml@self
+  - ${{ if parameters.isPreview }}:
+    - name: NugetPackageVersion
+      value: $(PreviewNugetPackageVersion)
 
   steps:
   - script: SET
@@ -49,14 +56,8 @@ jobs:
     parameters:
       product: MDS
 
-  # Publish symbols to private server
+  # Publish symbols to servers
   - template: ../steps/publish-symbols-step.yml@self
     parameters:
-      SymAccount: $(PrivateSymAccount)
       publishSymbols: ${{ parameters['PublishSymbols'] }}
-
-  # Publish symbols to public server
-  - template: ../steps/publish-symbols-step.yml@self
-    parameters:
-      SymAccount: $(PublicSymAccount)
-      publishSymbols: ${{ parameters['PublishSymbols'] }}
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)

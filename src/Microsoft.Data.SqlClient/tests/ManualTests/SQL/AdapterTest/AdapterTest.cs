@@ -596,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlAdapter.SelectCommand = cmd;
                     sqlAdapter.Fill(dataSet);
 
-                    // check our ouput and return value params
+                    // check our output and return value params
                     Assert.True(VerifyOutputParams(cmd.Parameters), "FAILED: InputOutput parameter test with returned rows and bound return value!");
 
                     Assert.True(1 == dataSet.Tables[0].Rows.Count, "FAILED:  Expected 1 row to be loaded in the dataSet!");
@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // now exec the same thing without a data set
                     cmd.ExecuteNonQuery();
 
-                    // check our ouput and return value params
+                    // check our output and return value params
                     Assert.True(VerifyOutputParams(cmd.Parameters), "FAILED: InputOutput parameter test with no returned rows and bound return value!");
 
                     // now unbind the return value
@@ -1059,7 +1059,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static bool CanRunSchemaTests()
+        {
+            return DataTestUtility.AreConnStringsSetup() &&
+                // Tests switch to master database, which is not guaranteed when using AAD auth
+                DataTestUtility.TcpConnectionStringDoesNotUseAadAuth;
+        }
+
+        [ConditionalFact(nameof(CanRunSchemaTests))]
         public void SelectAllTest()
         {
             // Test exceptions
@@ -1435,7 +1442,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Utility_Methods
         private void CheckParameters(SqlCommand cmd, string expectedResults)
         {
-            Debug.Assert(null != cmd, "DumpParameters: null SqlCommand");
+            Debug.Assert(cmd != null, "DumpParameters: null SqlCommand");
 
             string actualResults = "";
             StringBuilder builder = new StringBuilder();
@@ -1636,7 +1643,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 return;
             }
-            if (null == value)
+            if (value == null)
             {
                 textBuilder.Append("DEFAULT");
             }
@@ -1648,7 +1655,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Type valuetype = value.GetType();
 
-                if ((null != used) && (!valuetype.IsPrimitive))
+                if (used != null && (!valuetype.IsPrimitive))
                 {
                     if (used.Contains(value))
                     {
@@ -1807,7 +1814,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         PropertyInfo[] properties = valuetype.GetProperties(BindingFlags.Instance | BindingFlags.Public);
 
                         bool hasinfo = false;
-                        if ((null != fields) && (0 < fields.Length))
+                        if (fields != null && (0 < fields.Length))
                         {
                             textBuilder.Append(fullName);
                             fullName = null;
@@ -1825,9 +1832,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                             hasinfo = true;
                         }
-                        if ((null != properties) && (0 < properties.Length))
+                        if (properties != null && (0 < properties.Length))
                         {
-                            if (null != fullName)
+                            if (fullName != null)
                             {
                                 textBuilder.Append(fullName);
                                 fullName = null;
@@ -1840,7 +1847,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 if (property.CanRead)
                                 {
                                     ParameterInfo[] parameters = property.GetIndexParameters();
-                                    if ((null == parameters) || (0 == parameters.Length))
+                                    if (parameters == null || (0 == parameters.Length))
                                     {
                                         AppendNewLineIndent(textBuilder, indent + 1);
                                         textBuilder.Append(property.Name);
@@ -1872,7 +1879,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             textBuilder.Append(valuetype.Name);
                             textBuilder.Append('<');
                             MethodInfo method = valuetype.GetMethod("ToString", new Type[] { typeof(IFormatProvider) });
-                            if (null != method)
+                            if (method != null)
                             {
                                 textBuilder.Append((string)method.Invoke(value, new object[] { cultureInfo }));
                             }

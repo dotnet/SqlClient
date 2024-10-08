@@ -183,7 +183,7 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValues/*' />
         public virtual int GetSqlValues(object[] values)
         {
-            if (null == values)
+            if (values == null)
             {
                 throw ADP.ArgumentNull(nameof(values));
             }

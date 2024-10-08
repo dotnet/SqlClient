@@ -426,33 +426,16 @@ namespace Microsoft.Data.SqlClient.SNI
                     bool isConnected;
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
-                        if (isInfiniteTimeout)
+                        socket.Connect(ipAddress, port);
+                        if (!isInfiniteTimeout)
                         {
-                            socket.Connect(ipAddress, port);
-                        }
-                        else
-                        {
-                            if (timeout.IsExpired)
-                            {
-                                return null;
-                            }
-                            // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
-                            Task socketConnectTask = new Task(() => socket.Connect(ipAddress, port));
-                            socketConnectTask.ConfigureAwait(false);
-                            socketConnectTask.Start();
-                            int remainingTimeout = timeout.MillisecondsRemainingInt;
-                            if (!socketConnectTask.Wait(remainingTimeout))
-                            {
-                                throw ADP.TimeoutException($"The socket couldn't connect during the expected {remainingTimeout} remaining time.");
-                            }
                             throw SQL.SocketDidNotThrow();
                         }
 
                         isConnected = true;
                     }
-                    catch (AggregateException aggregateException) when (!isInfiniteTimeout
-                                                                        && aggregateException.InnerException is SocketException socketException
-                                                                        && socketException.SocketErrorCode == SocketError.WouldBlock)
+                    catch (SocketException socketException) when (!isInfiniteTimeout && 
+                                                                  socketException.SocketErrorCode == SocketError.WouldBlock)
                     {
                         // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
                         // Socket.Select is used because it supports timeouts, while Socket.Connect does not
@@ -509,11 +492,11 @@ namespace Microsoft.Data.SqlClient.SNI
                         return socket;
                     }
                 }
-                catch (AggregateException aggregateException) when (aggregateException.InnerException is SocketException socketException)
+                catch (SocketException e)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: socketException?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {socketException}");
+                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                 }
                 finally
                 {
@@ -721,7 +704,7 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
+                // sent immediately even if a send or receive operation is already in progress
                 // because out of band packets are used to cancel ongoing operations
                 // so try to take the lock if possible but continue even if it can't be taken
                 if (packet.IsOutOfBand)

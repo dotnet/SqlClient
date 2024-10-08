@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*' />
+        /// <inheritdoc cref="System.Exception.GetObjectData" />
 #if NET8_0_OR_GREATER
         [Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
 #endif
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null, SqlBatchCommand batchCommand = null)
         {
-            Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
+            Debug.Assert(errorCollection != null && errorCollection.Count > 0, "no errorCollection?");
 
             StringBuilder message = new();
             for (int i = 0; i < errorCollection.Count; i++)

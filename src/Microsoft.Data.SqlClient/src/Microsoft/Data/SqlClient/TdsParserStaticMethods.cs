@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
-                                if (null != protocol)
+                                if (protocol != null)
                                 {
                                     host = parsedAliasName;
                                 }
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (null == nicAddress)
+            if (nicAddress == null)
             {
                 nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
                 Random random = new Random();

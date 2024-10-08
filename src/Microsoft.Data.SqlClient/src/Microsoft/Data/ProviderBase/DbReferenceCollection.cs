@@ -43,7 +43,7 @@ namespace Microsoft.Data.ProviderBase
 
             public void SetNewTarget(int refInfo, object target)
             {
-                Debug.Assert(!TryGetTarget(out object _), "Entry already has a valid target");
+                Debug.Assert(!TryGetTarget(out _), "Entry already has a valid target");
                 Debug.Assert(refInfo != 0, "Bad reference info");
                 Debug.Assert(target != null, "Invalid target");
 
@@ -96,7 +96,7 @@ namespace Microsoft.Data.ProviderBase
                     if (_items[i].RefInfo == 0)
                     {
                         _items[i].SetNewTarget(refInfo, value);
-                        Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
+                        Debug.Assert(_items[i].TryGetTarget(out _), "missing expected target");
                         itemAdded = true;
                         break;
                     }
@@ -115,10 +115,10 @@ namespace Microsoft.Data.ProviderBase
                 {
                     for (int i = 0; i <= _lastItemIndex; ++i)
                     {
-                        if (!_items[i].TryGetTarget(out object _))
+                        if (!_items[i].TryGetTarget(out _))
                         {
                             _items[i].SetNewTarget(refInfo, value);
-                            Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
+                            Debug.Assert(_items[i].TryGetTarget(out _), "missing expected target");
                             itemAdded = true;
                             break;
                         }
@@ -196,7 +196,7 @@ namespace Microsoft.Data.ProviderBase
                                     NotifyItem(message, _items[index].RefInfo, value);
                                     _items[index].RemoveTarget();
                                 }
-                                Debug.Assert(!_items[index].TryGetTarget(out object _), "Unexpected target after notifying");
+                                Debug.Assert(!_items[index].TryGetTarget(out _), "Unexpected target after notifying");
                             }
                             _estimatedCount = 0;
                         }
@@ -226,7 +226,7 @@ namespace Microsoft.Data.ProviderBase
 
         protected void RemoveItem(object value)
         {
-            Debug.Assert(null != value, "RemoveItem with null");
+            Debug.Assert(value != null, "RemoveItem with null");
 
             bool lockObtained = false;
             try

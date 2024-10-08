@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient
             // ANSI types must convert to byte[] because that's the tool we have.
             if (MetaDataUtilsSmi.IsAnsiType(_metaData.SqlDbType))
             {
-                if (null == _encoder)
+                if (_encoder == null)
                 {
                     _encoder = _stateObj.Parser._defaultEncoding.GetEncoder();
                 }
@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                Debug.Assert(null != _variantType && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
+                Debug.Assert(_variantType != null && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
 
                 SqlCollation collation = SqlCollation.FromLCIDAndSort(checked((int)_variantType.LocaleId), _variantType.CompareOptions);
 
@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetInt64));
             if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                if (null == _variantType)
+                if (_variantType == null)
                 {
                     _stateObj.Parser.WriteSqlVariantHeader(10, TdsEnums.SQLINT8, 0, _stateObj);
                     _stateObj.Parser.WriteLong(value, _stateObj);
@@ -735,7 +735,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetVariantType(SmiMetaData value)
         {
-            Debug.Assert(null == _variantType, "Variant type can only be set once");
+            Debug.Assert(_variantType == null, "Variant type can only be set once");
             Debug.Assert(value != null &&
                 (value.SqlDbType == SqlDbType.Money ||
                 value.SqlDbType == SqlDbType.NVarChar ||

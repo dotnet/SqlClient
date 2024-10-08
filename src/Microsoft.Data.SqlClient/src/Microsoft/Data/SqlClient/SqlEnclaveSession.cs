@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
         internal SqlEnclaveSession(byte[] sessionKey, long sessionId)
         {
-            if (null == sessionKey)
+            if (sessionKey == null)
             {
                 throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className);
             }

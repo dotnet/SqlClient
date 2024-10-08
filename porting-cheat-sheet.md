@@ -53,6 +53,12 @@ For .NET Framework projects it may be necessary to include the following in your
 | Using DateTime object as value for SqlParameter with type `DbType.Date` would send date and time to SQL Server. | DateTime object's time components will be truncated when sent to SQL Server using `DbType.Date`. |
 | `Encrypt` defaults to `false`. | Starting in v4.0, default encryption settings were made more secure, requiring opt-in to non-encrypted connections. `Encrypt` defaults to `true` and the driver will always validate the server certificate based on `TrustServerCertificate`. (Previously, server certificates would only be validated if `Encrypt` was also `true`.)<br/><br/>If you need to turn off encryption, you must specify `Encrypt=false`. If you use encryption with a self-signed certificate on the server, you must specify `TrustServerCertificate=true`.<br/><br/>In v5.0, `SqlConnectionStringBuilder.Encrypt` is no longer a `bool`. It's a `SqlConnectionEncryptOption` with multiple values to support `Strict` encryption mode (TDS 8.0). It uses implicit conversion operators to remain code-backwards compatible, but it was a binary breaking change, requiring a recompile of applications. |
 
+## .NET Framework to .NET Considerations
+
+In .NET Framework and .NET versions prior to .NET 5, globalization APIs use National Language Support (NLS) on Windows. Starting in .NET 5, .NET globalization APIs changed to use International Components for Unicode (ICU) on Windows in order to be consistent across all platforms (Windows, Linux, macOS, etc.). This affects the behavior of comparisons of some SqlStrings in System.Data.SqlTypes. Comparisons using ICU don't always match NLS for some strings. Since SQL Server still uses NLS on the server side for string comparisons, this difference can result in SqlString comparisons behaving differently than server side string comparisons. If your application relies on SqlString behavior matching server side behavior, you need to resolve this issue. For detailed information in .NET, see [Globalization and ICU](https://learn.microsoft.com/en-us/dotnet/core/extensions/globalization-icu).
+
+If your application is affected, the workaround is to [Use NLS instead of ICU](https://learn.microsoft.com/en-us/dotnet/core/extensions/globalization-icu#use-nls-instead-of-icu) in your application.
+
 ## Contribute to this Cheat Sheet
 
 We would love the SqlClient community to help enhance this cheat sheet by contributing experiences and challenges faced when porting their applications.

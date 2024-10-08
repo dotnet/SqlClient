@@ -1,4 +1,4 @@
-﻿// <Snippet1>
+// <Snippet1>
 using Microsoft.Data.SqlClient;
 
 class Program
@@ -15,7 +15,7 @@ class Program
         using var connection = new SqlConnection(connString);
         connection.Open();
 
-        var batch = new SqlBatch(connection);
+        using var batch = new SqlBatch(connection);
 
         const int count = 10;
         const string parameterName = "parameter";
@@ -25,9 +25,6 @@ class Program
             batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
             batch.BatchCommands.Add(batchCommand);
         }
-
-        // Optionally Prepare
-        batch.Prepare();
 
         var results = new List<int>(count);
         using (SqlDataReader reader = batch.ExecuteReader())

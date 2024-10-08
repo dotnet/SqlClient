@@ -79,11 +79,13 @@ namespace Microsoft.Data.SqlClient.Samples
             }
         }
 
+        // Maintain an instance of the ClientCredential object to take advantage of underlying token caching
+        private static ClientCredential clientCredential = new ClientCredential(s_clientId, s_clientSecret);
+
         public static async Task<string> AzureActiveDirectoryAuthenticationCallback(string authority, string resource, string scope)
         {
             var authContext = new AuthenticationContext(authority);
-            ClientCredential clientCred = new ClientCredential(s_clientId, s_clientSecret);
-            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
+            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCredential);
             if (result == null)
             {
                 throw new InvalidOperationException($"Failed to retrieve an access token for {resource}");

@@ -1,130 +1,226 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlFunctionAttribute">
-        <SqlFunctionAttribute>
-            <summary>Used to mark a method definition of a user-defined aggregate as a function in SQL Server. The properties on the attribute reflect the physical characteristics used when the type is registered with SQL Server.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
+﻿<docs>
+  <members name="SqlFunctionAttribute">
+    <SqlFunctionAttribute>
+      <summary>
+        Used to mark a method definition of a user-defined aggregate as a function in SQL Server. The properties on the attribute reflect the physical characteristics used when the type is registered with SQL Server.
+      </summary>
+      <example>
+        <para>
+          The following example shows an aggregate function that returns a list of files in the specified directory path.
+        </para>
+        <!-- DataWorks_SqlFunctionAttribute_Sample -->
+        <code language="c#">
+          using System.IO;
+          using System.Collections;
+          using Microsoft.SqlServer.Server;
+          
+          public class Class1
+          {
+            [SqlFunctionAttribute(FillRowMethodName = "FillFileRow")]
+            public static IEnumerable GetFileDetails(string directoryPath)
+            {
+               try
+               {
+                  DirectoryInfo di = new DirectoryInfo(directoryPath);
+                  return di.GetFiles();
+               }
+               catch (DirectoryNotFoundException dnf)
+               {
+                  return new string[1] { dnf.ToString() };
+               }
+            }
+          }
+        </code>
+        <!-- DataWorks_SqlFunctionAttribute_Sample -->
+        <code language="vb">
+          Option Explicit On
+          Option Strict On
+          
+          Imports System.IO
+          Imports System.Collections
+          Imports Microsoft.SqlServer.Server
+          
+          Public Class Class1
+          
+            &lt;SqlFunction(FillRowMethodName:="FillFileRow")&gt; _
+            Public Shared Function GetFileDetails(ByVal directoryPath As String) As IEnumerable
+               Try
+                  Dim di As DirectoryInfo = new DirectoryInfo(directoryPath)
+                  return di.GetFiles()   
+               Catch dnf As DirectoryNotFoundException
+                  Dim message As String() = {dnf.ToString() }
+                  return message
+               End Try
+            End Function
+            
+          End Class
+        </code>
+      </example>
+    </SqlFunctionAttribute>
+    <ctor>
+      <summary>
+        An optional attribute on a user-defined aggregate, used to indicate that the method should be registered in SQL Server as a function. Also used to set the <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.FillRowMethodName" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsPrecise" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.Name" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.SystemDataAccess" />, and <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.TableDefinition" /> properties of the function attribute.
+      </summary>
+    </ctor>
+    <DataAccess>
+      <summary>
+        Indicates whether the function involves access to user data stored in the local instance of SQL Server.
+      </summary>
+      <value> <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />. <see langword="None" /> : Does not access data. <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />. <see langword="Read" /> : Only reads user data.</value>
+      <remarks>
+        <para>
+          The default is <see cref="F:Microsoft.SqlServer.Server.DataAccessKind.None" />. <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess" /> is also required when connecting to remote servers if transactions integration is required (the default).
+        </para>
+        <para>
+          If a Transact-SQL query is executed from inside a table-valued function (TVF), the <see cref="F:Microsoft.SqlServer.Server.DataAccessKind.Read" /> property should be set.
+        </para>
+      </remarks>
+    </DataAccess>
+    <FillRowMethodName>
+      <summary>
+        The name of a method in the same class which is used to fill a row with data in the table returned by the table-valued function.
+      </summary>
+      <value>
+        A <see cref="T:System.String" /> value representing the name of a method in the same class which is used to fill a row with data in the table returned by the table-valued function.
+      </value>
+    </FillRowMethodName>
+    <IsDeterministic>
+      <summary>
+        Indicates whether the user-defined function is deterministic.
+      </summary>
+      <value>
+        <see langword="true" /> if the function is deterministic; otherwise <see langword="false" />.
+      </value>
+      <remarks>
+        <para>
+          A user-defined function is said to be deterministic if it always produces the same output values given the same input values and the same database state.
+        </para>
+        <para>
+          The <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic" /> property is also useful for indexing the result of the function in the form of indexed computed columns and indexed views. If this property is not specified, the function is assumed to be non-deterministic.
+        </para>
+        <para>
+          Functions that access local data can be deterministic. The data access characteristic is captured separately by the <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess" /> and <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.SystemDataAccess" /> properties.
+        </para>
+        <para>
+          Note that data access to remote servers (for example, using a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> to connect to another SQL Server instance) is available in user-defined functions. However, you must still honor the <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic" /> declaration. If the common language runtime (CLR) function is marked as deterministic, it should not cause side effects in the remote server. While side effects against the context connection are restricted, SQL Server will not enforce the restriction for side effects over remote connections.
+        </para>
+        <para>
+          The default value of this attribute is <see langword="false" />.
+        </para>
+        <para>
+          Do not mark a function as deterministic if the function does not always produce the same output values, given the same input values and the same database state. Marking a function as deterministic when the function is not truly deterministic can result in corrupted indexed views and computed columns.
+        </para>
+      </remarks>
+    </IsDeterministic>
+    <IsPrecise>
+      <summary>
+        Indicates whether the function involves imprecise computations, such as floating point operations.
+      </summary>
+      <value>
+        <see langword="true" /> if the function involves precise computations; otherwise <see langword="false" />.
+      </value>
+      <remarks>
+        <para>
+          Precision of a function is one of the properties used to determine if computed columns that use this function can be indexed.
+        </para>
+        <para>
+          The default value of this attribute is <see langword="false" />.
+        </para>
+      </remarks>
+    </IsPrecise>
+    <Name>
+      <summary>
+        The name under which the function should be registered in SQL Server.
+      </summary>
+      <value>
+        A <see cref="T:System.String" /> value representing the name under which the function should be registered.
+      </value>
+      <remarks>
+        <para>
+          This attribute is used only by Microsoft Visual Studio to automatically register the specified method as a user-defined function. It is not used by SQL Server.
+        </para>
+        <para>
+          The following example specifies that the user-defined function is referenced using the name <c>sp_scalarFunc</c>.
+        </para>
+      </remarks>
+      <example>
+        <!-- SqlFunctionAttribute_SqlFunction #10 -->
+        <code language="c#">
+          public partial class UserDefinedFunctions
+          {
+              [SqlFunction(Name="sp_scalarFunc")]
+              public static SqlString SampleScalarFunction(SqlString s)
+              {
+                  //...
+                  return "";
+              }
+          }
+        </code>
+        <!-- SqlFunctionAttribute_SqlFunction #10 -->
+        <code language="vb">
+          Partial Public Class UserDefinedFunctions
+          
+              &lt;SqlFunction(Name:="sp_scalarFunc")&gt; 
+              Public Shared Function SampleScalarFunction(ByVal s As SqlString) As SqlString
+          
+                  '...
+                  Return ""
+              End Function
+              
+          End Class
+        </code>
+      </example>
+    </Name>
+    <SystemDataAccess>
+      <summary>
+        Indicates whether the function requires access to data stored in the system catalogs or virtual system tables of SQL Server.
+      </summary>
+      <value>
+        <see cref="F:Microsoft.SqlServer.Server.DataAccessKind.None" />: Does not access system data. <see cref="T:Microsoft.SqlServer.Server.DataAccessKind.Read" />: Only reads system data.</value>
+      <remarks>
+        The default is <see cref="F:Microsoft.SqlServer.Server.SystemDataAccessKind.None" />.
+      </remarks>
+    </SystemDataAccess>
+    <TableDefinition>
+      <summary>
+        A string that represents the table definition of the results, if the method is used as a table-valued function (TVF).
+      </summary>
+      <value>
+        A <see cref="T:System.String" /> value representing the table definition of the results.
+      </value>
+      <remarks>
+        This attribute is used only by Microsoft Visual Studio to automatically register the specified method as a TVF. It is not used by SQL Server.
+      </remarks>
+      <example>
+        <para>
+          The following example specifies that the user-defined function is referenced using the name <c>sp_tableFunc</c>. The <b>TableDefinition</b> property has the value <c>letter nchar(1)</c>.
+        </para>
+        <!-- SqlFunctionAttribute_SqlFunction #11 -->
+        <code language="c#">
+          public partial class UserDefinedFunctions
+          {
+              [SqlFunction(Name="sp_tableFunc", TableDefinition="letter nchar(1)")]
+              public static IEnumerable SampleTableFunction(SqlString s)
+              {
+                  //...
+                  return new ArrayList(new char[3] {'a', 'b', 'c'});
+              }
+          }
+        </code>
+        <!-- SqlFunctionAttribute_SqlFunction #11 -->
+        <code language="vb">
+          Partial Public Class UserDefinedFunctions
+          
+              &lt;SqlFunction(Name:="sp_tableFunc", TableDefinition:="letter nchar(1)")&gt; 
+              Public Shared Function SampleTableFunction(ByVal s As SqlString) As IEnumerable
+          
+                  '...
+                  Return New Char(2) {"a"c, "b"c, "c"c}
+              End Function
 
-## Examples  
-The following example shows an aggregate function that returns a list of files in the specified directory path.  
-
-[!code-csharp[SqlFunctionAttribute Sample#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/DataWorks_SqlFunctionAttribute_Sample.cs#1)]
-[!code-vb[SqlFunctionAttribute Sample#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/DataWorks_SqlFunctionAttribute_Sample.vb#1)]
-
-]]></format>
-            </remarks>
-        </SqlFunctionAttribute>
-        <ctor>
-            <summary>An optional attribute on a user-defined aggregate, used to indicate that the method should be registered in SQL Server as a function. Also used to set the <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.FillRowMethodName" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsPrecise" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.Name" />, <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.SystemDataAccess" />, and <see cref="P:Microsoft.SqlServer.Server.SqlFunctionAttribute.TableDefinition" /> properties of the function attribute.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
-        <DataAccess>
-            <summary>Indicates whether the function involves access to user data stored in the local instance of SQL Server.</summary>
-            <value>
-            <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />.<see langword="None" />: Does not access data. <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />.<see langword="Read" />: Only reads user data.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The default is <xref:Microsoft.SqlServer.Server.DataAccessKind.None>.<xref:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess%2A> is also required when connecting to remote servers if transactions integration is required (the default).  
-
-If a Transact-SQL query is executed from inside a table-valued function (TVF), the <xref:Microsoft.SqlServer.Server.DataAccessKind.Read> property should be set.  
-
-]]></format>
-            </remarks>
-        </DataAccess>
-        <FillRowMethodName>
-            <summary>The name of a method in the same class which is used to fill a row of data in the table returned by the table-valued function.</summary>
-            <value>A <see cref="T:System.String" /> value representing the name of a method in the same class which is used to fill a row of data in the table returned by the table-valued function.</value>
-        </FillRowMethodName>
-        <IsDeterministic>
-            <summary>Indicates whether the user-defined function is deterministic.</summary>
-            <value>
-            <see langword="true" /> if the function is deterministic; otherwise <see langword="false" />.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-A user-defined function is said to be deterministic if it always produces the same output values given the same input values and the same database state.  
-
-The <xref:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic%2A> property is also useful for indexing the result of the function in the form of indexed computed columns and indexed views. If this property is not specified, the function is assumed to be non-deterministic.  
-
-Functions that access local data can be deterministic. The data access characteristic is captured separately by the <xref:Microsoft.SqlServer.Server.SqlFunctionAttribute.DataAccess%2A> and <xref:Microsoft.SqlServer.Server.SqlFunctionAttribute.SystemDataAccess%2A> properties.  
-
-Note that data access to remote servers (for example, using a <xref:Microsoft.Data.SqlClient.SqlConnection> to connect to another SQL Server instance) is available in user-defined functions. However, you must still honor the <xref:Microsoft.SqlServer.Server.SqlFunctionAttribute.IsDeterministic%2A> declaration. If the common language runtime (CLR) function is marked as deterministic, it should not cause side-effects in the remote server. While side-effects against the context connection are restricted, SQL Server will not enforce the restriction for side-effects over remote connections.  
-
-The default value of this attribute is `false`.  
-
-Do not mark a function as deterministic if the function does not always produce the same output values, given the same input values and the same database state. Marking a function as deterministic when the function is not truly deterministic can result in corrupted indexed views and computed columns.  
-
-]]></format>
-            </remarks>
-        </IsDeterministic>
-        <IsPrecise>
-            <summary>Indicates whether the function involves imprecise computations, such as floating point operations.</summary>
-            <value>
-            <see langword="true" /> if the function involves precise computations; otherwise <see langword="false" />.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-Precision of a function is one of the properties used to determine if computed columns that use this function can be indexed.  
-
-The default value of this attribute is `false`.  
-
-]]></format>
-            </remarks>
-        </IsPrecise>
-        <Name>
-            <summary>The name under which the function should be registered in SQL Server.</summary>
-            <value>A <see cref="T:System.String" /> value representing the name under which the function should be registered.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-This attribute is used only by Microsoft Visual Studio to automatically register the specified method as a user-defined function. It is not used by SQL Server.  
-
-The following example specifies that the user-defined function is referenced using the name `sp_scalarFunc`.  
-
-## Examples  
-[!code-csharp[SqlFunctionAttribute Samples#10](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/SqlFunctionAttribute_SqlFunction.cs#10)]
-[!code-vb[SqlFunctionAttribute Samples#10](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/SqlFunctionAttribute_SqlFunction.vb#10)]
-
-]]></format>
-            </remarks>
-        </Name>
-        <SystemDataAccess>
-            <summary>Indicates whether the function requires access to data stored in the system catalogs or virtual system tables of SQL Server.</summary>
-            <value>
-            <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />.<see langword="None" />: Does not access system data. <see cref="T:Microsoft.SqlServer.Server.DataAccessKind" />.<see langword="Read" />: Only reads system data.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The default is <xref:Microsoft.SqlServer.Server.SystemDataAccessKind.None>.  
-
-]]></format>
-            </remarks>
-        </SystemDataAccess>
-        <TableDefinition>
-            <summary>A string that represents the table definition of the results, if the method is used as a table-valued function (TVF).</summary>
-            <value>A <see cref="T:System.String" /> value representing the table definition of the results.</value>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-This attribute is used only by Microsoft Visual Studio to automatically register the specified method as a TVF. It is not used by SQL Server.  
-
-The following example specifies that the user-defined function is referenced using the name `sp_tableFunc`. The `TableDefinition` property has the value `letter nchar(1)`.  
-
-## Examples  
-
-[!code-csharp[SqlFunctionAttribute Samples#11](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/SqlFunctionAttribute_SqlFunction.cs#11)]
-[!code-vb[SqlFunctionAttribute Samples#11](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/SqlFunctionAttribute_SqlFunction.vb#11)]
-
-]]></format>
-            </remarks>
-        </TableDefinition>
-    </members>
+          End Class
+        </code>
+      </example>
+    </TableDefinition>
+  </members>
 </docs>

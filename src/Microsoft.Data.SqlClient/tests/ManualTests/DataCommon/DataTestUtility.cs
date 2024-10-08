@@ -67,6 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
+        public static bool SupportsSystemAssignedManagedIdentity = false;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
@@ -93,6 +94,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
+        // JSON Coloumn type
+        public static readonly bool IsJsonSupported = false;
+
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -105,6 +109,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
                 return engineEditon == 6;
+            }
+        }
+
+        public static bool TcpConnectionStringDoesNotUseAadAuth
+        {
+            get
+            {
+                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
             }
         }
 
@@ -165,6 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
+            IsJsonSupported = c.IsJsonSupported;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -576,6 +590,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
+        {
+            DropTable(sqlConnection, tableName);
+            string tableCreate = "CREATE TABLE " + tableName + createBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = tableCreate;
+                command.ExecuteNonQuery();
+            }
+        }
+
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
             ResurrectConnection(sqlConnection);
@@ -633,19 +658,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetAccessToken()
         {
-            if (null == AADAccessToken && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
+            if (AADAccessToken == null && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
             {
                 string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
                 string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
             }
             // Creates a new Object Reference of Access Token - See GitHub Issue 438
-            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
+            return AADAccessToken != null ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
         public static string GetSystemIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && SupportsSystemAssignedManagedIdentity && AADSystemIdentityAccessToken == null && IsAADPasswordConnStrSetup())
             {
                 AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
                 if (AADSystemIdentityAccessToken == null)
@@ -653,12 +678,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
+            return AADSystemIdentityAccessToken != null ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static string GetUserIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && AADUserIdentityAccessToken == null && IsAADPasswordConnStrSetup())
             {
                 // Pass User Assigned Managed Identity Client Id here.
                 AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).GetAwaiter().GetResult();
@@ -667,7 +692,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
+            return AADUserIdentityAccessToken != null ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
@@ -941,6 +966,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             hostname = string.Empty;
             port = -1;
             instanceName = string.Empty;
+
+            // Remove leading and trailing spaces
+            dataSource = dataSource.Trim();
 
             if (dataSource.Contains(":"))
             {
