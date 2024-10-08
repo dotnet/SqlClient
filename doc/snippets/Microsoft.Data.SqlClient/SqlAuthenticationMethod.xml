@@ -1,49 +1,51 @@
 <docs>
-    <members name="SqlAuthenticationMethod">
-        <SqlAuthenticationMethod>
-            <summary>Describes the different SQL authentication methods that can be used by a client connecting to Azure SQL Database. For details, see <see href="https://docs.microsoft.com/azure/sql-database/sql-database-aad-authentication">Connecting to SQL Database By Using Azure Active Directory Authentication</see>.
-            </summary>
-            <remarks>To be added.</remarks>
-        </SqlAuthenticationMethod>
-        <NotSpecified>
-            <summary>The authentication method is not specified.</summary>
-            <value>0</value>
-        </NotSpecified>
-        <SqlPassword>
-            <summary>The authentication method is Sql Password.</summary>
-            <value>1</value>
-        </SqlPassword>
-        <ActiveDirectoryPassword>
-            <summary>The authentication method uses Active Directory Password. Use Active Directory Password to connect to a SQL Database using an Azure AD principal name and password.</summary>
-            <value>2</value>
-        </ActiveDirectoryPassword>
-        <ActiveDirectoryIntegrated>
-            <summary>The authentication method uses Active Directory Integrated. Use Active Directory Integrated to connect to a SQL Database using integrated Windows authentication.</summary>
-            <value>3</value>
-        </ActiveDirectoryIntegrated>
-        <ActiveDirectoryInteractive>
-            <summary>The authentication method uses Active Directory Interactive. Use Active Directory Interactive to connect to a SQL Database with an interactive authentication flow.</summary>
-            <value>4</value>
-        </ActiveDirectoryInteractive>
-        <ActiveDirectoryServicePrincipal>
-            <summary>The authentication method uses Active Directory Service Principal. Use Active Directory Service Principal to connect to a SQL Database using the client ID and secret of a service principal identity.</summary>
-            <value>5</value>
-        </ActiveDirectoryServicePrincipal>
-        <ActiveDirectoryDeviceCodeFlow>
-            <summary>The authentication method uses Active Directory Device Code Flow. Use Active Directory Device Code Flow to connect to a SQL Database from devices and operating systems that do not provide a Web browser, using another device to perform interactive authentication.</summary>
-            <value>6</value>
-        </ActiveDirectoryDeviceCodeFlow>
-        <ActiveDirectoryManagedIdentity>
-          <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
-          <value>7</value>
-        </ActiveDirectoryManagedIdentity>
-        <ActiveDirectoryMSI>
-          <summary>Alias for "Active Directory Managed Identity" authentication method. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
-          <value>8</value>
-        </ActiveDirectoryMSI>
-      <ActiveDirectoryDefault>
-          <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
-          <value>9</value>
-      </ActiveDirectoryDefault>
-    </members>
+  <members name="SqlAuthenticationMethod">
+    <SqlAuthenticationMethod>
+      <summary>Describes the different SQL authentication methods that can be used by a client connecting to Azure SQL Database. For details, see <see href="https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview">Use Microsoft Entra Authentication</see>.</summary>
+    </SqlAuthenticationMethod>
+    <NotSpecified>
+      <summary>The authentication method is not specified.</summary>
+      <value>0</value>
+    </NotSpecified>
+    <SqlPassword>
+      <summary>The authentication method uses Sql Password. Use Sql Password to connect to a SQL Database using SQL Server authentication.</summary>
+      <value>1</value>
+    </SqlPassword>
+    <ActiveDirectoryPassword>
+      <summary>The authentication method uses Active Directory Password. Use Active Directory Password to connect to a SQL Database using a Microsoft Entra principal name and password.</summary>
+      <value>2</value>
+    </ActiveDirectoryPassword>
+    <ActiveDirectoryIntegrated>
+      <summary>The authentication method uses Active Directory Integrated. Use Active Directory Integrated to connect to a SQL Database using integrated Windows authentication.</summary>
+      <value>3</value>
+    </ActiveDirectoryIntegrated>
+    <ActiveDirectoryInteractive>
+      <summary>The authentication method uses Active Directory Interactive. Use Active Directory Interactive to connect to a SQL Database with an interactive authentication flow.</summary>
+      <value>4</value>
+    </ActiveDirectoryInteractive>
+    <ActiveDirectoryServicePrincipal>
+      <summary>The authentication method uses Active Directory Service Principal. Use Active Directory Service Principal to connect to a SQL Database using the client ID and secret of a service principal identity.</summary>
+      <value>5</value>
+    </ActiveDirectoryServicePrincipal>
+    <ActiveDirectoryDeviceCodeFlow>
+      <summary>The authentication method uses Active Directory Device Code Flow. Use Active Directory Device Code Flow to connect to a SQL Database from devices and operating systems that do not provide a Web browser, using another device to perform interactive authentication.</summary>
+      <value>6</value>
+    </ActiveDirectoryDeviceCodeFlow>
+    <ActiveDirectoryManagedIdentity>
+      <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
+      <value>7</value>
+    </ActiveDirectoryManagedIdentity>
+    <ActiveDirectoryMSI>
+      <summary>Alias for "Active Directory Managed Identity" authentication method. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
+      <value>8</value>
+    </ActiveDirectoryMSI>
+    <ActiveDirectoryDefault>
+      <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
+      <value>9</value>
+    </ActiveDirectoryDefault>
+    <ActiveDirectoryWorkloadIdentity>
+    <summary>The authentication method uses Active Directory Workload Identity. Use a federated User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Workload Identity. The 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
+    <value>10</value>
+    </ActiveDirectoryWorkloadIdentity>
+  </members>
 </docs>

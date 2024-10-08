@@ -1,21 +1,36 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="Label">
-        <Label>
-            <summary>Represents the Data Classification Labels as received from SQL Server for the active 'SqlDataReader'</summary>
-        </Label>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.Label" /> class.</summary>
-            <param name="name">Name of label.</param>
-            <param name="id">ID of label.</param>
-        </ctor>
-        <Id>
-            <summary>Gets the ID for this 'Label' object</summary>
-            <value>ID of label.</value>
-        </Id>
-        <Name>
-            <summary>Gets the name for this 'Label' object</summary>
-            <value>Name of label.</value>
-        </Name>
-    </members>
+﻿<docs>
+  <members name="Label">
+    <Label>
+      <summary>
+        Represents the Data Classification Labels as received from SQL Server for the active <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" />
+      </summary>
+    </Label>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.Label" /> class.
+      </summary>
+      <param name="name">
+        Name of label.
+      </param>
+      <param name="id">
+        ID of label.
+      </param>
+    </ctor>
+    <Id>
+      <summary>
+        Gets the ID for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.Label" /> object
+      </summary>
+      <value>
+        ID of label.
+      </value>
+    </Id>
+    <Name>
+      <summary>
+        Gets the name for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.Label" /> object
+      </summary>
+      <value>
+        Name of label.
+      </value>
+    </Name>
+  </members>
 </docs>

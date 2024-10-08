@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
         [Fact]
         [ActiveIssue("12161", TestPlatforms.AnyUnix)]
         public static void SqlExcpetionSerializationTest()
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
                 catch (Exception ex)
                 {
-                    Assert.False(true, $"Unexpected Exception occurred: {ex.Message}");
+                    Assert.Fail($"Unexpected Exception occurred: {ex.Message}");
                 }
             }
         }

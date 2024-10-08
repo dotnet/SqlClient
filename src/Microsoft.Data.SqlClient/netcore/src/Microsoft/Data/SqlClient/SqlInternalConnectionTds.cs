@@ -109,6 +109,10 @@ namespace Microsoft.Data.SqlClient
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
         private TdsParser _parser;
+
+        // Connection re-route limit
+        internal const int _maxNumberOfRedirectRoute = 10;
+
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
         private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
@@ -130,10 +134,9 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
-        private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
 
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
@@ -200,6 +203,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal SQLDNSInfo pendingSQLDNSObject = null;
+
+        // Json Support Flag
+        internal bool IsJsonSupportEnabled = false;
 
         // TCE flags
         internal byte _tceVersionSupported;
@@ -484,7 +490,6 @@ namespace Microsoft.Data.SqlClient
             _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
@@ -643,7 +648,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
 
@@ -691,7 +696,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                bool result = (null == FindLiveReader(null)); // can't prepare with a live data reader...
+                bool result = FindLiveReader(null) == null; // can't prepare with a live data reader...
                 return result;
             }
         }
@@ -747,7 +752,7 @@ namespace Microsoft.Data.SqlClient
                 TdsParser parser = Interlocked.Exchange(ref _parser, null);  // guard against multiple concurrent dispose calls -- Delegated Transactions might cause this.
 
                 Debug.Assert(parser != null && _fConnectionOpen || parser == null && !_fConnectionOpen, "Unexpected state on dispose");
-                if (null != parser)
+                if (parser != null)
                 {
                     parser.Disconnect();
                 }
@@ -774,7 +779,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDataReader reader = null;
                 if (parser.MARSOn)
                 {
-                    if (null != command)
+                    if (command != null)
                     { // command can't have datareader already associated with it
                         reader = FindLiveReader(command);
                     }
@@ -788,7 +793,7 @@ namespace Microsoft.Data.SqlClient
 
                     reader = FindLiveReader(null);
                 }
-                if (null != reader)
+                if (reader != null)
                 {
                     // if MARS is on, then a datareader associated with the command exists
                     // or if MARS is off, then a datareader exists
@@ -884,7 +889,7 @@ namespace Microsoft.Data.SqlClient
             // Regardless of whether we're required to automatically enlist,
             // when there is not a current transaction, we cannot leave the
             // connection enlisted in a transaction.
-            if (null != transaction)
+            if (transaction != null)
             {
                 if (ConnectionOptions.Enlist)
                 {
@@ -915,7 +920,7 @@ namespace Microsoft.Data.SqlClient
             // transaction is completed and we can do it all then.
             if (!IsNonPoolableTransactionRoot)
             {
-                Debug.Assert(null != _parser || IsConnectionDoomed, "Deactivating a disposed connection?");
+                Debug.Assert(_parser != null || IsConnectionDoomed, "Deactivating a disposed connection?");
                 if (_parser != null)
                 {
                     _parser.Deactivate(IsConnectionDoomed);
@@ -973,7 +978,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsParser parser = Parser;
 
-            if (null != parser)
+            if (parser != null)
             {
                 parser.DisconnectTransaction(internalTransaction);
             }
@@ -1006,7 +1011,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = (null == name) ? string.Empty : name;
+            string transactionName = name == null ? string.Empty : name;
 
             ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
@@ -1122,7 +1127,7 @@ namespace Microsoft.Data.SqlClient
                 // an object that the ExecTMReq will also lock, but since we're on
                 // the same thread, the lock is a no-op.
 
-                if (null != internalTransaction && internalTransaction.IsDelegated)
+                if (internalTransaction != null && internalTransaction.IsDelegated)
                 {
                     if (_parser.MARSOn)
                     {
@@ -1171,7 +1176,7 @@ namespace Microsoft.Data.SqlClient
         protected override byte[] GetDTCAddress()
         {
             byte[] dtcAddress = _parser.GetDTCAddress(ConnectionOptions.ConnectTimeout, _parser.GetSession(this));
-            Debug.Assert(null != dtcAddress, "null dtcAddress?");
+            Debug.Assert(dtcAddress != null, "null dtcAddress?");
             return dtcAddress;
         }
 
@@ -1330,6 +1335,7 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired)
                 || _accessTokenCallback != null)
@@ -1361,9 +1367,15 @@ namespace Microsoft.Data.SqlClient
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
 
+            // The AzureSQLSupport feature is implicitly set for ReadOnly login
+            if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
+            }
+
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
@@ -1392,7 +1404,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo dataSource = new ServerInfo(connectionOptions);
             string failoverPartner;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 useFailoverPartner = PoolGroupProviderInfo.UseFailoverPartner;
                 failoverPartner = PoolGroupProviderInfo.FailoverPartner;
@@ -1437,6 +1449,23 @@ namespace Microsoft.Data.SqlClient
                             connectionOptions,
                             credential,
                             timeout);
+                }
+
+                if (!IsAzureSQLConnection)
+                {
+                    // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
+                    if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+                    {
+                        if (!string.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
+                        {
+                            throw SQL.ROR_FailoverNotSupportedConnString();
+                        }
+
+                        if (ServerProvidedFailOverPartner != null)
+                        {
+                            throw SQL.ROR_FailoverNotSupportedServer(this);
+                        }
+                    }
                 }
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
@@ -1545,7 +1574,7 @@ namespace Microsoft.Data.SqlClient
                                     newSecurePassword,
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
-                    if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
+                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailOverPartner != null)
                     {
                         // connection succeeded: trigger exception if server sends failover partner and MultiSubnetFailover is used
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -1554,9 +1583,9 @@ namespace Microsoft.Data.SqlClient
                     if (RoutingInfo != null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
-                        if (routingAttempts > 0)
+                        if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
                         }
 
                         if (timeout.IsExpired)
@@ -1592,12 +1621,13 @@ namespace Microsoft.Data.SqlClient
                         continue;
                     }
 
-                    if (null == _parser
-                            || TdsParserState.Closed != _parser.State
-                            || IsDoNotRetryConnectError(sqlex)
-                            || timeout.IsExpired)
-                    {       // no more time to try again
-                        throw;  // Caller will call LoginFailure()
+                    if (_parser == null
+                        || TdsParserState.Closed != _parser.State
+                        || IsDoNotRetryConnectError(sqlex)
+                        || timeout.IsExpired)
+                    {
+                        // no more time to try again
+                        throw; // Caller will call LoginFailure()
                     }
 
                     // Check sleep interval to make sure we won't exceed the timeout
@@ -1611,7 +1641,7 @@ namespace Microsoft.Data.SqlClient
                 // We only get here when we failed to connect, but are going to re-try
 
                 // Switch to failover logic if the server provided a partner
-                if (null != ServerProvidedFailOverPartner)
+                if (ServerProvidedFailOverPartner != null)
                 {
                     if (connectionOptions.MultiSubnetFailover)
                     {
@@ -1645,7 +1675,7 @@ namespace Microsoft.Data.SqlClient
             }
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -1711,7 +1741,7 @@ namespace Microsoft.Data.SqlClient
             ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
-            if (null == ServerProvidedFailOverPartner)
+            if (ServerProvidedFailOverPartner == null)
             {
                 ResolveExtendedServerName(failoverServerInfo, !redirectedUserInstance && failoverHost != primaryServerInfo.UserServerName, connectionOptions);
             }
@@ -1751,7 +1781,9 @@ namespace Microsoft.Data.SqlClient
                 // Re-allocate parser each time to make sure state is known
                 // RFC 50002652 - if parser was created by previous attempt, dispose it to properly close the socket, if created
                 if (_parser != null)
+                {
                     _parser.Disconnect();
+                }
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                 Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
@@ -1760,7 +1792,7 @@ namespace Microsoft.Data.SqlClient
                 if (useFailoverHost)
                 {
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
-                    if (null != ServerProvidedFailOverPartner && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
+                    if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover|ADV> {0}, new failover partner={1}", ObjectID, ServerProvidedFailOverPartner);
                         failoverServerInfo.SetDerivedNames(string.Empty, ServerProvidedFailOverPartner);
@@ -1784,15 +1816,44 @@ namespace Microsoft.Data.SqlClient
                             intervalTimer,
                             withFailover: true
                             );
-
-                    if (RoutingInfo != null)
+                    int routingAttemps = 0;
+                    while (RoutingInfo != null)
                     {
-                        // We are in login with failover scenation and server sent routing information
-                        // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
-                        // If it is something else, not known yet (future server) - this client is not designed to support this.
-                        // In any case, server should not have sent the routing info.
+                        if (routingAttemps > _maxNumberOfRedirectRoute)
+                        {
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
+                        }
+                        routingAttemps++;
+
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
-                        throw SQL.ROR_UnexpectedRoutingInfo(this);
+
+                        if(_parser != null)
+                        {
+                            _parser.Disconnect();
+                        }
+
+                        _parser = new TdsParser(ConnectionOptions.MARS, connectionOptions.Asynchronous);
+
+                        Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
+
+                        currentServerInfo = new ServerInfo(ConnectionOptions, RoutingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
+                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                        _originalClientConnectionId = _clientConnectionId;
+                        _routingDestination = currentServerInfo.UserServerName;
+
+                        // restore properties that could be changed by the environemnt tokens
+                        _currentPacketSize = connectionOptions.PacketSize;
+                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
+                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
+                        _currentFailoverPartner = null;
+                        _instanceName = string.Empty;
+
+                        AttemptOneLogin(
+                            currentServerInfo,
+                            newPassword,
+                            newSecurePassword,
+                            intervalTimer,
+                            withFailover: true);
                     }
                     break; // leave the while loop -- we've successfully connected
                 }
@@ -1809,7 +1870,7 @@ namespace Microsoft.Data.SqlClient
                         throw;  // Caller will call LoginFailure()
                     }
 
-                    if (IsConnectionDoomed)
+                    if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
                     {
                         throw;
                     }
@@ -1845,12 +1906,12 @@ namespace Microsoft.Data.SqlClient
             _activeDirectoryAuthTimeoutRetryHelper.State = ActiveDirectoryAuthenticationTimeoutRetryState.HasLoggedIn;
 
             // if connected to failover host, but said host doesn't have DbMirroring set up, throw an error
-            if (useFailoverHost && null == ServerProvidedFailOverPartner)
+            if (useFailoverHost && ServerProvidedFailOverPartner == null)
             {
                 throw SQL.InvalidPartnerConfiguration(failoverHost, CurrentDatabase);
             }
 
-            if (null != PoolGroupProviderInfo)
+            if (PoolGroupProviderInfo != null)
             {
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
@@ -1911,7 +1972,7 @@ namespace Microsoft.Data.SqlClient
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
@@ -2011,7 +2072,7 @@ namespace Microsoft.Data.SqlClient
             var connection = Connection;
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
-            if (null != connection)
+            if (connection != null)
             {
                 connection.Close();
             }
@@ -2159,6 +2220,7 @@ namespace Microsoft.Data.SqlClient
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2254,6 +2316,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // GetFedAuthToken should have updated _newDbConnectionPoolAuthenticationContext.
                     Debug.Assert(_newDbConnectionPoolAuthenticationContext != null, "_newDbConnectionPoolAuthenticationContext should not be null.");
+
+                    if (_newDbConnectionPoolAuthenticationContext != null)
+                    {
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
+                    }
                 }
             }
             else if (!attemptRefreshTokenLocked)
@@ -2293,7 +2360,7 @@ namespace Microsoft.Data.SqlClient
             bool authenticationContextLocked = false;
 
             // Prepare CER to ensure the lock on authentication context is released.
-#if !NET6_0_OR_GREATER          
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
@@ -2355,7 +2422,7 @@ namespace Microsoft.Data.SqlClient
             // Username to use in error messages.
             string username = null;
 
-            var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
+            var authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
@@ -2406,6 +2473,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                         case SqlAuthenticationMethod.ActiveDirectoryMSI:
                         case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                        case SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2733,23 +2801,33 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     }
-
-                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for UTF8 support", ObjectID);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for AzureSQLSupport", ObjectID);
+
                         if (data.Length < 1)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown value for UTF8 support", ObjectID);
-                            throw SQL.ParsingError();
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        IsAzureSQLConnection = true;
+
+                        //  Bit 0 for RO/FP support
+                        if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, FailoverPartner enabled with Readonly intent for AzureSQL DB", ObjectID);
+
                         }
                         break;
                     }
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
+
                         if (data.Length < 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
+
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte supportedDataClassificationVersion = data[0];
@@ -2762,10 +2840,23 @@ namespace Microsoft.Data.SqlClient
                         if (data.Length != 2)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
+
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte enabled = data[1];
                         _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
+                        break;
+                    }
+                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for UTF8 support", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown value for UTF8 support", ObjectID);
+
+                            throw SQL.ParsingError();
+                        }
                         break;
                     }
 
@@ -2801,6 +2892,24 @@ namespace Microsoft.Data.SqlClient
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
 
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte jsonSupportVersion = data[0];
+                        if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError();
+                        }
+                        IsJsonSupportEnabled = true;
                         break;
                     }
 
@@ -2888,7 +2997,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions);
+            Debug.Assert(userOptions != null);
 
             //-----------------
             //Method body
@@ -2907,7 +3016,7 @@ namespace Microsoft.Data.SqlClient
         {
             //-----------------
             // Preconditions
-            Debug.Assert(null != userOptions && null != routing);
+            Debug.Assert(userOptions != null && routing != null);
 
             //-----------------
             //Method body

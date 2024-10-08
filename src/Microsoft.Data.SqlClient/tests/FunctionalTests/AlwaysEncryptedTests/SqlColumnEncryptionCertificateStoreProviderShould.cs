@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
@@ -303,7 +304,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                     break;
 
                 default:
-                    Assert.True(false, "unexpected data type.");
+                    Assert.Fail("unexpected data type.");
                     break;
             }
 
@@ -378,7 +379,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Certificate Store Location and Name.
             Assert.True(certificateStoreNameAndLocation != null);
 
-            if (null != location)
+            if (location != null)
             {
                 // Certificate Store Location.
                 certificateStoreLocation = (StoreLocation)location;
@@ -495,22 +496,24 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
                 // use localmachine cert path only when current user is Admin.
-                if (CertificateFixture.IsAdmin)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
                 {
                     yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
                 }
             }
         }
 
+
         public class ValidCertificatePathsParameters : DataAttribute
         {
+
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
                 yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
                 yield return new object[2] { MyPathPrefix, null };
                 yield return new object[2] { @"", null };
                 // use localmachine cert path only when current user is Admin.
-                if (CertificateFixture.IsAdmin)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
                 {
                     yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
                 }
@@ -653,7 +656,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             AddCertificateToStore(certificate1, StoreLocation.CurrentUser);
             AddCertificateToStore(certificate2, StoreLocation.CurrentUser);
             AddCertificateToStore(certificate3, StoreLocation.CurrentUser);
-            if (IsAdmin)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsAdmin)
             {
                 AddCertificateToStore(certificate3, StoreLocation.LocalMachine);
             }

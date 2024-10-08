@@ -31,6 +31,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.ExecuteNonQuery();
         }
 
+#if NET6_0_OR_GREATER
+        /// <summary>
+        /// Insert CustomerDateOnly record into table
+        /// </summary>
+        internal static void InsertCustomerDateOnlyData(SqlConnection sqlConnection, SqlTransaction transaction, string tableName, CustomerDateOnly customer)
+        {
+            using SqlCommand sqlCommand = new(
+                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName, DateOfBirth, TimeOfDay) VALUES (@CustomerId, @FirstName, @LastName, @DateOfBirth, @TimeOfDay);",
+                connection: sqlConnection,
+                transaction: transaction,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+
+            sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
+            sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
+            sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
+            sqlCommand.Parameters.AddWithValue(@"DateOfBirth", customer.DateOfBirth);
+            sqlCommand.Parameters.AddWithValue(@"TimeOfDay", customer.TimeOfDay);
+            sqlCommand.ExecuteNonQuery();
+        }
+#endif
+
         /// <summary>
         /// Validates that the results are the ones expected.
         /// </summary>
@@ -155,9 +176,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     case "int":
                         Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
                         break;
+#if NET6_0_OR_GREATER
+                    case "DateOnly":
+                        Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(2001, 1, 31), "FAILED: read DateOnly value does not match.");
+                        break;
 
+                    case "TimeOnly":
+                        Assert.True(sqlDataReader.GetFieldValue<TimeOnly>(columnsRead) == new TimeOnly(18, 36, 45), "FAILED: read TimeOnly value does not match.");
+                        break;
+#endif
                     default:
-                        Assert.True(false, "FAILED: unexpected data type.");
+                        Assert.Fail("FAILED: unexpected data type.");
                         break;
                 }
 

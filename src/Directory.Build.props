@@ -15,10 +15,8 @@
 
       "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
       "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
-      "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
-      "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
-      ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+      ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
       CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
       > msbuild -p:configuration=Release
     -->
@@ -51,6 +49,7 @@
     <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
+    <CommonsourceRoot>$(RepoRoot)src\Microsoft.Data.SqlClient\src\</CommonsourceRoot>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
@@ -71,11 +70,31 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
 
+  <!-- Packaging  for source link-->
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+    <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>  
+
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
+  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" Project="$(ToolsDir)props\VersionsNet8OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
-  <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+  <Import Project="$(ToolsDir)props\AssemblyRef.props" />
+  <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
+
+  <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
 </Project>

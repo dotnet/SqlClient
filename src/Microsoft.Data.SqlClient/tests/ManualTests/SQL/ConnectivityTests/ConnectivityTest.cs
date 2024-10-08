@@ -83,7 +83,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Confirm Server Process Id stays the same after query execution
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
-            Assert.True(false, "No non-empty hostname found for the application");
+            Assert.Fail("No non-empty hostname found for the application");
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void ConnectionTimeoutInfiniteTest()
+        {
+            // Exercise the special-case infinite connect timeout code path
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ConnectTimeout = 0 // Infinite
+            };
+
+            using SqlConnection conn = new(builder.ConnectionString);
+            CancellationTokenSource cts = new(30000);
+            // Will throw TaskCanceledException and fail the test in the event of a hang
+            await conn.OpenAsync(cts.Token);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -360,7 +375,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // ConnectionOpenDisableRetry relies on error 4060 for automatic retry, which is not returned when using AAD auth
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
         public static void ConnectionOpenDisableRetry()
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
@@ -399,6 +415,103 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 sqlConnection.Open();
                 Assert.Equal(ConnectionState.Open, sqlConnection.State);
+            }
+            catch (SqlException ex)
+            {
+                Assert.Fail(ex.Message);
+            }
+        }
+
+        private static bool CanUseDacConnection()
+        {
+            if (!DataTestUtility.IsTCPConnStringSetup())
+            {
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName))
+            {
+                return false;
+            }
+
+            if ("localhost".Equals(hostname.ToLower()) && (port.Equals(-1) || port.Equals(1433)) &&
+                string.IsNullOrEmpty(instanceName) && b.UserID != null && b.UserID.ToLower().Equals("sa"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        [ConditionalFact(nameof(CanUseDacConnection))]
+        public static void DacConnectionTest()
+        {
+            if (!CanUseDacConnection())
+            {
+                throw new Exception("Unable to use a DAC connection in this environment. Localhost + sa credentials required.");
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            b.DataSource = "admin:localhost";
+            using SqlConnection sqlConnection = new(b.ConnectionString);
+            sqlConnection.Open();
+        }
+
+        private static bool UsernamePasswordNonEncryptedConnectionSetup()
+        {
+            if (!DataTestUtility.IsTCPConnStringSetup())
+            {
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            return !string.IsNullOrEmpty(b.UserID) &&
+                !string.IsNullOrEmpty(b.Password) &&
+                b.Encrypt == SqlConnectionEncryptOption.Optional &&
+                (b.Authentication == SqlAuthenticationMethod.NotSpecified || b.Authentication == SqlAuthenticationMethod.SqlPassword);
+        }
+
+        [ConditionalFact(nameof(UsernamePasswordNonEncryptedConnectionSetup))]
+        public static void SqlPasswordConnectionTest()
+        {
+            if (!UsernamePasswordNonEncryptedConnectionSetup())
+            {
+                throw new Exception("Sql credentials and non-Encrypted connection required.");
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            b.Authentication = SqlAuthenticationMethod.SqlPassword;
+
+            // This ensures we are not validating the server certificate when we shouldn't be
+            // This test may fail if Encrypt = false but the test server requires encryption
+            b.TrustServerCertificate = false;
+
+            using SqlConnection sqlConnection = new(b.ConnectionString);
+            sqlConnection.Open();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void ConnectionFireInfoMessageEventOnUserErrorsShouldSucceed()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                string command = "print";
+                string commandParam = "OK";
+
+                connection.FireInfoMessageEventOnUserErrors = true;
+
+                connection.InfoMessage += (sender, args) =>
+                {
+                    Assert.Equal(commandParam, args.Message);
+                };
+
+                connection.Open();
+
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.CommandType = System.Data.CommandType.Text;
+                cmd.CommandText = $"{command} '{commandParam}'";
+                cmd.ExecuteNonQuery();
             }
             catch (SqlException ex)
             {

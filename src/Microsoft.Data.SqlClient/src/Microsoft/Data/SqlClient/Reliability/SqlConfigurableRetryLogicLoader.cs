@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
                                                string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
                                                string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
         {
-#if !NETFRAMEWORK
+#if NET6_0_OR_GREATER
             // Just only one subscription to this event is required.
             // This class isn't supposed to be called more than one time;
             // SqlConfigurableRetryLogicManager manages a single instance of this class.

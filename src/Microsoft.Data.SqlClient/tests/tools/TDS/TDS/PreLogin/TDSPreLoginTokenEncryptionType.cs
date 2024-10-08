@@ -12,6 +12,7 @@ namespace Microsoft.SqlServer.TDS.PreLogin
         Off = 0x00,
         On = 0x01,
         NotSupported = 0x02,
-        Required = 0x03
+        Required = 0x03,
+        None = 0x10
     }
 }

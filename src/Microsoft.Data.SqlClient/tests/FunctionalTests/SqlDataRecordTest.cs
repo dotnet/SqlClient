@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Types;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -70,7 +71,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             char[] expectedValue = new char[] { 'a', 'b', 'e', 'f', 'g' };
             Assert.Equal(expectedValue.Length, record.GetChars(3, 0, cb2, 0, 5));
-            Assert.Equal<char>(expectedValue, new string(cb2, 0, (int)record.GetChars(3, 0, null, 0, 0)));
+            Assert.Equal<char>(expectedValue, new string(cb2, 0, (int)record.GetChars(3, 0, null, 0, 0)).ToCharArray());
 
             record.SetString(3, "");
             string xyz = "xyz";
@@ -319,6 +320,19 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [ClassData(typeof(GetUdtTypeTestData))]
+        public void GetUdt_ReturnsValue(Type udtType, object value, string serverTypeName)
+        {
+            SqlMetaData[] metadata = new SqlMetaData[] { new SqlMetaData(nameof(udtType.Name), SqlDbType.Udt, udtType, serverTypeName) };
+
+            SqlDataRecord record = new SqlDataRecord(metadata);
+
+            record.SetValue(0, value);
+
+            Assert.Equal(value.ToString(), record.GetValue(0).ToString());
+        }
+
+        [Theory]
         [ClassData(typeof(GetXXXBadTypeTestData))]
         public void GetXXX_ThrowsIfBadType(Func<SqlDataRecord, object> getXXX)
         {
@@ -342,8 +356,8 @@ namespace Microsoft.Data.SqlClient.Tests
             };
             SqlDataRecord record = new SqlDataRecord(metaData);
             record.SetValue(0, value);
+            Assert.Equal(value, record.GetValue(0));
             Assert.Equal(value, getXXX(record));
-
         }
     }
 
@@ -369,6 +383,21 @@ namespace Microsoft.Data.SqlClient.Tests
         }
     }
 
+    public class GetUdtTypeTestData : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            yield return new object[] { typeof(SqlGeography), SqlGeography.Point(43, -81, 4326), "Geography" };
+            yield return new object[] { typeof(SqlGeometry), SqlGeometry.Point(43, -81, 4326), "Geometry" };
+            yield return new object[] { typeof(SqlHierarchyId), SqlHierarchyId.Parse("/"), "HierarchyId" };
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+    }
+
     public class GetXXXCheckValueTestData : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()
@@ -383,6 +412,10 @@ namespace Microsoft.Data.SqlClient.Tests
             yield return new object[] { SqlDbType.DateTime, DateTime.Now, new Func<SqlDataRecord, object>(r => r.GetDateTime(0)) };
             yield return new object[] { SqlDbType.DateTimeOffset, new DateTimeOffset(DateTime.Now), new Func<SqlDataRecord, object>(r => r.GetDateTimeOffset(0)) };
             yield return new object[] { SqlDbType.Time, TimeSpan.FromHours(1), new Func<SqlDataRecord, object>(r => r.GetTimeSpan(0)) };
+            yield return new object[] { SqlDbType.Date, DateTime.Now.Date, new Func<SqlDataRecord, object>(r => r.GetDateTime(0)) };
+            yield return new object[] { SqlDbType.Bit, bool.Parse(bool.TrueString), new Func<SqlDataRecord, object>(r => r.GetBoolean(0)) };
+            yield return new object[] { SqlDbType.SmallDateTime, DateTime.Now, new Func<SqlDataRecord, object>(r => r.GetDateTime(0)) };
+            yield return new object[] { SqlDbType.TinyInt, (byte)1, new Func<SqlDataRecord, object>(r => r.GetByte(0)) };
         }
 
         IEnumerator IEnumerable.GetEnumerator()

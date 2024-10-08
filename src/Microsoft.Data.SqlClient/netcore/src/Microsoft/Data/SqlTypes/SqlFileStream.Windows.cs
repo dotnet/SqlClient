@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
 #endif
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
@@ -318,7 +318,7 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
 #endif
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
@@ -693,11 +693,7 @@ namespace Microsoft.Data.SqlTypes
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
             string uniqueId = Guid.NewGuid().ToString("N");
-#if NETSTANDARD
-            return System.IO.PathInternal.IsDeviceUNC(path.AsSpan())
-#else
             return System.IO.PathInternal.IsDeviceUNC(path)
-#endif
                 ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
                 : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
         }

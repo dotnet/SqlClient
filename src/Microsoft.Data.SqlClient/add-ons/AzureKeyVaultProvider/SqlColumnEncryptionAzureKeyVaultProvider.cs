@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 byte[] message = new byte[encryptedColumnEncryptionKey.Length - signatureLength];
                 Buffer.BlockCopy(encryptedColumnEncryptionKey, 0, message, 0, encryptedColumnEncryptionKey.Length - signatureLength);
 
-                if (null == message)
+                if (message == null)
                 {
                     throw ADP.NullHashFound();
                 }

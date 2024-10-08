@@ -331,7 +331,10 @@ namespace Microsoft.SqlServer.TDS.PreLogin
                 options.Add(new TDSPreLoginTokenOption(TDSPreLoginTokenOptionType.NonceOption, (ushort)Nonce.Length));
             }
 
-            options.Add(new TDSPreLoginTokenOption(TDSPreLoginTokenOptionType.Encryption, 1));
+            if (Encryption != TDSPreLoginTokenEncryptionType.None)
+            {
+                options.Add(new TDSPreLoginTokenOption(TDSPreLoginTokenOptionType.Encryption, 1));
+            }
             options.Add(new TDSPreLoginTokenOption(TDSPreLoginTokenOptionType.Terminator, 0));
 
             // Calculate the total size of the token metadata

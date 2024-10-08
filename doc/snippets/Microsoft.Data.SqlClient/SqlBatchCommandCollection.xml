@@ -1,0 +1,183 @@
+<docs>
+  <members name="SqlBatchCommandCollection">
+    <SqlBatchCommandCollection>
+      <summary>
+        A collection of instances of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />, contained within a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+      </summary>
+    </SqlBatchCommandCollection>
+    <Add1>
+      <summary>
+        Add a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> to the end of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+    </Add1>
+    <Add2>
+      <param name="item">
+        The object to add to the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </param>
+      <summary>
+        Adds the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object to the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </summary>
+    </Add2>
+    <Contains1>
+      <summary>
+        Determines whether a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> is in the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+    </Contains1>
+    <Contains2>
+      <param name="item">
+        The object to locate in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </param>
+      <summary>
+        Indicates whether a <see cref="T:System.Data.Common.DbBatchCommand" /> is contained in the collection.
+      </summary>
+      <returns>
+        <see langword="true" /> if the <see cref="T:System.Data.Common.DbBatchCommand" /> is in the collection; otherwise <see langword="false" />.
+      </returns>
+    </Contains2>
+    <CopyTo1>
+      <summary>
+        Copies the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> to a one dimensional array, starting at the target index of the target array.
+      </summary>
+    </CopyTo1>
+    <CopyTo2>
+      <param name="array">
+        The one-dimensional <see cref="T:System.Array" /> that is the destination of the elements copied from <see cref="T:System.Collections.Generic.ICollection`1" />. The <see cref="T:System.Array" /> must have zero-based indexing.
+      </param>
+      <param name="arrayIndex">
+        The zero-based index in <paramref name="array" /> at which copying begins.
+      </param>
+      <summary>
+        Copies the elements of the <see cref="T:System.Collections.Generic.ICollection`1" /> to an <see cref="T:System.Array" />, starting at a particular <see cref="T:System.Array" /> index.
+      </summary>
+    </CopyTo2>
+    <IndexOf1>
+      <summary>
+        Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurrence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+      <returns>
+        Returns the zero-based index of the first occurrence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </returns>
+    </IndexOf1>
+    <IndexOf2>
+      <param name="item">
+        The object to locate in the <see cref="T:System.Collections.Generic.IList`1" />.
+      </param>
+      <summary>
+        Returns the index of the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+      </summary>
+      <returns>
+        The index of the specified <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+      </returns>
+    </IndexOf2>
+    <Insert1>
+      <summary>
+        Inserts an item into the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> at the specified index.
+      </summary>
+    </Insert1>
+    <Insert2>
+      <param name="index">
+        The index at which to insert the <see cref="T:System.Data.Common.DbBatchCommand" /> object.
+      </param>
+      <param name="item">
+        The object to insert into the <see cref="T:System.Collections.Generic.IList`1" />.
+      </param>
+      <summary>
+        Inserts the specified index of the <see cref="T:System.Data.Common.DbBatchCommand" /> object with the specified name into the collection at the specified index.
+      </summary>
+    </Insert2>
+    <Remove1>
+      <summary>
+        Removes the first occurrence of a specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.
+      </summary>
+      <returns>
+        Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.
+      </returns>
+    </Remove1>
+    <Remove2>
+      <param name="item">
+        The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </param>
+      <summary>
+        Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.
+      </summary>
+      <returns>
+        <see langword="true" /> if <paramref name="item" /> was successfully removed; otherwise, <see langword="false" />. This method also returns <see langword="false" /> if <paramref name="item" /> was not found in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </returns>
+    </Remove2>
+    <this1>
+      <summary>
+        Gets or Sets the element at the specified index.
+      </summary>
+      <returns>
+        The element at the specified index.
+      </returns>
+    </this1>
+    <this2>
+      <summary>
+        Gets or Sets the element at the specified index.
+      </summary>
+      <returns>
+        The element at the specified index.
+      </returns>
+    </this2>
+    <GetBatchCommand>
+      <param name="index">
+        The index where the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object is located.
+      </param>
+      <summary>
+        Returns the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index in the list.
+      </summary>
+      <returns>
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index in the list.
+      </returns>
+    </GetBatchCommand>
+    <SetBatchCommand>
+      <param name="index">
+        The index where the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object should be located.
+      </param>
+      <param name="batchCommand">
+        The <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object to add to the collection.
+      </param>
+      <summary>
+        Sets the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index to a new value.
+      </summary>
+    </SetBatchCommand>
+    <Count>
+      <summary>
+        Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </summary>
+      <value>
+        The number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
+      </value>
+    </Count>
+    <IsReadOnly>
+      <summary>
+        Specifies whether the collection is read-only.
+      </summary>
+      <value>
+        <see langword="true" /> if the collection is read-only; otherwise <see langword="false" />.
+      </value>
+    </IsReadOnly>
+    <GetEnumerator>
+      <summary>
+        Returns the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index in the collection.
+      </summary>
+      <returns>
+        The <see cref="T:System.Data.Common.DbBatchCommand" /> object at the specified index in the collection.
+      </returns>
+    </GetEnumerator>
+    <Clear>
+      <summary>
+        Removes all <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> values from the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+    </Clear>
+    <RemoveAt>
+      <param name="index">
+        The index where the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object is located.
+      </param>
+      <summary>
+        Removes the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object at the specified index from the collection.
+      </summary>
+    </RemoveAt>
+  </members>
+</docs>

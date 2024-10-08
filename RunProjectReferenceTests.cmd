@@ -6,8 +6,8 @@ set netcoreVersion=net6.0
 
 :: Accept two parameters for .NET Framework and .NET versions.
 :: Examples: 
-::  - uses net48 and net7.0:
-::      > RunProjectReferenceTests.cmd net48 net7.0
+::  - uses net48 and net8.0:
+::      > RunProjectReferenceTests.cmd net48 net8.0
 ::  - uses default target frameworks:
 ::      > RunProjectReferenceTests.cmd 
 ::  - uses net48 and default target frameworks for netcore:

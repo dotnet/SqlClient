@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(5531)]
+        [ActiveIssue("5531")]
         public void TestPacketNumberWraparound()
         {
             // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
                 new SqlDataAdapter(cmd).Fill(new("BadFunc"));
-                Assert.False(true, "Expected exception did not occur");
+                Assert.Fail("Expected exception did not occur");
             }
             catch (Exception e)
             {
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
-                Assert.False(true, $"Unexpected error occurred: {e.Message}");
+                Assert.Fail($"Unexpected error occurred: {e.Message}");
             }
         }
 
@@ -1034,7 +1034,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 object value = row[i];
                 Type t;
-                if ((null == value || DBNull.Value == value))
+                if (value == null || DBNull.Value == value)
                 {
                     if (lastRowTypes[i] == null)
                     {
@@ -1226,7 +1226,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 for (int i = 0; i < row.Length; i++)
                 {
-                    if (null != row[i] && DBNull.Value != row[i] && row[i].GetType() != table.Columns[i].DataType)
+                    if (row[i] != null && DBNull.Value != row[i] && row[i].GetType() != table.Columns[i].DataType)
                     {
                         result = false;
                     }
@@ -1310,16 +1310,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
 
-                if (null == targetTable)
+                if (targetTable == null)
                 {
                     targetTable = CreateNewTable(row, ref valueTypes);
-                    if (null != targetTable)
+                    if (targetTable != null)
                     {
                         dtList.Add(targetTable);
                     }
                 }
 
-                if (null != targetTable)
+                if (targetTable != null)
                 {
                     targetTable.Rows.Add(row);
                 }
@@ -1345,10 +1345,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool IsNull(object value)
         {
-            return null == value ||
-                    DBNull.Value == value ||
-                    (value is INullable nullable &&
-                     nullable.IsNull);
+            return value == null ||
+                   DBNull.Value == value ||
+                   (value is INullable nullable && nullable.IsNull);
         }
 
         private SqlMetaData PermToSqlMetaData(StePermutation perm)
@@ -1417,11 +1416,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void ReportMismatch(object source, object result, StePermutation perm)
         {
-            if (null == source)
+            if (source == null)
             {
                 source = "(null)";
             }
-            if (null == result)
+            if (result == null)
             {
                 result = "(null)";
             }
@@ -1446,7 +1445,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         value = rdr.GetValue(columnOrd);
                     }
-                    if (null != values)
+                    if (values != null)
                     {
                         if (CompareValue(value, values[rowOrd][columnOrd], fieldMetaData[columnOrd]))
                         {

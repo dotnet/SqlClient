@@ -1,23 +1,17 @@
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/dotnet/sqlclient/master/LICENSE)
 [![Nuget](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient?label=Nuget.org%20Downloads&style=flat-square&color=blue)](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
-[![Gitter](https://img.shields.io/gitter/room/badges/shields.svg?style=flat-square&color=blue)](https://gitter.im/Microsoft/mssql-developers)
-[![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1139)
+[![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1879)
 
 # Microsoft SqlClient Data Provider for SQL Server
 
-Welcome to the home of the Microsoft ADO.NET driver for SQL Server aka the Microsoft.Data.SqlClient GitHub repository.
-
-Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure SQL Database. Now in General Availability, it is a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server features will be implemented in Microsoft.Data.SqlClient.
+Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url](https://aka.ms/sql)) and the [Azure SQL]([url](https://aka.ms/azure_sql)) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET Framework and .NET Core. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
 
 ## Supportability
 
-The Microsoft.Data.SqlClient package supports the below environments:
+The Microsoft.Data.SqlClient package supports the following environments:
 
 - .NET Framework 4.6.2+
-- .NET Core 3.1+
-- .NET Standard 2.0+
-
-The source code of this library is now available under the MIT license.
+- .NET 6.0+
 
 ## Download
 
@@ -25,9 +19,9 @@ The Microsoft.Data.SqlClient NuGet package is available on [NuGet.org](https://w
 
 ## SNI Package References
 
-For the .NET Framework driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads native `Microsoft.Data.SqlClient.SNI.x64.dll` and `Microsoft.Data.SqlClient.SNI.x86.dll` libraries into the client's build directories.
+When targeting .NET Framework on Windows, a package reference to [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/) loads native `Microsoft.Data.SqlClient.SNI.<platform>.dll` libraries into the client's build directories.
 
-For the .NET Core driver on Windows, a package reference to [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/) loads `arm`, `arm64`, `x64` and `x86` native `Microsoft.Data.SqlClient.SNI.dll` libraries into the client's build directories.
+When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/) loads `arm64`, `x64` and `x86` native `Microsoft.Data.SqlClient.SNI.dll` libraries into subdirectories in the client's build directory.
 
 ## Helpful Links
 
@@ -40,7 +34,6 @@ For the .NET Core driver on Windows, a package reference to [Microsoft.Data.SqlC
 | Support Policy | [SUPPORT.md](SUPPORT.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Copyright Information | [COPYRIGHT.md](COPYRIGHT.md) |
-| | |
 
 ## Our Featured Contributors
 
@@ -65,7 +58,7 @@ All preview and stable driver release notes are available under [release-notes](
 
 ## Porting from System.Data.SqlClient
 
-Refer to [porting-cheat-sheet.md](porting-cheat-sheet.md) for a safe porting experience from System.Data.SqlClient to Microsoft.Data.SqlClient and share your experience with us by advancing this guide for future developers.
+Refer to [porting-cheat-sheet.md](porting-cheat-sheet.md) for a safe porting experience from System.Data.SqlClient to Microsoft.Data.SqlClient and share your experience with us by enhancing this guide for future developers.
 
 ## Still have questions?
 
@@ -85,7 +78,7 @@ If you believe you have found a security vulnerability in any Microsoft-owned re
 
 Instead, please report them to the Microsoft Security Response Center (MSRC) at [https://msrc.microsoft.com/create-report](https://msrc.microsoft.com/create-report).
 
-If you prefer to submit without logging in, send email to [secure@microsoft.com](mailto:secure@microsoft.com).  If possible, encrypt your message with our PGP key; please download it from the the [Microsoft Security Response Center PGP Key page](https://www.microsoft.com/en-us/msrc/pgp-key-msrc).
+If you prefer to submit without logging in, send email to [secure@microsoft.com](mailto:secure@microsoft.com).  If possible, encrypt your message with our PGP key; please download it from the [Microsoft Security Response Center PGP Key page](https://www.microsoft.com/en-us/msrc/pgp-key-msrc).
 
 You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Additional information can be found at [microsoft.com/msrc](https://www.microsoft.com/msrc).
 

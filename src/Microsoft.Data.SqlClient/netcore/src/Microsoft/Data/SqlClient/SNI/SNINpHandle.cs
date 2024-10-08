@@ -24,6 +24,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private readonly string _targetServer;
         private readonly object _sendSync;
+        private readonly string _hostNameInCertificate;
+        private readonly string _serverCertificateFilename;
         private readonly bool _tlsFirst;
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
@@ -38,7 +40,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst)
+        public SNINpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
@@ -47,6 +49,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 _sendSync = new object();
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
+                _hostNameInCertificate = hostNameInCertificate;
+                _serverCertificateFilename = serverCertificateFilename;
                 try
                 {
                     _pipeStream = new NamedPipeClientStream(
@@ -68,7 +72,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         int timeoutMilliseconds = timeout.MillisecondsRemainingInt;
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
-                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} sepecified milliseconds.",
+                                                                  "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} specified milliseconds.",
                                                                   args0: _connectionId,
                                                                   args1: serverName,
                                                                   args2: pipeName,
@@ -369,14 +373,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Validate server certificate
         /// </summary>
         /// <param name="sender">Sender object</param>
-        /// <param name="cert">X.509 certificate</param>
+        /// <param name="serverCertificate">X.509 certificate</param>
         /// <param name="chain">X.509 chain</param>
         /// <param name="policyErrors">Policy errors</param>
         /// <returns>true if valid</returns>
-        private bool ValidateServerCertificate(object sender, X509Certificate cert, X509Chain chain, SslPolicyErrors policyErrors)
+        private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
-            {
+            {			
                 if (!_validateCert)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
@@ -384,8 +388,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
-                return SNICommon.ValidateSslServerCertificate(_targetServer, cert, policyErrors);
-            }
+                return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
+			}	
         }
 
         /// <summary>
