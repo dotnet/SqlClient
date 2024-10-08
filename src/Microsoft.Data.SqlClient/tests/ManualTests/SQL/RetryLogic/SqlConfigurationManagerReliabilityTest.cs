@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.TransientErrors = errors;
             RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out _);
 
             foreach(string errorString in transientErrorNumbers)
             {
