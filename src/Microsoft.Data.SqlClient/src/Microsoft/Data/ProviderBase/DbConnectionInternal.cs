@@ -2,9 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+//netcore---
+using System;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Threading;
+using System.Transactions;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+//---netcore
+
 namespace Microsoft.Data.ProviderBase
 {
-
+    //netfx---
     using System;
     using System.Data;
     using System.Data.Common;
@@ -16,6 +26,7 @@ namespace Microsoft.Data.ProviderBase
     using Microsoft.Data.Common;
     using Microsoft.Data.SqlClient;
     using System.Transactions;
+    //---netfx
 
     internal abstract class DbConnectionInternal
     {
@@ -23,6 +34,7 @@ namespace Microsoft.Data.ProviderBase
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         private TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
+        //netfx---
         internal static readonly StateChangeEventArgs StateChangeClosed = new StateChangeEventArgs(ConnectionState.Open, ConnectionState.Closed);
         internal static readonly StateChangeEventArgs StateChangeOpen = new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open);
 
@@ -39,6 +51,7 @@ namespace Microsoft.Data.ProviderBase
 
         private bool _connectionIsDoomed;       // true when the connection should no longer be used.
         private bool _cannotBePooled;           // true when the connection should no longer be pooled.
+        //---netfx
         private bool _isInStasis;
 
         private DateTime _createTime;               // when the connection was created.
@@ -56,7 +69,7 @@ namespace Microsoft.Data.ProviderBase
 #endif //DEBUG
 
         protected DbConnectionInternal() : this(ConnectionState.Open, true, false)
-        { // V1.1.3300
+        { //netfx // V1.1.3300
         }
 
         // Constructor for internal connections
@@ -219,6 +232,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
+        //netfx---
         /// <summary>
         /// Get boolean that specifies whether an enlisted transaction can be unbound from 
         /// the connection when that transaction completes.
@@ -268,7 +282,7 @@ namespace Microsoft.Data.ProviderBase
                 //       (DbConnectionPool.Clear and ReclaimEmancipatedObjects
                 //       do this for us)
 
-                // Remember how this works (I keep getting confused...)
+                // The functionality is as follows:
                 //
                 //    _pooledCount is incremented when the connection is pushed into the pool
                 //    _pooledCount is decremented when the connection is popped from the pool
@@ -276,17 +290,18 @@ namespace Microsoft.Data.ProviderBase
                 //
                 // That means that:
                 //
-                //    _pooledCount > 1    connection is in the pool multiple times (this is a serious bug...)
+                //    _pooledCount > 1    connection is in the pool multiple times (This should not happen)
                 //    _pooledCount == 1   connection is in the pool
                 //    _pooledCount == 0   connection is out of the pool
                 //    _pooledCount == -1  connection is not a pooled connection; we shouldn't be here for non-pooled connections.
-                //    _pooledCount < -1   connection out of the pool multiple times (not sure how this could happen...)
+                //    _pooledCount < -1   connection out of the pool multiple times
                 //
                 // Now, our job is to return TRUE when the connection is out
                 // of the pool and it's owning object is no longer around to
                 // return it.
 
-                return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
+                //netfx   return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
+                //netcore return (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
             }
         }
 
@@ -329,6 +344,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
+        //netfx---
         protected DbConnectionPoolCounters PerformanceCounters
         {
             get
@@ -336,6 +352,33 @@ namespace Microsoft.Data.ProviderBase
                 return _performanceCounters;
             }
         }
+        //---netfx
+        //netcore---
+        virtual protected bool UnbindOnTransactionCompletion
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        // Is this a connection that must be put in stasis (or is already in stasis) pending the end of it's transaction?
+        virtual protected internal bool IsNonPoolableTransactionRoot
+        {
+            get
+            {
+                return false; // if you want to have delegated transactions that are non-poolable, you better override this...
+            }
+        }
+
+        virtual internal bool IsTransactionRoot
+        {
+            get
+            {
+                return false; // if you want to have delegated transactions, you better override this...
+            }
+        }
+        //---netcore
 
         virtual protected bool ReadyToPrepareTransaction
         {
@@ -399,7 +442,8 @@ namespace Microsoft.Data.ProviderBase
 
             Activate(transaction);
 
-            PerformanceCounters.NumberOfActiveConnections.Increment();
+            //netfx   PerformanceCounters.NumberOfActiveConnections.Increment();
+            //netcore SqlClientEventSource.Log.EnterActiveConnection();
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -419,7 +463,8 @@ namespace Microsoft.Data.ProviderBase
 
         virtual public void ChangeDatabase(string value)
         {
-            throw ADP.MethodNotImplemented("ChangeDatabase");
+            //netfx   throw ADP.MethodNotImplemented("ChangeDatabase");
+            //netcore throw ADP.MethodNotImplemented();
         }
 
         internal virtual void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
@@ -476,7 +521,8 @@ namespace Microsoft.Data.ProviderBase
                 lock (this)
                 {
 
-                    object lockToken = ObtainAdditionalLocksForClose();
+                    //netfx   object lockToken = ObtainAdditionalLocksForClose();
+                    //netcore bool lockToken = ObtainAdditionalLocksForClose();
                     try
                     {
                         PrepareForCloseConnection();
@@ -492,15 +538,16 @@ namespace Microsoft.Data.ProviderBase
                         if (connectionPool != null)
                         {
                             connectionPool.PutObject(this, owningObject);   // PutObject calls Deactivate for us...
-                            // NOTE: Before we leave the PutObject call, another
-                            // thread may have already popped the connection from
-                            // the pool, so don't expect to be able to verify it.
+                                                                            // NOTE: Before we leave the PutObject call, another
+                                                                            // thread may have already popped the connection from
+                                                                            // the pool, so don't expect to be able to verify it.
                         }
                         else
                         {
                             Deactivate();   // ensure we de-activate non-pooled connections, or the data readers and transactions may not get cleaned up...
 
-                            PerformanceCounters.HardDisconnectsPerSecond.Increment();
+                            //netfx   PerformanceCounters.HardDisconnectsPerSecond.Increment();
+                            //netcore SqlClientEventSource.Log.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear
                             // the owning object before we call dispose so that
@@ -517,11 +564,17 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
+                                //netfx---
                                 PerformanceCounters.NumberOfNonPooledConnections.Decrement();
                                 if (this.GetType() != typeof(Microsoft.Data.SqlClient.SqlInternalConnectionSmi))
                                 {
                                     Dispose();
                                 }
+                                //---netfx
+                                //netcore---
+                                SqlClientEventSource.Log.ExitNonPooledConnection();
+                                Dispose();
+                                //---netcore
                             }
                         }
                     }
@@ -546,12 +599,21 @@ namespace Microsoft.Data.ProviderBase
             // By default, there is no preparation required
         }
 
+        //netfx---
         virtual protected object ObtainAdditionalLocksForClose()
         {
             return null; // no additional locks in default implementation
         }
+        //---netfx
+        //netcore---
+        virtual protected bool ObtainAdditionalLocksForClose()
+        {
+            return false; // no additional locks in default implementation
+        }
+        //---netcore
 
-        virtual protected void ReleaseAdditionalLocksForClose(object lockToken)
+        //netfx   virtual protected void ReleaseAdditionalLocksForClose(object lockToken)
+        //netcore virtual protected void ReleaseAdditionalLocksForClose(bool lockToken)
         {
             // no additional locks in default implementation
         }
@@ -570,20 +632,25 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
 #if DEBUG
             int activateCount = Interlocked.Decrement(ref _activateCount);
-            Debug.Assert(0 == activateCount, "activated multiple times?");
+            //netfx Debug.Assert(0 == activateCount, "activated multiple times?");
 #endif // DEBUG
 
+            //netfx---
             if (PerformanceCounters != null)
             { // Pool.Clear will DestroyObject that will clean performanceCounters before going here 
                 PerformanceCounters.NumberOfActiveConnections.Decrement();
             }
+            //---netfx
+            //netcore---
+            SqlClientEventSource.Log.ExitActiveConnection();
+            //---netcore
 
             if (!_connectionIsDoomed && Pool.UseLoadBalancing)
             {
                 // If we're not already doomed, check the connection's lifetime and
                 // doom it if it's lifetime has elapsed.
 
-                DateTime now = DateTime.UtcNow;  // WebData 111116
+                DateTime now = DateTime.UtcNow;
                 if ((now.Ticks - _createTime.Ticks) > Pool.LoadBalanceTimeout.Ticks)
                 {
                     DoNotPoolThisConnection();
@@ -635,7 +702,8 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks 
                 // in.
-                PerformanceCounters.NumberOfNonPooledConnections.Decrement();
+                //netfx   PerformanceCounters.NumberOfNonPooledConnections.Decrement();
+                //netcore SqlClientEventSource.Log.ExitNonPooledConnection();
                 Dispose();
             }
             // When _pooledCount is 0, the connection is a pooled connection
@@ -647,7 +715,7 @@ namespace Microsoft.Data.ProviderBase
         public virtual void Dispose()
         {
             _connectionPool = null;
-            _performanceCounters = null;
+            //netfx _performanceCounters = null;
             _connectionIsDoomed = true;
             _enlistedTransactionOriginal = null; // should not be disposed
 
@@ -668,7 +736,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         /// <devdoc>Ensure that this connection cannot be put back into the pool.</devdoc>
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+        //netfx [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         protected internal void DoomThisConnection()
         {
             _connectionIsDoomed = true;
@@ -683,7 +751,8 @@ namespace Microsoft.Data.ProviderBase
 
         abstract public void EnlistTransaction(Transaction transaction);
 
-        virtual protected internal DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
+        //netfx   virtual protected internal DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
+        //netcore protected internal virtual DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
         {
             Debug.Assert(outerConnection != null, "outerConnection may not be null.");
 
@@ -693,13 +762,14 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
-        internal void MakeNonPooledObject(DbConnection owningObject, DbConnectionPoolCounters performanceCounters)
+        //netfx   internal void MakeNonPooledObject(DbConnection owningObject, DbConnectionPoolCounters performanceCounters)
+        //netcore internal void MakeNonPooledObject(DbConnection owningObject)
         {
             // Used by DbConnectionFactory to indicate that this object IS NOT part of
             // a connection pool.
 
             _connectionPool = null;
-            _performanceCounters = performanceCounters;
+            //netfx _performanceCounters = performanceCounters;
             _owningObject.SetTarget(owningObject);
             _pooledCount = -1;
         }
@@ -709,11 +779,12 @@ namespace Microsoft.Data.ProviderBase
             // Used by DbConnectionFactory to indicate that this object IS part of
             // a connection pool.
 
-            // TODO: consider using ADP.TimerCurrent() for this.
-            _createTime = DateTime.UtcNow; // WebData 111116
+            //netfx // TODO: consider using ADP.TimerCurrent() for this.
+            //netfx  _createTime = DateTime.UtcNow; // WebData 111116
+            //netcore _createTime = DateTime.UtcNow;
 
             _connectionPool = connectionPool;
-            _performanceCounters = connectionPool.PerformanceCounters;
+            //netfx _performanceCounters = connectionPool.PerformanceCounters;
         }
 
         internal void NotifyWeakReference(int message)
@@ -745,7 +816,8 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
         {
-            throw ADP.MethodNotImplemented("TryReplaceConnection");
+            //netfx   throw ADP.MethodNotImplemented("TryReplaceConnection");
+            //netcore throw ADP.MethodNotImplemented();
         }
 
         protected bool TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
@@ -836,7 +908,7 @@ namespace Microsoft.Data.ProviderBase
             _owningObject.SetTarget(newOwner);
             _pooledCount--;
 
-            //DbConnection x = (newOwner as DbConnection);
+            //netfx //DbConnection x = (newOwner as DbConnection);
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.PostPop|RES|CPOOL> {0}, Preparing to pop from pool,  owning connection {1}, pooledCount={2}", ObjectID, 0, _pooledCount);
 
             //3 // The following tests are retail assertions of things we can't allow to happen.
@@ -945,8 +1017,8 @@ namespace Microsoft.Data.ProviderBase
         }
 
 
-        // TODO: Review whether we need the unmanaged code permission when we have the new object model available.
-        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        //netfx // TODO: Review whether we need the unmanaged code permission when we have the new object model available.
+        //netfx [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
         private void TransactionOutcomeEnlist(Transaction transaction)
         {
             _transactionCompletedEventHandler ??= new TransactionCompletedEventHandler(TransactionCompletedEvent);
@@ -957,7 +1029,8 @@ namespace Microsoft.Data.ProviderBase
         {
             _isInStasis = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
-            PerformanceCounters.NumberOfStasisConnections.Increment();
+            //netfx   PerformanceCounters.NumberOfStasisConnections.Increment();
+            //netcore SqlClientEventSource.Log.EnterStasisConnection();
         }
 
         private void TerminateStasis(bool returningToPool)
@@ -971,7 +1044,8 @@ namespace Microsoft.Data.ProviderBase
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, Delegated Transaction has ended, connection is closed/leaked.  Disposing.", ObjectID);
             }
 
-            PerformanceCounters.NumberOfStasisConnections.Decrement();
+            //netfx   PerformanceCounters.NumberOfStasisConnections.Decrement();
+            //netcore SqlClientEventSource.Log.ExitStasisConnection();
             _isInStasis = false;
         }
 
