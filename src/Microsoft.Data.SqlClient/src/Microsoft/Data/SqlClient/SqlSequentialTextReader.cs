@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Text;
@@ -19,8 +18,7 @@ namespace Microsoft.Data.SqlClient
         private readonly int _columnIndex;       // The index of out column in the table
         private readonly Encoding _encoding;     // Encoding for this character stream
         private readonly Decoder _decoder;       // Decoder based on the encoding (NOTE: Decoders are stateful as they are designed to process streams of data)
-        private byte[] _leftOverBytes;  // Bytes leftover from the last Read() operation - this can be null if there were no bytes leftover
-        private int _leftOverByteBufferUsed; //Number of bytes used from _leftOverBytes buffer - will be zero in case of null buffer
+        private byte[] _leftOverBytes;  // Bytes leftover from the last Read() operation - this can be null if there were no bytes leftover (Possible optimization: re-use the same array?)
         private int _peekedChar;        // The last character that we peeked at (or -1 if we haven't peeked at anything)
         private Task _currentTask;      // The current async task
         private readonly CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
@@ -359,18 +357,23 @@ namespace Microsoft.Data.SqlClient
 
                 if (_leftOverBytes != null)
                 {
-                    // Copy over the leftover buffer
-                    byteBuffer = ArrayPool<byte>.Shared.Rent(byteBufferSize);
-                    Buffer.BlockCopy(_leftOverBytes, 0, byteBuffer, 0, _leftOverByteBufferUsed);
-                    byteBufferUsed = _leftOverByteBufferUsed;
-                    //return _leftOverBytes and clean _leftOverBytes reference
-                    ArrayPool<byte>.Shared.Return(_leftOverBytes);
-                    _leftOverBytes = null;
-                    _leftOverByteBufferUsed = 0;
+                    // If we have more leftover bytes than we need for this conversion, then just re-use the leftover buffer
+                    if (_leftOverBytes.Length > byteBufferSize)
+                    {
+                        byteBuffer = _leftOverBytes;
+                        byteBufferUsed = byteBuffer.Length;
+                    }
+                    else
+                    {
+                        // Otherwise, copy over the leftover buffer
+                        byteBuffer = new byte[byteBufferSize];
+                        Buffer.BlockCopy(_leftOverBytes, 0, byteBuffer, 0, _leftOverBytes.Length);
+                        byteBufferUsed = _leftOverBytes.Length;
+                    }
                 }
                 else
                 {
-                    byteBuffer = ArrayPool<byte>.Shared.Rent(byteBufferSize);
+                    byteBuffer = new byte[byteBufferSize];
                     byteBufferUsed = 0;
                 }
             }
@@ -399,26 +402,14 @@ namespace Microsoft.Data.SqlClient
             // completed may be false and there is no spare bytes if the Decoder has stored bytes to use later
             if ((!completed) && (bytesUsed < inBufferCount))
             {
-                _leftOverByteBufferUsed = inBufferCount - bytesUsed;
-                _leftOverBytes = ArrayPool<byte>.Shared.Rent(_leftOverByteBufferUsed);
-                
-                Buffer.BlockCopy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverByteBufferUsed);
+                _leftOverBytes = new byte[inBufferCount - bytesUsed];
+                Buffer.BlockCopy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverBytes.Length);
             }
             else
             {
                 // If Convert() sets completed to true, then it must have used all of the bytes we gave it
                 Debug.Assert(bytesUsed >= inBufferCount, "Converted completed, but not all bytes were used");
-                if (_leftOverBytes != null)
-                {
-                    ArrayPool<byte>.Shared.Return(_leftOverBytes);
-                    _leftOverBytes = null;
-                    _leftOverByteBufferUsed = 0;
-                }
-            }
-
-            if (inBuffer.Length > 0)
-            {
-                ArrayPool<byte>.Shared.Return(inBuffer);
+                _leftOverBytes = null;
             }
 
             Debug.Assert(((_reader == null) || (_reader.ColumnDataBytesRemaining() > 0) || (!completed) || (_leftOverBytes == null)), "Stream has run out of data and the decoder finished, but there are leftover bytes");
