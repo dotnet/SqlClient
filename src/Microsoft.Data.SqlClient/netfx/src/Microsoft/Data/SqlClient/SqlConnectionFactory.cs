@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
                 // Used by notifications.
-                if (opt.IntegratedSecurity || opt.UsesCertificate || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+                if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     if (pool != null)
                     {
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient
                     opt = new SqlConnectionString(opt, instanceName, false /* user instance=false */, null /* do not modify the Enlist value */);
                     poolGroupProviderInfo = null; // null so we do not pass to constructor below...
                 }
-                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, key.ServerCertificateValidationCallback, key.ClientCertificateRetrievalCallback, pool, key.AccessToken, key.OriginalNetworkAddressInfo, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessTokenCallback);
+                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, pool, key.AccessToken, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessTokenCallback);
             }
             return result;
         }
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                                                    opt.IntegratedSecurity || opt.UsesCertificate || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                                                    opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                                                     opt.MinPoolSize,
                                                     opt.MaxPoolSize,
                                                     connectionTimeout,

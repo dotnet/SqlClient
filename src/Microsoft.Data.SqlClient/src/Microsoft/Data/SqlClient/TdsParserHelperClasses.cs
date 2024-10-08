@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
-using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -16,7 +14,6 @@ using System.Security;
 using System.Security.Authentication;
 using System.Text;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -32,7 +29,12 @@ namespace Microsoft.Data.SqlClient
         ON,
         NOT_SUP,
         REQ,
-        LOGIN
+        LOGIN,
+#if NETFRAMEWORK
+        OPTIONS_MASK = 0x3f,
+        CTAIP = 0x40,
+        CLIENT_CERT = 0x80,
+#endif
     }
 
     internal enum PreLoginHandshakeStatus
@@ -123,6 +125,11 @@ namespace Microsoft.Data.SqlClient
         internal byte minorVersion;
         internal short buildNum;
         internal uint tdsVersion;
+#if NETFRAMEWORK
+        internal string programName;
+
+        internal bool isVersion8;
+#endif
     }
 
     internal sealed class SqlFedAuthInfo
@@ -131,13 +138,13 @@ namespace Microsoft.Data.SqlClient
         internal string stsurl;
         public override string ToString()
         {
-            return String.Format(CultureInfo.InvariantCulture, "STSURL: {0}, SPN: {1}", stsurl ?? String.Empty, spn ?? String.Empty);
+            return $"STSURL: {stsurl}, SPN: {spn}";
         }
     }
 
     internal sealed class SqlFedAuthToken
     {
-        internal UInt32 dataLen;
+        internal uint dataLen;
         internal byte[] accessToken;
         internal long expirationFileTime;
     }
@@ -298,7 +305,9 @@ namespace Microsoft.Data.SqlClient
 
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
+#if !NETFRAMEWORK
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
+#endif
 
         private int _hiddenColumnCount;
         private int[] _visibleColumnMap;
@@ -318,7 +327,11 @@ namespace Microsoft.Data.SqlClient
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
+#if !NETFRAMEWORK
             dbColumnSchema = original.dbColumnSchema;
+#else
+            schemaTable = original.schemaTable;
+#endif
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -459,8 +472,8 @@ namespace Microsoft.Data.SqlClient
 
         public object Clone()
         {
-            _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection();
-            result.metaDataSet = metaDataSet == null ? null : metaDataSet.Clone();
+            _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
+            
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());
@@ -546,7 +559,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataXmlSchemaCollection
+    internal sealed class SqlMetaDataXmlSchemaCollection
     {
         internal string Database;
         internal string OwningSchema;
@@ -563,7 +576,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlMetaDataUdt
+    internal sealed class SqlMetaDataUdt
     {
 #if NET6_0_OR_GREATER
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
@@ -631,8 +644,8 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlParameter GetParameterByIndex(int index, out byte options)
         {
-            options = 0;
-            SqlParameter retval = null;
+            SqlParameter retval;
+
             if (index < systemParamCount)
             {
                 retval = systemParams[index];
@@ -647,13 +660,15 @@ namespace Microsoft.Data.SqlClient
             }
             return retval;
         }
-
     }
 
     internal sealed class SqlReturnValue : SqlMetaDataPriv
     {
         internal string parameter;
         internal readonly SqlBuffer value;
+#if NETFRAMEWORK
+        internal ushort parmIndex;      //2005 or later only
+#endif
 
         internal SqlReturnValue() : base()
         {
@@ -752,10 +767,13 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.3";
             }*/
-            if((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+            if ((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
             {
                 name = "TLS 1.2";
             }
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
             else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
             {
                 name = "TLS 1.1";
@@ -764,20 +782,26 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.0";
             }
-// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
             else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
             {
                 name = "SSL 3.0";
             }
             else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
-#pragma warning restore CS0618, CA5397
+#pragma warning restore CS0618 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
             {
                 name = "SSL 2.0";
             }
             else
             {
+#if !NETFRAMEWORK
                 name = protocol.ToString();
+#else
+                throw new ArgumentException(StringsHelper.GetString(StringsHelper.net_invalid_enum, "NativeProtocols"), "NativeProtocols");
+#endif
             }
 
             return name;
@@ -791,12 +815,21 @@ namespace Microsoft.Data.SqlClient
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
-// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
-#pragma warning disable CS0618, CA5397
+#if NET8_0_OR_GREATER
+#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#endif
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
-#pragma warning restore CS0618, CA5397
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#if NET8_0_OR_GREATER
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
+#endif
             {
+#if !NETFRAMEWORK
                 message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
+#else
+                message = StringsHelper.GetString(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
+#endif
             }
             return message;
         }
