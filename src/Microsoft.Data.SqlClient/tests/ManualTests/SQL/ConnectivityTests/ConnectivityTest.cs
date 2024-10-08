@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                  //    sqlConnection.Open();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
         public static async Task ConnectionOpenAsyncDisableRetry()
         {
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
