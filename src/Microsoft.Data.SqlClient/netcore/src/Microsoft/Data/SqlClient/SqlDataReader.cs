@@ -323,9 +323,9 @@ namespace Microsoft.Data.SqlClient
                                 collation != null ? collation.LCID : _defaultLCID,
                                 collation != null ? collation.SqlCompareOptions : SqlCompareOptions.None,
                                 colMetaData.udt?.Type,
-                                false, // isMultiValued
-                                null, // fieldmetadata
-                                null, // extended properties
+                                isMultiValued: false,
+                                fieldMetaData: null,
+                                extendedProperties: null,
                                 colMetaData.column,
                                 typeSpecificNamePart1,
                                 typeSpecificNamePart2,
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient
             _defaultLCID = _parser.DefaultLCID;
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         [SuppressMessage("ReflectionAnalysis", "IL2111",
                    Justification = "System.Type.TypeInitializer would not be used in dataType and providerSpecificDataType columns.")]
 #endif
@@ -763,11 +763,10 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: true);
 
-            TdsOperationStatus result;
-
             // VSTS DEVDIV2 380446: It is possible that read attempt we are cleaning after ended with partially
             // processed header (if it falls between network packets). In this case the first thing to do is to
             // finish reading the header, otherwise code will start treating unread header as TDS payload.
+            TdsOperationStatus result;
             if (_stateObj._partialHeaderBytesRead > 0)
             {
                 result = _stateObj.TryProcessHeader();
@@ -1154,7 +1153,9 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: We doom connection for TdsParserState.Closed since it indicates that it is in some abnormal and unstable state, probably as a result of
                     // closing from another thread. In general, TdsParserState.Closed does not necessitate dooming the connection.
                     if (_parser.Connection != null)
+                    {
                         _parser.Connection.DoomThisConnection();
+                    }
                     throw SQL.ConnectionDoomed();
                 }
                 bool ignored;
@@ -1252,7 +1253,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*' />
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         [SuppressMessage("ReflectionAnalysis", "IL2093:MismatchOnMethodReturnValueBetweenOverrides",
                    Justification = "Annotations for DbDataReader was not shipped in net6.0")]
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
@@ -1273,7 +1274,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         private Type GetFieldTypeInternal(_SqlMetaData metaData)
@@ -1368,7 +1369,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
-#if NET8_0_OR_GREATER
+#if !NETFRAMEWORK && NET8_0_OR_GREATER
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         override public Type GetProviderSpecificFieldType(int i)
@@ -1387,7 +1388,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         private Type GetProviderSpecificFieldTypeInternal(_SqlMetaData metaData)
@@ -1712,7 +1713,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (dataIndex < 0)
+                {
                     throw ADP.NegativeParameter(nameof(dataIndex));
+                }
 
                 if (dataIndex < _columnDataBytesRead)
                 {
@@ -1730,14 +1733,20 @@ namespace Microsoft.Data.SqlClient
 
                 // if bad buffer index, throw
                 if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                {
                     throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                }
 
                 // if there is not enough room in the buffer for data
                 if (length + bufferIndex > buffer.Length)
+                {
                     throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
+                }
 
                 if (length < 0)
+                {
                     throw ADP.InvalidDataLength(length);
+                }
 
                 // Skip if needed
                 if (cb > 0)
@@ -1774,7 +1783,9 @@ namespace Microsoft.Data.SqlClient
             // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
             // we need can cast to int if the dataIndex is in range
             if (dataIndex < 0)
+            {
                 throw ADP.NegativeParameter(nameof(dataIndex));
+            }
 
             if (dataIndex > int.MaxValue)
             {
@@ -1828,9 +1839,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     // help the user out in the case where there's less data than requested
                     if ((ndataIndex + length) > cbytes)
+                    {
                         cbytes = cbytes - ndataIndex;
+                    }
                     else
+                    {
                         cbytes = length;
+                    }
                 }
 
                 Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
@@ -1844,15 +1859,21 @@ namespace Microsoft.Data.SqlClient
                 cbytes = data.Length;
 
                 if (length < 0)
+                {
                     throw ADP.InvalidDataLength(length);
+                }
 
                 // if bad buffer index, throw
                 if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                {
                     throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                }
 
                 // if there is not enough room in the buffer for data
                 if (cbytes + bufferIndex > buffer.Length)
+                {
                     throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
+                }
 
                 throw;
             }
@@ -1868,7 +1889,6 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.AsyncOperationPending();
             }
 
-            TdsOperationStatus result;
             int value;
             SqlStatistics statistics = null;
             Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
@@ -1877,7 +1897,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SetTimeout(timeoutMilliseconds ?? _defaultTimeoutMilliseconds);
 
-                result = TryReadColumnHeader(i);
+                TdsOperationStatus result = TryReadColumnHeader(i);
                 if (result != TdsOperationStatus.Done)
                 {
                     throw SQL.SynchronousCallMayNotPend();
@@ -2161,7 +2181,9 @@ namespace Microsoft.Data.SqlClient
 
                 // if dataIndex outside of data range, return 0
                 if (ndataIndex < 0 || ndataIndex >= cchars)
+                {
                     return 0;
+                }
 
                 try
                 {
@@ -2169,9 +2191,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         // help the user out in the case where there's less data than requested
                         if ((ndataIndex + length) > cchars)
+                        {
                             cchars = cchars - ndataIndex;
+                        }
                         else
+                        {
                             cchars = length;
+                        }
                     }
 
                     Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
@@ -2186,15 +2212,21 @@ namespace Microsoft.Data.SqlClient
                     cchars = _columnDataChars.Length;
 
                     if (length < 0)
+                    {
                         throw ADP.InvalidDataLength(length);
+                    }
 
                     // if bad buffer index, throw
                     if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                    {
                         throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                    }
 
                     // if there is not enough room in the buffer for data
                     if (cchars + bufferIndex > buffer.Length)
+                    {
                         throw ADP.InvalidBufferSizeOrIndex(cchars, bufferIndex);
+                    }
 
                     throw;
                 }
@@ -2244,7 +2276,9 @@ namespace Microsoft.Data.SqlClient
             // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
             // In both cases we will clean decoder
             if (dataIndex == 0)
+            {
                 _stateObj._plpdecoder = null;
+            }
 
             bool isUnicode = _metaData[i].metaType.IsNCharType;
 
@@ -2617,7 +2651,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed(nameof(GetSqlValueFromSqlBufferInternal));
+                        throw ADP.DataReaderClosed();
                     }
                 }
                 else
@@ -2817,7 +2851,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed(nameof(GetValueFromSqlBufferInternal));
+                        throw ADP.DataReaderClosed();
                     }
                 }
             }
@@ -2896,7 +2930,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.DateTime;
             }
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
             else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
             {
                 return (T)(object)data.DateOnly;
@@ -3557,7 +3591,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 #endif
 
@@ -3708,10 +3742,10 @@ namespace Microsoft.Data.SqlClient
                     if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                     {
                         byte token;
-                        TdsOperationStatus debugResult = _stateObj.TryPeekByte(out token);
-                        if (debugResult != TdsOperationStatus.Done)
+                        result = _stateObj.TryPeekByte(out token);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return debugResult;
+                            return result;
                         }
 
                         Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
@@ -3808,7 +3842,7 @@ namespace Microsoft.Data.SqlClient
 
                 TdsOperationStatus result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                     _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                    columnMetaData.column);
+                    columnMetaData.column, _command);
                 if (result != TdsOperationStatus.Done)
                 {
                     // will read UDTs as VARBINARY.
@@ -3970,7 +4004,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        // we have read past the column somehow, this is an error
                         Debug.Assert(false, "We have read past the column somehow, this is an error");
                     }
                 }
@@ -4310,7 +4343,6 @@ namespace Microsoft.Data.SqlClient
 
             if (metaData != null)
             {
-                TdsOperationStatus result;
                 // we are done consuming metadata only if there is no moreInfo
                 if (!moreInfo)
                 {
@@ -4321,7 +4353,7 @@ namespace Microsoft.Data.SqlClient
                       // Peek, and if row token present, set _hasRows true since there is a
                       // row in the result
                         byte b;
-                        result = _stateObj.TryPeekByte(out b);
+                        TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -5201,7 +5233,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync:false));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync: false));
                     }
                     else
                     {
@@ -5241,7 +5273,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync:true));
+                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5305,19 +5337,24 @@ namespace Microsoft.Data.SqlClient
                 reader.PrepareForAsyncContinuation();
             }
 
-            TdsOperationStatus result;
             if (typeof(T) == typeof(Stream) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(XmlReader))
             {
-                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady && reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done)
+                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    bool internalReadSuccess = false;
+                    internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done;
+
+                    if (internalReadSuccess)
+                    {
+                        return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
                 }
             }
 
-            result = reader.TryReadColumn(columnIndex, setTimeout: false);
+            TdsOperationStatus result = reader.TryReadColumn(columnIndex, setTimeout: false);
             if (result == TdsOperationStatus.Done)
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync:false));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
             else
             {
@@ -5683,7 +5720,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal class Snapshot
+        internal sealed class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;
