@@ -10,10 +10,12 @@ using Microsoft.Win32;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
+
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*' />
     public class SqlColumnEncryptionCspProvider : SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*' />
         public const string ProviderName = @"MSSQL_CSP_PROVIDER";
 
         /// <summary>
@@ -22,7 +24,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private const string RSAEncryptionAlgorithmWithOAEP = @"RSA_OAEP";
 
-
+        /// <summary>
+        /// Hashing algorithm used for signing
+        /// </summary>
         private const string HashingAlgorithm = @"SHA256";
 
         /// <summary>
@@ -30,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private readonly byte[] _version = new byte[] { 0x01 };
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*' />
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             // Validate the input parameters
@@ -106,7 +110,7 @@ namespace Microsoft.Data.SqlClient
 
             // Compute the hash to validate the signature
             byte[] hash;
-            using (SHA256Cng sha256 = new SHA256Cng())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 sha256.TransformFinalBlock(encryptedColumnEncryptionKey, 0, encryptedColumnEncryptionKey.Length - signature.Length);
                 hash = sha256.Hash;
@@ -124,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             return RSADecrypt(rsaProvider, cipherText);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*' />
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             // Validate the input parameters
@@ -167,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             // Compute hash
             // SHA-2-256(version + keyPathLength + ciphertextLength + keyPath + ciphertext) 
             byte[] hash;
-            using (SHA256Cng sha256 = new SHA256Cng())
+            using (SHA256 sha256 = SHA256.Create())
             {
                 sha256.TransformBlock(version, 0, version.Length, version, 0);
                 sha256.TransformBlock(keyPathLength, 0, keyPathLength.Length, keyPathLength, 0);
@@ -214,13 +218,13 @@ namespace Microsoft.Data.SqlClient
             return encryptedColumnEncryptionKey;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*' />
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             throw new NotSupportedException();
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*' />
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
         {
             throw new NotSupportedException();
@@ -230,7 +234,7 @@ namespace Microsoft.Data.SqlClient
         /// This function validates that the encryption algorithm is RSA_OAEP and if it is not,
         /// then throws an exception
         /// </summary>
-        /// <param name="encryptionAlgorithm">Asymmetric key encryptio algorithm</param>
+        /// <param name="encryptionAlgorithm">Asymmetric key encryption algorithm</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         private void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {
@@ -340,7 +344,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Creates a RSACryptoServiceProvider from the given key path which contains both CSP name and key name
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CAPI provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CAPI provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <returns></returns>
         private RSACryptoServiceProvider CreateRSACryptoProvider(string keyPath, bool isSystemOp)
@@ -385,13 +389,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Extracts the CSP provider name and key name from the given key path
         /// </summary>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <param name="cspProviderName">output containing the CSP provider name</param>
         /// <param name="keyIdentifier">output containing the key name</param>
         private void GetCspProviderAndKeyName(string keyPath, bool isSystemOp, out string cspProviderName, out string keyIdentifier)
         {
-            int indexOfSlash = keyPath.IndexOf(@"/");
+            int indexOfSlash = keyPath.IndexOf(@"/", StringComparison.Ordinal);
             if (indexOfSlash == -1)
             {
                 throw SQL.InvalidCspPath(keyPath, isSystemOp);
@@ -415,7 +419,7 @@ namespace Microsoft.Data.SqlClient
         /// Gets the provider type from a given CAPI provider name
         /// </summary>
         /// <param name="providerName">CAPI provider name</param>
-        /// <param name="keyPath">key path in the format of [CSP provider name]\[key name]</param>
+        /// <param name="keyPath">key path in the format of [CSP provider name]/[key name]</param>
         /// <param name="isSystemOp">Indicates if ADO.NET calls or the customer calls the API</param>
         /// <returns></returns>
         private int GetProviderType(string providerName, string keyPath, bool isSystemOp)
