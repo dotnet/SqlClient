@@ -4,5 +4,8 @@
 		<TargetFrameworks>net6.0;net8.0;net462</TargetFrameworks>
 		<RootNamespace />
 	</PropertyGroup>
+	<ItemGroup>
+	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
+	</ItemGroup>
   
 </Project>
