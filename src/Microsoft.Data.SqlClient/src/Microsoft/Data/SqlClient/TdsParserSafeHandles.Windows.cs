@@ -5,10 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
+using Interop.Windows.Sni;
+
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 #endif
 
@@ -18,8 +19,8 @@ namespace Microsoft.Data.SqlClient
     {
         internal static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(ReadDispatcher);
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(WriteDispatcher);
+        internal readonly SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SqlAsyncCallbackDelegate(ReadDispatcher);
+        internal readonly SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SqlAsyncCallbackDelegate(WriteDispatcher);
 
         private readonly uint _sniStatus = TdsEnums.SNI_UNINITIALIZED;
         private readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
@@ -147,7 +148,7 @@ namespace Microsoft.Data.SqlClient
 
         // creates a physical connection
         internal SNIHandle(
-            SNINativeMethodWrapper.ConsumerInfo myInfo,
+            ConsumerInfo myInfo,
             string serverName,
             byte[] spnBuffer,
             int timeout,
@@ -195,7 +196,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // constructs SNI Handle for MARS session
-        internal SNIHandle(SNINativeMethodWrapper.ConsumerInfo myInfo, SNIHandle parent, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo) : base(IntPtr.Zero, true)
+        internal SNIHandle(ConsumerInfo myInfo, SNIHandle parent, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo) : base(IntPtr.Zero, true)
         {
             try
             { }

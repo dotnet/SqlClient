@@ -11,6 +11,7 @@ using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 
@@ -22,10 +23,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly System.Runtime.InteropServices.Architecture s_architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
         private const int SniOpenTimeOut = -1; // infinite
-
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        internal delegate void SqlAsyncCallbackDelegate(IntPtr m_ConsKey, IntPtr pPacket, uint dwError);
-
+        
         internal delegate IntPtr SqlClientCertificateDelegate(IntPtr pCallbackContext);
 
         internal const int ConnTerminatedError = 2;
@@ -160,14 +158,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region Structs\Enums
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct ConsumerInfo
-        {
-            internal int defaultBufferSize;
-            internal SqlAsyncCallbackDelegate readDelegate;
-            internal SqlAsyncCallbackDelegate writeDelegate;
-            internal IntPtr key;
-        }
+        
 
         [StructLayout(LayoutKind.Sequential)]
         internal struct AuthProviderInfo

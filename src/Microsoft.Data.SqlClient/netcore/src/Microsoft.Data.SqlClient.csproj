@@ -735,6 +735,12 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs">
       <Link>Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
+      <Link>Interop\Windows\Sni\Delegates.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\UnicodeString.cs">
       <Link>Interop\Windows\UnicodeString.cs</Link>
     </Compile>

@@ -5,12 +5,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
-using System.Threading.Tasks;
-using Microsoft.Data.Common;
-using System.Net;
 using System.Text;
+using System.Threading.Tasks;
+using Interop.Windows.Sni;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
@@ -63,7 +64,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(physicalConnection is TdsParserStateObjectNative, "Expected a stateObject of type " + this.GetType());
             TdsParserStateObjectNative nativeSNIObject = physicalConnection as TdsParserStateObjectNative;
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
@@ -121,9 +122,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
+        private ConsumerInfo CreateConsumerInfo(bool async)
         {
-            SNINativeMethodWrapper.ConsumerInfo myInfo = new SNINativeMethodWrapper.ConsumerInfo();
+            ConsumerInfo myInfo = new ConsumerInfo();
 
             Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
 
@@ -175,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 

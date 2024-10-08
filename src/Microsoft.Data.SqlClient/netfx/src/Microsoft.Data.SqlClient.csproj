@@ -151,6 +151,12 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
       <Link>Interop\SystemErrors.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
+      <Link>Interop\Windows\Sni\Delegates.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
       <Link>Interop\UnicodeString.cs</Link>
     </Compile>
