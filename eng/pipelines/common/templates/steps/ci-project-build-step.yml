@@ -43,6 +43,7 @@ steps:
         solution: build.proj
         msbuildArchitecture: x64
         msbuildArguments: '-t:restore'
+      retryCountOnTaskFailure: 1
 
     - task: MSBuild@1
       displayName: 'Build Driver [Win]'

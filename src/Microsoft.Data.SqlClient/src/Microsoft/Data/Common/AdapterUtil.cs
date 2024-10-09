@@ -1336,12 +1336,6 @@ namespace Microsoft.Data.Common
             return completion.Task;
         }
 
-        internal static void TraceExceptionForCapture(Exception e)
-        {
-            Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
-        }
-
         //
         // Helper Functions
         //

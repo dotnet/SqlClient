@@ -114,7 +114,7 @@ namespace Microsoft.Data.Sql
             string isClustered = null;
             string version = null;
             string[] serverinstanceslist = serverInstances.Split(EndOfServerInstanceDelimiter_Native);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of recieved server instances are {2}",
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of received server instances are {2}",
                                                    nameof(SqlDataSourceEnumeratorNativeHelper), nameof(ParseServerEnumString), serverinstanceslist.Length);
 
             // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 

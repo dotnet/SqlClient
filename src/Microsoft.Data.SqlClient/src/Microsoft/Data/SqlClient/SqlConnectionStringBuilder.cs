@@ -73,9 +73,6 @@ namespace Microsoft.Data.SqlClient
             ConnectionReset,
             NetworkLibrary,
             TransparentNetworkIPResolution,
-#if ADONET_CERT_AUTH
-            Certificate,
-#endif
 #endif
             // keep the KeywordsCount value last
             KeywordsCount
@@ -135,9 +132,6 @@ namespace Microsoft.Data.SqlClient
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
         private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
         private string _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
-#if ADONET_CERT_AUTH
-        private string _certificate = DbConnectionStringDefaults.Certificate;
-#endif
 #else
         internal const int DeprecatedKeywordsCount = 5;
 #endif
@@ -192,9 +186,6 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
             validKeywords[(int)Keywords.NetworkLibrary] = DbConnectionStringKeywords.NetworkLibrary;
             validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIPResolution;
-#if ADONET_CERT_AUTH
-            validKeywords[(int)Keywords.Certificate] = DbConnectionStringKeywords.Certificate;
-#endif
 #endif
             return validKeywords;
         }
@@ -248,9 +239,6 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.ConnectionReset, Keywords.ConnectionReset },
                 { DbConnectionStringKeywords.TransparentNetworkIPResolution, Keywords.TransparentNetworkIPResolution },
                 { DbConnectionStringKeywords.NetworkLibrary, Keywords.NetworkLibrary },
-#if ADONET_CERT_AUTH
-                { DbConnectionStringKeywords.Certificate, Keywords.Certificate },
-#endif
                 { DbConnectionStringSynonyms.NET, Keywords.NetworkLibrary },
                 { DbConnectionStringSynonyms.NETWORK, Keywords.NetworkLibrary },
                 { DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION, Keywords.TransparentNetworkIPResolution },
@@ -408,17 +396,12 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 case Keywords.ConnectionReset:
                     return ConnectionReset;
-#pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
                     return TransparentNetworkIPResolution;
                 case Keywords.NetworkLibrary:
                     return NetworkLibrary;
-#if ADONET_CERT_AUTH
-                case Keywords.Certificate:              return Certificate;
 #endif
-#else
 #pragma warning restore 618
-#endif
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -573,11 +556,6 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.NetworkLibrary:
                     _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
                     break;
-#if ADONET_CERT_AUTH
-                case Keywords.Certificate:
-                    _certificate = DbConnectionStringDefaults.Certificate;
-                    break;
-#endif
 #endif
                 default:
                     Debug.Fail("unexpected keyword");
@@ -1085,21 +1063,15 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.ConnectionReset:
                             ConnectionReset = ConvertToBoolean(value);
                             break;
-#pragma warning restore 618
                         case Keywords.NetworkLibrary:
                             NetworkLibrary = ConvertToString(value);
                             break;
                         case Keywords.TransparentNetworkIPResolution:
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
                             break;
-#if ADONET_CERT_AUTH
-                        case Keywords.Certificate:
-                            Certificate = ConvertToString(value);
-                            break;
 #endif
-#else
+#endif
 #pragma warning restore 618
-#endif
                         default:
                             Debug.Fail("unexpected keyword");
                             throw UnsupportedKeyword(keyword);
@@ -1544,7 +1516,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryCount
@@ -1563,7 +1535,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
         [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResiliency)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryInterval
@@ -1942,24 +1914,6 @@ namespace Microsoft.Data.SqlClient
                 _networkLibrary = value;
             }
         }
-
-#if ADONET_CERT_AUTH
-        [DisplayName(DbConnectionStringKeywords.Certificate)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Certificate)]
-        [RefreshProperties(RefreshProperties.All)]
-        public string Certificate {
-            get => _certificate;
-            set {
-                if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(value)) {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Certificate);
-                }
-
-                SetValue(DbConnectionStringKeywords.Certificate, value);
-                _certificate = value;
-            }
-        }
-#endif
 #endif
         #endregion // Public APIs
     }

@@ -101,6 +101,7 @@ steps:
   inputs:
     arguments: '-f ${{parameters.targetNetCoreVersion }}'
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+  retryCountOnTaskFailure: 1
 
 - task: DotNetCoreCLI@2
   displayName: 'Create Test Database ${{parameters.databaseName }}'

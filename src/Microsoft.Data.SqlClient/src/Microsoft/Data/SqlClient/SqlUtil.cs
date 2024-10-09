@@ -987,6 +987,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception JsonDocumentNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_JsonDocumentNotSupportedOnColumnType, columnName));
+        }
+
         internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
@@ -1444,10 +1449,10 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection, int maxNumberOfRedirectRoute)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported, maxNumberOfRedirectRoute)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
@@ -2695,7 +2700,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        ///  Escape a string to be used inside TSQL literal, such as N'somename' or 'somename'
+        ///  Escape a string to be used inside TSQL literal, such as N'some-name' or 'some-name'
         /// </summary>
         internal static string EscapeStringAsLiteral(string input)
         {

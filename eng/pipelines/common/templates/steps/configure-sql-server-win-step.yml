@@ -114,14 +114,28 @@ steps:
     
     Write-Host $machineName
     Import-Module "sqlps"
-    Invoke-Sqlcmd -ServerInstance "$machineName" @"
-        CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
-        DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
-        CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
-        ALTER SERVER ROLE [sysadmin] ADD MEMBER [${{parameters.user }}];
-        ALTER LOGIN [${{parameters.saUser }}] ENABLE;
-        ALTER LOGIN [${{parameters.saUser }}] WITH PASSWORD = '$password';
+    $tries = 0
+    while ($true) {
+        $tries++
+        try {
+            Invoke-Sqlcmd -ServerInstance "$machineName" @"
+                CREATE LOGIN [${{parameters.user }}] WITH PASSWORD=N'$password',
+                DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF;
+                CREATE USER [${{parameters.user }}] FROM LOGIN [${{parameters.user }}];
+                ALTER SERVER ROLE [sysadmin] ADD MEMBER [${{parameters.user }}];
+                ALTER LOGIN [${{parameters.saUser }}] ENABLE;
+                ALTER LOGIN [${{parameters.saUser }}] WITH PASSWORD = '$password';
     "@
+            break
+        } catch {
+            if ($tries -ge 5) {
+                Write-Host "##[error]Failed to create database user after $tries tries."
+                break
+            }
+            Write-Host "Failed to connect to server. Retrying in 5 seconds..."
+            Start-Sleep -Seconds 5
+        }
+    }
   displayName: 'Create SQL user [Win]'
   condition: ${{parameters.condition }}
   env:
