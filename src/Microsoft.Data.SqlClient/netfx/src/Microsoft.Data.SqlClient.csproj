@@ -139,6 +139,9 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -697,7 +700,6 @@
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />

@@ -50,6 +50,16 @@ namespace Microsoft.Data.SqlClient
             internal static void Assert(string message)
             {
             }
+
+            [Conditional("NETFRAMEWORK")]
+            internal void Start()
+            {
+            }
+
+            [Conditional("NETFRAMEWORK")]
+            internal void Stop()
+            {
+            }
         }
 
         private static int _objectTypeCount; // EventSource counter

@@ -74,6 +74,9 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -628,7 +631,6 @@
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
