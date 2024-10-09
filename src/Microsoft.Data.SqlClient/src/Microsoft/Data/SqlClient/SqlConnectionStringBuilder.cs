@@ -1070,7 +1070,6 @@ namespace Microsoft.Data.SqlClient
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
                             break;
 #endif
-#endif
 #pragma warning restore 618
                         default:
                             Debug.Fail("unexpected keyword");
