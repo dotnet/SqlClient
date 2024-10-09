@@ -2208,7 +2208,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// attempts to change the timeout state from the expected state to the target state and if it succeeds
         /// will setup the the stateobject into the timeout expired state
         /// </summary>
         /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>

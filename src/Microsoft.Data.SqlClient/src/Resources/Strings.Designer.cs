@@ -10484,7 +10484,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamNotSupportOnColumnType", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///    Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json.
+        /// </summary>
+        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support reading..
         /// </summary>

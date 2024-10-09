@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient
             // will end the reliable try...
             if (e is OutOfMemoryException)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
             }
             else
             {

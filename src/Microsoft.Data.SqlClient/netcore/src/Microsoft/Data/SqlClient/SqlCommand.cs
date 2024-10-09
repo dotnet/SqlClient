@@ -4566,7 +4566,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(rpc != null, "rpc should not be null here.");
 
                 int userParamCount = rpc.userParams?.Count ?? 0;
-                int recievedMetadataCount = 0;
+                int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
 
@@ -4591,7 +4591,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 Debug.Assert(sqlParameter.CipherMetadata == null, "param.CipherMetadata should be null.");
                                 sqlParameter.HasReceivedMetadata = true;
-                                recievedMetadataCount += 1;
+                                receivedMetadataCount += 1;
                                 // Found the param, setup the encryption info.
                                 byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
                                 if ((byte)SqlClientEncryptionType.PlainText != columnEncryptionType)
@@ -4633,7 +4633,7 @@ namespace Microsoft.Data.SqlClient
                 // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
                 // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
 
-                if (recievedMetadataCount != userParamCount)
+                if (receivedMetadataCount != userParamCount)
                 {
                     for (int index = 0; index < userParamCount; index++)
                     {
@@ -6466,7 +6466,7 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(size);
                     paramList.Append(')');
                 }
-                else if (mt.IsPlp && (mt.SqlDbType != SqlDbType.Xml) && (mt.SqlDbType != SqlDbType.Udt))
+                else if (mt.IsPlp && (mt.SqlDbType != SqlDbType.Xml) && (mt.SqlDbType != SqlDbType.Udt) && (mt.SqlDbType != SqlDbTypeExtensions.Json))
                 {
                     paramList.Append("(max) ");
                 }
