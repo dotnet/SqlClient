@@ -290,7 +290,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
-#if NET
+#if !NETFRAMEWORK
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
 
             // Network Library has its own special error message
