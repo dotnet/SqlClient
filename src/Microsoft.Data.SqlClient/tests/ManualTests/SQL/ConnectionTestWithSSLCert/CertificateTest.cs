@@ -92,6 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
+        [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpenningConnectionWithGoodCertificateTest()
@@ -121,6 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
+        [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
@@ -164,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("26934")]
+        [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
