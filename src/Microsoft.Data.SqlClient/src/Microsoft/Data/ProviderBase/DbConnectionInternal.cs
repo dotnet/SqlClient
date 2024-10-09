@@ -32,30 +32,17 @@ namespace Microsoft.Data.ProviderBase
 
         private static int _objectTypeCount;
 
-        private readonly bool _allowSetConnectionString;
-        private readonly bool _hidePassword;
         private readonly int _objectId = Interlocked.Increment(ref _objectTypeCount);
 
         /// <summary>
         /// [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
         /// </summary>
         private readonly WeakReference<DbConnection> _owningObject = new WeakReference<DbConnection>(null, false);
-        private readonly ConnectionState _state;
 
         /// <summary>
         /// True when the connection should no longer be pooled.
         /// </summary>
         private bool _cannotBePooled;
-
-        /// <summary>
-        /// True when the connection should no longer be used.
-        /// </summary>
-        private bool _connectionIsDoomed;
-
-        /// <summary>
-        /// The pooler that the connection came from (Pooled connections only)
-        /// </summary>
-        private DbConnectionPool _connectionPool;
 
         /// <summary>
         /// When the connection was created.
@@ -76,7 +63,6 @@ namespace Microsoft.Data.ProviderBase
         /// Also, this reference should not be disposed, since we aren't taking ownership of it.
         /// </summary>
         private Transaction _enlistedTransactionOriginal;
-        private bool _isInStasis;
 
         /// <summary>
         /// usage must be thread safe] the number of times this object has been pushed into the
@@ -84,18 +70,13 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         private int _pooledCount;
 
-        /// <summary>
-        /// Collection of objects that we need to notify in some way when we're being deactivated
-        /// </summary>
-        private DbReferenceCollection _referenceCollection;
         private TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
-        #if NETFRAMEWORK
-        private DbConnectionPoolCounters _performanceCounters;      // the performance counters we're supposed to update
-        #endif
-
         #if DEBUG
-        private int _activateCount;            // debug only counter to verify activate/deactivates are in sync.
+        /// <summary>
+        /// Debug only counter to verify activate/deactivates are in sync.
+        /// </summary>
+        private int _activateCount;
         #endif
 
         #endregion
@@ -107,28 +88,16 @@ namespace Microsoft.Data.ProviderBase
         // Constructor for internal connections
         internal DbConnectionInternal(ConnectionState state, bool hidePassword, bool allowSetConnectionString)
         {
-            _allowSetConnectionString = allowSetConnectionString;
-            _hidePassword = hidePassword;
-            _state = state;
+            AllowSetConnectionString = allowSetConnectionString;
+            ShouldHidePassword = hidePassword;
+            State = state;
         }
 
         #region Properties
 
-        internal bool AllowSetConnectionString
-        {
-            get
-            {
-                return _allowSetConnectionString;
-            }
-        }
+        internal bool AllowSetConnectionString { get; }
 
-        internal bool CanBePooled
-        {
-            get
-            {
-                return (!_connectionIsDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out _));
-            }
-        }
+        internal bool CanBePooled => !IsConnectionDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out _);
 
         internal virtual bool IsAccessTokenExpired => false;
 
@@ -172,72 +141,38 @@ namespace Microsoft.Data.ProviderBase
             get
             {
                 Debug.Assert(_pooledCount <= 1 && _pooledCount >= -1, "Pooled count for object is invalid");
-                return (_pooledCount == 1);
+                return _pooledCount == 1;
             }
         }
 
-        virtual internal bool IsTransactionRoot
-        {
-            get
-            {
-                return false; // if you want to have delegated transactions, you better override this...
-            }
-        }
+        /// <remarks>
+        /// If you want to have delegated transactions, you had better override this...
+        /// </remarks>
+        internal virtual bool IsTransactionRoot => false;
 
-        // Is this connection in stasis, waiting for transaction to end before returning to pool?
-        internal bool IsTxRootWaitingForTxEnd
-        {
-            get
-            {
-                return _isInStasis;
-            }
-        }
+        /// <summary>
+        /// Is this connection in stasis, waiting for transaction to end before returning to pool?
+        /// </summary>
+        internal bool IsTxRootWaitingForTxEnd { get; private set; }
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectId;
-            }
-        }
+        internal int ObjectID => _objectId;
 
-        internal DbConnectionPool Pool
-        {
-            get
-            {
-                return _connectionPool;
-            }
-        }
+        /// <summary>
+        /// The pooler that the connection came from (Pooled connections only)
+        /// </summary>
+        internal DbConnectionPool Pool { get; private set; }
 
-        abstract public string ServerVersion
-        {
-            get;
-        }
+        public abstract string ServerVersion { get; }
 
         // this should be abstract but until it is added to all the providers virtual will have to do RickFe
-        virtual public string ServerVersionNormalized
+        public virtual string ServerVersionNormalized
         {
-            get
-            {
-                throw ADP.NotSupported();
-            }
+            get => throw ADP.NotSupported();
         }
 
-        public bool ShouldHidePassword
-        {
-            get
-            {
-                return _hidePassword;
-            }
-        }
+        public bool ShouldHidePassword { get; }
 
-        public ConnectionState State
-        {
-            get
-            {
-                return _state;
-            }
-        }
+        public ConnectionState State { get; }
 
         protected internal Transaction EnlistedTransaction
         {
@@ -248,10 +183,9 @@ namespace Microsoft.Data.ProviderBase
             set
             {
                 Transaction currentEnlistedTransaction = _enlistedTransaction;
-                if ((currentEnlistedTransaction == null && value != null)
-                    || (currentEnlistedTransaction != null && !currentEnlistedTransaction.Equals(value)))
-                {  // WebData 20000024
-
+                if ((currentEnlistedTransaction == null && value != null) ||
+                    (currentEnlistedTransaction != null && !currentEnlistedTransaction.Equals(value)))
+                {
                     // Pay attention to the order here:
                     // 1) defect from any notifications
                     // 2) replace the transaction
@@ -299,12 +233,11 @@ namespace Microsoft.Data.ProviderBase
                         // we really need to dispose our clones; they may have
                         // native resources and GC may not happen soon enough.
                         // VSDevDiv 479564: don't dispose if still holding reference in _enlistedTransaction
-                        if (previousTransactionClone != null &&
-                                !Object.ReferenceEquals(previousTransactionClone, _enlistedTransaction))
+                        if (previousTransactionClone != null && !ReferenceEquals(previousTransactionClone, _enlistedTransaction))
                         {
                             previousTransactionClone.Dispose();
                         }
-                        if (valueClone != null && !Object.ReferenceEquals(valueClone, _enlistedTransaction))
+                        if (valueClone != null && !ReferenceEquals(valueClone, _enlistedTransaction))
                         {
                             valueClone.Dispose();
                         }
@@ -328,8 +261,9 @@ namespace Microsoft.Data.ProviderBase
         /// Get boolean value that indicates whether the enlisted transaction has been disposed.
         /// </summary>
         /// <value>
-        /// True if there is an enlisted transaction, and it has been disposed.
-        /// False if there is an enlisted transaction that has not been disposed, or if the transaction reference is null.
+        /// <see langword="true"/> if there is an enlisted transaction, and it has been disposed.
+        /// <see langword="false"/> if there is an enlisted transaction that has not been disposed,
+        /// or if the transaction reference is null.
         /// </value>
         /// <remarks>
         /// This method must be called while holding a lock on the DbConnectionInternal instance.
@@ -366,62 +300,46 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        protected internal bool IsConnectionDoomed
+        /// <summary>
+        /// <see langword="true" /> when the connection should no longer be used.
+        /// </summary>
+        protected internal bool IsConnectionDoomed { get; private set; }
+
+        /// <summary>
+        /// Is this a connection that must be put in stasis (or is already in stasis) pending the
+        /// end of its transaction?
+        /// </summary>
+        /// <remarks>
+        /// If you want to have delegated transactions that are non-poolable, you had better
+        /// override this...
+        /// </remarks>
+        protected internal virtual bool IsNonPoolableTransactionRoot
         {
-            get
-            {
-                return _connectionIsDoomed;
-            }
+            get => false;
         }
 
-        // Is this a connection that must be put in stasis (or is already in stasis) pending the end of it's transaction?
-        virtual protected internal bool IsNonPoolableTransactionRoot
-        {
-            get
-            {
-                return false; // if you want to have delegated transactions that are non-poolable, you better override this...
-            }
-        }
-
+        /// <remarks>
+        /// We use a weak reference to the owning object so we can identify when it has been
+        /// garbage collected without throwing exceptions.
+        /// </remarks>
         protected internal DbConnection Owner
         {
-            // We use a weak reference to the owning object so we can identify when
-            // it has been garbage collected without throwing exceptions.
-            get
-            {
-                if (_owningObject.TryGetTarget(out DbConnection connection))
-                {
-                    return connection;
-                }
-                return null;
-            }
+            get => _owningObject.TryGetTarget(out DbConnection connection) ? connection : null;
         }
 
         #if NETFRAMEWORK
-        protected DbConnectionPoolCounters PerformanceCounters
-        {
-            get
-            {
-                return _performanceCounters;
-            }
-        }
+        protected DbConnectionPoolCounters PerformanceCounters { get; private set; }
         #endif
 
-        virtual protected bool ReadyToPrepareTransaction
+        protected virtual bool ReadyToPrepareTransaction
         {
-            get
-            {
-                return true;
-            }
+            get => true;
         }
 
-        protected internal DbReferenceCollection ReferenceCollection
-        {
-            get
-            {
-                return _referenceCollection;
-            }
-        }
+        /// <summary>
+        /// Collection of objects that we need to notify in some way when we're being deactivated
+        /// </summary>
+        protected internal DbReferenceCollection ReferenceCollection { get; private set; }
 
         /// <summary>
         /// Get boolean that specifies whether an enlisted transaction can be unbound from
@@ -430,12 +348,9 @@ namespace Microsoft.Data.ProviderBase
         /// <value>
         /// True if the enlisted transaction can be unbound on transaction completion; otherwise false.
         /// </value>
-        virtual protected bool UnbindOnTransactionCompletion
+        protected virtual bool UnbindOnTransactionCompletion
         {
-            get
-            {
-                return true;
-            }
+            get => true;
         }
 
         #endregion
@@ -465,15 +380,15 @@ namespace Microsoft.Data.ProviderBase
 
         internal void AddWeakReference(object value, int tag)
         {
-            if (_referenceCollection == null)
+            if (ReferenceCollection == null)
             {
-                _referenceCollection = CreateReferenceCollection();
-                if (_referenceCollection == null)
+                ReferenceCollection = CreateReferenceCollection();
+                if (ReferenceCollection == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateReferenceCollectionReturnedNull);
                 }
             }
-            _referenceCollection.Add(value, tag);
+            ReferenceCollection.Add(value, tag);
         }
 
         abstract public DbTransaction BeginTransaction(System.Data.IsolationLevel il);
@@ -638,7 +553,7 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.ExitActiveConnection();
             #endif
 
-            if (!_connectionIsDoomed && Pool.UseLoadBalancing)
+            if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {
                 // If we're not already doomed, check the connection's lifetime and
                 // doom it if it's lifetime has elapsed.
@@ -765,12 +680,12 @@ namespace Microsoft.Data.ProviderBase
 
         public virtual void Dispose()
         {
-            _connectionPool = null;
-            _connectionIsDoomed = true;
+            Pool = null;
+            IsConnectionDoomed = true;
             _enlistedTransactionOriginal = null; // should not be disposed
 
             #if NETFRAMEWORK
-            _performanceCounters = null;
+            PerformanceCounters = null;
             #endif
 
             // Dispose of the _enlistedTransaction since it is a clone
@@ -806,10 +721,10 @@ namespace Microsoft.Data.ProviderBase
             // a connection pool.
 
             #if NETFRAMEWORK
-            _performanceCounters = performanceCounters;
+            PerformanceCounters = performanceCounters;
             #endif
 
-            _connectionPool = null;
+            Pool = null;
             _owningObject.SetTarget(owningObject);
             _pooledCount = -1;
         }
@@ -820,10 +735,10 @@ namespace Microsoft.Data.ProviderBase
             // a connection pool.
             _createTime = DateTime.UtcNow;
 
-            _connectionPool = connectionPool;
+            Pool = connectionPool;
 
             #if NETFRAMEWORK
-            _performanceCounters = connectionPool.PerformanceCounters;
+            PerformanceCounters = connectionPool.PerformanceCounters;
             #endif
         }
 
@@ -933,7 +848,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void SetInStasis()
         {
-            _isInStasis = true;
+            IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
             #if NETFRAMEWORK
@@ -988,7 +903,7 @@ namespace Microsoft.Data.ProviderBase
         #endif
         protected internal void DoomThisConnection()
         {
-            _connectionIsDoomed = true;
+            IsConnectionDoomed = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {0}, Dooming", ObjectID);
         }
 
@@ -1051,7 +966,7 @@ namespace Microsoft.Data.ProviderBase
         // Reset connection doomed status so it can be re-connected and pooled.
         protected internal void UnDoomThisConnection()
         {
-            _connectionIsDoomed = false;
+            IsConnectionDoomed = false;
         }
 
         #endregion
@@ -1075,7 +990,7 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.ExitStasisConnection();
             #endif
 
-            _isInStasis = false;
+            IsTxRootWaitingForTxEnd = false;
         }
 
         void TransactionCompletedEvent(object sender, TransactionEventArgs e)
