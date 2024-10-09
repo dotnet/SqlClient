@@ -23,30 +23,71 @@ namespace Microsoft.Data.ProviderBase
     {
         #region Fields
 
-        internal static readonly StateChangeEventArgs StateChangeClosed = new StateChangeEventArgs(ConnectionState.Open, ConnectionState.Closed);
-        internal static readonly StateChangeEventArgs StateChangeOpen = new StateChangeEventArgs(ConnectionState.Closed, ConnectionState.Open);
+        internal static readonly StateChangeEventArgs StateChangeClosed = new StateChangeEventArgs(
+            ConnectionState.Open,
+            ConnectionState.Closed);
+        internal static readonly StateChangeEventArgs StateChangeOpen = new StateChangeEventArgs(
+            ConnectionState.Closed,
+            ConnectionState.Open);
 
         private static int _objectTypeCount;
 
         private readonly bool _allowSetConnectionString;
         private readonly bool _hidePassword;
-        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
-        private readonly WeakReference<DbConnection> _owningObject = new WeakReference<DbConnection>(null, false);  // [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
+        private readonly int _objectId = Interlocked.Increment(ref _objectTypeCount);
+
+        /// <summary>
+        /// [usage must be thread safe] the owning object, when not in the pool. (both Pooled and Non-Pooled connections)
+        /// </summary>
+        private readonly WeakReference<DbConnection> _owningObject = new WeakReference<DbConnection>(null, false);
         private readonly ConnectionState _state;
 
-        private bool _cannotBePooled;           // true when the connection should no longer be pooled.
-        private bool _connectionIsDoomed;       // true when the connection should no longer be used.
-        private DbConnectionPool _connectionPool;           // the pooler that the connection came from (Pooled connections only)
-        private DateTime _createTime;               // when the connection was created.
-        private Transaction _enlistedTransaction;      // [usage must be thread-safe] the transaction that we're enlisted in, either manually or automatically
-        // _enlistedTransaction is a clone, so that transaction information can be queried even if the original transaction object is disposed.
-        // However, there are times when we need to know if the original transaction object was disposed, so we keep a reference to it here.
-        // This field should only be assigned a value at the same time _enlistedTransaction is updated.
-        // Also, this reference should not be disposed, since we aren't taking ownership of it.
+        /// <summary>
+        /// True when the connection should no longer be pooled.
+        /// </summary>
+        private bool _cannotBePooled;
+
+        /// <summary>
+        /// True when the connection should no longer be used.
+        /// </summary>
+        private bool _connectionIsDoomed;
+
+        /// <summary>
+        /// The pooler that the connection came from (Pooled connections only)
+        /// </summary>
+        private DbConnectionPool _connectionPool;
+
+        /// <summary>
+        /// When the connection was created.
+        /// </summary>
+        private DateTime _createTime;
+
+        /// <summary>
+        /// [usage must be thread-safe] the transaction that we're enlisted in, either manually or automatically.
+        /// </summary>
+        private Transaction _enlistedTransaction;
+
+        /// <summary>
+        /// <see cref="_enlistedTransaction"/> is a clone, so that transaction information can be
+        /// queried even if the original transaction object is disposed. However, there are times
+        /// when we need to know if the original transaction object was disposed, so we keep a
+        /// reference to it here. This field should only be assigned a value at the same time
+        /// <see cref="_enlistedTransaction"/> is updated.
+        /// Also, this reference should not be disposed, since we aren't taking ownership of it.
+        /// </summary>
         private Transaction _enlistedTransactionOriginal;
         private bool _isInStasis;
-        private int _pooledCount;              // [usage must be thread safe] the number of times this object has been pushed into the pool less the number of times it's been popped (0 != inPool)
-        private DbReferenceCollection _referenceCollection;      // collection of objects that we need to notify in some way when we're being deactivated
+
+        /// <summary>
+        /// usage must be thread safe] the number of times this object has been pushed into the
+        /// pool less the number of times it's been popped (0 != inPool)
+        /// </summary>
+        private int _pooledCount;
+
+        /// <summary>
+        /// Collection of objects that we need to notify in some way when we're being deactivated
+        /// </summary>
+        private DbReferenceCollection _referenceCollection;
         private TransactionCompletedEventHandler _transactionCompletedEventHandler = null;
 
         #if NETFRAMEWORK
@@ -156,7 +197,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                return _objectID;
+                return _objectId;
             }
         }
 
