@@ -102,6 +102,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("ServerSPN = server2")]
         [InlineData("Failover Partner SPN = server3")]
         [InlineData("FailoverPartnerSPN = server4")]
+        [InlineData("Context Connection = false")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
@@ -110,7 +111,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public static readonly IEnumerable<object[]> ConnectionStringTestsNetFx_TestCases = new[]
         {
             new object[] { "Connection Reset = false" },
-            new object[] { "Context Connection = false" },
             new object[] { "Network Library = dbmssocn" },
             new object[] { "Network = dbnmpntw" },
             new object[] { "Net = dbmsrpcn" },
@@ -183,6 +183,17 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectTimeout = -1);
             Assert.Contains("connect timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidContextConnection_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+#pragma warning disable CS0618
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => builder.ContextConnection = true);
+#pragma warning restore CS0618
+            Assert.Contains("connecting to the context connection using microsoft.data.sqlclient is not supported.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
