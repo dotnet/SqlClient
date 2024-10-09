@@ -591,11 +591,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return ShouldSerializeScale_Legacy();
             }
-            if (_scale != 0 || (GetMetaTypeOnly().IsVarTime && HasFlag(SqlParameterFlags.HasScale)))
-            {
-                return true;
-            }
-            return false;
+            return _scale != 0 || (GetMetaTypeOnly().IsVarTime && HasFlag(SqlParameterFlags.HasScale));
         }
 
 
