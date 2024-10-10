@@ -878,19 +878,21 @@ namespace Microsoft.Data.ProviderBase
 
         protected abstract void Activate(Transaction transaction);
 
-        // Cleanup connection's transaction-specific structures (currently used by Delegated transaction).
-        //  This is a separate method because cleanup can be triggered in multiple ways for a delegated
-        //  transaction.
-        virtual protected void CleanupTransactionOnCompletion(Transaction transaction)
+        /// <summary>
+        /// Cleanup connection's transaction-specific structures (currently used by Delegated transaction).
+        /// This is a separate method because cleanup can be triggered in multiple ways for a delegated
+        /// transaction.
+        /// </summary>
+        protected virtual void CleanupTransactionOnCompletion(Transaction transaction)
         {
         }
 
-        virtual protected DbReferenceCollection CreateReferenceCollection()
+        protected virtual DbReferenceCollection CreateReferenceCollection()
         {
             throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToConstructReferenceCollectionOnStaticObject);
         }
 
-        abstract protected void Deactivate();
+        protected abstract void Deactivate();
 
         protected internal void DoNotPoolThisConnection()
         {
@@ -898,7 +900,9 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DoNotPoolThisConnection|RES|INFO|CPOOL> {0}, Marking pooled object as non-poolable so it will be disposed", ObjectID);
         }
 
-        /// <devdoc>Ensure that this connection cannot be put back into the pool.</devdoc>
+        /// <summary>
+        /// Ensure that this connection cannot be put back into the pool.
+        /// </summary>
         #if NETFRAMEWORK
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         #endif
@@ -908,29 +912,35 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DoomThisConnection|RES|INFO|CPOOL> {0}, Dooming", ObjectID);
         }
 
-        protected internal virtual DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
+        protected internal virtual DataTable GetSchema(
+            DbConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions)
         {
-            Debug.Assert(outerConnection != null, "outerConnection may not be null.");
+            Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
 
             DbMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
-            Debug.Assert(metaDataFactory != null, "metaDataFactory may not be null.");
+            Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
 
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
-        virtual protected bool ObtainAdditionalLocksForClose()
+        protected virtual bool ObtainAdditionalLocksForClose()
         {
-            return false; // no additional locks in default implementation
+            // No additional locks in default implementation
+            return false;
         }
 
-        virtual protected void PrepareForCloseConnection()
+        protected virtual void PrepareForCloseConnection()
         {
             // By default, there is no preparation required
         }
 
-        virtual protected void ReleaseAdditionalLocksForClose(bool lockToken)
+        protected virtual void ReleaseAdditionalLocksForClose(bool lockToken)
         {
-            // no additional locks in default implementation
+            // No additional locks in default implementation
         }
 
         protected bool TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
@@ -938,7 +948,7 @@ namespace Microsoft.Data.ProviderBase
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
             {
-                DbConnectionInternal openConnection = null;
+                DbConnectionInternal openConnection;
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
@@ -953,21 +963,26 @@ namespace Microsoft.Data.ProviderBase
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw;
                 }
+
                 if (openConnection == null)
                 {
                     connectionFactory.SetInnerConnectionTo(outerConnection, this);
                     throw ADP.InternalConnectionError(ADP.ConnectionError.GetConnectionReturnsNull);
                 }
+
                 connectionFactory.SetInnerConnectionEvent(outerConnection, openConnection);
             }
 
             return true;
         }
 
-        // Reset connection doomed status so it can be re-connected and pooled.
-        protected internal void UnDoomThisConnection()
+        /// <summary>
+        /// Reset connection doomed status so it can be re-connected and pooled.
+        /// </summary>
+        protected void UnDoomThisConnection()
         {
             IsConnectionDoomed = false;
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.UnDoomThisConnection|RES|INFO|CPOOL> {0}, UnDooming", ObjectID);
         }
 
         #endregion
