@@ -991,14 +991,10 @@ namespace Microsoft.Data.ProviderBase
 
         private void TerminateStasis(bool returningToPool)
         {
-            if (returningToPool)
-            {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, Delegated Transaction has ended, connection is closed.  Returning to general pool.", ObjectID);
-            }
-            else
-            {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, Delegated Transaction has ended, connection is closed/leaked.  Disposing.", ObjectID);
-            }
+            string message = returningToPool
+                ? "Delegated Transaction has ended, connection is closed.  Returning to general pool."
+                : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
             #if NETFRAMEWORK
             PerformanceCounters.NumberOfStasisConnections.Decrement();
@@ -1009,7 +1005,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = false;
         }
 
-        void TransactionCompletedEvent(object sender, TransactionEventArgs e)
+        private void TransactionCompletedEvent(object sender, TransactionEventArgs e)
         {
             Transaction transaction = e.Transaction;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TransactionCompletedEvent|RES|CPOOL> {0}, Transaction Completed. (pooledCount = {1})", ObjectID, _pooledCount);
@@ -1024,7 +1020,7 @@ namespace Microsoft.Data.ProviderBase
         #endif
         private void TransactionOutcomeEnlist(Transaction transaction)
         {
-            _transactionCompletedEventHandler ??= new TransactionCompletedEventHandler(TransactionCompletedEvent);
+            _transactionCompletedEventHandler ??= TransactionCompletedEvent;
             transaction.TransactionCompleted += _transactionCompletedEventHandler;
         }
 
