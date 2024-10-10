@@ -618,7 +618,6 @@
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
 
-    <Compile Include="Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs" />
@@ -633,8 +632,6 @@
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
