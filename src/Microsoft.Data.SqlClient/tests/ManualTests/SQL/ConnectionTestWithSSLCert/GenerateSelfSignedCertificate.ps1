@@ -7,6 +7,8 @@
 # Comments: This scripts creates SQL Server SSL Self-Signed Certificate.
 # This script is not intended to be used in production environments.
 
+param ($Prefix, $Instance)
+
 function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
   param(
@@ -15,7 +17,7 @@ function Invoke-SqlServerCertificateCommand {
     [string] $certificateName = "SQLClientSelfSignedCertificate.cer",
     [string] $myCertStoreLocation = "Cert:\LocalMachine\My",
     [string] $rootCertStoreLocation = "Cert:\LocalMachine\Root",
-    [string] $sqlServerUserAccount = "NT Service\MSSQLSERVER",
+    [string] $sqlServerUserAccount = "NT Service\$Prefix$Instance",
     [string] $sqlAliasName = "SQLAliasName",
     [string] $localhost = "localhost",
     [string] $LoopBackIPV4 = "127.0.0.1",
@@ -95,20 +97,20 @@ function Invoke-SqlServerCertificateCommand {
     Import-Certificate @params
 
     # Import certificate to SQL Server
-    $path = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\*\MSSQLServer\SuperSocketNetLib"
+    $path = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\*$Instance\MSSQLServer\SuperSocketNetLib"
     Set-ItemProperty -Path $path.PsPath -Name "Certificate" -Type String -Value "$($certificate.Thumbprint)"
 
     # Set Force Encryption to Yes
-    $path = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\*\MSSQLServer\SuperSocketNetLib"
+    $path = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\*$Instance\MSSQLServer\SuperSocketNetLib"
     Set-ItemProperty -Path $path.PsPath -Name "ForceEncryption" -Type DWord -value 1
 
     # Restart SQL Server Service
-    Restart-Service -Name "MSSQLSERVER" -Force
+    Restart-Service -Name "$Prefix$Instance" -Force
     Start-Sleep 10
     Start-Service SQLSERVERAGENT
 
     # Print out SQL Service status
-    $service = Get-Service -Name "MSSQLSERVER"
+    $service = Get-Service -Name "$Prefix$Instance"
     Write-Host "SQL Server Service Status: $($service.Status)"
     Write-Host "Self-Signed Certificate created successfully"
   }
@@ -119,7 +121,7 @@ function Invoke-SqlServerCertificateCommand {
       $e = $e.InnerException
       $msg += "`n" + $e.Message
     }
-    Write-Host "Certificate generation was not successfull. $msg"
+    Write-Host "Certificate generation was not successful. $msg"
   }
 }
 

@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.Tests
 {
     public class MockConnection : DbConnection
     {

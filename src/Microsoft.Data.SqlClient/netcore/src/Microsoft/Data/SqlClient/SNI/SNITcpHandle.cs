@@ -426,33 +426,16 @@ namespace Microsoft.Data.SqlClient.SNI
                     bool isConnected;
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
-                        if (isInfiniteTimeout)
+                        socket.Connect(ipAddress, port);
+                        if (!isInfiniteTimeout)
                         {
-                            socket.Connect(ipAddress, port);
-                        }
-                        else
-                        {
-                            if (timeout.IsExpired)
-                            {
-                                return null;
-                            }
-                            // Socket.Connect does not support infinite timeouts, so we use Task to simulate it
-                            Task socketConnectTask = new Task(() => socket.Connect(ipAddress, port));
-                            socketConnectTask.ConfigureAwait(false);
-                            socketConnectTask.Start();
-                            int remainingTimeout = timeout.MillisecondsRemainingInt;
-                            if (!socketConnectTask.Wait(remainingTimeout))
-                            {
-                                throw ADP.TimeoutException($"The socket couldn't connect during the expected {remainingTimeout} remaining time.");
-                            }
                             throw SQL.SocketDidNotThrow();
                         }
 
                         isConnected = true;
                     }
-                    catch (AggregateException aggregateException) when (!isInfiniteTimeout
-                                                                        && aggregateException.InnerException is SocketException socketException
-                                                                        && socketException.SocketErrorCode == SocketError.WouldBlock)
+                    catch (SocketException socketException) when (!isInfiniteTimeout && 
+                                                                  socketException.SocketErrorCode == SocketError.WouldBlock)
                     {
                         // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
                         // Socket.Select is used because it supports timeouts, while Socket.Connect does not
@@ -509,11 +492,11 @@ namespace Microsoft.Data.SqlClient.SNI
                         return socket;
                     }
                 }
-                catch (AggregateException aggregateException) when (aggregateException.InnerException is SocketException socketException)
+                catch (SocketException e)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: socketException?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {socketException}");
+                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                 }
                 finally
                 {
@@ -644,7 +627,6 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                     else
                     {
-                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
                         _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
@@ -698,33 +680,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 return true;
             }
 
-            string serverNameToValidate;
-            if (!string.IsNullOrEmpty(_hostNameInCertificate))
-            {
-                serverNameToValidate = _hostNameInCertificate;
-            }
-            else
-            {
-                serverNameToValidate = _targetServer;
-            }
-
-            if (!string.IsNullOrEmpty(_serverCertificateFilename))
-            {
-                X509Certificate clientCertificate = null;
-                try
-                {
-                    clientCertificate = new X509Certificate(_serverCertificateFilename);
-                    return SNICommon.ValidateSslServerCertificate(clientCertificate, serverCertificate, policyErrors);
-                }
-                catch (Exception e)
-                {
-                    // if this fails, then fall back to the HostNameInCertificate or TargetServer validation.
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, IOException occurred: {1}", args0: _connectionId, args1: e.Message);
-                }
-            }
-
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(serverNameToValidate, serverCertificate, policyErrors);
+            return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
         }
 
         /// <summary>
@@ -747,7 +704,7 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
+                // sent immediately even if a send or receive operation is already in progress
                 // because out of band packets are used to cancel ongoing operations
                 // so try to take the lock if possible but continue even if it can't be taken
                 if (packet.IsOutOfBand)
@@ -1008,7 +965,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static void SetKeepAliveValues(ref Socket socket)
         {
-#if NETCOREAPP
+#if NET6_0_OR_GREATER
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);

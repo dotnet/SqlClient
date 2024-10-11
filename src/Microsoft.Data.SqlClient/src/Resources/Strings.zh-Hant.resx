@@ -411,8 +411,8 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>複寫</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
-    <value>恢復連接</value>
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
+    <value>連線復原</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>保存自訂使用者資訊的集合。</value>
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>輸入的 Schema 中遺漏了 IsDataSet 屬性。</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>無法判斷 DataSet Element。IsDataSet 屬性出現多次。</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet 不會序列化實作 IDynamicMetaObjectProvider 但未同時實作 IXmlSerializable 的型別。</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>必須是 {0}，但於位置 {2} 的實際語彙基元是 {1}。</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>無法從 {0} 轉換成 {1}。</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>無法將值 '{0}' 轉換成型別: {1}。</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>無效的資料行名稱 [{0}]。</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>無法評估。運算式 '{0}' 不是彙總。</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>篩選條件運算式 '{0}' 不會評估成 Boolean 詞彙。</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>無效的型別名稱 '{0}'。</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>僅可使用未變更 DataRowState 的 DataRows 呼叫 SetAdded 與 SetModified。</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>序數 '{0}' 超過上限。</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet 不支援 System.Nullable&lt;&gt;。</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>不相符的資料行在 PrimaryKey 中: &lt;target&gt;.{0} 和 &lt;source&gt;.{1}。</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>Relation {0} 無法合併，因為索引鍵擁有不相符的資料行。</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>目標資料表 {0} 遺漏資料行 {1} 的定義。</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>集合已經修改; 列舉作業可能無法執行。</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>已使用不同的 '{1}' 來宣告簡單型別 '{0}'。</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>無效的葉項。</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>無法移除資料行，因為它已內建在這個 dataSet。</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>無法移除關聯，因為它已內建在這個 dataSet。</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>當這個控制項的屬性變更時發生。</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>當這個集合的成員資格變更時發生。</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>無法取得值，因為它是 DBNull。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>更新需要具有連接物件的命令複製。命令複製的 Connection 屬性尚未初始化。</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>更新需要連接。</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update 需要具有開啟的連接物件的 {0}Command。{1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>欄位 '{0}' 已標示為非連續</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>欄位 '{0}' 的型別已標示為明確的配置，不允許為 Native 格式</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>多值的組件參考必須有非零的 Assembly Id。</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>建立連接至 SQL Server 時，發生網路相關或執行個體特定的錯誤。找不到或無法存取伺服器。確認執行個名稱是否正確，以及 SQL Server 是否設定為允許遠端連線。</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>用戶端無法建立連線，因為在登入前的連線初始化期間發生錯誤。失敗的原因可能是，用戶端嘗試連線至 SQL Server 不支援的版本，伺服器太忙碌而無法接受新連線或伺服器上的資源限制 (記憶體不足或允許的連線上限)。</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>與伺服器的連接已成功建立，但在登入前的信號交換時發生錯誤。</value>
@@ -4399,7 +4399,7 @@
     <value>包含 SQL Server 名稱及其信任的資料行主要金鑰路徑的字典物件。</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>已發生兩次以上的重新導向。每次登入僅允許一次重新導向。</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>不支援使用 ApplicationIntent ReadOnly 連接選項連接到 SQL Server 鏡像執行個體。</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>伺服器未保留復原嘗試期間的 SSL 加密，無法進行連接復原。</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>伺服器未保留復原嘗試期間所要求的確切用戶端 TDS 版本，無法進行連接復原。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>執行逾時到期。在作業完成之前超過逾時等待的時間，或是伺服器未回應。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>驗證證明權杖失敗。該權杖簽章與使用從位於 '{0}' 的證明公開金鑰端點擷取而來之公開金鑰計算所得的簽章不符。請驗證該端點的 DNS 對應 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求 詳細 資訊。若其正確，請連絡客戶支援服務。</value>
+    <value>驗證證明權杖失敗。該權杖簽章與使用從位於 '{0}' 的證明公開金鑰端點擷取而來之公開金鑰所得的計算簽章不符。請驗證該端點的 DNS 對應 - 詳細資料請參閱 https://go.microsoft.com/fwlink/?linkid=2157649。若其正確，請連絡客戶支援服務。</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>初始要求失敗後，重試下載 HGS 根憑證的下載時發生內部錯誤。請連絡客戶支援服務。</value>
@@ -4486,10 +4486,10 @@
     <value>驗證證明權杖失敗。權杖的格式無效。請連絡客戶支援服務。錯誤詳細資料: '{0}'。</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>證明服務為證明 URL '{0}' 傳回了過期的 HGS 根憑證。請檢查為您 HGS 執行個體設定的 HGS 根憑證 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。</value>
+    <value>證明服務為證明 URL '{0}' 傳回了過期的 HGS 根憑證。請檢查為您 HGS 執行個體設定的 HGS 根憑證 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求詳細資訊。</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>為證明 URL '{0}' 取得的 HGS 根憑證格式無效。請驗證證明 URL 正確，而且 HGS 伺服器在線上並已完全初始化 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。如需額外支援，請連絡客戶支援服務。錯誤詳細資料: '{1}'。</value>
+    <value>為證明 URL '{0}' 取得的 HGS 根憑證格式無效。請驗證證明 URL 正確，而且 HGS 伺服器在線上並已完全初始化 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求詳細資訊。如需額外支援，請連絡客戶支援服務。錯誤詳細資料: '{1}'。</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>驗證證明權杖失敗。無法從證明公開金鑰端點取得公開金鑰，或擷取到了無效格式的金鑰。錯誤詳細資料: '{0}'。</value>
@@ -4507,16 +4507,16 @@
     <value>驗證簽章時，驗證證明權杖失敗。例外狀況: '{0}'。</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>驗證證明權杖失敗。權杖中的宣告 '{0}' 有 '{1}'的無效值。請驗證證明原則 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求 詳細 資訊。若該原則正確，請連絡客戶支援服務。</value>
+    <value>驗證證明權杖失敗。權杖中的宣告 '{0}' 有 '{1}'的無效值。請驗證證明原則 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求詳細資訊。若該原則正確，請連絡客戶支援服務。</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>驗證證明權杖失敗。權杖中缺少宣告 '{0}'。請驗證證明原則 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求 詳細 資訊。若該原則正確，請連絡客戶支援服務。</value>
+    <value>驗證證明權杖失敗。權杖中缺少宣告 '{0}'。請驗證證明原則 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2157649 尋求詳細資訊。若該原則正確，請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>無法檢查記憶體保護區是否在生產模式下執行。請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>因為屬性 '{0}' 上原則的預期值與實際值不同，所以無法驗證記憶體保護區原則。實際: '{1}'，預期: '{2}' - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。</value>
+    <value>因為屬性 '{0}' 上原則的預期值與實際值不同，所以無法驗證記憶體保護區原則。實際: '{1}'，預期: '{2}' - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求詳細資訊。</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>驗證記憶體保護區報表的簽章失敗。報表的簽章與使用 HGS 根憑證計算所得的簽章不符。請驗證端點的 DNS 對應 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。若其正確，請連絡客戶支援服務。</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>通訊端未擲出預期的 '{0}'，錯誤碼為 '{1}'。</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.NET Standard 2.0 中不支援。</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>伺服器正嘗試使用此平台上不支援的功能。</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>驗證在進行憑證驗證時無法使用。</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>

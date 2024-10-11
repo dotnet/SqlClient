@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>Replicação</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Resiliência da Conexão</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>O atributo IsDataSet é inexistente no Schema de entrada.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>Não é possível determinar o DataSet Element. Há mais de um atributo IsDataSet.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet não irá serializar tipos que implementam IDynamicMetaObjectProvider mas também não implementam IXmlSerializable.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0} era esperado, mas o símbolo existente na posição {2} é {1}.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>Não é possível converter {0} em {1}.</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>Não é possível converter valor '{0}' no tipo {1}.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>Nome de coluna inválido [{0}].</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>Não é possível avaliar. Expressão '{0}' não é agregada.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>Expressão de filtro '{0}' não avalia um termo Boolean.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>Nome de tipo inválido '{0}'.</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded e SetModified somente podem ser chamados em DataRows com Unchanged DataRowState.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>Ordinal '{0}' excede o número máximo.</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet não dá suporte a System.Nullable&lt;&gt;.</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>Colunas incompatíveis em PrimaryKey: &lt;target&gt;.{0} versus &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>A Relation {0} não pode ser mesclada porque as chaves têm colunas incompatíveis.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>Tabela de destino {0} não tem definição para a coluna {1}.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>A coleção foi modificada. Talvez a operação de enumeração não seja executada.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>O tipo '{0}' simples já foi declarado com '{1}' diferente.</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>Foliação inválida.</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Não é possível remover coluna porque ela é interna a este dataSet.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>Não é possível remover relação porque ela é interna a este dataSet.</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>Ocorre sempre que uma propriedade deste controle é alterada.</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Ocorre sempre que os membros desta coleção são alterados.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>Não é possível obter o valor porque ele é DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>A atualização exige que o clone de comando tenha um objeto de conexão. A propriedade Connection do clone de comando não foi inicializada.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>A atualização exige conexão.</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update exige que o {0}Command tenha um objeto de conexão aberta. {1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>o campo '{0}' está marcado como não serializado</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>O tipo de campo '{0}' está marcado como layout explícito, o que não é permitido no formato Native</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>Referências de assembly com valores múltiplos devem ter uma identificação de Assembly diferente de zero.</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>Erro de rede ou específico à instância ao estabelecer conexão com o SQL Server. O servidor não foi encontrado ou não estava acessível. Verifique se o nome da instância está correto e se o SQL Server está configurado para permitir conexões remotas.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>O cliente não pôde estabelecer uma conexão devido a um erro durante o processo de inicialização da conexão antes do logon. Possíveis causas incluem: o cliente tentou conectar-se a uma versão sem suporte do SQL Server; o servidor estava muito ocupado para aceitar novas conexões; ou havia uma limitação de recursos (memória insuficiente ou máximo de conexões permitidas) no servidor.</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>Uma conexão com o servidor foi estabelecida com êxito, mas ocorreu um erro durante o handshake de pré-logon.</value>
@@ -4399,7 +4399,7 @@
     <value>Objeto de dicionário contendo nomes SQL Server e seus caminhos confiáveis de chave mestra da coluna.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Dois ou mais redirecionamentos ocorreram. É permitido somente um redirecionamento por logon.</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Não há suporte para a operação conectar com uma instância espelhada do SQL Server usando ApplicationIntent ReadOnly.</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>O servidor não preservou a criptografia SSL durante uma tentativa de recuperação; a recuperação da conexão não é possível.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>O servidor não preservou a versão TDS de cliente exata solicitada durante uma tentativa de recuperação; a recuperação da conexão não é possível.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>Tempo Limite de Execução Expirado.  O período de tempo limite terminou antes da conclusão da operação ou o servidor não está respondendo.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>A validação de um token de atestado falhou. A assinatura do token não corresponde à assinatura computada usando uma chave pública recuperada do ponto de extremidade da chave pública de atestado em'{0}'. Verifique o aplicativo DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>A validação de um token de atestado falhou. A assinatura do token não corresponde à assinatura computada usando uma chave pública recuperada do ponto final da chave pública de atestado em “{0}”. Verifique o mapeamento de DNS para o ponto de extremidade – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Ocorreu um erro interno ao repetir o download do certificado raiz HGS após a falha da solicitação inicial. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
@@ -4486,10 +4486,10 @@
     <value>A validação de um token de atestado falhou. O token tem um formato inválido. Entre em contato com os Serviços de Atendimento ao Cliente. Detalhes do erro: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>O serviço de atestado retornou um certificado raiz HGS expirado para o URL de atestado '{0}'. Verifique o certificado raiz HGS configurado para sua instância HGS - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes.</value>
+    <value>O serviço de atestado retornou um certificado raiz HGS expirado para a URL de atestado "{0}". Verifique o certificado raiz do HGS configurado para a sua instância do HGS – confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>O certificado raiz HGS obtido para o URL de atestado '{0}' tem um formato inválido. Verifique se o URL de atestado está correto e se o servidor HGS está online e totalmente inicializado- consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Para obter suporte adicional, entre em contato com os Serviços de Suporte ao Cliente. Detalhes do erro: '{1}'.</value>
+    <value>O certificado raiz HGS obtido para a URL de atestado "{0}" tem um formato inválido. Verifique se a URL de atestado está correta e se o servidor HGS está online e totalmente inicializado. Confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes. Para obter suporte adicional, entre em contato com os Serviços de Suporte ao Cliente. Detalhes do erro: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>A validação de um token de atestado falhou. Não é possível recuperar uma chave pública do ponto de extremidade de chave pública de atestado ou a chave recuperada tem um formato inválido. Detalhes do erro: '{0}'.</value>
@@ -4507,16 +4507,16 @@
     <value>A validação do token de atestado falhou durante a validação de assinatura. Exceção: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>A validação de um token de atestado falhou. A reivindicação '{0}' no token tem um valor inválido de '{1}'. Verifique a política de atestado - consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>A validação de um token de atestado falhou. A reivindicação "{0}" no token tem um valor inválido de "{1}". Verifique a política de atestado – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>A validação do token de atestado falhou. A reivindicação '{0}' está ausente no token. Verifique a política de atestado- consulte https://go.microsoft.com/fwlink/?linkid=2157649 para mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
+    <value>A validação do token de atestado falhou. A reivindicação "{0}" está ausente no token. Verifique a política de atestado – confira https://go.microsoft.com/fwlink/?linkid=2157649 para obter mais detalhes. Se a política estiver correta, entre em contato com os Serviços de Suporte ao Cliente.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Falha ao verificar se o enclave está sendo executado no modo de produção. Entre em contato com os Serviços de Atendimento ao Cliente.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Não foi possível verificar a política de enclave devido a uma diferença entre os valores esperados e reais da política na propriedade '{0}'. Real: '{1}', Esperado: '{2}' - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes.</value>
+    <value>Não foi possível verificar a política de enclave devido a uma diferença entre os valores esperados e reais da política na propriedade "{0}". Real: "{1}", Esperado: "{2}" – confira https://go.microsoft.com/fwlink/?linkid=2160553 para obter mais detalhes.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>A verificação da assinatura do relatório do enclave falhou. A assinatura do relatório não corresponde à assinatura calculada usando o certificado raiz HGS. Verifique o mapeamento DNS para o ponto de extremidade - consulte https://go.microsoft.com/fwlink/?linkid=2160553 para mais detalhes. Se estiver correto, entre em contato com os Serviços de Suporte ao Cliente.</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>O soquete não lançou o esperado '{0}' com código de erro '{1}'.</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Sem suporte no .Net Standard 2.0.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>O servidor está tentando usar um recurso que não é suportado nesta plataforma.</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Certificado não disponível durante a validação do certificado.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>O certificado fornecido pelo servidor não corresponde ao certificado fornecido pela opção ServerCertificate.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>

@@ -13,6 +13,8 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -71,8 +73,8 @@ namespace Microsoft.Data.SqlClient
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // context
         // undone: we may still want to do this...it's nice to pass in an lpvoid (essentially) and just have the reader keep the state
@@ -162,7 +164,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("Depth");
+                    throw ADP.DataReaderClosed();
                 }
 
                 return 0;
@@ -177,7 +179,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("FieldCount");
+                    throw ADP.DataReaderClosed();
                 }
                 if (_currentTask != null)
                 {
@@ -200,7 +202,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("HasRows");
+                    throw ADP.DataReaderClosed();
                 }
                 if (_currentTask != null)
                 {
@@ -251,7 +253,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsClosed)
                 {
-                    throw ADP.DataReaderClosed("MetaData");
+                    throw ADP.DataReaderClosed();
                 }
                 // metaData comes in pieces: colmetadata, tabname, colinfo, etc
                 // if we have any metaData, return it.  If we have none,
@@ -278,7 +280,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
                             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                            if (!TryConsumeMetaData())
+                            if (TryConsumeMetaData() != TdsOperationStatus.Done)
                             {
                                 throw SQL.SynchronousCallMayNotPend();
                             }
@@ -293,7 +295,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.OutOfMemoryException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -302,7 +304,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.StackOverflowException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -311,7 +313,7 @@ namespace Microsoft.Data.SqlClient
                     catch (System.Threading.ThreadAbortException e)
                     {
                         _isClosed = true;
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -327,7 +329,7 @@ namespace Microsoft.Data.SqlClient
             SmiExtendedMetaData[] metaDataReturn = null;
             _SqlMetaDataSet metaData = this.MetaData;
 
-            if (null != metaData && 0 < metaData.Length)
+            if (metaData != null && 0 < metaData.Length)
             {
                 metaDataReturn = new SmiExtendedMetaData[metaData.VisibleColumnCount];
                 int returnIndex = 0;
@@ -369,34 +371,35 @@ namespace Microsoft.Data.SqlClient
                             length /= ADP.CharSize;
                         }
 
-                        metaDataReturn[returnIndex] = new SmiQueryMetaData(
-                                                        colMetaData.type,
-                                                        length,
-                                                        colMetaData.precision,
-                                                        colMetaData.scale,
-                                                        (null != collation) ? collation.LCID : _defaultLCID,
-                                                        (null != collation) ? collation.SqlCompareOptions : SqlCompareOptions.None,
-                                                        colMetaData.udt?.Type,
-                                                        false,  // isMultiValued
-                                                        null,   // fieldmetadata
-                                                        null,   // extended properties
-                                                        colMetaData.column,
-                                                        typeSpecificNamePart1,
-                                                        typeSpecificNamePart2,
-                                                        typeSpecificNamePart3,
-                                                        colMetaData.IsNullable,
-                                                        colMetaData.serverName,
-                                                        colMetaData.catalogName,
-                                                        colMetaData.schemaName,
-                                                        colMetaData.tableName,
-                                                        colMetaData.baseColumn,
-                                                        colMetaData.IsKey,
-                                                        colMetaData.IsIdentity,
-                                                        colMetaData.IsReadOnly,
-                                                        colMetaData.IsExpression,
-                                                        colMetaData.IsDifferentName,
-                                                        colMetaData.IsHidden
-                                                        );
+                        metaDataReturn[returnIndex] =
+                            new SmiQueryMetaData(
+                                colMetaData.type,
+                                length,
+                                colMetaData.precision,
+                                colMetaData.scale,
+                                collation != null ? collation.LCID : _defaultLCID,
+                                collation != null ? collation.SqlCompareOptions : SqlCompareOptions.None,
+                                colMetaData.udt?.Type,
+                                isMultiValued: false,
+                                fieldMetaData: null,
+                                extendedProperties: null,
+                                colMetaData.column,
+                                typeSpecificNamePart1,
+                                typeSpecificNamePart2,
+                                typeSpecificNamePart3,
+                                colMetaData.IsNullable,
+                                colMetaData.serverName,
+                                colMetaData.catalogName,
+                                colMetaData.schemaName,
+                                colMetaData.tableName,
+                                colMetaData.baseColumn,
+                                colMetaData.IsKey,
+                                colMetaData.IsIdentity,
+                                colMetaData.IsReadOnly,
+                                colMetaData.IsExpression,
+                                colMetaData.IsDifferentName,
+                                colMetaData.IsHidden);
+
                         returnIndex += 1;
                     }
                 }
@@ -410,8 +413,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _command)
+                if (_command != null)
+                {
                     return _command.InternalRecordsAffected;
+                }
 
                 // cached locally for after Close() when command is nulled out
                 return _recordsAffected;
@@ -445,6 +450,7 @@ namespace Microsoft.Data.SqlClient
                 _tableNames = value;
             }
         }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/VisibleFieldCount/*' />
         override public int VisibleFieldCount
         {
@@ -452,7 +458,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.IsClosed)
                 {
-                    throw ADP.DataReaderClosed("VisibleFieldCount");
+                    throw ADP.DataReaderClosed();
                 }
                 _SqlMetaDataSet md = this.MetaData;
                 if (md == null)
@@ -484,9 +490,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Bind(TdsParserStateObject stateObj)
         {
-            Debug.Assert(null != stateObj, "null stateobject");
+            Debug.Assert(stateObj != null, "null stateobject");
 
-            Debug.Assert(null == _snapshot, "Should not change during execution of asynchronous command");
+            Debug.Assert(_snapshot == null, "Should not change during execution of asynchronous command");
 
             stateObj.Owner = this;
             _stateObj = stateObj;
@@ -497,100 +503,104 @@ namespace Microsoft.Data.SqlClient
         // Fills in a schema table with meta data information.  This function should only really be called by
         // UNDONE: need a way to refresh the table with more information as more data comes online for browse info like
         // table names and key information
+#if !NETFRAMEWORK
+        [SuppressMessage("ReflectionAnalysis", "IL2111",
+                   Justification = "System.Type.TypeInitializer would not be used in dataType and providerSpecificDataType columns.")]
+#endif
         internal DataTable BuildSchemaTable()
         {
             _SqlMetaDataSet md = this.MetaData;
-            Debug.Assert(null != md, "BuildSchemaTable - unexpected null metadata information");
+            Debug.Assert(md != null, "BuildSchemaTable - unexpected null metadata information");
 
             DataTable schemaTable = new DataTable("SchemaTable");
             schemaTable.Locale = CultureInfo.InvariantCulture;
             schemaTable.MinimumCapacity = md.Length;
 
-            DataColumn ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(System.String));
-            DataColumn Ordinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(System.Int32));
-            DataColumn Size = new DataColumn(SchemaTableColumn.ColumnSize, typeof(System.Int32));
-            DataColumn Precision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(System.Int16));
-            DataColumn Scale = new DataColumn(SchemaTableColumn.NumericScale, typeof(System.Int16));
+            DataColumn columnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
+            DataColumn ordinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
+            DataColumn size = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
+            DataColumn precision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
+            DataColumn scale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
 
-            DataColumn DataType = new DataColumn(SchemaTableColumn.DataType, typeof(System.Type));
-            DataColumn ProviderSpecificDataType = new DataColumn(SchemaTableOptionalColumn.ProviderSpecificDataType, typeof(System.Type));
-            DataColumn NonVersionedProviderType = new DataColumn(SchemaTableColumn.NonVersionedProviderType, typeof(System.Int32));
-            DataColumn ProviderType = new DataColumn(SchemaTableColumn.ProviderType, typeof(System.Int32));
+            DataColumn dataType = new DataColumn(SchemaTableColumn.DataType, typeof(System.Type));
+            DataColumn providerSpecificDataType = new DataColumn(SchemaTableOptionalColumn.ProviderSpecificDataType, typeof(System.Type));
+            DataColumn nonVersionedProviderType = new DataColumn(SchemaTableColumn.NonVersionedProviderType, typeof(int));
+            DataColumn providerType = new DataColumn(SchemaTableColumn.ProviderType, typeof(int));
 
-            DataColumn IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(System.Boolean));
-            DataColumn AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(System.Boolean));
-            DataColumn IsReadOnly = new DataColumn(SchemaTableOptionalColumn.IsReadOnly, typeof(System.Boolean));
-            DataColumn IsRowVersion = new DataColumn(SchemaTableOptionalColumn.IsRowVersion, typeof(System.Boolean));
+            DataColumn isLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
+            DataColumn allowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
+            DataColumn isReadOnly = new DataColumn(SchemaTableOptionalColumn.IsReadOnly, typeof(bool));
+            DataColumn isRowVersion = new DataColumn(SchemaTableOptionalColumn.IsRowVersion, typeof(bool));
 
-            DataColumn IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(System.Boolean));
-            DataColumn IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(System.Boolean));
-            DataColumn IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(System.Boolean));
-            DataColumn IsHidden = new DataColumn(SchemaTableOptionalColumn.IsHidden, typeof(System.Boolean));
+            DataColumn isUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
+            DataColumn isKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
+            DataColumn isAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
+            DataColumn isHidden = new DataColumn(SchemaTableOptionalColumn.IsHidden, typeof(bool));
 
-            DataColumn BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(System.String));
-            DataColumn BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(System.String));
-            DataColumn BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(System.String));
-            DataColumn BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(System.String));
+            DataColumn baseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+            DataColumn baseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
+            DataColumn baseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
+            DataColumn baseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
 
             // unique to SqlClient
-            DataColumn BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(System.String));
-            DataColumn IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(System.Boolean));
-            DataColumn IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(System.Boolean));
-            DataColumn IsIdentity = new DataColumn("IsIdentity", typeof(System.Boolean));
-            DataColumn DataTypeName = new DataColumn("DataTypeName", typeof(System.String));
-            DataColumn UdtAssemblyQualifiedName = new DataColumn("UdtAssemblyQualifiedName", typeof(System.String));
+            DataColumn baseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
+            DataColumn isAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
+            DataColumn isExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
+            DataColumn isIdentity = new DataColumn("IsIdentity", typeof(bool));
+            DataColumn dataTypeName = new DataColumn("DataTypeName", typeof(string));
+            DataColumn udtAssemblyQualifiedName = new DataColumn("UdtAssemblyQualifiedName", typeof(string));
             // Xml metadata specific
-            DataColumn XmlSchemaCollectionDatabase = new DataColumn("XmlSchemaCollectionDatabase", typeof(System.String));
-            DataColumn XmlSchemaCollectionOwningSchema = new DataColumn("XmlSchemaCollectionOwningSchema", typeof(System.String));
-            DataColumn XmlSchemaCollectionName = new DataColumn("XmlSchemaCollectionName", typeof(System.String));
+            DataColumn xmlSchemaCollectionDatabase = new DataColumn("XmlSchemaCollectionDatabase", typeof(string));
+            DataColumn xmlSchemaCollectionOwningSchema = new DataColumn("XmlSchemaCollectionOwningSchema", typeof(string));
+            DataColumn xmlSchemaCollectionName = new DataColumn("XmlSchemaCollectionName", typeof(string));
             // SparseColumnSet
-            DataColumn IsColumnSet = new DataColumn("IsColumnSet", typeof(System.Boolean));
+            DataColumn isColumnSet = new DataColumn("IsColumnSet", typeof(bool));
 
-            Ordinal.DefaultValue = 0;
-            IsLong.DefaultValue = false;
+            ordinal.DefaultValue = 0;
+            isLong.DefaultValue = false;
 
             DataColumnCollection columns = schemaTable.Columns;
 
             // must maintain order for backward compatibility
-            columns.Add(ColumnName);
-            columns.Add(Ordinal);
-            columns.Add(Size);
-            columns.Add(Precision);
-            columns.Add(Scale);
-            columns.Add(IsUnique);
-            columns.Add(IsKey);
-            columns.Add(BaseServerName);
-            columns.Add(BaseCatalogName);
-            columns.Add(BaseColumnName);
-            columns.Add(BaseSchemaName);
-            columns.Add(BaseTableName);
-            columns.Add(DataType);
-            columns.Add(AllowDBNull);
-            columns.Add(ProviderType);
-            columns.Add(IsAliased);
-            columns.Add(IsExpression);
-            columns.Add(IsIdentity);
-            columns.Add(IsAutoIncrement);
-            columns.Add(IsRowVersion);
-            columns.Add(IsHidden);
-            columns.Add(IsLong);
-            columns.Add(IsReadOnly);
-            columns.Add(ProviderSpecificDataType);
-            columns.Add(DataTypeName);
-            columns.Add(XmlSchemaCollectionDatabase);
-            columns.Add(XmlSchemaCollectionOwningSchema);
-            columns.Add(XmlSchemaCollectionName);
-            columns.Add(UdtAssemblyQualifiedName);
-            columns.Add(NonVersionedProviderType);
-            columns.Add(IsColumnSet);
+            columns.Add(columnName);
+            columns.Add(ordinal);
+            columns.Add(size);
+            columns.Add(precision);
+            columns.Add(scale);
+            columns.Add(isUnique);
+            columns.Add(isKey);
+            columns.Add(baseServerName);
+            columns.Add(baseCatalogName);
+            columns.Add(baseColumnName);
+            columns.Add(baseSchemaName);
+            columns.Add(baseTableName);
+            columns.Add(dataType);
+            columns.Add(allowDBNull);
+            columns.Add(providerType);
+            columns.Add(isAliased);
+            columns.Add(isExpression);
+            columns.Add(isIdentity);
+            columns.Add(isAutoIncrement);
+            columns.Add(isRowVersion);
+            columns.Add(isHidden);
+            columns.Add(isLong);
+            columns.Add(isReadOnly);
+            columns.Add(providerSpecificDataType);
+            columns.Add(dataTypeName);
+            columns.Add(xmlSchemaCollectionDatabase);
+            columns.Add(xmlSchemaCollectionOwningSchema);
+            columns.Add(xmlSchemaCollectionName);
+            columns.Add(udtAssemblyQualifiedName);
+            columns.Add(nonVersionedProviderType);
+            columns.Add(isColumnSet);
 
             for (int i = 0; i < md.Length; i++)
             {
                 _SqlMetaData col = md[i];
                 DataRow schemaRow = schemaTable.NewRow();
 
-                schemaRow[ColumnName] = col.column;
-                schemaRow[Ordinal] = col.ordinal;
+                schemaRow[columnName] = col.column;
+                schemaRow[ordinal] = col.ordinal;
                 //
                 // be sure to return character count for string types, byte count otherwise
                 // col.length is always byte count so for unicode types, half the length
@@ -599,37 +609,37 @@ namespace Microsoft.Data.SqlClient
                 if (col.cipherMD != null)
                 {
                     Debug.Assert(col.baseTI != null && col.baseTI.metaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
-                    schemaRow[Size] = (col.baseTI.metaType.IsSizeInCharacters && (col.baseTI.length != 0x7fffffff)) ? (col.baseTI.length / 2) : col.baseTI.length;
+                    schemaRow[size] = (col.baseTI.metaType.IsSizeInCharacters && (col.baseTI.length != 0x7fffffff)) ? (col.baseTI.length / 2) : col.baseTI.length;
                 }
                 else
                 {
-                    schemaRow[Size] = (col.metaType.IsSizeInCharacters && (col.length != 0x7fffffff)) ? (col.length / 2) : col.length;
+                    schemaRow[size] = (col.metaType.IsSizeInCharacters && (col.length != 0x7fffffff)) ? (col.length / 2) : col.length;
                 }
 
-                schemaRow[DataType] = GetFieldTypeInternal(col);
-                schemaRow[ProviderSpecificDataType] = GetProviderSpecificFieldTypeInternal(col);
-                schemaRow[NonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
-                schemaRow[DataTypeName] = GetDataTypeNameInternal(col);
+                schemaRow[dataType] = GetFieldTypeInternal(col);
+                schemaRow[providerSpecificDataType] = GetProviderSpecificFieldTypeInternal(col);
+                schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
+                schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
-                    schemaRow[ProviderType] = SqlDbType.NVarChar;
+                    schemaRow[providerType] = SqlDbType.NVarChar;
                     switch (col.type)
                     {
                         case SqlDbType.Date:
-                            schemaRow[Size] = TdsEnums.WHIDBEY_DATE_LENGTH;
+                            schemaRow[size] = TdsEnums.WHIDBEY_DATE_LENGTH;
                             break;
                         case SqlDbType.Time:
                             Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for Time column: " + col.scale);
-                            schemaRow[Size] = TdsEnums.WHIDBEY_TIME_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
+                            schemaRow[size] = TdsEnums.WHIDBEY_TIME_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTime2:
                             Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTime2 column: " + col.scale);
-                            schemaRow[Size] = TdsEnums.WHIDBEY_DATETIME2_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
+                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIME2_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                         case SqlDbType.DateTimeOffset:
                             Debug.Assert(TdsEnums.UNKNOWN_PRECISION_SCALE == col.scale || (0 <= col.scale && col.scale <= 7), "Invalid scale for DateTimeOffset column: " + col.scale);
-                            schemaRow[Size] = TdsEnums.WHIDBEY_DATETIMEOFFSET_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
+                            schemaRow[size] = TdsEnums.WHIDBEY_DATETIMEOFFSET_LENGTH[TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale ? col.scale : col.metaType.Scale];
                             break;
                     }
                 }
@@ -637,12 +647,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_typeSystem == SqlConnectionString.TypeSystem.SQLServer2005)
                     {
-                        schemaRow[ProviderType] = SqlDbType.VarBinary;
+                        schemaRow[providerType] = SqlDbType.VarBinary;
                     }
                     else
                     {
                         // TypeSystem.SQLServer2000
-                        schemaRow[ProviderType] = SqlDbType.Image;
+                        schemaRow[providerType] = SqlDbType.Image;
                     }
                 }
                 else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
@@ -650,19 +660,19 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2005 and above
 
                     // SqlDbType enum value - always the actual type for SQLServer2005.
-                    schemaRow[ProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type);
+                    schemaRow[providerType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type);
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
                         Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
-                        schemaRow[UdtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
+                        schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
                         Debug.Assert(Connection.Is2005OrNewer, "Invalid DataType (Xml) for the column");
-                        schemaRow[XmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
-                        schemaRow[XmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
-                        schemaRow[XmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
+                        schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
+                        schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
+                        schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
                     }
                 }
                 else
@@ -670,7 +680,7 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2000
 
                     // SqlDbType enum value - variable for certain types when SQLServer2000.
-                    schemaRow[ProviderType] = GetVersionedMetaType(col.metaType).SqlDbType;
+                    schemaRow[providerType] = GetVersionedMetaType(col.metaType).SqlDbType;
                 }
 
                 if (col.cipherMD != null)
@@ -678,110 +688,110 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
                     if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.precision)
                     {
-                        schemaRow[Precision] = col.baseTI.precision;
+                        schemaRow[precision] = col.baseTI.precision;
                     }
                     else
                     {
-                        schemaRow[Precision] = col.baseTI.metaType.Precision;
+                        schemaRow[precision] = col.baseTI.metaType.Precision;
                     }
                 }
                 else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.precision)
                 {
-                    schemaRow[Precision] = col.precision;
+                    schemaRow[precision] = col.precision;
                 }
                 else
                 {
-                    schemaRow[Precision] = col.metaType.Precision;
+                    schemaRow[precision] = col.metaType.Precision;
                 }
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
-                    schemaRow[Scale] = MetaType.MetaNVarChar.Scale;
+                    schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
                 else if (col.cipherMD != null)
                 {
                     Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
                     if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.baseTI.scale)
                     {
-                        schemaRow[Scale] = col.baseTI.scale;
+                        schemaRow[scale] = col.baseTI.scale;
                     }
                     else
                     {
-                        schemaRow[Scale] = col.baseTI.metaType.Scale;
+                        schemaRow[scale] = col.baseTI.metaType.Scale;
                     }
                 }
                 else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
                 {
-                    schemaRow[Scale] = col.scale;
+                    schemaRow[scale] = col.scale;
                 }
                 else
                 {
-                    schemaRow[Scale] = col.metaType.Scale;
+                    schemaRow[scale] = col.metaType.Scale;
                 }
 
-                schemaRow[AllowDBNull] = col.IsNullable;
+                schemaRow[allowDBNull] = col.IsNullable;
 
                 // If no ColInfo token received, do not set value, leave as null.
                 if (_browseModeInfoConsumed)
                 {
-                    schemaRow[IsAliased] = col.IsDifferentName;
-                    schemaRow[IsKey] = col.IsKey;
-                    schemaRow[IsHidden] = col.IsHidden;
-                    schemaRow[IsExpression] = col.IsExpression;
+                    schemaRow[isAliased] = col.IsDifferentName;
+                    schemaRow[isKey] = col.IsKey;
+                    schemaRow[isHidden] = col.IsHidden;
+                    schemaRow[isExpression] = col.IsExpression;
                 }
 
-                schemaRow[IsIdentity] = col.IsIdentity;
-                schemaRow[IsAutoIncrement] = col.IsIdentity;
+                schemaRow[isIdentity] = col.IsIdentity;
+                schemaRow[isAutoIncrement] = col.IsIdentity;
 
                 if (col.cipherMD != null)
                 {
                     Debug.Assert(col.baseTI != null, @"col.baseTI should not be null.");
                     Debug.Assert(col.baseTI.metaType != null, @"col.baseTI.metaType should not be null.");
-                    schemaRow[IsLong] = col.baseTI.metaType.IsLong;
+                    schemaRow[isLong] = col.baseTI.metaType.IsLong;
                 }
                 else
                 {
-                    schemaRow[IsLong] = col.metaType.IsLong;
+                    schemaRow[isLong] = col.metaType.IsLong;
                 }
 
                 // mark unique for timestamp columns
                 if (SqlDbType.Timestamp == col.type)
                 {
-                    schemaRow[IsUnique] = true;
-                    schemaRow[IsRowVersion] = true;
+                    schemaRow[isUnique] = true;
+                    schemaRow[isRowVersion] = true;
                 }
                 else
                 {
-                    schemaRow[IsUnique] = false;
-                    schemaRow[IsRowVersion] = false;
+                    schemaRow[isUnique] = false;
+                    schemaRow[isRowVersion] = false;
                 }
 
-                schemaRow[IsReadOnly] = col.IsReadOnly;
-                schemaRow[IsColumnSet] = col.IsColumnSet;
+                schemaRow[isReadOnly] = col.IsReadOnly;
+                schemaRow[isColumnSet] = col.IsColumnSet;
 
-                if (!ADP.IsEmpty(col.serverName))
+                if (!string.IsNullOrEmpty(col.serverName))
                 {
-                    schemaRow[BaseServerName] = col.serverName;
+                    schemaRow[baseServerName] = col.serverName;
                 }
-                if (!ADP.IsEmpty(col.catalogName))
+                if (!string.IsNullOrEmpty(col.catalogName))
                 {
-                    schemaRow[BaseCatalogName] = col.catalogName;
+                    schemaRow[baseCatalogName] = col.catalogName;
                 }
-                if (!ADP.IsEmpty(col.schemaName))
+                if (!string.IsNullOrEmpty(col.schemaName))
                 {
-                    schemaRow[BaseSchemaName] = col.schemaName;
+                    schemaRow[baseSchemaName] = col.schemaName;
                 }
-                if (!ADP.IsEmpty(col.tableName))
+                if (!string.IsNullOrEmpty(col.tableName))
                 {
-                    schemaRow[BaseTableName] = col.tableName;
+                    schemaRow[baseTableName] = col.tableName;
                 }
-                if (!ADP.IsEmpty(col.baseColumn))
+                if (!string.IsNullOrEmpty(col.baseColumn))
                 {
-                    schemaRow[BaseColumnName] = col.baseColumn;
+                    schemaRow[baseColumnName] = col.baseColumn;
                 }
-                else if (!ADP.IsEmpty(col.column))
+                else if (!string.IsNullOrEmpty(col.column))
                 {
-                    schemaRow[BaseColumnName] = col.column;
+                    schemaRow[baseColumnName] = col.column;
                 }
 
                 schemaTable.Rows.Add(schemaRow);
@@ -800,7 +810,7 @@ namespace Microsoft.Data.SqlClient
         internal void Cancel(int objectID)
         {
             TdsParserStateObject stateObj = _stateObj;
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.Cancel(objectID);
             }
@@ -808,18 +818,20 @@ namespace Microsoft.Data.SqlClient
 
         // wipe any data off the wire from a partial read
         // and reset all pointers for sequential access
-        private bool TryCleanPartialRead()
+        private TdsOperationStatus TryCleanPartialRead()
         {
             AssertReaderState(requireData: true, permitAsync: true);
 
             // VSTS DEVDIV2 380446: It is possible that read attempt we are cleaning after ended with partially
             // processed header (if it falls between network packets). In this case the first thing to do is to
             // finish reading the header, otherwise code will start treating unread header as TDS payload.
+            TdsOperationStatus result;
             if (_stateObj._partialHeaderBytesRead > 0)
             {
-                if (!_stateObj.TryProcessHeader())
+                result = _stateObj.TryProcessHeader();
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
             }
 
@@ -837,25 +849,27 @@ namespace Microsoft.Data.SqlClient
             // i. user called read but didn't fetch anything
             if (0 == _sharedState._nextColumnHeaderToRead)
             {
-                if (!_stateObj.Parser.TrySkipRow(_metaData, _stateObj))
+                result = _stateObj.Parser.TrySkipRow(_metaData, _stateObj);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
             }
             else
             {
-
                 // iia.  if we still have bytes left from a partially read column, skip
-                if (!TryResetBlobState())
+                result = TryResetBlobState();
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
 
                 // iib.
                 // now read the remaining values off the wire for this row
-                if (!_stateObj.Parser.TrySkipRow(_metaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                result = _stateObj.Parser.TrySkipRow(_metaData, _sharedState._nextColumnHeaderToRead, _stateObj);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
             }
 
@@ -863,18 +877,18 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj.HasPendingData)
             {
                 byte token;
-                if (!_stateObj.TryPeekByte(out token))
+                result = _stateObj.TryPeekByte(out token);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
 
                 Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
-
             }
 #endif
             _sharedState._dataReady = false;
 
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private void CleanPartialReadReliable()
@@ -894,8 +908,8 @@ namespace Microsoft.Data.SqlClient
 #else
                 {
 #endif //DEBUG
-                    bool result = TryCleanPartialRead();
-                    Debug.Assert(result, "Should not pend on sync call");
+                    TdsOperationStatus result = TryCleanPartialRead();
+                    Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
                     Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
                 }
 #if DEBUG
@@ -952,11 +966,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
-        override public void Close()
+        public override void Close()
         {
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.Close|API> {0}", ObjectID))
             {
+                SqlStatistics statistics = null;
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -1005,14 +1019,11 @@ namespace Microsoft.Data.SqlClient
 
                     if (stateObj != null)
                     {
-
                         // protect against concurrent close and cancel
                         lock (stateObj)
                         {
-
                             if (_stateObj != null)
                             {  // reader not closed while we waited for the lock
-
                                 // TryCloseInternal will clear out the snapshot when it is done
                                 if (_snapshot != null)
                                 {
@@ -1029,11 +1040,10 @@ namespace Microsoft.Data.SqlClient
                                 // in which case we need to switch to syncOverAsync
                                 stateObj._syncOverAsync = true;
 
-                                if (!TryCloseInternal(true /*closeReader*/))
+                                if (TryCloseInternal(closeReader: true) != TdsOperationStatus.Done)
                                 {
                                     throw SQL.SynchronousCallMayNotPend();
                                 }
-
                                 // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                             }
                         }
@@ -1046,14 +1056,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryCloseInternal(bool closeReader)
+        private TdsOperationStatus TryCloseInternal(bool closeReader)
         {
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
             bool closeConnection = (IsCommandBehavior(CommandBehavior.CloseConnection));
             bool aborting = false;
             bool cleanDataFailed = false;
-
+            TdsOperationStatus result;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
@@ -1069,7 +1079,6 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
                     {
-
                         // It is possible for this to be called during connection close on a
                         // broken connection, so check state first.
                         if (parser.State == TdsParserState.OpenLoggedIn)
@@ -1087,22 +1096,24 @@ namespace Microsoft.Data.SqlClient
                             if (_sharedState._dataReady)
                             {
                                 cleanDataFailed = true;
-                                if (TryCleanPartialRead())
+                                result = TryCleanPartialRead();
+                                if (result == TdsOperationStatus.Done)
                                 {
                                     cleanDataFailed = false;
                                 }
                                 else
                                 {
-                                    return false;
+                                    return result;
                                 }
                             }
 #if DEBUG
                             else
                             {
                                 byte token;
-                                if (!_stateObj.TryPeekByte(out token))
+                                result = _stateObj.TryPeekByte(out token);
+                                if (result != TdsOperationStatus.Done)
                                 {
-                                    return false;
+                                    return result;
                                 }
 
                                 Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
@@ -1110,16 +1121,16 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 
-                            bool ignored;
-                            if (!parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out ignored))
+                            result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out _);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
                         }
                     }
 
                     RestoreServerSettings(parser, stateObj);
-                    return true;
+                    return TdsOperationStatus.Done;
                 }
 #if DEBUG
                 finally
@@ -1132,7 +1143,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1142,7 +1153,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1152,7 +1163,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _isClosed = true;
                 aborting = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -1211,7 +1222,7 @@ namespace Microsoft.Data.SqlClient
                         {
 #endif //DEBUG
                             // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
-                            if ((!wasClosed) && (null != stateObj))
+                            if (!wasClosed && stateObj != null)
                             {
                                 if (!cleanDataFailed)
                                 {
@@ -1227,7 +1238,6 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                             }
-
                             // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                         }
 #if DEBUG
@@ -1239,7 +1249,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.OutOfMemoryException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1247,7 +1257,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.StackOverflowException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1255,7 +1265,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (System.Threading.ThreadAbortException e)
                     {
-                        if (null != _connection)
+                        if (_connection != null)
                         {
                             _connection.Abort(e);
                         }
@@ -1263,8 +1273,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // do not retry here
-                    bool result = TrySetMetaData(null, false);
-                    Debug.Assert(result, "Should not pend a synchronous request");
+                    result = TrySetMetaData(null, false);
+                    Debug.Assert(result == TdsOperationStatus.Done, "Should not pend a synchronous request");
                     _fieldNameLookup = null;
 
                     // if the user calls ExecuteReader(CommandBehavior.CloseConnection)
@@ -1329,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryConsumeMetaData()
+        private TdsOperationStatus TryConsumeMetaData()
         {
             // warning:  Don't check the MetaData property within this function
             // warning:  as it will be a reentrant call
@@ -1337,24 +1347,26 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                 {
-                    // Happened for DEVDIV2:180509    (SqlDataReader.ConsumeMetaData Hangs In 100% CPU Loop Forever When TdsParser._state == TdsParserState.Broken)
+                    // Happened for DEVDIV2:180509	(SqlDataReader.ConsumeMetaData Hangs In 100% CPU Loop Forever When TdsParser._state == TdsParserState.Broken)
                     // during request for DTC address.
                     // NOTE: We doom connection for TdsParserState.Closed since it indicates that it is in some abnormal and unstable state, probably as a result of
                     // closing from another thread. In general, TdsParserState.Closed does not necessitate dooming the connection.
                     if (_parser.Connection != null)
+                    {
                         _parser.Connection.DoomThisConnection();
+                    }
                     throw SQL.ConnectionDoomed();
                 }
                 bool ignored;
-                if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored))
+                TdsOperationStatus result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
                 Debug.Assert(!ignored, "Parser read a row token while trying to read metadata");
             }
 
-
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDataTypeName/*' />
@@ -1428,7 +1440,7 @@ namespace Microsoft.Data.SqlClient
 
         virtual internal SqlBuffer.StorageType GetVariantInternalStorageType(int i)
         {
-            Debug.Assert(null != _data, "Attempting to get variant internal storage type");
+            Debug.Assert(_data != null, "Attempting to get variant internal storage type");
             Debug.Assert(i < _data.Length, "Reading beyond data length?");
 
             return _data[i].VariantInternalStorageType;
@@ -1441,6 +1453,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*' />
+#if !NETFRAMEWORK
+        [SuppressMessage("ReflectionAnalysis", "IL2093:MismatchOnMethodReturnValueBetweenOverrides",
+                   Justification = "Annotations for DbDataReader was not shipped in net6.0")]
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         override public Type GetFieldType(int i)
         {
             SqlStatistics statistics = null;
@@ -1457,6 +1474,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         private Type GetFieldTypeInternal(_SqlMetaData metaData)
         {
             Type fieldType = null;
@@ -1481,7 +1501,6 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
@@ -1504,7 +1523,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // TypeSystem.SQLServer2000
-
                 fieldType = GetVersionedMetaType(metaData.metaType).ClassType; // Com+ type.
             }
 
@@ -1540,6 +1558,7 @@ namespace Microsoft.Data.SqlClient
                     lcid = 0;
                 }
             }
+
             return lcid;
         }
 
@@ -1548,11 +1567,14 @@ namespace Microsoft.Data.SqlClient
         {
             CheckMetaDataIsReady(columnIndex: i);
 
-            Debug.Assert(null != _metaData[i].column, "MDAC 66681");
+            Debug.Assert(_metaData[i].column != null, "MDAC 66681");
             return _metaData[i].column;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
+#if !NETFRAMEWORK && NET8_0_OR_GREATER
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         override public Type GetProviderSpecificFieldType(int i)
         {
             SqlStatistics statistics = null;
@@ -1569,6 +1591,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if !NETFRAMEWORK
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         private Type GetProviderSpecificFieldTypeInternal(_SqlMetaData metaData)
         {
             Type providerSpecificFieldType = null;
@@ -1592,7 +1617,6 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-
                 if (metaData.type == SqlDbType.Udt)
                 {
                     Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
@@ -1617,7 +1641,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // TypeSystem.SQLServer2000
-
                 providerSpecificFieldType = GetVersionedMetaType(metaData.metaType).SqlType; // SqlType type.
             }
 
@@ -1632,7 +1655,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                if (null == _fieldNameLookup)
+                if (_fieldNameLookup == null)
                 {
                     CheckMetaDataIsReady();
                     _fieldNameLookup = new FieldNameLookup(this, _defaultLCID);
@@ -1658,7 +1681,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*' />
-        override public DataTable GetSchemaTable()
+        public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID))
@@ -1666,15 +1689,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (null == _metaData || null == _metaData._schemaTable)
+                    if (_metaData == null || _metaData.schemaTable == null)
                     {
-                        if (null != this.MetaData)
+                        if (this.MetaData != null)
                         {
-                            _metaData._schemaTable = BuildSchemaTable();
-                            Debug.Assert(null != _metaData._schemaTable, "No schema information yet!");
+                            _metaData.schemaTable = BuildSchemaTable();
+                            Debug.Assert(_metaData.schemaTable != null, "No schema information yet!");
                         }
                     }
-                    return _metaData?._schemaTable;
+                    return _metaData?.schemaTable;
                 }
                 finally
                 {
@@ -1694,8 +1717,8 @@ namespace Microsoft.Data.SqlClient
         virtual public XmlReader GetXmlReader(int i)
         {
             // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
-            // If this ever changes, the following code should be changed to be like GetStream\GetTextReader
-            CheckDataIsReady(columnIndex: i, methodName: "GetXmlReader");
+            // If this ever changes, the following code should be changed to be like GetStream/GetTextReader
+            CheckDataIsReady(columnIndex: i);
 
             MetaType mt = _metaData[i].metaType;
 
@@ -1720,7 +1743,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true, async: false);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -1733,7 +1756,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*' />
         override public Stream GetStream(int i)
         {
-            CheckDataIsReady(columnIndex: i, methodName: "GetStream");
+            CheckDataIsReady(columnIndex: i);
 
             // Streaming is not supported on encrypted columns.
             if (_metaData[i] != null && _metaData[i].cipherMD != null)
@@ -1765,7 +1788,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    data = new byte[0];
+                    data = Array.Empty<byte>();
                 }
                 else
                 {
@@ -1791,7 +1814,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             long cbBytes = 0;
 
-            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetBytes");
+            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
 
             // don't allow get bytes on non-long or non-binary columns
             MetaType mt = _metaData[i].metaType;
@@ -1824,16 +1847,18 @@ namespace Microsoft.Data.SqlClient
 
             long value;
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryGetBytesInternal(i, dataIndex, buffer, bufferIndex, length, out value);
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            TdsOperationStatus result = TryGetBytesInternal(i, dataIndex, buffer, bufferIndex, length, out value);
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return value;
         }
 
-        private bool TryGetBytesInternal(int i, long dataIndex, byte[] buffer, int bufferIndex, int length, out long remaining)
+        private TdsOperationStatus TryGetBytesInternal(int i, long dataIndex, byte[] buffer, int bufferIndex, int length, out long remaining)
         {
             remaining = 0;
-
+            TdsOperationStatus result;
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
@@ -1862,9 +1887,10 @@ namespace Microsoft.Data.SqlClient
 
                         if (_sharedState._nextColumnHeaderToRead <= i)
                         {
-                            if (!TryReadColumnHeader(i))
+                            result = TryReadColumnHeader(i);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
                         }
 
@@ -1878,32 +1904,35 @@ namespace Microsoft.Data.SqlClient
                         if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
                         {
                             ulong left;
-                            if (!_parser.TryPlpBytesLeft(_stateObj, out left))
+                            result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
                             _sharedState._columnDataBytesRemaining = (long)left;
                         }
 
                         if (0 == _sharedState._columnDataBytesRemaining)
                         {
-                            return true; // We've read this column to the end
+                            return TdsOperationStatus.Done; // We've read this column to the end
                         }
 
                         // if no buffer is passed in, return the number total of bytes, or -1
-                        if (null == buffer)
+                        if (buffer == null)
                         {
                             if (_metaData[i].metaType.IsPlp)
                             {
                                 remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
-                                return true;
+                                return TdsOperationStatus.Done;
                             }
                             remaining = _sharedState._columnDataBytesRemaining;
-                            return true;
+                            return TdsOperationStatus.Done;
                         }
 
                         if (dataIndex < 0)
-                            throw ADP.NegativeParameter("dataIndex");
+                        {
+                            throw ADP.NegativeParameter(nameof(dataIndex));
+                        }
 
                         if (dataIndex < _columnDataBytesRead)
                         {
@@ -1916,19 +1945,25 @@ namespace Microsoft.Data.SqlClient
                         // if dataIndex is outside of the data range, return 0
                         if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
                         {
-                            return true;
+                            return TdsOperationStatus.Done;
                         }
 
                         // if bad buffer index, throw
                         if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        {
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        }
 
                         // if there is not enough room in the buffer for data
                         if (length + bufferIndex > buffer.Length)
+                        {
                             throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
+                        }
 
                         if (length < 0)
+                        {
                             throw ADP.InvalidDataLength(length);
+                        }
 
                         // Skip if needed
                         if (cb > 0)
@@ -1936,17 +1971,19 @@ namespace Microsoft.Data.SqlClient
                             if (_metaData[i].metaType.IsPlp)
                             {
                                 ulong skipped;
-                                if (!_parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped))
+                                result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
+                                if (result != TdsOperationStatus.Done)
                                 {
-                                    return false;
+                                    return result;
                                 }
                                 _columnDataBytesRead += (long)skipped;
                             }
                             else
                             {
-                                if (!_stateObj.TrySkipLongBytes(cb))
+                                result = _stateObj.TrySkipLongBytes(cb);
+                                if (result != TdsOperationStatus.Done)
                                 {
-                                    return false;
+                                    return result;
                                 }
                                 _columnDataBytesRead += cb;
                                 _sharedState._columnDataBytesRemaining -= cb;
@@ -1954,7 +1991,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         int bytesRead;
-                        bool result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
+                        result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
                         remaining = (int)bytesRead;
                         return result;
                     }
@@ -1963,11 +2000,13 @@ namespace Microsoft.Data.SqlClient
                     // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
                     // we need can cast to int if the dataIndex is in range
                     if (dataIndex < 0)
-                        throw ADP.NegativeParameter("dataIndex");
-
-                    if (dataIndex > Int32.MaxValue)
                     {
-                        throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, "dataIndex");
+                        throw ADP.NegativeParameter(nameof(dataIndex));
+                    }
+
+                    if (dataIndex > int.MaxValue)
+                    {
+                        throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
                     }
 
                     int ndataIndex = (int)dataIndex;
@@ -2000,16 +2039,16 @@ namespace Microsoft.Data.SqlClient
                     cbytes = data.Length;
 
                     // if no buffer is passed in, return the number of characters we have
-                    if (null == buffer)
+                    if (buffer == null)
                     {
                         remaining = cbytes;
-                        return true;
+                        return TdsOperationStatus.Done;
                     }
 
                     // if dataIndex is outside of data range, return 0
                     if (ndataIndex < 0 || ndataIndex >= cbytes)
                     {
-                        return true;
+                        return TdsOperationStatus.Done;
                     }
                     try
                     {
@@ -2017,9 +2056,13 @@ namespace Microsoft.Data.SqlClient
                         {
                             // help the user out in the case where there's less data than requested
                             if ((ndataIndex + length) > cbytes)
+                            {
                                 cbytes = cbytes - ndataIndex;
+                            }
                             else
+                            {
                                 cbytes = length;
+                            }
                         }
 
                         Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
@@ -2034,21 +2077,27 @@ namespace Microsoft.Data.SqlClient
                         cbytes = data.Length;
 
                         if (length < 0)
+                        {
                             throw ADP.InvalidDataLength(length);
+                        }
 
                         // if bad buffer index, throw
                         if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        {
+                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                        }
 
                         // if there is not enough room in the buffer for data
                         if (cbytes + bufferIndex > buffer.Length)
+                        {
                             throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
+                        }
 
                         throw;
                     }
 
                     remaining = cbytes;
-                    return true;
+                    return TdsOperationStatus.Done;
                 }
 #if DEBUG
                 finally
@@ -2060,7 +2109,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2069,7 +2118,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2078,7 +2127,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2101,13 +2150,17 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SetTimeout(timeoutMilliseconds ?? _defaultTimeoutMilliseconds);
 
-                bool result = TryReadColumnHeader(i);
-                if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                TdsOperationStatus result = TryReadColumnHeader(i);
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 result = TryGetBytesInternalSequential(i, buffer, index, length, out value);
-                if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
             }
             finally
             {
@@ -2120,7 +2173,7 @@ namespace Microsoft.Data.SqlClient
         // This is meant to be called from other internal methods once we are at the column to read
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the index and decrease length by the value of bytesRead
-        internal bool TryGetBytesInternalSequential(int i, byte[] buffer, int index, int length, out int bytesRead)
+        internal TdsOperationStatus TryGetBytesInternalSequential(int i, byte[] buffer, int index, int length, out int bytesRead)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
             Debug.Assert(_sharedState._nextColumnHeaderToRead == i + 1 && _sharedState._nextColumnDataToRead == i, "Non sequential access");
@@ -2130,6 +2183,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(index + length <= buffer.Length, "Buffer too small");
 
             bytesRead = 0;
+            TdsOperationStatus result;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -2153,32 +2207,43 @@ namespace Microsoft.Data.SqlClient
                     // if plp columns, do partial reads. Don't read the entire value in one shot.
                     if (_metaData[i].metaType.IsPlp)
                     {
-                        // Read in data
-                        bool result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        if (!result)
-                        {
-                            return false;
-                        }
-
-                        // Query for number of bytes left
-                        ulong left;
-                        if (!_parser.TryPlpBytesLeft(_stateObj, out left))
-                        {
-                            _sharedState._columnDataBytesRemaining = -1;
-                            return false;
-                        }
-                        _sharedState._columnDataBytesRemaining = (long)left;
-                        return true;
+                        // No data left or nothing requested, return 0
+                        bytesRead = 0;
+                        return TdsOperationStatus.Done;
                     }
                     else
                     {
-                        // Read data (not exceeding the total amount of data available)
-                        int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        bool result = _stateObj.TryReadByteArray(buffer.AsSpan(start: index), bytesToRead, out bytesRead);
-                        _columnDataBytesRead += bytesRead;
-                        _sharedState._columnDataBytesRemaining -= bytesRead;
-                        return result;
+                        // if plp columns, do partial reads. Don't read the entire value in one shot.
+                        if (_metaData[i].metaType.IsPlp)
+                        {
+                            // Read in data
+                            result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                            _columnDataBytesRead += bytesRead;
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+
+                            // Query for number of bytes left
+                            ulong left;
+                            result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                _sharedState._columnDataBytesRemaining = -1;
+                                return result;
+                            }
+                            _sharedState._columnDataBytesRemaining = (long)left;
+                            return TdsOperationStatus.Done;
+                        }
+                        else
+                        {
+                            // Read data (not exceeding the total amount of data available)
+                            int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
+                            result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
+                            _columnDataBytesRead += bytesRead;
+                            _sharedState._columnDataBytesRemaining -= bytesRead;
+                            return result;
+                        }
                     }
                 }
 #if DEBUG
@@ -2192,7 +2257,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2201,7 +2266,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2210,7 +2275,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2221,7 +2286,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
         override public TextReader GetTextReader(int i)
         {
-            CheckDataIsReady(columnIndex: i, methodName: "GetTextReader");
+            CheckDataIsReady(columnIndex: i);
 
             // Xml type is not supported
             MetaType mt = null;
@@ -2252,7 +2317,11 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 System.Text.Encoding encoding;
-                if (mt.IsNCharType)
+                if (mt.SqlDbType == SqlDbTypeExtensions.Json)
+                {
+                    encoding = new UTF8Encoding();
+                }
+                else if (mt.IsNCharType)
                 {
                     // NChar types always use unicode
                     encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
@@ -2261,7 +2330,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     encoding = _metaData[i].encoding;
                 }
-
                 _currentTextReader = new SqlSequentialTextReader(this, i, encoding);
                 _lastColumnWithDataChunkRead = i;
                 return _currentTextReader;
@@ -2351,7 +2419,7 @@ namespace Microsoft.Data.SqlClient
                     // if bad buffer index, throw
                     if ((bufferIndex < 0) || (buffer != null && bufferIndex >= buffer.Length))
                     {
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
                     }
 
                     // if there is not enough room in the buffer for data
@@ -2364,7 +2432,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                            CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         }
                         catch (Exception ex)
                         {
@@ -2383,7 +2451,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true, methodName: "GetChars");
+                        CheckDataIsReady(columnIndex: i, allowPartiallyReadColumn: true);
                         charsRead = GetCharsFromPlpData(i, dataIndex, buffer, bufferIndex, length);
                     }
                     _lastColumnWithDataChunkRead = i;
@@ -2411,19 +2479,23 @@ namespace Microsoft.Data.SqlClient
 
                 // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
                 // we need can cast to int if the dataIndex is in range
-                if (dataIndex > Int32.MaxValue)
+                if (dataIndex > int.MaxValue)
                 {
-                    throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, "dataIndex");
+                    throw ADP.InvalidSourceBufferIndex(cchars, dataIndex, nameof(dataIndex));
                 }
                 int ndataIndex = (int)dataIndex;
 
                 // if no buffer is passed in, return the number of characters we have
-                if (null == buffer)
+                if (buffer == null)
+                {
                     return cchars;
+                }
 
                 // if dataIndex outside of data range, return 0
                 if (ndataIndex < 0 || ndataIndex >= cchars)
+                {
                     return 0;
+                }
 
                 try
                 {
@@ -2431,9 +2503,13 @@ namespace Microsoft.Data.SqlClient
                     {
                         // help the user out in the case where there's less data than requested
                         if ((ndataIndex + length) > cchars)
+                        {
                             cchars = cchars - ndataIndex;
+                        }
                         else
+                        {
                             cchars = length;
+                        }
                     }
 
                     Array.Copy(_columnDataChars, ndataIndex, buffer, bufferIndex, cchars);
@@ -2449,15 +2525,21 @@ namespace Microsoft.Data.SqlClient
                     cchars = _columnDataChars.Length;
 
                     if (length < 0)
+                    {
                         throw ADP.InvalidDataLength(length);
+                    }
 
                     // if bad buffer index, throw
                     if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, "bufferIndex");
+                    {
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                    }
 
                     // if there is not enough room in the buffer for data
                     if (cchars + bufferIndex > buffer.Length)
+                    {
                         throw ADP.InvalidBufferSizeOrIndex(cchars, bufferIndex);
+                    }
 
                     throw;
                 }
@@ -2520,7 +2602,9 @@ namespace Microsoft.Data.SqlClient
                     // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
                     // In both cases we will clean decoder
                     if (dataIndex == 0)
+                    {
                         _stateObj._plpdecoder = null;
+                    }
 
                     bool isUnicode = _metaData[i].metaType.IsNCharType;
 
@@ -2538,7 +2622,7 @@ namespace Microsoft.Data.SqlClient
 
                     // if no buffer is passed in, return the total number of characters or -1
                     // TODO: for DBCS encoding it returns number of bytes, not number of chars
-                    if (null == buffer)
+                    if (buffer == null)
                     {
                         cch = (long)_parser.PlpBytesTotalLength(_stateObj);
                         return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
@@ -2550,7 +2634,6 @@ namespace Microsoft.Data.SqlClient
                         // Clean decoder state: we do not reset it, but destroy to ensure
                         // that we do not start decoding the column with decoder from the old one
                         _stateObj._plpdecoder = null;
-
                         // TODO: for DBCS encoding skip positioning dataIndex is not in characters but is interpreted as
                         // number of chars already read + number of bytes to skip
                         cch = dataIndex - _columnDataCharsRead;
@@ -2585,7 +2668,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2594,7 +2677,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2603,7 +2686,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -2667,7 +2750,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDecimal/*' />
-        override public Decimal GetDecimal(int i)
+        override public decimal GetDecimal(int i)
         {
             ReadColumn(i);
             return _data[i].Decimal;
@@ -2695,21 +2778,21 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*' />
-        override public Int16 GetInt16(int i)
+        override public short GetInt16(int i)
         {
             ReadColumn(i);
             return _data[i].Int16;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt32/*' />
-        override public Int32 GetInt32(int i)
+        override public int GetInt32(int i)
         {
             ReadColumn(i);
             return _data[i].Int32;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt64/*' />
-        override public Int64 GetInt64(int i)
+        override public long GetInt64(int i)
         {
             ReadColumn(i);
             return _data[i].Int64;
@@ -2869,6 +2952,14 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/GetSqlJson/*' />
+        virtual public SqlJson GetSqlJson(int i)
+        {
+            ReadColumn(i);
+            SqlJson json = _data[i].IsNull ? SqlJson.Null : _data[i].SqlJson;
+            return json;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
@@ -2894,9 +2985,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout: false);
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            TdsOperationStatus result = TryReadColumn(i, setTimeout: false);
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetSqlValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -2920,11 +3013,11 @@ namespace Microsoft.Data.SqlClient
             }
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
-                // TypeSystem.SQLServer2005
+                // TypeSystem.SQLServer2005 and above
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    var connection = _connection;
+                    SqlConnection connection = _connection;
                     if (connection != null)
                     {
                         connection.CheckGetExtendedUDTInfo(metaData, true);
@@ -2932,7 +3025,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed("GetSqlValueFromSqlBufferInternal");
+                        throw ADP.DataReaderClosed();
                     }
                 }
                 else
@@ -2963,9 +3056,9 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 CheckDataIsReady();
-                if (null == values)
+                if (values == null)
                 {
-                    throw ADP.ArgumentNull("values");
+                    throw ADP.ArgumentNull(nameof(values));
                 }
 
                 SetTimeout(_defaultTimeoutMilliseconds);
@@ -3084,9 +3177,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout: false);
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            TdsOperationStatus result = TryReadColumn(i, setTimeout: false);
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
             return GetValueFromSqlBufferInternal(_data[i], _metaData[i]);
         }
@@ -3116,7 +3211,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
-                // TypeSystem.SQLServer2005
+                // TypeSystem.SQLServer2005 and above
 
                 if (metaData.type != SqlDbType.Udt)
                 {
@@ -3124,7 +3219,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    var connection = _connection;
+                    SqlConnection connection = _connection;
                     if (connection != null)
                     {
                         connection.CheckGetExtendedUDTInfo(metaData, true);
@@ -3132,7 +3227,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw ADP.DataReaderClosed("GetValueFromSqlBufferInternal");
+                        throw ADP.DataReaderClosed();
                     }
                 }
             }
@@ -3152,8 +3247,8 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool forStreaming = typeof(T) == typeof(XmlReader) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(Stream);
-            bool result = TryReadColumn(i, setTimeout: false, forStreaming: forStreaming);
-            if (!result)
+            TdsOperationStatus result = TryReadColumn(i, setTimeout: false, forStreaming: forStreaming);
+            if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
             }
@@ -3162,7 +3257,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
-        {            
+        {
             // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
             // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
@@ -3211,6 +3306,16 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.DateTime;
             }
+#if !NETFRAMEWORK
+            else if (typeof(T) == typeof(DateOnly) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            {
+                return (T)(object)data.DateOnly;
+            }
+            else if (typeof(T) == typeof(TimeOnly) && dataType == typeof(TimeOnly) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005)
+            {
+                return (T)(object)data.TimeOnly;
+            }
+#endif
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
@@ -3312,6 +3417,16 @@ namespace Microsoft.Data.SqlClient
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
             }
+            else if (typeof(T) == typeof(JsonDocument))
+            {
+                MetaType metaType = metaData.metaType;
+                if (metaType.SqlDbType != SqlDbTypeExtensions.Json)
+                {
+                    throw SQL.JsonDocumentNotSupportedOnColumnType(metaData.column);
+                }
+                JsonDocument document = JsonDocument.Parse(data.Value as string);
+                return (T)(object)document;
+            }
             else
             {
                 if (typeof(INullable).IsAssignableFrom(typeof(T)))
@@ -3367,9 +3482,9 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
 
-                if (null == values)
+                if (values == null)
                 {
-                    throw ADP.ArgumentNull("values");
+                    throw ADP.ArgumentNull(nameof(values));
                 }
 
                 CheckMetaDataIsReady();
@@ -3383,13 +3498,15 @@ namespace Microsoft.Data.SqlClient
                 _commandBehavior &= ~CommandBehavior.SequentialAccess;
 
                 // Read in all of the columns in one TryReadColumn call
-                bool result = TryReadColumn(maximumColumn, setTimeout: false);
-                if (!result)
-                { throw SQL.SynchronousCallMayNotPend(); }
+                TdsOperationStatus result = TryReadColumn(maximumColumn, setTimeout: false);
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
                 for (int i = 0; i < copyLen; i++)
                 {
-                    // Get the usable, TypeSystem-compatible value from the iternal buffer
+                    // Get the usable, TypeSystem-compatible value from the internal buffer
                     int fieldIndex = _metaData.GetVisibleColumnIndex(i);
                     values[i] = GetValueFromSqlBufferInternal(_data[fieldIndex], _metaData[fieldIndex]);
 
@@ -3454,36 +3571,59 @@ namespace Microsoft.Data.SqlClient
             return metaType;
         }
 
-        private bool TryHasMoreResults(out bool moreResults)
+        private TdsOperationStatus TryHasMoreResults(out bool moreResults)
         {
-            if (null != _parser)
+            if (_parser != null)
             {
                 bool moreRows;
-                if (!TryHasMoreRows(out moreRows))
+                TdsOperationStatus result = TryHasMoreRows(out moreRows);
+                if (result != TdsOperationStatus.Done)
                 {
                     moreResults = false;
-                    return false;
+                    return result;
                 }
                 if (moreRows)
                 {
                     // When does this happen?  This is only called from NextResult(), which loops until Read() false.
                     moreResults = false;
-                    return true;
+                    return TdsOperationStatus.Done;
                 }
 
-                Debug.Assert(null != _command, "unexpected null command from the data reader!");
+                Debug.Assert(_command != null, "unexpected null command from the data reader!");
 
                 while (_stateObj.HasPendingData)
                 {
                     byte token;
-                    if (!_stateObj.TryPeekByte(out token))
+                    result = _stateObj.TryPeekByte(out token);
+                    if (result != TdsOperationStatus.Done)
                     {
                         moreResults = false;
-                        return false;
+                        return result;
                     }
 
                     switch (token)
                     {
+                        case TdsEnums.SQLROW:
+                        case TdsEnums.SQLNBCROW:
+                            // always happens if there is a row following an altrow
+                            moreResults = true;
+                            return TdsOperationStatus.Done;
+
+                        // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
+                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
+                        // case TdsEnums.DONEINPROC:
+                        case TdsEnums.SQLDONE:
+                            Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
+                            _altRowStatus = ALTROWSTATUS.Null;
+                            _metaData = null;
+                            _altMetaDataSetCollection = null;
+                            moreResults = true;
+                            return TdsOperationStatus.Done;
+                        case TdsEnums.SQLCOLMETADATA:
+                            moreResults = true;
+                            return TdsOperationStatus.Done;
+
+                        // deprecated
                         case TdsEnums.SQLALTROW:
                             if (_altRowStatus == ALTROWSTATUS.Null)
                             {
@@ -3498,57 +3638,38 @@ namespace Microsoft.Data.SqlClient
                             _altRowStatus = ALTROWSTATUS.AltRow;
                             _hasRows = true;
                             moreResults = true;
-                            return true;
-                        case TdsEnums.SQLROW:
-                        case TdsEnums.SQLNBCROW:
-                            // always happens if there is a row following an altrow
-                            moreResults = true;
-                            return true;
-
-                        // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
-                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
-                        // case TdsEnums.DONEINPROC:
-                        case TdsEnums.SQLDONE:
-                            Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
-                            _altRowStatus = ALTROWSTATUS.Null;
-                            _metaData = null;
-                            _altMetaDataSetCollection = null;
-                            moreResults = true;
-                            return true;
-                        case TdsEnums.SQLCOLMETADATA:
-                            moreResults = true;
-                            return true;
+                            return TdsOperationStatus.Done;
                     }
 
                     // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults using MARS
                     // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
-                    // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
+                    // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                     // Instead, we will throw a closed connection exception
                     if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                     {
                         throw ADP.ClosedConnectionError();
                     }
 
-                    bool ignored;
-                    if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored))
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
                     {
                         moreResults = false;
-                        return false;
+                        return result;
                     }
                 }
             }
             moreResults = false;
-            return true;
+            return TdsOperationStatus.Done;
         }
 
-        private bool TryHasMoreRows(out bool moreRows)
+        private TdsOperationStatus TryHasMoreRows(out bool moreRows)
         {
-            if (null != _parser)
+            if (_parser != null)
             {
                 if (_sharedState._dataReady)
                 {
                     moreRows = true;
-                    return true;
+                    return TdsOperationStatus.Done;
                 }
 
                 // NextResult: previous call to NextResult started to process the altrowpackage, can't peek anymore
@@ -3558,10 +3679,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     case ALTROWSTATUS.AltRow:
                         moreRows = true;
-                        return true;
+                        return TdsOperationStatus.Done;
                     case ALTROWSTATUS.Done:
                         moreRows = false;
-                        return true;
+                        return TdsOperationStatus.Done;
                 }
                 if (_stateObj.HasPendingData)
                 {
@@ -3580,10 +3701,11 @@ namespace Microsoft.Data.SqlClient
                     // process any done, doneproc and doneinproc token streams and
                     // any order, error or info token preceeding the first done, doneproc or doneinproc token stream
                     byte b;
-                    if (!_stateObj.TryPeekByte(out b))
+                    TdsOperationStatus result = _stateObj.TryPeekByte(out b);
+                    if (result != TdsOperationStatus.Done)
                     {
                         moreRows = false;
-                        return false;
+                        return result;
                     }
                     bool ParsedDoneToken = false;
 
@@ -3597,7 +3719,6 @@ namespace Microsoft.Data.SqlClient
                                 b == TdsEnums.SQLERROR ||
                                 b == TdsEnums.SQLINFO))
                     {
-
                         if (b == TdsEnums.SQLDONE ||
                             b == TdsEnums.SQLDONEPROC ||
                             b == TdsEnums.SQLDONEINPROC)
@@ -3607,25 +3728,26 @@ namespace Microsoft.Data.SqlClient
 
                         // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults when using MARS
                         // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
-                        // TryRun() will immediately return if the TdsParser is closed\broken, causing us to enter an infinite loop
+                        // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                         // Instead, we will throw a closed connection exception
                         if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                         {
                             throw ADP.ClosedConnectionError();
                         }
 
-                        bool ignored;
-                        if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored))
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
                         {
                             moreRows = false;
-                            return false;
+                            return result;
                         }
                         if (_stateObj.HasPendingData)
                         {
-                            if (!_stateObj.TryPeekByte(out b))
+                            result = _stateObj.TryPeekByte(out b);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 moreRows = false;
-                                return false;
+                                return result;
                             }
                         }
                         else
@@ -3638,12 +3760,12 @@ namespace Microsoft.Data.SqlClient
                     if (IsRowToken(b))
                     {
                         moreRows = true;
-                        return true;
+                        return TdsOperationStatus.Done;
                     }
                 }
             }
             moreRows = false;
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private bool IsRowToken(byte token)
@@ -3666,7 +3788,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNull");
+                CheckHeaderIsReady(columnIndex: i);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
 
@@ -3691,19 +3813,20 @@ namespace Microsoft.Data.SqlClient
             }
 
             bool more;
-            bool result;
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = TryNextResult(out more);
-
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            TdsOperationStatus result = TryNextResult(out more);
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
         // recordset is automatically positioned on the first result set
-        private bool TryNextResult(out bool more)
+        private TdsOperationStatus TryNextResult(out bool more)
         {
+            TdsOperationStatus result;
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.NextResult|API> {0}", ObjectID))
             {
@@ -3727,7 +3850,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (IsClosed)
                         {
-                            throw ADP.DataReaderClosed("NextResult");
+                            throw ADP.DataReaderClosed(nameof(NextResult));
                         }
                         _fieldNameLookup = null;
 
@@ -3737,10 +3860,11 @@ namespace Microsoft.Data.SqlClient
                         // if we are specifically only processing a single result, then read all the results off the wire and detach
                         if (IsCommandBehavior(CommandBehavior.SingleResult))
                         {
-                            if (!TryCloseInternal(false /*closeReader*/))
+                            result = TryCloseInternal(closeReader: false);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 more = false;
-                                return false;
+                                return result;
                             }
 
                             // In the case of not closing the reader, null out the metadata AFTER
@@ -3748,31 +3872,34 @@ namespace Microsoft.Data.SqlClient
                             // and use the metadata.
                             ClearMetaData();
                             more = success;
-                            return true;
+                            return TdsOperationStatus.Done;
                         }
 
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             // if there are more rows, then skip them, the user wants the next result
                             bool moreRows = true;
                             while (moreRows)
                             {
-                                if (!TryReadInternal(false, out moreRows))
-                                { // don't reset set the timeout value
+                                result = TryReadInternal(false, out moreRows);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    // don't reset set the timeout value
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
                             }
                         }
 
                         // we may be done, so continue only if we have not detached ourselves from the parser
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             bool moreResults;
-                            if (!TryHasMoreResults(out moreResults))
+                            result = TryHasMoreResults(out moreResults);
+                            if (result != TdsOperationStatus.Done)
                             {
                                 more = false;
-                                return false;
+                                return result;
                             }
                             if (moreResults)
                             {
@@ -3783,10 +3910,11 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     case ALTROWSTATUS.AltRow:
                                         int altRowId;
-                                        if (!_parser.TryGetAltRowId(_stateObj, out altRowId))
+                                        result = _parser.TryGetAltRowId(_stateObj, out altRowId);
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             more = false;
-                                            return false;
+                                            return result;
                                         }
                                         _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
                                         if (altMetaDataSet != null)
@@ -3802,15 +3930,16 @@ namespace Microsoft.Data.SqlClient
                                         _altRowStatus = ALTROWSTATUS.Null;
                                         break;
                                     default:
-                                        if (!TryConsumeMetaData())
+                                        result = TryConsumeMetaData();
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             more = false;
-                                            return false;
+                                            return result;
                                         }
                                         if (_metaData == null)
                                         {
                                             more = false;
-                                            return true;
+                                            return TdsOperationStatus.Done;
                                         }
                                         break;
                                 }
@@ -3820,19 +3949,21 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 // detach the parser from this reader now
-                                if (!TryCloseInternal(false /*closeReader*/))
+                                result = TryCloseInternal(closeReader: false);
+                                if (result != TdsOperationStatus.Done)
                                 {
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
 
                                 // In the case of not closing the reader, null out the metadata AFTER
                                 // CloseInternal finishes - since CloseInternal may go to the wire
                                 // and use the metadata.
-                                if (!TrySetMetaData(null, false))
+                                result = TrySetMetaData(null, false);
+                                if (result != TdsOperationStatus.Done)
                                 {
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
                             }
                         }
@@ -3845,7 +3976,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         more = success;
-                        return true;
+                        return TdsOperationStatus.Done;
                     }
 #if DEBUG
                     finally
@@ -3857,7 +3988,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.OutOfMemoryException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3866,7 +3997,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.StackOverflowException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3875,7 +4006,7 @@ namespace Microsoft.Data.SqlClient
                 catch (System.Threading.ThreadAbortException e)
                 {
                     _isClosed = true;
-                    if (null != _connection)
+                    if (_connection != null)
                     {
                         _connection.Abort(e);
                     }
@@ -3898,18 +4029,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             bool more;
-            bool result;
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            result = TryReadInternal(true, out more);
+            TdsOperationStatus result = TryReadInternal(true, out more);
 
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
             return more;
         }
 
         // user must call Read() to position on the first row
-        private bool TryReadInternal(bool setTimeout, out bool more)
+        private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.Read|API> {0}", ObjectID))
@@ -3928,9 +4060,10 @@ namespace Microsoft.Data.SqlClient
 #else
                 {
 #endif //DEBUG
+                        TdsOperationStatus result;
                         statistics = SqlStatistics.StartTimer(Statistics);
 
-                        if (null != _parser)
+                        if (_parser != null)
                         {
                             if (setTimeout)
                             {
@@ -3938,10 +4071,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (_sharedState._dataReady)
                             {
-                                if (!TryCleanPartialRead())
+                                result = TryCleanPartialRead();
+                                if (result != TdsOperationStatus.Done)
                                 {
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
                             }
 
@@ -3956,10 +4090,11 @@ namespace Microsoft.Data.SqlClient
                             if (!_haltRead)
                             {
                                 bool moreRows;
-                                if (!TryHasMoreRows(out moreRows))
+                                result = TryHasMoreRows(out moreRows);
+                                if (result != TdsOperationStatus.Done)
                                 {
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
                                 if (moreRows)
                                 {
@@ -3969,10 +4104,11 @@ namespace Microsoft.Data.SqlClient
                                         if (_altRowStatus != ALTROWSTATUS.AltRow)
                                         {
                                             // if this is an ordinary row we let the run method consume the ROW token
-                                            if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady))
+                                            result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
+                                            if (result != TdsOperationStatus.Done)
                                             {
                                                 more = false;
-                                                return false;
+                                                return result;
                                             }
                                             if (_sharedState._dataReady)
                                             {
@@ -3992,16 +4128,17 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         _haltRead = IsCommandBehavior(CommandBehavior.SingleRow);
                                         more = true;
-                                        return true;
+                                        return TdsOperationStatus.Done;
                                     }
                                 }
 
                                 if (!_stateObj.HasPendingData)
                                 {
-                                    if (!TryCloseInternal(false /*closeReader*/))
+                                    result = TryCloseInternal(closeReader: false);
+                                    if (result != TdsOperationStatus.Done)
                                     {
                                         more = false;
-                                        return false;
+                                        return result;
                                     }
                                 }
                             }
@@ -4011,10 +4148,11 @@ namespace Microsoft.Data.SqlClient
                                 // success must be false - or else we could have just read off row and set
                                 // halt to true
                                 bool moreRows;
-                                if (!TryHasMoreRows(out moreRows))
+                                result = TryHasMoreRows(out moreRows);
+                                if (result != TdsOperationStatus.Done)
                                 {
                                     more = false;
-                                    return false;
+                                    return result;
                                 }
                                 while (moreRows)
                                 {
@@ -4022,19 +4160,21 @@ namespace Microsoft.Data.SqlClient
                                     // read the rest of the rows, if any
                                     while (_stateObj.HasPendingData && !_sharedState._dataReady)
                                     {
-                                        if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady))
+                                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             more = false;
-                                            return false;
+                                            return result;
                                         }
                                     }
 
                                     if (_sharedState._dataReady)
                                     {
-                                        if (!TryCleanPartialRead())
+                                        result = TryCleanPartialRead();
+                                        if (result != TdsOperationStatus.Done)
                                         {
                                             more = false;
-                                            return false;
+                                            return result;
                                         }
                                     }
 
@@ -4043,10 +4183,11 @@ namespace Microsoft.Data.SqlClient
 
                                     _sharedState._nextColumnHeaderToRead = 0;
 
-                                    if (!TryHasMoreRows(out moreRows))
+                                    result = TryHasMoreRows(out moreRows);
+                                    if (result != TdsOperationStatus.Done)
                                     {
                                         more = false;
-                                        return false;
+                                        return result;
                                     }
                                 }
 
@@ -4056,7 +4197,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (IsClosed)
                         {
-                            throw ADP.DataReaderClosed("Read");
+                            throw ADP.DataReaderClosed(nameof(Read));
                         }
                         more = false;
 
@@ -4064,16 +4205,17 @@ namespace Microsoft.Data.SqlClient
                         if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                         {
                             byte token;
-                            if (!_stateObj.TryPeekByte(out token))
+                            result = _stateObj.TryPeekByte(out token);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
 
                             Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                         }
 #endif
 
-                        return true;
+                        return TdsOperationStatus.Done;
                     }
 #if DEBUG
                     finally
@@ -4082,7 +4224,7 @@ namespace Microsoft.Data.SqlClient
                     }
 #endif //DEBUG
                 }
-                catch (System.OutOfMemoryException e)
+                catch (OutOfMemoryException e)
                 {
                     _isClosed = true;
                     SqlConnection con = _connection;
@@ -4092,7 +4234,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (StackOverflowException e)
                 {
                     _isClosed = true;
                     SqlConnection con = _connection;
@@ -4127,16 +4269,16 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout, allowPartiallyReadColumn);
-            if (!result)
+            TdsOperationStatus result = TryReadColumn(i, setTimeout, allowPartiallyReadColumn);
+            if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
             }
         }
 
-        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
+        private TdsOperationStatus TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
-            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn);
+            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: nameof(CheckDataIsReady));
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4159,12 +4301,13 @@ namespace Microsoft.Data.SqlClient
                         SetTimeout(_defaultTimeoutMilliseconds);
                     }
 
-                    if (!TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming))
+                    TdsOperationStatus result = TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
 
-                    Debug.Assert(null != _data[i], " data buffer is null?");
+                    Debug.Assert(_data[i] != null, " data buffer is null?");
                 }
 #if DEBUG
                 finally
@@ -4176,7 +4319,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4185,7 +4328,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4194,17 +4337,17 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
                 throw;
             }
 
-            return true;
+            return TdsOperationStatus.Done;
         }
 
-        private bool TryReadColumnData()
+        private TdsOperationStatus TryReadColumnData()
         {
             // If we've already read the value (because it was NULL) we don't
             // bother to read here.
@@ -4212,27 +4355,31 @@ namespace Microsoft.Data.SqlClient
             {
                 _SqlMetaData columnMetaData = _metaData[_sharedState._nextColumnDataToRead];
 
-                if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
+                TdsOperationStatus result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                                              _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                             columnMetaData.column, _command))
-                { // will read UDTs as VARBINARY.
-                    return false;
+                                             columnMetaData.column, _command);
+                if (result != TdsOperationStatus.Done)
+                {
+                    // will read UDTs as VARBINARY.
+                    return result;
                 }
                 _sharedState._columnDataBytesRemaining = 0;
             }
             _sharedState._nextColumnDataToRead++;
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private void ReadColumnHeader(int i)
         {
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumnHeader(i);
-            if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            TdsOperationStatus result = TryReadColumnHeader(i);
+            if (result != TdsOperationStatus.Done)
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
-        private bool TryReadColumnHeader(int i)
+        private TdsOperationStatus TryReadColumnHeader(int i)
         {
             if (!_sharedState._dataReady)
             {
@@ -4261,7 +4408,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.OutOfMemoryException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4270,7 +4417,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.StackOverflowException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4279,7 +4426,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
-                if (null != _connection)
+                if (_connection != null)
                 {
                     _connection.Abort(e);
                 }
@@ -4287,7 +4434,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool TryReadColumnInternal(int i, bool readHeaderOnly/* = false*/, bool forStreaming)
+        internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly/* = false*/, bool forStreaming)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i);
 
@@ -4309,7 +4456,7 @@ namespace Microsoft.Data.SqlClient
                         (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
                                                                                                                         //    Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check
                         "Gone past column, be we have no data stored for it");
-                    return true;
+                    return TdsOperationStatus.Done;
                 }
             }
 
@@ -4317,6 +4464,7 @@ namespace Microsoft.Data.SqlClient
 
             // If we're in sequential access mode, we can safely clear out any
             // data from the previous column.
+            TdsOperationStatus result;
             bool isSequentialAccess = IsCommandBehavior(CommandBehavior.SequentialAccess);
             if (isSequentialAccess)
             {
@@ -4334,17 +4482,19 @@ namespace Microsoft.Data.SqlClient
             else if (_sharedState._nextColumnDataToRead < _sharedState._nextColumnHeaderToRead)
             {
                 // We read the header but not the column for the previous column
-                if (!TryReadColumnData())
+                result = TryReadColumnData();
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
                 Debug.Assert(_sharedState._nextColumnDataToRead == _sharedState._nextColumnHeaderToRead);
             }
 
             // if we still have bytes left from the previous blob read, clear the wire and reset
-            if (!TryResetBlobState())
+            result = TryResetBlobState();
+            if (result != TdsOperationStatus.Done)
             {
-                return false;
+                return result;
             }
 
             do
@@ -4357,9 +4507,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         // SkipValue is no-op if the column appears in NBC bitmask
                         // if not, it skips regular and PLP types
-                        if (!_parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                        result = _parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
 
                         _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
@@ -4369,17 +4520,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         bool isNull;
                         ulong dataLength;
-                        if (
-                            !_parser.TryProcessColumnHeader(
-                                columnMetaData, 
-                                _stateObj, 
-                                _sharedState._nextColumnHeaderToRead, 
-                                out isNull, 
-                                out dataLength
-                            )
-                        )
+                        result = _parser.TryProcessColumnHeader(columnMetaData, _stateObj, _sharedState._nextColumnHeaderToRead, out isNull, out dataLength);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
 
                         _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
@@ -4390,12 +4534,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (columnMetaData.type != SqlDbType.Timestamp)
                             {
-                                TdsParser.GetNullSqlValue(
-                                    _data[_sharedState._nextColumnDataToRead],
+                                TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                     columnMetaData,
                                     _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                    _parser.Connection
-                                );
+                                    _parser.Connection);
                             }
                         }
                         else
@@ -4404,17 +4546,13 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // If we're in sequential mode try to read the data and then if it succeeds update shared
                                 // state so there are no remaining bytes and advance the next column to read
-                                if (
-                                    !_parser.TryReadSqlValue(
-                                        _data[_sharedState._nextColumnDataToRead], 
-                                        columnMetaData, 
-                                        (int)dataLength, _stateObj,
+                                result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                         _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                        columnMetaData.column
-                                    )
-                                )
-                                { // will read UDTs as VARBINARY.
-                                    return false;
+                                        columnMetaData.column);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    // will read UDTs as VARBINARY.
+                                    return result;
                                 }
                                 _sharedState._columnDataBytesRemaining = 0;
                                 _sharedState._nextColumnDataToRead++;
@@ -4427,16 +4565,17 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        Debug.Assert(false, "we have read past the column somehow, this is an error");
+                        Debug.Assert(false, "We have read past the column somehow, this is an error");
                     }
                 }
                 else
                 {
                     bool isNull;
                     ulong dataLength;
-                    if (!_parser.TryProcessColumnHeader(columnMetaData, _stateObj, _sharedState._nextColumnHeaderToRead, out isNull, out dataLength))
+                    result = _parser.TryProcessColumnHeader(columnMetaData, _stateObj, _sharedState._nextColumnHeaderToRead, out isNull, out dataLength);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
 
                     _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
@@ -4446,12 +4585,10 @@ namespace Microsoft.Data.SqlClient
                     // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
                     if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
                     {
-                        TdsParser.GetNullSqlValue(
-                            _data[_sharedState._nextColumnDataToRead],
+                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                             columnMetaData,
                             _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                            _parser.Connection
-                        );
+                            _parser.Connection);
 
                         if (!readHeaderOnly)
                         {
@@ -4465,11 +4602,13 @@ namespace Microsoft.Data.SqlClient
                             // If we're not in sequential access mode, we have to
                             // save the data we skip over so that the consumer
                             // can read it out of order
-                            if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
+                            result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                                          _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                                         columnMetaData.column))
-                            { // will read UDTs as VARBINARY.
-                                return false;
+                                                         columnMetaData.column, _command);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                // will read UDTs as VARBINARY.
+                                return result;
                             }
                             _sharedState._nextColumnDataToRead++;
                         }
@@ -4489,7 +4628,7 @@ namespace Microsoft.Data.SqlClient
                 }
             } while (_sharedState._nextColumnHeaderToRead <= i);
 
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         // Estimates if there is enough data available to read the number of columns requested
@@ -4532,12 +4671,11 @@ namespace Microsoft.Data.SqlClient
                 // Check NBC first
                 if (!_stateObj.IsNullCompressionBitSet(currentColumn))
                 {
-
                     // NOTE: This is mostly duplicated from TryProcessColumnHeaderNoNBC and TryGetTokenLength
                     var metaType = _metaData[currentColumn].metaType;
                     if ((metaType.IsLong) || (metaType.IsPlp) || (metaType.SqlDbType == SqlDbType.Udt) || (metaType.SqlDbType == SqlDbType.Structured))
                     {
-                        // Plp, Udt and TVP types have an unknownable size - so return that the estimate failed
+                        // Plp, Udt and TVP types have an unknowable size - so return that the estimate failed
                         return false;
                     }
                     int maxHeaderSize;
@@ -4579,12 +4717,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         // clean remainder bytes for the column off the wire
-        private bool TryResetBlobState()
+        private TdsOperationStatus TryResetBlobState()
         {
-            Debug.Assert(null != _stateObj, "null state object"); // _parser may be null at this point
+            Debug.Assert(_stateObj != null, "null state object"); // _parser may be null at this point
             AssertReaderState(requireData: true, permitAsync: true);
             Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
-
+            TdsOperationStatus result;
             // If we haven't already entirely read the column
             if (_sharedState._nextColumnDataToRead < _sharedState._nextColumnHeaderToRead)
             {
@@ -4592,10 +4730,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_stateObj._longlen != 0)
                     {
-                        ulong ignored;
-                        if (!_stateObj.Parser.TrySkipPlpValue(UInt64.MaxValue, _stateObj, out ignored))
+                        result = _stateObj.Parser.TrySkipPlpValue(ulong.MaxValue, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
                     }
                     if (_streamingXml != null)
@@ -4607,9 +4745,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (0 < _sharedState._columnDataBytesRemaining)
                 {
-                    if (!_stateObj.TrySkipLongBytes(_sharedState._columnDataBytesRemaining))
+                    result = _stateObj.TrySkipLongBytes(_sharedState._columnDataBytesRemaining);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
                 }
             }
@@ -4627,7 +4766,7 @@ namespace Microsoft.Data.SqlClient
             _columnDataCharsIndex = -1;
             _stateObj._plpdecoder = null;
 
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private void CloseActiveSequentialStreamAndTextReader()
@@ -4647,7 +4786,7 @@ namespace Microsoft.Data.SqlClient
         private void RestoreServerSettings(TdsParser parser, TdsParserStateObject stateObj)
         {
             // turn off any set options
-            if (null != parser && null != _resetOptionsString)
+            if (parser != null && _resetOptionsString != null)
             {
                 // It is possible for this to be called during connection close on a
                 // broken connection, so check state first.
@@ -4664,7 +4803,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool TrySetAltMetaDataSet(_SqlMetaDataSet metaDataSet, bool metaDataConsumed)
+        internal TdsOperationStatus TrySetAltMetaDataSet(_SqlMetaDataSet metaDataSet, bool metaDataConsumed)
         {
             if (_altMetaDataSetCollection == null)
             {
@@ -4676,23 +4815,25 @@ namespace Microsoft.Data.SqlClient
             }
             _altMetaDataSetCollection.SetAltMetaData(metaDataSet);
             _metaDataConsumed = metaDataConsumed;
-            if (_metaDataConsumed && null != _parser)
+            if (_metaDataConsumed && _parser != null)
             {
                 byte b;
-                if (!_stateObj.TryPeekByte(out b))
+                TdsOperationStatus result = _stateObj.TryPeekByte(out b);
+                if (result != TdsOperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
                 if (TdsEnums.SQLORDER == b)
                 {
-                    bool ignored;
-                    if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out ignored))
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
-                    if (!_stateObj.TryPeekByte(out b))
+                    result = _stateObj.TryPeekByte(out b);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
                 }
                 if (b == TdsEnums.SQLINFO)
@@ -4700,19 +4841,21 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         _stateObj._accumulateInfoEvents = true;
-                        bool ignored;
-                        if (!_parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out ignored))
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
                     }
                     finally
                     {
                         _stateObj._accumulateInfoEvents = false;
                     }
-                    if (!_stateObj.TryPeekByte(out b))
+
+                    result = _stateObj.TryPeekByte(out b);
+                    if (result != TdsOperationStatus.Done)
                     {
-                        return false;
+                        return result;
                     }
                 }
                 _hasRows = IsRowToken(b);
@@ -4724,7 +4867,7 @@ namespace Microsoft.Data.SqlClient
                     _data = SqlBuffer.CreateBufferArray(metaDataSet.Length);
                 }
             }
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private void ClearMetaData()
@@ -4736,13 +4879,13 @@ namespace Microsoft.Data.SqlClient
             _browseModeInfoConsumed = false;
         }
 
-        internal bool TrySetSensitivityClassification(SensitivityClassification sensitivityClassification)
+        internal TdsOperationStatus TrySetSensitivityClassification(SensitivityClassification sensitivityClassification)
         {
             SensitivityClassification = sensitivityClassification;
-            return true;
+            return TdsOperationStatus.Done;
         }
 
-        internal bool TrySetMetaData(_SqlMetaDataSet metaData, bool moreInfo)
+        internal TdsOperationStatus TrySetMetaData(_SqlMetaDataSet metaData, bool moreInfo)
         {
             _metaData = metaData;
 
@@ -4756,7 +4899,7 @@ namespace Microsoft.Data.SqlClient
 
             _fieldNameLookup = null;
 
-            if (null != metaData)
+            if (metaData != null)
             {
                 // we are done consuming metadata only if there is no moreInfo
                 if (!moreInfo)
@@ -4768,9 +4911,10 @@ namespace Microsoft.Data.SqlClient
                         // Peek, and if row token present, set _hasRows true since there is a
                         // row in the result
                         byte b;
-                        if (!_stateObj.TryPeekByte(out b))
+                        TdsOperationStatus result = _stateObj.TryPeekByte(out b);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
 
                         // UNDONE - should we be consuming tokens here??? Maybe we should be calling HasMoreRows?
@@ -4778,18 +4922,20 @@ namespace Microsoft.Data.SqlClient
 
                         // simply rip the order token off the wire
                         if (b == TdsEnums.SQLORDER)
-                        {                     //  same logic as SetAltMetaDataSet
-                                              // Devnote: That's not the right place to process TDS
-                                              // Can this result in Reentrance to Run?
-                                              //
-                            bool ignored;
-                            if (!_parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out ignored))
+                        {                     
+                            // same logic as SetAltMetaDataSet
+                            // Devnote: That's not the right place to process TDS
+                            // Can this result in Reentrance to Run?
+
+                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
-                            if (!_stateObj.TryPeekByte(out b))
+                            result = _stateObj.TryPeekByte(out b);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
                         }
                         if (b == TdsEnums.SQLINFO)
@@ -4800,19 +4946,21 @@ namespace Microsoft.Data.SqlClient
                             try
                             {
                                 _stateObj._accumulateInfoEvents = true;
-                                bool ignored;
-                                if (!_parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out ignored))
+                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
+                                if (result != TdsOperationStatus.Done)
                                 {
-                                    return false;
+                                    return result;
                                 }
                             }
                             finally
                             {
                                 _stateObj._accumulateInfoEvents = false;
                             }
-                            if (!_stateObj.TryPeekByte(out b))
+
+                            result = _stateObj.TryPeekByte(out b);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
                         }
                         _hasRows = IsRowToken(b);
@@ -4829,7 +4977,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _browseModeInfoConsumed = false;
-            return true;
+            return TdsOperationStatus.Done;
         }
 
         private void SetTimeout(long timeoutMilliseconds)
@@ -4837,7 +4985,7 @@ namespace Microsoft.Data.SqlClient
             // WebData 111653,112003 -- we now set timeouts per operation, not
             // per command (it's not supposed to be a cumulative per command).
             TdsParserStateObject stateObj = _stateObj;
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.SetTimeoutMilliseconds(timeoutMilliseconds);
             }
@@ -4894,11 +5042,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CheckHeaderIsReady(int columnIndex, bool permitAsync = false, string methodName = null)
+        private void CheckHeaderIsReady(int columnIndex, bool permitAsync = false, [CallerMemberName] string methodName = null)
         {
             if (_isClosed)
             {
-                throw ADP.DataReaderClosed(methodName ?? "CheckHeaderIsReady");
+                throw ADP.DataReaderClosed(methodName ?? nameof(CheckHeaderIsReady));
             }
             if ((!permitAsync) && (_currentTask != null))
             {
@@ -4920,11 +5068,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void CheckDataIsReady(int columnIndex, bool allowPartiallyReadColumn = false, bool permitAsync = false, string methodName = null)
+        private void CheckDataIsReady(int columnIndex, bool allowPartiallyReadColumn = false, bool permitAsync = false, [CallerMemberName] string methodName = null)
         {
             if (_isClosed)
             {
-                throw ADP.DataReaderClosed(methodName ?? "CheckDataIsReady");
+                throw ADP.DataReaderClosed(methodName ?? nameof(CheckDataIsReady));
             }
             if ((!permitAsync) && (_currentTask != null))
             {
@@ -4973,7 +5121,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (IsClosed)
                 {
-                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("NextResultAsync")));
+                    source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     return source.Task;
                 }
 
@@ -5011,17 +5159,17 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context._reader.ObjectID);
-                context._reader.PrepareForAsyncContinuation();
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context.Reader.ObjectID);
+                context.Reader.PrepareForAsyncContinuation();
             }
 
-            if (context._reader.TryNextResult(out bool more))
+            if (context.Reader.TryNextResult(out bool more) == TdsOperationStatus.Done)
             {
                 // completed 
                 return more ? ADP.TrueTask : ADP.FalseTask;
             }
 
-            return context._reader.ExecuteAsyncCall(context);
+            return context.Reader.ExecuteAsyncCall(context);
         }
 
         // NOTE: This will return null if it completed sequentially
@@ -5034,16 +5182,12 @@ namespace Microsoft.Data.SqlClient
             bytesRead = 0;
             if (IsClosed)
             {
-                TaskCompletionSource<int> source = new TaskCompletionSource<int>();
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetBytesAsync")));
-                return source.Task;
+                return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
             }
 
             if (_currentTask != null)
             {
-                TaskCompletionSource<int> source = new TaskCompletionSource<int>();
-                source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
-                return source.Task;
+                return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
             }
 
             if (cancellationToken.CanBeCanceled)
@@ -5056,12 +5200,12 @@ namespace Microsoft.Data.SqlClient
 
             var context = new GetBytesAsyncCallContext(this)
             {
-                columnIndex = columnIndex,
-                buffer = buffer,
-                index = index,
-                length = length,
-                timeout = timeout,
-                cancellationToken = cancellationToken,
+                _columnIndex = columnIndex,
+                _buffer = buffer,
+                _index = index,
+                _length = length,
+                _timeout = timeout,
+                _cancellationToken = cancellationToken,
             };
 
             // Check if we need to skip columns
@@ -5086,18 +5230,18 @@ namespace Microsoft.Data.SqlClient
                     timeoutToken = timeoutCancellationSource.Token;
                 }
 
-                context._disposable = timeoutCancellationSource;
-                context.timeoutToken = timeoutToken;
-                context._source = source;
 
                 PrepareAsyncInvocation(useSnapshot: true);
+
+                context.Set(this, source, timeoutCancellationSource);
+                context._timeoutToken = timeoutToken;
 
                 return InvokeAsyncCall(context);
             }
             else
             {
                 // We're already at the correct column, just read the data
-                context.mode = GetBytesAsyncCallContext.OperationMode.Read;
+                context._mode = GetBytesAsyncCallContext.OperationMode.Read;
 
                 // Switch to async
                 PrepareAsyncInvocation(useSnapshot: false);
@@ -5117,35 +5261,36 @@ namespace Microsoft.Data.SqlClient
         private static Task<int> GetBytesAsyncSeekExecute(Task task, object state)
         {
             GetBytesAsyncCallContext context = (GetBytesAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Seek, "context.mode must be Seek to check if seeking can resume");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Seek, "context.mode must be Seek to check if seeking can resume");
 
             if (task != null)
             {
                 reader.PrepareForAsyncContinuation();
             }
+
             // Prepare for stateObj timeout
             reader.SetTimeout(reader._defaultTimeoutMilliseconds);
 
-            if (reader.TryReadColumnHeader(context.columnIndex))
+            if (reader.TryReadColumnHeader(context._columnIndex) == TdsOperationStatus.Done)
             {
-                // Only once we have read upto where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
+                // Only once we have read up to where we need to be can we check the cancellation tokens (otherwise we will be in an unknown state)
 
-                if (context.cancellationToken.IsCancellationRequested)
+                if (context._cancellationToken.IsCancellationRequested)
                 {
                     // User requested cancellation
-                    return Task.FromCanceled<int>(context.cancellationToken);
+                    return Task.FromCanceled<int>(context._cancellationToken);
                 }
-                else if (context.timeoutToken.IsCancellationRequested)
+                else if (context._timeoutToken.IsCancellationRequested)
                 {
                     // Timeout
-                    return ADP.CreatedTaskWithException<int>(ADP.ExceptionWithStackTrace(ADP.IO(SQLMessage.Timeout())));
+                    return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.IO(SQLMessage.Timeout())));
                 }
                 else
                 {
-                    // Upto the correct column - continue to read
-                    context.mode = GetBytesAsyncCallContext.OperationMode.Read;
+                    // Up to the correct column - continue to read
+                    context._mode = GetBytesAsyncCallContext.OperationMode.Read;
                     reader.SwitchToAsyncWithoutSnapshot();
                     int totalBytesRead;
                     var readTask = reader.GetBytesAsyncReadDataStage(context, true, out totalBytesRead);
@@ -5169,18 +5314,18 @@ namespace Microsoft.Data.SqlClient
         private static Task<int> GetBytesAsyncReadExecute(Task task, object state)
         {
             var context = (GetBytesAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Read, "context.mode must be Read to check if read can resume");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Read, "context.mode must be Read to check if read can resume");
 
             reader.PrepareForAsyncContinuation();
 
-            if (context.cancellationToken.IsCancellationRequested)
+            if (context._cancellationToken.IsCancellationRequested)
             {
                 // User requested cancellation
-                return Task.FromCanceled<int>(context.cancellationToken);
+                return Task.FromCanceled<int>(context._cancellationToken);
             }
-            else if (context.timeoutToken.IsCancellationRequested)
+            else if (context._timeoutToken.IsCancellationRequested)
             {
                 // Timeout
                 return Task.FromException<int>(ADP.ExceptionWithStackTrace(ADP.IO(SQLMessage.Timeout())));
@@ -5191,19 +5336,19 @@ namespace Microsoft.Data.SqlClient
                 reader.SetTimeout(reader._defaultTimeoutMilliseconds);
 
                 int bytesReadThisIteration;
-                bool result = reader.TryGetBytesInternalSequential(
-                    context.columnIndex,
-                    context.buffer,
-                    context.index + context.totalBytesRead,
-                    context.length - context.totalBytesRead,
+                TdsOperationStatus result = reader.TryGetBytesInternalSequential(
+                    context._columnIndex,
+                    context._buffer,
+                    context._index + context._totalBytesRead,
+                    context._length - context._totalBytesRead,
                     out bytesReadThisIteration
                 );
-                context.totalBytesRead += bytesReadThisIteration;
-                Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+                context._totalBytesRead += bytesReadThisIteration;
+                Debug.Assert(context._totalBytesRead <= context._length, "Read more bytes than required");
 
-                if (result)
+                if (result == TdsOperationStatus.Done)
                 {
-                    return Task.FromResult<int>(context.totalBytesRead);
+                    return Task.FromResult<int>(context._totalBytesRead);
                 }
                 else
                 {
@@ -5214,34 +5359,32 @@ namespace Microsoft.Data.SqlClient
 
         private Task<int> GetBytesAsyncReadDataStage(GetBytesAsyncCallContext context, bool isContinuation, out int bytesRead)
         {
-            Debug.Assert(context.mode == GetBytesAsyncCallContext.OperationMode.Read, "context.Mode must be Read to read data");
+            Debug.Assert(context._mode == GetBytesAsyncCallContext.OperationMode.Read, "context.Mode must be Read to read data");
 
-            _lastColumnWithDataChunkRead = context.columnIndex;
+            _lastColumnWithDataChunkRead = context._columnIndex;
             TaskCompletionSource<int> source = null;
 
             // Prepare for stateObj timeout
             SetTimeout(_defaultTimeoutMilliseconds);
 
             // Try to read without any continuations (all the data may already be in the stateObj's buffer)
-            bool filledBuffer = context._reader.TryGetBytesInternalSequential(
-                context.columnIndex,
-                context.buffer,
-                context.index + context.totalBytesRead,
-                context.length - context.totalBytesRead,
+            TdsOperationStatus filledBuffer = context.Reader.TryGetBytesInternalSequential(
+                context._columnIndex,
+                context._buffer,
+                context._index + context._totalBytesRead,
+                context._length - context._totalBytesRead,
                 out bytesRead
             );
-            context.totalBytesRead += bytesRead;
-            Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+            context._totalBytesRead += bytesRead;
+            Debug.Assert(context._totalBytesRead <= context._length, "Read more bytes than required");
 
-            if (!filledBuffer)
+            if (filledBuffer != TdsOperationStatus.Done)
             {
                 // This will be the 'state' for the callback
-                int totalBytesRead = bytesRead;
-
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
-                    Debug.Assert(context._source == null, "context._source should not be non-null when trying to change to async");
+                    Debug.Assert(context.Source == null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
@@ -5249,8 +5392,7 @@ namespace Microsoft.Data.SqlClient
                         source.SetException(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                         return source.Task;
                     }
-
-                    context._source = source;
+                    context.Source = source;
                     // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
                     if (_cancelAsyncOnCloseToken.IsCancellationRequested)
                     {
@@ -5260,29 +5402,29 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Timeout
-                    Debug.Assert(context.timeoutToken == CancellationToken.None, "TimeoutToken is set when GetBytesAsyncReadDataStage is not a continuation");
-                    if (context.timeout > 0)
+                    Debug.Assert(context._timeoutToken == CancellationToken.None, "TimeoutToken is set when GetBytesAsyncReadDataStage is not a continuation");
+                    if (context._timeout > 0)
                     {
                         CancellationTokenSource timeoutCancellationSource = new CancellationTokenSource();
-                        timeoutCancellationSource.CancelAfter(context.timeout);
-                        Debug.Assert(context._disposable is null, "setting context.disposable would lose the previous dispoable");
-                        context._disposable = timeoutCancellationSource;
-                        context.timeoutToken = timeoutCancellationSource.Token;
+                        timeoutCancellationSource.CancelAfter(context._timeout);
+                        Debug.Assert(context.Disposable is null, "setting context.disposable would lose the previous disposable");
+                        context.Disposable = timeoutCancellationSource;
+                        context._timeoutToken = timeoutCancellationSource.Token;
                     }
                 }
 
                 Task<int> retryTask = ExecuteAsyncCall(context);
                 if (isContinuation)
                 {
-                    // Let the caller handle cleanup\completing
+                    // Let the caller handle cleanup/completing
                     return retryTask;
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context._source shuld not be null when continuing");
-                    // setup for cleanup\completing
+                    Debug.Assert(context.Source != null, "context._source should not be null when continuing");
+                    // setup for cleanup/completing
                     retryTask.ContinueWith(
-                        continuationAction: AAsyncCallContext<int>.s_completeCallback,
+                        continuationAction: SqlDataReaderBaseAsyncCallContext<int>.s_completeCallback,
                         state: context,
                         TaskScheduler.Default
                     );
@@ -5307,7 +5449,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsClosed)
                 {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("ReadAsync")));
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
+                }
+
+                // Register first to catch any already expired tokens to be able to trigger cancellation event.
+                if (cancellationToken.CanBeCanceled)
+                {
+                    registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
                 // Register first to catch any already expired tokens to be able to trigger cancellation event.
@@ -5319,13 +5467,13 @@ namespace Microsoft.Data.SqlClient
                 // If user's token is canceled, return a canceled task
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return ADP.CreatedTaskWithCancellation<bool>();
+                    return Task.FromCanceled<bool>(cancellationToken);
                 }
 
                 // Check for existing async
                 if (_currentTask != null)
                 {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
                 }
 
                 // These variables will be captured in moreFunc so that we can skip searching for a row token once one has been read
@@ -5339,7 +5487,6 @@ namespace Microsoft.Data.SqlClient
                     // NOTE: If we are in SingleRow mode and we've read that single row (i.e. _haltRead == true), then skip the shortcut
                     if ((!_haltRead) && ((!_sharedState._dataReady) || (WillHaveEnoughData(_metaData.Length - 1))))
                     {
-
 #if DEBUG
                         try
                         {
@@ -5351,12 +5498,12 @@ namespace Microsoft.Data.SqlClient
                             CleanPartialReadReliable();
                         }
 
-                        // If there a ROW token ready (as well as any metadata for the row)
-                        if (_stateObj.IsRowTokenReady())
-                        {
-                            // Read the ROW token
-                            bool result = TryReadInternal(true, out more);
-                            Debug.Assert(result, "Should not have run out of data");
+                            // If there a ROW token ready (as well as any metadata for the row)
+                            if (_stateObj.IsRowTokenReady())
+                            {
+                                // Read the ROW token
+                                TdsOperationStatus result = TryReadInternal(true, out more);
+                                Debug.Assert(result == TdsOperationStatus.Done, "Should not have run out of data");
 
                             rowTokenRead = true;
                             if (more)
@@ -5364,7 +5511,19 @@ namespace Microsoft.Data.SqlClient
                                 // Sequential mode, nothing left to do
                                 if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                                 {
-                                    return ADP.TrueTask;
+                                    // Sequential mode, nothing left to do
+                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                                    {
+                                        return ADP.TrueTask;
+                                    }
+                                    // For non-sequential, check if we can read the row data now
+                                    else if (WillHaveEnoughData(_metaData.Length - 1))
+                                    {
+                                        // Read row data
+                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                        Debug.Assert(result == TdsOperationStatus.Done, "Should not have run out of data");
+                                        return ADP.TrueTask;
+                                    }
                                 }
                                 // For non-sequential, check if we can read the row data now
                                 else if (WillHaveEnoughData(_metaData.Length - 1))
@@ -5396,7 +5555,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw;
                     }
-                    return ADP.CreatedTaskWithException<bool>(ex);
+                    return Task.FromException<bool>(ex);
                 }
 
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -5417,7 +5576,7 @@ namespace Microsoft.Data.SqlClient
 
                 var context = Interlocked.Exchange(ref _cachedReadAsyncContext, null) ?? new ReadAsyncCallContext();
 
-                Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+                Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ReadAsyncCallContext was not properly disposed");
 
                 context.Set(this, source, registrationHolder.Take());
                 context._hasMoreData = more;
@@ -5432,7 +5591,7 @@ namespace Microsoft.Data.SqlClient
         private static Task<bool> ReadAsyncExecute(Task task, object state)
         {
             var context = (ReadAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
             ref bool hasMoreData = ref context._hasMoreData;
             ref bool hasReadRowToken = ref context._hasReadRowToken;
 
@@ -5441,7 +5600,7 @@ namespace Microsoft.Data.SqlClient
                 reader.PrepareForAsyncContinuation();
             }
 
-            if (hasReadRowToken || reader.TryReadInternal(true, out hasMoreData))
+            if (hasReadRowToken || (reader.TryReadInternal(true, out hasMoreData) == TdsOperationStatus.Done))
             {
                 // If there are no more rows, or this is Sequential Access, then we are done
                 if (!hasMoreData || (reader._commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
@@ -5460,7 +5619,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // if non-sequentialaccess then read entire row before returning
-                    if (reader.TryReadColumn(reader._metaData.Length - 1, true))
+                    TdsOperationStatus result = reader.TryReadColumn(reader._metaData.Length - 1, true);
+                    if (result == TdsOperationStatus.Done)
                     {
                         // completed 
                         return ADP.TrueTask;
@@ -5479,10 +5639,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*' />
         override public Task<bool> IsDBNullAsync(int i, CancellationToken cancellationToken)
         {
-
             try
             {
-                CheckHeaderIsReady(columnIndex: i, methodName: "IsDBNullAsync");
+                CheckHeaderIsReady(columnIndex: i);
             }
             catch (Exception ex)
             {
@@ -5490,7 +5649,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                return ADP.CreatedTaskWithException<bool>(ex);
+                return Task.FromException<bool>(ex);
             }
 
             // Shortcut - if there are no issues and the data is already read, then just return the value
@@ -5504,7 +5663,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Reader was closed between the CheckHeaderIsReady and accessing _data - throw closed exception
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("IsDBNullAsync")));
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                 }
             }
             else
@@ -5512,13 +5671,13 @@ namespace Microsoft.Data.SqlClient
                 // Throw if there is any current task
                 if (_currentTask != null)
                 {
-                    return ADP.CreatedTaskWithException<bool>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                    return Task.FromException<bool>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
                 }
 
                 // If user's token is canceled, return a canceled task
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    return ADP.CreatedTaskWithCancellation<bool>();
+                    return Task.FromCanceled<bool>(cancellationToken);
                 }
 
                 // Shortcut - if we have enough data, then run sync
@@ -5548,7 +5707,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw;
                     }
-                    return ADP.CreatedTaskWithException<bool>(ex);
+                    return Task.FromException<bool>(ex);
                 }
 
                 using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
@@ -5578,7 +5737,7 @@ namespace Microsoft.Data.SqlClient
 
                     IsDBNullAsyncCallContext context = Interlocked.Exchange(ref _cachedIsDBNullContext, null) ?? new IsDBNullAsyncCallContext();
 
-                    Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ISDBNullAsync context not properly disposed");
+                    Debug.Assert(context.Reader == null && context.Source == null && context.Disposable == default, "cached ISDBNullAsync context not properly disposed");
 
                     context.Set(this, source, registrationHolder.Take());
                     context._columnIndex = i;
@@ -5594,14 +5753,15 @@ namespace Microsoft.Data.SqlClient
         private static Task<bool> IsDBNullAsyncExecute(Task task, object state)
         {
             IsDBNullAsyncCallContext context = (IsDBNullAsyncCallContext)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
 
             if (task != null)
             {
                 reader.PrepareForAsyncContinuation();
             }
 
-            if (reader.TryReadColumnHeader(context._columnIndex))
+            TdsOperationStatus result = reader.TryReadColumnHeader(context._columnIndex);
+            if (result == TdsOperationStatus.Done)
             {
                 return reader._data[context._columnIndex].IsNull ? ADP.TrueTask : ADP.FalseTask;
             }
@@ -5621,7 +5781,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                CheckDataIsReady(columnIndex: i, methodName: "GetFieldValueAsync");
+                CheckDataIsReady(columnIndex: i);
 
                 // Shortcut - if there are no issues and the data is already read, then just return the value
                 if ((!IsCommandBehavior(CommandBehavior.SequentialAccess)) && (_sharedState._nextColumnDataToRead > i) && (!cancellationToken.IsCancellationRequested) && (_currentTask == null))
@@ -5634,8 +5794,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        // Reader was closed between the CheckDataIsReady and accessing _data\_metaData - throw closed exception
-                        return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed("GetFieldValueAsync")));
+                        // Reader was closed between the CheckDataIsReady and accessing _data/_metaData - throw closed exception
+                        return Task.FromException<T>(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     }
                 }
             }
@@ -5645,19 +5805,19 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                return ADP.CreatedTaskWithException<T>(ex);
+                return Task.FromException<T>(ex);
             }
 
             // Throw if there is any current task
             if (_currentTask != null)
             {
-                return ADP.CreatedTaskWithException<T>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
+                return Task.FromException<T>(ADP.ExceptionWithStackTrace(ADP.AsyncOperationPending()));
             }
 
             // If user's token is canceled, return a canceled task
             if (cancellationToken.IsCancellationRequested)
             {
-                return ADP.CreatedTaskWithCancellation<T>();
+                return Task.FromCanceled<T>(cancellationToken);
             }
 
             // Shortcut - if we have enough data, then run sync
@@ -5670,7 +5830,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
+                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5686,7 +5846,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
-                return ADP.CreatedTaskWithException<T>(ex);
+                return Task.FromException<T>(ex);
             }
 
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
@@ -5714,14 +5874,20 @@ namespace Microsoft.Data.SqlClient
                     registrationHolder.Set(cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command));
                 }
 
-                return InvokeAsyncCall(new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take(), i));
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                GetFieldValueAsyncCallContext<T> context = new GetFieldValueAsyncCallContext<T>(this, source, registrationHolder.Take());
+                context._columnIndex = i;
+
+                return InvokeAsyncCall(context);
             }
         }
 
         private static Task<T> GetFieldValueAsyncExecute<T>(Task task, object state)
         {
             GetFieldValueAsyncCallContext<T> context = (GetFieldValueAsyncCallContext<T>)state;
-            SqlDataReader reader = context._reader;
+            SqlDataReader reader = context.Reader;
             int columnIndex = context._columnIndex;
             if (task != null)
             {
@@ -5738,7 +5904,7 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         tdsReliabilitySection.Start();
-                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false);
+                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false) == TdsOperationStatus.Done;
                     }
                     finally
                     {
@@ -5752,7 +5918,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (reader.TryReadColumn(columnIndex, setTimeout: false))
+            TdsOperationStatus result = reader.TryReadColumn(columnIndex, setTimeout: false);
+            if (result == TdsOperationStatus.Done)
             {
                 return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
@@ -5784,71 +5951,62 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        private class Snapshot
+        internal abstract class SqlDataReaderBaseAsyncCallContext<T> : AAsyncBaseCallContext<SqlDataReader, T>
         {
-            public bool _dataReady;
-            public bool _haltRead;
-            public bool _metaDataConsumed;
-            public bool _browseModeInfoConsumed;
-            public bool _hasRows;
-            public ALTROWSTATUS _altRowStatus;
-            public int _nextColumnDataToRead;
-            public int _nextColumnHeaderToRead;
-            public long _columnDataBytesRead;
-            public long _columnDataBytesRemaining;
+            internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
 
-            public _SqlMetaDataSet _metadata;
-            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
-            public MultiPartTableName[] _tableNames;
+            internal static readonly Func<Task, object, Task<T>> s_executeCallback = ExecuteAsyncCallCallback;
 
-            public SqlSequentialStream _currentStream;
-            public SqlSequentialTextReader _currentTextReader;
-        }
-
-        private abstract class AAsyncCallContext<T> : IDisposable
-        {
-            internal static readonly Action<Task<T>, object> s_completeCallback = SqlDataReader.CompleteAsyncCallCallback<T>;
-
-            internal static readonly Func<Task, object, Task<T>> s_executeCallback = SqlDataReader.ExecuteAsyncCallCallback<T>;
-
-            internal SqlDataReader _reader;
-            internal TaskCompletionSource<T> _source;
-            internal IDisposable _disposable;
-
-            protected AAsyncCallContext()
+            protected SqlDataReaderBaseAsyncCallContext()
             {
             }
 
-            protected AAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable = null)
+            protected SqlDataReaderBaseAsyncCallContext(SqlDataReader owner, TaskCompletionSource<T> source)
             {
-                Set(reader, source, disposable);
-            }
-
-            internal void Set(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable = null)
-            {
-                this._reader = reader ?? throw new ArgumentNullException(nameof(reader));
-                this._source = source ?? throw new ArgumentNullException(nameof(source));
-                this._disposable = disposable;
-            }
-
-            internal void Clear()
-            {
-                _source = null;
-                _reader = null;
-                IDisposable copyDisposable = _disposable;
-                _disposable = null;
-                copyDisposable?.Dispose();
+                Set(owner, source);
             }
 
             internal abstract Func<Task, object, Task<T>> Execute { get; }
 
-            public virtual void Dispose()
+            internal SqlDataReader Reader { get => _owner; set => _owner = value; }
+
+            public TaskCompletionSource<T> Source { get => _source; set => _source = value; }
+
+            private static Task<T> ExecuteAsyncCallCallback(Task task, object state)
             {
-                Clear();
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
+                return context.Reader.ContinueAsyncCall(task, context);
+            }
+
+            private static void CompleteAsyncCallCallback(Task<T> task, object state)
+            {
+                SqlDataReaderBaseAsyncCallContext<T> context = (SqlDataReaderBaseAsyncCallContext<T>)state;
+                context.Reader.CompleteAsyncCall(task, context);
             }
         }
 
-        private sealed class ReadAsyncCallContext : AAsyncCallContext<bool>
+        internal abstract class SqlDataReaderAsyncCallContext<T, TDisposable> : SqlDataReaderBaseAsyncCallContext<T>
+            where TDisposable : IDisposable
+        {
+            private TDisposable _disposable;
+
+            public TDisposable Disposable { get => _disposable; set => _disposable = value; }
+
+            public void Set(SqlDataReader owner, TaskCompletionSource<T> source, TDisposable disposable)
+            {
+                base.Set(owner, source);
+                _disposable = disposable;
+            }
+
+            protected override void DisposeCore()
+            {
+                TDisposable copy = _disposable;
+                _disposable = default;
+                copy?.Dispose();
+            }
+        }
+
+        internal sealed class ReadAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.ReadAsyncExecute;
 
@@ -5861,15 +6019,13 @@ namespace Microsoft.Data.SqlClient
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
 
-            public override void Dispose()
+            protected override void AfterCleared(SqlDataReader owner)
             {
-                SqlDataReader reader = this._reader;
-                base.Dispose();
-                reader.SetCachedReadAsyncCallContext(this);
+                owner.SetCachedReadAsyncCallContext(this);
             }
         }
 
-        private sealed class IsDBNullAsyncCallContext : AAsyncCallContext<bool>
+        internal sealed class IsDBNullAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             internal static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.IsDBNullAsyncExecute;
 
@@ -5879,27 +6035,25 @@ namespace Microsoft.Data.SqlClient
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
 
-            public override void Dispose()
+            protected override void AfterCleared(SqlDataReader owner)
             {
-                SqlDataReader reader = this._reader;
-                base.Dispose();
-                reader.SetCachedIDBNullAsyncCallContext(this);
+                owner.SetCachedIDBNullAsyncCallContext(this);
             }
         }
 
-        private sealed class HasNextResultAsyncCallContext : AAsyncCallContext<bool>
+        private sealed class HasNextResultAsyncCallContext : SqlDataReaderAsyncCallContext<bool, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<bool>> s_execute = SqlDataReader.NextResultAsyncExecute;
 
-            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, IDisposable disposable)
-                : base(reader, source, disposable)
+            public HasNextResultAsyncCallContext(SqlDataReader reader, TaskCompletionSource<bool> source, CancellationTokenRegistration disposable)
             {
+                Set(reader, source, disposable);
             }
 
             internal override Func<Task, object, Task<bool>> Execute => s_execute;
         }
 
-        private sealed class GetBytesAsyncCallContext : AAsyncCallContext<int>
+        private sealed class GetBytesAsyncCallContext : SqlDataReaderAsyncCallContext<int, CancellationTokenSource>
         {
             internal enum OperationMode
             {
@@ -5910,63 +6064,66 @@ namespace Microsoft.Data.SqlClient
             private static readonly Func<Task, object, Task<int>> s_executeSeek = SqlDataReader.GetBytesAsyncSeekExecute;
             private static readonly Func<Task, object, Task<int>> s_executeRead = SqlDataReader.GetBytesAsyncReadExecute;
 
-            internal int columnIndex;
-            internal byte[] buffer;
-            internal int index;
-            internal int length;
-            internal int timeout;
-            internal CancellationToken cancellationToken;
-            internal CancellationToken timeoutToken;
-            internal int totalBytesRead;
+            internal int _columnIndex;
+            internal byte[] _buffer;
+            internal int _index;
+            internal int _length;
+            internal int _timeout;
+            internal CancellationToken _cancellationToken;
+            internal CancellationToken _timeoutToken;
+            internal int _totalBytesRead;
 
-            internal OperationMode mode;
+            internal OperationMode _mode;
 
             internal GetBytesAsyncCallContext(SqlDataReader reader)
             {
-                this._reader = reader ?? throw new ArgumentNullException(nameof(reader));
+                Reader = reader ?? throw new ArgumentNullException(nameof(reader));
             }
 
-            internal override Func<Task, object, Task<int>> Execute => mode == OperationMode.Seek ? s_executeSeek : s_executeRead;
+            internal override Func<Task, object, Task<int>> Execute => _mode == OperationMode.Seek ? s_executeSeek : s_executeRead;
 
-            public override void Dispose()
+            protected override void Clear()
             {
-                buffer = null;
-                cancellationToken = default;
-                timeoutToken = default;
-                base.Dispose();
+                _buffer = null;
+                _cancellationToken = default;
+                _timeoutToken = default;
+                base.Clear();
             }
         }
 
-        private sealed class GetFieldValueAsyncCallContext<T> : AAsyncCallContext<T>
+        private sealed class GetFieldValueAsyncCallContext<T> : SqlDataReaderAsyncCallContext<T, CancellationTokenRegistration>
         {
             private static readonly Func<Task, object, Task<T>> s_execute = SqlDataReader.GetFieldValueAsyncExecute<T>;
 
-            internal readonly int _columnIndex;
+            internal int _columnIndex;
 
-            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, IDisposable disposable, int columnIndex)
-                : base(reader, source, disposable)
+            internal GetFieldValueAsyncCallContext() { }
+
+            internal GetFieldValueAsyncCallContext(SqlDataReader reader, TaskCompletionSource<T> source, CancellationTokenRegistration disposable)
             {
-                _columnIndex = columnIndex;
+                Set(reader, source, disposable);
+            }
+
+            protected override void Clear()
+            {
+                _columnIndex = -1;
+                base.Clear();
             }
 
             internal override Func<Task, object, Task<T>> Execute => s_execute;
         }
 
-        private static Task<T> ExecuteAsyncCallCallback<T>(Task task, object state)
+        /// <summary>
+        /// Starts the process of executing an async call using an SqlDataReaderAsyncCallContext derived context object.
+        /// After this call the context lifetime is handled by BeginAsyncCall ContinueAsyncCall and CompleteAsyncCall AsyncCall methods
+        ///
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        private Task<T> InvokeAsyncCall<T>(SqlDataReaderBaseAsyncCallContext<T> context)
         {
-            AAsyncCallContext<T> context = (AAsyncCallContext<T>)state;
-            return context._reader.ExecuteAsyncCall(task, context);
-        }
-
-        private static void CompleteAsyncCallCallback<T>(Task<T> task, object state)
-        {
-            AAsyncCallContext<T> context = (AAsyncCallContext<T>)state;
-            context._reader.CompleteAsyncCall<T>(task, context);
-        }
-
-        private Task<T> InvokeAsyncCall<T>(AAsyncCallContext<T> context)
-        {
-            TaskCompletionSource<T> source = context._source;
+            TaskCompletionSource<T> source = context.Source;
             try
             {
                 Task<T> task;
@@ -5976,7 +6133,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex)
                 {
-                    task = ADP.CreatedTaskWithException<T>(ex);
+                    task = Task.FromException<T>(ex);
                 }
 
                 if (task.IsCompleted)
@@ -5986,7 +6143,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     task.ContinueWith(
-                       continuationAction: AAsyncCallContext<T>.s_completeCallback,
+                       continuationAction: SqlDataReaderBaseAsyncCallContext<T>.s_completeCallback,
                        state: context,
                        TaskScheduler.Default
                    );
@@ -6001,7 +6158,7 @@ namespace Microsoft.Data.SqlClient
                 source.TrySetException(e);
             }
 
-            // Fall through for exceptions\completing async
+            // Fall through for exceptions/completing async
             return source.Task;
         }
 
@@ -6011,7 +6168,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ExecuteAsyncCall<T>(AAsyncCallContext<T> context)
+        private Task<T> ExecuteAsyncCall<T>(AAsyncBaseCallContext<SqlDataReader, T> context)
         {
             // _networkPacketTaskSource could be null if the connection was closed
             // while an async invocation was outstanding.
@@ -6024,7 +6181,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return completionSource.Task.ContinueWith(
-                    continuationFunction: AAsyncCallContext<T>.s_executeCallback,
+                    continuationFunction: SqlDataReaderBaseAsyncCallContext<T>.s_executeCallback,
                     state: context,
                     TaskScheduler.Default
                 ).Unwrap();
@@ -6040,10 +6197,10 @@ namespace Microsoft.Data.SqlClient
         /// <param name="task"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        private Task<T> ExecuteAsyncCall<T>(Task task, AAsyncCallContext<T> context)
+        private Task<T> ContinueAsyncCall<T>(Task task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
             // this function must be an instance function called from the static callback because otherwise a compiler error
-            // is caused by accessing the _cancelAsyncOnCloseToken field of a MarchalByRefObject derived class
+            // is caused by accessing the _cancelAsyncOnCloseToken field of a MarshalByRefObject derived class
             if (task.IsFaulted)
             {
                 // Somehow the network task faulted - return the exception
@@ -6100,9 +6257,9 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="T"></typeparam>
         /// <param name="task"></param>
         /// <param name="context"></param>
-        private void CompleteAsyncCall<T>(Task<T> task, AAsyncCallContext<T> context)
+        private void CompleteAsyncCall<T>(Task<T> task, SqlDataReaderBaseAsyncCallContext<T> context)
         {
-            TaskCompletionSource<T> source = context._source;
+            TaskCompletionSource<T> source = context.Source;
             context.Dispose();
 
             // If something has forced us to switch to SyncOverAsync mode while in an async task then we need to guarantee that we do the cleanup
@@ -6129,6 +6286,27 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private sealed class Snapshot
+        {
+            public bool _dataReady;
+            public bool _haltRead;
+            public bool _metaDataConsumed;
+            public bool _browseModeInfoConsumed;
+            public bool _hasRows;
+            public ALTROWSTATUS _altRowStatus;
+            public int _nextColumnDataToRead;
+            public int _nextColumnHeaderToRead;
+            public long _columnDataBytesRead;
+            public long _columnDataBytesRemaining;
+
+            public _SqlMetaDataSet _metadata;
+            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
+            public MultiPartTableName[] _tableNames;
+
+            public SqlSequentialStream _currentStream;
+            public SqlSequentialTextReader _currentTextReader;
+        }
+
         private void PrepareAsyncInvocation(bool useSnapshot)
         {
             // if there is already a snapshot, then the previous async command
@@ -6140,28 +6318,27 @@ namespace Microsoft.Data.SqlClient
 
                 if (_snapshot == null)
                 {
-                    _snapshot = new Snapshot
-                    {
-                        _dataReady = _sharedState._dataReady,
-                        _haltRead = _haltRead,
-                        _metaDataConsumed = _metaDataConsumed,
-                        _browseModeInfoConsumed = _browseModeInfoConsumed,
-                        _hasRows = _hasRows,
-                        _altRowStatus = _altRowStatus,
-                        _nextColumnDataToRead = _sharedState._nextColumnDataToRead,
-                        _nextColumnHeaderToRead = _sharedState._nextColumnHeaderToRead,
-                        _columnDataBytesRead = _columnDataBytesRead,
-                        _columnDataBytesRemaining = _sharedState._columnDataBytesRemaining,
+                    _snapshot = new Snapshot();
 
-                        // _metadata and _altaMetaDataSetCollection must be Cloned
-                        // before they are updated
-                        _metadata = _metaData,
-                        _altMetaDataSetCollection = _altMetaDataSetCollection,
-                        _tableNames = _tableNames,
+                    _snapshot._dataReady = _sharedState._dataReady;
+                    _snapshot._haltRead = _haltRead;
+                    _snapshot._metaDataConsumed = _metaDataConsumed;
+                    _snapshot._browseModeInfoConsumed = _browseModeInfoConsumed;
+                    _snapshot._hasRows = _hasRows;
+                    _snapshot._altRowStatus = _altRowStatus;
+                    _snapshot._nextColumnDataToRead = _sharedState._nextColumnDataToRead;
+                    _snapshot._nextColumnHeaderToRead = _sharedState._nextColumnHeaderToRead;
+                    _snapshot._columnDataBytesRead = _columnDataBytesRead;
+                    _snapshot._columnDataBytesRemaining = _sharedState._columnDataBytesRemaining;
 
-                        _currentStream = _currentStream,
-                        _currentTextReader = _currentTextReader,
-                    };
+                    // _metadata and _altaMetaDataSetCollection must be Cloned
+                    // before they are updated
+                    _snapshot._metadata = _metaData;
+                    _snapshot._altMetaDataSetCollection = _altMetaDataSetCollection;
+                    _snapshot._tableNames = _tableNames;
+
+                    _snapshot._currentStream = _currentStream;
+                    _snapshot._currentTextReader = _currentTextReader;
 
                     _stateObj.SetSnapshot();
                 }

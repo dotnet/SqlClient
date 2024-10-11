@@ -86,7 +86,7 @@ namespace Microsoft.Data.Common
 
         static private void TraceException(string trace, Exception e)
         {
-            Debug.Assert(null != e, "TraceException: null Exception");
+            Debug.Assert(e != null, "TraceException: null Exception");
             if (e is not null)
             {
                 SqlClientEventSource.Log.TryTraceEvent(trace, e);
@@ -125,6 +125,31 @@ namespace Microsoft.Data.Common
             catch (Exception caught)
             {
                 return caught;
+            }
+        }
+
+        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
+        {
+            // Don't capture the current ExecutionContext and its AsyncLocals onto 
+            // a global timer causing them to live forever
+            bool restoreFlow = false;
+            try
+            {
+                if (!ExecutionContext.IsFlowSuppressed())
+                {
+                    ExecutionContext.SuppressFlow();
+                    restoreFlow = true;
+                }
+
+                return new Timer(callback, state, dueTime, period);
+            }
+            finally
+            {
+                // Restore the current ExecutionContext
+                if (restoreFlow)
+                {
+                    ExecutionContext.RestoreFlow();
+                }
             }
         }
 
@@ -448,7 +473,7 @@ namespace Microsoft.Data.Common
                                         connectionOptions.DataSource, msalException.Message,
                                         ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
             }
-            return SqlException.CreateException(sqlErs, "", sender);
+            return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }
 
 #endregion
@@ -643,7 +668,7 @@ namespace Microsoft.Data.Common
         /// Note: In Longhorn you'll be able to rename a machine without
         /// rebooting.  Therefore, don't cache this machine name.
         /// </summary>
-#if !NET6_0_OR_GREATER
+#if NETFRAMEWORK
         [EnvironmentPermission(SecurityAction.Assert, Read = "COMPUTERNAME")]
 #endif
         internal static string MachineName() => Environment.MachineName;
@@ -1202,8 +1227,8 @@ namespace Microsoft.Data.Common
 
         internal static Exception ParameterConversionFailed(object value, Type destType, Exception inner)
         {
-            Debug.Assert(null != value, "null value on conversion failure");
-            Debug.Assert(null != inner, "null inner on conversion failure");
+            Debug.Assert(value != null, "null value on conversion failure");
+            Debug.Assert(inner != null, "null inner on conversion failure");
 
             Exception e;
             string message = StringsHelper.GetString(Strings.ADP_ParameterConversionFailed, value.GetType().Name, destType.Name);
@@ -1303,12 +1328,6 @@ namespace Microsoft.Data.Common
             TaskCompletionSource<T> completion = new();
             completion.SetCanceled();
             return completion.Task;
-        }
-
-        internal static void TraceExceptionForCapture(Exception e)
-        {
-            Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
         //
@@ -1516,28 +1535,6 @@ namespace Microsoft.Data.Common
 #endregion
 #else
 #region netcore project only
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
-        {
-            // Don't capture the current ExecutionContext and its AsyncLocals onto 
-            // a global timer causing them to live forever
-            bool restoreFlow = false;
-            try
-            {
-                if (!ExecutionContext.IsFlowSuppressed())
-                {
-                    ExecutionContext.SuppressFlow();
-                    restoreFlow = true;
-                }
-
-                return new Timer(callback, state, dueTime, period);
-            }
-            finally
-            {
-                // Restore the current ExecutionContext
-                if (restoreFlow)
-                    ExecutionContext.RestoreFlow();
-            }
-        }
 
         //
         // COM+ exceptions

@@ -23,14 +23,14 @@ namespace Microsoft.Data.SqlClient.Server
             {
 #if NETFRAMEWORK
                 SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-                if (null != parent)
+                if (parent != null)
                 {
                     return parent.HasMessages;
                 }
                 else
 #endif
                 {
-                    bool result = (null != _errors || null != _warnings);
+                    bool result = _errors != null || _warnings != null;
                     return result;
                 }
             }
@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.Server
             // hooks up.
 #if NETFRAMEWORK
             SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (null != parent)
+            if (parent != null)
             {
                 parent.DispatchMessages(ignoreNonFatalMessages);
             }
@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.Server
                     , ignoreNonFatalMessages
 #endif    
                     );   // ignore warnings, because there's no place to send them...
-                if (null != errors)
+                if (errors != null)
                 {
                     throw errors;
                 }
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Server
             SqlException result = null;
             SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
 
-            if (null != _errors)
+            if (_errors != null)
             {
                 Debug.Assert(0 != _errors.Count, "empty error collection?"); // must be something in the collection
 #if NETFRAMEWORK
@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.Server
                 else
 #endif
                 {
-                    if (null != _warnings)
+                    if (_warnings != null)
                     {
                         // When we throw an exception we place all the warnings that
                         // occurred at the end of the collection - after all the errors.
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                Debug.Assert(null == _warnings || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
+                Debug.Assert(_warnings == null || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
 
                 if (!ignoreWarnings)
                 {
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.Server
                 _warnings = null;
             }
 
-            if (null != temp)
+            if (temp != null)
             {
                 result = SqlException.CreateException(temp, ServerVersion);
             }

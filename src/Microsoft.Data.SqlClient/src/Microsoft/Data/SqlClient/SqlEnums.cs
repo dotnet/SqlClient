@@ -16,6 +16,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -123,6 +124,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char ||
             type == SqlDbType.VarChar ||
             type == SqlDbType.Text ||
+            type == SqlDbTypeExtensions.Json ||
             type == SqlDbType.Xml;
 
         private static bool _IsNCharType(SqlDbType type) =>
@@ -226,6 +228,8 @@ namespace Microsoft.Data.SqlClient
                     return MetaXml;
                 case SqlDbType.Udt:
                     return MetaUdt;
+                case SqlDbTypeExtensions.Json:
+                    return s_MetaJson;
                 case SqlDbType.Structured:
                     if (isMultiValued)
                     {
@@ -362,6 +366,8 @@ namespace Microsoft.Data.SqlClient
                         return s_metaReal;
                     else if (dataType == typeof(SqlXml))
                         return MetaXml;
+                    else if (dataType == typeof(SqlJson))
+                        return s_MetaJson;
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -603,7 +609,7 @@ namespace Microsoft.Data.SqlClient
         internal static object GetSqlValueFromComVariant(object comVal)
         {
             object sqlVal = null;
-            if ((null != comVal) && (DBNull.Value != comVal))
+            if (comVal != null && (DBNull.Value != comVal))
             {
                 switch (comVal)
                 {
@@ -862,6 +868,8 @@ namespace Microsoft.Data.SqlClient
                     return s_metaDateTime2;
                 case TdsEnums.SQLDATETIMEOFFSET:
                     return MetaDateTimeOffset;
+                case TdsEnums.SQLJSON:
+                    return s_MetaJson;
 
                 case TdsEnums.SQLVOID:
                 default:
@@ -968,6 +976,8 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
+        internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(string), typeof(string), SqlDbTypeExtensions.Json, DbType.String, 0);
+
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
             SqlDateTime sqlDateTime;
@@ -1054,6 +1064,7 @@ namespace Microsoft.Data.SqlClient
             public const string TIME = "time";
             public const string DATETIME2 = "datetime2";
             public const string DATETIMEOFFSET = "datetimeoffset";
+            public const string JSON = "json";
         }
     }
 

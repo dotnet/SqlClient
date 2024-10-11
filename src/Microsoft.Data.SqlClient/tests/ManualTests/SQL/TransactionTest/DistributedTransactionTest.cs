@@ -3,18 +3,19 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     [PlatformSpecific(TestPlatforms.Windows)]
     public class DistributedTransactionTest
     {
-        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && PlatformDetection.IsNotX86Process;
+        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotX86Architecture;
 
         [ConditionalFact(nameof(s_DelegatedTransactionCondition), Timeout = 10000)]
         public async Task Delegated_transaction_deadlock_in_SinglePhaseCommit()

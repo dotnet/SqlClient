@@ -9,7 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
-    <repository type="git" url="https://github.com/dotnet/sqlclient" />
+    <repository type="git" url="https://github.com/dotnet/sqlclient" commit="$COMMITID$" />
     <description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
     
 Available Types:

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
 using System.Data.Common;
@@ -126,8 +127,11 @@ namespace Microsoft.Data.ProviderBase
             }
 
             DbCommand command = connection.CreateCommand();
+            SqlConnection castConnection = connection as SqlConnection;
+
             command.CommandText = sqlCommand;
             command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
+            command.Transaction = castConnection?.GetOpenTdsConnection()?.CurrentTransaction?.Parent;
 
             for (int i = 0; i < numberOfRestrictions; i++)
             {
@@ -237,7 +241,7 @@ namespace Microsoft.Data.ProviderBase
 
             DataColumn collectionNameColumn = metaDataCollectionsTable.Columns[DbMetaDataColumnNames.CollectionName];
 
-            if ((null == collectionNameColumn) || (typeof(string) != collectionNameColumn.DataType))
+            if (collectionNameColumn == null || (typeof(string) != collectionNameColumn.DataType))
             {
                 throw ADP.InvalidXmlMissingColumn(DbMetaDataCollectionNames.MetaDataCollections, DbMetaDataColumnNames.CollectionName);
             }

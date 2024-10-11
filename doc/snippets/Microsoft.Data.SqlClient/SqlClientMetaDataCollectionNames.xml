@@ -1,68 +1,84 @@
 <docs>
-    <members name="SqlClientMetaDataCollectionNames">
-        <SqlClientMetaDataCollectionNames>
-            <summary>Provides a list of constants for use with the **GetSchema** method to retrieve metadata collections.</summary>
-            <remarks>To be added.</remarks>
-        </SqlClientMetaDataCollectionNames>
-        <Columns>
-            <summary>A constant for use with the **GetSchema** method that represents the **Columns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Columns>
-        <Databases>
-            <summary>A constant for use with the **GetSchema** method that represents the **Databases** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Databases>
-        <ForeignKeys>
-            <summary>A constant for use with the **GetSchema** method that represents the **ForeignKeys** collection.</summary>
-            <remarks>To be added.</remarks>
-        </ForeignKeys>
-        <IndexColumns>
-            <summary>A constant for use with the **GetSchema** method that represents the **IndexColumns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </IndexColumns>
-        <Indexes>
-            <summary>A constant for use with the **GetSchema** method that represents the **Indexes** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Indexes>
-        <ProcedureParameters>
-            <summary>A constant for use with the **GetSchema** method that represents the **ProcedureParameters** collection.</summary>
-            <remarks>To be added.</remarks>
-        </ProcedureParameters>
-        <Procedures>
-            <summary>A constant for use with the **GetSchema** method that represents the **Procedures** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Procedures>
-        <Tables>
-            <summary>A constant for use with the **GetSchema** method that represents the **Tables** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Tables>
-        <UserDefinedTypes>
-            <summary>A constant for use with the **GetSchema** method that represents the **UserDefinedTypes** collection.</summary>
-            <remarks>To be added.</remarks>
-        </UserDefinedTypes>
-        <Users>
-            <summary>A constant for use with the **GetSchema** method that represents the **Users** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Users>
-        <ViewColumns>
-            <summary>A constant for use with the **GetSchema** method that represents the **ViewColumns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </ViewColumns>
-        <Views>
-            <summary>A constant for use with the **GetSchema** method that represents the **Views** collection.</summary>
-            <remarks>To be added.</remarks>
-        </Views>
-        <AllColumns>
-            <summary>A constant for use with the **GetSchema** method that represents the **AllColumns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </AllColumns>
-        <ColumnSetColumns>
-            <summary>A constant for use with the **GetSchema** method that represents the **ColumnSetColumns** collection.</summary>
-            <remarks>To be added.</remarks>
-        </ColumnSetColumns>
-        <StructuredTypeMembers>
-            <summary>A constant for use with the **GetSchema** method that represents the **StructuredTypeMembers** collection.</summary>
-            <remarks>To be added.</remarks>
-        </StructuredTypeMembers>
-    </members>
+  <members name="SqlClientMetaDataCollectionNames">
+    <SqlClientMetaDataCollectionNames>
+      <summary>
+        Provides a list of constants for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method to retrieve metadata collections.
+      </summary>
+    </SqlClientMetaDataCollectionNames>
+    <Columns>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Columns</b> collection.
+      </summary>
+    </Columns>
+    <Databases>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Databases</b> collection.
+      </summary>
+    </Databases>
+    <ForeignKeys>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>ForeignKeys</b> collection.
+      </summary>
+    </ForeignKeys>
+    <IndexColumns>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>IndexColumns</b> collection.
+      </summary>
+    </IndexColumns>
+    <Indexes>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Indexes</b> collection.
+      </summary>
+    </Indexes>
+    <ProcedureParameters>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>ProcedureParameters</b> collection.
+      </summary>
+    </ProcedureParameters>
+    <Procedures>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Procedures</b> collection.
+      </summary>
+    </Procedures>
+    <Tables>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Tables</b> collection.
+      </summary>
+    </Tables>
+    <UserDefinedTypes>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>UserDefinedTypes</b> collection.
+      </summary>
+    </UserDefinedTypes>
+    <Users>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Users</b> collection.
+      </summary>
+    </Users>
+    <ViewColumns>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>ViewColumns</b> collection.
+      </summary>
+    </ViewColumns>
+    <Views>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>Views</b> collection.
+      </summary>
+    </Views>
+    <AllColumns>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>AllColumns</b> collection.
+      </summary>
+    </AllColumns>
+    <ColumnSetColumns>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>ColumnSetColumns</b> collection.
+      </summary>
+    </ColumnSetColumns>
+    <StructuredTypeMembers>
+      <summary>
+        A constant for use with the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" /> method that represents the <b>StructuredTypeMembers</b> collection.
+      </summary>
+    </StructuredTypeMembers>
+  </members>
 </docs>

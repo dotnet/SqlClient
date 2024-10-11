@@ -8,13 +8,12 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.Common;
-
-using SysTx = System.Transactions;
+using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
 
-    sealed internal class SqlDelegatedTransaction : SysTx.IPromotableSinglePhaseNotification
+    sealed internal class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
     {
         private static int _objectTypeCount;
         private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
@@ -34,19 +33,19 @@ namespace Microsoft.Data.SqlClient
         //  may be initiated here AFTER the connection lock is released, but should NOT fall under this class's locking strategy.
 
         private SqlInternalConnection _connection;            // the internal connection that is the root of the transaction
-        private IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
+        private System.Data.IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
         private SqlInternalTransaction _internalTransaction;   // the SQL Server transaction we're delegating to
-        private SysTx.Transaction _atomicTransaction;
+        private Transaction _atomicTransaction;
 
         private bool _active;                // Is the transaction active?
 
-        internal SqlDelegatedTransaction(SqlInternalConnection connection, SysTx.Transaction tx)
+        internal SqlDelegatedTransaction(SqlInternalConnection connection, Transaction tx)
         {
-            Debug.Assert(null != connection, "null connection?");
+            Debug.Assert(connection != null, "null connection?");
             _connection = connection;
             _atomicTransaction = tx;
             _active = false;
-            SysTx.IsolationLevel systxIsolationLevel = tx.IsolationLevel;
+            System.Transactions.IsolationLevel systxIsolationLevel = tx.IsolationLevel;
 
             // We need to map the System.Transactions IsolationLevel to the one
             // that System.Data uses and communicates to SqlServer.  We could
@@ -57,27 +56,27 @@ namespace Microsoft.Data.SqlClient
             // place.
             switch (systxIsolationLevel)
             {
-                case SysTx.IsolationLevel.ReadCommitted:
-                    _isolationLevel = IsolationLevel.ReadCommitted;
+                case System.Transactions.IsolationLevel.ReadCommitted:
+                    _isolationLevel = System.Data.IsolationLevel.ReadCommitted;
                     break;
-                case SysTx.IsolationLevel.ReadUncommitted:
-                    _isolationLevel = IsolationLevel.ReadUncommitted;
+                case System.Transactions.IsolationLevel.ReadUncommitted:
+                    _isolationLevel = System.Data.IsolationLevel.ReadUncommitted;
                     break;
-                case SysTx.IsolationLevel.RepeatableRead:
-                    _isolationLevel = IsolationLevel.RepeatableRead;
+                case System.Transactions.IsolationLevel.RepeatableRead:
+                    _isolationLevel = System.Data.IsolationLevel.RepeatableRead;
                     break;
-                case SysTx.IsolationLevel.Serializable:
-                    _isolationLevel = IsolationLevel.Serializable;
+                case System.Transactions.IsolationLevel.Serializable:
+                    _isolationLevel = System.Data.IsolationLevel.Serializable;
                     break;
-                case SysTx.IsolationLevel.Snapshot:
-                    _isolationLevel = IsolationLevel.Snapshot;
+                case System.Transactions.IsolationLevel.Snapshot:
+                    _isolationLevel = System.Data.IsolationLevel.Snapshot;
                     break;
                 default:
                     throw SQL.UnknownSysTxIsolationLevel(systxIsolationLevel);
             }
         }
 
-        internal SysTx.Transaction Transaction
+        internal Transaction Transaction
         {
             get { return _atomicTransaction; }
         }
@@ -116,7 +115,7 @@ namespace Microsoft.Data.SqlClient
                     connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Begin, null, _isolationLevel, _internalTransaction, true);
 
                     // Handle case where ExecuteTran didn't produce a new transaction, but also didn't throw.
-                    if (null == connection.CurrentTransaction)
+                    if (connection.CurrentTransaction == null)
                     {
                         connection.DoomThisConnection();
                         throw ADP.InternalError(ADP.InternalErrorCode.UnknownTransactionFailure);
@@ -166,7 +165,7 @@ namespace Microsoft.Data.SqlClient
 
             Exception promoteException;
             byte[] returnValue = null;
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
@@ -191,18 +190,18 @@ namespace Microsoft.Data.SqlClient
                                 // Now that we've acquired the lock, make sure we still have valid state for this operation.
                                 ValidateActiveOnConnection(connection);
 
-                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, IsolationLevel.Unspecified, _internalTransaction, true);
-                                returnValue = _connection.PromotedDTCToken;
+                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Promote, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
+                                returnValue = connection.PromotedDTCToken;
 
                                 // For Global Transactions, we need to set the Transaction Id since we use a Non-MSDTC Promoter type.
-                                if (_connection.IsGlobalTransaction)
+                                if (connection.IsGlobalTransaction)
                                 {
                                     if (SysTxForGlobalTransactions.SetDistributedTransactionIdentifier == null)
                                     {
                                         throw SQL.UnsupportedSysTxForGlobalTransactions();
                                     }
 
-                                    if (!_connection.IsGlobalTransactionsEnabledForServer)
+                                    if (!connection.IsGlobalTransactionsEnabledForServer)
                                     {
                                         throw SQL.GlobalTransactionsNotEnabled();
                                     }
@@ -260,12 +259,12 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         // Safely access Transction status - as it's possible Transaction is not in right state.
-                        if(Transaction?.TransactionInformation?.Status == SysTx.TransactionStatus.Aborted)
+                        if(Transaction?.TransactionInformation?.Status == System.Transactions.TransactionStatus.Aborted)
                         {
                             throw SQL.PromotionFailed(promoteException);
                         }
                     }
-                    catch(SysTx.TransactionException te)
+                    catch(TransactionException te)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Transaction exception occurred: {2}.", ObjectID, usersConnection?.ClientConnectionId, te.Message);
                         // Throw promote exception if transaction state is unknown.
@@ -287,12 +286,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Called by transaction to initiate abort sequence
-        public void Rollback(SysTx.SinglePhaseEnlistment enlistment)
+        public void Rollback(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-            if (null != connection)
+            if (connection != null)
             {
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
@@ -315,7 +314,7 @@ namespace Microsoft.Data.SqlClient
                             // If we haven't already rolled back (or aborted) then tell the SQL Server to roll back
                             if (!_internalTransaction.IsAborted)
                             {
-                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, IsolationLevel.Unspecified, _internalTransaction, true);
+                                connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                             }
                         }
                         catch (SqlException e)
@@ -382,13 +381,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Called by the transaction to initiate commit sequence
-        public void SinglePhaseCommit(SysTx.SinglePhaseEnlistment enlistment)
+        public void SinglePhaseCommit(SinglePhaseEnlistment enlistment)
         {
-            Debug.Assert(null != enlistment, "null enlistment?");
+            Debug.Assert(enlistment != null, "null enlistment?");
             SqlInternalConnection connection = GetValidConnection();
 
-
-            if (null != connection)
+            if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
@@ -429,7 +427,7 @@ namespace Microsoft.Data.SqlClient
                                     _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                                     _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
-                                    connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, _internalTransaction, true);
+                                    connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                                     commitException = null;
                                 }
                                 catch (SqlException e)
@@ -462,7 +460,7 @@ namespace Microsoft.Data.SqlClient
                                 else if (_internalTransaction.IsAborted)
                                 {
                                     // The transaction was aborted, report that to
-                                    // SysTx.
+                                    // System.Transactions.
                                     enlistment.Aborted(commitException);
                                 }
                                 else
@@ -521,7 +519,7 @@ namespace Microsoft.Data.SqlClient
         //  ended event via the internal connection. If it occurs without a prior Rollback or SinglePhaseCommit call,
         //  it indicates the transaction was ended externally (generally that one the the DTC participants aborted
         //  the transaction).
-        internal void TransactionEnded(SysTx.Transaction transaction)
+        internal void TransactionEnded(Transaction transaction)
         {
             SqlInternalConnection connection = _connection;
 
@@ -548,7 +546,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection GetValidConnection()
         {
             SqlInternalConnection connection = _connection;
-            if (null == connection && _atomicTransaction.TransactionInformation.Status != SysTx.TransactionStatus.Aborted)
+            if (connection == null && _atomicTransaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
             }
@@ -567,11 +565,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Invalid indicates something BAAAD happened (Commit after TransactionEnded, for instance)
                 //  Doom anything remotely involved.
-                if (null != connection)
+                if (connection != null)
                 {
                     connection.DoomThisConnection();
                 }
-                if (connection != _connection && null != _connection)
+                if (connection != _connection && _connection != null)
                 {
                     _connection.DoomThisConnection();
                 }

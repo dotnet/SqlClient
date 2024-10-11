@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SqlClientWrapperSmiStreamChars(SmiEventSink_Default sink, SmiStream stream)
         {
-            Debug.Assert(null != sink);
-            Debug.Assert(null != stream);
+            Debug.Assert(sink != null);
+            Debug.Assert(stream != null);
             _sink = sink;
             _stream = stream;
         }
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                return null == _stream;
+                return _stream == null;
             }
         }
 

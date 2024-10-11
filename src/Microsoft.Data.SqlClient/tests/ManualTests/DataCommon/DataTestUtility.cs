@@ -11,10 +11,16 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Core;
+using Azure.Identity;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.Identity.Client;
 using Xunit;
@@ -29,7 +35,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string NPConnectionString = null;
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
-        public static readonly string TCPConnectionStringAASVBS = null;
         public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
@@ -40,8 +45,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
-        public static readonly string AKVClientId = null;
-        public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -50,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool UseManagedSNIOnWindows = false;
-        public static readonly bool IsAzureSynapse = false;
+
         public static Uri AKVBaseUri = null;
         public static readonly string PowerShellPath = null;
         public static string FileStreamDirectory = null;
@@ -67,6 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
+        public static bool SupportsSystemAssignedManagedIdentity = false;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
@@ -90,13 +94,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_sQLServerVersion = string.Empty;
         private static bool s_isTDS8Supported;
 
+        //SQL Server EngineEdition
+        private static string s_sqlServerEngineEdition;
+
+        // JSON Coloumn type
+        public static readonly bool IsJsonSupported = false;
+
+        // Azure Synapse EngineEditionId == 6
+        // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
+        public static bool IsAzureSynapse
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(TCPConnectionString))
+                {
+                    s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
+                }
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
+                return engineEditon == 6;
+            }
+        }
+
+        public static bool TcpConnectionStringDoesNotUseAadAuth
+        {
+            get
+            {
+                SqlConnectionStringBuilder builder = new (TCPConnectionString);
+                return builder.Authentication == SqlAuthenticationMethod.SqlPassword || builder.Authentication == SqlAuthenticationMethod.NotSpecified;
+            }
+        }
+
         public static string SQLServerVersion
         {
             get
             {
                 if (!string.IsNullOrEmpty(TCPConnectionString))
                 {
-                    s_sQLServerVersion ??= GetSqlServerVersion(TCPConnectionString);
+                    s_sQLServerVersion ??= GetSqlServerProperty(TCPConnectionString, "ProductMajorVersion");
                 }
                 return s_sQLServerVersion;
             }
@@ -121,7 +155,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NPConnectionString = c.NPConnectionString;
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
-            TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
@@ -138,7 +171,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingConnString = c.DNSCachingConnString;
             DNSCachingServerCR = c.DNSCachingServerCR;
             DNSCachingServerTR = c.DNSCachingServerTR;
-            IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
@@ -149,6 +181,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
+            IsJsonSupported = c.IsJsonSupported;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -172,8 +205,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
-            AKVClientId = c.AzureKeyVaultClientId;
-            AKVClientSecret = c.AzureKeyVaultClientSecret;
 
             if (EnclaveEnabled)
             {
@@ -183,9 +214,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionStringHGSVBS);
                 }
 
-                if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
+                if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
                 {
-                    AEConnStrings.Add(TCPConnectionStringAASVBS);
+                    AEConnStrings.Add(TCPConnectionStringNoneVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
@@ -267,19 +298,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
-        public static string GetSqlServerVersion(string connectionString)
+        public static string GetSqlServerProperty(string connectionString, string propertyName)
         {
-            string version = string.Empty;
+            string propertyValue = string.Empty;
             using SqlConnection conn = new(connectionString);
             conn.Open();
             SqlCommand command = conn.CreateCommand();
-            command.CommandText = "SELECT SERVERProperty('ProductMajorVersion')";
+            command.CommandText = $"SELECT SERVERProperty('{propertyName}')";
             SqlDataReader reader = command.ExecuteReader();
             if (reader.Read())
             {
-                version = reader.GetString(0);
+                switch (propertyName)
+                {
+                    case "EngineEdition":
+                        propertyValue = reader.GetInt32(0).ToString();
+                        break;
+                    case "ProductMajorVersion":
+                        propertyValue = reader.GetString(0);
+                        break;
+                }
             }
-            return version;
+            return propertyValue;
         }
 
         public static bool GetSQLServerStatusOnTDS8(string connectionString)
@@ -301,6 +340,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             return isTDS8Supported;
         }
+
+        public static bool IsNotX86Architecture => RuntimeInformation.ProcessArchitecture != Architecture.X86;
 
         public static bool IsDatabasePresent(string name)
         {
@@ -426,7 +467,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+        }
+
+        private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
+
+        public static TokenCredential GetTokenCredential()
+        {
+            return s_defaultCredential;
+        }
+
+        public static bool IsTargetReadyForAeWithKeyStore()
+        {
+            return DataTestUtility.AreConnStringSetupForAE()
+#if NET6_0_OR_GREATER
+                // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
+                && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
+#endif
+                ;
+        }
+
+        public static bool IsSupportingDistributedTransactions()
+        {
+#if NET8_0_OR_GREATER
+            return OperatingSystem.IsWindows() && System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture != System.Runtime.InteropServices.Architecture.X86 && IsNotAzureServer();
+#elif NETFRAMEWORK
+            return IsNotAzureServer();
+#else
+            return false;
+#endif
         }
 
         public static bool IsTargetReadyForAeWithKeyStore()
@@ -444,8 +513,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() =>
-#if !NETFRAMEWORK
-        DataTestUtility.IsNotUsingManagedSNIOnWindows();
+#if NET6_0_OR_GREATER
+            IsNotUsingManagedSNIOnWindows();
 #else 
             true;
 #endif
@@ -539,6 +608,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
+        {
+            DropTable(sqlConnection, tableName);
+            string tableCreate = "CREATE TABLE " + tableName + createBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = tableCreate;
+                command.ExecuteNonQuery();
+            }
+        }
+
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
             ResurrectConnection(sqlConnection);
@@ -596,19 +676,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetAccessToken()
         {
-            if (null == AADAccessToken && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
+            if (AADAccessToken == null && IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
             {
                 string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
                 string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
             }
             // Creates a new Object Reference of Access Token - See GitHub Issue 438
-            return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
+            return AADAccessToken != null ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
         public static string GetSystemIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && SupportsSystemAssignedManagedIdentity && AADSystemIdentityAccessToken == null && IsAADPasswordConnStrSetup())
             {
                 AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
                 if (AADSystemIdentityAccessToken == null)
@@ -616,12 +696,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
+            return AADSystemIdentityAccessToken != null ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static string GetUserIdentityAccessToken()
         {
-            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (ManagedIdentitySupported && AADUserIdentityAccessToken == null && IsAADPasswordConnStrSetup())
             {
                 // Pass User Assigned Managed Identity Client Id here.
                 AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).GetAwaiter().GetResult();
@@ -630,14 +710,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ManagedIdentitySupported = false;
                 }
             }
-            return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
+            return AADUserIdentityAccessToken != null ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
         }
 
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
-
-        public static bool IsSystemIdentityTokenSetup() => !string.IsNullOrEmpty(GetSystemIdentityAccessToken());
-
-        public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
         public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
@@ -723,7 +799,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
+                Assert.Fail("ERROR: Did not get expected exception");
                 return null;
             }
             catch (Exception ex)
@@ -737,58 +813,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 throw;
             }
-        }
-
-        public static TException ExpectFailure<TException, TInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception
-        {
-            try
-            {
-                actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                if ((CheckException<TException>(ex, exceptionMessage, false)) && (CheckException<TInnerException>(ex.InnerException, innerExceptionMessage, innerInnerExceptionMustBeNull)))
-                {
-                    return (ex as TException);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        public static TException ExpectFailure<TException, TInnerException, TInnerInnerException>(Action actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, string innerInnerExceptionMessage = null, bool innerInnerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception where TInnerInnerException : Exception
-        {
-            try
-            {
-                actionThatFails();
-                Assert.False(true, "ERROR: Did not get expected exception");
-                return null;
-            }
-            catch (Exception ex)
-            {
-                if ((CheckException<TException>(ex, exceptionMessage, false)) && (CheckException<TInnerException>(ex.InnerException, innerExceptionMessage, false)) && (CheckException<TInnerInnerException>(ex.InnerException.InnerException, innerInnerExceptionMessage, innerInnerInnerExceptionMustBeNull)))
-                {
-                    return (ex as TException);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        public static void ExpectAsyncFailure<TException>(Func<Task> actionThatFails, string exceptionMessage = null, bool innerExceptionMustBeNull = false) where TException : Exception
-        {
-            ExpectFailure<AggregateException, TException>(() => actionThatFails().Wait(), null, exceptionMessage, innerExceptionMustBeNull);
-        }
-
-        public static void ExpectAsyncFailure<TException, TInnerException>(Func<Task> actionThatFails, string exceptionMessage = null, string innerExceptionMessage = null, bool innerInnerExceptionMustBeNull = false) where TException : Exception where TInnerException : Exception
-        {
-            ExpectFailure<AggregateException, TException, TInnerException>(() => actionThatFails().Wait(), null, exceptionMessage, innerExceptionMessage, innerInnerExceptionMustBeNull);
         }
 
         public static string GenerateObjectName()
@@ -961,8 +985,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             port = -1;
             instanceName = string.Empty;
 
-            if (dataSource.Contains(",") && dataSource.Contains("\\"))
-                return false;
+            // Remove leading and trailing spaces
+            dataSource = dataSource.Trim();
 
             if (dataSource.Contains(":"))
             {
@@ -975,7 +999,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     return false;
                 }
-                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal) - 1);
+                // IndexOf is zero-based, no need to subtract one
+                dataSource = dataSource.Substring(0, dataSource.IndexOf(",", StringComparison.Ordinal));
             }
 
             if (dataSource.Contains("\\"))

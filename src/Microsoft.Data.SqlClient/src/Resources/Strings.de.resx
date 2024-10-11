@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>Replikation</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Verbindungsresilienz</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>Das 'IsDataSet'-Attribut fehlt im Eingabe-Schema.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>Das 'DataSet'-Element kann nicht ermittelt werden. Das 'IsDataSet-Attribut ist mehrmals vorhanden.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>Typen, die IDynamicMetaObjectProvider implementieren, aber nicht gleichzeitig IXmlSerializable implementieren, werden von DataSet nicht serialisiert.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0} wird erwartet. Das Token an Position {2} ist jedoch {1}.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>{0} kann nicht in {1} konvertiert werden.</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>Der Wert '{0}' kann nicht in den Typ {1} konvertiert werden.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>Ungültiger Spaltenname [{0}].</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>Auswerten nicht möglich. Der Ausdruck '{0}' ist kein Aggregat.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>Der Filterausdruck '{0}' wertet nicht auf einen Boolean-Wert aus.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>Ungültiger Typname '{0}'.</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded und SetModified können nur für DataRows mit Unchanged DataRowState aufgerufen werden.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>Die Ordinalzahl '{0}' überschreitet die Höchstzahl.</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>'DataSet' unterstützt nicht System.Nullable&lt;&gt;.</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>Spaltenkonflikt im PrimaryKey: &lt;target&gt;.{0} im Vergleich zu &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>Relation {0} kann nicht zusammengeführt werden, da Schlüsselspalten nicht übereinstimmen.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>Zieltabelle {0} hat keine Definition für Spalte {1}.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>Die Sammlung wurde geändert; möglicherweise wurde die Enumeration nicht ausgeführt.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>Der einfache Typ '{0}' wurde bereits mit unterschiedlichem/r '{1}' deklariert.</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>Ungültige Paginierung.</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Die Spalte kann nicht entfernt werden, da sie in das 'dataSet' eingebaut ist.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>Die Beziehung kann nicht entfernt werden, da sie in das 'dataSet' eingebaut ist.</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>Tritt auf, wenn eine Eigenschaft für das Steuerelement geändert wird.</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Tritt auf, wenn sich die Mitgliedschaft dieser Sammlung ändert.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>Der Wert kann nicht abgerufen werden, da er DBNull ist.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>Für ein Update benötigt der Befehlsklon ein Verbindungsobjekt. Die Connection-Eigenschaft des Befehlsklons wurde nicht initialisiert.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>Für ein Update ist eine Verbindung erforderlich.</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Für ein Update muss der {0}Command über ein geöffnetes Verbindungsobjekt verfügen. {1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>Feld '{0}' ist als nicht serialisiert markiert</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>Der Typ des Feldes '{0}' ist als explizites Layout markiert, was im Format 'Native' nicht zulässig ist</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>Mehrere mit Werten versehene Assembly-Verweise müssen über eine Assembly-ID ungleich Null verfügen.</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>Netzwerkbezogener oder instanzspezifischer Fehler beim Herstellen einer Verbindung mit SQL Server. Der Server wurde nicht gefunden, oder auf ihn kann nicht zugegriffen werden. Überprüfen Sie, ob der Instanzname richtig ist und ob SQL Server Remoteverbindungen zulässt.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>Aufgrund eines Fehlers während der Initialisierung der Verbindung vor der Anmeldung konnte der Client keine Verbindung mit dem Server herstellen. Mögliche Ursachen sind u. a. folgende: Der Client hat versucht, eine Verbindung mit einer nicht unterstützten Version von SQL Server herzustellen, der Server ist ausgelastet und kann keine neuen Verbindungen annehmen, oder die Ressourcen auf dem Server sind eingeschränkt (zu wenig Arbeitsspeicher oder maximal zulässige Verbindungen).</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>Es konnte eine Verbindung mit dem Server hergestellt werden, doch während des Handshakes vor der Anmeldung trat ein Fehler auf.</value>
@@ -4399,7 +4399,7 @@
     <value>Wörterbuchobjekt, das SQL Server-Namen und deren vertrauenswürdige Spaltenhauptschlüsselpfade enthalten.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Mindestens zwei Umleitungen sind aufgetreten. Es ist nur eine Umleitung pro Anmeldung zulässig.</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Die Verbindungsoption "ApplicationIntent ReadOnly" wird nicht unterstützt, wenn eine Verbindung mit einer gespiegelten SQL Server-Instanz hergestellt wird.</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>Die SSL-Verschlüsselung wurde während eines Wiederherstellungsversuchs vom Server nicht beibehalten; die Verbindung kann nicht wiederhergestellt werden.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>Die genaue TDS-Version des Clients, die bei einem Wiederherstellungsversuch angefordert wurde, konnte vom Server nicht beibehalten werden; die Verbindung kann nicht wiederhergestellt werden.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Validierung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der berechneten Signatur überein, indem ein öffentlicher Schlüssel verwendet wird, der vom Endpunkt des öffentlichen Nachweisschlüssels unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn richtig, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
@@ -4489,7 +4489,7 @@
     <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL „{0}“ zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Überprüfen Sie, ob die Nachweis-URL korrekt und der HGS-Server online und vollständig initialisiert sind – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenden Sie sich an den Kundensupport, um weitere Informationen zu erhalten. Fehlerdetails: „{1}“.</value>
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Vergewissern Sie sich, dass die Nachweis-URL korrekt ist und der HGS-Server online und vollständig initialisiert ist. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Um weitere Unterstützung zu erhalten, wenden Sie sich an den Kundensupport. Fehlerdetails: „{0}“</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
@@ -4507,10 +4507,10 @@
     <value>Fehler bei der Überprüfung des Nachweistokens während der Signaturüberprüfung. Ausnahme: {0}.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Fehler bei der Überprüfung eines Nachweistokens. Der Anspruch „{0}“ im Token weist einen ungültigen Wert von „{1}“ auf. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Validierung eines Nachweistokens. Der Anspruch „{0}“ im Token weist den ungültigen Wert „{1}“ auf. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Fehler bei der Überprüfung des Nachweistokens. Der Anspruch „{0}“ fehlt im Token. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Validierung des Nachweistokens. Anspruch „{0}“ fehlt im Token. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Es konnte nicht überprüft werden, ob die Enclave im Produktionsmodus ausgeführt wird. Wenden Sie sich an den Kundensupport.</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Socket hat den erwarteten "{0}" nicht ausgelöst. Fehlercode: "{1}".</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Wird in .NET Standard 2.0 nicht unterstützt.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Der Server versucht, ein Feature zu verwenden, das auf dieser Plattform nicht unterstützt wird.</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Das Zertifikat ist während der Überprüfung des Zertifikats nicht verfügbar.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Das vom Server bereitgestellte Zertifikat stimmt nicht mit dem Zertifikat überein, das über die ServerCertificate-Option bereitgestellt wurde.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>

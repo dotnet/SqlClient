@@ -1,32 +1,52 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlRetryingEventArgs">
-        <SqlRetryingEventArgs>
-            <summary>Represents the set of arguments passed to the <see cref="E:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying" /> event.</summary>
-        </SqlRetryingEventArgs>
-        <ctor>
-            <param name="retryCount">The current retry attempt count.</param>
-            <param name="delay">The delay that indicates how long the current thread will be suspended before the next iteration is invoked.</param>
-            <param name="exceptions">The list of exceptions since the first retry that caused the retry logic to re-execute the function.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryingEventArgs" /> class.</summary>
-        </ctor>
-        <RetryCount>
-            <summary>Retry-attempt-number, after the first exception occurrence.</summary>
-            <value>
-            <see langword="int" /> that returns the number of retry execution attempts; starting from 1.</value>
-        </RetryCount>
-        <Cancel>
-            <summary>Gets or sets a value that indicates whether the retry logic should be canceled.</summary>
-            <value> If set to <see langword="true" />, the execution attempt will be interrupted immediately.</value>
-        </Cancel>
-        <Delay>
-            <summary>Gets the current waiting time as a <see cref="T:System.TimeSpan" /> object.</summary>
-            <value>
-            <see cref="T:System.TimeSpan" /> The upcoming gap time before the next execution attempt.</value>
-        </Delay>
-        <Exceptions>
-            <summary>Gets the list of exceptions since the first attempt failure.</summary>
-            <value>List of occurred exceptions.</value>
-        </Exceptions>
-    </members>
+﻿<docs>
+  <members name="SqlRetryingEventArgs">
+    <SqlRetryingEventArgs>
+      <summary>
+        Represents the set of arguments passed to the <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying" /> event.
+      </summary>
+    </SqlRetryingEventArgs>
+    <ctor>
+      <param name="retryCount">
+        The current retry attempt count.
+      </param>
+      <param name="delay">
+        The delay that indicates how long the current thread will be suspended before the next iteration is invoked.
+      </param>
+      <param name="exceptions">
+        The list of exceptions since the first retry that caused the retry logic to re-execute the function.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryingEventArgs" /> class.
+      </summary>
+    </ctor>
+    <RetryCount>
+      <summary>
+        Retry-attempt-number, after the first exception occurrence.
+      </summary>
+      <value>
+        <see cref="T:System.Int32" /> that returns the number of retry execution attempts; starting from 1.</value>
+    </RetryCount>
+    <Cancel>
+      <summary>
+        Gets or sets a value that indicates whether the retry logic should be canceled.
+      </summary>
+      <value>
+        If set to <see langword="true" />, the execution attempt will be interrupted immediately.
+      </value>
+    </Cancel>
+    <Delay>
+      <summary>
+        Gets the current waiting time as a <see cref="T:System.TimeSpan" /> object.
+      </summary>
+      <value> <see cref="T:System.TimeSpan" /> The upcoming gap time before the next execution attempt.</value>
+    </Delay>
+    <Exceptions>
+      <summary>
+        Gets the list of exceptions since the first attempt failure.
+      </summary>
+      <value>
+        List of occurred exceptions.
+      </value>
+    </Exceptions>
+  </members>
 </docs>

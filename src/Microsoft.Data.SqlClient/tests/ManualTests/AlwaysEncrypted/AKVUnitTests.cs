@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
-using Azure.Identity;
 using Xunit;
 using Azure.Security.KeyVault.Keys;
 using System.Reflection;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics.Tracing;
@@ -59,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                         break;
                     default:
-                        Assert.False(true, "Unexpected event occurred: " + item.Message);
+                        Assert.Fail("Unexpected event occurred: " + item.Message);
                         break;
                 }
             });
@@ -86,8 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
             byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
             byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCek);
 
@@ -104,8 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // SqlClientCustomTokenCredential implements a legacy authentication callback to request the access token from the client-side.
             SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+            SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
 
             byte[] encryptedCekWithNewProvider = newAkvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
             byte[] decryptedCekWithOldProvider = oldAkvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCekWithNewProvider);
@@ -129,15 +125,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 string keyName = keyPathUri.Segments[2];
                 string keyVersion = keyPathUri.Segments[3];
-                ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-                KeyClient keyClient = new KeyClient(vaultUri, clientSecretCredential);
+                KeyClient keyClient = new KeyClient(vaultUri, DataTestUtility.GetTokenCredential());
                 KeyVaultKey currentVersionKey = keyClient.GetKey(keyName);
                 KeyVaultKey specifiedVersionKey = keyClient.GetKey(keyName, keyVersion);
 
                 //If specified versioned key is the most recent version of the key then we cannot test.
                 if (!KeyIsLatestVersion(specifiedVersionKey, currentVersionKey))
                 {
-                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
                     // Perform an operation to initialize the internal caches
                     azureKeyProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVOriginalUrl, EncryptionAlgorithm, s_columnEncryptionKey);
 

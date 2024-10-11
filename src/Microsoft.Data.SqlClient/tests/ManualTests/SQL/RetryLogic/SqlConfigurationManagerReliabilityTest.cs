@@ -23,7 +23,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         { InitialCatalog = SqlConnectionReliabilityTest.InvalidInitialCatalog, ConnectTimeout = 1 }.ConnectionString;
 
         #region Internal Functions
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Test relies on error 4060 for automatic retry, which is not returned when using AAD auth
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Fix, RetryLogicConfigHelper.RetryMethodName_Inc)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Inc, RetryLogicConfigHelper.RetryMethodName_Exp)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
@@ -129,7 +130,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Test relies on error 4060 for automatic retry, which is not returned when using AAD auth
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
         [InlineData("InvalidRetrylogicTypeName")]
         [InlineData("")]
         [InlineData(null)]
@@ -217,6 +219,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
+        }
+        #endregion
+
+        #region Valid Configurations
+        [Theory]
+        [InlineData("-1,1,2,3")]
+        [InlineData("-1, 1, 2 , 3, -2")]
+        [InlineData("")]
+        public void ValidTransientError(string errors)
+        {
+            string[] transientErrorNumbers = errors.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            cnnCfg.TransientErrors = errors;
+            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+
+            RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out _);
+
+            foreach(string errorString in transientErrorNumbers)
+            {
+                int errorNumber = int.Parse(errorString.Trim());
+                SqlException transientException = RetryLogicConfigHelper.CreateSqlException(errorNumber);
+
+                Assert.True(cnnProvider.RetryLogic.TransientPredicate(transientException), $"Error {errorNumber} is not considered transient by the predicate.");
+            }
         }
         #endregion
 

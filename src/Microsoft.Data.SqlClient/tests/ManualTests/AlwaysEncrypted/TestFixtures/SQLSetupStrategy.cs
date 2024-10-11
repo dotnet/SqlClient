@@ -1,4 +1,5 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+﻿
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.using System;
 
@@ -20,7 +21,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
+        public Table ColumnDecryptErrorTestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
+        public Table DateOnlyTestTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
         public Table SqlNullValuesTable { get; private set; }
@@ -125,11 +128,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAETestTable);
 
+            ColumnDecryptErrorTestTable = new ColumnDecryptErrorTestTable(GenerateUniqueName("ColumnDecryptErrorTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(ColumnDecryptErrorTestTable);
+
             SqlParameterPropertiesTable = new SqlParameterPropertiesTable(GenerateUniqueName("SqlParameterPropertiesTable"));
             tables.Add(SqlParameterPropertiesTable);
 
             End2EndSmokeTable = new ApiTestTable(GenerateUniqueName("End2EndSmokeTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(End2EndSmokeTable);
+
+            DateOnlyTestTable = new DateOnlyTestTable(GenerateUniqueName("DateOnlyTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(DateOnlyTestTable);
 
             TrustedMasterKeyPathsTestTable = new ApiTestTable(GenerateUniqueName("TrustedMasterKeyPathsTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(TrustedMasterKeyPathsTestTable);

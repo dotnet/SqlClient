@@ -126,11 +126,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
 
-                if (null == data)
+                if (data == null)
                 {
                     data = Marshal.AllocHGlobal(passedSize).ToPointer();
 
-                    Trace.Assert(null != data);
+                    Trace.Assert(data != null);
 
                     System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
 
@@ -184,26 +184,6 @@ namespace Microsoft.Data.SqlClient
             public SqlClientCertificateDelegate clientCertificateCallback;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string serverCertFileName;
-        };
-
-        internal struct CTAIPProviderInfo
-        {
-            internal byte[] originalNetworkAddress;
-            internal Boolean fromDataSecurityProxy;
-        };
-
-        struct SNIAuthProviderInfoWrapper
-        {
-            internal object pDelegateContext;
-            internal SqlClientCertificateDelegate pSqlClientCertificateDelegate;
-        };
-
-        internal struct SNICTAIPProviderInfo
-        {
-            internal SNIHandle pConn;
-            internal byte prgbAddress;
-            internal ulong cbAddress;
-            internal bool fFromDataSecurityProxy;
         };
 
         [StructLayout(LayoutKind.Sequential)]
@@ -413,21 +393,6 @@ namespace Microsoft.Data.SqlClient
                     return SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
-            }
-        }
-
-        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref SNICTAIPProviderInfo pInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 default:
                     throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
@@ -889,8 +854,7 @@ namespace Microsoft.Data.SqlClient
 
         private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
-            [In, Out] byte[] pIn,
-            uint cbIn,
+            [In, Out] ReadOnlySpan<byte> pIn,
             [In, Out] byte[] pOut,
             [In] ref uint pcbOut,
             [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
@@ -899,16 +863,19 @@ namespace Microsoft.Data.SqlClient
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
             [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
         {
-            switch (s_architecture)
+            fixed (byte* pInPtr = pIn)
             {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                switch (s_architecture)
+                {
+                    case System.Runtime.InteropServices.Architecture.Arm64:
+                        return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    case System.Runtime.InteropServices.Architecture.X64:
+                        return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    case System.Runtime.InteropServices.Architecture.X86:
+                        return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                    default:
+                        throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                }
             }
         }
 
@@ -937,21 +904,6 @@ namespace Microsoft.Data.SqlClient
                     return SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
-            }
-        }
-
-        private static IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
                 default:
                     throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
@@ -1183,53 +1135,15 @@ namespace Microsoft.Data.SqlClient
         {
             UInt32 ret;
             uint ERROR_SUCCESS = 0;
-            SNIAuthProviderInfoWrapper sniAuthInfoWrapper;
 
-            if (authInfo.clientCertificateCallback != null)
-            {
-                sniAuthInfoWrapper.pDelegateContext = authInfo.clientCertificateCallbackContext;
-                sniAuthInfoWrapper.pSqlClientCertificateDelegate = authInfo.clientCertificateCallback;
-
-                authInfo.clientCertificateCallbackContext = sniAuthInfoWrapper;
-                authInfo.clientCertificateCallback = SNIClientCertificateFallbackWrapper;
-            }
+            Debug.Assert(authInfo.clientCertificateCallback == null, "CTAIP support has been removed");
 
             ret = SNIAddProviderWrapper(pConn, providerEnum, ref authInfo);
 
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
-                Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
-            }
-
-            return ret;
-        }
-
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static uint SNIAddProvider(SNIHandle pConn,
-                                            ProviderEnum providerEnum,
-                                            CTAIPProviderInfo authInfo)
-        {
-            UInt32 ret;
-            uint ERROR_SUCCESS = 0;
-
-
-            SNICTAIPProviderInfo ctaipInfo = new SNICTAIPProviderInfo();
-
-            ctaipInfo.prgbAddress = authInfo.originalNetworkAddress[0];
-            ctaipInfo.cbAddress = (byte)authInfo.originalNetworkAddress.Length;
-            ctaipInfo.fFromDataSecurityProxy = authInfo.fromDataSecurityProxy;
-
-            ret = SNIAddProviderWrapper(pConn, providerEnum, ref ctaipInfo);
-
-            if (ret == ERROR_SUCCESS)
-            {
-                // added a provider, need to requery for sync over async support
-                bool fSupportsSyncOverAsync;
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out fSupportsSyncOverAsync);
+                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -1378,18 +1292,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, byte[] inBuff, uint receivedLength, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
         {
             fixed (byte* pin_serverUserName = &serverUserName[0])
             {
-                bool local_fDone;
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
                     inBuff,
-                    receivedLength,
                     OutBuff,
                     ref sendLength,
-                    out local_fDone,
+                    out bool _,
                     pin_serverUserName,
                     (uint)serverUserName.Length,
                     null,
@@ -1412,10 +1324,10 @@ namespace Microsoft.Data.SqlClient
         private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = null != consumerInfo.readDelegate
+            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = null != consumerInfo.writeDelegate
+            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;

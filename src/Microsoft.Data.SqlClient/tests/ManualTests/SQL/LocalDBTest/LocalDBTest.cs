@@ -26,15 +26,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_startLocalDbCommand = @$"/c SqlLocalDb start {DataTestUtility.LocalDbAppName}";
         private static readonly string s_localDbNamedPipeConnectionString = @$"server={GetLocalDbNamedPipe()}";
 
+
         #region LocalDbTests
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void SqlLocalDbConnectionTest()
         {
             ConnectionTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBEncryptionNotSupportedTest()
         {
@@ -43,7 +43,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithEncryptionTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBMarsTest()
         {
@@ -51,17 +50,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithMarsTest(s_localDbConnectionString);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidLocalDBTest()
         {
             using var connection = new SqlConnection(s_badConnectionString);
             DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
         }
-        #endregion
+#endregion
 
         #region SharedLocalDb tests
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
         public static void SharedLocalDbEncryptionTest()
         {
@@ -71,6 +68,123 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // But connection should succeed as encryption is disabled by driver.
                 ConnectionWithEncryptionTest(connectionString);
             }
+        }
+
+        [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
+        public static void SharedLocalDbMarsTest()
+        {
+            foreach (string connectionString in s_sharedLocalDbInstances)
+            {
+                ConnectionWithMarsTest(connectionString);
+            }
+        }
+
+        [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
+        public static void SqlLocalDbSharedInstanceConnectionTest()
+        {
+            foreach (string connectionString in s_sharedLocalDbInstances)
+            {
+                ConnectionTest(connectionString);
+            }
+        }
+        #endregion
+
+
+        #region NamedPipeTests
+
+        [Fact]
+        [ActiveIssue("20245")] //pending pipeline configuration
+        public static void SqlLocalDbNamedPipeConnectionTest()
+        {
+            ConnectionTest(s_localDbNamedPipeConnectionString);
+        }
+
+        [Fact]
+        [ActiveIssue("20245")] //pending pipeline configuration
+        public static void LocalDBNamedPipeEncryptionNotSupportedTest()
+        {
+            // Encryption is not supported by SQL Local DB.
+            // But connection should succeed as encryption is disabled by driver.
+            ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
+        }
+
+        [Fact]
+        [ActiveIssue("20245")] //pending pipeline configuration
+        public static void LocalDBNamepipeMarsTest()
+        {
+            ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
+        }
+
+        #endregion
+
+        #region Failures
+        // ToDo: After adding shared memory support on managed SNI, the IsNativeSNI could be taken out
+        [ConditionalTheory(nameof(IsLocalDBEnvironmentSet), nameof(IsNativeSNI))]
+        [InlineData("lpc:")]
+        public static void SharedMemoryAndSqlLocalDbConnectionTest(string prefix)
+        {
+            SqlConnectionStringBuilder stringBuilder = new(s_localDbConnectionString);
+            stringBuilder.DataSource = prefix + stringBuilder.DataSource;
+            SqlException ex = Assert.Throws<SqlException>(() => ConnectionTest(stringBuilder.ConnectionString));
+            Assert.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 41 - Cannot open a Shared Memory connection to a remote SQL server)", ex.Message);
+        }
+
+        [InlineData("tcp:")]
+        [InlineData("np:")]
+        [InlineData("undefinded:")]
+        [ConditionalTheory(nameof(IsLocalDBEnvironmentSet)/*, nameof(IsNativeSNI)*/)]
+        public static void PrefixAndSqlLocalDbConnectionTest(string prefix)
+        {
+            SqlConnectionStringBuilder stringBuilder = new(s_localDbConnectionString);
+            stringBuilder.DataSource = prefix + stringBuilder.DataSource;
+            SqlException ex = Assert.Throws<SqlException>(() => ConnectionTest(stringBuilder.ConnectionString));
+            Assert.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 26 - Error Locating Server/Instance Specified)", ex.Message);
+        }
+
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet)/*, nameof(IsNativeSNI)*/)]
+        public static void InvalidSqlLocalDbConnectionTest()
+        {
+            SqlConnectionStringBuilder stringBuilder = new(s_localDbConnectionString);
+            stringBuilder.DataSource = stringBuilder.DataSource + "Invalid123";
+            SqlException ex = Assert.Throws<SqlException>(() => ConnectionTest(stringBuilder.ConnectionString));
+            Assert.Contains("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: SQL Network Interfaces, error: 50 - Local Database Runtime error occurred.", ex.Message);
+            if (IsNativeSNI())
+            {
+                Assert.Contains("The specified LocalDB instance does not exist.", ex.Message);
+            }
+        }
+        #endregion
+
+        private static void ConnectionWithMarsTest(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                IntegratedSecurity = true,
+                MultipleActiveResultSets = true,
+                ConnectTimeout = 2
+            };
+            OpenConnection(builder.ConnectionString);
+        }
+
+        private static void ConnectionWithEncryptionTest(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                IntegratedSecurity = true,
+                ConnectTimeout = 2,
+                Encrypt = SqlConnectionEncryptOption.Mandatory
+            };
+            OpenConnection(builder.ConnectionString);
+        }
+
+        private static void ConnectionTest(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                IntegratedSecurity = true,
+                ConnectTimeout = 2
+            };
+            OpenConnection(builder.ConnectionString);
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP

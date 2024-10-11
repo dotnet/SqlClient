@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>복제</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>연결 복구</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>IsDataSet 특성이 입력 Schema에 없습니다.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>DataSet 요소를 확인할 수 없습니다. IsDataSet 특성이 둘 이상 있습니다.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>데이터 세트은 IDynamicMetaObjectProvider를 구현하면서 IXmlSerializable은 구현하지 않는 형식을 직렬화하지 않습니다.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0}이(가) 필요한데 {2} 위치의 실제 토큰은 {1}입니다.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>{0}에서 {1}(으)로 변환할 수 없습니다.</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>'{0}' 값을 {1} 형식으로 변환할 수 없습니다.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>열 이름[{0}]이 잘못되었습니다.</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>계산할 수 없습니다. '{0}' 식은 집계식이 아닙니다.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>'{0}' 필터 식은 Boolean 형식으로 계산되지 않습니다.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>형식 이름 '{0}'이(가) 잘못되었습니다.</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded 및 SetModified는 DataRowState가 Unchanged인 DataRows에서만 호출할 수 있습니다.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>서수 '{0}'이(가) 최대 수를 초과합니다.</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet에서 System.Nullable&lt;&gt;을 지원하지 않습니다.</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>PrimaryKey의 열이 일치하지 않습니다 : &lt;target&gt;.{0} 및 &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>해당 키에 일치하지 않는 열이 있으므로 Relation {0}을(를) 병합할 수 없습니다.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>{0} 대상 테이블에 {1} 열의 정의가 없습니다.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>컬렉션이 수정되었습니다. 열거 작업이 실행되지 않았을 수 있습니다.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>단순 유형 '{0}'이(가) 다른 '{1}'(으)로 이미 선언되었습니다.</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>foliation이 잘못되었습니다.</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>이 열은 현재 dataSet에 내장되어 있으므로 제거할 수 없습니다.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>이 관계는 현재 dataSet에 내장되어 있으므로 제거할 수 없습니다.</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>이 컨트롤의 속성이 변경될 때마다 발생합니다.</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>이 컬렉션의 멤버가 변경될 때마다 발생합니다.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>값이 DBNull이므로 가져올 수 없습니다.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>업데이트하려면 명령 복제에서 연결 개체를 사용해야 합니다. 명령 복제의 Connection 속성이 초기화되지 않았습니다.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>업데이트하려면 연결이 필요합니다.</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update하려면 {0}Command에서 열린 연결 개체를 사용해야 합니다. {1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>필드 '{0}'이(가) serialize되지 않은 것으로 표시되어 있습니다.</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>필드 '{0}'의 유형이 Native 형식에서 허용되지 않는 명시적 레이아웃으로 표시되어 있습니다.</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>값이 여러 개인 어셈블리 참조에는 0이 아닌 어셈블리 ID가 있어야 합니다.</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>SQL Server에 연결을 설정하는 중에 네트워크 관련 또는 인스턴스 관련 오류가 발생했습니다. 서버를 찾을 수 없거나 액세스할 수 없습니다. 인스턴스 이름이 올바르고 SQL Server가 원격 연결을 허용하도록 구성되어 있는지 확인하십시오.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>로그인하기 전에 연결을 초기화하는 동안 오류가 발생하여 클라이언트에서 서버에 연결하지 못했습니다. 지원되지 않는 버전의 SQL Server를 연결하려고 했거나 서버가 사용 중이어서 새로운 연결을 허용하지 않았거나 서버의 리소스 제한(메모리 또는 최대 허용 연결 수) 때문에 이러한 문제가 발생할 수 있습니다.</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>서버에 연결했지만 사전 로그인 핸드셰이크 중에 오류가 발생했습니다.</value>
@@ -4399,7 +4399,7 @@
     <value>SQL Server 이름과 해당하는 신뢰할 수 있는 열 마스터 키 경로가 포함된 사전 개체입니다.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>둘 이상의 리디렉션이 발생했습니다. 로그인당 하나의 리디렉션만 허용됩니다.</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>ApplicationIntent ReadOnly 연결 옵션을 사용하여 미러된 SQL Server 인스턴스에 연결할 수 없습니다.</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>복구를 시도하는 동안 서버에서 SSL 암호화를 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>복구를 시도하는 동안 서버에서 요청된 정확한 클라이언트 TDS 버전을 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>실행 제한 시간을 초과했습니다. 작업이 완료되기 전에 실행 제한 시간이 지났거나 서버가 응답하지 않습니다.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용한 컴퓨팅 디지털 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 참조하세요. 매핑이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>초기 요청이 실패한 후 HGS 루트 인증서 다운로드를 다시 시도하는 동안 내부 오류가 발생했습니다. 고객 지원 서비스에 문의하세요.</value>
@@ -4486,10 +4486,10 @@
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 형식이 유효하지 않습니다. 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
+    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하고 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 페이지를 참조하세요.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 유효하지 않습니다. 증명 URL이 올바르며 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요. 추가 지원은 고객 지원 서비스 팀에 문의하세요. 오류 세부 정보: '{1}'.</value>
+    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 잘못되었습니다. 증명 URL이 올바르고 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 페이지를 참조하세요. 추가 지원은 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 증명 공개 키 엔드포인트에서 공개 키를 검색할 수 없거나, 검색된 키의 형식이 유효하지 않습니다. 오류 세부 정보: '{0}'.</value>
@@ -4507,16 +4507,16 @@
     <value>서명 유효성 검사 도중 증명 토큰의 유효성을 검사하지 못했습니다. 예외: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 클레임 '{0}'의 '{1}'의 값이 유효하지 않습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰의 클레임 '{0}'에 잘못된 값 '{1}'이(가) 있습니다. 증명 정책을 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 페이지를 참조하세요. 정책이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 클레임 '{0}'이(가) 토큰에 없습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰이 유효성 검사에 실패했습니다. 토큰에 클레임 '{0}'이(가) 없습니다. 증명 정책을 확인합니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 페이지를 참조하세요. 정책이 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>enclave가 프로덕션 모드에서 실행되고 있는지 확인하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}'. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
+    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}' - 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 링크를 참조하세요.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>소켓이 오류 코드 '{1}'과(와) 예상되는 '{0}'을(를) throw하지 않았습니다.</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0에서는 지원되지 않습니다.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>서버가 이 플랫폼에서 지원되지 않는 기능을 사용하려고 합니다.</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>인증서의 유효성을 검사하는 동안에는 인증서를 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>

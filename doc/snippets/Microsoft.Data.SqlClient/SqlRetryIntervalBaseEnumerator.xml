@@ -1,55 +1,102 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlRetryIntervalBaseEnumerator">
-        <SqlRetryIntervalBaseEnumerator>
-            <summary>Generates a sequence of time intervals.</summary>
-        </SqlRetryIntervalBaseEnumerator>
-        <ctor1>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with a default value of zero for the gap time, minimum, and maximum interval time.</summary>
-        </ctor1>
-        <ctor2>
-            <param name="timeInterval">The gap time used to calculate the time delay before each attempt.</param>
-            <param name="maxTime">The maximum time allowed as a gap time.</param>
-            <param name="minTime">The minimum time allowed as a gap time.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class.</summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed <see cref="M:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator.Validate(System.TimeSpan,System.TimeSpan,System.TimeSpan)" /> validation.</exception>
-        </ctor2>
-        <GapTimeInterval>
-            <summary>The default gap time of each interval.</summary>
-        </GapTimeInterval>
-        <MinTimeInterval>
-            <summary>The minimum allowed time interval value.</summary>
-        </MinTimeInterval>
-        <MaxTimeInterval>
-            <summary>The maximum allowed time interval value.</summary>
-        </MaxTimeInterval>
-        <Current>
-            <summary>Gets the element in the collection at the current position of the enumerator.</summary>
-        </Current>
-        <Reset>
-            <summary>Sets the enumerator to its initial position, which is before the first element in the collection.</summary>
-        </Reset>
-        <Validate>
-            <param name="timeInterval">The gap time of each interval. Must be between 0 and 120 seconds.</param>
-            <param name="maxTimeInterval">Maximum time interval value. Must be between 0 and 120 seconds.</param>
-            <param name="minTimeInterval">Minimum time interval value. Must be less than maximum time interval and between 0 and 120 seconds.</param>
-            <summary>Validate the enumeration parameters.</summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed validation.</exception>
-        </Validate>
-        <GetNextInterval>
-            <summary>Calculates the next interval time.</summary>
-            <returns>Returns the next gap time interval.</returns>
-        </GetNextInterval>
-        <MoveNext>
-            <summary>Advances the enumerator to the next element of the collection.</summary>
-            <returns>Returns <see langword="true"/>, if the enumerator was successfully advanced to the next element; <see langword="false"/> if the enumerator has passed the end of the collection.</returns>
-        </MoveNext>
-        <Dispose>
-            <summary>Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.</summary>
-        </Dispose>
-        <Clone>
-            <summary>Creates a new object that is a copy of the current instance.</summary>
-            <returns>A new object that is a copy of this instance.</returns>
-        </Clone>
-    </members>
+﻿<docs>
+  <members name="SqlRetryIntervalBaseEnumerator">
+    <SqlRetryIntervalBaseEnumerator>
+      <summary>
+        Generates a sequence of time intervals.
+      </summary>
+    </SqlRetryIntervalBaseEnumerator>
+    <ctor1>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with a default value of zero for the gap time, minimum, and maximum interval time.
+      </summary>
+    </ctor1>
+    <ctor2>
+      <param name="timeInterval">
+        The gap time used to calculate the time delay before each attempt.
+      </param>
+      <param name="maxTime">
+        The maximum time allowed as a gap time.
+      </param>
+      <param name="minTime">
+        The minimum time allowed as a gap time.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class.
+      </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The supplied arguments failed <see cref="M:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator.Validate(System.TimeSpan,System.TimeSpan,System.TimeSpan)" /> validation.
+      </exception>
+    </ctor2>
+    <GapTimeInterval>
+      <summary>
+        The default gap time of each interval.
+      </summary>
+    </GapTimeInterval>
+    <MinTimeInterval>
+      <summary>
+        The minimum allowed time interval value.
+      </summary>
+    </MinTimeInterval>
+    <MaxTimeInterval>
+      <summary>
+        The maximum allowed time interval value.
+      </summary>
+    </MaxTimeInterval>
+    <Current>
+      <summary>
+        Gets the element in the collection at the current position of the enumerator.
+      </summary>
+    </Current>
+    <Reset>
+      <summary>
+        Sets the enumerator to its initial position, which is before the first element in the collection.
+      </summary>
+    </Reset>
+    <Validate>
+      <param name="timeInterval">
+        The gap time of each interval. Must be between 0 and 120 seconds.
+      </param>
+      <param name="maxTimeInterval">
+        Maximum time interval value. Must be between 0 and 120 seconds.
+      </param>
+      <param name="minTimeInterval">
+        Minimum time interval value. Must be less than maximum time interval and between 0 and 120 seconds.
+      </param>
+      <summary>
+        Validate the enumeration parameters.
+      </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The supplied arguments failed validation.
+      </exception>
+    </Validate>
+    <GetNextInterval>
+      <summary>
+        Calculates the next interval time.
+      </summary>
+      <returns>
+        Returns the next gap time interval.
+      </returns>
+    </GetNextInterval>
+    <MoveNext>
+      <summary>
+        Advances the enumerator to the next element of the collection.
+      </summary>
+      <returns>
+        Returns <see langword="true" />, if the enumerator was successfully advanced to the next element; <see langword="false" /> if the enumerator has passed the end of the collection.
+      </returns>
+    </MoveNext>
+    <Dispose>
+      <summary>
+        Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+      </summary>
+    </Dispose>
+    <Clone>
+      <summary>
+        Creates a new object that is a copy of the current instance.
+      </summary>
+      <returns>
+        A new object that is a copy of this instance.
+      </returns>
+    </Clone>
+  </members>
 </docs>

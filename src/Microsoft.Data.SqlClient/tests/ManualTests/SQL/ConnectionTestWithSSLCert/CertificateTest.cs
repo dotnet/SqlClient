@@ -29,21 +29,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private readonly string _thumbprint;
         private const string ThumbPrintEnvName = "Thumbprint";
 
-        public string ForceEncryptionRegistryPath
+        // InstanceName will get replaced with an instance name in the connection string
+        private static string InstanceName = "MSSQLSERVER";
+        
+        // s_instanceNamePrefix will get replaced with MSSQL$ is there is an instance name in connection string
+        private static string InstanceNamePrefix = "";
+
+        // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
+        private static string SlashInstanceName = "";
+
+        private static string ForceEncryptionRegistryPath
         {
             get
             {
                 if (DataTestUtility.IsSQL2022())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL16.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2019())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL15.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 if (DataTestUtility.IsSQL2016())
                 {
-                    return @"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.MSSQLSERVER\MSSQLServer\SuperSocketNetLib";
+                    return $@"SOFTWARE\Microsoft\Microsoft SQL Server\MSSQL14.{InstanceName}\MSSQLSERVER\SuperSocketNetLib";
                 }
                 return string.Empty;
             }
@@ -52,13 +61,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public CertificateTest()
         {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
+            if (!LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(instanceName))
+            {
+                InstanceName = instanceName;
+                InstanceNamePrefix = "MSSQL$";
+                SlashInstanceName = $"\\{InstanceName}";
+            }
+
             Assert.True(DataTestUtility.IsAdmin, "CertificateTest class needs to be run in Admin mode.");
 
             CreateValidCertificate(s_fullPathToPowershellScript);
             _thumbprint = Environment.GetEnvironmentVariable(ThumbPrintEnvName, EnvironmentVariableTarget.Machine);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        private static bool IsLocalHost()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out _));
+            return LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
+        private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
+        private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
+
+        [ActiveIssue("31754")]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpenningConnectionWithGoodCertificateTest()
         {
@@ -87,18 +122,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Provided hostname in certificate are:
         // localhost, FQDN, Loopback IPv4: 127.0.0.1, IPv6: ::1
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ActiveIssue("31754")]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void OpeningConnectionWitHNICTest()
         {
             // Mandatory
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
-                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depinding on name resolution on the machine
+                // 127.0.0.1 most of the cases does not cause any Remote certificate validation error depending on name resolution on the machine
                 //  It mostly returns SslPolicyErrors.None
-                DataSource = IPV4,
+                //DataSource = IPV4,
+                DataSource = IPV4 + SlashInstanceName,
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
-                HostNameInCertificate = "localhost"
+                HostNameInCertificate = LocalHost
+                //HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName
             };
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
@@ -109,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // According to above no other hostname in certificate than FQDN will work in net6 which is same as SubjectName in case of RemoteCertificateNameMismatch
             // Net7.0 the new API added by dotnet runtime will check SANS and then SubjectName
 
-            builder.DataSource = IPV6;
+            builder.DataSource = IPV6 + SlashInstanceName;
             builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
             using SqlConnection connection2 = new(builder.ConnectionString);
@@ -119,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsTDS8Supported)
             {
                 // Strict
-                builder.DataSource = IPV6;
+                builder.DataSource = IPV6 + SlashInstanceName;
                 builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
                 builder.Encrypt = SqlConnectionEncryptOption.Strict;
                 using SqlConnection connection3 = new(builder.ConnectionString);
@@ -128,8 +166,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue(26934)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.UseManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureServer))]
+        [ActiveIssue("31754")]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {
@@ -161,7 +199,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = script,
+                    Arguments = $"{script} -Prefix {InstanceNamePrefix} -Instance {InstanceName}",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -232,7 +270,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RegistryKey key = Registry.LocalMachine.OpenSubKey(registryPath, true);
             key?.SetValue("ForceEncryption", 0, RegistryValueKind.DWord);
             key?.SetValue("Certificate", "", RegistryValueKind.String);
-            ServiceController sc = new("MSSQLSERVER");
+            ServiceController sc = new($"{InstanceNamePrefix}{InstanceName}");
             sc.Stop();
             sc.WaitForStatus(ServiceControllerStatus.Stopped);
             sc.Start();

@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETCOREAPP || NETSTANDARD
+#if NET6_0_OR_GREATER
         partial void SubscribeToAppDomainUnload();
 
         partial void SubscribeToAssemblyLoadContextUnload();
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     dependencyList = LookupCommandEntryWithRemove(sqlNotification.Key);
 
-                    if (null != dependencyList)
+                    if (dependencyList != null)
                     {
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyPerAppDomainDispatcher.InvalidateCommandID|DEP> commandHash found in hashtable.");
                         foreach (SqlDependency dependency in dependencyList)
@@ -261,7 +261,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                if (null != dependencyList)
+                if (dependencyList != null)
                 {
                     // After removal from hashtables, invalidate.
                     foreach (SqlDependency dependency in dependencyList)
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.LookupDependencyEntry|DEP> {0}, Key: '{1}'", ObjectID, id);
             try
             {
-                if (null == id)
+                if (id == null)
                 {
                     throw ADP.ArgumentNull(nameof(id));
                 }
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     for (int i = 0; i < dependencies.Length; i++)
                     {
-                        if (null != dependencies[i])
+                        if (dependencies[i] != null)
                         {
                             SingletonInstance._dependencyIdToDependencyHash.Remove(dependencies[i].Id);
                         }

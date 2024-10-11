@@ -250,14 +250,12 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
-            if (null == command)
+            if (command == null)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
 #if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
-#endif
-#if !NET6_0_OR_GREATER
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try

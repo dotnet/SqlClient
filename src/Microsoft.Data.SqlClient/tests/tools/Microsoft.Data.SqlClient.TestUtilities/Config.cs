@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string TCPConnectionString = null;
         public string NPConnectionString = null;
         public string TCPConnectionStringHGSVBS = null;
-        public string TCPConnectionStringAASVBS = null;
         public string TCPConnectionStringNoneVBS = null;
         public string TCPConnectionStringAASSGX = null;
         public string AADAuthorityURL = null;
@@ -22,8 +21,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AADServicePrincipalSecret = null;
         public string AzureKeyVaultURL = null;
         public string AzureKeyVaultTenantId = null;
-        public string AzureKeyVaultClientId = null;
-        public string AzureKeyVaultClientSecret = null;
         public string LocalDbAppName = null;
         public string LocalDbSharedInstanceName = null;
         public bool EnclaveEnabled = false;
@@ -45,6 +42,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string KerberosDomainUser = null;
         public bool IsManagedInstance = false;
         public string AliasName = null;
+        public bool IsJsonSupported = false;
         public static Config Load(string configPath = @"config.json")
         {
             try

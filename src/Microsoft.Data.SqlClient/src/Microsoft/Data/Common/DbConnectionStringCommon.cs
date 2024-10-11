@@ -14,20 +14,28 @@ namespace Microsoft.Data.Common
     {
         internal static bool ConvertToBoolean(object value)
         {
-            Debug.Assert(null != value, "ConvertToBoolean(null)");
+            Debug.Assert(value != null, "ConvertToBoolean(null)");
             if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
+                {
                     return true;
+                }
                 else if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "false") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "no"))
+                {
                     return false;
+                }
                 else
                 {
                     string tmp = svalue.Trim();  // Remove leading & trailing white space.
                     if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "true") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "yes"))
+                    {
                         return true;
+                    }
                     else if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "false") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "no"))
+                    {
                         return false;
+                    }
                 }
                 return bool.Parse(svalue);
             }
@@ -43,7 +51,7 @@ namespace Microsoft.Data.Common
 
         internal static bool ConvertToIntegratedSecurity(object value)
         {
-            Debug.Assert(null != value, "ConvertToIntegratedSecurity(null)");
+            Debug.Assert(value != null, "ConvertToIntegratedSecurity(null)");
             if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "sspi") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
@@ -98,7 +106,7 @@ namespace Microsoft.Data.Common
         internal static bool TryConvertToPoolBlockingPeriod(string value, out PoolBlockingPeriod result)
         {
             Debug.Assert(Enum.GetNames(typeof(PoolBlockingPeriod)).Length == 3, "PoolBlockingPeriod enum has changed, update needed");
-            Debug.Assert(null != value, "TryConvertToPoolBlockingPeriod(null,...)");
+            Debug.Assert(value != null, "TryConvertToPoolBlockingPeriod(null,...)");
 
             if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(PoolBlockingPeriod.Auto)))
             {
@@ -152,7 +160,7 @@ namespace Microsoft.Data.Common
         /// <returns>PoolBlockingPeriod value in the valid range</returns>
         internal static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
         {
-            Debug.Assert(null != value, "ConvertToPoolBlockingPeriod(null)");
+            Debug.Assert(value != null, "ConvertToPoolBlockingPeriod(null)");
             if (value is string sValue)
             {
                 // We could use Enum.TryParse<PoolBlockingPeriod> here, but it accepts value combinations like
@@ -222,7 +230,7 @@ namespace Microsoft.Data.Common
         internal static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
         {
             Debug.Assert(Enum.GetNames(typeof(ApplicationIntent)).Length == 2, "ApplicationIntent enum has changed, update needed");
-            Debug.Assert(null != value, "TryConvertToApplicationIntent(null,...)");
+            Debug.Assert(value != null, "TryConvertToApplicationIntent(null,...)");
 
             if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(ApplicationIntent.ReadOnly)))
             {
@@ -272,7 +280,7 @@ namespace Microsoft.Data.Common
         /// <returns>application intent value in the valid range</returns>
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
-            Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
+            Debug.Assert(value != null, "ConvertToApplicationIntent(null)");
             if (value is string sValue)
             {
                 // We could use Enum.TryParse<ApplicationIntent> here, but it accepts value combinations like
@@ -347,7 +355,42 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
-        const string SqlCertificateString = "Sql Certificate";
+        internal const string ActiveDirectoryWorkloadIdentityString = "Active Directory Workload Identity";
+
+#if DEBUG
+        private static readonly string[] s_supportedAuthenticationModes =
+        {
+            "NotSpecified",
+            "SqlPassword",
+            "ActiveDirectoryPassword",
+            "ActiveDirectoryIntegrated",
+            "ActiveDirectoryInteractive",
+            "ActiveDirectoryServicePrincipal",
+            "ActiveDirectoryDeviceCodeFlow",
+            "ActiveDirectoryManagedIdentity",
+            "ActiveDirectoryMSI",
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryWorkloadIdentity",
+        };
+
+        private static bool IsValidAuthenticationMethodEnum()
+        {
+            string[] names = Enum.GetNames(typeof(SqlAuthenticationMethod));
+            int l = s_supportedAuthenticationModes.Length;
+            bool listValid;
+            if (listValid = names.Length == l)
+            {
+                for (int i = 0; i < l; i++)
+                {
+                    if (string.Compare(s_supportedAuthenticationModes[i], names[i], StringComparison.Ordinal) != 0)
+                    {
+                        listValid = false;
+                    }
+                }
+            }
+            return listValid;
+        }
+#endif
 
 #if DEBUG
         private static readonly string[] s_supportedAuthenticationModes =
@@ -444,13 +487,12 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
                 isSuccess = true;
             }
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)
-                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlCertificate, CultureInfo.InvariantCulture))) {
-                result = SqlAuthenticationMethod.SqlCertificate;
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryWorkloadIdentityString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
                 isSuccess = true;
             }
-#endif
             else
             {
                 result = DbConnectionStringDefaults.Authentication;
@@ -516,7 +558,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 11, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -526,9 +568,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-                || value == SqlAuthenticationMethod.SqlCertificate
-#endif
+                || value == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -547,16 +587,14 @@ namespace Microsoft.Data.Common
                 SqlAuthenticationMethod.ActiveDirectoryManagedIdentity => ActiveDirectoryManagedIdentityString,
                 SqlAuthenticationMethod.ActiveDirectoryMSI => ActiveDirectoryMSIString,
                 SqlAuthenticationMethod.ActiveDirectoryDefault => ActiveDirectoryDefaultString,
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-                SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
-#endif
+                SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity => ActiveDirectoryWorkloadIdentityString,
                 _ => null
             };
         }
 
         internal static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.Authentication;
             }
@@ -630,7 +668,7 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
@@ -751,7 +789,7 @@ namespace Microsoft.Data.Common
 
         internal static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
         {
-            if (null == value)
+            if (value == null)
             {
                 return DbConnectionStringDefaults.AttestationProtocol;
             }
@@ -937,12 +975,6 @@ namespace Microsoft.Data.Common
             }
         }
         #endregion
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-        internal static bool IsValidCertificateValue(string value) => string.IsNullOrEmpty(value)
-                                                              || value.StartsWith("subject:", StringComparison.OrdinalIgnoreCase)
-                                                              || value.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase);
-#endif
     }
 
     internal static class DbConnectionStringDefaults
@@ -963,9 +995,6 @@ namespace Microsoft.Data.Common
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
-#if ADONET_CERT_AUTH
-        internal const string Certificate = "";
-#endif
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
@@ -1021,7 +1050,7 @@ namespace Microsoft.Data.Common
         // OracleClient
         internal const string Unicode = "Unicode";
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
-
+#endif
         // SqlClient
         internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
         internal const string Certificate = "Certificate";
@@ -1059,6 +1088,7 @@ namespace Microsoft.Data.Common
         internal const string IPAddressPreference = "IP Address Preference";
         internal const string ServerSPN = "Server SPN";
         internal const string FailoverPartnerSPN = "Failover Partner SPN";
+        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1078,10 +1108,9 @@ namespace Microsoft.Data.Common
 
     internal static class DbConnectionStringSynonyms
     {
-#if NETFRAMEWORK
         //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
         internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
-#endif
+
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 

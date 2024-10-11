@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>Репликация</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>Устойчивость подключений</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>Атрибут IsDataSet отсутствует во входной схеме Schema.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>Не удается определить элемент DataSet. Атрибут IsDataSet присутствует несколько раз.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Не удается определить элемент набора данных. Атрибут IsDataSet встречается более одного раза.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet не сериализует типы, в которых реализован интерфейс IDynamicMetaObjectProvider, но не реализован интерфейс IXmlSerializable.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>Ожидалось {0}, но фактически в позиции {2} находится маркер {1}.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
     <value>Невозможно выполнить преобразование из {0} в {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>Невозможно привести значение "{0}" к типу: {1}.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Невозможно преобразовать значение "{0}" в тип: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>Недопустимое имя столбца [{0}].</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>Невозможно вычислить. Выражение "{0}" не является составным.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>Выражение фильтра "{0}" не задает логический терм Boolean.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Выражение фильтра "{0}" не вычисляется как логический термин.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>Недопустимое имя типа "{0}".</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded и SetModified могут вызываться только для DataRows с неизмененным DataRowState.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>Порядковый номер "{0}" превышает максимальное значение.</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Порядковый номер "{0}" превышает максимальное число.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet не поддерживает System.Nullable&lt;&gt;.</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>Несоответствие столбцов в PrimaryKey: &lt;target&gt;.{0} относительно &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>Невозможно присоединить отношение Relation {0} из-за несоответствия столбцов в ключах.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Отношение {0} не может быть объединено, поскольку ключи имеют несовпадающие столбцы.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>В конечной таблице {0} отсутствует определение столбца {1}.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>Коллекция изменена, возможно операция перечисления не будет выполнена.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>Простой тип "{0}" уже определен с другим "{1}".</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Простой тип "{0}" уже объявлен с другим "{1}".</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>Недопустимая нумерация.</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>Невозможно удалить столбец, т.к. он встроен в этот dataSet.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>Невозможно удалить отношение, т.к. оно встроено в этот dataSet.</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Невозможно удалить отношение, поскольку оно встроено в этот набор данных.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>Происходит при каждом изменении любого свойства этого элемента управления.</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Происходит при каждом изменении принадлежности этой коллекции.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>Невозможно получить значение, поскольку оно равно DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,7 +1914,7 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>Для обновления требуется, чтобы клон команды имел объект подключения. Свойство Connection для клона команды не инициализировано.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
     <value>Для обновления требуется подключение.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>поле "{0}" отмечено как несериализованное</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>Тип поля "{0}" имеет макет с явно заданным смещением, что недопустимо в собственном формате Native.</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>Тип поля "{0}" помечен как явный макет, что не допускается в собственном формате</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>Многозначные ссылки на сборку должны иметь ненулевой идентификатор сборки.</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>При установлении соединения с SQL Server произошла ошибка, связанная с сетью или с определенным экземпляром. Сервер не найден или недоступен. Убедитесь, что имя экземпляра указано правильно и что на SQL Server разрешены удаленные соединения.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>Клиенту не удалось установить соединение из-за ошибки, возникшей во время инициализации соединения до входа в систему. Возможны следующие причины ошибки: клиент попытался соединиться с неподдерживаемой версией SQL Server; сервер был слишком загружен и не мог принимать новые соединения; ресурсы сервера были ограничены (недостаточно памяти или превышено допустимое число соединений).</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>Клиенту не удалось установить соединение из-за ошибки в процессе инициализации соединения перед входом в систему. Возможные причины включают следующее: клиент попытался подключиться к неподдерживаемой версии SQL Server; сервер был слишком занят, чтобы принимать новые подключения; или на сервере имелось ограничение ресурсов (недостаточно памяти или максимально допустимого количества подключений).</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>Подключение к серверу успешно установлено, но затем произошла ошибка в процессе подтверждения, предшествующего входу.</value>
@@ -4399,7 +4399,7 @@
     <value>Объект словаря, содержащий имена серверов SQL Server и пути к их доверенным главным ключам столбцов.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Перенаправление выполнено два или более раза. Для одного имени входа поддерживается только одно перенаправление.</value>
+    <value>Произошло слишком много перенаправлений. Допустимое число перенаправлений для каждого входа: {0}.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>Соединение с зеркальным экземпляром SQL Server с параметром ApplicationIntent, установленным в значение ReadOnly, не поддерживается.</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>Сервер не сохранил SSL-шифрование при попытке восстановления, восстановление соединения невозможно.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>Сервер не сохранил точную версию TDS клиента, запрошенную в ходе попытки восстановления. Восстановление соединения невозможно.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>Время ожидания выполнения истекло. Время ожидания истекло до завершения операции, или сервер не отвечает.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует вычисленной подписи на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2157649. Если оно верно, обратитесь в службу поддержки клиентов.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Произошла внутренняя ошибка при повторной попытке скачивания корневого сертификата HGS после сбоя начального запроса. Обратитесь в службу поддержки пользователей.</value>
@@ -4486,10 +4486,10 @@
     <value>Проверка токена аттестации не пройдена. Недопустимый формат токена. Обратитесь в службу поддержки пользователей. Сведения об ошибке: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений.</value>
+    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS, — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Для получения дополнительной поддержки обратитесь в службу поддержки пользователей. Сведения об ошибке: "{1}".</value>
+    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2160553. Для получения дополнительной поддержки обратитесь в службу поддержки клиентов. Сведения об ошибке: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Проверка токена аттестации не пройдена. Не удается получить открытый ключ из конечной точки открытого ключа аттестации либо полученный ключ имеет недопустимый формат. Сведения об ошибке: "{0}".</value>
@@ -4507,16 +4507,16 @@
     <value>Проверка токена аттестации не пройдена при проверке подписи. Исключение: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Утверждение "{0}" в токене имеет недопустимое значение "{1}". Проверьте политику аттестации — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. Утверждение "{0}" в токене имеет недопустимое значение "{1}". Проверьте политику аттестации — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2157649. Если политика верна, обратитесь в службу поддержки клиентов.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2157649. Если политика верна, обратитесь в службу поддержки клиентов.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Не удалось проверить, работает ли анклав в рабочем режиме. Обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}" — см. https://go.microsoft.com/fwlink/?linkid=2160553 для дополнительных сведений.</value>
+    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}" — дополнительные сведения см. на странице https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>Сокет не вызвал ожидаемый "{0}" с кодом ошибки "{1}".</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>Не поддерживается в .NET Standard 2.0.</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>Сервер пытается использовать функцию, которая не поддерживается этой платформой.</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>Сертификат недоступен при проверке сертификата.</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>Сертификат, предоставленный сервером, не совпадает с сертификатом, указанным в параметре ServerCertificate.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>
   </data>
 </root>

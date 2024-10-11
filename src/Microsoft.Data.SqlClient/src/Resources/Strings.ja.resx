@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>レプリケーション</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>接続の復元性</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>入力 Schema 内に IsDataSet 属性がありません。</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>DataSet Element を特定することができません。IsDataSet 属性が 1 つ以上存在しています。</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet は、IDynamicMetaObjectProvider を実装して IXmlSerializable を実装しない型をシリアル化しません。</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0} が必要ですが、位置 {2} の実際のトークンは {1} です。</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>'{0}' から '{1}' に変換できません。</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>Cannot convert from {0} to {1}.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>値 '{0}' を型 : {1} に変換できません。</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>Cannot convert value '{0}' to Type: {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>列名 [{0}] が無効です。</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>評価できません。式 '{0}' は集約ではありません。</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>フィルター式 '{0}' は Boolean 型に対して評価しません。</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>型名 '{0}' が無効です。</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded および SetModified を呼び出せるのは、DataRowState プロパティの値が Unchanged である DataRows オブジェクトからのみです。</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>序数 '{0}' は最大数を超えています。</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>Ordinal '{0}' exceeds the maximum number.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet は System.Nullable&lt;&gt; をサポートしていません。</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>PrimaryKey 内に列の不一致があります : &lt;target&gt;.{0} に対する &lt;source&gt;.{1} です。</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>キーに一致しない列があるため、Relation {0} をマージできません。</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>ターゲット テーブル {0} に列 {1} の定義が見つかりません。</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>コレクションが修正されました。列挙操作が実行されない可能性があります。</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>単純型 '{0}' は既に別の '{1}' を使用して宣言されています。</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>foliation が無効です。</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>列がこの dataSet に組み込まれているため、削除できません。</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>リレーションシップがこの dataSet に組み込まれているため、削除できません。</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>Cannot remove relation since it is built in to this dataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>このコントロールのプロパティが変わるときに発生します。</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>このコレクションのメンバーシップが変わるたびに発生します。</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>値が DBNull のため、取得できません。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>更新には、コマンドの複製に接続オブジェクトを指定する必要があります。コマンドの複製の Connection プロパティは初期化されていません。</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>更新には接続が必要です。</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>Update requires a connection.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update は {0}Command を使用して、開かれた接続オブジェクトを持つ必要があります。{1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>フィールド '{0}' は、シリアル化されていないとマークされています。</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>フィールド '{0}' の型は明示的なレイアウトとしてマークされていますが、これは Native 形式では許可されません。</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>複数の値をとるアセンブリ参照には、ゼロ以外のアセンブリ ID が必要です。</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>SQL Server への接続を確立しているときにネットワーク関連またはインスタンス固有のエラーが発生しました。サーバーが見つからないかアクセスできません。インスタンス名が正しいこと、および SQL Server がリモート接続を許可するように構成されていることを確認してください。</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>ログイン前の接続初期化プロセス中に発生したエラーにより、クライアントは接続を確立できませんでした。エラーの原因として、サポートされていないバージョンの SQL Server にクライアントが接続しようとした、サーバーがビジーで新しい接続を受け入れられなかった、サーバーのリソースが制限されていた (メモリ不足や最大接続許可数) などの可能性があります。</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>サーバーとの接続を正常に確立しましたが、ログイン前のハンドシェイク中にエラーが発生しました。</value>
@@ -4399,7 +4399,7 @@
     <value>SQL Server 名を格納しているディクショナリ オブジェクトと信頼された列マスター キーのパス。</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>2 回以上のリダイレクトが発生しました。リダイレクトは 1 回のログインにつき 1 回だけ実行できます。</value>
+    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>ApplicationIntent ReadOnly 接続オプションを使用して SQL Server のミラー化されたインスタンスに接続することはできません。</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>回復の試行中、SSL 暗号化をサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>回復の試行中、要求された正確なクライアントの TDS のバージョンをサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4465,7 +4465,7 @@
     <value>実行タイムアウトの期限が切れました。操作完了前にタイムアウト期間が過ぎたか、サーバーが応答していません。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。トークンの署名が、'{0}' の構成証明の公開キー エンドポイントから取得した公開キーを使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>構成証明トークンの検証に失敗しました。トークン署名は、'{0}' の構成証明公開キーのエンドポイントから取得された公開キーを使用して計算された署名と一致しません。エンドポイントの DNS マッピングを確認します。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。正しい場合は、カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>最初の要求が失敗した後に、HGS ルート証明書のダウンロードを再試行しているときに内部エラーが発生しました。カスタマー サポート サービスにお問い合わせください。</value>
@@ -4486,10 +4486,10 @@
     <value>構成証明トークンの検証に失敗しました。トークンの形式が無効です。カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{0}'。</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>構成証明サービスにより、構成証明 URL '{0}' の期限切れの HGS ルート証明書が返されました。HGS インスタンス用に構成されている HGS ルート証明書をご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。</value>
+    <value>構成証明サービスは、構成証明 URL '{0}' の期限切れの HGS ルート証明書を返しました。HGS インスタンス用に構成された HGS ルート証明書を確認します。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>構成証明 URL '{0}' に関する、取得された HGS ルート証明書の形式が無効です。構成証明 URL が正しいこと、および HGS サーバーがオンラインであり完全に初期化されていることをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。追加のサポートについては、カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{1}'。</value>
+    <value>構成証明 URL '{0}' に対して取得された HGS ルート証明書の形式が無効です。構成証明 URL が正しく、HGS サーバーがオンラインで完全に初期化されていることを確認します。詳細については https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。その他のサポートについては、カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{1}'。</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>構成証明トークンの検証に失敗しました。構成証明の公開キー エンドポイントから公開キーを取得できないか、取得したキーの形式が無効です。エラーの詳細: '{0}'。</value>
@@ -4507,16 +4507,16 @@
     <value>署名の検証中に、構成証明トークンの検証に失敗しました。例外: '{0}'。</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。トークン内の要求 '{0}' の値 '{1}' が無効です。構成証明ポリシーをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>構成証明トークンの検証に失敗しました。トークン内の要求 '{0}' の値 '{1}' が無効です。構成証明ポリシーを確認します。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。ポリシーが正しい場合は、カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。要求 '{0}' がトークンにありません。構成証明ポリシーをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>構成証明トークンの検証に失敗しました。要求 '{0}' がトークンにありません。構成証明ポリシーを確認します。詳細については、https://go.microsoft.com/fwlink/?linkid=2157649 を参照してください。ポリシーが正しい場合は、カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>エンクレーブが運用モードで実行されているかどうかを確認できませんでした。カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>プロパティ '{0}' のポリシーの必要な値と実際の値の違いにより、エンクレーブ ポリシーを確認できませんでした。実際の値: '{1}'、必要な値: '{2}'。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。</value>
+    <value>プロパティ '{0}' のポリシーの必要な値と実際の値の違いにより、エンクレーブ ポリシーを確認できませんでした。実際: '{1}'、必要な値: '{2}' - 詳細については https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>エンクレーブ レポートの署名の検証に失敗しました。レポートの署名が、HGS ルート証明書を使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。詳細については、https://go.microsoft.com/fwlink/?linkid=2160553 を参照してください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
@@ -4680,9 +4680,6 @@
   <data name="SQL_SocketDidNotThrow" xml:space="preserve">
     <value>ソケットは予期された '{0}' をスローしませんでした。エラー コード '{1}'。</value>
   </data>
-  <data name="SQL_TDS8_NotSupported_Netstandard2_0" xml:space="preserve">
-    <value>.Net Standard 2.0 ではサポートされていません。</value>
-  </data>
   <data name="SQL_UnsupportedFeature" xml:space="preserve">
     <value>サーバーは、このプラットフォームでサポートされていない機能を使用しようとしています。</value>
   </data>
@@ -4739,5 +4736,11 @@
   </data>
   <data name="SQL_RemoteCertificateNotAvailable" xml:space="preserve">
     <value>証明書の検証中は証明書を使用できません。</value>
+  </data>
+  <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
+    <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
   </data>
 </root>
