@@ -589,6 +589,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // See if one of the sockets in the Selected list is connected without errors (exists in read list or write list but not error list)
+                    // Concat read/write lists since we treat them the same from here
+                    checkWriteLst.AddRange(checkReadLst);
+
                     foreach (Socket s in checkWriteLst)
                     {
                         // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
@@ -615,21 +618,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (connectedSocket == null)
                     {
-                        foreach (Socket socket in checkReadLst)
-                        {
-                            // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
-                            if (!checkErrorLst.Contains(socket) && socket.Connected)
-                            {
-                                connectedSocket = socket;
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                    "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (connectedSocket == null)
-                    {
                         // Remove any remaining (unsuccessful) sockets from socketsInFlight so that we
                         // loop again on any remaining socketsInFlight
 
@@ -641,13 +629,6 @@ namespace Microsoft.Data.SqlClient.SNI
                             socketsInFlight.Remove(socket);
                         }
                         // Read/write lists could contain sockets that indicated Connected == false above
-                        foreach (Socket socket in checkReadLst)
-                        {
-                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                                "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
-                                nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
-                            socketsInFlight.Remove(socket);
-                        }
                         foreach (Socket socket in checkWriteLst)
                         {
                             SqlClientEventSource.Log.TryAdvancedTraceEvent(
