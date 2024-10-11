@@ -88,7 +88,7 @@ jobs:
           $spec.Save($file.FullName)
       - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.${{ github.run_number }}
       - run: dir packages
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: nuget
           path: packages/*.nupkg
