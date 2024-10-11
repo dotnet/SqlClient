@@ -313,27 +313,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 return availableSocket;
             }
 
-            string IPv4String = null;
-            string IPv6String = null;
-
-            foreach (IPAddress ipAddress in serverAddresses)
-            {
-                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    IPv4String = ipAddress.ToString();
-                }
-                else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    IPv6String = ipAddress.ToString();
-                }
-            }
-
-            if (IPv4String != null || IPv6String != null)
-            {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
-            }
-
-            availableSocket = ParallelConnect(serverAddresses, port, timeout);
+            availableSocket = ParallelConnect(serverAddresses, port, timeout, cachedFQDN, ref pendingDNSInfo);
 
             return availableSocket;
         }
@@ -450,8 +430,8 @@ namespace Microsoft.Data.SqlClient.SNI
                             checkErrorLst = new List<Socket>(1) { socket };
 
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                                                      "Determining the status of the socket during the remaining timeout of {0} microseconds.",
-                                                                      socketSelectTimeout);
+                                "Determining the status of the socket during the remaining timeout of {0} microseconds.",
+                                socketSelectTimeout);
 
                             Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
                             // nothing selected means timeout
@@ -481,9 +461,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException e)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"{nameof(SNITCPHandle)}.{nameof(Connect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                        "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
+                        nameof(SNITCPHandle), nameof(Connect), EventType.ERR, e);
                 }
                 finally
                 {
@@ -495,7 +475,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return null;
         }
 
-        private static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout)
+        private static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             if (serverAddresses == null)
             {
@@ -506,7 +486,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 throw new ArgumentOutOfRangeException(nameof(serverAddresses));
             }
 
-            List<Socket> sockets = new List<Socket>(serverAddresses.Length);
+            Dictionary<Socket, IPAddress> sockets = new(serverAddresses.Length);
             Socket connectedSocket = null;
 
             foreach (IPAddress address in serverAddresses)
@@ -515,17 +495,17 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     Blocking = false
                 };
-                sockets.Add(socket);
+                sockets.Add(socket, address);
 
                 // enable keep-alive on socket
                 SetKeepAliveValues(ref socket);
 
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                        "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
-                        address,
-                        port,
-                        address.AddressFamily,
-                        timeout.IsInfinite);
+                    "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
+                    address,
+                    port,
+                    address.AddressFamily,
+                    timeout.IsInfinite);
 
                 try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                 {
@@ -543,7 +523,7 @@ namespace Microsoft.Data.SqlClient.SNI
             // Socket.Select will return as soon any any socket in the list meets read/write/error
 
             List<Socket> socketsInFlight = new List<Socket>(sockets.Count);
-            socketsInFlight.AddRange(sockets);
+            socketsInFlight.AddRange(sockets.Keys);
             int socketSelectTimeout;
             List<Socket> checkReadLst = new();
             List<Socket> checkWriteLst = new();
@@ -576,8 +556,8 @@ namespace Microsoft.Data.SqlClient.SNI
                         checkErrorLst.AddRange(socketsInFlight);
 
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                                                    "Determining the status of sockets during the remaining timeout of {0} microseconds.",
-                                                                    socketSelectTimeout);
+                            "Watching pending sockets during the remaining timeout of {0} microseconds.",
+                            socketSelectTimeout);
 
                         // Socket.Select will return as soon as any socket is readable, writable, or errored
                         Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
@@ -589,14 +569,14 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Socket.Select can throw if one of the sockets has issues. That socket will be in checkErrorLst.
                     // Log the error and let that socket be removed from socketsInFlight below.
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        $"{nameof(SNITCPHandle)}.{nameof(ParallelConnect)}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                        "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, e);
                     lastError = e;
                 }
 
                 if (timeout.IsExpired)
                 {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                            "ParallelConnect timeout expired.");
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "{0}.{1}{2}ParallelConnect timeout expired.", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.INFO);
                     break;
                 }
 
@@ -608,7 +588,19 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         connectedSocket = s;
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
+                            "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
+                        connectedSocket.Blocking = true;
+                        string iPv4String = null;
+                        string iPv6String = null;
+                        if (connectedSocket.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            iPv4String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
+                        }
+                        else
+                        {
+                            iPv6String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
+                        }
+                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
                         break;
                     }
                 }
@@ -622,7 +614,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             connectedSocket = socket;
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                    "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
+                                "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
                             break;
                         }
                     }
@@ -635,41 +627,46 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     foreach (Socket socket in checkErrorLst)
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                "Failed to connect to endpoint: {0}. Error: {1}", connectedSocket.RemoteEndPoint, lastError);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
                         socketsInFlight.Remove(socket);
                     }
                     // Read/write lists could contain sockets that indicated Connected == false above
                     foreach (Socket socket in checkReadLst)
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                "Failed to connect to endpoint: {0}. Connected == false", connectedSocket.RemoteEndPoint, lastError);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
                         socketsInFlight.Remove(socket);
                     }
                     foreach (Socket socket in checkWriteLst)
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                "Failed to connect to endpoint: {0}. Connected == false", connectedSocket.RemoteEndPoint, lastError);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
                         socketsInFlight.Remove(socket);
                     }
                 }
             }
 
             // Dispose unused sockets
-            foreach (Socket socket in sockets)
+            foreach (Socket socket in sockets.Keys)
             {
                 if (socket != connectedSocket)
                 {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                            "Disposing non-selected socket: {0}", socket?.RemoteEndPoint);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "{0}.{1}{2}Disposing non-selected socket for endpoint: {3}", nameof(SNITCPHandle),
+                        nameof(ParallelConnect), EventType.INFO, sockets[socket]);
                     socket?.Dispose();
                 }
             }
 
-            if (connectedSocket != null && lastError != null)
+            if (connectedSocket == null)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    $"{nameof(SNITCPHandle)}.{nameof(ParallelConnect)}{EventType.ERR}No connections succeeded. Last error: {lastError}");
+                    "{0}.{1}{2}No socket connections succeeded. Last error: {3}",
+                    nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, lastError);
             }
 
             return connectedSocket;
