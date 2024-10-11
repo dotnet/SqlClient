@@ -363,7 +363,11 @@ namespace Microsoft.Data.ProviderBase
             // Internal method called from the connection pooler so we don't expose
             // the Activate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.ActivateConnection|RES|INFO|CPOOL> {0}, Activating", ObjectID);
-            Debug.Assert(Interlocked.Increment(ref _activateCount) == 1, "activated multiple times?");
+
+            #if DEBUG
+            int activateCount = Interlocked.Increment(ref _activateCount);
+            Debug.Assert(activateCount == 1, "activated multiple times?");
+            #endif
 
             Activate(transaction);
 
@@ -536,7 +540,11 @@ namespace Microsoft.Data.ProviderBase
             // Internal method called from the connection pooler so we don't expose
             // the Deactivate method publicly.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.DeactivateConnection|RES|INFO|CPOOL> {0}, Deactivating", ObjectID);
-            Debug.Assert(Interlocked.Decrement(ref _activateCount) == 0, "activated multiple times?");
+
+            #if DEBUG
+            int activateCount = Interlocked.Decrement(ref _activateCount);
+            Debug.Assert(activateCount == 0, "activated multiple times?");
+            #endif
 
             #if NETFRAMEWORK
             if (PerformanceCounters is not null)
