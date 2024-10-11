@@ -297,25 +297,28 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private Socket TryConnectParallel(string hostName, int port, TimeoutTimer timeout, ref bool callerReportError, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            Socket availableSocket = null;
-            bool isInfiniteTimeOut = timeout.IsInfinite;
-
-            IPAddress[] serverAddresses = isInfiniteTimeOut
-                    ? SNICommon.GetDnsIpAddresses(hostName)
-                    : SNICommon.GetDnsIpAddresses(hostName, timeout);
-
-            if (serverAddresses.Length > MaxParallelIpAddresses)
+            using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
-                // Fail if above 64 to match legacy behavior
-                callerReportError = false;
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} serverAddresses.Length {1} Exception: {2}", args0: _connectionId, args1: serverAddresses.Length, args2: Strings.SNI_ERROR_47);
-                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
+                Socket availableSocket = null;
+                bool isInfiniteTimeOut = timeout.IsInfinite;
+
+                IPAddress[] serverAddresses = isInfiniteTimeOut
+                        ? SNICommon.GetDnsIpAddresses(hostName)
+                        : SNICommon.GetDnsIpAddresses(hostName, timeout);
+
+                if (serverAddresses.Length > MaxParallelIpAddresses)
+                {
+                    // Fail if above 64 to match legacy behavior
+                    callerReportError = false;
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0} serverAddresses.Length {1} Exception: {2}", args0: _connectionId, args1: serverAddresses.Length, args2: Strings.SNI_ERROR_47);
+                    ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
+                    return availableSocket;
+                }
+
+                availableSocket = ParallelConnect(serverAddresses, port, timeout, cachedFQDN, ref pendingDNSInfo);
+
                 return availableSocket;
             }
-
-            availableSocket = ParallelConnect(serverAddresses, port, timeout, cachedFQDN, ref pendingDNSInfo);
-
-            return availableSocket;
         }
 
         /// <summary>
@@ -363,313 +366,319 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeoutTimer timeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
-            bool isInfiniteTimeout = timeout.IsInfinite;
-
-            IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
-
-            foreach (IPAddress ipAddress in ipAddresses)
+            using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
-                bool isSocketSelected = false;
-                Socket socket = null;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
+                bool isInfiniteTimeout = timeout.IsInfinite;
 
-                try
+                IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
+
+                foreach (IPAddress ipAddress in ipAddresses)
                 {
-                    socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                    bool isSocketSelected = false;
+                    Socket socket = null;
+
+                    try
                     {
-                        Blocking = isInfiniteTimeout
+                        socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                        {
+                            Blocking = isInfiniteTimeout
+                        };
+
+                        // enable keep-alive on socket
+                        SetKeepAliveValues(ref socket);
+
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
+                            "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
+                            ipAddress,
+                            port,
+                            ipAddress.AddressFamily,
+                            isInfiniteTimeout);
+
+                        bool isConnected;
+                        try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
+                        {
+                            socket.Connect(ipAddress, port);
+                            if (!isInfiniteTimeout)
+                            {
+                                throw SQL.SocketDidNotThrow();
+                            }
+
+                            isConnected = true;
+                        }
+                        catch (SocketException socketException) when (!isInfiniteTimeout &&
+                                                                      socketException.SocketErrorCode == SocketError.WouldBlock)
+                        {
+                            // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+                            // Socket.Select is used because it supports timeouts, while Socket.Connect does not
+
+                            List<Socket> checkReadLst;
+                            List<Socket> checkWriteLst;
+                            List<Socket> checkErrorLst;
+
+                            // Repeating Socket.Select several times if our timeout is greater
+                            // than int.MaxValue microseconds because of 
+                            // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
+                            // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
+                            do
+                            {
+                                if (timeout.IsExpired)
+                                {
+                                    return null;
+                                }
+
+                                int socketSelectTimeout =
+                                    checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
+
+                                checkReadLst = new List<Socket>(1) { socket };
+                                checkWriteLst = new List<Socket>(1) { socket };
+                                checkErrorLst = new List<Socket>(1) { socket };
+
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
+                                    "Determining the status of the socket during the remaining timeout of {0} microseconds.",
+                                    socketSelectTimeout);
+
+                                Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
+                                // nothing selected means timeout
+                            } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0);
+
+                            // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
+                            isConnected = socket.Connected && checkErrorLst.Count == 0;
+                        }
+
+                        if (isConnected)
+                        {
+                            socket.Blocking = true;
+                            string iPv4String = null;
+                            string iPv6String = null;
+                            if (socket.AddressFamily == AddressFamily.InterNetwork)
+                            {
+                                iPv4String = ipAddress.ToString();
+                            }
+                            else
+                            {
+                                iPv6String = ipAddress.ToString();
+                            }
+                            pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
+                            isSocketSelected = true;
+                            return socket;
+                        }
+                    }
+                    catch (SocketException e)
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
+                            nameof(SNITCPHandle), nameof(Connect), EventType.ERR, e);
+                    }
+                    finally
+                    {
+                        if (!isSocketSelected)
+                            socket?.Dispose();
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        private static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        {
+            using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
+            {
+                if (serverAddresses == null)
+                {
+                    throw new ArgumentNullException(nameof(serverAddresses));
+                }
+                if (serverAddresses.Length == 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(serverAddresses));
+                }
+
+                Dictionary<Socket, IPAddress> sockets = new(serverAddresses.Length);
+                Socket connectedSocket = null;
+
+                foreach (IPAddress address in serverAddresses)
+                {
+                    var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                    {
+                        Blocking = false
                     };
+                    sockets.Add(socket, address);
 
                     // enable keep-alive on socket
                     SetKeepAliveValues(ref socket);
 
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
                         "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
-                        ipAddress,
+                        address,
                         port,
-                        ipAddress.AddressFamily,
-                        isInfiniteTimeout);
+                        address.AddressFamily,
+                        timeout.IsInfinite);
 
-                    bool isConnected;
                     try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
                     {
-                        socket.Connect(ipAddress, port);
-                        if (!isInfiniteTimeout)
-                        {
-                            throw SQL.SocketDidNotThrow();
-                        }
-
-                        isConnected = true;
+                        socket.Connect(address, port);
+                        throw SQL.SocketDidNotThrow();
                     }
-                    catch (SocketException socketException) when (!isInfiniteTimeout && 
-                                                                  socketException.SocketErrorCode == SocketError.WouldBlock)
+                    catch (SocketException socketException) when (socketException.SocketErrorCode == SocketError.WouldBlock)
                     {
-                        // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
-                        // Socket.Select is used because it supports timeouts, while Socket.Connect does not
+                    }
+                }
 
-                        List<Socket> checkReadLst;
-                        List<Socket> checkWriteLst;
-                        List<Socket> checkErrorLst;
+                // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+                // Socket.Select is used because it supports timeouts, while Socket.Connect does not
+                // Socket.Select also allows us to wait for multiple sockets using a single thread
+                // Socket.Select will return as soon any any socket in the list meets read/write/error
 
+                List<Socket> socketsInFlight = new List<Socket>(sockets.Count);
+                socketsInFlight.AddRange(sockets.Keys);
+                int socketSelectTimeout;
+                List<Socket> checkReadLst = new();
+                List<Socket> checkWriteLst = new();
+                List<Socket> checkErrorLst = new();
+                SocketException lastError = null;
+
+                // Each time the loop repeats, we will either end with a connected socket or an errored socket
+                // A connected socket results in all other sockets getting disposed and returning that socket
+                // An errored socket results in that socket being removed from socketsInFlight and repeating the loop
+                while (connectedSocket == null && socketsInFlight.Count > 0 && !timeout.IsExpired)
+                {
+                    try
+                    {
                         // Repeating Socket.Select several times if our timeout is greater
                         // than int.MaxValue microseconds because of 
                         // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
                         // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
                         do
-                        {
-                            if (timeout.IsExpired)
-                            {
-                                return null;
-                            }
-
-                            int socketSelectTimeout =
+                        { // timeout loop for when select timed out but no sockets have changed state
+                          // Socket.Select timeout is in microseconds and can only handle up to int.MaxValue
+                          // This means our connection timeout can be greater than the max select timeout
+                            socketSelectTimeout =
                                 checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
 
-                            checkReadLst = new List<Socket>(1) { socket };
-                            checkWriteLst = new List<Socket>(1) { socket };
-                            checkErrorLst = new List<Socket>(1) { socket };
+                            checkReadLst = new List<Socket>(socketsInFlight.Count);
+                            checkReadLst.AddRange(socketsInFlight);
+                            checkWriteLst = new List<Socket>(socketsInFlight.Count);
+                            checkWriteLst.AddRange(socketsInFlight);
+                            checkErrorLst = new List<Socket>(socketsInFlight.Count);
+                            checkErrorLst.AddRange(socketsInFlight);
 
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                                "Determining the status of the socket during the remaining timeout of {0} microseconds.",
+                                "Watching pending sockets during the remaining timeout of {0} microseconds.",
                                 socketSelectTimeout);
 
+                            // Socket.Select will return as soon as any socket is readable, writable, or errored
                             Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
-                            // nothing selected means timeout
-                        } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0);
-
-                        // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
-                        isConnected = socket.Connected && checkErrorLst.Count == 0;
+                            // nothing selected means select timed out
+                        } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0 && !timeout.IsExpired);
+                    }
+                    catch (SocketException e)
+                    {
+                        // Socket.Select can throw if one of the sockets has issues. That socket will be in checkErrorLst.
+                        // Log the error and let that socket be removed from socketsInFlight below.
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, e);
+                        lastError = e;
                     }
 
-                    if (isConnected)
+                    if (timeout.IsExpired)
                     {
-                        socket.Blocking = true;
-                        string iPv4String = null;
-                        string iPv6String = null;
-                        if (socket.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            iPv4String = ipAddress.ToString();
-                        }
-                        else
-                        {
-                            iPv6String = ipAddress.ToString();
-                        }
-                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
-                        isSocketSelected = true;
-                        return socket;
-                    }
-                }
-                catch (SocketException e)
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
-                        nameof(SNITCPHandle), nameof(Connect), EventType.ERR, e);
-                }
-                finally
-                {
-                    if (!isSocketSelected)
-                        socket?.Dispose();
-                }
-            }
-
-            return null;
-        }
-
-        private static Socket ParallelConnect(IPAddress[] serverAddresses, int port, TimeoutTimer timeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
-        {
-            if (serverAddresses == null)
-            {
-                throw new ArgumentNullException(nameof(serverAddresses));
-            }
-            if (serverAddresses.Length == 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(serverAddresses));
-            }
-
-            Dictionary<Socket, IPAddress> sockets = new(serverAddresses.Length);
-            Socket connectedSocket = null;
-
-            foreach (IPAddress address in serverAddresses)
-            {
-                var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
-                {
-                    Blocking = false
-                };
-                sockets.Add(socket, address);
-
-                // enable keep-alive on socket
-                SetKeepAliveValues(ref socket);
-
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                    "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
-                    address,
-                    port,
-                    address.AddressFamily,
-                    timeout.IsInfinite);
-
-                try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
-                {
-                    socket.Connect(address, port);
-                    throw SQL.SocketDidNotThrow();
-                }
-                catch (SocketException socketException) when (socketException.SocketErrorCode == SocketError.WouldBlock)
-                {
-                }
-            }
-
-            // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
-            // Socket.Select is used because it supports timeouts, while Socket.Connect does not
-            // Socket.Select also allows us to wait for multiple sockets using a single thread
-            // Socket.Select will return as soon any any socket in the list meets read/write/error
-
-            List<Socket> socketsInFlight = new List<Socket>(sockets.Count);
-            socketsInFlight.AddRange(sockets.Keys);
-            int socketSelectTimeout;
-            List<Socket> checkReadLst = new();
-            List<Socket> checkWriteLst = new();
-            List<Socket> checkErrorLst = new();
-            SocketException lastError = null;
-
-            // Each time the loop repeats, we will either end with a connected socket or an errored socket
-            // A connected socket results in all other sockets getting disposed and returning that socket
-            // An errored socket results in that socket being removed from socketsInFlight and repeating the loop
-            while (connectedSocket == null && socketsInFlight.Count > 0 && !timeout.IsExpired)
-            {
-                try
-                {
-                    // Repeating Socket.Select several times if our timeout is greater
-                    // than int.MaxValue microseconds because of 
-                    // https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
-                    // which states that Socket.Select can't handle timeouts greater than int.MaxValue microseconds
-                    do
-                    { // timeout loop for when select timed out but no sockets have changed state
-                        // Socket.Select timeout is in microseconds and can only handle up to int.MaxValue
-                        // This means our connection timeout can be greater than the max select timeout
-                        socketSelectTimeout =
-                            checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
-
-                        checkReadLst = new List<Socket>(socketsInFlight.Count);
-                        checkReadLst.AddRange(socketsInFlight);
-                        checkWriteLst = new List<Socket>(socketsInFlight.Count);
-                        checkWriteLst.AddRange(socketsInFlight);
-                        checkErrorLst = new List<Socket>(socketsInFlight.Count);
-                        checkErrorLst.AddRange(socketsInFlight);
-
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                            "Watching pending sockets during the remaining timeout of {0} microseconds.",
-                            socketSelectTimeout);
-
-                        // Socket.Select will return as soon as any socket is readable, writable, or errored
-                        Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
-                        // nothing selected means select timed out
-                    } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0 && !timeout.IsExpired);
-                }
-                catch (SocketException e)
-                {
-                    // Socket.Select can throw if one of the sockets has issues. That socket will be in checkErrorLst.
-                    // Log the error and let that socket be removed from socketsInFlight below.
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, e);
-                    lastError = e;
-                }
-
-                if (timeout.IsExpired)
-                {
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        "{0}.{1}{2}ParallelConnect timeout expired.", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.INFO);
-                    break;
-                }
-
-                // See if one of the sockets in the Selected list is connected without errors (exists in read list or write list but not error list)
-                foreach (Socket s in checkWriteLst)
-                {
-                    // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
-                    if (!checkErrorLst.Contains(s) && s.Connected)
-                    {
-                        connectedSocket = s;
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
-                            "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
-                        connectedSocket.Blocking = true;
-                        string iPv4String = null;
-                        string iPv6String = null;
-                        if (connectedSocket.AddressFamily == AddressFamily.InterNetwork)
-                        {
-                            iPv4String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
-                        }
-                        else
-                        {
-                            iPv6String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
-                        }
-                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}ParallelConnect timeout expired.", nameof(SNITCPHandle), nameof(ParallelConnect), EventType.INFO);
                         break;
                     }
-                }
 
-                if (connectedSocket == null)
-                {
-                    foreach (Socket socket in checkReadLst)
+                    // See if one of the sockets in the Selected list is connected without errors (exists in read list or write list but not error list)
+                    foreach (Socket s in checkWriteLst)
                     {
                         // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
-                        if (!checkErrorLst.Contains(socket) && socket.Connected)
+                        if (!checkErrorLst.Contains(s) && s.Connected)
                         {
-                            connectedSocket = socket;
+                            connectedSocket = s;
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
                                 "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
+                            connectedSocket.Blocking = true;
+                            string iPv4String = null;
+                            string iPv6String = null;
+                            if (connectedSocket.AddressFamily == AddressFamily.InterNetwork)
+                            {
+                                iPv4String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
+                            }
+                            else
+                            {
+                                iPv6String = ((IPEndPoint)connectedSocket.RemoteEndPoint).Address.ToString();
+                            }
+                            pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
                             break;
                         }
                     }
+
+                    if (connectedSocket == null)
+                    {
+                        foreach (Socket socket in checkReadLst)
+                        {
+                            // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
+                            if (!checkErrorLst.Contains(socket) && socket.Connected)
+                            {
+                                connectedSocket = socket;
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
+                                    "Connected to endpoint: {0}", connectedSocket.RemoteEndPoint);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (connectedSocket == null)
+                    {
+                        // Remove any remaining (unsuccessful) sockets from socketsInFlight so that we
+                        // loop again on any remaining socketsInFlight
+
+                        foreach (Socket socket in checkErrorLst)
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                                "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                                nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
+                            socketsInFlight.Remove(socket);
+                        }
+                        // Read/write lists could contain sockets that indicated Connected == false above
+                        foreach (Socket socket in checkReadLst)
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                                "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                                nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
+                            socketsInFlight.Remove(socket);
+                        }
+                        foreach (Socket socket in checkWriteLst)
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                                "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
+                                nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
+                            socketsInFlight.Remove(socket);
+                        }
+                    }
+                }
+
+                // Dispose unused sockets
+                foreach (Socket socket in sockets.Keys)
+                {
+                    if (socket != connectedSocket)
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            "{0}.{1}{2}Disposing non-selected socket for endpoint: {3}", nameof(SNITCPHandle),
+                            nameof(ParallelConnect), EventType.INFO, sockets[socket]);
+                        socket?.Dispose();
+                    }
                 }
 
                 if (connectedSocket == null)
                 {
-                    // Remove any remaining (unsuccessful) sockets from socketsInFlight so that we
-                    // loop again on any remaining socketsInFlight
-
-                    foreach (Socket socket in checkErrorLst)
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
-                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
-                        socketsInFlight.Remove(socket);
-                    }
-                    // Read/write lists could contain sockets that indicated Connected == false above
-                    foreach (Socket socket in checkReadLst)
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
-                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
-                        socketsInFlight.Remove(socket);
-                    }
-                    foreach (Socket socket in checkWriteLst)
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                            "{0}.{1}{2}Failed to connect to endpoint: {3}. Error: {4}", nameof(SNITCPHandle),
-                            nameof(ParallelConnect), EventType.INFO, sockets[socket], lastError);
-                        socketsInFlight.Remove(socket);
-                    }
-                }
-            }
-
-            // Dispose unused sockets
-            foreach (Socket socket in sockets.Keys)
-            {
-                if (socket != connectedSocket)
-                {
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                        "{0}.{1}{2}Disposing non-selected socket for endpoint: {3}", nameof(SNITCPHandle),
-                        nameof(ParallelConnect), EventType.INFO, sockets[socket]);
-                    socket?.Dispose();
+                        "{0}.{1}{2}No socket connections succeeded. Last error: {3}",
+                        nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, lastError);
                 }
-            }
 
-            if (connectedSocket == null)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                    "{0}.{1}{2}No socket connections succeeded. Last error: {3}",
-                    nameof(SNITCPHandle), nameof(ParallelConnect), EventType.ERR, lastError);
+                return connectedSocket;
             }
-
-            return connectedSocket;
         }
 
         /// <summary>
@@ -718,12 +727,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override void DisableSsl()
         {
-            _sslStream.Dispose();
-            _sslStream = null;
-            _sslOverTdsStream?.Dispose();
-            _sslOverTdsStream = null;
-            _stream = _tcpStream;
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL Disabled. Communication will continue on TCP Stream.", args0: _connectionId);
+            using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
+            {
+                _sslStream.Dispose();
+                _sslStream = null;
+                _sslOverTdsStream?.Dispose();
+                _sslOverTdsStream = null;
+                _stream = _tcpStream;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL Disabled. Communication will continue on TCP Stream.", args0: _connectionId);
+            }
         }
 
         /// <summary>
