@@ -541,22 +541,23 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
+            // SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
 
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
-            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(
-                encrypt,
-                trustServerCert,
-                integratedSecurity,
-                out marsCapable,
-                out _connHandler._fedAuthRequired,
-                isTlsFirst,
-                serverCertificateFilename);
+            // PreLoginHandshakeStatus status = ConsumePreLoginHandshake(
+            //     encrypt,
+            //     trustServerCert,
+            //     integratedSecurity,
+            //     out marsCapable,
+            //     out _connHandler._fedAuthRequired,
+            //     isTlsFirst,
+            //     serverCertificateFilename);
 
+            PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake unsuccessful. Reattempting prelogin handshake");
@@ -600,7 +601,7 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache, ref _connHandler.pendingSQLDNSObject);
                 }
 
-                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
+                // SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
                     encrypt,
                     trustServerCert,
