@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: microsoft/setup-msbuild@v1.0.2
+      - uses: nuget/setup-nuget@v1
+      - run: choco install dotnet4.6.1
+      - run: choco install dotnet4.6.1-devpack
+      - run: choco install netfx-4.6.1-devpack
+      - name: workaround netcore
+        shell: powershell
+        run: |
+          $path = 'src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/TdsParser.cs'
+          $content = Get-Content $path -Raw
+          $content = $content.Replace(
+            'SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);',
+            '// SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);'
+          ).Replace(
+            'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(
+                encrypt,
+                trustServerCert,
+                integratedSecurity,
+                out marsCapable,
+                out _connHandler._fedAuthRequired,
+                isTlsFirst,
+                serverCertificateFilename);',
+            'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;'
+          )
+          $content | Set-Content -Path $path
+      - name: workaround netfx
+        shell: powershell
+        run: |
+          $path = 'src/Microsoft.Data.SqlClient/netfx/src/Microsoft/Data/SqlClient/TdsParser.cs'
+          $content = Get-Content $path -Raw
+          $content = $content.Replace(
+          'SendPreLoginHandshake(
+                instanceName,
+                encrypt,
+                integratedSecurity,
+                !string.IsNullOrEmpty(certificate),
+                useOriginalAddressInfo,
+                serverCertificateFilename,
+                serverCallback,
+                clientCallback);',
+          '// SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo, serverCertificateFilename, serverCallback, clientCallback);'
+          ).Replace(
+          'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(
+                authType,
+                encrypt,
+                trustServerCert,
+                integratedSecurity,
+                serverCallback,
+                clientCallback,
+                out marsCapable,
+                out _connHandler._fedAuthRequired,
+                isTlsFirst,
+                serverCertificateFilename);',
+          'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;'
+          ).Replace(
+          'out marsCapable,
+          out _connHandler._fedAuthRequired,',
+          '//out marsCapable,
+          //out _connHandler._fedAuthRequired,'
+          )
+          $content | Set-Content -Path $path
+      - name: rename
+        shell: powershell
+        run: |
+          $file = Get-Item tools/specs/Microsoft.Data.SqlClient.nuspec
+          $spec = [xml] (Get-Content $file.FullName)
+          $spec.package.metadata.id = 'Rabota.Data.SqlClient'
+          $spec.package.metadata.title = 'Rabota.Data.SqlClient'
+          $spec.package.metadata.authors = 'robota.ua'
+          $spec.package.metadata.projectUrl = 'https://github.com/rabotaua/SqlClient'
+          $spec.package.metadata.description = 'Notice: this is not Microsoft library it is an robota.ua fork to fix issue with old SQLServer version in modern environments, if you found this library you probably want to use Microsoft.Data.SqlClient instead'
+          $spec.package.metadata.releaseNotes = 'https://github.com/rabotaua/SqlClient'
+          $spec.package.metadata.copyright = 'robota.ua'
+          $spec.Save($file.FullName)
+      - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.${{ github.run_number }}
+      - run: dir packages
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nuget
+          path: packages/*.nupkg
