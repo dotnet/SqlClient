@@ -412,7 +412,7 @@
     <value>복제</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>연결 복구</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>사용자 지정 사용자 정보를 보유하는 컬렉션입니다.</value>
@@ -1720,7 +1720,7 @@
     <value>이 컬렉션의 멤버가 변경될 때마다 발생합니다.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>값이 DBNull이므로 가져올 수 없습니다.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>'{0}' 속성을 사용하려면 Microsoft WindowsNT 또는 WindowsNT 기반 운영 체제가 필요합니다.</value>
@@ -4426,7 +4426,7 @@
     <value>복구를 시도하는 동안 서버에서 SSL 암호화를 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>복구를 시도하는 동안 서버에서 요청된 정확한 클라이언트 TDS 버전을 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>연결이 끊겼고 복구할 수 없습니다. 클라이언트 드라이버에서 한 번 이상 연결을 복구하려고 했지만 모두 실패했습니다. 복원 시도 횟수를 늘리려면 ConnectRetryCount 값을 높이십시오.</value>

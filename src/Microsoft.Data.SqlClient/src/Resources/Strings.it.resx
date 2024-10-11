@@ -412,7 +412,7 @@
     <value>Replica</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>Resilienza connessione</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>Raccolta che contiene le informazioni utente personalizzate.</value>
@@ -1720,7 +1720,7 @@
     <value>Generato quando si modifica l'appartenenza a questa raccolta.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>Impossibile ottenere il valore perché è DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>La proprietà '{0}' richiede Microsoft WindowsNT o un altro sistema operativo basato su WindowsNT.</value>
@@ -4426,7 +4426,7 @@
     <value>Il server non ha mantenuto la crittografia SSL durante un tentativo di ripristino. Impossibile eseguire il ripristino della connessione.</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>Il server non ha mantenuto l'esatta versione TDS del client richiesta durante un tentativo di ripristino. Impossibile eseguire il ripristino della connessione.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>La connessione è interrotta e non è possibile ripristinarla. Il driver client ha tentato una o più volte di ripristinare la connessione, ma tutti i tentativi non sono riusciti. Aumentare il valore di ConnectRetryCount per incrementare il numero di tentativi di ripristino.</value>

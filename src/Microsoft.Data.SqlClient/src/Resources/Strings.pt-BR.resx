@@ -412,7 +412,7 @@
     <value>Replicação</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>Resiliência da Conexão</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>A coleção que retém informações personalizadas sobre o usuário.</value>
@@ -1720,7 +1720,7 @@
     <value>Ocorre sempre que os membros desta coleção são alterados.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>Não é possível obter o valor porque ele é DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>A propriedade '{0}' requer um sistema operacional com base em Microsoft WindowsNT ou em WindowsNT.</value>
@@ -4426,7 +4426,7 @@
     <value>O servidor não preservou a criptografia SSL durante uma tentativa de recuperação; a recuperação da conexão não é possível.</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>O servidor não preservou a versão TDS de cliente exata solicitada durante uma tentativa de recuperação; a recuperação da conexão não é possível.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>A conexão foi interrompida e a recuperação não é possível. O driver do cliente tentou recuperar a conexão uma ou mais vezes e houve falha em todas as tentativas. Aumente o valor de ConnectRetryCount para aumentar o número de tentativas de recuperação.</value>

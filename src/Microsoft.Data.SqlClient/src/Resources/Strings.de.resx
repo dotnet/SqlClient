@@ -412,7 +412,7 @@
     <value>Replikation</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>Verbindungsresilienz</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>Die Sammlung die Benutzerinformationen enthält.</value>
@@ -1720,7 +1720,7 @@
     <value>Tritt auf, wenn sich die Mitgliedschaft dieser Sammlung ändert.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>Der Wert kann nicht abgerufen werden, da er DBNull ist.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>Für die '{0}'-Eigenschaft ist Microsoft WindowsNT oder ein WindowsNT-basiertes Betriebssystem erforderlich.</value>
@@ -4426,7 +4426,7 @@
     <value>Die SSL-Verschlüsselung wurde während eines Wiederherstellungsversuchs vom Server nicht beibehalten; die Verbindung kann nicht wiederhergestellt werden.</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>Die genaue TDS-Version des Clients, die bei einem Wiederherstellungsversuch angefordert wurde, konnte vom Server nicht beibehalten werden; die Verbindung kann nicht wiederhergestellt werden.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>Die Verbindung ist unterbrochen und eine Wiederherstellung ist nicht möglich. Der Clienttreiber hat ein oder mehrere Male versucht, die Verbindung wiederherzustellen, aber alle Versuche sind fehlgeschlagen. Erhöhen Sie den Wert von ConnectRetryCount, um die Anzahl der Wiederherstellungsversuche zu erhöhen.</value>

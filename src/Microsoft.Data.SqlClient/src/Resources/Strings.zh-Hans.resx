@@ -412,7 +412,7 @@
     <value>复制</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>连接复原力</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>保留自定义用户信息的集合。</value>
@@ -1720,7 +1720,7 @@
     <value>每当此集合的成员更改时发生。</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>无法获取值，因为它是 DBNull。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>“{0}”属性需要 Microsoft WindowsNT 或基于 WindowsNT 的操作系统。</value>
@@ -4426,7 +4426,7 @@
     <value>服务器未保留恢复尝试期间的 SSL 加密，无法恢复连接。</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>服务器未保留尝试恢复过程中请求的确切的客户端 TDS 版本，无法恢复连接。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>连接已断开，且无法恢复。客户端驱动程序尝试了一次或多次恢复连接，所有尝试均已失败。请增加 ConnectRetryCount 的值，以增加尝试恢复的次数。</value>

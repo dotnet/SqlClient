@@ -412,7 +412,7 @@
     <value>レプリケーション</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>接続の復元性</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>カスタム ユーザー情報を保有するコレクションです。</value>
@@ -1720,7 +1720,7 @@
     <value>このコレクションのメンバーシップが変わるたびに発生します。</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>値が DBNull のため、取得できません。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>'{0}' プロパティを使用する場合は、Microsoft WindowsNT または WindowsNT ベースのオペレーティング システムが必要になります。</value>
@@ -4426,7 +4426,7 @@
     <value>回復の試行中、SSL 暗号化をサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>回復の試行中、要求された正確なクライアントの TDS のバージョンをサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>接続が中断されたため復元できません。クライアント ドライバーは接続の復元を 1 回以上試みましたが、すべての試行は失敗しました。ConnectRetryCount の値を増やして、復元の試行回数を増やしてください。</value>
