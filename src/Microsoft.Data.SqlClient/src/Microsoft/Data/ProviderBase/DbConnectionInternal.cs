@@ -127,12 +127,8 @@ namespace Microsoft.Data.ProviderBase
                 // Now, our job is to return TRUE when the connection is out
                 // of the pool and it's owning object is no longer around to
                 // return it.
-
-                #if NETFRAMEWORK
+                
                 return !IsTxRootWaitingForTxEnd && (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
-                #else
-                return (_pooledCount < 1) && !_owningObject.TryGetTarget(out _);
-                #endif
             }
         }
 
