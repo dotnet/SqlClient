@@ -2900,7 +2900,15 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
-                    Debug.Assert(!ReferenceEquals(current.Buffer, buffer));
+                    if (ReferenceEquals(current.Buffer, buffer))
+                    {
+                        // multiple packets are permitted to be in the same buffer because of partial packets
+                        // but their contents cannot overlap
+                        if ((current.Read + current.DataLength) > read)
+                        {
+                            Debug.Fail("duplicate or overlapping packet appended to snapshot");
+                        }
+                    }
                 }
 #endif
                 PacketData packetData = _sparePacket;
