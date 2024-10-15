@@ -66,10 +66,15 @@ namespace Microsoft.Data.SqlClient
                         SetBuffer(_inBuff, 0, (int)dataSize);
                     }
 
-                    bool recurse;
+                    bool recurse = false;
                     bool appended = false;
                     do
                     {
+                        if (recurse && appended)
+                        {
+                            SetBuffer(new byte[_inBuff.Length], 0, 0);
+                            appended = false;
+                        }
                         MultiplexPackets(
                             _inBuff, _inBytesUsed, _inBytesRead,
                             _partialPacket,
@@ -113,6 +118,10 @@ namespace Microsoft.Data.SqlClient
                             if (_snapshot != null)
                             {
                                 _snapshot.AppendPacketData(_inBuff, _inBytesRead);
+                                // if we SetBuffer here to clear the packet buffer we will break the attention handling which relies
+                                // on the attention containing packet remaining in the active buffer even if we're appending to the
+                                // snapshot so we will have to use the appended variable to prevent the same buffer being added again
+                                //// SetBuffer(new byte[_inBuff.Length], 0, 0);
                                 appended = true;
                             }
                             else

@@ -177,6 +177,30 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public static void TrailingPartialPacketInSnapshotNotDuplicated()
+        {
+            int dataSize = 120;
+
+            var expected = new List<PacketData>
+            {
+                CreatePacket(120, 5),
+                CreatePacket(90, 6),
+                CreatePacket(13, 7),
+            };
+
+            var input = SplitPackets(120, expected,
+                (8 + 120),
+                (8 + 90) + (8 + 13)
+            );
+
+            Assert.Equal(SumPacketLengths(expected), SumPacketLengths(input));
+
+            var output = MultiplexPacketList(true, dataSize, input);
+
+            ComparePacketLists(dataSize, expected, output);
+        }
+
+        [Fact]
         public static void BetweenAsyncAttentionPacket()
         {
             int dataSize = 120;
