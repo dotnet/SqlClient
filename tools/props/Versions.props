@@ -30,6 +30,8 @@
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
+    <MicrosoftIdentityClientBrokerVersion>4.61.3</MicrosoftIdentityClientBrokerVersion>
+    <MicrosoftIdentityClientDesktopVersion>4.61.3</MicrosoftIdentityClientDesktopVersion>
     <MicrosoftExtensionsCachingMemoryVersion>6.0.1</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>

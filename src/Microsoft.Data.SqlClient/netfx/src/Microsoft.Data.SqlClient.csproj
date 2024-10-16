@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
-    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
+    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;INTERACTIVE_AUTH;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
   </PropertyGroup>
@@ -86,6 +86,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(InteractiveAuthEnabled)'=='true'">
+    <DefineConstants>$(DefineConstants);INTERACTIVE_AUTH;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -791,6 +794,9 @@
     </PackageReference>
     <PackageReference Include="Azure.Identity">
       <Version>$(AzureIdentityVersion)</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Client.Broker" Condition="$(DefineConstants.Contains('INTERACTIVE_AUTH'))">
+      <Version>$(MicrosoftIdentityClientBrokerVersion)</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
       <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
