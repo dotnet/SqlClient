@@ -955,10 +955,10 @@ namespace Microsoft.Data.Common
         internal const string AttachDBFilename = "";
         internal const int CommandTimeout = 30;
         internal const int ConnectTimeout = 15;
+        internal const bool ContextConnection = false;
 
 #if NETFRAMEWORK
         internal const bool ConnectionReset = true;
-        internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
 #endif
