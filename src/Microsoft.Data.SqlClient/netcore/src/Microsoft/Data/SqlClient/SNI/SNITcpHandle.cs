@@ -525,6 +525,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                 }
 
+                // The code between here and Socket.Select is all for setting up the Socket.Select method.
                 // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
                 // Socket.Select is used because it supports timeouts, while Socket.Connect does not
                 // Socket.Select also allows us to wait for multiple sockets using a single thread
@@ -533,9 +534,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 List<Socket> socketsInFlight = new List<Socket>(sockets.Count);
                 socketsInFlight.AddRange(sockets.Keys);
                 int socketSelectTimeout;
-                List<Socket> checkReadLst = new();
-                List<Socket> checkWriteLst = new();
-                List<Socket> checkErrorLst = new();
+                List<Socket> checkReadLst = new(socketsInFlight.Count);
+                List<Socket> checkWriteLst = new(socketsInFlight.Count);
+                List<Socket> checkErrorLst = new(socketsInFlight.Count);
                 SocketException lastError = null;
 
                 // Each time the loop repeats, we will either end with a connected socket or an errored socket
@@ -556,11 +557,11 @@ namespace Microsoft.Data.SqlClient.SNI
                             socketSelectTimeout =
                                 checked((int)(Math.Min(timeout.MillisecondsRemainingInt, int.MaxValue / 1000) * 1000));
 
-                            checkReadLst = new List<Socket>(socketsInFlight.Count);
+                            checkReadLst.Clear();
                             checkReadLst.AddRange(socketsInFlight);
-                            checkWriteLst = new List<Socket>(socketsInFlight.Count);
+                            checkWriteLst.Clear();
                             checkWriteLst.AddRange(socketsInFlight);
-                            checkErrorLst = new List<Socket>(socketsInFlight.Count);
+                            checkErrorLst.Clear();
                             checkErrorLst.AddRange(socketsInFlight);
 
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO,
@@ -588,10 +589,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         break;
                     }
 
-                    // See if one of the sockets in the Selected list is connected without errors (exists in read list or write list but not error list)
-                    // Concat read/write lists since we treat them the same from here
-                    checkWriteLst.AddRange(checkReadLst);
-
+                    // As the client, we only care about the write list
                     foreach (Socket s in checkWriteLst)
                     {
                         // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
