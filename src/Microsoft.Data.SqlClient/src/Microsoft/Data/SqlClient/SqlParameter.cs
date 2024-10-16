@@ -584,7 +584,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool ShouldSerializeScale() => _scale != 0; // V1.0 compat, ignore _hasScale
+        private bool ShouldSerializeScale_Legacy() => _scale != 0; // V1.0 compat, ignore _hasScale
+
+        private bool ShouldSerializeScale()
+        {
+            if (LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour)
+            {
+                return ShouldSerializeScale_Legacy();
+            }
+            return _scale != 0 || (GetMetaTypeOnly().IsVarTime && HasFlag(SqlParameterFlags.HasScale));
+        }
+
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
@@ -1510,7 +1520,6 @@ namespace Microsoft.Data.SqlClient
                 return ScaleInternal;
             }
 
-            // issue: how could a user specify 0 as the actual scale?
             if (GetMetaTypeOnly().IsVarTime)
             {
                 return TdsEnums.DEFAULT_VARTIME_SCALE;
