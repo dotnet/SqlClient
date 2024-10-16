@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net6.0;net8.0;net462</TargetFrameworks>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
+	<ItemGroup>
+	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
+	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
+	</ItemGroup>
 
 </Project>
