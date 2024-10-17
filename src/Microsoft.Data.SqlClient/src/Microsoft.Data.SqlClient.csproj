@@ -11,5 +11,8 @@
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Interop\Windows\SspiCli\" />
+	</ItemGroup>
 
 </Project>

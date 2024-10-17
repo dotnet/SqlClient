@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if !NET8_0_OR_GREATER
+#if !NETFRAMEWORK && !NET8_0_OR_GREATER
 
 using System.Net.Security;
 using System.Runtime.InteropServices;
@@ -10,8 +10,9 @@ using Microsoft.Data;
 
 namespace System.Net
 {
-    // Schannel SSPI interface.
-    internal class SSPISecureChannelType : SSPIInterface
+
+    // Authentication SSPI (Kerberos, NTLM, Negotiate and WDigest):
+    internal class SSPIAuthType : SSPIInterface
     {
         private static volatile SecurityPackageInfoClass[] s_securityPackages;
 
@@ -49,11 +50,6 @@ namespace System.Net
             return SafeFreeCredentials.AcquireCredentialsHandle(moduleName, usage, ref authdata, out outCredential);
         }
 
-        public int AcceptSecurityContext(ref SafeFreeCredentials credential, ref SafeDeleteContext context, SecurityBuffer inputBuffer, Interop.SspiCli.ContextFlags inFlags, Interop.SspiCli.Endianness endianness, SecurityBuffer outputBuffer, ref Interop.SspiCli.ContextFlags outFlags)
-        {
-            return SafeDeleteContext.AcceptSecurityContext(ref credential, ref context, inFlags, endianness, inputBuffer, null, outputBuffer, ref outFlags);
-        }
-
         public int AcceptSecurityContext(SafeFreeCredentials credential, ref SafeDeleteContext context, SecurityBuffer[] inputBuffers, Interop.SspiCli.ContextFlags inFlags, Interop.SspiCli.Endianness endianness, SecurityBuffer outputBuffer, ref Interop.SspiCli.ContextFlags outFlags)
         {
             return SafeDeleteContext.AcceptSecurityContext(ref credential, ref context, inFlags, endianness, null, inputBuffers, outputBuffer, ref outFlags);
@@ -74,6 +70,7 @@ namespace System.Net
             try
             {
                 bool ignore = false;
+
                 context.DangerousAddRef(ref ignore);
                 return Interop.SspiCli.EncryptMessage(ref context._handle, 0, ref inputOutput, sequenceNumber);
             }
@@ -83,14 +80,40 @@ namespace System.Net
             }
         }
 
-        public unsafe int DecryptMessage(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput,
-            uint sequenceNumber)
+        public unsafe int DecryptMessage(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
         {
+            int status = (int)Interop.SECURITY_STATUS.InvalidHandle;
+            uint qop = 0;
+
             try
             {
                 bool ignore = false;
                 context.DangerousAddRef(ref ignore);
-                return Interop.SspiCli.DecryptMessage(ref context._handle, ref inputOutput, sequenceNumber, null);
+                status = Interop.SspiCli.DecryptMessage(ref context._handle, ref inputOutput, sequenceNumber, &qop);
+            }
+            finally
+            {
+                context.DangerousRelease();
+            }
+
+            if (status == 0 && qop == Interop.SspiCli.SECQOP_WRAP_NO_ENCRYPT)
+            {
+                NetEventSource.Fail(this, $"Expected qop = 0, returned value = {qop}");
+                throw new InvalidOperationException(Strings.net_auth_message_not_encrypted);
+            }
+
+            return status;
+        }
+
+        public int MakeSignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
+        {
+            try
+            {
+                bool ignore = false;
+
+                context.DangerousAddRef(ref ignore);
+
+                return Interop.SspiCli.EncryptMessage(ref context._handle, Interop.SspiCli.SECQOP_WRAP_NO_ENCRYPT, ref inputOutput, sequenceNumber);
             }
             finally
             {
@@ -98,26 +121,30 @@ namespace System.Net
             }
         }
 
-        public int MakeSignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
+        public unsafe int VerifySignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
         {
-            throw NotImplemented.ByDesignWithMessage(Strings.net_MethodNotImplementedException);
+            try
+            {
+                bool ignore = false;
+                uint qop = 0;
+
+                context.DangerousAddRef(ref ignore);
+                return Interop.SspiCli.DecryptMessage(ref context._handle, ref inputOutput, sequenceNumber, &qop);
+            }
+            finally
+            {
+                context.DangerousRelease();
+            }
         }
 
-        public int VerifySignature(SafeDeleteContext context, ref Interop.SspiCli.SecBufferDesc inputOutput, uint sequenceNumber)
+        public int QueryContextChannelBinding(SafeDeleteContext context, Interop.SspiCli.ContextAttribute attribute, out SafeFreeContextBufferChannelBinding binding)
         {
-            throw NotImplemented.ByDesignWithMessage(Strings.net_MethodNotImplementedException);
+            // Querying an auth SSP for a CBT is not supported.
+            binding = null;
+            throw new NotSupportedException();
         }
 
-        public unsafe int QueryContextChannelBinding(SafeDeleteContext phContext, Interop.SspiCli.ContextAttribute attribute, out SafeFreeContextBufferChannelBinding refHandle)
-        {
-            refHandle = SafeFreeContextBufferChannelBinding.CreateEmptyHandle();
-
-            // Bindings is on the stack, so there's no need for a fixed block.
-            SecPkgContext_Bindings bindings = new SecPkgContext_Bindings();
-            return SafeFreeContextBufferChannelBinding.QueryContextChannelBinding(phContext, attribute, &bindings, refHandle);
-        }
-
-        public unsafe int QueryContextAttributes(SafeDeleteContext phContext, Interop.SspiCli.ContextAttribute attribute, byte[] buffer, Type handleType, out SafeHandle refHandle)
+        public unsafe int QueryContextAttributes(SafeDeleteContext context, Interop.SspiCli.ContextAttribute attribute, byte[] buffer, Type handleType, out SafeHandle refHandle)
         {
             refHandle = null;
             if (handleType != null)
@@ -135,25 +162,42 @@ namespace System.Net
                     throw new ArgumentException(StringsHelper.Format(Strings.SSPIInvalidHandleType, handleType.FullName), nameof(handleType));
                 }
             }
+
             fixed (byte* bufferPtr = buffer)
             {
-                return SafeFreeContextBuffer.QueryContextAttributes(phContext, attribute, bufferPtr, refHandle);
+                return SafeFreeContextBuffer.QueryContextAttributes(context, attribute, bufferPtr, refHandle);
             }
         }
 
         public int QuerySecurityContextToken(SafeDeleteContext phContext, out SecurityContextTokenHandle phToken)
         {
-            throw new NotSupportedException();
+            return GetSecurityContextToken(phContext, out phToken);
         }
 
         public int CompleteAuthToken(ref SafeDeleteContext refContext, SecurityBuffer[] inputBuffers)
         {
-            throw new NotSupportedException();
+            return SafeDeleteContext.CompleteAuthToken(ref refContext, inputBuffers);
+        }
+
+        private static int GetSecurityContextToken(SafeDeleteContext phContext, out SecurityContextTokenHandle safeHandle)
+        {
+            safeHandle = null;
+
+            try
+            {
+                bool ignore = false;
+                phContext.DangerousAddRef(ref ignore);
+                return Interop.SspiCli.QuerySecurityContextToken(ref phContext._handle, out safeHandle);
+            }
+            finally
+            {
+                phContext.DangerousRelease();
+            }
         }
 
         public int ApplyControlToken(ref SafeDeleteContext refContext, SecurityBuffer[] inputBuffers)
         {
-            return SafeDeleteContext.ApplyControlToken(ref refContext, inputBuffers);
+            throw new NotSupportedException();
         }
     }
 }

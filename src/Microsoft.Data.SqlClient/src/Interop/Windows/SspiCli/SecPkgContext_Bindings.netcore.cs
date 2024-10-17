@@ -2,14 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if !NET8_0_OR_GREATER
+#if !NETFRAMEWORK && !NET8_0_OR_GREATER
+
+using System.Runtime.InteropServices;
 
 namespace System.Net
 {
-    internal static class GlobalSSPI
+    // sspi.h
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SecPkgContext_Bindings
     {
-        internal static readonly SSPIInterface SSPIAuth = new SSPIAuthType();
-        internal static readonly SSPIInterface SSPISecureChannel = new SSPISecureChannelType();
+        internal int BindingsLength;
+        internal IntPtr Bindings;
     }
 }
 
