@@ -853,6 +853,18 @@
 
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Interop.Libraries.netcore.cs">
+      <Link>Common\Interop\Unix\Interop.Libraries.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.netcore.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.Interop.GssBuffer.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs">
+      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
     </Compile>
@@ -860,10 +872,6 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
 
-    <Compile Include="Common\Interop\Unix\Interop.Libraries.cs" />
-    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs" />
-    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs" />
-    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
     <Compile Include="Common\System\Net\Security\Unix\SafeDeleteContext.cs" />
