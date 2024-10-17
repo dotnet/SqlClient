@@ -696,8 +696,8 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
       <Link>Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
-      <Link>Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\FileTypes.cs">
+      <Link>Interop\Windows\Kernel32\FileTypes.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\IoControlCodeAccess.cs">
       <Link>Interop\Windows\Kernel32\IoControlCodeAccess.cs</Link>
