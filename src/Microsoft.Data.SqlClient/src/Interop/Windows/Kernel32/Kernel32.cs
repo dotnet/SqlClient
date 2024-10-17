@@ -24,6 +24,11 @@ namespace Interop_TEMP.Windows.Kernel32
 
         private const string DllName = "kernel32.dll";
 
+        #if !NETFRAMEWORK
+        [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
+        public static extern unsafe bool FreeLibrary([In] IntPtr hModule);
+        #endif
+
         [DllImport(DllName, SetLastError = true)]
         internal static extern int GetFileType(SafeHandle hFile);
 
