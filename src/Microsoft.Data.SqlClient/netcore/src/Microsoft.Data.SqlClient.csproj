@@ -680,8 +680,11 @@
 
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates.netcore.cs">
+      <Link>Common\Interop\Windows\Crypt32\Interop.certificates.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs">
+      <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Errors.cs">
       <Link>Common\Interop\Windows\Interop.Errors.cs</Link>
@@ -700,6 +703,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
@@ -759,8 +765,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
 
-    <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
-    <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.FreeLibrary.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.GetProcAddress.cs" />
