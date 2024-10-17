@@ -570,7 +570,7 @@ namespace Microsoft.Data.SqlTypes
             StringBuilder buffer = new StringBuilder(path.Length + 1);
 
             // If everything goes correctly, we only need to call this once
-            int fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+            int fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
 
             // If our buffer was smaller than required, the buffer will be empty, but the full
             // path size will be the size we should reallocate to.
@@ -578,7 +578,7 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Reallocate the buffer and try again
                 buffer.Capacity = fullPathLength;
-                fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+                fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
             }
 
             // If the method tells us the full path length is 0, then we have an error condition.

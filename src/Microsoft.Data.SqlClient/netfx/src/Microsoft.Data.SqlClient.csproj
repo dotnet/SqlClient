@@ -115,9 +115,6 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
       <Link>Interop\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
-      <Link>Interop\Kernel32\Interop.GetFullPathName.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlCodeAccess.cs">
       <Link>Interop\Kernel32\IoControlCodeAccess.cs</Link>
     </Compile>
