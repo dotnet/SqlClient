@@ -17,7 +17,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         private readonly ITestOutputHelper _output;
         private static readonly string _jsonFile = "randomRecords.json";
         private static readonly string _outputFile = "serverRecords.json";
-        private static readonly bool _isTestEnabled = DataTestUtility.IsJsonSupported;
         
         public JsonBulkCopyTest(ITestOutputHelper output)
         {
@@ -237,18 +236,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             }
         }
 
-        [Theory]
         [InlineData(CommandBehavior.Default, false)]
         [InlineData(CommandBehavior.Default, true)]
         [InlineData(CommandBehavior.SequentialAccess, false)]
         [InlineData(CommandBehavior.SequentialAccess, true)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming)
         {
-            if (!_isTestEnabled)
-            {
-                return;
-            }
-
             PopulateData(10000);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -261,17 +255,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             }
         }
 
-        [Theory]
         [InlineData(CommandBehavior.Default, false)]
         [InlineData(CommandBehavior.Default, true)]
         [InlineData(CommandBehavior.SequentialAccess, false)]
         [InlineData(CommandBehavior.SequentialAccess, true)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming)
         {
-            if (!_isTestEnabled)
-            {
-                return;
-            }
             PopulateData(10000);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
