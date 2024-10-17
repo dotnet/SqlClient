@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
+using Microsoft.Win32.SafeHandles;
 
 #if !NETFRAMEWORK
 using Interop_TEMP.Windows.Handles;
@@ -15,6 +16,7 @@ namespace Interop_TEMP.Windows.Kernel32
 {
     internal static class Kernel32
     {
+        internal const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
         internal const uint SEM_FAILCRITICALERRORS = 1;
 
         #if !NETFRAMEWORK
@@ -24,9 +26,20 @@ namespace Interop_TEMP.Windows.Kernel32
 
         private const string DllName = "kernel32.dll";
 
+        [DllImport(DllName, CharSet = CharSet.Unicode, SetLastError = true)]
+        internal static extern bool DeviceIoControl(
+            SafeFileHandle fileHandle,
+            uint ioControlCode,
+            IntPtr inBuffer,
+            uint cbInBuffer,
+            IntPtr outBuffer,
+            uint cbOutBuffer,
+            out uint cbBytesReturned,
+            IntPtr overlapped);
+
         #if !NETFRAMEWORK
         [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
-        public static extern unsafe bool FreeLibrary([In] IntPtr hModule);
+        public static extern bool FreeLibrary([In] IntPtr hModule);
         #endif
 
         [DllImport(DllName, SetLastError = true)]

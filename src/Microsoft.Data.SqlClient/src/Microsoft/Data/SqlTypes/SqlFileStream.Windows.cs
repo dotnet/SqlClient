@@ -919,12 +919,12 @@ namespace Microsoft.Data.SqlTypes
                 if (access is FileAccess.ReadWrite)
                 {
                     uint ioControlCode = Interop.Kernel32.CTL_CODE(
-                        Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
+                        Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode,
                         (byte)IoControlTransferType.METHOD_BUFFERED,
                         (byte)IoControlCodeAccess.FILE_ANY_ACCESS);
 
-                    if (!Interop.Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
+                    if (!Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
                     {
                         Win32Exception e = new Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);
