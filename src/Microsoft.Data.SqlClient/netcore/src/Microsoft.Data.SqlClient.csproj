@@ -702,9 +702,6 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FreeLibrary.netcore.cs">
       <Link>Interop\Windows\Kernel32\Interop.FreeLibrary.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\IoControlCodeAccess.cs">
       <Link>Interop\Windows\Kernel32\IoControlCodeAccess.cs</Link>
     </Compile>
