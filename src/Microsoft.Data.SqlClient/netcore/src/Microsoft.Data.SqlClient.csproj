@@ -746,6 +746,15 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs">
+      <Link>Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.netcore.cs">
+      <Link>Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SECURITY_STATUS.netcore.cs">
+      <Link>Common\Interop\Windows\SChannel\Interop.SECURITY_STATUS.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
     </Compile>
@@ -777,9 +786,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
 
-    <Compile Include="Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs" />
-    <Compile Include="Common\Interop\Windows\SChannel\Interop.SECURITY_STATUS.cs" />
-    <Compile Include="Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs" />
     <Compile Include="Common\Interop\Windows\sspicli\GlobalSSPI.cs" />
     <Compile Include="Common\Interop\Windows\sspicli\Interop.SSPI.cs" />
     <Compile Include="Common\Interop\Windows\sspicli\NegotiationInfoClass.cs" />
