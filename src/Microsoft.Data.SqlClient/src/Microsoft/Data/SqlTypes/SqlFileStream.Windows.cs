@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Interop_TEMP.Windows;
 using Interop_TEMP.Windows.Kernel32;
+using Interop_TEMP.Windows.NtDll;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -835,7 +836,7 @@ namespace Microsoft.Data.SqlTypes
 
                     #if NETFRAMEWORK
                     const string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,

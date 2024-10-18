@@ -714,6 +714,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
       <Link>Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs">
       <Link>Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs</Link>
     </Compile>
