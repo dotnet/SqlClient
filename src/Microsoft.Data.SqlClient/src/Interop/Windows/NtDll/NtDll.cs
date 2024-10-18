@@ -24,7 +24,7 @@ namespace Interop_TEMP.Windows.NtDll
             CreateOptions createOptions
 
             #if NETFRAMEWORK
-            ,Interop.ImpersonationLevel impersonationLevel,
+            ,ImpersonationLevel impersonationLevel,
             bool isDynamicTracking,
             bool isEffectiveOnly
             #endif

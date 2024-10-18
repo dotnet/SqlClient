@@ -2,12 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Runtime.InteropServices;
-
-internal partial class Interop
+namespace Interop_TEMP.Windows.NtDll
 {
-
-
     /// <summary>
     /// Values that specify security impersonation levels. Security impersonation levels govern
     /// the degree to which a server process can act on behalf of a client process.

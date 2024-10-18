@@ -10,7 +10,7 @@ namespace Interop_TEMP.Windows.NtDll
     internal unsafe struct SecurityQualityOfService
     {
         public SecurityQualityOfService(
-            Interop.ImpersonationLevel impersonationLevel,
+            ImpersonationLevel impersonationLevel,
             bool isDynamicTracking,
             bool isEffectiveOnly)
         {
@@ -30,7 +30,7 @@ namespace Interop_TEMP.Windows.NtDll
         /// may represent, or impersonate, the client. Security impersonation levels govern the
         /// degree to which a server process can act on behalf of a client process.
         /// </summary>
-        public Interop.ImpersonationLevel ImpersonationLevel { get; set; }
+        public ImpersonationLevel ImpersonationLevel { get; set; }
 
         /// <summary>
         /// Specifies whether the server is to be given a snapshot of the client's security

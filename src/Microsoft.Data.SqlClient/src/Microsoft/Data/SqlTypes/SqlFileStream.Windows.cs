@@ -845,7 +845,7 @@ namespace Microsoft.Data.SqlTypes
                         shareAccess: shareAccess,
                         createDisposition: createDisposition,
                         createOptions: createOptions,
-                        impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                        impersonationLevel: ImpersonationLevel.SecurityAnonymous,
                         isDynamicTracking: false,
                         isEffectiveOnly: false);
                     #else
