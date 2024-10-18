@@ -738,45 +738,6 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs">
       <Link>Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\GlobalSSPI.netcore.cs">
-      <Link>Interop\Windows\SspiCli\GlobalSSPI.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\Interop.SSPI.netcore.cs">
-      <Link>Interop\Windows\SspiCli\Interop.SSPI.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs">
-      <Link>Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_NegotiationInfoW.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecPkgContext_NegotiationInfoW.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_Sizes.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecPkgContext_Sizes.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_StreamSizes.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecPkgContext_StreamSizes.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecurityPackageInfo.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecurityPackageInfo.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIAuthType.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SSPIAuthType.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIInterface.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SSPIInterface.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPISecureChannelType.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SSPISecureChannelType.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIWrapper.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SSPIWrapper.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\UnicodeString.cs">
       <Link>Interop\Windows\UnicodeString.cs</Link>
     </Compile>
