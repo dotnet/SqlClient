@@ -6,16 +6,10 @@
 
 using System;
 using System.Runtime.InteropServices;
+using Interop_TEMP.Windows.SChannel;
 
 internal static partial class Interop
 {
-    internal enum ApplicationProtocolNegotiationStatus
-    {
-        None = 0,
-        Success,
-        SelectedClientOnly
-    }
-
     internal enum ApplicationProtocolNegotiationExt
     {
         None = 0,
