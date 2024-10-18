@@ -108,7 +108,7 @@ namespace Interop_TEMP.Windows.NtDll
             out IntPtr FileHandle,
             DesiredAccess DesiredAccess,
             ref ObjectAttributes ObjectAttributes,
-            out Interop.NtDll.IO_STATUS_BLOCK IoStatusBlock,
+            out IoStatusBlock IoStatusBlock,
             long* AllocationSize,
             FileAttributes FileAttributes,
             FileShare ShareAccess,

@@ -133,8 +133,8 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
       <Link>Common\Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
-      <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\IoStatusBlock.cs">
+      <Link>Interop\NtDll\IoStatusBlock.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
