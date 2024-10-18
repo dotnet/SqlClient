@@ -6,12 +6,11 @@
 
 using System;
 using System.Runtime.InteropServices;
-using Interop_TEMP.Windows.SChannel;
 
-internal static partial class Interop
+namespace Interop_TEMP.Windows.SChannel
 {
     [StructLayout(LayoutKind.Sequential)]
-    internal class SecPkgContext_ApplicationProtocol
+    internal struct SecPkgContextApplicationProtocol
     {
         private const int MaxProtocolIdSize = 0xFF;
 

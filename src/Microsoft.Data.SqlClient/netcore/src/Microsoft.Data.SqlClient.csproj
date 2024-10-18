@@ -730,13 +730,13 @@
       <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs">
-      <Link>Common\Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs</Link>
+      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs">
-      <Link>Common\Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs</Link>
+      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs">
-      <Link>Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs">
+      <Link>Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\GlobalSSPI.netcore.cs">
       <Link>Interop\Windows\SspiCli\GlobalSSPI.netcore.cs</Link>
