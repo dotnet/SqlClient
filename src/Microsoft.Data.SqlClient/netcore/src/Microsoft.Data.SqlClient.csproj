@@ -620,8 +620,6 @@
 
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
-    <Compile Include="Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs" />
-    <Compile Include="Common\System\Net\DebugSafeHandle.cs" />
     <Compile Include="Common\System\Net\InternalException.cs" />
     <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
     <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
@@ -685,6 +683,18 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs">
       <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs">
+      <Link>Common\Interop\Windows\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs">
+      <Link>Common\Interop\Windows\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugSafeHandle.netcore.cs">
+      <Link>Common\Interop\Windows\Handles\DebugSafeHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
+      <Link>Common\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Errors.cs">
       <Link>Common\Interop\Windows\Interop.Errors.cs</Link>
@@ -830,11 +840,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-
-    <Compile Include="Common\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs" />
+    
     <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
-    <Compile Include="Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
     <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
     <Compile Include="Common\System\Net\Security\NetEventSource.Security.Windows.cs" />

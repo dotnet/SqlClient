@@ -12,6 +12,7 @@
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
 	</ItemGroup>
 	<ItemGroup>
+	  <Folder Include="Interop\Windows\Handles\" />
 	  <Folder Include="Interop\Windows\SspiCli\" />
 	</ItemGroup>
 

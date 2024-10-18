@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if !NETFRAMEWORK
+
 namespace Microsoft.Win32.SafeHandles
 {
     sealed internal class SafeLibraryHandle : SafeHandleZeroOrMinusOneIsInvalid
@@ -14,3 +16,5 @@ namespace Microsoft.Win32.SafeHandles
         }
     }
 }
+
+#endif
