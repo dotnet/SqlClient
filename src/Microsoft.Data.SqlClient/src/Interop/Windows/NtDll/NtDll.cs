@@ -54,7 +54,7 @@ namespace Interop_TEMP.Windows.NtDll
                 #endif
 
                 // Generate the object attributes object that defines what we're opening
-                Interop.NtDll.OBJECT_ATTRIBUTES attributes = new Interop.NtDll.OBJECT_ATTRIBUTES(
+                ObjectAttributes attributes = new ObjectAttributes(
                     objectName: &ucPath,
                     attributes: Interop.NtDll.ObjectAttributes.OBJ_CASE_INSENSITIVE,
                     rootDirectory: IntPtr.Zero,
@@ -104,7 +104,7 @@ namespace Interop_TEMP.Windows.NtDll
         private static extern unsafe int NtCreateFile(
             out IntPtr FileHandle,
             Interop.NtDll.DesiredAccess DesiredAccess,
-            ref Interop.NtDll.OBJECT_ATTRIBUTES ObjectAttributes,
+            ref ObjectAttributes ObjectAttributes,
             out Interop.NtDll.IO_STATUS_BLOCK IoStatusBlock,
             long* AllocationSize,
             System.IO.FileAttributes FileAttributes,
