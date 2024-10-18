@@ -44,13 +44,13 @@ namespace Interop_TEMP.Windows.NtDll
 
                 #if NETFRAMEWORK
                 // Generate a Security QOS object
-                Interop.SecurityQualityOfService qos = new Interop.SecurityQualityOfService(
+                SecurityQualityOfService qos = new SecurityQualityOfService(
                     impersonationLevel,
                     isDynamicTracking,
                     isEffectiveOnly);
-                Interop.SecurityQualityOfService* pQos = &qos;
+                SecurityQualityOfService* pQos = &qos;
                 #else
-                Interop.SecurityQualityOfService* pQos = null;
+                SecurityQualityOfService* pQos = null;
                 #endif
 
                 // Generate the object attributes object that defines what we're opening

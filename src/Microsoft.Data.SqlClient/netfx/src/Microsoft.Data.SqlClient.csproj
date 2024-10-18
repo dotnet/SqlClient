@@ -148,6 +148,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\ObjecAttributes.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
       <Link>Interop\UnicodeString.cs</Link>
     </Compile>

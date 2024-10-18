@@ -38,7 +38,7 @@ namespace Interop_TEMP.Windows.NtDll
         /// Optional quality of service to be applied to the object. Used to indicate
         /// security impersonation level and context tracking mode (dynamic or static).
         /// </summary>
-        public Interop.SecurityQualityOfService* SecurityQoS;
+        public SecurityQualityOfService* SecurityQoS;
 
         /// <summary>
         /// Equivalent of InitializeObjectAttributes macro with the exception that you can directly set SQOS.
@@ -47,7 +47,7 @@ namespace Interop_TEMP.Windows.NtDll
             UnicodeString* objectName,
             ObjectAttributeFlags attributes,
             IntPtr rootDirectory,
-            Interop.SecurityQualityOfService* securityQos)
+            SecurityQualityOfService* securityQos)
         {
             Length = (uint)sizeof(ObjectAttributes);
             RootDirectory = rootDirectory;
