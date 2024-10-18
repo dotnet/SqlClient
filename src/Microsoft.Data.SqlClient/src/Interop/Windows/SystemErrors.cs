@@ -11,5 +11,10 @@ namespace Interop_TEMP.Windows
         internal const int ERROR_INVALID_HANDLE = 0x6;
         internal const int ERROR_SHARING_VIOLATION = 0x20;
         internal const int ERROR_INVALID_PARAMETER = 0x57;
+
+        /// <summary>
+        /// The system cannot find message text for the provided error number.
+        /// </summary>
+        internal const int ERROR_MR_MID_NOT_FOUND = 317;
     }
 }

@@ -12,6 +12,10 @@ namespace Interop_TEMP.Windows.NtDll
     {
         private const string DllName = "ntdll.dll";
 
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms680600(v=vs.85).aspx
+        [DllImport(DllName, ExactSpelling = true)]
+        public static extern uint RtlNtStatusToDosError(int Status);
+
         internal static unsafe (int status, IntPtr handle) CreateFile(
             string path,
             byte[] eaName,
