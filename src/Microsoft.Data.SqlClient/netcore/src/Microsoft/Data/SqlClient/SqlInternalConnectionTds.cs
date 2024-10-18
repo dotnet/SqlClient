@@ -109,6 +109,10 @@ namespace Microsoft.Data.SqlClient
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
         private TdsParser _parser;
+
+        // Connection re-route limit
+        internal const int _maxNumberOfRedirectRoute = 10;
+
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
         private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
@@ -130,7 +134,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
@@ -1363,11 +1367,15 @@ namespace Microsoft.Data.SqlClient
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
 
+            // The AzureSQLSupport feature is implicitly set for ReadOnly login
+            if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
+            }
+
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
-#if DEBUG
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
-#endif
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
@@ -1441,6 +1449,23 @@ namespace Microsoft.Data.SqlClient
                             connectionOptions,
                             credential,
                             timeout);
+                }
+
+                if (!IsAzureSQLConnection)
+                {
+                    // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
+                    if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
+                    {
+                        if (!string.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
+                        {
+                            throw SQL.ROR_FailoverNotSupportedConnString();
+                        }
+
+                        if (ServerProvidedFailOverPartner != null)
+                        {
+                            throw SQL.ROR_FailoverNotSupportedServer(this);
+                        }
+                    }
                 }
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
@@ -1558,9 +1583,9 @@ namespace Microsoft.Data.SqlClient
                     if (RoutingInfo != null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
-                        if (routingAttempts > 0)
+                        if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
                         }
 
                         if (timeout.IsExpired)
@@ -1756,7 +1781,9 @@ namespace Microsoft.Data.SqlClient
                 // Re-allocate parser each time to make sure state is known
                 // RFC 50002652 - if parser was created by previous attempt, dispose it to properly close the socket, if created
                 if (_parser != null)
+                {
                     _parser.Disconnect();
+                }
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                 Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
@@ -1789,15 +1816,44 @@ namespace Microsoft.Data.SqlClient
                             intervalTimer,
                             withFailover: true
                             );
-
-                    if (RoutingInfo != null)
+                    int routingAttemps = 0;
+                    while (RoutingInfo != null)
                     {
-                        // We are in login with failover scenation and server sent routing information
-                        // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
-                        // If it is something else, not known yet (future server) - this client is not designed to support this.
-                        // In any case, server should not have sent the routing info.
+                        if (routingAttemps > _maxNumberOfRedirectRoute)
+                        {
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
+                        }
+                        routingAttemps++;
+
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
-                        throw SQL.ROR_UnexpectedRoutingInfo(this);
+
+                        if(_parser != null)
+                        {
+                            _parser.Disconnect();
+                        }
+
+                        _parser = new TdsParser(ConnectionOptions.MARS, connectionOptions.Asynchronous);
+
+                        Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
+
+                        currentServerInfo = new ServerInfo(ConnectionOptions, RoutingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
+                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                        _originalClientConnectionId = _clientConnectionId;
+                        _routingDestination = currentServerInfo.UserServerName;
+
+                        // restore properties that could be changed by the environemnt tokens
+                        _currentPacketSize = connectionOptions.PacketSize;
+                        _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
+                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
+                        _currentFailoverPartner = null;
+                        _instanceName = string.Empty;
+
+                        AttemptOneLogin(
+                            currentServerInfo,
+                            newPassword,
+                            newSecurePassword,
+                            intervalTimer,
+                            withFailover: true);
                     }
                     break; // leave the while loop -- we've successfully connected
                 }
@@ -1814,7 +1870,7 @@ namespace Microsoft.Data.SqlClient
                         throw;  // Caller will call LoginFailure()
                     }
 
-                    if (IsConnectionDoomed)
+                    if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
                     {
                         throw;
                     }
@@ -1916,7 +1972,7 @@ namespace Microsoft.Data.SqlClient
                                 TimeoutTimer timeout,
                                 bool withFailover = false)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information 
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
@@ -2745,23 +2801,33 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     }
-
-                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                case TdsEnums.FEATUREEXT_AZURESQLSUPPORT:
                     {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for UTF8 support", ObjectID);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for AzureSQLSupport", ObjectID);
+
                         if (data.Length < 1)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown value for UTF8 support", ObjectID);
-                            throw SQL.ParsingError();
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        IsAzureSQLConnection = true;
+
+                        //  Bit 0 for RO/FP support
+                        if ((data[0] & 1) == 1 && SqlClientEventSource.Log.IsTraceEnabled())
+                        {
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, FailoverPartner enabled with Readonly intent for AzureSQL DB", ObjectID);
+
                         }
                         break;
                     }
                 case TdsEnums.FEATUREEXT_DATACLASSIFICATION:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for DATACLASSIFICATION", ObjectID);
+
                         if (data.Length < 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
+
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte supportedDataClassificationVersion = data[0];
@@ -2774,10 +2840,23 @@ namespace Microsoft.Data.SqlClient
                         if (data.Length != 2)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for DATACLASSIFICATION", ObjectID);
+
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         byte enabled = data[1];
                         _parser.DataClassificationVersion = (enabled == 0) ? TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED : supportedDataClassificationVersion;
+                        break;
+                    }
+                case TdsEnums.FEATUREEXT_UTF8SUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for UTF8 support", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown value for UTF8 support", ObjectID);
+
+                            throw SQL.ParsingError();
+                        }
                         break;
                     }
 
@@ -2824,7 +2903,7 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
-                        byte jsonSupportVersion = data[0];            
+                        byte jsonSupportVersion = data[0];
                         if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);

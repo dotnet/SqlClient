@@ -30,14 +30,14 @@
   <!-- Override debugtype=portable in Directory.Build.props for netfx -->
   <PropertyGroup>
     <DebugType>full</DebugType>
-  </PropertyGroup>  
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)\$(TargetFramework)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
@@ -67,8 +67,6 @@
     <GenerateAssemblyAttribute>true</GenerateAssemblyAttribute>
     <RawClDefines>$(RawClDefines);SUPPRESS_SECURITY_RULES=1</RawClDefines>
     <!-- ADO.NET internal defines -->
-    <UseOwnAssemblyVersionOnly Condition="'$(AdoNetService)'=='true'">true</UseOwnAssemblyVersionOnly>
-    <DefineConstants Condition="'$(AdoNetService)'=='true'">$(DefineConstants);ADONET_SERVICE;ADONET_CERT_AUTH;ADONET_ORIGINAL_CLIENT_ADDRESS</DefineConstants>
     <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
@@ -144,6 +142,9 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -207,6 +208,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
+      <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
@@ -221,6 +225,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
@@ -471,6 +478,15 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
     </Compile>
@@ -636,6 +652,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSessionPool.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSessionPool.cs</Link>
     </Compile>
@@ -654,6 +673,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -668,7 +690,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
+    <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
@@ -681,7 +703,6 @@
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
@@ -700,14 +721,9 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCertificateCallbacks.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientOriginalAddressInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
@@ -721,13 +737,11 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Misc\ExternDll.cs" />
   </ItemGroup>
   <!-- Resources  -->

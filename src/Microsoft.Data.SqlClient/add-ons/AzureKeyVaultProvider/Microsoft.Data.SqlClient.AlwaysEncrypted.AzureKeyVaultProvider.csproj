@@ -17,7 +17,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
   </PropertyGroup>
    <!--Generating Strong Name-->
-  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+  <PropertyGroup Condition="'$(CDP_BUILD_TYPE)'=='Official'">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
   </PropertyGroup>

@@ -121,7 +121,7 @@ function Invoke-SqlServerCertificateCommand {
       $e = $e.InnerException
       $msg += "`n" + $e.Message
     }
-    Write-Host "Certificate generation was not successfull. $msg"
+    Write-Host "Certificate generation was not successful. $msg"
   }
 }
 

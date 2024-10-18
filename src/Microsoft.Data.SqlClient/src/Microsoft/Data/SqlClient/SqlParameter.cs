@@ -18,6 +18,7 @@ using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1001,7 +1002,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks the parameter name for the @ prefix and appends it if it is missing, then apends the parameter name
+        /// Checks the parameter name for the @ prefix and appends it if it is missing, then appends the parameter name
         /// </summary>
         /// <param name="builder"></param>
         /// <param name="rawParameterName"></param>
@@ -1563,6 +1564,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NVarChar:
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
+                        case SqlDbTypeExtensions.Json:
                             {
                                 coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType)) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
@@ -2245,6 +2247,10 @@ namespace Microsoft.Data.SqlClient
                         if (currentType == typeof(SqlXml))
                         {
                             value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                        }
+                        else if (currentType == typeof(SqlJson))
+                        {
+                            value = (value as SqlJson).Value;
                         }
                         else if (currentType == typeof(SqlString))
                         {

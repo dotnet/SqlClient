@@ -47,9 +47,9 @@ class Program
                     new SqlBulkCopyColumnMapping("Name", "ProdName");
                 bulkCopy.ColumnMappings.Add(mapName);
 
-                SqlBulkCopyColumnMapping mapMumber =
+                SqlBulkCopyColumnMapping mapNumber =
                     new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                bulkCopy.ColumnMappings.Add(mapMumber);
+                bulkCopy.ColumnMappings.Add(mapNumber);
 
                 // Write from the source to the destination.
                 try
