@@ -118,6 +118,9 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Libraries.cs">
       <Link>Interop\Interop.Libraries.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\CreateDisposition.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>

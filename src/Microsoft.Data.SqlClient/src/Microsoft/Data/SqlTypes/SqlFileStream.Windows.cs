@@ -764,7 +764,7 @@ namespace Microsoft.Data.SqlTypes
             #endif
 
             Interop.NtDll.CreateOptions createOptions = 0;
-            Interop.NtDll.CreateDisposition createDisposition = 0;
+            CreateDisposition createDisposition = 0;
             Interop.NtDll.DesiredAccess desiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES |
                                                         Interop.NtDll.DesiredAccess.SYNCHRONIZE;
             FileShare shareAccess = 0;
@@ -774,20 +774,20 @@ namespace Microsoft.Data.SqlTypes
                 case FileAccess.Read:
                     desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
                     shareAccess = FileShare.Delete | FileShare.ReadWrite;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    createDisposition = CreateDisposition.FILE_OPEN;
                     break;
 
                 case FileAccess.Write:
                     desiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 case FileAccess.ReadWrite:
                     desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA |
                                       Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 // Note: default case is heuristically unreachable due to check above.
@@ -850,7 +850,7 @@ namespace Microsoft.Data.SqlTypes
                         isEffectiveOnly: false);
                     #else
                     const string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,

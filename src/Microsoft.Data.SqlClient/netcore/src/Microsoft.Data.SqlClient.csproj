@@ -699,6 +699,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
       <Link>Common\Interop\Windows\Kernel32\Kernel32.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\CreateDisposition.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>

@@ -12,56 +12,6 @@ internal partial class Interop
     internal partial class NtDll
     {
         /// <summary>
-        /// File creation disposition when calling directly to NT APIs.
-        /// </summary>
-        public enum CreateDisposition : uint
-        {
-            /// <summary>
-            /// Default. Replace or create. Deletes existing file instead of overwriting.
-            /// </summary>
-            /// <remarks>
-            /// As this potentially deletes it requires that DesiredAccess must include Delete.
-            /// This has no equivalent in CreateFile.
-            /// </remarks>
-            FILE_SUPERSEDE = 0,
-
-            /// <summary>
-            /// Open if exists or fail if doesn't exist. Equivalent to OPEN_EXISTING or
-            /// <see cref="System.IO.FileMode.Open"/>.
-            /// </summary>
-            /// <remarks>
-            /// TruncateExisting also uses Open and then manually truncates the file
-            /// by calling NtSetInformationFile with FileAllocationInformation and an
-            /// allocation size of 0.
-            /// </remarks>
-            FILE_OPEN = 1,
-
-            /// <summary>
-            /// Create if doesn't exist or fail if does exist. Equivalent to CREATE_NEW
-            /// or <see cref="System.IO.FileMode.CreateNew"/>.
-            /// </summary>
-            FILE_CREATE = 2,
-
-            /// <summary>
-            /// Open if exists or create if doesn't exist. Equivalent to OPEN_ALWAYS or
-            /// <see cref="System.IO.FileMode.OpenOrCreate"/>.
-            /// </summary>
-            FILE_OPEN_IF = 3,
-
-            /// <summary>
-            /// Open and overwrite if exists or fail if doesn't exist. Equivalent to
-            /// TRUNCATE_EXISTING or <see cref="System.IO.FileMode.Truncate"/>.
-            /// </summary>
-            FILE_OVERWRITE = 4,
-
-            /// <summary>
-            /// Open and overwrite if exists or create if doesn't exist. Equivalent to
-            /// CREATE_ALWAYS or <see cref="System.IO.FileMode.Create"/>.
-            /// </summary>
-            FILE_OVERWRITE_IF = 5
-        }
-
-        /// <summary>
         /// Options for creating/opening files with NtCreateFile.
         /// </summary>
         [Flags]

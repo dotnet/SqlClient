@@ -20,7 +20,7 @@ namespace Interop_TEMP.Windows.NtDll
             Interop.NtDll.DesiredAccess desiredAccess,
             FileAttributes fileAttributes,
             FileShare shareAccess,
-            Interop.NtDll.CreateDisposition createDisposition,
+            CreateDisposition createDisposition,
             Interop.NtDll.CreateOptions createOptions
 
             #if NETFRAMEWORK
@@ -97,7 +97,6 @@ namespace Interop_TEMP.Windows.NtDll
             }
         }
 
-
         // https://msdn.microsoft.com/en-us/library/bb432380.aspx
         // https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424.aspx
         [DllImport(DllName, CharSet = CharSet.Unicode, ExactSpelling = true)]
@@ -109,7 +108,7 @@ namespace Interop_TEMP.Windows.NtDll
             long* AllocationSize,
             System.IO.FileAttributes FileAttributes,
             System.IO.FileShare ShareAccess,
-            Interop.NtDll.CreateDisposition CreateDisposition,
+            CreateDisposition CreateDisposition,
             Interop.NtDll.CreateOptions CreateOptions,
             void* EaBuffer,
             uint EaLength);
