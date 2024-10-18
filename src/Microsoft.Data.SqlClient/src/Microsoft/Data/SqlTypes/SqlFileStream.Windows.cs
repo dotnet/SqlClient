@@ -918,7 +918,7 @@ namespace Microsoft.Data.SqlTypes
                 // we need to tell SQL Server to preserve the existing file contents.
                 if (access is FileAccess.ReadWrite)
                 {
-                    uint ioControlCode = Interop.Kernel32.CTL_CODE(
+                    uint ioControlCode = Kernel32.CtlCode(
                         Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode,
                         (byte)IoControlTransferType.METHOD_BUFFERED,

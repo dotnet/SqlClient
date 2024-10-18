@@ -103,9 +103,6 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
       <Link>Interop\SystemErrors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.CTL_CODE.cs">
-      <Link>Interop\Kernel32\Interop.CTL_CODE.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\FileTypes.cs">
       <Link>Interop\Kernel32\FileTypes.cs</Link>
     </Compile>
