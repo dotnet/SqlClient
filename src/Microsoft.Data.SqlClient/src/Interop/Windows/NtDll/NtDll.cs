@@ -17,7 +17,7 @@ namespace Interop_TEMP.Windows.NtDll
             byte[] eaName,
             byte[] eaValue,
 
-            Interop.NtDll.DesiredAccess desiredAccess,
+            DesiredAccess desiredAccess,
             FileAttributes fileAttributes,
             FileShare shareAccess,
             CreateDisposition createDisposition,
@@ -102,7 +102,7 @@ namespace Interop_TEMP.Windows.NtDll
         [DllImport(DllName, CharSet = CharSet.Unicode, ExactSpelling = true)]
         private static extern unsafe int NtCreateFile(
             out IntPtr FileHandle,
-            Interop.NtDll.DesiredAccess DesiredAccess,
+            DesiredAccess DesiredAccess,
             ref ObjectAttributes ObjectAttributes,
             out Interop.NtDll.IO_STATUS_BLOCK IoStatusBlock,
             long* AllocationSize,

@@ -765,27 +765,27 @@ namespace Microsoft.Data.SqlTypes
 
             CreateOptions createOptions = 0;
             CreateDisposition createDisposition = 0;
-            Interop.NtDll.DesiredAccess desiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES |
-                                                        Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            DesiredAccess desiredAccess = DesiredAccess.FILE_READ_ATTRIBUTES |
+                                          DesiredAccess.SYNCHRONIZE;
             FileShare shareAccess = 0;
 
             switch (access)
             {
                 case FileAccess.Read:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA;
                     shareAccess = FileShare.Delete | FileShare.ReadWrite;
                     createDisposition = CreateDisposition.FILE_OPEN;
                     break;
 
                 case FileAccess.Write:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
                     createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 case FileAccess.ReadWrite:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA |
-                                      Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA |
+                                     DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
                     createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;

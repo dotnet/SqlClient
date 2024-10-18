@@ -124,14 +124,14 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\CreateOptions.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\DesiredAccess.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
       <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.NtCreateFile.cs">
-      <Link>Interop\NtDll\Interop.NtCreateFile.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Interop\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
