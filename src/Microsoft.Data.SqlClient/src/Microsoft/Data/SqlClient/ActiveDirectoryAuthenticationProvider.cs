@@ -4,8 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -14,17 +12,15 @@ using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
-
 #if INTERACTIVE_AUTH
 using Microsoft.Identity.Client.Broker;
 #endif
-
 using Microsoft.Identity.Client.Extensibility;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
-    public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
         /// <summary>
         /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
@@ -44,6 +40,31 @@ namespace Microsoft.Data.SqlClient
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
         private ICustomWebUi _customWebUI = null;
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
+        private SynchronizationContext _synchronizationContext = null;
+
+        private SynchronizationContext SynchronizationContext
+        {
+            get
+            {
+                if (_synchronizationContext != null)
+                {
+                    return _synchronizationContext;
+                }
+                else if (SynchronizationContext.Current != null)
+                {
+                    return SynchronizationContext.Current;
+                }
+                else
+                {
+                    return new SynchronizationContext();
+                }
+            }
+
+            set
+            {
+                _synchronizationContext = value;
+            }
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider()
@@ -87,6 +108,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetAcquireAuthorizationCodeAsyncCallback/*'/>
         public void SetAcquireAuthorizationCodeAsyncCallback(Func<Uri, Uri, CancellationToken, Task<Uri>> acquireAuthorizationCodeAsyncCallback) => _customWebUI = new CustomWebUi(acquireAuthorizationCodeAsyncCallback);
 
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="synchronizationContext"></param>
+        public void SetSynchronizationContext(SynchronizationContext synchronizationContext) => this.SynchronizationContext = synchronizationContext;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
@@ -112,33 +139,6 @@ namespace Microsoft.Data.SqlClient
         {
             _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
         }
-
-#if NETFRAMEWORK
-
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
-        public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => SetParentActivityOrWindow(iWin32WindowFunc);
-#endif
-
-        private Func<object> _parentActivityOrWindowFunc = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="parentActivityOrWindowFunc"></param>
-        public void SetParentActivityOrWindow(Func<object> parentActivityOrWindowFunc) => this._parentActivityOrWindowFunc = parentActivityOrWindowFunc;
-
-        private delegate Task<AuthenticationResult> InvokeDelegate(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
-    SqlAuthenticationMethod authenticationMethod, CancellationTokenSource cts, ICustomWebUi customWebUI, Func<DeviceCodeResult, Task> deviceCodeFlowCallback);
-
-        private SynchronizationContext _synchronizationContext = null;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="synchronizationContext"></param>
-        public void SetSynchronizationContext(SynchronizationContext synchronizationContext) => this._synchronizationContext = synchronizationContext;
-
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
 
@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
                 //Public client auth methods
                 case SqlAuthenticationMethod.ActiveDirectoryPassword:
                     {
-                        PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId, _parentActivityOrWindowFunc);
+                        PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId, ParentActivityOrWindow);
                         IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
                         AuthenticationResult result = null;
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                 case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                     {
-                        PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId, _parentActivityOrWindowFunc);
+                        PublicClientAppKey pcaKey = new(parameters.Authority, redirectUri, _applicationClientId, ParentActivityOrWindow);
                         IPublicClientApplication app = await GetPublicClientAppInstanceAsync(pcaKey, cts.Token).ConfigureAwait(false);
 
                         AuthenticationResult result = null;
@@ -309,7 +309,9 @@ namespace Microsoft.Data.SqlClient
                                 _taskCompletionSource = new TaskCompletionSource<AuthenticationResult>()
                             };
 
-                            _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+
+                            SynchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                            
                             result = await state._taskCompletionSource.Task;
 
                             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
@@ -331,15 +333,9 @@ namespace Microsoft.Data.SqlClient
                                 _taskCompletionSource = new TaskCompletionSource<AuthenticationResult>()
                             };
 
-                            if (_synchronizationContext == null)
-                            {
-                                var tempSC = new SynchronizationContext();
-                                tempSC.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
-                            }
-                            else
-                            {
-                                _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
-                            }
+
+                            SynchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                            
                             result = await state._taskCompletionSource.Task;
 
                             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
@@ -630,50 +626,10 @@ namespace Microsoft.Data.SqlClient
             .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
             .WithRedirectUri(publicClientAppKey._redirectUri)
 #if INTERACTIVE_AUTH
-            .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
+            .WithParentActivityOrWindow(ParentActivityOrWindow)
             .WithBroker(new BrokerOptions(BrokerOptions.OperatingSystems.Windows))
 #endif
             .Build();
-        }
-
-
-        // This is your window handle!
-        static IntPtr GetParent()
-        {
-            Process currentProcess = Process.GetCurrentProcess();
-            return currentProcess.MainWindowHandle;
-        }
-
-        enum GetAncestorFlags
-        {
-            GetParent = 1,
-            GetRoot = 2,
-            /// <summary>
-            /// Retrieves the owned root window by walking the chain of parent and owner windows returned by GetParent.
-            /// </summary>
-            GetRootOwner = 3
-        }
-
-        /// <summary>
-        /// Retrieves the handle to the ancestor of the specified window.
-        /// </summary>
-        /// <param name="hwnd">A handle to the window whose ancestor is to be retrieved.
-        /// If this parameter is the desktop window, the function returns NULL. </param>
-        /// <param name="flags">The ancestor to be retrieved.</param>
-        /// <returns>The return value is the handle to the ancestor window.</returns>
-        [DllImport("user32.dll", ExactSpelling = true)]
-        static extern IntPtr GetAncestor(IntPtr hwnd, GetAncestorFlags flags);
-
-        [DllImport("kernel32.dll")]
-        static extern IntPtr GetConsoleWindow();
-
-        // This is your window handle!
-        IntPtr GetConsoleOrTerminalWindow()
-        {
-            IntPtr consoleHandle = GetConsoleWindow();
-            IntPtr handle = GetAncestor(consoleHandle, GetAncestorFlags.GetRootOwner);
-
-            return handle;
         }
 
         private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)

@@ -223,6 +223,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
@@ -687,6 +690,14 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetConsoleWindow.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetConsoleWindow.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\User32\Interop.GetAncestor.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop.GetAncestor.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
