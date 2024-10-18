@@ -10,13 +10,6 @@ using Interop_TEMP.Windows.SChannel;
 
 internal static partial class Interop
 {
-    internal enum ApplicationProtocolNegotiationExt
-    {
-        None = 0,
-        NPN,
-        ALPN
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     internal class SecPkgContext_ApplicationProtocol
     {
