@@ -331,7 +331,15 @@ namespace Microsoft.Data.SqlClient
                                 _taskCompletionSource = new TaskCompletionSource<AuthenticationResult>()
                             };
 
-                            _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                            if (_synchronizationContext == null)
+                            {
+                                var tempSC = new SynchronizationContext();
+                                tempSC.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                            }
+                            else
+                            {
+                                _synchronizationContext.Post(AcquireTokenInteractiveDeviceFlowAsync, state);
+                            }
                             result = await state._taskCompletionSource.Task;
 
                             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
