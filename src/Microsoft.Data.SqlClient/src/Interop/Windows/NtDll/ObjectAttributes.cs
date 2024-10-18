@@ -27,7 +27,7 @@ namespace Interop_TEMP.Windows.NtDll
         /// </summary>
         public UnicodeString* ObjectName;
 
-        public Interop.NtDll.ObjectAttributes Attributes;
+        public ObjectAttributeFlags Attributes;
 
         /// <summary>
         /// If null, object will receive default security settings.
@@ -45,7 +45,7 @@ namespace Interop_TEMP.Windows.NtDll
         /// </summary>
         public ObjectAttributes(
             UnicodeString* objectName,
-            Interop.NtDll.ObjectAttributes attributes,
+            ObjectAttributeFlags attributes,
             IntPtr rootDirectory,
             Interop.SecurityQualityOfService* securityQos)
         {

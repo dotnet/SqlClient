@@ -136,6 +136,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\ObjecAttributes.cs</Link>
     </Compile>

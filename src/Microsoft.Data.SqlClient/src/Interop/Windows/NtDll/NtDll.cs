@@ -56,7 +56,7 @@ namespace Interop_TEMP.Windows.NtDll
                 // Generate the object attributes object that defines what we're opening
                 ObjectAttributes attributes = new ObjectAttributes(
                     objectName: &ucPath,
-                    attributes: Interop.NtDll.ObjectAttributes.OBJ_CASE_INSENSITIVE,
+                    attributes: ObjectAttributeFlags.OBJ_CASE_INSENSITIVE,
                     rootDirectory: IntPtr.Zero,
                     securityQos: pQos);
 
