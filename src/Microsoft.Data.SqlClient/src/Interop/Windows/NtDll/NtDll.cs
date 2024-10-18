@@ -21,7 +21,7 @@ namespace Interop_TEMP.Windows.NtDll
             FileAttributes fileAttributes,
             FileShare shareAccess,
             CreateDisposition createDisposition,
-            Interop.NtDll.CreateOptions createOptions
+            CreateOptions createOptions
 
             #if NETFRAMEWORK
             ,Interop.ImpersonationLevel impersonationLevel,
@@ -106,10 +106,10 @@ namespace Interop_TEMP.Windows.NtDll
             ref ObjectAttributes ObjectAttributes,
             out Interop.NtDll.IO_STATUS_BLOCK IoStatusBlock,
             long* AllocationSize,
-            System.IO.FileAttributes FileAttributes,
-            System.IO.FileShare ShareAccess,
+            FileAttributes FileAttributes,
+            FileShare ShareAccess,
             CreateDisposition CreateDisposition,
-            Interop.NtDll.CreateOptions CreateOptions,
+            CreateOptions CreateOptions,
             void* EaBuffer,
             uint EaLength);
     }

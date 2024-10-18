@@ -763,7 +763,7 @@ namespace Microsoft.Data.SqlTypes
             DemandAccessPermission(path, access);
             #endif
 
-            Interop.NtDll.CreateOptions createOptions = 0;
+            CreateOptions createOptions = 0;
             CreateDisposition createDisposition = 0;
             Interop.NtDll.DesiredAccess desiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES |
                                                         Interop.NtDll.DesiredAccess.SYNCHRONIZE;
@@ -795,22 +795,22 @@ namespace Microsoft.Data.SqlTypes
 
             if ((options & FileOptions.WriteThrough) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+                createOptions |= CreateOptions.FILE_WRITE_THROUGH;
             }
 
             if ((options & FileOptions.Asynchronous) == 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+                createOptions |= CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
             if ((options & FileOptions.SequentialScan) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+                createOptions |= CreateOptions.FILE_SEQUENTIAL_ONLY;
             }
 
             if ((options & FileOptions.RandomAccess) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+                createOptions |= CreateOptions.FILE_RANDOM_ACCESS;
             }
 
             SafeFileHandle fileHandle = null;
