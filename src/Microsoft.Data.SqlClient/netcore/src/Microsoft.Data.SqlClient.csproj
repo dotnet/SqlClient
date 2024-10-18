@@ -131,8 +131,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
       <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProviderBase.cs">
-      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProviderBase.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
@@ -818,7 +818,7 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProviderBase.Unix.cs</Link>
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Unix.cs</Link>
     </Compile>
 
     <Compile Include="Common\Interop\Unix\Interop.Libraries.cs" />
