@@ -7,6 +7,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -2564,43 +2565,45 @@ namespace Microsoft.Data.SqlClient
             return isAlive;
         }
 
-        /*
+        
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
-        private void DumpBuffer() {
-            Console.WriteLine("dumping buffer");
-            Console.WriteLine("_inBytesRead = {0}", _inBytesRead);
-            Console.WriteLine("_inBytesUsed = {0}", _inBytesUsed);
+        internal string DumpBuffer() {
+            StringBuilder buffer = new StringBuilder(128);
+            buffer.AppendLine("dumping buffer");
+            buffer.AppendFormat("_inBytesRead = {0}", _inBytesRead).AppendLine();
+            buffer.AppendFormat("_inBytesUsed = {0}", _inBytesUsed).AppendLine();
             int cc = 0; // character counter
             int i;
-            Console.WriteLine("used buffer:");
+            buffer.AppendLine("used buffer:");
             for (i=0; i< _inBytesUsed; i++) {
                 if (cc==16) {
-                    Console.WriteLine();
+                    buffer.AppendLine();
                     cc = 0;
                 }
-                Console.Write("{0,-2:X2} ", _inBuff[i]);
+                buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
             if (cc>0) {
-                Console.WriteLine();
+                buffer.AppendLine();
             }
 
             cc = 0;
-            Console.WriteLine("unused buffer:");
+            buffer.AppendLine("unused buffer:");
             for (i=_inBytesUsed; i<_inBytesRead; i++) {
                 if (cc==16) {
-                    Console.WriteLine();
+                    buffer.AppendLine();
                     cc = 0;
                 }
-                Console.Write("{0,-2:X2} ", _inBuff[i]);
+                buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
             if (cc>0) {
-                Console.WriteLine();
+                buffer.AppendLine();
             }
+            return buffer.ToString();
         }
-        */
+        
 
         internal void SetSnapshot()
         {
@@ -2649,15 +2652,21 @@ namespace Microsoft.Data.SqlClient
                         PrevPacket.NextPacket = null;
                         PrevPacket = null;
                     }
-                    SetDebugStackInternal(null);
-                    SetDebugPacketIdInternal(0);
+                    SetDebugStackImpl(null);
+                    SetDebugPacketId(0);
+                    SetDebugDataHash();
                 }
 
-                internal void SetDebugStack(string value) => SetDebugStackInternal(value);
-                internal void SetDebugPacketId(int value) => SetDebugPacketIdInternal(value);
+                internal void SetDebugStack(string value) => SetDebugStackImpl(value);
+                internal void SetDebugPacketId(int value) => SetDebugPacketIdImpl(value);
+                internal void SetDebugDataHash() => SetDebugDataHashImpl();
 
-                partial void SetDebugStackInternal(string value);
-                partial void SetDebugPacketIdInternal(int value);
+                internal void CheckDebugDataHash() => CheckDebugDataHashImpl();
+
+                partial void SetDebugStackImpl(string value);
+                partial void SetDebugPacketIdImpl(int value);
+                partial void SetDebugDataHashImpl();
+                partial void CheckDebugDataHashImpl();
             }
 
 #if DEBUG
@@ -2679,33 +2688,137 @@ namespace Microsoft.Data.SqlClient
                         _data = data;
                     }
 
-                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                    public PacketData[] Items
+                    //[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    //public PacketData[] Items
+                    //{
+                    //    get
+                    //    {
+                    //        PacketData[] items = Array.Empty<PacketData>();
+                    //        if (_data != null)
+                    //        {
+                    //            int count = 0;
+                    //            for (PacketData current = _data; current != null; current = current?.NextPacket)
+                    //            {
+                    //                count++;
+                    //            }
+                    //            items = new PacketData[count];
+                    //            int index = 0;
+                    //            for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
+                    //            {
+                    //                items[index] = current;
+                    //            }
+                    //        }
+                    //        return items;
+                    //    }
+                    //}
+
+                    public string Type {
+
+                        get
+                        {
+                            if (_data != null && _data.Buffer!=null)
+                            {
+                                switch (_data.Buffer[0])
+                                {
+                                    case 1: return nameof(TdsEnums.MT_SQL);
+                                    case 2: return nameof(TdsEnums.MT_LOGIN);
+                                    case 3: return nameof(TdsEnums.MT_RPC);
+                                    case 4: return nameof(TdsEnums.MT_TOKENS);
+                                    case 5: return nameof(TdsEnums.MT_BINARY);
+                                    case 6: return nameof(TdsEnums.MT_ATTN);
+                                    case 7: return nameof(TdsEnums.MT_BULK);
+                                    case 8: return nameof(TdsEnums.MT_FEDAUTH);
+                                    case 9: return nameof(TdsEnums.MT_CLOSE);
+                                    case 10: return nameof(TdsEnums.MT_ERROR);
+                                    case 11: return nameof(TdsEnums.MT_ACK);
+                                    case 12: return nameof(TdsEnums.MT_ECHO);
+                                    case 13: return nameof(TdsEnums.MT_LOGOUT);
+                                    case 14: return nameof(TdsEnums.MT_TRANS);
+                                    case 15: return nameof(TdsEnums.MT_OLEDB);
+                                    case 16: return nameof(TdsEnums.MT_LOGIN7);
+                                    case 17: return nameof(TdsEnums.MT_SSPI);
+                                    case 18: return nameof(TdsEnums.MT_PRELOGIN);
+                                    default: return _data.Buffer[0].ToString("X2");
+                                }
+                            }
+                            return "";
+                        }
+                    }
+
+                    public string Status
                     {
                         get
                         {
-                            PacketData[] items = Array.Empty<PacketData>();
-                            if (_data != null)
+                            if (_data != null && _data.Buffer != null && _data.Buffer.Length > 1)
                             {
-                                int count = 0;
-                                for (PacketData current = _data; current != null; current = current?.NextPacket)
+                                int status = Packet.GetStatusFromHeader(_data.Buffer);
+                                StringBuilder buffer = new StringBuilder(10);
+
+                                if ((status & TdsEnums.ST_EOM) == TdsEnums.ST_EOM)
                                 {
-                                    count++;
+                                    if (buffer.Length > 0)
+                                    {
+                                        buffer.Append(',');
+                                    }
+                                    buffer.Append(nameof(TdsEnums.ST_EOM));
                                 }
-                                items = new PacketData[count];
-                                int index = 0;
-                                for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
+                                if ((status & TdsEnums.ST_AACK) == TdsEnums.ST_AACK)
                                 {
-                                    items[index] = current;
+                                    if (buffer.Length > 0)
+                                    {
+                                        buffer.Append(',');
+                                    }
+                                    buffer.Append(nameof(TdsEnums.ST_AACK));
                                 }
+                                if ((status & TdsEnums.ST_BATCH) == TdsEnums.ST_BATCH)
+                                {
+                                    if (buffer.Length > 0)
+                                    {
+                                        buffer.Append(',');
+                                    }
+                                    buffer.Append(nameof(TdsEnums.ST_BATCH));
+                                }
+                                if ((status & TdsEnums.ST_RESET_CONNECTION) == TdsEnums.ST_RESET_CONNECTION)
+                                {
+                                    if (buffer.Length > 0)
+                                    {
+                                        buffer.Append(',');
+                                    }
+                                    buffer.Append(nameof(TdsEnums.ST_RESET_CONNECTION));
+                                }
+                                if ((status & TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION) == TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION)
+                                {
+                                    if (buffer.Length > 0)
+                                    {
+                                        buffer.Append(',');
+                                    }
+                                    buffer.Append(nameof(TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION));
+                                }
+
+                                return buffer.ToString();
                             }
-                            return items;
+
+                            return "";
                         }
                     }
+
+                    public int Length => _data.DataLength;
+
+                    public int Spid => _data.SPID;
+
+                    public int PacketID => _data.PacketID;
+
+                    public ReadOnlySpan<byte> HeaderBytes => _data.GetHeaderSpan();
+
+                    public ReadOnlySpan<byte> Data => _data.Buffer.AsSpan(TdsEnums.HEADER_LEN);
+
+                    public PacketData NextPacket => _data.NextPacket;
+                    public PacketData PrevPacket => _data.PrevPacket;
                 }
 
-                public int PacketId;
+                public int DebugPacketId;
                 public string Stack;
+                public byte[] Hash;
 
                 public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
@@ -2715,29 +2828,74 @@ namespace Microsoft.Data.SqlClient
 
                 public int DataLength => Packet.GetDataLengthFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
-                partial void SetDebugStackInternal(string value) => Stack = value;
+                public ReadOnlySpan<byte> GetHeaderSpan() => Buffer.AsSpan(0, TdsEnums.HEADER_LEN);
 
-                partial void SetDebugPacketIdInternal(int value) => PacketId = value;
+                partial void SetDebugStackImpl(string value) => Stack = value;
 
-                public override string ToString()
+                partial void SetDebugPacketIdImpl(int value) => DebugPacketId = value;
+
+                partial void SetDebugDataHashImpl()
                 {
-                    string byteString = null;
-                    if (Buffer != null && Buffer.Length >= 12)
+                    if (Buffer != null)
                     {
-                        ReadOnlySpan<byte> bytes = Buffer.AsSpan(0, 12);
-                        StringBuilder buffer = new StringBuilder(12 * 3 + 10);
-                        buffer.Append('{');
-                        for (int index = 0; index < bytes.Length; index++)
+                        using (MD5 hasher = MD5.Create())
                         {
-                            buffer.AppendFormat("{0:X2}", bytes[index]);
-                            buffer.Append(", ");
+                            Hash = hasher.ComputeHash(Buffer, 0, Read);
                         }
-                        buffer.Append("...");
-                        buffer.Append('}');
-                        byteString = buffer.ToString();
                     }
-                    return $"{PacketId}: [{Read}] {byteString} {(NextPacket != null ? @"->" : string.Empty)}";
+                    else
+                    {
+                        Hash = null;
+                    }
+                    
                 }
+
+                partial void CheckDebugDataHashImpl()
+                {
+                    if (Hash == null)
+                    {
+                        if (Buffer != null && Read > 0)
+                        {
+                            throw new InvalidOperationException("Packet modification detected. Hash is null but packet contains non-null buffer");
+                        }
+                    }
+                    else
+                    {
+                        byte[] checkHash = null;
+                        using (MD5 hasher = MD5.Create())
+                        {
+                            checkHash = hasher.ComputeHash(Buffer, 0, Read);
+                        }
+
+                        for (int index = 0; index < Hash.Length; index++)
+                        {
+                            if (Hash[index] != checkHash[index])
+                            {
+                                throw new InvalidOperationException("Packet modification detected. Hash from packet creation does not match hash from packet check");
+                            }
+                        }
+                    }
+                }
+
+                //public override string ToString()
+                //{
+                //    string byteString = null;
+                //    if (Buffer != null && Buffer.Length >= 12)
+                //    {
+                //        ReadOnlySpan<byte> bytes = Buffer.AsSpan(0, 12);
+                //        StringBuilder buffer = new StringBuilder(12 * 3 + 10);
+                //        buffer.Append('{');
+                //        for (int index = 0; index < bytes.Length; index++)
+                //        {
+                //            buffer.AppendFormat("{0:X2}", bytes[index]);
+                //            buffer.Append(", ");
+                //        }
+                //        buffer.Append("...");
+                //        buffer.Append('}');
+                //        byteString = buffer.ToString();
+                //    }
+                //    return $"{InternalPacketId}: [{Read}] {byteString} {(NextPacket != null ? @"->" : string.Empty)}";
+                //}
             }
 #endif
 
@@ -2925,6 +3083,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 packetData.SetDebugStack(_stateObj._lastStack);
                 packetData.SetDebugPacketId(Interlocked.Increment(ref _packetCounter));
+                packetData.SetDebugDataHash();
 #endif
                 if (_firstPacket is null)
                 {
@@ -2958,6 +3117,7 @@ namespace Microsoft.Data.SqlClient
                 if (moved)
                 {
                     _stateObj.SetBuffer(_current.Buffer, 0, _current.Read);
+                    _current.CheckDebugDataHash();
                     _stateObj._snapshotStatus = moveToMode;
                     retval = true;
                 }
