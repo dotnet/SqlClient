@@ -627,6 +627,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             socketsInFlight.Remove(socket);
                         }
                         // Read/write lists could contain sockets that indicated Connected == false above
+                        checkWriteLst.AddRange(checkReadLst);
                         foreach (Socket socket in checkWriteLst)
                         {
                             SqlClientEventSource.Log.TryAdvancedTraceEvent(
