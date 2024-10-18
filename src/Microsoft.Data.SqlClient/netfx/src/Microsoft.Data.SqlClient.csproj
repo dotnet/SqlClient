@@ -127,11 +127,11 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
       <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\DesiredAccess.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
       <Link>Common\Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
-      <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
       <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>

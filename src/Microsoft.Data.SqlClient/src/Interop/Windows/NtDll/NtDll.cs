@@ -35,7 +35,7 @@ namespace Interop_TEMP.Windows.NtDll
         )
         {
             // Acquire space for the file extended attribute
-            int eaHeaderSize = sizeof(Interop.NtDll.FILE_FULL_EA_INFORMATION);
+            int eaHeaderSize = sizeof(FileFullEaInformation);
             int eaBufferSize = eaHeaderSize + eaName.Length + eaValue.Length;
             Span<byte> eaBuffer = stackalloc byte[eaBufferSize];
 
@@ -74,7 +74,7 @@ namespace Interop_TEMP.Windows.NtDll
                 //    stored as a pointer). So in the second chunk, we copy the name/value to the
                 //    byte[] after the FILE_FULL_EA_INFORMATION struct.
                 // Step 1) Write the header
-                Interop.NtDll.FILE_FULL_EA_INFORMATION* pEaObj = (Interop.NtDll.FILE_FULL_EA_INFORMATION*)pEaBuffer;
+                FileFullEaInformation* pEaObj = (FileFullEaInformation*)pEaBuffer;
                 pEaObj->NextEntryOffset = 0;
                 pEaObj->Flags = 0;
                 pEaObj->EaNameLength = (byte)(eaName.Length - 1); // Null terminator is not included
