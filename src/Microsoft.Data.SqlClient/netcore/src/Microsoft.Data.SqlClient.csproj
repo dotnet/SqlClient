@@ -687,8 +687,8 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
       <Link>Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Errors.cs">
-      <Link>Interop\Windows\Interop.Errors.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SystemErrors.cs">
+      <Link>Interop\Windows\SystemErrors.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Libraries.cs">
       <Link>Interop\Windows\Interop.Libraries.cs</Link>

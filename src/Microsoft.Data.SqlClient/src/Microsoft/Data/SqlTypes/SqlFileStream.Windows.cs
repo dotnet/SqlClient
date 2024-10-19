@@ -10,6 +10,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Interop_TEMP.Windows;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -873,13 +874,13 @@ namespace Microsoft.Data.SqlTypes
                     case 0:
                         break;
 
-                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                    case SystemErrors.ERROR_SHARING_VIOLATION:
                         throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
-                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                    case SystemErrors.ERROR_INVALID_PARAMETER:
                         throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
-                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
+                    case SystemErrors.ERROR_FILE_NOT_FOUND:
                         DirectoryNotFoundException dirNotFoundException = new DirectoryNotFoundException();
                         ADP.TraceExceptionAsReturnValue(dirNotFoundException);
                         throw dirNotFoundException;
@@ -900,7 +901,7 @@ namespace Microsoft.Data.SqlTypes
                 // Make sure the file handle is usable for us
                 if (fileHandle.IsInvalid)
                 {
-                    Win32Exception e = new Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    Win32Exception e = new Win32Exception(SystemErrors.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
