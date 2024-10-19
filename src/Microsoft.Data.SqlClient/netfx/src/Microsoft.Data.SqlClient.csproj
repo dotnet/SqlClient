@@ -124,11 +124,11 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
       <Link>Interop\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
+      <Link>Common\Interop\Windows\Kernel32\Kernel32.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Libraries.cs">
       <Link>Interop\Interop.Libraries.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs">
-      <Link>Interop\Kernel32\Interop.SetThreadErrorMode.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>

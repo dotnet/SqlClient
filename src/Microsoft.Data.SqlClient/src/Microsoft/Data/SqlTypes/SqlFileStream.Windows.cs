@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Interop_TEMP.Windows;
+using Interop_TEMP.Windows.Kernel32;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -819,7 +820,7 @@ namespace Microsoft.Data.SqlTypes
                 //   takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(path);
 
-                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+                Kernel32.SetThreadErrorMode(Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 // Make the interop call to open the file
                 int retval;
@@ -865,7 +866,7 @@ namespace Microsoft.Data.SqlTypes
                 }
                 finally
                 {
-                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                    Kernel32.SetThreadErrorMode(oldMode, out oldMode);
                 }
 
                 // Handle error codes from the interop call
