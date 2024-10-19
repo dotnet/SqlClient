@@ -5,8 +5,10 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using Microsoft.Win32;
 using Interop_TEMP.Windows.Handles;
+using Interop_TEMP.Windows.Kernel32;
+using Microsoft.Win32;
+
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -145,7 +147,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // Load the dll
-                    SafeLibraryHandle libraryHandle = Interop.Kernel32.LoadLibraryExW(dllPath.Trim(), IntPtr.Zero, 0);
+                    SafeLibraryHandle libraryHandle = Kernel32.LoadLibraryExW(dllPath.Trim(), IntPtr.Zero, 0);
 
                     if (libraryHandle.IsInvalid)
                     {

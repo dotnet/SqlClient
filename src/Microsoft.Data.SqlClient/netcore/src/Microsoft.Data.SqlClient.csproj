@@ -717,9 +717,6 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
       <Link>Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.LoadLibraryEx.netcore.cs">
-      <Link>Interop\Windows\Kernel32\Interop.LoadLibraryEx.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
       <Link>Common\Interop\Windows\Kernel32\Kernel32.cs</Link>
     </Compile>

@@ -1,17 +1,33 @@
-// // Licensed to the .NET Foundation under one or more agreements.
-// // The .NET Foundation licenses this file to you under the MIT license.
-// // See the LICENSE file in the project root for more information.
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 using System.Runtime.InteropServices;
+
+#if !NETFRAMEWORK
+using System;
+using Interop_TEMP.Windows.Handles;
+#endif
 
 namespace Interop_TEMP.Windows.Kernel32
 {
     internal static class Kernel32
     {
         internal const uint SEM_FAILCRITICALERRORS = 1;
+
+        #if !NETFRAMEWORK
+        internal const int LOAD_LIBRARY_AS_DATAFILE = 0x00000002;
+        internal const int LOAD_LIBRARY_SEARCH_SYSTEM32 = 0x00000800;
+        #endif
+
         private const string DllName = "kernel32.dll";
 
-        [DllImport(Interop.Libraries.Kernel32, SetLastError = true, ExactSpelling = true)]
+        #if !NETFRAMEWORK
+        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeLibraryHandle LoadLibraryExW([In] string lpwLibFileName, [In] IntPtr hFile, [In] uint dwFlags);
+        #endif
+
+        [DllImport(DllName, SetLastError = true, ExactSpelling = true)]
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
     }
 }
