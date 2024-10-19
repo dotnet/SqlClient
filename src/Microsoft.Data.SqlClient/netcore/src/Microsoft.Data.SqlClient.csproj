@@ -711,8 +711,8 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
       <Link>Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
-      <Link>Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\IoControlCodeAccess.cs">
+      <Link>Interop\Windows\Kernel32\IoControlCodeAccess.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\IoControlTransferType.cs">
       <Link>Interop\Windows\Kernel32\IoControlTransferType.cs</Link>
