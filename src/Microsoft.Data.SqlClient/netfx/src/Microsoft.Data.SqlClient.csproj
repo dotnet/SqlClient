@@ -145,8 +145,8 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
       <Link>Interop\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.UNICODE_STRING.cs">
-      <Link>Interop\Interop.UNICODE_STRING.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
+      <Link>Interop\UnicodeString.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>

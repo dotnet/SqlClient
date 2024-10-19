@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using Interop_TEMP.Windows;
 
 internal partial class Interop
 {
@@ -54,7 +55,7 @@ internal partial class Interop
             fixed (byte* pEaBuffer = eaBuffer)
             {
                 // Generate a unicode string object from the path
-                UNICODE_STRING ucPath = new UNICODE_STRING(pPath, path.Length);
+                UnicodeString ucPath = new UnicodeString(pPath, path.Length);
 
                 #if NETFRAMEWORK
                 // Generate a Security QOS object
@@ -130,7 +131,7 @@ internal partial class Interop
             /// Name of the object. Must be fully qualified if RootDirectory isn't set.
             /// Otherwise is relative to RootDirectory.
             /// </summary>
-            public UNICODE_STRING* ObjectName;
+            public UnicodeString* ObjectName;
 
             public ObjectAttributes Attributes;
 
@@ -149,7 +150,7 @@ internal partial class Interop
             /// Equivalent of InitializeObjectAttributes macro with the exception that you can directly set SQOS.
             /// </summary>
             public unsafe OBJECT_ATTRIBUTES(
-                UNICODE_STRING* objectName,
+                UnicodeString* objectName,
                 ObjectAttributes attributes,
                 IntPtr rootDirectory,
                 SecurityQualityOfService* securityQos)
