@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Instance.LoadUserInstanceDll() ? Instance.GetConnectionString(localDbInstance) : null;
 
         internal static IntPtr GetProcAddress(string functionName) =>
-            Instance.LoadUserInstanceDll() ? Interop.Kernel32.GetProcAddress(LocalDB.Instance._sqlUserInstanceLibraryHandle, functionName) : IntPtr.Zero;
+            Instance.LoadUserInstanceDll() ? Kernel32.GetProcAddress(LocalDB.Instance._sqlUserInstanceLibraryHandle, functionName) : IntPtr.Zero;
 
         private string GetConnectionString(string localDbInstance)
         {
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // Load the procs from the DLLs
-                    _startInstanceHandle = Interop.Kernel32.GetProcAddress(libraryHandle, ProcLocalDBStartInstance);
+                    _startInstanceHandle = Kernel32.GetProcAddress(libraryHandle, ProcLocalDBStartInstance);
 
                     if (_startInstanceHandle == IntPtr.Zero)
                     {

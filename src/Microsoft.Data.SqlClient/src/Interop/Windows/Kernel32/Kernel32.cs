@@ -23,6 +23,16 @@ namespace Interop_TEMP.Windows.Kernel32
         private const string DllName = "kernel32.dll";
 
         #if !NETFRAMEWORK
+        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
+        #endif
+
+        #if !NETFRAMEWORK
+        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
+        public static extern IntPtr GetProcAddress(SafeLibraryHandle hModule, string lpProcName);
+        #endif
+
+        #if !NETFRAMEWORK
         [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeLibraryHandle LoadLibraryExW([In] string lpwLibFileName, [In] IntPtr hFile, [In] uint dwFlags);
         #endif
