@@ -121,8 +121,8 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Interop\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
-      <Link>Interop\Kernel32\Interop.IoControlTransferType.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlTransferType.cs">
+      <Link>Interop\Kernel32\IoControlTransferType.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
       <Link>Common\Interop\Windows\Kernel32\Kernel32.cs</Link>

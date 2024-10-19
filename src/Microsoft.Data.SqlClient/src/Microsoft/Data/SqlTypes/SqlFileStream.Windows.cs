@@ -921,7 +921,7 @@ namespace Microsoft.Data.SqlTypes
                     uint ioControlCode = Interop.Kernel32.CTL_CODE(
                         Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode,
-                        (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
+                        (byte)IoControlTransferType.METHOD_BUFFERED,
                         (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
 
                     if (!Interop.Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
