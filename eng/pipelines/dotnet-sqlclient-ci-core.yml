@@ -289,7 +289,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Ubuntu20_Sql19: ADO-UB20-Sql19
-            Ubuntu20_Sql22: ADO-UB2004-SQL2022
+            Ubuntu20_Sql22: ADO-UB20-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
