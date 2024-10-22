@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
-    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
+    <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;INTERACTIVE_AUTH;</DefineConstants>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
   </PropertyGroup>
@@ -86,6 +86,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(InteractiveAuthEnabled)'=='true'">
+    <DefineConstants>$(DefineConstants);INTERACTIVE_AUTH;</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -219,6 +222,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
@@ -687,6 +693,14 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetConsoleWindow.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetConsoleWindow.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\User32\Interop.GetAncestor.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop.GetAncestor.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
@@ -791,6 +805,9 @@
     </PackageReference>
     <PackageReference Include="Azure.Identity">
       <Version>$(AzureIdentityVersion)</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Identity.Client.Broker" Condition="$(DefineConstants.Contains('INTERACTIVE_AUTH'))">
+      <Version>$(MicrosoftIdentityClientBrokerVersion)</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
       <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
