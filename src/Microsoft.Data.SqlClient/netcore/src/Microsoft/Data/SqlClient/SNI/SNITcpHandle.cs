@@ -758,7 +758,7 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
+                // sent immediately even if a send or receive operation is already in progress
                 // because out of band packets are used to cancel ongoing operations
                 // so try to take the lock if possible but continue even if it can't be taken
                 if (packet.IsOutOfBand)

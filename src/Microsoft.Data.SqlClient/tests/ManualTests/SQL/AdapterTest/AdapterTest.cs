@@ -596,7 +596,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlAdapter.SelectCommand = cmd;
                     sqlAdapter.Fill(dataSet);
 
-                    // check our ouput and return value params
+                    // check our output and return value params
                     Assert.True(VerifyOutputParams(cmd.Parameters), "FAILED: InputOutput parameter test with returned rows and bound return value!");
 
                     Assert.True(1 == dataSet.Tables[0].Rows.Count, "FAILED:  Expected 1 row to be loaded in the dataSet!");
@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // now exec the same thing without a data set
                     cmd.ExecuteNonQuery();
 
-                    // check our ouput and return value params
+                    // check our output and return value params
                     Assert.True(VerifyOutputParams(cmd.Parameters), "FAILED: InputOutput parameter test with no returned rows and bound return value!");
 
                     // now unbind the return value

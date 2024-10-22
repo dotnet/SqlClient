@@ -68,9 +68,6 @@ namespace Microsoft.Data.SqlClient
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
             internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
             internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
-#if ADONET_CERT_AUTH
-            internal const  string Certificate = DbConnectionStringDefaults.Certificate;
-#endif
 #endif // NETFRAMEWORK
         }
 
@@ -126,9 +123,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Failover_Partner_SPN = DbConnectionStringKeywords.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
-#if ADONET_CERT_AUTH
-            internal const string Certificate = DbConnectionStringKeywords.Certificate;
-#endif
 #endif // NETFRAMEWORK
         }
 
@@ -398,10 +392,6 @@ namespace Microsoft.Data.SqlClient
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
-#if ADONET_CERT_AUTH
-            _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
-#endif
-
             if (_contextConnection)
             {
                 // We have to be running in the engine for you to request a
@@ -630,31 +620,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
             }
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-
-            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))
-            {
-                throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
-            }
-
-            if (!string.IsNullOrEmpty(_certificate))
-            {
-
-                if (Authentication == SqlAuthenticationMethod.NotSpecified && !_integratedSecurity)
-                {
-                    _authType = SqlAuthenticationMethod.SqlCertificate;
-                }
-
-                if (Authentication == SqlAuthenticationMethod.SqlCertificate && (_hasUserIdKeyword || _hasPasswordKeyword || _integratedSecurity)) {
-                    throw SQL.InvalidCertAuth();
-                }
-            }
-            else if (Authentication == SqlAuthenticationMethod.SqlCertificate)
-            {
-                throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
-            }
-#endif
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -715,9 +680,6 @@ namespace Microsoft.Data.SqlClient
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
             _networkLibrary = connectionOptions._networkLibrary;
             _typeSystemAssemblyVersion = connectionOptions._typeSystemAssemblyVersion;
-#if ADONET_CERT_AUTH
-            _certificate = connectionOptions._certificate;
-#endif
 #endif // NETFRAMEWORK
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
@@ -916,9 +878,6 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.ServerSPN, KEY.Server_SPN },
                     { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
-#if ADONET_CERT_AUTH
-                    { KEY.Certificate, KEY.Certificate },
-#endif
                     { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
                     { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
 #endif // NETFRAMEWORK
@@ -1240,15 +1199,6 @@ namespace Microsoft.Data.SqlClient
         internal bool ContextConnection => _contextConnection;
         internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
         internal string NetworkLibrary => _networkLibrary;
-
-#if ADONET_CERT_AUTH
-        private readonly string _certificate;
-        internal string Certificate => _certificate;
-        internal bool UsesCertificate => _authType == SqlAuthenticationMethod.SqlCertificate;
-#else
-        internal string Certificate => null;
-        internal bool UsesCertificate => false;
-#endif
 
 #endif // NETFRAMEWORK
     }
