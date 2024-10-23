@@ -1286,11 +1286,6 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ConnectionRequired(method);
             }
 
-            if (_connection.IsContextConnection)
-            {
-                throw SQL.NotAvailableOnContextConnection();
-            }
-
             if (_ownConnection && _connection.State != ConnectionState.Open)
             {
                 _connection.Open();

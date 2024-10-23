@@ -587,25 +587,6 @@
       </example>
       <exception cref="T:System.ArgumentNullException"><paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
     </ContainsKey>
-    <ContextConnection>
-      <summary>
-        Obsolete. Gets or sets a value that indicates whether a client/server or in-process connection to SQL Server should be made.
-      </summary>
-      <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ContextConnection" /> property, or <see langword="false" /> if none has been supplied.
-      </value>
-      <remarks>
-        <para>
-          This property corresponds to the "Context Connection" key within the connection string.
-        </para>
-        <note type="note">
-          Connecting to the context connection using Microsoft.Data.SqlClient is not supported, and the only valid value for this property is <see langword="false" />.
-        </note>
-        <note type="note">
-          The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /> property returns <see langword="null" /> if the connection string for the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is "context connection=true".
-        </note>
-      </remarks>
-    </ContextConnection>
     <CurrentLanguage>
       <summary>
         Gets or sets the language used for database server warning or error messages..

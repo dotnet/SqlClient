@@ -387,29 +387,6 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidPacketSizeValue();
             }
 
-            if (ContextConnection)
-            {
-                // We have to be running in the engine for you to request a
-                // context connection.
-
-                if (!InOutOfProcHelper.InProc)
-                {
-                    throw SQL.ContextUnavailableOutOfProc();
-                }
-
-                // When using a context connection, we need to ensure that no
-                // other connection string keywords are specified.
-
-                foreach (KeyValuePair<string, string> entry in Parsetable)
-                {
-                    if (entry.Key != KEY.Context_Connection &&
-                        entry.Key != KEY.Type_System_Version)
-                    {
-                        throw SQL.ContextAllowsLimitedKeywords();
-                    }
-                }
-            }
-
 #if NETFRAMEWORK
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
@@ -523,10 +500,6 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2000, StringComparison.OrdinalIgnoreCase))
             {
-                if (ContextConnection)
-                {
-                    throw SQL.ContextAllowsOnlyTypeSystem2005();
-                }
                 _typeSystemVersion = TypeSystem.SQLServer2000;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))

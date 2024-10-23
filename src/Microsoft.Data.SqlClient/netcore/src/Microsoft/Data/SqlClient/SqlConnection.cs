@@ -179,10 +179,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
-                else if (UsesContextConnection(connectionOptions))
-                {
-                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
-                }
                 else if (UsesActiveDirectoryIntegrated(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
@@ -466,14 +462,6 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (IsContextConnection)
-                {
-                    if (value)
-                    {
-                        throw SQL.NotAvailableOnContextConnection();
-                    }
-                }
-                else
                 {
                     if (value)
                     {
@@ -516,21 +504,6 @@ namespace Microsoft.Data.SqlClient
         {
             get => _AsyncCommandInProgress;
             set => _AsyncCommandInProgress = value;
-        }
-
-        internal bool IsContextConnection
-        {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return UsesContextConnection(opt);
-            }
-        }
-
-        // Is this connection is a Context Connection?
-        private bool UsesContextConnection(SqlConnectionString opt)
-        {
-            return opt != null && opt.ContextConnection;
         }
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
@@ -871,11 +844,6 @@ namespace Microsoft.Data.SqlClient
             // can just return what the connection string had.
             get
             {
-                if (IsContextConnection)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
-
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 int result;
 
@@ -976,11 +944,6 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (IsContextConnection)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
-
                 // If not supplied by the user, the default value is the MachineName
                 // Note: In Longhorn you'll be able to rename a machine without
                 // rebooting.  Therefore, don't cache this machine name.
@@ -1086,11 +1049,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity();
             }
-
-            if (UsesContextConnection(connectionOptions))
-            {
-                throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
-            }
         }
 
         // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken: check if the usage of AccessToken has any conflict
@@ -1107,11 +1065,6 @@ namespace Microsoft.Data.SqlClient
             if (UsesIntegratedSecurity(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndIntegratedSecurity();
-            }
-
-            if (UsesContextConnection(connectionOptions))
-            {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndContextConnection();
             }
 
             if (UsesAuthentication(connectionOptions))
@@ -1305,10 +1258,6 @@ namespace Microsoft.Data.SqlClient
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
-                if (connection.IsContextConnection)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
                 SqlConnectionFactory.SingletonInstance.ClearPool(connection);
             }
         }
@@ -1754,13 +1703,6 @@ namespace Microsoft.Data.SqlClient
                     if (cancellationToken.IsCancellationRequested)
                     {
                         result.SetCanceled();
-                        return result.Task;
-                    }
-
-                    if (IsContextConnection)
-                    {
-                        // Async not supported on Context Connections
-                        result.SetException(ADP.ExceptionWithStackTrace(SQL.NotAvailableOnContextConnection()));
                         return result.Task;
                     }
 
@@ -2419,11 +2361,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />
         public void ResetStatistics()
         {
-            if (IsContextConnection)
-            {
-                throw SQL.NotAvailableOnContextConnection();
-            }
-
             if (Statistics != null)
             {
                 Statistics.Reset();
@@ -2438,11 +2375,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*' />
         public IDictionary RetrieveStatistics()
         {
-            if (IsContextConnection)
-            {
-                throw SQL.NotAvailableOnContextConnection();
-            }
-
             if (Statistics != null)
             {
                 UpdateStatistics();

@@ -186,17 +186,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void SetInvalidContextConnection_Throws()
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-
-#pragma warning disable CS0618
-            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => builder.ContextConnection = true);
-#pragma warning restore CS0618
-            Assert.Contains("connecting to the context connection using microsoft.data.sqlclient is not supported.", ex.Message, StringComparison.OrdinalIgnoreCase);
-        }
-
-        [Fact]
         public void SetInvalidCommandTimeout_Throws()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();

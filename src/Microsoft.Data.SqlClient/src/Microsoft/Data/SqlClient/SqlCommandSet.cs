@@ -252,10 +252,6 @@ namespace Microsoft.Data.SqlClient
 #endif
             using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
-                if (Connection.IsContextConnection)
-                {
-                    throw SQL.BatchedUpdatesNotAvailableOnContextConnection();
-                }
                 ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 
                 BatchCommand.SetBatchRPCMode(true);

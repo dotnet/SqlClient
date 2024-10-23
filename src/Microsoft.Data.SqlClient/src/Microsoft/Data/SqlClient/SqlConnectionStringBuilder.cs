@@ -87,7 +87,6 @@ namespace Microsoft.Data.SqlClient
         private ApplicationIntent _applicationIntent = DbConnectionStringDefaults.ApplicationIntent;
         private string _applicationName = DbConnectionStringDefaults.ApplicationName;
         private string _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
-        private bool _contextConnection = DbConnectionStringDefaults.ContextConnection;
         private string _currentLanguage = DbConnectionStringDefaults.CurrentLanguage;
         private string _dataSource = DbConnectionStringDefaults.DataSource;
         private string _failoverPartner = DbConnectionStringDefaults.FailoverPartner;
@@ -392,7 +391,7 @@ namespace Microsoft.Data.SqlClient
                     return FailoverPartnerSPN;
 #pragma warning disable 618 // Obsolete properties
                 case Keywords.ContextConnection:
-                    return ContextConnection;
+                    return false;
 #if NETFRAMEWORK
                 case Keywords.ConnectionReset:
                     return ConnectionReset;
@@ -544,7 +543,6 @@ namespace Microsoft.Data.SqlClient
                     _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
                     break;
                 case Keywords.ContextConnection:
-                    _contextConnection = DbConnectionStringDefaults.ContextConnection;
                     break;
 #if NETFRAMEWORK
                 case Keywords.ConnectionReset:
@@ -892,7 +890,6 @@ namespace Microsoft.Data.SqlClient
 #else    
         private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
-            DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
             DbConnectionStringKeywords.TransparentNetworkIPResolution,
             DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION,
@@ -1057,7 +1054,10 @@ namespace Microsoft.Data.SqlClient
                             break;
 #pragma warning disable 618 // Obsolete properties
                         case Keywords.ContextConnection:
-                            ContextConnection = ConvertToBoolean(value);
+                            if (ConvertToBoolean(value))
+                            {
+                                throw SQL.ContextConnectionIsUnsupported();
+                            }
                             break;
 #if NETFRAMEWORK
                         case Keywords.ConnectionReset:
@@ -1169,26 +1169,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 SetValue(DbConnectionStringKeywords.ConnectTimeout, value);
                 _connectTimeout = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
-        [DisplayName(DbConnectionStringKeywords.ContextConnection)]
-        [Obsolete("ContextConnection has been deprecated. Connecting to the context connection using Microsoft.Data.SqlClient is not supported, and the only valid value for this property is false.")]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
-        [RefreshProperties(RefreshProperties.All)]
-        public bool ContextConnection
-        {
-            get => _contextConnection;
-            set
-            {
-                if (value)
-                {
-                    throw SQL.ContextConnectionIsUnsupported();
-                }
-                SetValue(DbConnectionStringKeywords.ContextConnection, value);
-                _contextConnection = value;
             }
         }
 
