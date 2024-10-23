@@ -524,7 +524,7 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(PacketHandle packet, uint error)
+        public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
         {
             if (error != 0)
             {
@@ -541,8 +541,23 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 uint dataSize = 0;
+                bool usedPartialPacket = false;
+                uint getDataError = 0;
 
-                uint getDataError = SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+                if (usePartialPacket && _snapshot == null && _partialPacket != null && _partialPacket.IsComplete)
+                {
+                    //Debug.Assert(_snapshot == null, "_snapshot must be null when processing partial packet instead of network read");
+                    //Debug.Assert(_partialPacket != null, "_partialPacket must not be null when usePartialPacket is true");
+                    //Debug.Assert(_partialPacket.IsComplete, "_partialPacket.IsComplete must be true to use it in place of a real read");
+                    SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
+                    ClearPartialPacket();
+                    getDataError = TdsEnums.SNI_SUCCESS;
+                    usedPartialPacket = true;
+                }
+                else
+                {
+                    getDataError = SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+                }
 
                 if (getDataError == TdsEnums.SNI_SUCCESS)
                 {
@@ -552,18 +567,100 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
                     }
 
-                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
-                    _inBytesRead = (int)dataSize;
-                    _inBytesUsed = 0;
+                    if (!usedPartialPacket)
+                    {
+                        _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+
+                        SetBuffer(_inBuff, 0, (int)dataSize);
+                    }
+
+                    bool recurse;
+                    bool appended = false;
+                    do
+                    {
+                        MultiplexPackets(
+                            _inBuff, _inBytesUsed, _inBytesRead,
+                            _partialPacket,
+                            out int newDataOffset,
+                            out int newDataLength,
+                            out Packet remainderPacket,
+                            out bool consumeInputDirectly,
+                            out bool consumePartialPacket,
+                            out bool remainderPacketProduced,
+                            out recurse
+                        );
+                        bool bufferIsPartialCompleted = false;
+
+                        // if a partial packet was reconstructed it must be handled first
+                        if (consumePartialPacket)
+                        {
+                            if (_snapshot != null)
+                            {
+                                _snapshot.AppendPacketData(_partialPacket.Buffer, _partialPacket.CurrentLength);
+                                appended = true;
+                            }
+                            else
+                            {
+                                SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
+                                bufferIsPartialCompleted = true;
+                            }
+                            ClearPartialPacket();
+                        }
+
+                        // if the remaining data can be processed directly it must be second
+                        if (consumeInputDirectly)
+                        {
+                            // if some data was taken from the new packet adjust the counters
+                            if (dataSize != newDataLength || 0 != newDataOffset)
+                            {
+                                SetBuffer(_inBuff, newDataOffset, newDataLength);
+                            }
+
+                            if (_snapshot != null)
+                            {
+                                _snapshot.AppendPacketData(_inBuff, _inBytesRead);
+                                appended = true;
+                            }
+                            else
+                            {
+                                SetBuffer(_inBuff, 0, _inBytesRead);
+                            }
+                        }
+                        else
+                        {
+                            // whatever is in the input buffer should not be directly consumed
+                            // and is contained in the partial or remainder packets so make sure
+                            // we don't process it
+                            if (!bufferIsPartialCompleted)
+                            {
+                                SetBuffer(_inBuff, 0, 0);
+                            }
+                        }
+
+                        // if there is a remainder it must be last
+                        if (remainderPacketProduced)
+                        {
+                            SetPartialPacket(remainderPacket);
+                            if (!bufferIsPartialCompleted)
+                            {
+                                // we are keeping the partial packet buffer so replace it with a new one
+                                // unless we have already set the buffer to the partial packet buffer
+                                SetBuffer(new byte[_inBuff.Length], 0, 0);
+                            }
+                        }
+
+                    } while (recurse && _snapshot != null);
 
                     if (_snapshot != null)
                     {
-                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
-                        if (_snapshotReplay)
+                        if (_snapshotStatus != SnapshotStatus.NotActive && appended)
                         {
                             _snapshot.MoveNext();
 #if DEBUG
-                            _snapshot.AssertCurrent();
+                            // multiple packets can be appended by demuxing but we should only move 
+                            // forward by a single packet so we can no longer assert that we are on
+                            // the last packet at this time
+                            //_snapshot.AssertCurrent();
 #endif
                         }
                     }
@@ -1773,7 +1870,7 @@ namespace Microsoft.Data.SqlClient
             if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
             {
                 // Async reads
-                Debug.Assert(_snapshot == null && !_snapshotReplay, "StateObj has leftover snapshot state");
+                Debug.Assert(_snapshot == null && _snapshotStatus == SnapshotStatus.NotActive, "StateObj has leftover snapshot state");
                 Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
                 Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
                 // Async writes

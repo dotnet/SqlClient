@@ -2412,6 +2412,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
+                            // temporarily cache next byte
                             byte peekedToken;
                             result = stateObj.TryPeekByte(out peekedToken);
                             if (result != TdsOperationStatus.Done)
@@ -4162,6 +4163,8 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
+            
+            // Length of parameter name
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
@@ -4560,7 +4563,6 @@ namespace Microsoft.Data.SqlClient
                 collation = null;
                 return result;
             }
-
             if (SqlCollation.Equals(_cachedCollation, info, sortId))
             {
                 collation = _cachedCollation;
@@ -5284,7 +5286,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
-                {    
+                {
                     result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
                     if (result != TdsOperationStatus.Done)
                     {

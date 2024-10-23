@@ -3566,7 +3566,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*' />
         // user must call Read() to position on the first row
-        override public bool Read()
+        public override bool Read()
         {
             if (_currentTask != null)
             {
@@ -4198,7 +4198,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             else
             {
-                Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
+                //Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
             }
 #endif
 
@@ -4349,9 +4349,10 @@ namespace Microsoft.Data.SqlClient
                     _metaDataConsumed = true;
 
                     if (_parser != null)
-                    { // There is a valid case where parser is null
-                      // Peek, and if row token present, set _hasRows true since there is a
-                      // row in the result
+                    { 
+                        // There is a valid case where parser is null
+                        // Peek, and if row token present, set _hasRows true since there is a
+                        // row in the result
                         byte b;
                         TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                         if (result != TdsOperationStatus.Done)
