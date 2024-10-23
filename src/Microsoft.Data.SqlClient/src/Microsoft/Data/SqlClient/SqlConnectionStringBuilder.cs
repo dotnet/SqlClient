@@ -389,18 +389,18 @@ namespace Microsoft.Data.SqlClient
                     return ServerSPN;
                 case Keywords.FailoverPartnerSPN:
                     return FailoverPartnerSPN;
-#pragma warning disable 618 // Obsolete properties
                 case Keywords.ContextConnection:
                     return false;
 #if NETFRAMEWORK
+#pragma warning disable 618 // Obsolete properties
                 case Keywords.ConnectionReset:
                     return ConnectionReset;
+#pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
                     return TransparentNetworkIPResolution;
                 case Keywords.NetworkLibrary:
                     return NetworkLibrary;
 #endif
-#pragma warning restore 618
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -1052,7 +1052,6 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.FailoverPartnerSPN:
                             FailoverPartnerSPN = ConvertToString(value);
                             break;
-#pragma warning disable 618 // Obsolete properties
                         case Keywords.ContextConnection:
                             if (ConvertToBoolean(value))
                             {
@@ -1060,9 +1059,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             break;
 #if NETFRAMEWORK
+#pragma warning disable 618 // Obsolete properties
                         case Keywords.ConnectionReset:
                             ConnectionReset = ConvertToBoolean(value);
                             break;
+#pragma warning restore 618
                         case Keywords.NetworkLibrary:
                             NetworkLibrary = ConvertToString(value);
                             break;
@@ -1070,7 +1071,6 @@ namespace Microsoft.Data.SqlClient
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
                             break;
 #endif
-#pragma warning restore 618
                         default:
                             Debug.Fail("unexpected keyword");
                             throw UnsupportedKeyword(keyword);
