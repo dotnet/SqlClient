@@ -420,6 +420,8 @@ namespace Microsoft.Data.SqlClient
 
             if (consumePartialPacket && consumeInputDirectly)
             {
+                string message = $"MultiplexPackets cannot return both {nameof(consumePartialPacket)} and {nameof(consumeInputDirectly)}";
+                System.Diagnostics.Debug.Fail(message); // fail is easier to debug because the exception can be swallowed by higher layers.
                 throw new InvalidOperationException($"MultiplexPackets cannot return both {nameof(consumePartialPacket)} and {nameof(consumeInputDirectly)}");
             }
         }
