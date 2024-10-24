@@ -6,10 +6,10 @@ internal static partial class Interop
 {
     internal static partial class Libraries
     {
-        internal const string Crypt32 = "crypt32.dll";
         internal const string Kernel32 = "kernel32.dll";
         internal const string NtDll = "ntdll.dll";
 #if !NET8_0_OR_GREATER
+        internal const string Crypt32 = "crypt32.dll";
         internal const string SspiCli = "sspicli.dll";
 #endif
     }

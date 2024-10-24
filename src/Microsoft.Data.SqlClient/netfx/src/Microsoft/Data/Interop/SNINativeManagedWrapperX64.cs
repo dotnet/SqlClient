@@ -74,9 +74,6 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo);
-
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
