@@ -202,15 +202,17 @@ namespace Microsoft.Data.SqlClient
             out Packet remainderPacket,
             out bool consumeInputDirectly,
             out bool consumePartialPacket,
-            out bool consumeRemainderPacket,
+            out bool createdRemainderPacket,
             out bool recurse
         )
         {
+            Debug.Assert(dataBuffer != null);
+
             ReadOnlySpan<byte> data = dataBuffer.AsSpan(dataOffset, dataLength);
             remainderPacket = null;
             consumeInputDirectly = false;
             consumePartialPacket = false;
-            consumeRemainderPacket = false;
+            createdRemainderPacket = false;
             recurse = false;
 
             newDataLength = dataLength;
@@ -266,14 +268,43 @@ namespace Microsoft.Data.SqlClient
                         // data from a following packet
 
                         // the TDS spec requires that all packets be of the defined packet size apart from
-                        // the last packet of a response. This means that is is not possible to have more than
+                        // the last packet of a response. This means that it should not possible to have more than
                         // 2 packet fragments in a single buffer like this:
                         //  - first packet caused the partial
                         //  - second packet is the one we have just unpacked
                         //  - third packet is the extra data we have found
+                        // however, due to the timing of cancellation it is possible that a response token stream
+                        // has ended before an attention message response is sent leaving us with a short final
+                        // packet and an additional short cancel packet following it
 
-                        // we must throw an exception because we have encountered an invalid tds stream
-                        throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        // this should only happen when the caller is trying to consume the partial packet
+                        // and does not have new input data
+                        Debug.Assert(newDataLength == 0);
+
+                        int remainderLength = partialPacket.CurrentLength - partialPacket.RequiredLength;
+
+                        partialPacket.CurrentLength -= remainderLength;
+
+                        remainderPacket = new Packet
+                        {
+                            Buffer = new byte[dataBuffer.Length],
+                            CurrentLength = remainderLength,
+                        };
+
+                        ReadOnlySpan<byte> remainderSource = partialPacket.Buffer.AsSpan(TdsEnums.HEADER_LEN + partialPacket.DataLength, remainderLength);
+                        Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderLength);
+                        remainderSource.CopyTo(remainderTarget);
+
+                        createdRemainderPacket = true;
+
+                        if (remainderPacket.HasHeader)
+                        {
+                            remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
+                            if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
+                            {
+                                recurse = true;
+                            }
+                        }
                     }
 
                     if (partialPacket.CurrentLength == partialPacket.RequiredLength)
@@ -290,7 +321,8 @@ namespace Microsoft.Data.SqlClient
                         // some data has been taken from the buffer, put into the partial
                         // packet buffer and we have data left so move the data we have
                         // left to the start of the buffer so we can pass the buffer back
-                        // as zero based to the caller avoiding offset calculations everywhere
+                        // as zero based to the caller avoiding offset calculations in the
+                        // rest of this method
                         Buffer.BlockCopy(
                             dataBuffer, dataOffset + bytesConsumed, // from
                             dataBuffer, dataOffset, // to
@@ -299,7 +331,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                         // for debugging purposes fill the removed data area with an easily
                         // recognisable pattern so we can see if it is misused
-                        Span<byte> removed = dataBuffer.AsSpan(dataOffset + (dataLength - bytesConsumed), (dataOffset + bytesConsumed));
+                        Span<byte> removed = dataBuffer.AsSpan(dataOffset + (dataLength - bytesConsumed), bytesConsumed);
                         removed.Fill(0xFF);
 #endif
 
@@ -312,7 +344,12 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (data.Length > 0 && !consumeRemainderPacket)
+            // partial packet handling should not make decisions about consuming the input buffer
+            Debug.Assert(!consumeInputDirectly);
+            // partial packet handling may only create a remainder packet when it is trying to consume the partial packet and has no incoming data
+            Debug.Assert(!createdRemainderPacket || data.Length == 0);
+
+            if (data.Length > 0)
             {
                 if (data.Length >= TdsEnums.HEADER_LEN)
                 {
@@ -340,7 +377,7 @@ namespace Microsoft.Data.SqlClient
                                 DataLength = packetDataLength,
                                 CurrentLength = data.Length
                             };
-                            consumeRemainderPacket = true;
+                            createdRemainderPacket = true;
                             Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
                             Debug.Assert(remainderPacket.HasDataLength); // must have been set at construction
                             if (remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
@@ -354,59 +391,88 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (data.Length < TdsEnums.HEADER_LEN + packetDataLength)
                     {
-                        // another partial packet so produce one and tell the caller that they need
-                        // consume it.
+                        // an incomplete packet so create a remainder packet to pass back
                         remainderPacket = new Packet
                         {
                             Buffer = dataBuffer,
                             DataLength = packetDataLength,
                             CurrentLength = data.Length
                         };
-                        consumeRemainderPacket = true;
+                        createdRemainderPacket = true;
                     }
                     else // implied: current length > required length
                     {
                         // more data than required so need to split it out but we can't do that
                         // here so we need to tell the caller to take the remainder packet and then
                         // call this function again
-
-                        int remainderLength = data.Length - (TdsEnums.HEADER_LEN + packetDataLength);
-                        remainderPacket = new Packet
+                        if (consumePartialPacket)
                         {
-                            Buffer = new byte[dataBuffer.Length],
-                            CurrentLength = remainderLength,
-                        };
-
-                        ReadOnlySpan<byte> remainderSource = data.Slice(TdsEnums.HEADER_LEN + packetDataLength);
-                        Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderLength);
-                        remainderSource.CopyTo(remainderTarget);
-
-                        newDataLength = TdsEnums.HEADER_LEN + packetDataLength;
-                        consumeInputDirectly = true;
-                        consumeRemainderPacket = true;
-
-                        if (remainderPacket.HasHeader)
-                        {
-                            remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
-                            if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
+                            // we are already telling the caller to consume the partial packet so we
+                            // can't tell them it to also consume the data in the buffer directly
+                            // so create a remainder packet and pass it back.
+                            remainderPacket = new Packet
                             {
-                                recurse = true;
+                                Buffer = new byte[dataBuffer.Length],
+                                CurrentLength = data.Length
+                            };
+
+                            ReadOnlySpan<byte> remainderSource = data;
+                            Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderPacket.CurrentLength);
+                            remainderSource.CopyTo(remainderTarget);
+
+                            createdRemainderPacket = true;
+                        }
+                        else
+                        {
+                            int remainderLength = data.Length - (TdsEnums.HEADER_LEN + packetDataLength);
+                            remainderPacket = new Packet
+                            {
+                                Buffer = new byte[dataBuffer.Length],
+                                CurrentLength = remainderLength,
+                            };
+
+                            ReadOnlySpan<byte> remainderSource = data.Slice(TdsEnums.HEADER_LEN + packetDataLength);
+                            Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderLength);
+                            remainderSource.CopyTo(remainderTarget);
+
+#if DEBUG
+                            // for debugging purposes fill the removed data area with an easily
+                            // recognisable pattern so we can see if it is misused
+                            Span<byte> removed = dataBuffer.AsSpan(TdsEnums.HEADER_LEN + packetDataLength, remainderLength);
+                            removed.Fill(0xFF);
+#endif
+
+                            newDataLength = TdsEnums.HEADER_LEN + packetDataLength;
+
+                            consumeInputDirectly = true;
+                            createdRemainderPacket = true;
+
+                            if (remainderPacket.HasHeader)
+                            {
+                                remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
+                                if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
+                                {
+                                    recurse = true;
+                                }
                             }
+
                         }
                     }
                 }
                 else
                 {
-                    // we took some data from the input to reconstruct the partial packet
-                    // so we can't tell the caller to directly consume the packet in the
-                    // input buffer, we need to construct a new remainder packet and then
-                    // tell them to consume it
+                    // either:
+                    // 1) we took some data from the input to reconstruct the partial packet
+                    // 2) there was less than a single packet header of data recieved
+                    // in both cases we can't tell the caller to directly consume the packet
+                    // in the input buffer, we need to construct a new remainder packet with
+                    // the incomplete data and let the caller deal with it
                     remainderPacket = new Packet
                     {
                         Buffer = dataBuffer,
                         CurrentLength = data.Length
                     };
-                    consumeRemainderPacket = true;
+                    createdRemainderPacket = true;
                 }
             }
 #if DEBUG

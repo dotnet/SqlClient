@@ -153,27 +153,24 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory, MemberData(nameof(IsAsync))]
-        public static void FailReconstruct2Packets_FullFullPart_Part(bool isAsync)
+        public static void Reconstruct3Packets_PartPartPart(bool isAsync)
         {
-            // illegal, cannot have multiple packets end in a single packet because all packets except an end packet must 
-            // be be of max length, thus only max length packets can exist before a short packet.
-            int maxDataSize = 46;
+            int dataSize = 62;
 
             var expected = new List<PacketData>
             {
-                CreatePacket(10, 5),
+                CreatePacket(26, 5),
                 CreatePacket(10, 6),
-                CreatePacket(30, 7)
+                CreatePacket(10, 7)
             };
 
-            var input = SplitPackets(maxDataSize, expected,
-                (8 + 10) + (8 + 10) + (8 + 2), // full, full, part
-                36 // part 
+            var input = SplitPackets(70, expected,
+                (8 + 26) + (8 + 10) + (8 + 10) // = 70: full, full, part
             );
 
-            Assert.Throws<Exception>(
-                () => MultiplexPacketList(isAsync, maxDataSize, input)
-            );
+            var output = MultiplexPacketList(isAsync, dataSize, input);
+
+            ComparePacketLists(dataSize, expected, output);
         }
 
         [Fact]
@@ -258,7 +255,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             if (!isAsync)
             {
-                if (stateObject._partialPacket != null)
+                while (stateObject._partialPacket != null)
                 {
                     stateObject.Current = default;
 
