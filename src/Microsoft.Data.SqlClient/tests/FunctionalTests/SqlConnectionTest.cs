@@ -521,6 +521,18 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void ConnectionString_ContextConnection_Invalid()
+        {
+            SqlConnection cn = new SqlConnection();
+
+            // context connection enabled
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.ConnectionString = "Context Connection=true");
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("connecting to the context connection using microsoft.data.sqlclient is not supported.", StringComparison.OrdinalIgnoreCase) != -1);
+        }
+
+        [Fact]
         public void ConnectionString_CommandTimeout()
         {
             SqlConnection cn = new SqlConnection();
