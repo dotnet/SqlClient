@@ -164,6 +164,9 @@ namespace Microsoft.Data.SqlClient
         // XML metadata substitute sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+        // JSON metadata substitute sequence
+        private static readonly byte[] s_jsonMetadataSubstituteSequence = { 0xa7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
 
@@ -8072,6 +8075,11 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
                     return TdsOperationStatus.Done;
                 }
+                else if (token == TdsEnums.SQLJSON)
+                {
+                    tokenLength = -1;
+                    return TdsOperationStatus.Done;
+                }
             }
 
             switch (token & TdsEnums.SQLLenMask)
@@ -10788,6 +10796,9 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByte(md.tdsType);
                             stateObj.WriteByte(md.scale);
                             break;
+                        case SqlDbTypeExtensions.Json:
+                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
+                            break;
                         default:
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
@@ -11042,7 +11053,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             ccb = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
                             break;
-
+                        case TdsEnums.SQLJSON:
+                            string strval = (isSqlType) ? ((SqlString)value).Value : (string)value;
+                            ccb = isSqlType ? strval.Length : strval.Length * 2;
+                            ccbStringBytes = Encoding.UTF8.GetByteCount(strval);
+                            break;
                         default:
                             ccb = metadata.length;
                             break;
@@ -11052,9 +11067,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     Debug.Assert(metatype.IsLong &&
                         ((metatype.SqlDbType == SqlDbType.VarBinary && value is StreamDataFeed) ||
-                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar) && value is TextDataFeed) ||
+                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar || metatype.SqlDbType == SqlDbTypeExtensions.Json) && value is TextDataFeed) ||
                          (metatype.SqlDbType == SqlDbType.Xml && value is XmlDataFeed)),
-                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max), Xml data feed should only be assigned to XML(max)");
+                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max) or json, Xml data feed should only be assigned to XML(max)");
                 }
 
 
@@ -11076,6 +11091,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Xml:
                         case SqlDbType.Udt:
+                        case SqlDbTypeExtensions.Json:
                             // plp data
                             WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                             break;
@@ -11956,7 +11972,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size)
+        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size, bool useReadBlock)
         {
             Debug.Assert(encoding == null || !needBom);
             char[] inBuff = ArrayPool<char>.Shared.Rent(constTextBufferSize);
@@ -11984,11 +12000,25 @@ namespace Microsoft.Data.SqlClient
 
                     if (_asyncWrite)
                     {
-                        nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        if (useReadBlock)
+                        {
+                            nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            nRead = await feed._source.ReadAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
                     }
                     else
                     {
-                        nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        if (useReadBlock)
+                        {
+                            nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        }
+                        else
+                        {
+                            nRead = feed._source.Read(inBuff, 0, constTextBufferSize);
+                        }
                     }
 
                     if (nRead == 0)
@@ -12189,7 +12219,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize));
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize, true));
                             }
                         }
                         else
@@ -12228,7 +12258,8 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? new UTF8Encoding() : null;
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize));
+                                bool useReadBlock = type.NullableType == TdsEnums.SQLJSON ? false : true;
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize, useReadBlock));
                             }
                         }
                         else
