@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 Console.WriteLine("File Stream database could not be setup. " + e.Message);
-                fileStreamDir = null;
+                throw;
             }
             return s_fileStreamDBName;
         }
