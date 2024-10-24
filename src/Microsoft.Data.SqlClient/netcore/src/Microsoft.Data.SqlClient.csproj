@@ -38,15 +38,6 @@
   </ItemGroup>  
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
-    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs">
-      <Link>Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs">
-      <Link>Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugSafeHandle.netcore.cs">
-      <Link>Interop\Common\Handles\DebugSafeHandle.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -774,9 +765,6 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs">
       <Link>Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SafeDeleteContext.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SafeDeleteContext.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs">
       <Link>Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs</Link>
     </Compile>
@@ -794,9 +782,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs">
       <Link>Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecuritySafeHandles.netcore.cs">
-      <Link>Interop\Windows\SspiCli\SecuritySafeHandles.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIAuthType.netcore.cs">
       <Link>Interop\Windows\SspiCli\SSPIAuthType.netcore.cs</Link>
@@ -846,7 +831,6 @@
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
     <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
     <Compile Include="Common\System\Net\Security\NetEventSource.Security.Windows.cs" />
-    <Compile Include="Common\System\Net\Security\SecurityContextTokenHandle.cs" />
     <Compile Include="Common\System\Net\SecurityStatusAdapterPal.Windows.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
@@ -861,21 +845,6 @@
 
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\GssSafeHandles.netcore.cs">
-      <Link>Interop\Unix\Handles\GssSafeHandles.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteContext.netcore.cs">
-      <Link>Interop\Unix\Handles\SafeDeleteContext.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteNegoContext.netcore.cs">
-      <Link>Interop\Unix\Handles\SafeDeleteNegoContext.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeCredentials.netcore.cs">
-      <Link>Interop\Unix\Handles\SafeFreeCrednetials.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeNegoCredentials.netcore.cs">
-      <Link>Interop\Unix\Handles\SafeFreeNegoCredentials.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Interop.Libraries.netcore.cs">
       <Link>Interop\Unix\Interop.Libraries.netcore.cs</Link>
     </Compile>
