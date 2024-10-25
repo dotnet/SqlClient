@@ -607,7 +607,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap: {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, _nullBitmap.Length);
 
                 return TdsOperationStatus.Done;
             }
@@ -2208,7 +2208,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// attempts to change the timeout state from the expected state to the target state and if it succeeds
         /// will setup the the stateobject into the timeout expired state
         /// </summary>
         /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>

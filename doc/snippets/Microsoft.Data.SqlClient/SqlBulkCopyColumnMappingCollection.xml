@@ -182,9 +182,9 @@
                               new SqlBulkCopyColumnMapping("Name", "ProdName");
                           bulkCopy.ColumnMappings.Add(mapName);
           
-                          SqlBulkCopyColumnMapping mapMumber =
+                          SqlBulkCopyColumnMapping mapNumber =
                               new SqlBulkCopyColumnMapping("ProductNumber", "ProdNum");
-                          bulkCopy.ColumnMappings.Add(mapMumber);
+                          bulkCopy.ColumnMappings.Add(mapNumber);
           
                           // Write from the source to the destination.
                           try
@@ -1252,7 +1252,7 @@
                               bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
           
                               // Rather than clearing mappings that are not necessary
-                              // for the next bulk copyo peration, the unneeded mappings
+                              // for the next bulk copy operation, the unneeded mappings
                               //  are removed with the RemoveAt method.
                               bulkCopy.ColumnMappings.RemoveAt(2);
                               bulkCopy.ColumnMappings.RemoveAt(1);
