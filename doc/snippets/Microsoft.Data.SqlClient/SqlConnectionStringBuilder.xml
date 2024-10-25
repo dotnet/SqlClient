@@ -925,7 +925,7 @@
                   try
                   {
                       string connectString =
-                          "Data Source=(local);User ID=ab;Password=MyPassword;" +
+                          "Data Source=(local);Integrated Security=SSPI" +
                           "Initial Catalog=AdventureWorks";
           
                       SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
@@ -1477,10 +1477,8 @@
         </note>
         <!-- SqlConnectionStringBuilder_Remove -->
         <code language="c#">
-          using System;
-          using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -1488,23 +1486,24 @@
                   try
                   {
                       string connectString =
-                          "Data Source=(local);User ID=ab;Password= a1Pass@@11;" +
-                          "Initial Catalog=AdventureWorks";
-          
+                          "Data Source=(local);User ID=ab;";
+
                       SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
                       Console.WriteLine("Original: " + builder.ConnectionString);
-          
+
                       // Use the Remove method
-                      // in order to reset the user ID and password back to their
-                      // default (empty string) values. 
+                      // in order to reset the user ID back to its
+                      // default (empty string) value. 
                       builder.Remove("User ID");
-                      builder.Remove("Password");
-          
+
                       // Turn on integrated security:
                       builder.IntegratedSecurity = true;
-          
+
+                      // Turn off encryption for local db
+                      builder.Encrypt = false;
+
                       Console.WriteLine("Modified: " + builder.ConnectionString);
-          
+
                       using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                       {
                           connection.Open();
@@ -1516,7 +1515,7 @@
                   {
                       Console.WriteLine(ex.Message);
                   }
-          
+
                   Console.WriteLine("Press any key to finish.");
                   Console.ReadLine();
               }
@@ -1526,8 +1525,9 @@
           The example displays the following text in the console window:
         </para>
         <code>
-          Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password= a1Pass@@11
-          Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True Database=AdventureWorks
+          Original: Data Source=(local);User ID=ab;
+          Modified: Data Source=(local);Integrated Security=True; Encrypt=false
+          Database = master
         </code>
       </example>
       <exception cref="T:System.ArgumentNullException">
