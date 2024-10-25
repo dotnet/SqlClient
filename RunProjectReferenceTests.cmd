@@ -2,7 +2,7 @@
 
 :: Default target frameworks
 set netfxVersion=net462
-set netcoreVersion=net6.0
+set netcoreVersion=net8.0
 
 :: Accept two parameters for .NET Framework and .NET versions.
 :: Examples: 

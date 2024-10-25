@@ -12,12 +12,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net6.0, net8.0]
+  default: [net462, net8.0]
 
 - name: targetFrameworksLinux
   displayName: 'Target Frameworks on Non-Windows'
   type: object
-  default: [net6.0, net8.0]
+  default: [net8.0]
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
@@ -39,7 +39,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: codeCovTargetFrameworks
   displayName: 'Code Coverage Target Frameworks'
   type: object
-  default: [net462, net6.0]
+  default: [net462, net8.0]
 
 - name: buildType
   displayName: 'Build Type'
@@ -107,7 +107,7 @@ stages:
           hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
             Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net6.0, net8.0] # list of target frameworks to run
+          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
@@ -131,7 +131,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net6.0] # target frameworks should run tests on x86 as well
+            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86 as well
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
