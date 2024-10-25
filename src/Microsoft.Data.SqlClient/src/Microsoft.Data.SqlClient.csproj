@@ -5,6 +5,9 @@
 		<RootNamespace />
 	</PropertyGroup>
 	<ItemGroup>
+	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
+	</ItemGroup>
+	<ItemGroup>
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
 	</ItemGroup>
