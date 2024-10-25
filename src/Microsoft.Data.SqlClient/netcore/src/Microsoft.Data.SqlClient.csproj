@@ -701,6 +701,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
@@ -721,6 +724,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
@@ -749,6 +755,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    </Compile>
+
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
@@ -775,7 +785,6 @@
     <Compile Include="Common\Interop\Windows\sspicli\SSPIWrapper.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs" />
     <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
-    <Compile Include="Common\System\IO\PathInternal.Windows.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
@@ -792,7 +801,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
 
   <!-- Unix only -->
