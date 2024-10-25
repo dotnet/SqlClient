@@ -69,13 +69,13 @@
                   // Pass the SqlConnectionStringBuilder an existing 
                   // connection string, and you can retrieve and
                   // modify any of the elements.
-                  builder.ConnectionString = "server=(local);user id=ab;" +
-                      "password= a!Pass113;initial catalog=AdventureWorks";
+                  builder.ConnectionString = "server=(local);integrated security=SSPI;
+                    initial catalog=AdventureWorks";
           
                   // Now that the connection string has been parsed,
                   // you can work with individual items.
-                  Console.WriteLine(builder.Password);
-                  builder.Password = "new@1Password";
+                  Console.WriteLine(builder.InitialCatalog);
+                  builder.InitialCatalog = "Northwind";
           
                   // You can refer to connection keys using strings, 
                   // as well. When you use this technique (the default
