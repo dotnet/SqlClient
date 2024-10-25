@@ -412,7 +412,7 @@
     <value>Replica</value>
   </data>
   <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
-    <value>Connection Resiliency</value>
+    <value>Resilienza connessione</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>Raccolta che contiene le informazioni utente personalizzate.</value>
@@ -772,7 +772,7 @@
     <value>Attributo IsDataSet assente nello Schema input.</value>
   </data>
   <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
-    <value>Cannot determine the DataSet Element. IsDataSet attribute exist more than once.</value>
+    <value>Non è possibile determinare l'elemento DataSet. L'attributo IsDataSet esiste più di una volta.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet non serializzerà i tipi che implementano IDynamicMetaObjectProvider ma che non implementano anche IXmlSerializable.</value>
@@ -814,10 +814,10 @@
     <value>Previsto {0}. Il token nella posizione {2} è invece {1}.</value>
   </data>
   <data name="Expr_DatatypeConversion" xml:space="preserve">
-    <value>Cannot convert from {0} to {1}.</value>
+    <value>Non è possibile eseguire la conversione da {0} a {1}.</value>
   </data>
   <data name="Expr_DatavalueConversion" xml:space="preserve">
-    <value>Cannot convert value '{0}' to Type: {1}.</value>
+    <value>Non è possibile convertire il valore '{0}' nel tipo {1}.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>Nome di colonna non valido: [{0}].</value>
@@ -880,7 +880,7 @@
     <value>'{0}' non è un'espressione di aggregazione. Impossibile valutarla.</value>
   </data>
   <data name="Expr_FilterConversion" xml:space="preserve">
-    <value>Filter expression '{0}' does not evaluate to a Boolean term.</value>
+    <value>L'espressione filtro '{0}' non restituisce un valore booleano.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>Nome di tipo non valido: '{0}'.</value>
@@ -1114,7 +1114,7 @@
     <value>È possibile chiamare SetAdded e SetModified sui DataRows con DataRowState Unchanged.</value>
   </data>
   <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
-    <value>Ordinal '{0}' exceeds the maximum number.</value>
+    <value>L'ordinale '{0}' supera il numero massimo.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet non supporta System.Nullable&lt;&gt;.</value>
@@ -1465,7 +1465,7 @@
     <value>Errata corrispondenza di colonne nella chiave PrimaryKey tra &lt;target&gt;.{0} e &lt;source&gt;.{1}.</value>
   </data>
   <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
-    <value>Relation {0} cannot be merged, because keys have mismatch columns.</value>
+    <value>Non è possibile unire la relazione {0} perché le chiavi hanno colonne non corrispondenti.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>Nella tabella di destinazione {0} manca la definizione per la colonna {1}.</value>
@@ -1651,7 +1651,7 @@
     <value>La raccolta è stata modificata; impossibile eseguire l'operazione di enumerazione.</value>
   </data>
   <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
-    <value>Simple type '{0}' has already be declared with different '{1}'.</value>
+    <value>Il tipo semplice '{0}' è già stato dichiarato con un elemento '{1}' diverso.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>Foliazione non valida.</value>
@@ -1711,7 +1711,7 @@
     <value>Impossibile rimuovere una colonna incorporata nel dataSet.</value>
   </data>
   <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
-    <value>Cannot remove relation since it is built in to this dataSet.</value>
+    <value>Non è possibile rimuovere la relazione perché è incorporata in questo set di dati.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>Generato quando una proprietà di questo controllo cambia.</value>
@@ -1720,7 +1720,7 @@
     <value>Generato quando si modifica l'appartenenza a questa raccolta.</value>
   </data>
   <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
-    <value>Cannot get value because it is DBNull.</value>
+    <value>Impossibile ottenere il valore perché è DBNull.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
     <value>La proprietà '{0}' richiede Microsoft WindowsNT o un altro sistema operativo basato su WindowsNT.</value>
@@ -1915,7 +1915,7 @@
     <value>Update richiede che il duplicato di comando abbia un oggetto connessione. La proprietà Connection del duplicato di comando non è stata inizializzata.</value>
   </data>
   <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
-    <value>Update requires a connection.</value>
+    <value>L'aggiornamento richiede una connessione.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update richiede che {0}Command abbia un oggetto Connection aperto. {1}</value>
@@ -3619,7 +3619,7 @@
     <value>il campo "{0}" è contrassegnato come non serializzato</value>
   </data>
   <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
-    <value>The type of field '{0}' is marked as explicit layout which is not allowed in Native format</value>
+    <value>Il tipo di campo '{0}' è contrassegnato come layout esplicito e questo non è consentito nel formato nativo</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>I riferimenti con più valori agli assembly devono avere un ID assembly diverso da zero.</value>
@@ -3946,7 +3946,7 @@
     <value>Si è verificato un errore di rete o specifico dell'istanza mentre si cercava di stabilire una connessione con SQL Server. Il server non è stato trovato o non è accessibile. Verificare che il nome dell'istanza sia corretto e che SQL Server sia configurato in modo da consentire connessioni remote.</value>
   </data>
   <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
-    <value>The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server.</value>
+    <value>Il client non è riuscito a stabilire una connessione a causa di un errore durante il processo di inizializzazione della connessione prima dell'accesso. Cause possibili: il client ha tentato di connettersi a una versione non supportata di SQL Server, il server era troppo occupato per accettare nuove connessioni oppure c'era una limitazione delle risorse (memoria insufficiente o numero massimo di connessioni consentite) nel server.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>La connessione con il server è stata stabilita correttamente, ma poi si è verificato un errore durante l'handshake pre-login.</value>
@@ -4399,7 +4399,7 @@
     <value>Oggetto Dictionary che contiene i nomi di SQL Server e i relativi percorsi di chiave master di colonna attendibili.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>Too many redirections have occurred. Only {0} redirections per login is allowed.</value>
+    <value>Si sono verificati troppi reindirizzamenti. Sono consentiti solo {0} reindirizzamenti per accesso.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>La connessione a un'istanza di SQL Server con mirroring mediante l'opzione ApplicationIntent ReadOnly non è supportata.</value>
@@ -4426,7 +4426,7 @@
     <value>Il server non ha mantenuto la crittografia SSL durante un tentativo di ripristino. Impossibile eseguire il ripristino della connessione.</value>
   </data>
   <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
-    <value>The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible.</value>
+    <value>Il server non ha mantenuto l'esatta versione TDS del client richiesta durante un tentativo di ripristino. Impossibile eseguire il ripristino della connessione.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
     <value>La connessione è interrotta e non è possibile ripristinarla. Il driver client ha tentato una o più volte di ripristinare la connessione, ma tutti i tentativi non sono riusciti. Aumentare il valore di ConnectRetryCount per incrementare il numero di tentativi di ripristino.</value>
@@ -4741,6 +4741,6 @@
     <value>Il certificato fornito dal server non corrisponde al certificato fornito dall'opzione ServerCertificate.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
+    <value>Tentativo non valido di ottenere JsonDocument nella colonna '{0}'. JsonDocument è supportato solo per colonne di tipo JSON.</value>
   </data>
 </root>

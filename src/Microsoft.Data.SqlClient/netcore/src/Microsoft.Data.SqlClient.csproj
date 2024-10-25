@@ -77,6 +77,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -614,8 +617,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
-    
-    <Compile Include="Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
+
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs" />
@@ -630,7 +632,6 @@
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
@@ -700,6 +701,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
@@ -720,6 +724,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
@@ -748,6 +755,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    </Compile>
+
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
     <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
     <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
@@ -774,7 +785,6 @@
     <Compile Include="Common\Interop\Windows\sspicli\SSPIWrapper.cs" />
     <Compile Include="Common\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs" />
     <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
-    <Compile Include="Common\System\IO\PathInternal.Windows.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
     <Compile Include="Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
@@ -791,7 +801,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
 
   <!-- Unix only -->
@@ -868,6 +877,7 @@
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

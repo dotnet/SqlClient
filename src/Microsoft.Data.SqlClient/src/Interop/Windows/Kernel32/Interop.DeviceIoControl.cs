@@ -10,6 +10,8 @@ internal partial class Interop
 {
     internal partial class Kernel32
     {
+        internal const ushort FILE_DEVICE_FILE_SYSTEM = 0x0009;
+
         [DllImport(Libraries.Kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool DeviceIoControl
         (
