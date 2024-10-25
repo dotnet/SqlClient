@@ -33,6 +33,12 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
+        /// <summary>
+        /// Gets or sets an arbitrary tag that can be used to e.g. identify this SqlCommand in telemetry.
+        /// </summary>
+        /// <returns>The value of the tag.</returns>
+        public object Tag { get; set; }
+
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
@@ -255,8 +261,8 @@ namespace Microsoft.Data.SqlClient
                     IsColumnEncryptionEnabled;
 
         /// <summary>
-        /// Per-command custom providers. It can be provided by the user and can be set more than once. 
-        /// </summary> 
+        /// Per-command custom providers. It can be provided by the user and can be set more than once.
+        /// </summary>
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
@@ -3483,7 +3489,7 @@ namespace Microsoft.Data.SqlClient
                             r[colNames[(int)ProcParamsColIndex.TypeName]];
 
                         // the constructed type name above is incorrectly formatted, it should be a 2 part name not 3
-                        // for compatibility we can't change this because the bug has existed for a long time and been 
+                        // for compatibility we can't change this because the bug has existed for a long time and been
                         // worked around by users, so identify that it is present and catch it later in the execution
                         // process once users can no longer interact with with the parameter type name
                         p.IsDerivedParameterTypeName = true;
@@ -3993,7 +3999,7 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-#if NETFRAMEWORK 
+#if NETFRAMEWORK
                     RuntimeHelpers.PrepareConstrainedRegions();
 #endif
                     try
@@ -6493,7 +6499,7 @@ namespace Microsoft.Data.SqlClient
 
             // Stitching back together is a little tricky. Assume we want to build a full multi-part name
             //  with all parts except trimming separators for leading empty names (null or empty strings,
-            //  but not whitespace). Separators in the middle should be added, even if the name part is 
+            //  but not whitespace). Separators in the middle should be added, even if the name part is
             //  null/empty, to maintain proper location of the parts.
             for (int i = 0; i < strings.Length; i++)
             {
