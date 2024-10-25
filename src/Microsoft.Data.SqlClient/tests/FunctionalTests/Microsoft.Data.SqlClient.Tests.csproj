@@ -31,6 +31,7 @@
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
+    <Compile Include="MultiplexerTests.cs" />
     <Compile Include="SqlAuthenticationProviderTest.cs" />
     <Compile Include="SqlBufferTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
@@ -67,10 +68,12 @@
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
+    <Compile Include="TdsParserStateObject.TestHarness.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="TestRoutingTdsServer.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
@@ -97,6 +100,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="System.Buffers" Version="$(SystemBuffersVersion)" />    
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
