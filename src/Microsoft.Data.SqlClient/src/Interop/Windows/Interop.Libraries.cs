@@ -12,5 +12,8 @@ internal static partial class Interop
         internal const string Crypt32 = "crypt32.dll";
         internal const string SspiCli = "sspicli.dll";
 #endif
+#if NETFRAMEWORK
+        internal const string Advapi32 = "advapi32.dll";
+#endif
     }
 }

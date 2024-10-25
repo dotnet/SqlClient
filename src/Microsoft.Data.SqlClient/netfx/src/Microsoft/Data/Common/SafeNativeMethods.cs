@@ -17,20 +17,20 @@ namespace Microsoft.Data.Common
     internal static class SafeNativeMethods
     {
         // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/getcomputernameex.asp
-        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
+        [DllImport(Interop.Libraries.Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);
 
-        [DllImport(ExternDll.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        [DllImport(Interop.Libraries.Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
         static internal extern int GetCurrentProcessId();
 
-        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [DllImport(Interop.Libraries.Kernel32, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
         static internal extern IntPtr GetModuleHandle([MarshalAs(UnmanagedType.LPTStr), In] string moduleName/*lpctstr*/);
 
-        [DllImport(ExternDll.Kernel32, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
+        [DllImport(Interop.Libraries.Kernel32, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
         //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Ansi)]
         [ResourceExposure(ResourceScope.None)]
         static internal extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName/*lpcstr*/);
