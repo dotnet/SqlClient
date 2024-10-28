@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 
 internal partial class Interop
@@ -25,45 +26,87 @@ internal partial class Interop
             void* EaBuffer,
             uint EaLength);
 
-        internal unsafe static (int status, IntPtr handle) CreateFile(
-            ReadOnlySpan<char> path,
-            IntPtr rootDirectory,
+        internal static unsafe (int status, IntPtr handle) CreateFile(
+            string path,
+            byte[] eaName,
+            byte[] eaValue,
+
+            DesiredAccess desiredAccess,
+            FileAttributes fileAttributes,
+            FileShare shareAccess,
             CreateDisposition createDisposition,
-            DesiredAccess desiredAccess = DesiredAccess.FILE_GENERIC_READ | DesiredAccess.SYNCHRONIZE,
-            System.IO.FileShare shareAccess = System.IO.FileShare.ReadWrite | System.IO.FileShare.Delete,
-            System.IO.FileAttributes fileAttributes = 0,
-            CreateOptions createOptions = CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT,
-            ObjectAttributes objectAttributes = ObjectAttributes.OBJ_CASE_INSENSITIVE,
-            void* eaBuffer = null,
-            uint eaLength = 0)
+            CreateOptions createOptions
+
+            #if NETFRAMEWORK
+            ,ImpersonationLevel impersonationLevel,
+            bool isDynamicTracking,
+            bool isEffectiveOnly
+            #endif
+        )
         {
-            fixed (char* c = &MemoryMarshal.GetReference(path))
+            // Acquire space for the file extended attribute
+            int eaHeaderSize = sizeof(FILE_FULL_EA_INFORMATION);
+            int eaBufferSize = eaHeaderSize + eaName.Length + eaValue.Length;
+            Span<byte> eaBuffer = stackalloc byte[eaBufferSize];
+
+            // Fix the position of the path and the extended attribute buffer
+            fixed (char* pPath = path)
+            fixed (byte* pEaBuffer = eaBuffer)
             {
-                UNICODE_STRING name = new UNICODE_STRING
-                {
-                    Length = checked((ushort)(path.Length * sizeof(char))),
-                    MaximumLength = checked((ushort)(path.Length * sizeof(char))),
-                    Buffer = (IntPtr)c
-                };
+                // Generate a unicode string object from the path
+                UNICODE_STRING ucPath = new UNICODE_STRING(pPath, path.Length);
 
+                #if NETFRAMEWORK
+                // Generate a Security QOS object
+                SecurityQualityOfService qos = new SecurityQualityOfService(
+                    impersonationLevel,
+                    isDynamicTracking,
+                    isEffectiveOnly);
+                SecurityQualityOfService* pQos = &qos;
+                #else
+                SecurityQualityOfService* pQos = null;
+                #endif
+
+                // Generate the object attributes object that defines what we're opening
                 OBJECT_ATTRIBUTES attributes = new OBJECT_ATTRIBUTES(
-                    &name,
-                    objectAttributes,
-                    rootDirectory);
+                    objectName: &ucPath,
+                    attributes: ObjectAttributes.OBJ_CASE_INSENSITIVE,
+                    rootDirectory: IntPtr.Zero,
+                    securityQos: pQos);
 
+                // Set the contents of the extended information
+                // NOTE: This chunk of code treats a byte[] as FILE_FULL_EA_INFORMATION. Since we
+                //    do not have a direct reference to a FILE_FULL_EA_INFORMATION, we have to use
+                //    the -> operator to dereference the object before accessing its members.
+                //    However, the byte[] is longer than the FILE_FULL_EA_INFORMATION struct in
+                //    order to contain the name and value. Since byte[] are reference types, we
+                //    cannot store the name/value directly in the struct (in memory it would be
+                //    stored as a pointer). So in the second chunk, we copy the name/value to the
+                //    byte[] after the FILE_FULL_EA_INFORMATION struct.
+                // Step 1) Write the header
+                FILE_FULL_EA_INFORMATION* pEaObj = (FILE_FULL_EA_INFORMATION*)pEaBuffer;
+                pEaObj->NextEntryOffset = 0;
+                pEaObj->Flags = 0;
+                pEaObj->EaNameLength = (byte)(eaName.Length - 1); // Null terminator is not included
+                pEaObj->EaValueLength = (ushort)eaValue.Length;
+
+                // Step 2) Write the contents
+                eaName.AsSpan().CopyTo(eaBuffer.Slice(eaHeaderSize));
+                eaValue.AsSpan().CopyTo(eaBuffer.Slice(eaHeaderSize + eaName.Length));
+
+                // Make the interop call
                 int status = NtCreateFile(
                     out IntPtr handle,
                     desiredAccess,
                     ref attributes,
-                    out IO_STATUS_BLOCK statusBlock,
+                    IoStatusBlock: out _,
                     AllocationSize: null,
                     fileAttributes,
                     shareAccess,
                     createDisposition,
                     createOptions,
-                    eaBuffer,
-                    eaLength);
-
+                    pEaBuffer,
+                    (uint) eaBufferSize);
                 return (status, handle);
             }
         }
@@ -100,19 +143,23 @@ internal partial class Interop
             /// Optional quality of service to be applied to the object. Used to indicate
             /// security impersonation level and context tracking mode (dynamic or static).
             /// </summary>
-            public void* SecurityQualityOfService;
+            public SecurityQualityOfService* SecurityQoS;
 
             /// <summary>
             /// Equivalent of InitializeObjectAttributes macro with the exception that you can directly set SQOS.
             /// </summary>
-            public unsafe OBJECT_ATTRIBUTES(UNICODE_STRING* objectName, ObjectAttributes attributes, IntPtr rootDirectory)
+            public unsafe OBJECT_ATTRIBUTES(
+                UNICODE_STRING* objectName,
+                ObjectAttributes attributes,
+                IntPtr rootDirectory,
+                SecurityQualityOfService* securityQos)
             {
                 Length = (uint)sizeof(OBJECT_ATTRIBUTES);
                 RootDirectory = rootDirectory;
                 ObjectName = objectName;
                 Attributes = attributes;
                 SecurityDescriptor = null;
-                SecurityQualityOfService = null;
+                SecurityQoS = securityQos;
             }
         }
 
@@ -215,6 +262,7 @@ internal partial class Interop
         /// <summary>
         /// Options for creating/opening files with NtCreateFile.
         /// </summary>
+        [Flags]
         public enum CreateOptions : uint
         {
             /// <summary>
