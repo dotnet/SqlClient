@@ -40,6 +40,9 @@ parameters:
   - name: targetFramework
     type: string
 
+  - name: netcoreVersionTestUtils
+    type: string
+
   - name: enableX86Test
     type: boolean
     default: false
@@ -164,6 +167,7 @@ jobs:
       - template: ../steps/configure-sql-server-step.yml@self # configure SQL Server
         parameters:
           operatingSystem: ${{ parameters.operatingSystem }}
+          netcoreVersionTestUtils: ${{ parameters.netcoreVersionTestUtils }}
           ${{ if parameters.configProperties.instanceName }}:
             instanceName: ${{ parameters.configProperties.instanceName }}
           ${{ if parameters.configProperties.user }}:
@@ -182,8 +186,6 @@ jobs:
             SQLAliasName: ${{ parameters.configProperties.SQLAliasName }}
           ${{ if parameters.configProperties.SQLAliasPort }}:
             SQLAliasPort: ${{ parameters.configProperties.SQLAliasPort }}
-          ${{ if parameters.configProperties.targetNetCoreVersion }}:
-            targetNetCoreVersion: ${{ parameters.configProperties.targetNetCoreVersion }}
           ${{ if parameters.configProperties.databaseName }}:
             databaseName: ${{ parameters.configProperties.databaseName }}
           ${{ if parameters.configProperties.enableLocalDB }}:

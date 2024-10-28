@@ -19,6 +19,11 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: object
   default: [net8.0]
 
+- name: netcoreVersionTestUtils
+  displayName: 'Netcore Version for Test Utilities'
+  type: object
+  default: net8.0
+
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
   type: object
@@ -143,7 +148,7 @@ stages:
             # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
             # SQLAliasName: default: $(SQLAliasName)
             # SQLAliasPort: default: $(SQLAliasPort)
-            # targetNetCoreVersion: default: $(MainTargetNetCoreVersion)
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
             # databaseName: default: Northwind
             # localDbAppName: default: $(LocalDbAppName)
             # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
@@ -180,6 +185,9 @@ stages:
             x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+
+
 
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
