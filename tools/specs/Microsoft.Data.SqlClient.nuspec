@@ -111,23 +111,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
     <!-- End of Localization files for Net 8 -->	
 
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" target="lib\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.pdb" target="lib\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.xml" target="lib\net6.0\" exclude="" />
-    
-	<!-- Localization files for Net 6 -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\de\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\es\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\fr\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\it\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\ja\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\ko\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\ru\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net6.0\zh-Hant\" exclude="" />
-    <!-- End of Localization files for Net 6 -->	
-
     <!-- runtimes NetFx -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net462\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net462\" exclude="" />
@@ -137,11 +120,5 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net8.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net8.0\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net8.0\" exclude="" />
-
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\net6.0\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net6.0\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\net6.0\" exclude="" />
-
   </files>
 </package>
