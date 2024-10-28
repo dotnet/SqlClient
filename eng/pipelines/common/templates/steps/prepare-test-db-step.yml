@@ -16,6 +16,7 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Build Ext Utilities'
   inputs:
+    command: build
     arguments: '-f ${{parameters.targetFramework }}'
     workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
 - task: DotNetCoreCLI@2
