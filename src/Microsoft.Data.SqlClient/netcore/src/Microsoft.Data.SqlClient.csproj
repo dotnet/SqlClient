@@ -39,13 +39,13 @@
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs">
-      <Link>Common\Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
+      <Link>Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs">
-      <Link>Common\Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
+      <Link>Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugSafeHandle.netcore.cs">
-      <Link>Common\Interop\Common\Handles\DebugSafeHandle.netcore.cs</Link>
+      <Link>Interop\Common\Handles\DebugSafeHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
@@ -688,127 +688,127 @@
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates.netcore.cs">
-      <Link>Common\Interop\Windows\Crypt32\Interop.certificates.netcore.cs</Link>
+      <Link>Interop\Windows\Crypt32\Interop.certificates.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs">
-      <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs</Link>
+      <Link>Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
-      <Link>Common\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
+      <Link>Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Errors.cs">
-      <Link>Common\Interop\Windows\Interop.Errors.cs</Link>
+      <Link>Interop\Windows\Interop.Errors.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
+      <Link>Interop\Windows\Interop.Libraries.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.UNICODE_STRING.cs">
-      <Link>Common\Interop\Windows\Interop.UNICODE_STRING.cs</Link>
+      <Link>Interop\Windows\Interop.UNICODE_STRING.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetProcAddress.netcore.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.GetProcAddress.netcore.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.GetProcAddress.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.CloseHandle.netcore.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CloseHandle.netcore.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.CloseHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.CTL_CODE.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.CTL_CODE.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.CTL_CODE.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FreeLibrary.netcore.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.FreeLibrary.netcore.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.FreeLibrary.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.LoadLibraryEx.netcore.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.LoadLibraryEx.netcore.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.LoadLibraryEx.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs">
-      <Link>Common\Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs</Link>
+      <Link>Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
-      <Link>Common\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
+      <Link>Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
-      <Link>Common\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
+      <Link>Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.NtCreateFile.cs">
-      <Link>Common\Interop\Windows\NtDll\Interop.NtCreateFile.cs</Link>
+      <Link>Interop\Windows\NtDll\Interop.NtCreateFile.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
-      <Link>Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+      <Link>Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
-      <Link>Common\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
+      <Link>Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs">
-      <Link>Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs</Link>
+      <Link>Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.netcore.cs">
-      <Link>Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.netcore.cs</Link>
+      <Link>Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\Interop.SECURITY_STATUS.netcore.cs">
-      <Link>Common\Interop\Windows\SChannel\Interop.SECURITY_STATUS.netcore.cs</Link>
+      <Link>Interop\Windows\SChannel\Interop.SECURITY_STATUS.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\GlobalSSPI.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\GlobalSSPI.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\GlobalSSPI.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\Interop.SSPI.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\Interop.SSPI.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\Interop.SSPI.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\NegotiationInfoClass.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SafeDeleteContext.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SafeDeleteContext.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SafeDeleteContext.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecPkgContext_Bindings.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_NegotiationInfoW.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecPkgContext_NegotiationInfoW.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecPkgContext_NegotiationInfoW.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_Sizes.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecPkgContext_Sizes.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecPkgContext_Sizes.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecPkgContext_StreamSizes.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecPkgContext_StreamSizes.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecPkgContext_StreamSizes.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecurityPackageInfo.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecurityPackageInfo.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecurityPackageInfo.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecurityPackageInfoClass.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SecuritySafeHandles.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SecuritySafeHandles.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SecuritySafeHandles.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIAuthType.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SSPIAuthType.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SSPIAuthType.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIInterface.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SSPIInterface.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SSPIInterface.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPISecureChannelType.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SSPISecureChannelType.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SSPISecureChannelType.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SspiCli\SSPIWrapper.netcore.cs">
-      <Link>Common\Interop\Windows\SspiCli\SSPIWrapper.netcore.cs</Link>
+      <Link>Interop\Windows\SspiCli\SSPIWrapper.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
@@ -862,31 +862,31 @@
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\GssSafeHandles.netcore.cs">
-      <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.netcore.cs</Link>
+      <Link>Interop\Unix\Handles\GssSafeHandles.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteContext.netcore.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteContext.netcore.cs</Link>
+      <Link>Interop\Unix\Handles\SafeDeleteContext.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteNegoContext.netcore.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteNegoContext.netcore.cs</Link>
+      <Link>Interop\Unix\Handles\SafeDeleteNegoContext.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeCredentials.netcore.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeCrednetials.netcore.cs</Link>
+      <Link>Interop\Unix\Handles\SafeFreeCrednetials.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeNegoCredentials.netcore.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.netcore.cs</Link>
+      <Link>Interop\Unix\Handles\SafeFreeNegoCredentials.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Interop.Libraries.netcore.cs">
-      <Link>Common\Interop\Unix\Interop.Libraries.netcore.cs</Link>
+      <Link>Interop\Unix\Interop.Libraries.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs</Link>
+      <Link>Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.netcore.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.Interop.GssBuffer.netcore.cs</Link>
+      <Link>Interop\Unix\System.Net.Security.Native\Interop.Interop.GssBuffer.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs</Link>
+      <Link>Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
