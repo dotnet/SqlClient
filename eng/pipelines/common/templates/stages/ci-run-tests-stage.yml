@@ -54,6 +54,7 @@ stages:
                   configProperties: ${{ config.value.configProperties }}
                   prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
+                  netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
                   ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
                     ${{ if eq(codeCoveTF, targetFramework) }}:
@@ -81,6 +82,7 @@ stages:
                     useManagedSNI: ${{ useManagedSNI }}
                     prebuildSteps: ${{ parameters.prebuildSteps }}                  
                     targetFramework: ${{ targetFramework }}
+                    netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
                     ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
                       ${{ if eq(codeCoveTF, targetFramework) }}:
