@@ -3,14 +3,25 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
     public class MultiplexerTests
     {
-        public static IEnumerable<object[]> IsAsync() { yield return new object[] { false }; yield return new object[] { true }; }
+        [ExcludeFromCodeCoverage]
+        public static IEnumerable<object[]> IsAsync()
+        {
+            yield return new object[] { false };
+            yield return new object[] { true };
+        }
+
+        [ExcludeFromCodeCoverage]
+        public static IEnumerable<object[]> OnlyAsync() { yield return new object[] { true }; }
 
         [Theory, MemberData(nameof(IsAsync))]
         public static void PassThroughSinglePacket(bool isAsync)
@@ -60,7 +71,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             int dataSize = 4;
             var a = CreatePacket(dataSize, 0xF);
-            List<PacketData> input = SplitPacket(a, 1);
+            List<PacketData> input = SplitPacket(a, 6);
             List<PacketData> expected = new List<PacketData> { a };
 
             Assert.Equal(SumPacketLengths(expected), SumPacketLengths(input));
@@ -93,12 +104,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public static void Reconstruct2Packets_Full_FullPart_Part(bool isAsync)
         {
             int dataSize = 30;
-            var expected = new List<PacketData>
-            {
-                CreatePacket(30, 5),
-                CreatePacket(10, 6),
-                CreatePacket(30, 7)
-            };
+            var expected = new List<PacketData> { CreatePacket(30, 5), CreatePacket(10, 6), CreatePacket(30, 7) };
 
             var input = SplitPackets(38, expected,
                 (8 + 30), // full
@@ -157,12 +163,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             int dataSize = 62;
 
-            var expected = new List<PacketData>
-            {
-                CreatePacket(26, 5),
-                CreatePacket(10, 6),
-                CreatePacket(10, 7)
-            };
+            var expected = new List<PacketData> { CreatePacket(26, 5), CreatePacket(10, 6), CreatePacket(10, 7) };
 
             var input = SplitPackets(70, expected,
                 (8 + 26) + (8 + 10) + (8 + 10) // = 70: full, full, part
@@ -178,12 +179,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             int dataSize = 120;
 
-            var expected = new List<PacketData>
-            {
-                CreatePacket(120, 5),
-                CreatePacket(90, 6),
-                CreatePacket(13, 7),
-            };
+            var expected = new List<PacketData> { CreatePacket(120, 5), CreatePacket(90, 6), CreatePacket(13, 7), };
 
             var input = SplitPackets(120, expected,
                 (8 + 120),
@@ -205,26 +201,43 @@ namespace Microsoft.Data.SqlClient.Tests
             var attentionPacket = CreatePacket(13, 6);
             var input = new List<PacketData> { normalPacket, attentionPacket };
 
-            var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, true);
+            var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync: true);
 
             for (int index = 0; index < input.Count; index++)
             {
                 stateObject.Current = input[index];
-                stateObject.ProcessSniPacket(default, 0, usePartialPacket: false);
+                stateObject.ProcessSniPacket(default, 0);
             }
 
-            // attention packet should be in the current buffer because the snapshot is not active
             Assert.NotNull(stateObject._inBuff);
             Assert.Equal(21, stateObject._inBytesRead);
             Assert.Equal(0, stateObject._inBytesUsed);
-
-            // attention packet should be in the snapshot as well
             Assert.NotNull(stateObject._snapshot);
             Assert.NotNull(stateObject._snapshot.List);
-            Assert.Equal(2, stateObject._snapshot.List.Count); 
+            Assert.Equal(2, stateObject._snapshot.List.Count);
+
         }
 
+        [Fact]
+        public static void MultipleFullPacketsInRemainderAreSplitCorrectly()
+        {
+            int dataSize = 800 - TdsEnums.HEADER_LEN;
+            List<PacketData> expected = new List<PacketData>
+            {
+                CreatePacket(dataSize, 5), CreatePacket(80, 6), CreatePacket(21, 7)
+            };
 
+
+            List<PacketData> input = SplitPacket(CombinePackets(expected), 700);
+
+            var stateObject = new TdsParserStateObject(input, dataSize, isAsync: false);
+
+            var output = MultiplexPacketList(false, dataSize, input);
+
+            ComparePacketLists(dataSize, expected, output);
+        }
+
+        [ExcludeFromCodeCoverage]
         private static List<PacketData> MultiplexPacketList(bool isAsync, int dataSize, List<PacketData> input)
         {
             var stateObject = new TdsParserStateObject(input, TdsEnums.HEADER_LEN + dataSize, isAsync);
@@ -234,47 +247,54 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 stateObject.Current = input[index];
 
-                stateObject.ProcessSniPacket(default, 0, usePartialPacket: false);
+                stateObject.ProcessSniPacket(default, 0);
 
                 if (stateObject._inBytesRead > 0)
                 {
                     if (
                         stateObject._inBytesRead < TdsEnums.HEADER_LEN
                         ||
-                        stateObject._inBytesRead != (TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
+                        stateObject._inBytesRead != (TdsEnums.HEADER_LEN +
+                                                     Packet.GetDataLengthFromHeader(
+                                                         stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
                     )
                     {
                         Assert.Fail("incomplete packet exposed after call to ProcessSniPacket");
                     }
+
                     if (!isAsync)
                     {
-                        output.Add(PacketData.Copy(stateObject._inBuff, stateObject._inBytesUsed, stateObject._inBytesRead));
+                        output.Add(PacketData.Copy(stateObject._inBuff, stateObject._inBytesUsed,
+                            stateObject._inBytesRead));
                     }
                 }
             }
 
+
             if (!isAsync)
             {
-                while (stateObject._partialPacket != null)
+                while (stateObject.PartialPacket != null)
                 {
                     stateObject.Current = default;
 
-                    stateObject.ProcessSniPacket(default, 0, usePartialPacket: true);
+                    stateObject.ProcessSniPacket(default, 0);
 
                     if (stateObject._inBytesRead > 0)
                     {
                         if (
                             stateObject._inBytesRead < TdsEnums.HEADER_LEN
                             ||
-                            stateObject._inBytesRead != (TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
+                            stateObject._inBytesRead != (TdsEnums.HEADER_LEN +
+                                                         Packet.GetDataLengthFromHeader(
+                                                             stateObject._inBuff.AsSpan(0, TdsEnums.HEADER_LEN)))
                         )
                         {
-                            Assert.Fail("incomplete packet exposed after call to ProcessSniPacket with usePartialPacket");
+                            Assert.Fail(
+                                "incomplete packet exposed after call to ProcessSniPacket with usePartialPacket");
                         }
-                        if (!isAsync)
-                        {
-                            output.Add(PacketData.Copy(stateObject._inBuff, stateObject._inBytesUsed, stateObject._inBytesRead));
-                        }
+
+                        output.Add(PacketData.Copy(stateObject._inBuff, stateObject._inBytesUsed,
+                            stateObject._inBytesRead));
                     }
                 }
 
@@ -287,6 +307,7 @@ namespace Microsoft.Data.SqlClient.Tests
             return output;
         }
 
+        [ExcludeFromCodeCoverage]
         private static void ComparePacketLists(int dataSize, List<PacketData> expected, List<PacketData> output)
         {
             Assert.NotNull(expected);
@@ -307,6 +328,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        [ExcludeFromCodeCoverage]
         public static PacketData CreatePacket(int dataSize, byte dataValue, int startOffset = 0, int endPadding = 0)
         {
             byte[] buffer = new byte[startOffset + TdsEnums.HEADER_LEN + dataSize + endPadding];
@@ -315,6 +337,7 @@ namespace Microsoft.Data.SqlClient.Tests
             return new PacketData(buffer, startOffset, buffer.Length - endPadding);
         }
 
+        [ExcludeFromCodeCoverage]
         public static List<PacketData> CreatePackets(DataSize sizes, params byte[] dataValues)
         {
             int count = dataValues.Length;
@@ -332,12 +355,14 @@ namespace Microsoft.Data.SqlClient.Tests
             return list;
         }
 
+        [ExcludeFromCodeCoverage]
         private static void WritePacket(Span<byte> buffer, int dataSize, byte dataValue, byte id)
         {
             Span<byte> header = buffer.Slice(0, TdsEnums.HEADER_LEN);
             header[0] = 4; // Type, 4 - Raw Data
             header[1] = 0; // Status, 0 - normal message
-            BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.HEADER_LEN_FIELD_OFFSET, 2), (short)(TdsEnums.HEADER_LEN + dataSize)); // total length
+            BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.HEADER_LEN_FIELD_OFFSET, 2),
+                (short)(TdsEnums.HEADER_LEN + dataSize)); // total length
             BinaryPrimitives.TryWriteInt16BigEndian(header.Slice(TdsEnums.SPID_OFFSET, 2), short.MaxValue); // SPID 
             header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 4] = id; // PacketID
             header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 5] = 0; // Window
@@ -346,6 +371,7 @@ namespace Microsoft.Data.SqlClient.Tests
             data.Fill(dataValue);
         }
 
+        [ExcludeFromCodeCoverage]
         public static List<PacketData> SplitPacket(PacketData packet, int length)
         {
             List<PacketData> list = new List<PacketData>(2);
@@ -354,13 +380,16 @@ namespace Microsoft.Data.SqlClient.Tests
                 list.Add(new PacketData(packet.Array, packet.Start, length));
                 packet = new PacketData(packet.Array, packet.Start + length, packet.Length - length);
             }
+
             if (packet.Length > 0)
             {
                 list.Add(packet);
             }
+
             return list;
         }
 
+        [ExcludeFromCodeCoverage]
         public static List<PacketData> SplitPackets(int dataSize, List<PacketData> packets, params int[] lengths)
         {
             List<PacketData> list = new List<PacketData>(lengths.Length);
@@ -370,8 +399,10 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 if (lengths[index] > packetSize)
                 {
-                    throw new ArgumentOutOfRangeException($"segment size of an individual part cannot exceed the packet buffer size of the state object, max packet size: {packetSize}, supplied length: {lengths[index]}, at index: {index}");
+                    throw new ArgumentOutOfRangeException(
+                        $"segment size of an individual part cannot exceed the packet buffer size of the state object, max packet size: {packetSize}, supplied length: {lengths[index]}, at index: {index}");
                 }
+
                 arrays[index] = new byte[lengths[index]];
             }
 
@@ -380,6 +411,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             int sourceOffset = 0;
             int sourceIndex = 0;
+
 
             do
             {
@@ -424,10 +456,29 @@ namespace Microsoft.Data.SqlClient.Tests
             return list;
         }
 
+        [ExcludeFromCodeCoverage]
+        public static PacketData CombinePackets(List<PacketData> packets)
+        {
+            int totalLength = SumPacketLengths(packets);
+            byte[] buffer = new byte[totalLength];
+            int offset = 0;
+            for (int index = 0; index < packets.Count; index++)
+            {
+                PacketData packet = packets[index];
+                Array.Copy(packet.Array, packet.Start, buffer, offset, packet.Length);
+                offset += packet.Length;
+            }
+
+            return new PacketData(buffer, 0, totalLength);
+        }
+
+        [ExcludeFromCodeCoverage]
         public static int PacketSizeFromDataSize(int dataSize) => TdsEnums.HEADER_LEN + dataSize;
 
+        [ExcludeFromCodeCoverage]
         public static int DataSizeFromPacketSize(int packetSize) => packetSize - TdsEnums.HEADER_LEN;
 
+        [ExcludeFromCodeCoverage]
         public static int SumPacketLengths(List<PacketData> list)
         {
             int total = 0;
@@ -437,9 +488,107 @@ namespace Microsoft.Data.SqlClient.Tests
             }
             return total;
         }
+
+        [ExcludeFromCodeCoverage]
+        public static List<PacketData> LoadPacketBinFiles(string directoryName)
+        {
+            // expects a set of files contained in a directory with the name 
+            // formatted as packet_{number}_{dataSize}.bin each packet will be
+            // loaded into a byte[]
+
+            string[] files = Directory.GetFiles(directoryName, "packet*.bin", SearchOption.TopDirectoryOnly);
+            SortedDictionary<int, PacketData> packets = new SortedDictionary<int, PacketData>();
+            foreach (string file in files)
+            {
+                Match match = Regex.Match(file, @"packet_(?<number>\d+)_(?<size>\d+)\.bin");
+                int number = int.Parse(match.Groups["number"].Value);
+                int size = int.Parse(match.Groups["size"].Value);
+                packets.Add(
+                    number,
+                    new PacketData(
+                        System.IO.File.ReadAllBytes(file),
+                        0,
+                        size
+                    )
+                );
+            }
+
+            return packets.Values.ToList();
+        }
+
+        [ExcludeFromCodeCoverage]
+        public static List<PacketData> NaiveReconstructPacketStream(List<PacketData> input)
+        {
+            int dataSize = input[0].Array.Length;
+            List<PacketData> output = new List<PacketData>(input.Count);
+
+            byte[] currentBuffer = new byte[dataSize];
+            int currentBufferOffset = 0;
+
+            foreach (PacketData inputPacket in input)
+            {
+                int inputPacketOffset = 0;
+                while (inputPacketOffset < inputPacket.Length)
+                {
+                    if (currentBufferOffset < dataSize)
+                    {
+                        int requiredCount = dataSize - currentBufferOffset;
+                        int availableCount = inputPacket.Length - inputPacketOffset;
+                        int copyCount = Math.Min(requiredCount, availableCount);
+                        ReadOnlySpan<byte> copyFrom = inputPacket.Array.AsSpan(inputPacketOffset, copyCount);
+                        Span<byte> copyTo = currentBuffer.AsSpan(currentBufferOffset, copyCount);
+                        copyFrom.CopyTo(copyTo);
+                        currentBufferOffset += copyCount;
+                        inputPacketOffset += copyCount;
+                    }
+
+                    if (currentBufferOffset == dataSize)
+                    {
+                        output.Add(new PacketData(currentBuffer, 0, dataSize));
+                        currentBufferOffset = 0;
+                        currentBuffer = new byte[dataSize];
+                    }
+                }
+            }
+
+            if (currentBufferOffset > 0)
+            {
+                output.Add(new PacketData(currentBuffer, 0, currentBufferOffset));
+            }
+
+            for (int index = 0; index < output.Count; index++)
+            {
+                PacketData packet = output[index];
+                int expectedLength = 8 + Packet.GetDataLengthFromHeader(packet.Array);
+                if (expectedLength != packet.Length)
+                {
+                    if (index != output.Count - 1)
+                    {
+                        throw new InvalidOperationException(
+                            "non-terminal packet has a length mismatch between the packet header and amount of data available");
+                    }
+                    else
+                    {
+                        byte[] remainder = new byte[dataSize];
+                        int remainderSize = packet.Length - expectedLength;
+                        Span<byte> copyFrom = packet.Array.AsSpan(expectedLength, remainderSize);
+                        Span<byte> copyTo = remainder.AsSpan(0, remainderSize);
+                        copyFrom.CopyTo(copyTo);
+                        copyFrom.Fill(0);
+
+                        PacketData replacementPacket = new PacketData(packet.Array, 0, expectedLength);
+                        PacketData additionalPacket = new PacketData(remainder, 0, remainderSize);
+                        output[index] = replacementPacket;
+                        output.Add(additionalPacket);
+                    }
+                }
+            }
+
+            return output;
+        }
     }
 
-
+    [ExcludeFromCodeCoverage]
     [DebuggerDisplay("{ToDebugString(),nq}")]
     public readonly struct PacketData
     {
@@ -473,6 +622,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 newArray = new byte[array.Length];
                 Buffer.BlockCopy(array, start, newArray, start, length);
             }
+
             return new PacketData(newArray, start, length);
         }
 
@@ -488,6 +638,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 {
                     buffer.AppendFormat(" (arr: {0})", Array.Length);
                 }
+
                 buffer.Append(": {");
                 buffer.AppendFormat("{0:D2}", Array[0]);
 
@@ -497,16 +648,21 @@ namespace Microsoft.Data.SqlClient.Tests
                     buffer.Append(',');
                     buffer.AppendFormat("{0:D2}", Array[index]);
                 }
+
                 if (Length > max)
                 {
                     buffer.Append(" ...");
                 }
+
                 buffer.Append('}');
             }
+
             return buffer.ToString();
         }
+
     }
 
+    [ExcludeFromCodeCoverage]
     [DebuggerStepThrough]
     public struct DataSize
     {
@@ -515,6 +671,7 @@ namespace Microsoft.Data.SqlClient.Tests
             CommonSize = commonSize;
             LastSize = commonSize;
         }
+
         public DataSize(int commonSize, int lastSize)
         {
             CommonSize = commonSize;
@@ -538,12 +695,12 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public static implicit operator DataSize(int commonSize)
         {
-            return new DataSize( commonSize,  commonSize );
+            return new DataSize(commonSize, commonSize);
         }
 
         public static implicit operator DataSize((int commonSize, int lastSize) values)
         {
-            return new DataSize( values.commonSize, values.lastSize );
+            return new DataSize(values.commonSize, values.lastSize);
         }
     }
 }

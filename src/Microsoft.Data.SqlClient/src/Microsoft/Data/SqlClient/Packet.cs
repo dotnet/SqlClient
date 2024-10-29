@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
     /// This class is used to contain partial packet data and helps ensure that the packet data is completely
     /// received before a full packet is made available to the rest of the library
     /// </summary>
-    internal sealed class Packet
+    internal sealed partial class Packet
     {
         public const int UnknownDataLength = -1;
 
@@ -29,8 +29,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// If the packet data has enough bytes available to determine the length amount of data that should be present
-        /// in the packet then this property will be set to the count of data bytes in the packet.<br />
-        /// Otherwise this will be -1
+        /// in the packet then this property will be set to the count of data bytes in the packet, <br />
+        /// otherwise this will be -1
         /// </summary>
         public int DataLength
         {
@@ -113,9 +113,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// returns a boolean value indicating whether the <see cref="Buffer"/> contains enough
         /// data for a valid tds header, has a <see cref="DataLength"/> set and that the 
-        /// <see cref="CurrentLength"/> is equal to the <see cref="DataLength"/> + tds header length.<br /> 
+        /// <see cref="CurrentLength"/> is greater than or equal to the <see cref="DataLength"/> + tds header length.<br /> 
         /// </summary>
-        public bool IsComplete => _dataLength != UnknownDataLength && (TdsEnums.HEADER_LEN + _dataLength) == _totalLength;
+        public bool ContainsCompletePacket => _dataLength != UnknownDataLength && (TdsEnums.HEADER_LEN + _dataLength) <= _totalLength;
 
         /// <summary>
         /// returns a <seealso href="ReadOnlySpan&lt;byte&gt;"/> containing the first 8 bytes of the <see cref="Buffer"/> array which will
@@ -138,6 +138,10 @@ namespace Microsoft.Data.SqlClient
                 ThrowDisposed();
             }
         }
+
+        internal void SetCreatedBy(int creator) => SetCreatedByImpl(creator);
+
+        partial void SetCreatedByImpl(int creator);
 
         public static void ThrowDisposed()
         {
@@ -163,4 +167,15 @@ namespace Microsoft.Data.SqlClient
 
         internal static bool GetIsEOMFromHeader(ReadOnlySpan<byte> header) => GetStatusFromHeader(header) == 1;
     }
+
+#if DEBUG
+    internal sealed partial class Packet
+    {
+        private int _createdBy;
+
+        public int CreatedBy => _createdBy;
+
+        partial void SetCreatedByImpl(int creator) => _createdBy = creator;
+    }
+#endif 
 }

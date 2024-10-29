@@ -72,6 +72,7 @@
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>

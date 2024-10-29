@@ -12,10 +12,10 @@ namespace Microsoft.Data.SqlClient
 #endif
     partial class TdsParserStateObject
     {
-        private Packet __partialPacket;
-        internal Packet _partialPacket => __partialPacket;
+        private Packet _partialPacket;
+        internal Packet PartialPacket => _partialPacket;
 
-        public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
+        public void ProcessSniPacket(PacketHandle packet, uint error)
         {
             if (error != 0)
             {
@@ -34,10 +34,11 @@ namespace Microsoft.Data.SqlClient
                 uint dataSize = 0;
                 bool usedPartialPacket = false;
                 uint getDataError = 0;
-
-                if (usePartialPacket && _partialPacket != null && _partialPacket.IsComplete)
+                
+                if (PartialPacketContainsCompletePacket())
                 {
-                    SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
+                    Packet partialPacket = _partialPacket;
+                    SetBuffer(partialPacket.Buffer, 0, partialPacket.CurrentLength);
                     ClearPartialPacket();
                     getDataError = TdsEnums.SNI_SUCCESS;
                     usedPartialPacket = true;
@@ -77,7 +78,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         MultiplexPackets(
                             _inBuff, _inBytesUsed, _inBytesRead,
-                            _partialPacket,
+                            PartialPacket,
                             out int newDataOffset,
                             out int newDataLength,
                             out Packet remainderPacket,
@@ -93,13 +94,13 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_snapshot != null)
                             {
-                                _snapshot.AppendPacketData(_partialPacket.Buffer, _partialPacket.CurrentLength);
+                                _snapshot.AppendPacketData(PartialPacket.Buffer, PartialPacket.CurrentLength);
                                 SetBuffer(new byte[_inBuff.Length], 0, 0);
                                 appended = true;
                             }
                             else
                             {
-                                SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength);
+                                SetBuffer(PartialPacket.Buffer, 0, PartialPacket.CurrentLength);
                                 
                             }
                             bufferIsPartialCompleted = true;
@@ -175,23 +176,31 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void SetPartialPacket(Packet packet/*, [CallerMemberName] string caller = null*/)
+        private void SetPartialPacket(Packet packet)
         {
-            if (__partialPacket != null && packet != null)
+            if (_partialPacket != null && packet != null)
             {
                 throw new InvalidOperationException("partial packet cannot be non-null when setting to non=null");
             }
-            __partialPacket = packet;
+            _partialPacket = packet;
         }
 
-        private void ClearPartialPacket(/*[CallerMemberName] string caller = null*/)
+        private void ClearPartialPacket()
         {
-            Packet partialPacket = __partialPacket;
-            __partialPacket = null;
+            Packet partialPacket = _partialPacket;
+            _partialPacket = null;
             if (partialPacket != null)
             {
                 partialPacket.Dispose();
             }
+        }
+
+        // this check is used in two places that must be identical so it is
+        // extracted into a method, do not inline this method
+        internal bool PartialPacketContainsCompletePacket()
+        {
+            Packet partialPacket = _partialPacket;
+            return partialPacket != null && partialPacket.ContainsCompletePacket;
         }
 
         private static void MultiplexPackets(
@@ -268,7 +277,7 @@ namespace Microsoft.Data.SqlClient
                         // data from a following packet
 
                         // the TDS spec requires that all packets be of the defined packet size apart from
-                        // the last packet of a response. This means that it should not possible to have more than
+                        // the last packet of a response. This means that is should not possible to have more than
                         // 2 packet fragments in a single buffer like this:
                         //  - first packet caused the partial
                         //  - second packet is the one we have just unpacked
@@ -279,7 +288,6 @@ namespace Microsoft.Data.SqlClient
 
                         // this should only happen when the caller is trying to consume the partial packet
                         // and does not have new input data
-                        Debug.Assert(newDataLength == 0);
 
                         int remainderLength = partialPacket.CurrentLength - partialPacket.RequiredLength;
 
@@ -290,6 +298,7 @@ namespace Microsoft.Data.SqlClient
                             Buffer = new byte[dataBuffer.Length],
                             CurrentLength = remainderLength,
                         };
+                        remainderPacket.SetCreatedBy(1);
 
                         ReadOnlySpan<byte> remainderSource = partialPacket.Buffer.AsSpan(TdsEnums.HEADER_LEN + partialPacket.DataLength, remainderLength);
                         Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderLength);
@@ -297,14 +306,7 @@ namespace Microsoft.Data.SqlClient
 
                         createdRemainderPacket = true;
 
-                        if (remainderPacket.HasHeader)
-                        {
-                            remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
-                            if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
-                            {
-                                recurse = true;
-                            }
-                        }
+                        recurse = SetupRemainderPacket(remainderPacket);
                     }
 
                     if (partialPacket.CurrentLength == partialPacket.RequiredLength)
@@ -318,11 +320,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (data.Length > 0)
                     {
-                        // some data has been taken from the buffer, put into the partial
-                        // packet buffer and we have data left so move the data we have
-                        // left to the start of the buffer so we can pass the buffer back
-                        // as zero based to the caller avoiding offset calculations in the
-                        // rest of this method
+                        // some data has been taken from the buffer and put into the partial
+                        // packet buffer. We have data left so move the data we have to the
+                        // start of the buffer so we can pass the buffer back as zero based
+                        // to the caller avoiding offset calculations in the rest of this method
                         Buffer.BlockCopy(
                             dataBuffer, dataOffset + bytesConsumed, // from
                             dataBuffer, dataOffset, // to
@@ -374,19 +375,11 @@ namespace Microsoft.Data.SqlClient
                             remainderPacket = new Packet
                             {
                                 Buffer = dataBuffer,
-                                DataLength = packetDataLength,
                                 CurrentLength = data.Length
                             };
+                            remainderPacket.SetCreatedBy(2);
                             createdRemainderPacket = true;
-                            Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
-                            Debug.Assert(remainderPacket.HasDataLength); // must have been set at construction
-                            if (remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
-                            {
-                                // the remainder packet contains more data than the packet so we need
-                                // to tell the caller to recurse into this function again once they have
-                                // consumed the first packet
-                                recurse = true;
-                            }
+                            recurse = SetupRemainderPacket(remainderPacket);
                         }
                     }
                     else if (data.Length < TdsEnums.HEADER_LEN + packetDataLength)
@@ -398,11 +391,13 @@ namespace Microsoft.Data.SqlClient
                             DataLength = packetDataLength,
                             CurrentLength = data.Length
                         };
+                        remainderPacket.SetCreatedBy(3);
                         createdRemainderPacket = true;
+                        recurse = SetupRemainderPacket(remainderPacket);
                     }
                     else // implied: current length > required length
                     {
-                        // more data than required so need to split it out but we can't do that
+                        // more data than required so need to split it out, but we can't do that
                         // here so we need to tell the caller to take the remainder packet and then
                         // call this function again
                         if (consumePartialPacket)
@@ -415,47 +410,39 @@ namespace Microsoft.Data.SqlClient
                                 Buffer = new byte[dataBuffer.Length],
                                 CurrentLength = data.Length
                             };
-
+                            remainderPacket.SetCreatedBy(4);
                             ReadOnlySpan<byte> remainderSource = data;
                             Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderPacket.CurrentLength);
                             remainderSource.CopyTo(remainderTarget);
 
                             createdRemainderPacket = true;
+
+                            recurse = SetupRemainderPacket(remainderPacket);
                         }
                         else
                         {
+                            newDataLength = TdsEnums.HEADER_LEN + packetDataLength;
                             int remainderLength = data.Length - (TdsEnums.HEADER_LEN + packetDataLength);
                             remainderPacket = new Packet
                             {
                                 Buffer = new byte[dataBuffer.Length],
-                                CurrentLength = remainderLength,
+                                CurrentLength = remainderLength
                             };
+                            remainderPacket.SetCreatedBy(5);
 
                             ReadOnlySpan<byte> remainderSource = data.Slice(TdsEnums.HEADER_LEN + packetDataLength);
                             Span<byte> remainderTarget = remainderPacket.Buffer.AsSpan(0, remainderLength);
                             remainderSource.CopyTo(remainderTarget);
-
 #if DEBUG
                             // for debugging purposes fill the removed data area with an easily
                             // recognisable pattern so we can see if it is misused
                             Span<byte> removed = dataBuffer.AsSpan(TdsEnums.HEADER_LEN + packetDataLength, remainderLength);
                             removed.Fill(0xFF);
 #endif
-
-                            newDataLength = TdsEnums.HEADER_LEN + packetDataLength;
+                            createdRemainderPacket = true;
+                            recurse = SetupRemainderPacket(remainderPacket);
 
                             consumeInputDirectly = true;
-                            createdRemainderPacket = true;
-
-                            if (remainderPacket.HasHeader)
-                            {
-                                remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
-                                if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
-                                {
-                                    recurse = true;
-                                }
-                            }
-
                         }
                     }
                 }
@@ -463,7 +450,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // either:
                     // 1) we took some data from the input to reconstruct the partial packet
-                    // 2) there was less than a single packet header of data recieved
+                    // 2) there was less than a single packet header of data received
                     // in both cases we can't tell the caller to directly consume the packet
                     // in the input buffer, we need to construct a new remainder packet with
                     // the incomplete data and let the caller deal with it
@@ -472,24 +459,32 @@ namespace Microsoft.Data.SqlClient
                         Buffer = dataBuffer,
                         CurrentLength = data.Length
                     };
+                    remainderPacket.SetCreatedBy(6);
                     createdRemainderPacket = true;
+                    recurse = SetupRemainderPacket(remainderPacket);
                 }
             }
-#if DEBUG
-            //// the Window field is unused by the spec so it can be used as a marker
-            ////  to identify reconstructed packets while debugging
-            //if (remainderPacket != null && remainderPacket.HasHeader)
-            //{
-            //    remainderPacket.Buffer[7] = 0xF;
-            //}
-#endif
 
             if (consumePartialPacket && consumeInputDirectly)
             {
-                string message = $"MultiplexPackets cannot return both {nameof(consumePartialPacket)} and {nameof(consumeInputDirectly)}";
-                System.Diagnostics.Debug.Fail(message); // fail is easier to debug because the exception can be swallowed by higher layers.
                 throw new InvalidOperationException($"MultiplexPackets cannot return both {nameof(consumePartialPacket)} and {nameof(consumeInputDirectly)}");
             }
+        }
+
+        private static bool SetupRemainderPacket(Packet packet)
+        {
+            Debug.Assert(packet != null);
+            bool containsFullPacket = false;
+            if (packet.HasHeader)
+            {
+                packet.DataLength = Packet.GetDataLengthFromHeader(packet);
+                if (packet.HasDataLength && packet.CurrentLength >= packet.RequiredLength)
+                {
+                    containsFullPacket = true;
+                }
+            }
+
+            return containsFullPacket;
         }
     }
 }

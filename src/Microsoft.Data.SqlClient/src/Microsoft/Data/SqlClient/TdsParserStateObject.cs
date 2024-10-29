@@ -2035,7 +2035,7 @@ namespace Microsoft.Data.SqlClient
                 result = TdsOperationStatus.NeedMoreData;
             }
 
-            if (result == TdsOperationStatus.InvalidData && _partialPacket != null && !_partialPacket.IsComplete)
+            if (result == TdsOperationStatus.InvalidData && PartialPacket != null && !PartialPacket.ContainsCompletePacket)
             {
                 result = TdsOperationStatus.NeedMoreData;
             }
@@ -2043,11 +2043,10 @@ namespace Microsoft.Data.SqlClient
             if (_syncOverAsync)
             {
                 ReadSniSyncOverAsync();
-
                 while (_inBytesRead == 0)
                 {
                     // a partial packet must have taken the packet data so we
-                    // need to read more data to complete the packet but we 
+                    // need to read more data to complete the packet, but we 
                     // can't return NeedMoreData in sync mode so we have to
                     // spin fetching more data here until we have something
                     // that the caller can read
@@ -2087,12 +2086,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             PacketHandle readPacket = default;
-            bool readFromNetwork = true;
-            if (_partialPacket != null && _partialPacket.IsComplete)
-            {
-                readFromNetwork = false;
-            }
-
+            bool readFromNetwork = PartialPacketContainsCompletePacket();
             uint error;
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -2130,7 +2124,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
                     }
 
-                    ProcessSniPacket(readPacket, TdsEnums.SNI_SUCCESS, usePartialPacket: !readFromNetwork);
+                    ProcessSniPacket(readPacket, TdsEnums.SNI_SUCCESS);
 #if DEBUG
                     if (s_forcePendingReadsToWaitForUser)
                     {
