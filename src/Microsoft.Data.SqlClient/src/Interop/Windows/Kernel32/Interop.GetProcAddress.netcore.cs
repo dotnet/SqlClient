@@ -6,8 +6,7 @@
 
 using System;
 using System.Runtime.InteropServices;
-
-using Microsoft.Win32.SafeHandles;
+using Interop_TEMP.Windows.Handles;
 
 internal partial class Interop
 {
