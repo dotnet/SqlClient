@@ -524,7 +524,7 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
+        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
             if (error != 0)
             {

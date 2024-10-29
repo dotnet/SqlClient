@@ -393,8 +393,9 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
+        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
+            return SNIPacketGetData(packet, _inBuff, ref dataSize);
             if (error != 0)
             {
                 if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
