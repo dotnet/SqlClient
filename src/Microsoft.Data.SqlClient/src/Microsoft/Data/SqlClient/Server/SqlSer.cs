@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static int SizeInBytes(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t) => SizeInBytes(Activator.CreateInstance(t));
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal static object Deserialize(Stream s,
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type resultType) => GetSerializer(resultType).Deserialize(s);
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
         private static Serializer GetSerializer(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type t)
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal static int GetUdtMaxLength(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t)
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Create a new serializer for the given type.
         private static Serializer GetNewSerializer(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type t)
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.Server
     // The base serializer class.
     internal abstract class Serializer
     {
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
         protected Type _type;
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.Server
         public abstract void Serialize(Stream s, object o);
 
         protected Serializer(
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t) => _type = t;
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.Server
         private readonly BinaryOrderedUdtNormalizer _normalizer;
    
         internal NormalizedSerializer(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type t) : base(t)
@@ -184,7 +184,7 @@ namespace Microsoft.Data.SqlClient.Server
     internal sealed class BinarySerializeSerializer : Serializer
     {
         internal BinarySerializeSerializer(
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t) : base(t)

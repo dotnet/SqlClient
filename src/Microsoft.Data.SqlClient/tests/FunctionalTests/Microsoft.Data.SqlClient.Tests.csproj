@@ -6,8 +6,6 @@
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
-    <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>

@@ -597,7 +597,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal TimeOnly TimeOnly
         {
             get
@@ -887,7 +887,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-#if NET8_0_OR_GREATER
+#if NET
                     return SqlMoney.FromTdsValue(_value._int64);
 #else
                     return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
@@ -1190,7 +1190,7 @@ namespace Microsoft.Data.SqlClient
                         return typeof(DateTimeOffset);
                     case StorageType.Json:
                         return typeof(string);
-#if NET6_0_OR_GREATER
+#if NET
                     case StorageType.Time:
                         return typeof(TimeOnly);
 #endif

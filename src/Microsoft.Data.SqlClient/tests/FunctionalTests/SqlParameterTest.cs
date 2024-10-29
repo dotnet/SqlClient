@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, p.XmlSchemaCollectionOwningSchema);
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         [Fact]
         public void Constructor2_Value_DateOnly()
         {
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(value, p.Value);
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         [Fact]
         public void InferType_DateOnly()
         {
@@ -1943,7 +1943,7 @@ namespace Microsoft.Data.SqlClient.Tests
             else
             {
                 //need to remove the switch value via reflection as AppContext does not expose a means to do that.
-#if NET5_0_OR_GREATER
+#if NET
                 var switches = typeof(AppContext).GetField("s_switches", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
                 if (switches is not null) //may be null if not initialised yet
                 {

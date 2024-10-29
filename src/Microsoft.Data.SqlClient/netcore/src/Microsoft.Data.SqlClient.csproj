@@ -859,6 +859,7 @@
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
+    <Compile Remove="C:\Users\mdaigle\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs" />
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>

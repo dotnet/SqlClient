@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.Server
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
     {
-#if NET6_0_OR_GREATER
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         private Type GetFieldTypeFrameworkSpecific(int ordinal) 

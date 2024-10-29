@@ -855,7 +855,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
         [ResCategory("DataCategory_Update")]
-#if NET6_0_OR_GREATER
+#if NET
         [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
 #endif
         public override bool SourceColumnNullMapping
@@ -2315,7 +2315,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = new DateTimeOffset((DateTime)value);
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     else if ((currentType == typeof(DateOnly)) && (destinationType.SqlDbType == SqlDbType.Date))
                     {
                         value = ((DateOnly)value).ToDateTime(new TimeOnly(0, 0));

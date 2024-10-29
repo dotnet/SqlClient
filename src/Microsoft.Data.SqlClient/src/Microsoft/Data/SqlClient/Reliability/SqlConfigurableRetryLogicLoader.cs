@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
                                                string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
                                                string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
         {
-#if NET6_0_OR_GREATER
+#if NET
             // Just only one subscription to this event is required.
             // This class isn't supposed to be called more than one time;
             // SqlConfigurableRetryLogicManager manages a single instance of this class.
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static object CreateInstance(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicMethods)]
 #endif
             Type type, string retryMethodName, SqlRetryLogicOption option)

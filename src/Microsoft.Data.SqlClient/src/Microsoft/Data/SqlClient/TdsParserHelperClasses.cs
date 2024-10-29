@@ -578,7 +578,7 @@ namespace Microsoft.Data.SqlClient
 
     internal sealed class SqlMetaDataUdt
     {
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
 #endif
         internal Type Type;
@@ -771,7 +771,7 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.2";
             }
-#if NET8_0_OR_GREATER
+#if NET
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
             else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
@@ -782,7 +782,7 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.0";
             }
-#if NET8_0_OR_GREATER
+#if NET
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
 #pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
@@ -815,13 +815,13 @@ namespace Microsoft.Data.SqlClient
         public static string GetProtocolWarning(this SslProtocols protocol)
         {
             string message = string.Empty;
-#if NET8_0_OR_GREATER
+#if NET
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
-#if NET8_0_OR_GREATER
+#if NET
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
             {
