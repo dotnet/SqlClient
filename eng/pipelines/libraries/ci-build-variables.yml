@@ -23,5 +23,3 @@ variables:
     value: false
   - name: packagePath
     value: '$(Build.SourcesDirectory)/packages'
-  - name: internalFeed
-    value: 'https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json'

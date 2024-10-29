@@ -4,10 +4,6 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: debug
-    type: boolean
-    default: false
-
   - name: poolName
     type: string
     default: $(ci_var_defaultPoolName)
@@ -27,10 +23,6 @@ parameters:
   - name: configuration
     type: string
     default: $(Configuration)
-
-  - name: internalSNIVersion
-    type: string
-    default: ''
 
   - name: prebuildSteps
     type: stepList
@@ -52,45 +44,11 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
-  - ${{ if ne(parameters.internalSNIVersion, '') }}:
-    - powershell: |
-        $newVersion = "${{parameters.internalSNIVersion }}"
-        $rootFolder = Get-location
-        $filePath = Join-Path $rootFolder "tools\specs\Microsoft.Data.SqlClient.nuspec"
-        Write-Host $filePath
-
-        [Xml] $xml = Get-Content -Path $filePath
-        $nsm = New-Object Xml.XmlNamespaceManager($xml.NameTable)
-        $nsm.AddNamespace('ns', $xml.DocumentElement.NamespaceURI)
-        $dependencies = $xml.SelectNodes("//ns:dependency[@id='Microsoft.Data.SqlClient.SNI' or @id='Microsoft.Data.SqlClient.SNI.runtime']", $nsm)
-  
-        if ($dependencies.Count -eq 0) {
-            Write-Error "No matching dependencies found."
-        }
-
-        foreach($dependency in $dependencies){
-            $dependency.version = $newVersion
-        }
-
-        $xml.Save($filePath)
-
-      displayName: 'Update SNI version in nuspec'
-
-    - ${{ if parameters.debug }}:
-      - powershell: |
-          # Display the content of the Versions.props file
-          $rootFolder = Get-location
-          $filePath = Join-Path $rootFolder "tools\specs\Microsoft.Data.SqlClient.nuspec"
-          Get-Content -Path "$filePath"
-        displayName: 'Read Microsoft.Data.SqlClient.nuspec [debug]'    
-
   - template: ../steps/ci-project-build-step.yml@self
     parameters:
-      debug: ${{ parameters.debug }}
       platform: ${{ parameters.platform }}
       configuration: ${{ parameters.configuration }}
       operatingSystem: Windows
-      internalSNIVersion: ${{ parameters.internalSNIVersion }}
       build: all
 
   - template: ../steps/generate-nuget-package-step.yml@self

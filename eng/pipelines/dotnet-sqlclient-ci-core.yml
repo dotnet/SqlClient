@@ -52,12 +52,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: string
   default: $(ci_var_defaultPoolName)
 
-# It will pick the compatible stages with the runWithCustomSNI property in the test configuration if it is set
-- name: internalSNIVersion
-  displayName: 'SNI Version from Internal Feed'
-  type: string
-  default: ''
-
 variables:
   - template: libraries/ci-build-variables.yml@self
 
@@ -68,22 +62,17 @@ variables:
     value: 'Azure Pipelines'
 
 stages:
-    # skips build nugets stage if internalSNIVersion is set with the project reference
-  - ${{ if or(eq(parameters.internalSNIVersion, ''), and(eq(parameters.buildType, 'Package'), ne(parameters.internalSNIVersion, ''))) }}:
-    - stage: build_nugets
-      displayName: 'Build NuGet Packages'
-      jobs:
-      - template: common/templates/jobs/ci-build-nugets-job.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          artifactName: $(artifactName)
-          internalSNIVersion: ${{ parameters.internalSNIVersion }}
+  - stage: build_nugets
+    displayName: 'Build NuGet Packages'
+    jobs:
+    - template: common/templates/jobs/ci-build-nugets-job.yml@self
+      parameters:
+        artifactName: $(artifactName)
 
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
       debug: ${{ parameters.debug }}
       buildType: ${{ parameters.buildType }}
-      internalSNIVersion: ${{ parameters.internalSNIVersion }}
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
@@ -93,24 +82,22 @@ stages:
           debug: ${{ parameters.debug }}
           artifactName: $(artifactName)
           buildType: ${{ parameters.buildType }}
-          internalSNIVersion: ${{ parameters.internalSNIVersion }}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
-        ${{ if eq(parameters.internalSNIVersion, '') }}: # Skip post test jobs if internalSNIVersion is set
-          postTestJobs: # jobs to run after the tests are done
-          - template: common/templates/jobs/ci-code-coverage-job.yml@self
-            parameters:
-              debug: ${{ parameters.debug }}
-              downloadArtifactsSteps:
-                - ${{ each targetFramework in parameters.codeCovTargetFrameworks }}:
-                  - task: DownloadPipelineArtifact@2
-                    displayName: 'Download Coverage Reports [${{ targetFramework }}]'
-                    inputs:
-                      itemPattern: '**\${{ targetFramework }}*'
-                      ${{ if contains(targetFramework, 'net4') }}:
-                        targetPath: '$(Build.SourcesDirectory)\coverageNetFx'
-                      ${{ else }}:
-                        targetPath: '$(Build.SourcesDirectory)\coverageNetCore'
+        postTestJobs: # jobs to run after the tests are done
+        - template: common/templates/jobs/ci-code-coverage-job.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            downloadArtifactsSteps:
+              - ${{ each targetFramework in parameters.codeCovTargetFrameworks }}:
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Coverage Reports [${{ targetFramework }}]'
+                  inputs:
+                    itemPattern: '**\${{ targetFramework }}*'
+                    ${{ if contains(targetFramework, 'net4') }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetFx'
+                    ${{ else }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetCore'
 
 # test stages configurations
   # self hosted SQL Server on Windows
@@ -161,7 +148,6 @@ stages:
             # localDbAppName: default: $(LocalDbAppName)
             # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
             # skipSqlConfiguration: # skips the SQL configuration step
-            # runWithCustomSNI: # should be run with custom SNI when it's provided
 
         windows_sql_22: 
           pool: ${{parameters.defaultPoolName }}
@@ -194,7 +180,6 @@ stages:
             x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
-            runWithCustomSNI: true
 
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
@@ -269,7 +254,6 @@ stages:
             UserManagedIdentityClientId: $(UserManagedIdentityClientId_eastus)
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
-            runWithCustomSNI: true
 
         windows_enclave_sql:
           pool: ADO-CI-AE-1ES-Pool
@@ -392,7 +376,7 @@ stages:
           useManagedSNI: [true]
           codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: azure
-          operatingSystem: MacOS
+          operatingSystem: Mac
           configProperties:
             # config.json properties
             TCPConnectionString: $(AZURE_DB_SP_TCP_CONN_STRING)

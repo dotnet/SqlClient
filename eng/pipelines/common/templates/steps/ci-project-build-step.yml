@@ -4,31 +4,27 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: debug
-    type: boolean
-    default: false
-
   - name: platform
     type: string
     default: $(Platform)
-
+  
   - name: configuration
     type: string
     default: $(Configuration)
-
+  
   - name: buildNumber
     type: string
     default: $(BuildNumber)
-
+  
   - name: operatingSystem
     type: string
-    default: deferredToRuntime
+    default: deferedToRuntime
     values:
       - Windows
       - Linux
       - MacOS
-      - deferredToRuntime
-
+      - deferedToRuntime
+    
   - name: build
     type: string
     default: MDS
@@ -37,20 +33,9 @@ parameters:
       - AKV
       - all
 
-  - name: internalSNIVersion
-    type: string
-    default: ''
-
 steps:
-- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferredToRuntime')) }}:
+- ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
-
-    - ${{ if ne(parameters.internalSNIVersion, '') }}:
-      - template: ci-custom-sni-step.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          internalSNIVersion: ${{ parameters.internalSNIVersion }}
-
     - task: MSBuild@1
       displayName: 'Restore nugets [Win]'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
@@ -92,7 +77,7 @@ steps:
         configuration: '${{ parameters.configuration }}'
         msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
 
-- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferredToRuntime')) }}:
+- ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2
     displayName: 'Build Driver [non-Win]'
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
