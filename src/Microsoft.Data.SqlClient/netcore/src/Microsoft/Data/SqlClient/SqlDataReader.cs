@@ -3531,7 +3531,7 @@ namespace Microsoft.Data.SqlClient
                             if (result != TdsOperationStatus.Done)
                             {
                                 more = false;
-                                return TdsOperationStatus.Done;
+                                return result;
                             }
 
                             // In the case of not closing the reader, null out the metadata AFTER

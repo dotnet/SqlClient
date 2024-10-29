@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -101,7 +102,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// returns a boolean value indicating if there are enough total bytes availble in the <see cref="Buffer"/> to read the tds header
+        /// returns a boolean value indicating if there are enough total bytes available in the <see cref="Buffer"/> to read the tds header
         /// </summary>
         public bool HasHeader => _totalLength >= TdsEnums.HEADER_LEN;
 
@@ -139,6 +140,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        [Conditional("DEBUG")]
         internal void SetCreatedBy(int creator) => SetCreatedByImpl(creator);
 
         partial void SetCreatedByImpl(int creator);

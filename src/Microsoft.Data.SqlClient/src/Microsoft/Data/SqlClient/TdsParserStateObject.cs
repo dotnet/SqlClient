@@ -2086,7 +2086,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             PacketHandle readPacket = default;
-            bool readFromNetwork = PartialPacketContainsCompletePacket();
+            bool readFromNetwork = !PartialPacketContainsCompletePacket();
             uint error;
 
             RuntimeHelpers.PrepareConstrainedRegions();
