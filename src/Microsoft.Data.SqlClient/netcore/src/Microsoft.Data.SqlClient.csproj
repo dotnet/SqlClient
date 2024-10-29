@@ -861,6 +861,21 @@
 
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\GssSafeHandles.netcore.cs">
+      <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteContext.netcore.cs">
+      <Link>Common\System\Net\Security\Unix\SafeDeleteContext.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeDeleteNegoContext.netcore.cs">
+      <Link>Common\System\Net\Security\Unix\SafeDeleteNegoContext.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeCredentials.netcore.cs">
+      <Link>Common\System\Net\Security\Unix\SafeFreeCrednetials.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Unix\Handles\SafeFreeNegoCredentials.netcore.cs">
+      <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Unix\Interop.Libraries.netcore.cs">
       <Link>Common\Interop\Unix\Interop.Libraries.netcore.cs</Link>
     </Compile>
@@ -879,13 +894,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
-
-    <Compile Include="Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs" />
+    
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
-    <Compile Include="Common\System\Net\Security\Unix\SafeDeleteContext.cs" />
-    <Compile Include="Common\System\Net\Security\Unix\SafeDeleteNegoContext.cs" />
-    <Compile Include="Common\System\Net\Security\Unix\SafeFreeCredentials.cs" />
-    <Compile Include="Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
