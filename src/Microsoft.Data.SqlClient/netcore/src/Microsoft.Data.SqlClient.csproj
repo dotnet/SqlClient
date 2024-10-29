@@ -38,6 +38,15 @@
   </ItemGroup>  
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs">
+      <Link>Common\Interop\Common\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs">
+      <Link>Common\Interop\Common\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Common\Handles\DebugSafeHandle.netcore.cs">
+      <Link>Common\Interop\Common\Handles\DebugSafeHandle.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -683,15 +692,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs">
       <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs">
-      <Link>Common\Interop\Windows\Handles\DebugCriticalHandleMinusOneIsInvalid.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs">
-      <Link>Common\Interop\Windows\Handles\DebugCriticalHandleZeroOrMinusOneIsInvalid.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\DebugSafeHandle.netcore.cs">
-      <Link>Common\Interop\Windows\Handles\DebugSafeHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
       <Link>Common\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs</Link>
