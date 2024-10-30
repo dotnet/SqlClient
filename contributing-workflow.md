@@ -33,8 +33,6 @@ We use and recommend the following workflow:
 
 ## PR - CI Process
 
-_[Coming Soon - Currently under development]_
-
 The [SqlClient Continuous Integration](https://dev.azure.com/sqlclientdrivers-ci/sqlclient/) (CI) system will automatically perform the required builds and run tests (including the ones you are expected to run) for PRs. Builds and test runs must be clean.
 
 If the CI build fails for any reason, the PR issue will be updated with a link that can be used to determine the cause of the failure.
