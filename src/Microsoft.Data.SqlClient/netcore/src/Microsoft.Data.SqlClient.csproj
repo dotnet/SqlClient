@@ -791,18 +791,6 @@
 
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\Interop.Libraries.netcore.cs">
-      <Link>Interop\Unix\Interop.Libraries.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs">
-      <Link>Interop\Unix\System.Net.Security.Native\Interop.GssApiException.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.netcore.cs">
-      <Link>Interop\Unix\System.Net.Security.Native\Interop.Interop.GssBuffer.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs">
-      <Link>Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
     </Compile>
