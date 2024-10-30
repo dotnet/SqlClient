@@ -405,6 +405,7 @@ namespace Microsoft.Data.SqlClient
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
             var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
 
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Tls12;
@@ -437,6 +438,7 @@ namespace Microsoft.Data.SqlClient
             {
                 protocolVersion = (int)SslProtocols.None;
             }
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values 
             return returnValue;
         }
 

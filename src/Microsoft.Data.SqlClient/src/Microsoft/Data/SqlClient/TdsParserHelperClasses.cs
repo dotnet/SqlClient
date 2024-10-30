@@ -767,6 +767,7 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "TLS 1.3";
             }*/
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if ((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
             {
                 name = "TLS 1.2";
@@ -795,6 +796,7 @@ namespace Microsoft.Data.SqlClient
             {
                 name = "SSL 2.0";
             }
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
             else
             {
 #if !NETFRAMEWORK
@@ -818,9 +820,13 @@ namespace Microsoft.Data.SqlClient
 #if NET
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
-#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is deprecated
+#pragma warning disable CA5397 // Do not use deprecated SslProtocols values
+#pragma warning disable CA5398 // Do not use deprecated SslProtocols values
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
-#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+#pragma warning restore CA5398 // Do not use deprecated SslProtocols values
+#pragma warning restore CA5397 // Do not use deprecated SslProtocols values
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is deprecated
 #if NET
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
