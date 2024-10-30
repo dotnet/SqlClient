@@ -322,14 +322,22 @@ namespace Microsoft.Data.SqlClient
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
                             PacketHandle syncReadPacket = default;
+                            bool readFromNetwork = true;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
-
-                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
+                                readFromNetwork = !PartialPacketContainsCompletePacket();
+                                if (readFromNetwork)
+                                {
+                                    syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
+                                }
+                                else
+                                {
+                                    error = TdsEnums.SNI_SUCCESS;
+                                }
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -342,7 +350,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!readFromNetwork || !IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -353,7 +361,7 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (!IsPacketEmpty(syncReadPacket))
+                                if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
                                 {
                                     ReleasePacket(syncReadPacket);
                                 }

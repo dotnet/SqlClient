@@ -2382,6 +2382,7 @@ namespace Microsoft.Data.SqlClient
             PacketHandle readPacket = default;
 
             uint error = 0;
+            bool readFromNetwork = true;
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -2427,16 +2428,26 @@ namespace Microsoft.Data.SqlClient
                     Interlocked.Increment(ref _readingCount);
 
                     handle = SessionHandle;
-                    if (!handle.IsNull)
+
+                    readFromNetwork = !PartialPacketContainsCompletePacket();
+                    if (readFromNetwork)
                     {
-                        IncrementPendingCallbacks();
-
-                        readPacket = ReadAsync(handle, out error);
-
-                        if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                        if (!handle.IsNull)
                         {
-                            DecrementPendingCallbacks(false); // Failure - we won't receive callback!
+                            IncrementPendingCallbacks();
+
+                            readPacket = ReadAsync(handle, out error);
+
+                            if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                            {
+                                DecrementPendingCallbacks(false); // Failure - we won't receive callback!
+                            }
                         }
+                    }
+                    else
+                    {
+                        readPacket = default;
+                        error = TdsEnums.SNI_SUCCESS;
                     }
 
                     Interlocked.Decrement(ref _readingCount);
@@ -2449,12 +2460,12 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(IsValidPacket(readPacket), "ReadNetworkPacket should not have been null on this async operation!");
+                    Debug.Assert(!readFromNetwork || IsValidPacket(readPacket) , "ReadNetworkPacket should not have been null on this async operation!");
                     // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
 
                     // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
-                    if (TdsParserStateObjectFactory.UseManagedSNI && !IsPacketEmpty(readPacket))
+                    if (TdsParserStateObjectFactory.UseManagedSNI && readFromNetwork && !IsPacketEmpty(readPacket))
                     {
                         ReleasePacket(readPacket);
                     }
@@ -2492,7 +2503,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!TdsParserStateObjectFactory.UseManagedSNI)
                 {
-                    if (!IsPacketEmpty(readPacket))
+                    if (readFromNetwork && !IsPacketEmpty(readPacket))
                     {
                         // Be sure to release packet, otherwise it will be leaked by native.
                         ReleasePacket(readPacket);
