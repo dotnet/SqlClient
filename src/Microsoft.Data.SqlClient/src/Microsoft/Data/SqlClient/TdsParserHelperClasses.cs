@@ -821,9 +821,11 @@ namespace Microsoft.Data.SqlClient
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
 #pragma warning disable CS0618 // Type or member is obsolete : SSL is deprecated
+#pragma warning disable CA5397 // Do not use deprecated SslProtocols values
 #pragma warning disable CA5398 // Do not use deprecated SslProtocols values
             if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
 #pragma warning restore CA5398 // Do not use deprecated SslProtocols values
+#pragma warning restore CA5397 // Do not use deprecated SslProtocols values
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is deprecated
 #if NET8_0_OR_GREATER
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
