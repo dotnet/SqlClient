@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if !NET8_0_OR_GREATER
-
 #if DEBUG
 // Uncomment to enable runtime checks to help validate that NetEventSource isn't being misused
 // in a way that will cause performance problems, e.g. unexpected boxing of value types.
@@ -773,5 +771,3 @@ namespace System.Net
         #endregion
     }
 }
-
-#endif
