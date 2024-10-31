@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 6.0.0-preview2.24304.8] - 2024-10-30
+
+This update brings the below changes over the previous release:
+
+### Added
+
+- Added a dependency on System.Text.Json 8.0.5 for .NET 8+ and 6.0.10 for other versions [#2921](https://github.com/dotnet/SqlClient/pull/2921)
+- Added support for JSON datatype [#2916](https://github.com/dotnet/SqlClient/pull/2916), [#2892](https://github.com/dotnet/SqlClient/pull/2892), [#2891](https://github.com/dotnet/SqlClient/pull/2891), [#2880](https://github.com/dotnet/SqlClient/pull/2880), [#2882](https://github.com/dotnet/SqlClient/pull/2882), [#2829](https://github.com/dotnet/SqlClient/pull/2829), [#2830](https://github.com/dotnet/SqlClient/pull/2830)
+- Added readme to nuget package [#2826](https://github.com/dotnet/SqlClient/pull/2826)
+
+### Fixed
+
+- Fixed scale serialization when explicitly set to 0 [#2411](https://github.com/dotnet/SqlClient/pull/2411)
+- Fixed issue blocking GetSchema commands from being enrolled into the current transaction [#2876](https://github.com/dotnet/SqlClient/pull/2876)
+- Adjusted retry logic to allow errors with negative numbers to be considered transient [#2896](https://github.com/dotnet/SqlClient/pull/2896)
+- Fixed string formatting in OutOfMemory exceptions [#2797](https://github.com/dotnet/SqlClient/pull/2797)
+- Increased routing attempts to 10 in netcore for LoginNoFailover and added routing support to LoginWithFailover to standardize routing behavior between netcore and netfx [#2873](https://github.com/dotnet/SqlClient/pull/2873)
+- Restructured documentation into XML format so that it displays correctly in visual studio [#2836](https://github.com/dotnet/SqlClient/pull/2836), [#2822](https://github.com/dotnet/SqlClient/pull/2822), [#2834](https://github.com/dotnet/SqlClient/pull/2834), [#2851](https://github.com/dotnet/SqlClient/pull/2851), [#2863](https://github.com/dotnet/SqlClient/pull/2863), [#2864](https://github.com/dotnet/SqlClient/pull/2864), [#2865](https://github.com/dotnet/SqlClient/pull/2865), [#2869](https://github.com/dotnet/SqlClient/pull/2869), [#2871](https://github.com/dotnet/SqlClient/pull/2871), [#2837](https://github.com/dotnet/SqlClient/pull/2837), [#2821](https://github.com/dotnet/SqlClient/pull/2821)
+- Fixed cleanup behavior when column decryption fails. Prevents leaving stale data on the wire for pooled connections [#2843](https://github.com/dotnet/SqlClient/pull/2843), [#2825](https://github.com/dotnet/SqlClient/pull/2825)
+
+### Changed
+
+- Updated System.Configuration.ConfigurationManager from 8.0.0 to 8.0.1 for .Net 8 [#2921](https://github.com/dotnet/SqlClient/pull/2921)
+- Updated Microsoft.Extensions.Caching.Memory from 8.0.0 to 8.0.1 for .Net 8 [#2921](https://github.com/dotnet/SqlClient/pull/2921)
+- Code Health Improvements [#2915](https://github.com/dotnet/SqlClient/pull/2915), [#2844](https://github.com/dotnet/SqlClient/pull/2844), [#2812](https://github.com/dotnet/SqlClient/pull/2812), [#2805](https://github.com/dotnet/SqlClient/pull/2805), [#2897](https://github.com/dotnet/SqlClient/pull/2897), [#2376](https://github.com/dotnet/SqlClient/pull/2376), [#2814](https://github.com/dotnet/SqlClient/pull/2814), [#2889](https://github.com/dotnet/SqlClient/pull/2889), [#2885](https://github.com/dotnet/SqlClient/pull/2885), [#2854](https://github.com/dotnet/SqlClient/pull/2854), [#2835](https://github.com/dotnet/SqlClient/pull/2835), [#2442](https://github.com/dotnet/SqlClient/pull/2442), [#2820](https://github.com/dotnet/SqlClient/pull/2820), [#2831](https://github.com/dotnet/SqlClient/pull/2831), [#2907](https://github.com/dotnet/SqlClient/pull/2907), [#2910](https://github.com/dotnet/SqlClient/pull/2910), [#2898](https://github.com/dotnet/SqlClient/pull/2898), [#2928](https://github.com/dotnet/SqlClient/pull/2928), [#2929](https://github.com/dotnet/SqlClient/pull/2929), [#2936](https://github.com/dotnet/SqlClient/pull/2936), [#2939](https://github.com/dotnet/SqlClient/pull/2939)
+
 ## [Preview Release 6.0.0-preview1.24240.8] - 2024-08-27
 
 This update brings the below changes over the previous release:
