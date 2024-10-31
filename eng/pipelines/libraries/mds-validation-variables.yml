@@ -17,7 +17,7 @@ variables:
   - name: expectedFolderNames
     value: lib,ref,runtimes
   - name: expectedDotnetVersions
-    value: net462,net6.0,net8.0
+    value: net462,net8.0
   - name: Database
     value: Northwind
   - name: platform
