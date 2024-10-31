@@ -86,15 +86,6 @@ msbuild -t:BuildTests -p:configuration=Release
 msbuild -t:RunTests -p:configuration=Release -p:DotnetPath=C:\net8-win-x86\
 ```
 
-### Building and Testing the .NET Framework driver
-
-Using the default configuration:
-
-```bash
-msbuild -t:BuildNetFx
-msbuild -t:RunTests -p:TF=net462
-```
-
 ### Running Manual Tests
 
 #### Pre-Requisites for running Manual tests
