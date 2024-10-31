@@ -67,14 +67,14 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session
-            Debug.Assert(null != parser, "no parser?");
+            Debug.Assert(parser != null, "no parser?");
             _parser = parser;
             _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
-            Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
-            Debug.Assert(null != _parser._physicalStateObj._inBuff, "no in buffer?");
-            Debug.Assert(null != _parser._physicalStateObj._outBuff, "no out buffer?");
+            Debug.Assert(_parser._physicalStateObj != null, "no physical session?");
+            Debug.Assert(_parser._physicalStateObj._inBuff != null, "no in buffer?");
+            Debug.Assert(_parser._physicalStateObj._outBuff != null, "no out buffer?");
             Debug.Assert(_parser._physicalStateObj._outBuff.Length ==
                          _parser._physicalStateObj._inBuff.Length, "Unexpected unequal buffers.");
 
@@ -329,7 +329,7 @@ namespace Microsoft.Data.SqlClient
 
             DisposeCounters();
 
-            if (null != sessionHandle || null != packetHandle)
+            if (sessionHandle != null || packetHandle != null)
             {
                 // Comment CloseMARSSession
                 // UNDONE - if there are pending reads or writes on logical connections, we need to block
@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient
                                 if (TdsEnums.SNI_SUCCESS == error)
                                 {
                                     // We will end up letting the run method deal with the expected done:done_attn token stream.
-                                    stateObj.ProcessSniPacket(syncReadPacket, 0);
+                                    stateObj.ProcessSniPacket(syncReadPacket, TdsEnums.SNI_SUCCESS);
                                     return;
                                 }
                                 else
@@ -569,7 +569,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     SniReadStatisticsAndTracing();
-                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer {1}, In Bytes Read: {2}", ObjectID, _inBuff, (ushort)_inBytesRead);
+                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer: {1}, In Bytes Read: {2}", ObjectID, _inBuff, _inBytesRead);
 
                     AssertValidState();
                 }
@@ -1309,9 +1309,8 @@ namespace Microsoft.Data.SqlClient
                                 return;
                             }
 
-                            uint sniError;
                             _parser._asyncWrite = false; // stop async write
-                            SNIWritePacket(Handle, attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
+                            SNIWritePacket(Handle, attnPacket, out _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Sent Attention.", _objectID);
                         }
                         finally
@@ -1334,7 +1333,7 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.SendAttention | INFO | ADV | State Object Id {0}, Packet sent. Out Buffer {1}, Out Bytes Used: {2}", _objectID, _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.SendAttention | INFO | ADV | State Object Id {0}, Packet sent. Out Buffer: {1}, Out Bytes Used: {2}", _objectID, _outBuff, _outBytesUsed);
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Attention sent to the server.", _objectID);
 
                 AssertValidState();
@@ -1467,7 +1466,7 @@ namespace Microsoft.Data.SqlClient
         private void SniReadStatisticsAndTracing()
         {
             SqlStatistics statistics = Parser.Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 if (statistics.WaitForReply)
                 {
@@ -1483,7 +1482,7 @@ namespace Microsoft.Data.SqlClient
         private void SniWriteStatisticsAndTracing()
         {
             SqlStatistics statistics = _parser.Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 statistics.SafeIncrement(ref statistics._buffersSent);
                 statistics.SafeAdd(ref statistics._bytesSent, _outBytesUsed);
@@ -1519,7 +1518,7 @@ namespace Microsoft.Data.SqlClient
                     _traceChangePasswordLength = 0;
                 }
             }
-            SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, (ushort)_outBytesUsed);
+            SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, _outBytesUsed);
         }
 
         [Conditional("DEBUG")]

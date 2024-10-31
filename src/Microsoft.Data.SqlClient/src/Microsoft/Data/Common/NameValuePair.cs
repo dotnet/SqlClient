@@ -42,7 +42,7 @@ namespace Microsoft.Data.Common
             get => _next;
             set
             {
-                if ((null != _next) || (null == value))
+                if (_next != null || value == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.NameValuePairNext);
                 }

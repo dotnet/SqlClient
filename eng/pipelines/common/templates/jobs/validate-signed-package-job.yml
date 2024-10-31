@@ -33,8 +33,12 @@ parameters:
     type: string
     default: $(AssemblyFileVersion)
 
+  - name: isPreview
+    type: boolean
+
 jobs:
 - job: validate_signed_package
+  displayName: 'Verify signed package'
   ${{ if ne(parameters.dependsOn, '')}}:
     dependsOn: '${{parameters.dependsOn }}'
   pool:
@@ -48,13 +52,27 @@ jobs:
   
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+  
+  - name: ProductVersion    #MDS product version (MDS validation)
+    value: $(NugetPackageVersion)
+
+  - name: BuildType
+    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+
+  - ${{ if parameters.isPreview }}:
+    - name: extractedNugetPath
+      value: $(extractedNugetRootPath).$(PreviewNugetPackageVersion)
+    - name: NugetPackageVersion
+      value: $(PreviewNugetPackageVersion)
+    - name: ProductVersion
+      value: $(PreviewNugetPackageVersion)
 
   steps:
   - script: SET
     displayName: 'Print Environment Variables'
 
   - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet '
+    displayName: 'Use NuGet'
 
   - powershell: |
       #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
@@ -104,6 +122,44 @@ jobs:
         nuget verify -All $(pathToDownloadedNuget)\*.snupkg
       }
     displayName: 'Verify nuget signature'
+
+  - powershell: |
+      $buildType = [string]"$(BuildType)" 
+
+      if($buildType -eq 'Official')
+      {
+          # Recursively find all .dll files in TempFolder (installed nuget folder)
+          # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name
+          $dllFiles = Get-ChildItem -Path $(TempFolderName) -Recurse -Filter *.dll
+          $badDlls = @()
+          foreach ($file in $dllFiles) 
+          {
+            # Run sn.k to verify the strong name on each dll
+            $result = & "C:\Program Files (x86)\Microsoft SDKs\Windows\*\bin\NETFX 4.8.1 Tools\sn.exe" -vf $file.FullName
+            Write-OutPut $result
+
+            # if thhe dll is not valid, it would be delay signed or test-signed which is not meant for production
+            if($result[$result.Length-1] -notlike "* is valid")
+            {
+              $badDlls += $result[$result.Length-1]
+            }
+          }
+          if($badDlls.Count -gt 0)
+          {
+            Write-OutPut "Error: Invalid dlls are detected. Chek below list:"
+            foreach($dll in $badDlls)
+            {
+              Write-Output $dll
+            }        
+            Exit -1
+        }
+        Write-Host "Strong name has been verified for all dlls"
+      }
+      else
+      {
+        Write-OutPut "Strong name verification is not required for non-official builds"
+      }
+    displayName: 'Verify strong name is generated for production'
 
   - powershell: |
       # Checks the expected folder names such as lib, ref, runtimes
@@ -207,7 +263,6 @@ jobs:
         }
       }
     displayName: 'Verify all DLLs unzipped match "expected" hierarchy'
-
   - powershell: |
       # Verify all dlls status are Valid
       

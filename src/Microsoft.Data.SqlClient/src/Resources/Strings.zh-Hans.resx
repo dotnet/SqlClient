@@ -411,8 +411,8 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>复制</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
-    <value>连接弹性</value>
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
+    <value>连接复原能力</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
     <value>保留自定义用户信息的集合。</value>
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>输入 Schema 中缺少 IsDataSet 特性。</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>无法确定 DataSet 元素。IsDataSet 特性存在多次。</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>无法确定 DataSet 元素。IsDataSet 属性出现多次。</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet 将不对实现 IDynamicMetaObjectProvider 但不实现 IXmlSerializable 的类型进行序列化。</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>应为 {0}，但位置 {2} 的实际标记是 {1}。</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>无法从 {0} 转换到 {1}。</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>无法从 {0} 转换为 {1}。</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>无法将值“{0}”转换为类型: {1}。</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>无法将值 ‘{0}’ 转换为类型: {1}。</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>无效列名称 [{0}]。</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>无法计算。表达式“{0}”不是聚合。</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>筛选表达式“{0}”的计算结果不是 Boolean 值项。</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>筛选表达式 ‘{0}’ 的计算结果不是布尔项。</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>无效的类型名称“{0}”。</value>
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>只能在具有 Unchanged DataRowState 的 DataRows 上调用 SetAdded 和 SetModified 。</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>序数“{0}”超出了最大数字。</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>序数 ‘{0}’ 超出最大数字。</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet 不支持 System.Nullable&lt;&gt;。</value>
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>PrimaryKey 中的列不匹配 : &lt;target&gt;.{0} 与 &lt;source&gt;.{1} 不匹配。</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>不能合并 Relation {0}，因为键具有不匹配的列。</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>无法合并关系 {0}，因为键的列不匹配。</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>目标表 {0} 缺少列 {1} 的定义。</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>集合已修改；枚举操作可能无法执行。</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>简单类型“{0}”已使用不同的“{1}”进行声明。</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>已使用不同的 ‘{1}’ 声明简单类型 ‘{0}’。</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>无效的编页。</value>
@@ -1710,8 +1710,8 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>不能移除列，因为它内置于此 dataSet 中。</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
-    <value>不能移除关系，因为它内置于此 dataSet 中。</value>
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
+    <value>无法移除关系，因为它内置于此 dataSet 中。</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
     <value>每当更改该控件的属性时发生。</value>
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>每当此集合的成员更改时发生。</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>无法获取值，因为它是 DBNull。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,8 +1914,8 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>更新要求命令克隆具有连接对象。该命令克隆的 Connection 属性尚未初始化。</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
-    <value>更新要求连接。</value>
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
+    <value>更新需要连接。</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
     <value>Update 要求 {0}Command 具有打开的连接对象。{1}</value>
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>字段“{0}”被标记为非序列化</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>字段“{0}”的类型被标记为显式布局，而 Native 格式不支持</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>字段 ‘{0}’ 的类型标记为显式布局，这在本机格式中是不允许的</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>有多个值的程序集引用必须有一个非零程序集 ID。</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>在与 SQL Server 建立连接时出现与网络相关的或特定于实例的错误。未找到或无法访问服务器。请验证实例名称是否正确并且 SQL Server 已配置为允许远程连接。</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>客户端无法建立连接，因为在登录前连接初始化进程中发生错误。可能的原因包括: 客户端尝试连接的 SQL Server 的版本不受支持; 服务器过忙，无法接受新连接; 或者，服务器上存在资源限制(内存不足或已达到允许的连接最大数量)。</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>由于登录前的连接初始化过程中发生错误，客户端无法建立连接。可能的原因包括: 客户端尝试连接到不受支持的 SQL Server 版本；服务器太忙，无法接受新连接；或服务器上存在资源限制(内存不足或允许的最大连接数)。</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>已成功与服务器建立连接，但是在登录前的握手期间发生错误。</value>
@@ -4399,7 +4399,7 @@
     <value>包含 SQL Server 名称的字典对象及其信任的列的主密钥路径。</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>出现了两个或多个重定向。每次登录只允许一个重定向。</value>
+    <value>发生了过多的重定向。每个登录仅允许 {0} 次重定向。</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>不支持使用 ApplicationIntent ReadOnly 连接选项连接到镜像的 SQL Server 实例。</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>服务器未保留恢复尝试期间的 SSL 加密，无法恢复连接。</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>服务器未保留尝试恢复过程中请求的确切的客户端 TDS 版本，无法恢复连接。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4738,6 +4738,9 @@
     <value>验证证书时证书不可用。</value>
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
-    <value>The certificate provided by the server does not match the certificate provided by the ServerCertificate option.</value>
+    <value>服务器提供的证书与 ServerCertificate 选项提供的证书不匹配。</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>在列 ‘{0}’ 上获取 JsonDocument 的尝试无效。只有 json 类型的列支持 JsonDocument。</value>
   </data>
 </root>

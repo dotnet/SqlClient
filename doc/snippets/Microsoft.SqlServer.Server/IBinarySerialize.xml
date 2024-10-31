@@ -1,56 +1,184 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="IBinarySerialize">
-        <IBinarySerialize>
-            <summary>Provides custom implementation for user-defined type (UDT) and user-defined aggregate serialization and deserialization.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
+﻿<docs>
+  <members name="IBinarySerialize">
+    <IBinarySerialize>
+      <summary>
+        Provides custom implementation for user-defined type (UDT) and user-defined aggregate serialization and deserialization.
+      </summary>
+      <remarks>
+        <para>
+          User-defined types (UDTs) and user-defined aggregates are required to define a storage format, which can be either <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> or <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" />.
+        </para>
+        <para>
+          <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> allows SQL Server to handle serialization and deserialization automatically, but the format has restrictions on the kind of types it can handle. <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" /> allows user-defined types and aggregates to handle their own serialization. User-defined types and aggregates must be marked with <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" /> in the <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> or <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute" /> attribute, and must implement the <b>IBinarySerialize</b> interface.
+        </para>
+        <para>
+          Note that even with custom serialization, the total size of each instance must be under the maximum allowed limit, currently 8000 bytes.
+        </para>
+      </remarks>
+    </IBinarySerialize>
+    <Read>
+      <param name="r">
+        The <see cref="T:System.IO.BinaryReader" /> stream from which the object is deserialized.
+      </param>
+      <summary>
+        Generates a user-defined type (UDT) or user-defined aggregate from its binary form.
+      </summary>
+      <remarks>
+        The <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method must reconstitute your object using the information written by the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> method.
+      </remarks>
+      <example>
+        <para>
+          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryReader" /> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: <c>StringValue</c> and <c>DoubleValue</c>.
+        </para>
+        <!-- DataWorks_IBinarySerialize_Sample #1 -->
+        <code language="c#">
+          // The binary layout is as follows:
+          //    Bytes 0 - 19: string text, padded to the right with null characters
+          //    Bytes 20+: Double value
   
-## Remarks  
-User-defined types (UDTs) and user-defined aggregates are required to define a storage format, which can be either <xref:Microsoft.SqlServer.Server.Format>.`Native` or <xref:Microsoft.SqlServer.Server.Format>.`UserDefined`.  
-
-<xref:Microsoft.SqlServer.Server.Format>.`Native` allows SQL Server to handle serialization and deserialization automatically, but the format has restrictions on the kind of types it can handle. <xref:Microsoft.SqlServer.Server.Format>.`UserDefined` allows user-defined types and aggregates to handle their own serialization. User-defined types and aggregates must be marked with <xref:Microsoft.SqlServer.Server.Format>.`UserDefined` in the `SqlUserDefinedType` or `SqlUserDefinedAggregate` attribute, and must implement the <xref:Microsoft.SqlServer.Server.IBinarySerialize> interface.  
-
-Note that even with custom serialization, the total size of each instance must be under the maximum allowed limit, currently 8000 bytes.  
-
- ]]></format>
-            </remarks>
-        </IBinarySerialize>
-        <Read>
-            <param name="r">The <see cref="T:System.IO.BinaryReader" /> stream from which the object is deserialized.</param>
-            <summary>Generates a user-defined type (UDT) or user-defined aggregate from its binary form.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
+          // using Microsoft.SqlServer.Server;
+          public void Read(System.IO.BinaryReader r)
+          {
   
-## Remarks  
-The <xref:Microsoft.SqlServer.Server.IBinarySerialize.Read%2A> method must reconstitute your object using the information written by the <xref:Microsoft.SqlServer.Server.IBinarySerialize.Write%2A> method.  
-
-## Examples  
-The following example shows the implementation of the <xref:Microsoft.SqlServer.Server.IBinarySerialize.Read%2A> method of a UDT, which uses a <xref:System.IO.BinaryReader> to de-serialize a previously persisted UDT. This example assumes that the UDT has two data properties: `StringValue` and `DoubleValue`.  
-
-[!code-csharp[IBinarySerialize Samples#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/DataWorks_IBinarySerialize_Sample.cs#1)]
-[!code-vb[IBinarySerialize Samples#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/DataWorks_IBinarySerialize_Sample.vb#1)]
-
- ]]></format>
-            </remarks>
-        </Read>
-        <Write>
-            <param name="w">The <see cref="T:System.IO.BinaryWriter" /> stream to which the UDT or user-defined aggregate is serialized.</param>
-            <summary>Converts a user-defined type (UDT) or user-defined aggregate into its binary format so that it may be persisted.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
+              int maxStringSize = 20;
+              char[] chars;
+              int stringEnd;
+              string stringValue;
+              double doubleValue;
   
-## Remarks  
-Write sufficient information to the binary stream to allow the <xref:Microsoft.SqlServer.Server.IBinarySerialize.Read%2A> method to reconstitute your UDT or user-defined aggregate.  
-
-## Examples  
-The following example shows the implementation of the <xref:Microsoft.SqlServer.Server.IBinarySerialize.Write%2A> method of a UDT, which uses a <xref:System.IO.BinaryWriter> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.  
-
-[!code-csharp[IBinarySerialize Samples#2](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/DataWorks_IBinarySerialize_Sample.cs#2)]
-[!code-vb[IBinarySerialize Samples#2](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/DataWorks_IBinarySerialize_Sample.vb#2)]
-
- ]]></format>
-            </remarks>
-        </Write>
-    </members>
+              // Read the characters from the binary stream.
+              chars = r.ReadChars(maxStringSize);
+  
+              // Find the start of the null character padding.
+              stringEnd = Array.IndexOf(chars, '\0');
+  
+              if (stringEnd == 0)
+              {
+                  stringValue = null;
+                  return;
+              }
+  
+              // Build the string from the array of characters.
+              stringValue = new String(chars, 0, stringEnd);
+  
+              // Read the double value from the binary stream.
+              doubleValue = r.ReadDouble();
+  
+              // Set the object's properties equal to the values.
+              this.StringValue = stringValue;
+              this.DoubleValue = doubleValue;
+          }
+        </code>
+        <!-- DataWorks_IBinarySerialize_Sample #1 -->
+        <code language="vb">
+          ' The binary layout is as follows:
+          '    Bytes 0 - 19: string text, padded to the right with null
+          '    characters
+          '    Bytes 20+: double value
+          Public Sub Read(ByVal r As System.IO.BinaryReader) _
+            Implements Microsoft.SqlServer.Server.IBinarySerialize.Read
+              
+              Dim maxStringSize As Integer = 20
+              Dim chars As Char()
+              Dim stringEnd As Integer
+              Dim stringValue As String
+              Dim value As double
+          
+              ' Read the characters from the binary stream.
+              chars = r.ReadChars(maxStringSize)
+              
+              ' Find the start of the null character padding.
+              stringEnd = Array.IndexOf(chars, ControlChars.NullChar)
+          
+              If StringEnd = 0 Then
+                 stringValue = Nothing
+                 Exit Sub
+              End If
+          
+              ' Build the string from the array of characters.
+              stringValue = new String(chars, 0, stringEnd)
+          
+              ' Read the double value from the binary stream.
+              value = r.ReadDouble()
+          
+              ' Set the object's properties equal to the values.
+              Me.StringValue = stringValue
+              Me.DoubleValue = value
+          
+          End Sub
+        </code>
+      </example>
+    </Read>
+    <Write>
+      <param name="w">
+        The <see cref="T:System.IO.BinaryWriter" /> stream to which the UDT or user-defined aggregate is serialized.
+      </param>
+      <summary>
+        Converts a user-defined type (UDT) or user-defined aggregate into its binary format so that it may be persisted.
+      </summary>
+      <remarks>
+        Write sufficient information to the binary stream to allow the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> method to reconstitute your UDT or user-defined aggregate.
+      </remarks>
+      <example>
+        <para>
+          The following example shows the implementation of the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> method of a UDT, which uses a <see cref="T:System.IO.BinaryWriter" /> to serialize the UDT in the user-defined binary format. The purpose of the null character padding is to ensure that the string value is completely separated from the double value, so that one UDT is compared to another in Transact-SQL code, string bytes are compared to string bytes and double bytes are compared to double bytes.
+        </para>
+        <!-- DataWorks_IBinarySerialize_Sample #2 -->
+        <code language="c#">
+          // The binary layout is as follows:
+          //    Bytes 0 - 19: string text, padded to the right with null characters
+          //    Bytes 20+: Double value
+  
+          // using Microsoft.SqlServer.Server;
+          public void Write(System.IO.BinaryWriter w)
+          {
+              int maxStringSize = 20;
+              string stringValue = "The value of PI: ";
+              string paddedString;
+              double value = 3.14159;
+  
+              // Pad the string from the right with null characters.
+              paddedString = stringValue.PadRight(maxStringSize, '\0');
+  
+              // Write the string value one byte at a time.
+              for (int i = 0; i &lt; paddedString.Length; i++)
+              {
+                  w.Write(paddedString[i]);
+              }
+  
+              // Write the double value.
+              w.Write(value);
+          }
+        </code>
+        <!-- DataWorks_IBinarySerialize_Sample #3 -->
+        <code language="vb">
+          ' The binary layout is as follows:
+          '    Bytes 0 - 19: string text, padded to the right with null characters
+          '    Bytes 20+: Double value
+          Public Sub Write(ByVal w As System.IO.BinaryWriter) _
+            Implements Microsoft.SqlServer.Server.IBinarySerialize.Write
+          
+              Dim maxStringSize As Integer = 20
+              Dim stringValue As String = "The value of PI: "
+              Dim paddedString As String
+              Dim value As Double = 3.14159
+          
+              ' Pad the string from the right with null characters.
+              paddedString = stringValue.PadRight(maxStringSize, ControlChars.NullChar)
+              
+              
+              ' Write the string value one byte at a time.
+              Dim i As Integer
+              For i = 0 To paddedString.Length - 1
+                  w.Write(paddedString(i))
+              Next
+          
+              ' Write the double value.
+              w.Write(value)
+              
+          End Sub
+        </code>
+      </example>
+    </Write>
+  </members>
 </docs>

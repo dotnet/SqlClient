@@ -68,9 +68,6 @@ namespace Microsoft.Data.SqlClient
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
             internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
             internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
-#if ADONET_CERT_AUTH
-            internal const  string Certificate = DbConnectionStringDefaults.Certificate;
-#endif
 #endif // NETFRAMEWORK
         }
 
@@ -126,9 +123,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Failover_Partner_SPN = DbConnectionStringKeywords.FailoverPartnerSPN;
 #if NETFRAMEWORK
             internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
-#if ADONET_CERT_AUTH
-            internal const string Certificate = DbConnectionStringKeywords.Certificate;
-#endif
 #endif // NETFRAMEWORK
         }
 
@@ -398,10 +392,6 @@ namespace Microsoft.Data.SqlClient
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
-#if ADONET_CERT_AUTH
-            _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
-#endif
-
             if (_contextConnection)
             {
                 // We have to be running in the engine for you to request a
@@ -425,7 +415,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (null != _networkLibrary)
+            if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
                 Hashtable netlib = NetlibMapping();
@@ -460,7 +450,7 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
             ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
             ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
-            if (null != _workstationId)
+            if (_workstationId != null)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
             }
@@ -487,7 +477,7 @@ namespace Microsoft.Data.SqlClient
 #else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
 #endif // NETFRAMEWORK
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
                 {
@@ -630,31 +620,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
             }
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-
-            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))
-            {
-                throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
-            }
-
-            if (!string.IsNullOrEmpty(_certificate))
-            {
-
-                if (Authentication == SqlAuthenticationMethod.NotSpecified && !_integratedSecurity)
-                {
-                    _authType = SqlAuthenticationMethod.SqlCertificate;
-                }
-
-                if (Authentication == SqlAuthenticationMethod.SqlCertificate && (_hasUserIdKeyword || _hasPasswordKeyword || _integratedSecurity)) {
-                    throw SQL.InvalidCertAuth();
-                }
-            }
-            else if (Authentication == SqlAuthenticationMethod.SqlCertificate)
-            {
-                throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
-            }
-#endif
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -715,9 +680,6 @@ namespace Microsoft.Data.SqlClient
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
             _networkLibrary = connectionOptions._networkLibrary;
             _typeSystemAssemblyVersion = connectionOptions._typeSystemAssemblyVersion;
-#if ADONET_CERT_AUTH
-            _certificate = connectionOptions._certificate;
-#endif
 #endif // NETFRAMEWORK
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
@@ -782,13 +744,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // so tdsparser.connect can determine if SqlConnection.UserConnectionOptions
                 // needs to enforce local host after datasource alias lookup
-                return (null != _expandedAttachDBFilename) && (null == _localDBInstance);
+                return _expandedAttachDBFilename != null && _localDBInstance == null;
             }
         }
 
         protected internal override string Expand()
         {
-            if (null != _expandedAttachDBFilename)
+            if (_expandedAttachDBFilename != null)
             {
 #if NETFRAMEWORK
                 return ExpandKeyword(KEY.AttachDBFilename, _expandedAttachDBFilename);
@@ -831,7 +793,7 @@ namespace Microsoft.Data.SqlClient
         internal static Dictionary<string, string> GetParseSynonyms()
         {
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
-            if (null == synonyms)
+            if (synonyms == null)
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
@@ -916,9 +878,6 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.ServerSPN, KEY.Server_SPN },
                     { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
-#if ADONET_CERT_AUTH
-                    { KEY.Certificate, KEY.Certificate },
-#endif
                     { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
                     { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
 #endif // NETFRAMEWORK
@@ -936,7 +895,7 @@ namespace Microsoft.Data.SqlClient
             // Note: In Longhorn you'll be able to rename a machine without
             // rebooting.  Therefore, don't cache this machine name.
             string result = WorkstationId;
-            if (null == result)
+            if (result == null)
             {
                 // permission to obtain Environment.MachineName is Asserted
                 // since permission to open the connection has been granted
@@ -1172,7 +1131,7 @@ namespace Microsoft.Data.SqlClient
             const int NetLibCount = 8;
 
             Hashtable hash = s_netlibMapping;
-            if (null == hash)
+            if (hash == null)
             {
                 hash = new Hashtable(NetLibCount)
                 {
@@ -1240,15 +1199,6 @@ namespace Microsoft.Data.SqlClient
         internal bool ContextConnection => _contextConnection;
         internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
         internal string NetworkLibrary => _networkLibrary;
-
-#if ADONET_CERT_AUTH
-        private readonly string _certificate;
-        internal string Certificate => _certificate;
-        internal bool UsesCertificate => _authType == SqlAuthenticationMethod.SqlCertificate;
-#else
-        internal string Certificate => null;
-        internal bool UsesCertificate => false;
-#endif
 
 #endif // NETFRAMEWORK
     }

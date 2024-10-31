@@ -29,11 +29,11 @@ namespace Microsoft.Data.Common
 
         internal static object MicrosoftDataSqlClientSqlProviderServices_Instance()
         {
-            if (null == MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo)
+            if (MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo == null)
             {
                 Type t = Type.GetType(MicrosoftDataSqlClientSqlProviderServices_TypeName, false);
 
-                if (null != t)
+                if (t != null)
                 {
                     MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo = t.GetField("Instance", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
                 }
@@ -46,7 +46,7 @@ namespace Microsoft.Data.Common
         private static object MicrosoftDataSqlClientSqlProviderServices_Instance_GetValue()
         {
             object result = null;
-            if (null != MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo)
+            if (MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo != null)
             {
                 result = MicrosoftDataSqlClientSqlProviderServices_Instance_FieldInfo.GetValue(null);
             }

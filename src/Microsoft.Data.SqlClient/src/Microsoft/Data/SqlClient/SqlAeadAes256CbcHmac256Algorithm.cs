@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
         /// Root encryption key from which three other keys will be derived
         /// </param>
         /// <param name="encryptionType">Encryption Type, accepted values are Deterministic and Randomized. 
-        /// For Deterministic encryption, a synthetic IV will be genenrated during encryption
+        /// For Deterministic encryption, a synthetic IV will be generated during encryption
         /// For Randomized encryption, a random IV will be generated during encryption.
         /// </param>
         /// <param name="algorithmVersion">
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
             _algorithmVersion = algorithmVersion;
             _version[0] = algorithmVersion;
 
-            Debug.Assert(null != encryptionKey, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
+            Debug.Assert(encryptionKey != null, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
             Debug.Assert(0x01 == algorithmVersion, "Unknown algorithm version passed to AeadAes256CbcHmac256");
 
             // Validate encryption type for this algorithm

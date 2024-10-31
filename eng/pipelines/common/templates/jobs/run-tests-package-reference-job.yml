@@ -17,8 +17,12 @@ parameters:
     type: string
     default: empty
 
+  - name: isPreview
+    type: boolean
+
 jobs:
 - job: run_tests_package_reference
+  displayName: 'Run tests with package reference'
   ${{ if ne(parameters.dependsOn, 'empty')}}:
     dependsOn: '${{parameters.dependsOn }}'
   pool:
@@ -38,6 +42,8 @@ jobs:
   - template: ../steps/update-nuget-config-local-feed-step.yml
     parameters:
       downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)
 
   - template: ../steps/update-config-file-step.yml
     parameters: 
@@ -51,8 +57,12 @@ jobs:
   - template: ../steps/build-and-run-tests-netfx-step.yml
     parameters:
       referenceType: Package
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)
 
   - template: ../steps/build-and-run-tests-netcore-step.yml
     parameters:
       referenceType: Package
       cleanFirst: true
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)

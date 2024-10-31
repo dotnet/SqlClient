@@ -238,6 +238,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
+        public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
 
         [Flags]
         public enum FeatureExtension : uint
@@ -250,7 +251,8 @@ namespace Microsoft.Data.SqlClient
             AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
-            SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
+            SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1),
+            JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -488,6 +490,8 @@ namespace Microsoft.Data.SqlClient
         public const int SQLDATETIME2 = 0x2a;
         public const int SQLDATETIMEOFFSET = 0x2b;
 
+        public const int SQLJSON = 0xF4;
+
         public const int DEFAULT_VARTIME_SCALE = 7;
 
         //Partially length prefixed datatypes constants. These apply to XMLTYPE, BIGVARCHRTYPE,
@@ -598,9 +602,7 @@ namespace Microsoft.Data.SqlClient
         // dbnetlib error values
         public const short TIMEOUT_EXPIRED = -2;
         public const short ENCRYPTION_NOT_SUPPORTED = 20;
-#if NETFRAMEWORK
         public const short CTAIP_NOT_SUPPORTED = 21;
-#endif
 
         // CAUTION: These are not error codes returned by SNI. This is used for backward compatibility
         // since netlib (now removed from sqlclient) returned these codes.
@@ -994,6 +996,9 @@ namespace Microsoft.Data.SqlClient
         internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
         internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
+        // JSON Support constants
+        internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
+
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support
@@ -1171,14 +1176,10 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryDefault,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryWorkloadIdentity/*'/>
-        ActiveDirectoryWorkloadIdentity,
-
-#if ADONET_CERT_AUTH && NETFRAMEWORK
-        SqlCertificate,
-#endif
+        ActiveDirectoryWorkloadIdentity
     }
     // This enum indicates the state of TransparentNetworkIPResolution
-    // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
+    // The first attempt when TNIR is on should be sequential. If the first attempt fails next attempts should be parallel.
     internal enum TransparentNetworkResolutionState
     {
         DisabledMode = 0,

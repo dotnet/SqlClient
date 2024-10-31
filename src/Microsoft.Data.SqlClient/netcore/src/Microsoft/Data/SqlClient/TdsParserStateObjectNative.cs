@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient
 
             DisposeCounters();
 
-            if (null != sessionHandle || null != packetHandle)
+            if (sessionHandle != null || packetHandle != null)
             {
                 packetHandle?.Dispose();
                 asyncAttnPacket?.Dispose();
@@ -405,11 +405,12 @@ namespace Microsoft.Data.SqlClient
             uint returnValue = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(Handle, GetTimeoutRemaining(), out uint nativeProtocolVersion);
             var nativeProtocol = (NativeProtocols)nativeProtocolVersion;
 
+#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_2_SERVER))
             {
                 protocolVersion = (int)SslProtocols.Tls12;
             }
-#if NET6_0_OR_GREATER
+#if NET6_0_OR_GREATER 
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_TLS1_3_SERVER))
             {
                 /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later */
@@ -439,6 +440,7 @@ namespace Microsoft.Data.SqlClient
             {
                 protocolVersion = (int)SslProtocols.None;
             }
+#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values 
             return returnValue;
         }
 

@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                if (null == _errors)
+                if (_errors == null)
                 {
                     _errors = new SqlErrorCollection();
                 }
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                if (null == _warnings)
+                if (_warnings == null)
                 {
                     _warnings = new SqlErrorCollection();
                 }
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal void CleanMessages()
         {
             SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (null != parent)
+            if (parent != null)
             {
                 parent.CleanMessages();
             }
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Server
         //</summary>
         internal override void BatchCompleted()
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.BatchCompleted);
             }
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal override void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 paramValues)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.ParametersAvailable);
             }
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal override void ParameterAvailable(SmiParameterMetaData metaData, SmiTypedGetterSetter paramValue, int ordinal)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.ParameterAvailable);
             }
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when the server database context changes (ENVCHANGE token)
         internal override void DefaultDatabaseChanged(string databaseName)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.DefaultDatabaseChanged);
             }
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called for messages and errors (ERROR and INFO tokens)
         internal override void MessagePosted(int number, byte state, byte errorClass, string server, string message, string procedure, int lineNumber)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SmiEventSink_Default.MessagePosted|ADV> {0}, number={1} state={2} errorClass={3} server='{4}' message='{5}' procedure='{6}' linenumber={7}.", 0, number, state, errorClass, server, message, procedure, lineNumber);
                 SqlError error = new SqlError(number, state, errorClass, server, message, procedure, lineNumber);
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called for new resultset starting (COLMETADATA token)
         internal override void MetaDataAvailable(SmiQueryMetaData[] metaData, bool nextEventIsRow)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.MetaDataAvailable);
             }
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a new row arrives (ROW token)
         internal override void RowAvailable(ITypedGetters rowData)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.RowAvailable);
             }
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a new row arrives (ROW token)
         internal override void RowAvailable(ITypedGettersV3 rowData)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.RowAvailable);
             }
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when any statement completes on server (DONE token)
         internal override void StatementCompleted(int rowsAffected)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.StatementCompleted);
             }
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionCommitted(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionCommitted);
             }
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionDefected(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionDefected);
             }
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is committed (ENVCHANGE token)
         internal override void TransactionEnlisted(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionEnlisted);
             }
@@ -230,7 +230,7 @@ namespace Microsoft.Data.SqlClient.Server
         // by the provider's batch (ENVCHANGE token)
         internal override void TransactionEnded(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionEnded);
             }
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is rolled back (ENVCHANGE token)
         internal override void TransactionRolledBack(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionRolledBack);
             }
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is started (ENVCHANGE token)
         internal override void TransactionStarted(long transactionId)
         {
-            if (null == _parent)
+            if (_parent == null)
             {
                 throw SQL.UnexpectedSmiEvent(UnexpectedEventType.TransactionStarted);
             }

@@ -86,7 +86,7 @@ namespace Microsoft.Data.Common
 
         static private void TraceException(string trace, Exception e)
         {
-            Debug.Assert(null != e, "TraceException: null Exception");
+            Debug.Assert(e != null, "TraceException: null Exception");
             if (e is not null)
             {
                 SqlClientEventSource.Log.TryTraceEvent(trace, e);
@@ -1227,8 +1227,8 @@ namespace Microsoft.Data.Common
 
         internal static Exception ParameterConversionFailed(object value, Type destType, Exception inner)
         {
-            Debug.Assert(null != value, "null value on conversion failure");
-            Debug.Assert(null != inner, "null inner on conversion failure");
+            Debug.Assert(value != null, "null value on conversion failure");
+            Debug.Assert(inner != null, "null inner on conversion failure");
 
             Exception e;
             string message = StringsHelper.GetString(Strings.ADP_ParameterConversionFailed, value.GetType().Name, destType.Name);
@@ -1328,12 +1328,6 @@ namespace Microsoft.Data.Common
             TaskCompletionSource<T> completion = new();
             completion.SetCanceled();
             return completion.Task;
-        }
-
-        internal static void TraceExceptionForCapture(Exception e)
-        {
-            Debug.Assert(ADP.IsCatchableExceptionType(e), "Invalid exception type, should have been re-thrown!");
-            TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
         //
