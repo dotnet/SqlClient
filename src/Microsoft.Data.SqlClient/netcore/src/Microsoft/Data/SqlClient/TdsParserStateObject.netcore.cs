@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
+                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
@@ -504,7 +504,7 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
+                // synchronously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync(asyncClose: true);
