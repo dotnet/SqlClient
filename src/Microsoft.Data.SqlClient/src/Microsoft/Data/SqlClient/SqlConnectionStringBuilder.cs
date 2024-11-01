@@ -617,7 +617,7 @@ namespace Microsoft.Data.SqlClient
 
         private Exception UnsupportedKeyword(string keyword)
         {
-#if NET6_0_OR_GREATER
+#if NET
             for (int index = 0; index < s_notSupportedKeywords.Length; index++)
             {
                 if (string.Equals(keyword, s_notSupportedKeywords[index], StringComparison.OrdinalIgnoreCase))

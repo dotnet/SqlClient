@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.Structured,           // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
             SqlDbType.Time,                 // System.TimeSpan
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
-#if NET6_0_OR_GREATER
+#if NET
             SqlDbType.Date,                 // System.DateOnly
             SqlDbType.Time,                 // System.TimeOnly  
 #endif
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
         {
-#if NET6_0_OR_GREATER
+#if NET
             int Count = 44;
 #else
             int Count = 42;
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Server
                 { typeof(IEnumerable<SqlDataRecord>), ExtendedClrTypeCode.IEnumerableOfSqlDataRecord },
                 { typeof(TimeSpan), ExtendedClrTypeCode.TimeSpan },
                 { typeof(DateTimeOffset), ExtendedClrTypeCode.DateTimeOffset },
-#if NET6_0_OR_GREATER
+#if NET
                 { typeof(DateOnly), ExtendedClrTypeCode.DateOnly },
                 { typeof(TimeOnly), ExtendedClrTypeCode.TimeOnly },
 #endif
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Char;
                         break;
                     case SqlDbType.Date:
-#if NET6_0_OR_GREATER
+#if NET
                         if (value.GetType() == typeof(DateOnly))
                             extendedCode = ExtendedClrTypeCode.DateOnly;
                         else if (value.GetType() == typeof(DateTime))
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Invalid;
                         }
                         break;
-#if NET6_0_OR_GREATER
+#if NET
                     case SqlDbType.Time:
                         if (value.GetType() == typeof(TimeOnly))
                             extendedCode = ExtendedClrTypeCode.TimeOnly;

@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET6_0_OR_GREATER
+#if NET
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, Exception> exceptionConverter = null,
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
         {
             if (timeout > 0)
@@ -1369,7 +1369,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.
-#if NET6_0_OR_GREATER
+#if NET
                 SQL_UnsupportedSysTxVersion));
 #else
                 GT_UnsupportedSysTxVersion));
@@ -2512,7 +2512,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static Exception SocketDidNotThrow()
         {
             return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));

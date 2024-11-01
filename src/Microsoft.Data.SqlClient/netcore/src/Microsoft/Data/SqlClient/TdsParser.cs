@@ -1790,14 +1790,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if NET6_0_OR_GREATER
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
-#else
-            buffer[0] = (byte)(value & 0xff);
-            buffer[1] = (byte)((value >> 8) & 0xff);
-            buffer[2] = (byte)((value >> 16) & 0xff);
-            buffer[3] = (byte)((value >> 24) & 0xff);
-#endif
         }
 
         //
@@ -6455,11 +6448,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
-#endif
                     }
                     break;
 
@@ -6776,11 +6765,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
-#endif
 
                         break;
                     }
@@ -7669,11 +7654,7 @@ namespace Microsoft.Data.SqlClient
 
 
             Span<uint> data = stackalloc uint[4];
-#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
-#else
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
-#endif
             byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
@@ -7698,11 +7679,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(0);
 
             Span<uint> data = stackalloc uint[4];
-#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
-#else
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
-#endif
             WriteUnsignedInt(data[0], stateObj);
             WriteUnsignedInt(data[1], stateObj);
             WriteUnsignedInt(data[2], stateObj);

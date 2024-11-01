@@ -637,7 +637,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             get
             {
-#if NET6_0_OR_GREATER
+#if NET
                 System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
