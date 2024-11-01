@@ -31,86 +31,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        #region Structs\Enums
-
-        internal enum TransparentNetworkResolutionMode : byte
-        {
-            DisabledMode = 0,
-            SequentialMode,
-            ParallelMode
-        };
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct Sni_Consumer_Info
-        {
-            public int DefaultUserDataLength;
-            public IntPtr ConsumerKey;
-            public IntPtr fnReadComp;
-            public IntPtr fnWriteComp;
-            public IntPtr fnTrace;
-            public IntPtr fnAcceptComp;
-            public uint dwNumProts;
-            public IntPtr rgListenInfo;
-            public IntPtr NodeAffinity;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private unsafe struct SNI_CLIENT_CONSUMER_INFO
-        {
-            public Sni_Consumer_Info ConsumerInfo;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszConnectionString;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string HostNameInCertificate;
-            public Prefix networkLibrary;
-            public byte* szSPN;
-            public uint cchSPN;
-            public byte* szInstanceName;
-            public uint cchInstanceName;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fOverrideLastConnectCache;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fSynchronousConnection;
-            public int timeout;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fParallel;
-            public TransparentNetworkResolutionMode transparentNetworkResolution;
-            public int totalTimeout;
-            public bool isAzureSqlServerEndpoint;
-            public SqlConnectionIPAddressPreference ipAddressPreference;
-            public SNI_DNSCache_Info DNSCacheInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct SNI_DNSCache_Info
-        {
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedFQDN;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpIPv4;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpIPv6;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpPort;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct SNI_Error
-        {
-            internal Provider provider;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
-            internal string errorMessage;
-            internal uint nativeError;
-            internal uint sniError;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            internal string fileName;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            internal string function;
-            internal uint lineNumber;
-        }
-
-        #endregion
-
         #region DLL Imports
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
@@ -126,7 +46,7 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIClose(IntPtr pConn);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SNIGetLastError(out SNI_Error pErrorStruct);
+        internal static extern void SNIGetLastError(out SniError pErrorStruct);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SNIPacketRelease(IntPtr pPacket);
@@ -183,17 +103,17 @@ namespace Microsoft.Data.SqlClient
         private static extern uint SNIInitialize([In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);
+        private static extern uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIOpenWrapper(
-            [In] ref Sni_Consumer_Info pConsumerInfo,
+            [In] ref SniConsumerInfo pConsumerInfo,
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
             SqlConnectionIPAddressPreference ipPreference,
-            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
+            [In] ref SniDnsCacheInfo pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType);
@@ -274,10 +194,10 @@ namespace Microsoft.Data.SqlClient
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
-            Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
+            SniConsumerInfo native_consumerInfo = new SniConsumerInfo();
             MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
 
-            SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
+            SniDnsCacheInfo native_cachedDNSInfo = new SniDnsCacheInfo();
             native_cachedDNSInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
             native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
             native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
@@ -303,7 +223,7 @@ namespace Microsoft.Data.SqlClient
 
             fixed (byte* pin_instanceName = &instanceName[0])
             {
-                SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();
+                SniClientConsumerInfo clientConsumerInfo = new SniClientConsumerInfo();
 
                 // initialize client ConsumerInfo part first
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
@@ -394,7 +314,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
+        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
             native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null

@@ -184,6 +184,21 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\QueryType.cs">
       <Link>Interop\Windows\Sni\QueryType.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniClientConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniClientConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniDnsCacheInfo.cs">
+      <Link>Interop\Windows\Sni\SniDnsCacheInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniError.cs">
+      <Link>Interop\Windows\Sni\SniErro.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
+      <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
       <Link>Interop\UnicodeString.cs</Link>
     </Compile>

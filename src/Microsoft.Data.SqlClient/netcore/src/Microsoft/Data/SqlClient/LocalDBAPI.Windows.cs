@@ -29,7 +29,7 @@ namespace Microsoft.Data
                             }
                             else
                             {
-                                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
+                                SNINativeMethodWrapper.SNIGetLastError(out SniError sniError);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
                             }
                         }

@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIClose(IntPtr pConn);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void SNIGetLastError(out SNI_Error pErrorStruct);
+        internal static extern void SNIGetLastError(out SniError pErrorStruct);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern void SNIPacketRelease(IntPtr pPacket);
@@ -87,17 +87,17 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIInitialize([In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);
+        internal static extern uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNIOpenWrapper(
-            [In] ref Sni_Consumer_Info pConsumerInfo,
+            [In] ref SniConsumerInfo pConsumerInfo,
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
             SqlConnectionIPAddressPreference ipPreference,
-            [In] ref SNI_DNSCache_Info pDNSCachedInfo);
+            [In] ref SniDnsCacheInfo pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType);
