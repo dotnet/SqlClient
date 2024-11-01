@@ -330,7 +330,7 @@
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
         <para>
-          For more information about asynchronous programming, see <see href="/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
+          For more information about asynchronous programming, see <see href="https://learn.microsoft.com/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
         </para>
         <para>
           This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)" />.
@@ -365,7 +365,7 @@
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
         <para>
-          For more information about asynchronous programming, see <see href="/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
+          For more information about asynchronous programming, see <see href="https://learn.microsoft.com/dotnet/framework/data/adonet/asynchronous-programming">Asynchronous Programming</see>.
         </para>
         <para>
           If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
@@ -375,7 +375,7 @@
         </note>
       </remarks>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">An error occurred while executing the batch.</exception>
-      <related type="Article" href="/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
+      <related type="Article" href="https://learn.microsoft.com/dotnet/framework/data/adonet/ado-net-overview">ADO.NET Overview</related>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
       </exception>

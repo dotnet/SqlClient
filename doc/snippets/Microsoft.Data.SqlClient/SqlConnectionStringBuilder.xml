@@ -174,7 +174,7 @@
     </ctorConnectionString>
     <ApplicationIntent>
       <summary>
-        Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see <see href="/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
+        Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
       </summary>
       <value>
         Returns the current value of the property.
@@ -187,7 +187,7 @@
           The default value is <c>ApplicationIntent.ReadWrite</c> .
         </para>
       </remarks>
-      <seealso href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </seealso>
     </ApplicationIntent>
@@ -321,10 +321,10 @@
       <exception cref="T:System.ArgumentNullException">
         To set the value to null, use <see cref="F:System.DBNull.Value" /> .
       </exception>
-      <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
+      <seealso href="https://learn.microsoft.com/dotnet/framework/data/adonet/connection-strings">
         Working with Connection Strings
       </seealso>
-      <seealso href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </seealso>
     </AttachDBFilename>
@@ -341,13 +341,13 @@
     </AttestationProtocol>
     <Authentication>
       <summary>
-        Gets or sets the authentication method used for <see href="https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities">Connecting to SQL Database By Using Azure Active Directory Authentication</see>.
+        Gets or sets the authentication method used for <see href="https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview#connect-with-microsoft-entra-to-azure-sql-resources">Connect with Microsoft Entra to Azure SQL resources</see>.
       </summary>
       <value>
         The authentication method of the connection string.
       </value>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/azure-active-directory-authentication">Using Azure Active Directory authentication with SqlClient</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication">Connect to Azure SQL with Microsoft Entra authentication and SqlClient</see>.
       </remarks>
     </Authentication>
     <Clear>
@@ -394,7 +394,7 @@
         Gets or sets the column encryption settings for the connection string builder.
       </summary>
       <value>
-        The column encryption settings for the connection string builder.This property enables or disables <see href="/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see> functionality for the connection.
+        The column encryption settings for the connection string builder.This property enables or disables <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see> functionality for the connection.
       </value>
     </ColumnEncryptionSetting>
     <CommandTimeout>
@@ -637,7 +637,7 @@
           When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes: <c>np:(local),  tcp:(local), lpc:(local)</c> .
         </para>
         <para>
-          You can also connect to a LocalDB database as follows: <c>server=(localdb)\\myInstance</c> . For more information about LocalDB, see <see href="/sql/connect/ado-net/sql/sqlclient-support-localdb">SqlClient Support for LocalDB</see> . <b>Data Source</b> must use the TCP format or the Named Pipes format. TCP format is as follows:
+          You can also connect to a LocalDB database as follows: <c>server=(localdb)\\myInstance</c> . For more information about LocalDB, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-localdb">SqlClient Support for LocalDB</see> . <b>Data Source</b> must use the TCP format or the Named Pipes format. TCP format is as follows:
         </para>
         <list type="bullet">
           <item><c>tcp:\&lt;host name&gt;\\&lt;instance name&gt;</c></item>
@@ -737,7 +737,7 @@
           This property corresponds to the "Encrypt" key within the connection string.
         </para>
         <para>
-          When <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="false" /> and <b>Encrypt</b> is <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> or <see langword="true" />, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see <see href="/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements">Enable encrypted connections to the Database Engine</see> .
+          When <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="false" /> and <b>Encrypt</b> is <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> or <see langword="true" />, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements">Enable encrypted connections to the Database Engine</see> .
         </para>
         <note type="note">
           Starting from <b>version 4.0</b>, the default value of the property <b>Encrypt</b> is set to <see langword="true" /> while it is <see langword="false" /> for earlier versions.
@@ -746,10 +746,10 @@
           Starting from <b>version 5.0</b>, the data type is updated to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> , and the default value of the <c>Encrypt</c> property is set to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> .
         </note>
       </remarks>
-      <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
+      <seealso href="https://learn.microsoft.com/dotnet/framework/data/adonet/connection-strings">
         Working with Connection Strings
       </seealso>
-      <seealso href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </seealso>
     </Encrypt>
@@ -983,10 +983,10 @@
       <value>
         <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.
       </value>
-      <seealso href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">
+      <seealso href="https://learn.microsoft.com/dotnet/framework/data/adonet/connection-strings">
         Working with Connection Strings
       </seealso>
-      <seealso href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </seealso>
     </IsFixedSize>
@@ -1132,7 +1132,7 @@
     </MinPoolSize>
     <MultipleActiveResultSets>
       <summary>
-        When true, an application can maintain multiple active result sets (MARS). When false, an application must process or cancel all result sets from one batch before it can execute any other batch on that connection. For more information, see <see href="https://msdn.microsoft.com//library/cfa084cz.aspx">Multiple Active Result Sets (MARS)</see>.
+        When true, an application can maintain multiple active result sets (MARS). When false, an application must process or cancel all result sets from one batch before it can execute any other batch on that connection. For more information, see <see href="https://learn.microsoft.com/dotnet/framework/data/adonet/sql/multiple-active-result-sets-mars">Multiple Active Result Sets (MARS)</see>.
       </summary>
       <value>
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MultipleActiveResultSets" /> property, or <see langword="false" /> if none has been supplied.
@@ -1178,7 +1178,7 @@
     </MultipleActiveResultSets>
     <MultiSubnetFailover>
       <summary>
-        If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting <c>MultiSubnetFailover=true</c> provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see <see href="/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
+        If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting <c>MultiSubnetFailover=true</c> provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
       </summary>
       <value>
         Returns <see cref="T:System.Boolean" /> indicating the current value of the property.
@@ -1678,7 +1678,7 @@
           When <c>Trust Server Certificate</c> is set to <see langword="true" />, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If <c>Trust Server Certificate</c> is set to <see langword="true" /> and encryption is enforced by target server, the encryption level specified on the server will be used even if <c>Encrypt</c> is set to <see langword="false" /> . The connection will fail otherwise.
         </para>
         <para>
-          For more information, see <see href="/sql/relational-databases/security/encryption/encryption-hierarchy">Encryption Hierarchy</see> and <see href="/sql/relational-databases/native-client/features/using-encryption-without-validation">Using Encryption Without Validation</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/encryption-hierarchy">Encryption Hierarchy</see> and <see href="https://learn.microsoft.com/sql/relational-databases/native-client/features/using-encryption-without-validation">Using Encryption Without Validation</see>.
         </para>
       </remarks>
     </TrustServerCertificate>
@@ -1843,7 +1843,7 @@
           This property corresponds to the "User Instance" key within the connection string.
         </para>
         <note type="note">
-          This feature is available only with the SQL Server Express Edition. For more information on user instances, see <see href="/sql/connect/ado-net/sql/sql-server-express-user-instances">SQL Server Express User Instances</see>.
+          This feature is available only with the SQL Server Express Edition. For more information on user instances, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-express-user-instances">SQL Server Express User Instances</see>.
         </note>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
