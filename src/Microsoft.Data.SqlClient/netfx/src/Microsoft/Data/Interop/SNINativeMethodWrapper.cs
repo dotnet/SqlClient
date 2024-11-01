@@ -189,78 +189,6 @@ namespace Microsoft.Data.SqlClient
             SECPKG_ATTR_UI_INFO = 0x68, // sets SEcPkgContext_UiInfo  
         }
 
-        internal enum IOType
-        {
-            READ,
-            WRITE,
-        }
-
-        internal enum PrefixEnum
-        {
-            UNKNOWN_PREFIX,
-            SM_PREFIX,
-            TCP_PREFIX,
-            NP_PREFIX,
-            VIA_PREFIX,
-            INVALID_PREFIX,
-        }
-
-        internal enum ProviderEnum
-        {
-            HTTP_PROV,
-            NP_PROV,
-            SESSION_PROV,
-            SIGN_PROV,
-            SM_PROV,
-            SMUX_PROV,
-            SSL_PROV,
-            TCP_PROV,
-            VIA_PROV,
-            CTAIP_PROV,
-            MAX_PROVS,
-            INVALID_PROV,
-        }
-
-        internal enum QTypes
-        {
-            SNI_QUERY_CONN_INFO,
-            SNI_QUERY_CONN_BUFSIZE,
-            SNI_QUERY_CONN_KEY,
-            SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE,
-            SNI_QUERY_SERVER_ENCRYPT_POSSIBLE,
-            SNI_QUERY_CERTIFICATE,
-            SNI_QUERY_LOCALDB_HMODULE,
-            SNI_QUERY_CONN_ENCRYPT,
-            SNI_QUERY_CONN_PROVIDERNUM,
-            SNI_QUERY_CONN_CONNID,
-            SNI_QUERY_CONN_PARENTCONNID,
-            SNI_QUERY_CONN_SECPKG,
-            SNI_QUERY_CONN_NETPACKETSIZE,
-            SNI_QUERY_CONN_NODENUM,
-            SNI_QUERY_CONN_PACKETSRECD,
-            SNI_QUERY_CONN_PACKETSSENT,
-            SNI_QUERY_CONN_PEERADDR,
-            SNI_QUERY_CONN_PEERPORT,
-            SNI_QUERY_CONN_LASTREADTIME,
-            SNI_QUERY_CONN_LASTWRITETIME,
-            SNI_QUERY_CONN_CONSUMER_ID,
-            SNI_QUERY_CONN_CONNECTTIME,
-            SNI_QUERY_CONN_HTTPENDPOINT,
-            SNI_QUERY_CONN_LOCALADDR,
-            SNI_QUERY_CONN_LOCALPORT,
-            SNI_QUERY_CONN_SSLHANDSHAKESTATE,
-            SNI_QUERY_CONN_SOBUFAUTOTUNING,
-            SNI_QUERY_CONN_SECPKGNAME,
-            SNI_QUERY_CONN_SECPKGMUTUALAUTH,
-            SNI_QUERY_CONN_CONSUMERCONNID,
-            SNI_QUERY_CONN_SNIUCI,
-            SNI_QUERY_CONN_SUPPORTS_EXTENDED_PROTECTION,
-            SNI_QUERY_CONN_CHANNEL_PROVIDES_AUTHENTICATION_CONTEXT,
-            SNI_QUERY_CONN_PEERID,
-            SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC,
-            SNI_QUERY_CONN_SSL_SECCTXTHANDLE,
-        }
-
         internal enum TransparentNetworkResolutionMode : byte
         {
             DisabledMode = 0,
@@ -290,7 +218,7 @@ namespace Microsoft.Data.SqlClient
             public string wszConnectionString;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string HostNameInCertificate;
-            public PrefixEnum networkLibrary;
+            public Prefix networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
             public byte* szInstanceName;
@@ -325,7 +253,7 @@ namespace Microsoft.Data.SqlClient
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct SNI_Error
         {
-            internal ProviderEnum provider;
+            internal Provider provider;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
             internal string errorMessage;
             internal uint nativeError;
@@ -340,7 +268,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
-        internal static uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo)
+        internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo)
         {
             switch (s_architecture)
             {
@@ -355,7 +283,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo)
+        internal static uint SNIAddProviderWrapper(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo)
         {
             switch (s_architecture)
             {
@@ -436,7 +364,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
+        internal static void SNIPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
         {
             switch (s_architecture)
             {
@@ -454,7 +382,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIQueryInfo(QTypes QType, ref uint pbQInfo)
+        internal static uint SNIQueryInfo(QueryType QType, ref uint pbQInfo)
         {
             switch (s_architecture)
             {
@@ -469,7 +397,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo)
+        internal static uint SNIQueryInfo(QueryType QType, ref IntPtr pbQInfo)
         {
             switch (s_architecture)
             {
@@ -514,7 +442,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum)
+        internal static uint SNIRemoveProvider(SNIHandle pConn, Provider ProvNum)
         {
             switch (s_architecture)
             {
@@ -544,7 +472,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo)
+        internal static uint SNISetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo)
         {
             switch (s_architecture)
             {
@@ -619,7 +547,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo)
         {
             switch (s_architecture)
             {
@@ -634,7 +562,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
         {
             switch (s_architecture)
             {
@@ -649,7 +577,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum)
         {
             switch (s_architecture)
             {
@@ -679,7 +607,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum)
         {
             switch (s_architecture)
             {
@@ -746,7 +674,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
+        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType)
         {
             switch (s_architecture)
             {
@@ -853,17 +781,17 @@ namespace Microsoft.Data.SqlClient
         #endregion
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
         }
 
-        internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
+        internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
 
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
         }
 
         internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
@@ -976,7 +904,7 @@ namespace Microsoft.Data.SqlClient
 
                 clientConsumerInfo.wszConnectionString = constring;
                 clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
-                clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
+                clientConsumerInfo.networkLibrary = Prefix.UNKNOWN_PREFIX;
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
@@ -1026,7 +954,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SNIAddProvider(SNIHandle pConn,
-                                            ProviderEnum providerEnum,
+                                            Provider providerEnum,
                                             AuthProviderInfo authInfo)
         {
             UInt32 ret;
@@ -1039,14 +967,14 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
+                ret = SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
             return ret;
         }
 
-        internal static void SNIPacketAllocate(SafeHandle pConn, IOType IOType, ref IntPtr pPacket)
+        internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket)
         {
             pPacket = SNIPacketAllocateWrapper(pConn, IOType);
         }

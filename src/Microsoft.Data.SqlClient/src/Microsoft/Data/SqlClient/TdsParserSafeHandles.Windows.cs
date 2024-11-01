@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             uint value = 0;
                             // Query OS to find out whether encryption is supported.
-                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
+                            SNINativeMethodWrapper.SNIQueryInfo(QueryType.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
                             _clientOSEncryptionSupport = value != 0;
                         }
                         catch (Exception e)
@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal SNIPacket(SafeHandle sniHandle) : base(IntPtr.Zero, true)
         {
-            SNINativeMethodWrapper.SNIPacketAllocate(sniHandle, SNINativeMethodWrapper.IOType.WRITE, ref base.handle);
+            SNINativeMethodWrapper.SNIPacketAllocate(sniHandle, IoType.WRITE, ref base.handle);
             if (IntPtr.Zero == base.handle)
             {
                 throw SQL.SNIPacketAllocationFailure();
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Success - reset the packet
                 packet = _packets.Pop();
-                SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(sniHandle, IoType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

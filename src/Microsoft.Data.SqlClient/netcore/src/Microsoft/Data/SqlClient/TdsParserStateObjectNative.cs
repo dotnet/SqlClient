@@ -79,14 +79,14 @@ namespace Microsoft.Data.SqlClient
             string IPStringFromSNI = string.Empty;
             IPAddress IPFromSNI;
             _parser.isTcpProtocol = false;
-            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+            Provider providerNumber = Provider.INVALID_PROV;
 
             if (string.IsNullOrEmpty(userProtocol))
             {
 
                 result = SNINativeMethodWrapper.SniGetProviderNumber(Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
-                _parser.isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+                _parser.isTcpProtocol = (providerNumber == Provider.TCP_PROV);
             }
             else if (userProtocol == TdsEnums.TCP)
             {
@@ -346,7 +346,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {
@@ -382,10 +382,10 @@ namespace Microsoft.Data.SqlClient
             => SNINativeMethodWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
         internal override uint DisableSsl()
-            => SNINativeMethodWrapper.SNIRemoveProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV);
+            => SNINativeMethodWrapper.SNIRemoveProvider(Handle, Provider.SSL_PROV);
 
         internal override uint EnableMars(ref uint info)
-            => SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
+            => SNINativeMethodWrapper.SNIAddProvider(Handle, Provider.SMUX_PROV, ref info);
 
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
@@ -395,11 +395,11 @@ namespace Microsoft.Data.SqlClient
             authInfo.serverCertFileName = serverCertificateFilename;
 
             // Add SSL (Encryption) SNI provider.
-            return SNINativeMethodWrapper.SNIAddProvider(Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, ref authInfo);
+            return SNINativeMethodWrapper.SNIAddProvider(Handle, Provider.SSL_PROV, ref authInfo);
         }
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
-            => SNINativeMethodWrapper.SNISetInfo(Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+            => SNINativeMethodWrapper.SNISetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Success - reset the packet
                     packet = _packets.Pop();
-                    SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
+                    SNINativeMethodWrapper.SNIPacketReset(sniHandle, IoType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
                 }
                 else
                 {

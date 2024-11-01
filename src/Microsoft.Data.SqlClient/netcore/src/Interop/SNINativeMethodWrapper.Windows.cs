@@ -33,76 +33,6 @@ namespace Microsoft.Data.SqlClient
 
         #region Structs\Enums
 
-        internal enum IOType
-        {
-            READ,
-            WRITE,
-        }
-
-        internal enum PrefixEnum
-        {
-            UNKNOWN_PREFIX,
-            SM_PREFIX,
-            TCP_PREFIX,
-            NP_PREFIX,
-            VIA_PREFIX,
-            INVALID_PREFIX,
-        }
-
-        internal enum ProviderEnum
-        {
-            HTTP_PROV,
-            NP_PROV,
-            SESSION_PROV,
-            SIGN_PROV,
-            SM_PROV,
-            SMUX_PROV,
-            SSL_PROV,
-            TCP_PROV,
-            VIA_PROV,
-            MAX_PROVS,
-            INVALID_PROV,
-        }
-
-        internal enum QTypes
-        {
-            SNI_QUERY_CONN_INFO,
-            SNI_QUERY_CONN_BUFSIZE,
-            SNI_QUERY_CONN_KEY,
-            SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE,
-            SNI_QUERY_SERVER_ENCRYPT_POSSIBLE,
-            SNI_QUERY_CERTIFICATE,
-            SNI_QUERY_LOCALDB_HMODULE,
-            SNI_QUERY_CONN_ENCRYPT,
-            SNI_QUERY_CONN_PROVIDERNUM,
-            SNI_QUERY_CONN_CONNID,
-            SNI_QUERY_CONN_PARENTCONNID,
-            SNI_QUERY_CONN_SECPKG,
-            SNI_QUERY_CONN_NETPACKETSIZE,
-            SNI_QUERY_CONN_NODENUM,
-            SNI_QUERY_CONN_PACKETSRECD,
-            SNI_QUERY_CONN_PACKETSSENT,
-            SNI_QUERY_CONN_PEERADDR,
-            SNI_QUERY_CONN_PEERPORT,
-            SNI_QUERY_CONN_LASTREADTIME,
-            SNI_QUERY_CONN_LASTWRITETIME,
-            SNI_QUERY_CONN_CONSUMER_ID,
-            SNI_QUERY_CONN_CONNECTTIME,
-            SNI_QUERY_CONN_HTTPENDPOINT,
-            SNI_QUERY_CONN_LOCALADDR,
-            SNI_QUERY_CONN_LOCALPORT,
-            SNI_QUERY_CONN_SSLHANDSHAKESTATE,
-            SNI_QUERY_CONN_SOBUFAUTOTUNING,
-            SNI_QUERY_CONN_SECPKGNAME,
-            SNI_QUERY_CONN_SECPKGMUTUALAUTH,
-            SNI_QUERY_CONN_CONSUMERCONNID,
-            SNI_QUERY_CONN_SNIUCI,
-            SNI_QUERY_CONN_SUPPORTS_EXTENDED_PROTECTION,
-            SNI_QUERY_CONN_CHANNEL_PROVIDES_AUTHENTICATION_CONTEXT,
-            SNI_QUERY_CONN_PEERID,
-            SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC,
-        }
-
         internal enum TransparentNetworkResolutionMode : byte
         {
             DisabledMode = 0,
@@ -132,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             public string wszConnectionString;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string HostNameInCertificate;
-            public PrefixEnum networkLibrary;
+            public Prefix networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
             public byte* szInstanceName;
@@ -167,7 +97,7 @@ namespace Microsoft.Data.SqlClient
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct SNI_Error
         {
-            internal ProviderEnum provider;
+            internal Provider provider;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
             internal string errorMessage;
             internal uint nativeError;
@@ -184,10 +114,10 @@ namespace Microsoft.Data.SqlClient
         #region DLL Imports
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
-        internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
+        internal static extern uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
-        internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo);
+        internal static extern uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNICheckConnectionWrapper")]
         internal static extern uint SNICheckConnection([In] SNIHandle pConn);
@@ -202,13 +132,13 @@ namespace Microsoft.Data.SqlClient
         internal static extern void SNIPacketRelease(IntPtr pPacket);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIPacketResetWrapper")]
-        internal static extern void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum);
+        internal static extern void SNIPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIQueryInfo(QTypes QType, ref uint pbQInfo);
+        internal static extern uint SNIQueryInfo(QueryType QType, ref uint pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo);
+        internal static extern uint SNIQueryInfo(QueryType QType, ref IntPtr pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIReadAsyncWrapper")]
         internal static extern uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket);
@@ -217,13 +147,13 @@ namespace Microsoft.Data.SqlClient
         internal static extern uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIRemoveProviderWrapper")]
-        internal static extern uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum);
+        internal static extern uint SNIRemoveProvider(SNIHandle pConn, Provider ProvNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNISecInitPackage(ref uint pcbMaxToken);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNISetInfoWrapper")]
-        internal static extern uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo);
+        internal static extern uint SNISetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern uint SNITerminate();
@@ -238,16 +168,16 @@ namespace Microsoft.Data.SqlClient
         private static extern uint GetSniMaxComposedSpnLength();
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo);
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum);
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
+        private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIInitialize([In] IntPtr pmo);
@@ -266,7 +196,7 @@ namespace Microsoft.Data.SqlClient
             [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType);
+        private static extern IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize);
@@ -308,17 +238,17 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
         }
 
-        internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
+        internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
 
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
         }
 
         internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
@@ -380,7 +310,7 @@ namespace Microsoft.Data.SqlClient
 
                 clientConsumerInfo.wszConnectionString = constring;
                 clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
-                clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
+                clientConsumerInfo.networkLibrary = Prefix.UNKNOWN_PREFIX;
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
@@ -415,7 +345,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SNIPacketAllocate(SafeHandle pConn, IOType IOType, ref IntPtr pPacket)
+        internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket)
         {
             pPacket = SNIPacketAllocateWrapper(pConn, IOType);
         }

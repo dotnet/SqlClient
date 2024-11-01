@@ -814,14 +814,14 @@ namespace Microsoft.Data.SqlClient
             string IPStringFromSNI = string.Empty;
             IPAddress IPFromSNI;
             isTcpProtocol = false;
-            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+            Provider providerNumber = Provider.INVALID_PROV;
 
             if (string.IsNullOrEmpty(userProtocol))
             {
 
                 result = SNINativeMethodWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
-                isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+                isTcpProtocol = (providerNumber == Provider.TCP_PROV);
             }
             else if (userProtocol == TdsEnums.TCP)
             {
@@ -865,7 +865,7 @@ namespace Microsoft.Data.SqlClient
             UInt32 error = 0;
 
             // Remove SSL (Encryption) SNI provider since we only wanted to encrypt login.
-            error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV);
+            error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, Provider.SSL_PROV);
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -892,7 +892,7 @@ namespace Microsoft.Data.SqlClient
                 UInt32 info = 0;
 
                 // Add SMUX (MARS) SNI provider.
-                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
+                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, Provider.SMUX_PROV, ref info);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -1226,7 +1226,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
-            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
+            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, Provider.SSL_PROV, authInfo);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -3153,7 +3153,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
-                            uint bufferSizeResult = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+                            uint bufferSizeResult = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }

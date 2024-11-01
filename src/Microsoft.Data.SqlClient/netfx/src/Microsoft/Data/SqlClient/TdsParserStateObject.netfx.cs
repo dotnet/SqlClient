@@ -1400,7 +1400,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

@@ -747,6 +747,18 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
       <Link>Interop\Windows\Sni\Delegates.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\IoType.cs">
+      <Link>Interop\Windows\Sni\IoType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Prefix.cs">
+      <Link>Interop\Windows\Sni\Prefix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Provider.cs">
+      <Link>Interop\Windows\Sni\Provider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\QueryType.cs">
+      <Link>Interop\Windows\Sni\QueryType.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\UnicodeString.cs">
       <Link>Interop\Windows\UnicodeString.cs</Link>
     </Compile>
