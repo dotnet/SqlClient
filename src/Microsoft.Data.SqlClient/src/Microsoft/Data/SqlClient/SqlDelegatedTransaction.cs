@@ -611,15 +611,15 @@ namespace Microsoft.Data.SqlClient
 
         // Get the server-side Global Transaction Id from the PromotedDTCToken
         // Skip first 4 bytes since they contain the version
-#if NET
-        private Guid GetGlobalTxnIdentifierFromToken() => new Guid(new ReadOnlySpan<byte>(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, 16));
-#else
         private Guid GetGlobalTxnIdentifierFromToken()
         {
+#if NET
+            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, 16));
+#else
             byte[] txnGuid = new byte[16];
             Buffer.BlockCopy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
             return new Guid(txnGuid);
-        }
 #endif
+        }
     }
 }
