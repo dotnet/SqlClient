@@ -848,7 +848,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (args1 is byte[] args1Bytes)
                 {
-#if NET6_0_OR_GREATER
+#if NET
                     AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, Convert.ToHexString(args1Bytes), args2?.ToString() ?? NullStr));
 #else
 

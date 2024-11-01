@@ -23,12 +23,12 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class MetaType
     {
-#if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type ClassType;   // com+ type
-#if NET6_0_OR_GREATER
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type SqlType;
 
@@ -64,12 +64,12 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is100Supported;
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
-#if NET6_0_OR_GREATER
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type classType,
-#if NET6_0_OR_GREATER
-            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
         {
@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return MetaDateTimeOffset;
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     else if (dataType == typeof(DateOnly))
                     {
                         return s_metaDate;
@@ -661,7 +661,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     case TimeSpan:
                     case DateTimeOffset:
-#if NET6_0_OR_GREATER
+#if NET
                     case TimeOnly:
                     case DateOnly:
 #endif

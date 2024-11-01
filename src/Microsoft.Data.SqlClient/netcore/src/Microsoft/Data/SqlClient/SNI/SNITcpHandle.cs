@@ -1019,11 +1019,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static void SetKeepAliveValues(ref Socket socket)
         {
-#if NET6_0_OR_GREATER
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);
-#endif
         }
     }
 }

@@ -1794,13 +1794,11 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
-#if NET6_0_OR_GREATER
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch => true;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbBatch/*'/>
         protected override DbBatch CreateDbBatch() => new SqlBatch(this);
-#endif
 
         private class OpenAsyncRetry
         {

@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Server
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
 #endif
         private FieldInfo[] GetFields(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields)]
 #endif
             Type t)
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal BinaryOrderedUdtNormalizer(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type t, bool isTopLevelUdt)
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Denormalize a top-level udt and return it
         internal object DeNormalizeTopObject(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t, Stream s) => DeNormalizeInternal(t, s);
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
         private object DeNormalizeInternal(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
 #endif
             Type t, Stream s)
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.Server
         protected bool _skipNormalize;
 
         internal static Normalizer GetNormalizer(
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
             Type t)
