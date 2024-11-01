@@ -200,7 +200,11 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
+#if !NET9_0_OR_GREATER
                     certificateCollection.Import(data);
+#else
+                    certificateCollection.Add(X509CertificateLoader.LoadCertificate(data));
+#endif
                 }
                 catch (CryptographicException exception)
                 {
