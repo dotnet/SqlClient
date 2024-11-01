@@ -2515,7 +2515,7 @@ namespace Microsoft.Data.SqlClient
 #if NET6_0_OR_GREATER
         internal static Exception SocketDidNotThrow()
         {
-            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
+            return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
 #else
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
