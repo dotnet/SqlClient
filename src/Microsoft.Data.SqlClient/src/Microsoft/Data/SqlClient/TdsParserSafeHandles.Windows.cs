@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Success - reset the packet
                 packet = _packets.Pop();
-                SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

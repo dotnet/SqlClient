@@ -33,14 +33,6 @@ namespace Microsoft.Data.SqlClient
 
         #region Structs\Enums
 
-        internal enum ConsumerNumber
-        {
-            SNI_Consumer_SNI,
-            SNI_Consumer_SSB,
-            SNI_Consumer_PacketIsReleased,
-            SNI_Consumer_Invalid,
-        }
-
         internal enum IOType
         {
             READ,

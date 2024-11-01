@@ -346,7 +346,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {
@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Success - reset the packet
                     packet = _packets.Pop();
-                    SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                    SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
                 }
                 else
                 {

@@ -741,6 +741,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
       <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerNumber.cs">
+      <Link>Interop\Windows\Sni\ConsumerNumber.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
       <Link>Interop\Windows\Sni\Delegates.cs</Link>
     </Compile>
