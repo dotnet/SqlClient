@@ -17,8 +17,6 @@ namespace Microsoft.Data.SqlClient
 
         private const int SniOpenTimeOut = -1; // infinite
 
-        internal delegate IntPtr SqlClientCertificateDelegate(IntPtr pCallbackContext);
-
         internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
 
         internal static int SniMaxComposedSpnLength
@@ -34,24 +32,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region Structs\Enums
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct AuthProviderInfo
-        {
-            public uint flags;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool tlsFirst;
-            public object certContext;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string certId;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool certHash;
-            public object clientCertificateCallbackContext;
-            public SqlClientCertificateDelegate clientCertificateCallback;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string serverCertFileName;
-        };
-
 
         internal enum ConsumerNumber
         {

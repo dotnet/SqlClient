@@ -735,6 +735,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs">
       <Link>Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
+      <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
       <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
     </Compile>

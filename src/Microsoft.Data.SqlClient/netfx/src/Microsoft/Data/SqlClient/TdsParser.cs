@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Net;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
@@ -1214,7 +1215,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Add SSL (Encryption) SNI provider.
-            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+            AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = encrypt == SqlConnectionEncryptOption.Strict;
             authInfo.certId = null;

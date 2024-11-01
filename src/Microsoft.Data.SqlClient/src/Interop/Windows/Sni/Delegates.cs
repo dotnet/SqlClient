@@ -9,4 +9,6 @@ namespace Interop.Windows.Sni
 {
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     internal delegate void SqlAsyncCallbackDelegate(IntPtr m_ConsKey, IntPtr pPacket, uint dwError);
+    
+    internal delegate IntPtr SqlClientCertificateDelegate(IntPtr pCallbackContext);
 }

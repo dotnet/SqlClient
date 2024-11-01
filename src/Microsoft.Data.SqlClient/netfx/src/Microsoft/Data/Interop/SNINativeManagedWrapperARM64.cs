@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using Interop.Windows.Sni;
 using static Microsoft.Data.SqlClient.SNINativeMethodWrapper;
 
 namespace Microsoft.Data.SqlClient

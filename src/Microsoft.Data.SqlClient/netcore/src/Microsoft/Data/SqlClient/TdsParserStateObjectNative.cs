@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
-            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+            AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = tlsFirst;
             authInfo.serverCertFileName = serverCertificateFilename;
