@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>レプリケーション</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>接続の復元性</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>入力 Schema 内に IsDataSet 属性がありません。</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>DataSet Element を特定することができません。IsDataSet 属性が 1 つ以上存在しています。</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>DataSet 要素を特定できません。IsDataSet 属性が 2 回以上存在します。</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>DataSet は、IDynamicMetaObjectProvider を実装して IXmlSerializable を実装しない型をシリアル化しません。</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0} が必要ですが、位置 {2} の実際のトークンは {1} です。</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
-    <value>'{0}' から '{1}' に変換できません。</value>
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
+    <value>{0} から {1} に変換できません。</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>値 '{0}' を型 : {1} に変換できません。</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>値 '{0}' は型 '{1} に変換できません。</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>列名 [{0}] が無効です。</value>
@@ -879,7 +879,7 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>評価できません。式 '{0}' は集約ではありません。</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
+  <data name="Expr_FilterConversion" xml:space="preserve">
     <value>フィルター式 '{0}' は Boolean 型に対して評価しません。</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
@@ -1113,8 +1113,8 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded および SetModified を呼び出せるのは、DataRowState プロパティの値が Unchanged である DataRows オブジェクトからのみです。</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
-    <value>序数 '{0}' は最大数を超えています。</value>
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
+    <value>序数 {0} は最大数を超えています。</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
     <value>DataSet は System.Nullable&lt;&gt; をサポートしていません。</value>
@@ -1464,7 +1464,7 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>PrimaryKey 内に列の不一致があります : &lt;target&gt;.{0} に対する &lt;source&gt;.{1} です。</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
     <value>キーに一致しない列があるため、Relation {0} をマージできません。</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
@@ -1650,7 +1650,7 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>コレクションが修正されました。列挙操作が実行されない可能性があります。</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
     <value>単純型 '{0}' は既に別の '{1}' を使用して宣言されています。</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
@@ -1710,7 +1710,7 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>列がこの dataSet に組み込まれているため、削除できません。</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>リレーションシップがこの dataSet に組み込まれているため、削除できません。</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>このコレクションのメンバーシップが変わるたびに発生します。</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>値が DBNull のため、取得できません。</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,7 +1914,7 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>更新には、コマンドの複製に接続オブジェクトを指定する必要があります。コマンドの複製の Connection プロパティは初期化されていません。</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
     <value>更新には接続が必要です。</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
@@ -3618,8 +3618,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>フィールド '{0}' は、シリアル化されていないとマークされています。</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>フィールド '{0}' の型は明示的なレイアウトとしてマークされていますが、これは Native 形式では許可されません。</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>フィールド '{0}' の型は明示的にレイアウトするように設定されていますが、ネイティブ形式では許可されません</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>複数の値をとるアセンブリ参照には、ゼロ以外のアセンブリ ID が必要です。</value>
@@ -3945,8 +3945,8 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>SQL Server への接続を確立しているときにネットワーク関連またはインスタンス固有のエラーが発生しました。サーバーが見つからないかアクセスできません。インスタンス名が正しいこと、および SQL Server がリモート接続を許可するように構成されていることを確認してください。</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
-    <value>ログイン前の接続初期化プロセス中に発生したエラーにより、クライアントは接続を確立できませんでした。エラーの原因として、サポートされていないバージョンの SQL Server にクライアントが接続しようとした、サーバーがビジーで新しい接続を受け入れられなかった、サーバーのリソースが制限されていた (メモリ不足や最大接続許可数) などの可能性があります。</value>
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
+    <value>ログイン前の接続初期化処理中にエラーが発生したため、クライアントは接続を確立できませんでした。エラーの原因として、サポートされていないバージョンの SQL Server にクライアントが接続しようとした、サーバーがビジーで新しい接続を受け入れられなかった、サーバーのリソースが制限されていた (メモリ不足や最大接続許可数) などの可能性があります。</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
     <value>サーバーとの接続を正常に確立しましたが、ログイン前のハンドシェイク中にエラーが発生しました。</value>
@@ -4399,7 +4399,7 @@
     <value>SQL Server 名を格納しているディクショナリ オブジェクトと信頼された列マスター キーのパス。</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>2 回以上のリダイレクトが発生しました。リダイレクトは 1 回のログインにつき 1 回だけ実行できます。</value>
+    <value>発生したリダイレクトが多すぎます。ログインごとに {0} 回のリダイレクトのみが許可されます。</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>ApplicationIntent ReadOnly 接続オプションを使用して SQL Server のミラー化されたインスタンスに接続することはできません。</value>
@@ -4425,7 +4425,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>回復の試行中、SSL 暗号化をサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>回復の試行中、要求された正確なクライアントの TDS のバージョンをサーバーが保持しませんでした。接続を回復できません。</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4739,5 +4739,8 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>サーバーによって提供された証明書が、ServerCertificate オプションで指定された証明書と一致しません。</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>列 '{0}' で JsonDocument を取得しようとしましたが無効です。JsonDocument は json 型の列でのみサポートされています。</value>
   </data>
 </root>

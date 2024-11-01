@@ -15,7 +15,7 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
 
-#if NET6_0_OR_GREATER
+#if NET
 using SmiContext = System.Object;
 #endif
 
@@ -1542,7 +1542,7 @@ namespace Microsoft.Data.SqlClient.Server
                         SetCompatibleValue(sink, setters, ordinal, metaData, charsValue, ExtendedClrTypeCode.CharArray, 0);
                         break;
                     }
-#if NET6_0_OR_GREATER
+#if NET
                 case ExtendedClrTypeCode.DateOnly:
                     SetDateTime_Checked(sink, setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
                     break;
@@ -2907,7 +2907,7 @@ namespace Microsoft.Data.SqlClient.Server
 /*EnSDR*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , X,  _  , _  , _  , _ , },/*IEnurerable<SqlDataRecord>*/
 /*TmSpn*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeSpan*/
 /*DTOst*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , X , },/*DateTimeOffset*/
-#if NET6_0_OR_GREATER
+#if NET
 /*DOnly*/{ _ ,  _ ,  _ , _ , X , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , X  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  X  , _  , X  , _ , },/*DateOnly*/
 /*TOnly*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeOnly*/
 #endif
@@ -2963,7 +2963,7 @@ namespace Microsoft.Data.SqlClient.Server
 /*EnSDR*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , X,  _  , _  , _  , _ , },/*IEnurerable<SqlDataRecord>*/
 /*TmSpn*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeSpan*/
 /*DTOst*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , _  , _  , X , },/*DateTimeOffset*/
-#if NET6_0_OR_GREATER
+#if NET
 /*DOnly*/{ _ ,  _ ,  _ , _ , X , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , X  , _ , _  , _  , _ , _ , _  , _  , X  , _ , _  , _ , _ , _ ,  _ , _,  X  , _  , X  , _ , },/*DateOnly*/
 /*TOnly*/{ _ ,  _ ,  _ , _ , _ , _  , _ , _ , _  , _  , _  , _  , _  , _ , _ , _  , _ , _  , _  , _ , _ , _  , _  , _  , _ , _  , _ , _ , _ ,  _ , _,  _  , X  , _  , _ , },/*TimeOnly*/
 #endif
@@ -3174,7 +3174,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             long temp = getters.GetInt64(sink, ordinal);
             sink.ProcessMessagesAndThrow();
-#if NET8_0_OR_GREATER
+#if NET
             return SqlMoney.FromTdsValue(temp);
 #else
             return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
@@ -3658,7 +3658,7 @@ namespace Microsoft.Data.SqlClient.Server
                     sink.ProcessMessagesAndThrow();
                 }
 
-#if NET8_0_OR_GREATER
+#if NET
                 setters.SetInt64(sink, ordinal, value.GetTdsValue());
 #else
                 setters.SetInt64(sink, ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));

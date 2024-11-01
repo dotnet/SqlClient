@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>net8.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -16,8 +16,8 @@
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
-    <EnableTrimAnalyzer Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">true</EnableTrimAnalyzer>
-    <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn> 
     <RootNamespace />
   </PropertyGroup>
   <!--Generating Strong Name-->
@@ -36,45 +36,8 @@
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>  
-  <!-- Contains common items shared between NetFx and NetCore -->
+  <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
-    <Compile Include="$(CommonPath)\CoreLib\System\Threading\Tasks\TaskToApm.cs">
-      <Link>Common\CoreLib\System\Threading\Tasks\TaskToApm.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\ContextFlagsPal.cs">
-      <Link>Common\System\Net\ContextFlagsPal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs">
-      <Link>Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\DebugSafeHandle.cs">
-      <Link>Common\System\Net\DebugSafeHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\InternalException.cs">
-      <Link>Common\System\Net\InternalException.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Logging\DebugThreadTracking.cs">
-      <Link>Common\System\Net\Logging\DebugThreadTracking.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Logging\NetEventSource.Common.cs">
-      <Link>Common\System\Net\Logging\NetEventSource.Common.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\NegotiationInfoClass.cs">
-      <Link>Common\System\Net\NegotiationInfoClass.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\SecurityBuffer.cs">
-      <Link>Common\System\Net\Security\SecurityBuffer.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\SecurityBufferType.cs">
-      <Link>Common\System\Net\Security\SecurityBufferType.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\SecurityStatusPal.cs">
-      <Link>Common\System\Net\SecurityStatusPal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\NotImplemented.cs" />
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -110,6 +73,12 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
@@ -156,6 +125,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
+      <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
@@ -164,6 +136,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
@@ -417,6 +392,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCollation.cs">
       <Link>Microsoft\Data\SqlClient\SqlCollation.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
     </Compile>
@@ -597,6 +575,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
     </Compile>
@@ -624,6 +605,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -637,12 +621,20 @@
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
 
+    <Compile Include="Common\System\NotImplemented.cs" />
+    <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
+    <Compile Include="Common\System\Net\DebugCriticalHandleMinusOneIsInvalid.cs" />
+    <Compile Include="Common\System\Net\DebugSafeHandle.cs" />
+    <Compile Include="Common\System\Net\InternalException.cs" />
+    <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
+    <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
+    <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
+    <Compile Include="Common\System\Net\Security\SecurityBuffer.cs" />
+    <Compile Include="Common\System\Net\Security\SecurityBufferType.cs" />
+    <Compile Include="Common\System\Net\SecurityStatusPal.cs" />
+    <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
@@ -668,8 +660,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnostic.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
@@ -683,7 +673,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
@@ -692,151 +681,54 @@
 
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs">
-      <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.GetFileType_SafeHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs">
-      <Link>Common\CoreLib\Interop\Windows\Kernel32\Interop.CloseHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.SetThreadErrorMode.cs">
-      <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.SetThreadErrorMode.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs">
-      <Link>Common\CoreLib\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\CoreLib\System\IO\PathInternal.Windows.cs">
-      <Link>Common\CoreLib\System\IO\PathInternal.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Crypt32\Interop.certificates.cs">
-      <Link>Common\Interop\Windows\Crypt32\Interop.certificates.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Crypt32\Interop.certificates_types.cs">
-      <Link>Common\Interop\Windows\Crypt32\Interop.certificates_types.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Errors.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Errors.cs">
       <Link>Common\Interop\Windows\Interop.Errors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Libraries.cs">
       <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.UNICODE_STRING.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.UNICODE_STRING.cs">
       <Link>Common\Interop\Windows\Interop.UNICODE_STRING.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.CTL_CODE.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.CTL_CODE.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.CTL_CODE.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.DeviceIoControl.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.DeviceIoControl.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.FreeLibrary.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.FreeLibrary.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.FileTypes.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.FileTypes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.GetProcAddress.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.GetProcAddress.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.GetFullPathName.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlCodeAccess.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs">
+      <Link>Common\Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.NtCreateFile.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.NtCreateFile.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.NtCreateFile.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
       <Link>Common\Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs">
-      <Link>Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\SChannel\Interop.SECURITY_STATUS.cs">
-      <Link>Common\Interop\Windows\SChannel\Interop.SECURITY_STATUS.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs">
-      <Link>Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\GlobalSSPI.cs">
-      <Link>Common\Interop\Windows\sspicli\GlobalSSPI.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\Interop.SSPI.cs">
-      <Link>Common\Interop\Windows\sspicli\Interop.SSPI.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\NegotiationInfoClass.cs">
-      <Link>Common\Interop\Windows\sspicli\NegotiationInfoClass.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SafeDeleteContext.cs">
-      <Link>Common\Interop\Windows\sspicli\SafeDeleteContext.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecPkgContext_Bindings.cs">
-      <Link>Common\Interop\Windows\sspicli\SecPkgContext_Bindings.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecPkgContext_NegotiationInfoW.cs">
-      <Link>Common\Interop\Windows\sspicli\SecPkgContext_NegotiationInfoW.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecPkgContext_Sizes.cs">
-      <Link>Common\Interop\Windows\sspicli\SecPkgContext_Sizes.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecPkgContext_StreamSizes.cs">
-      <Link>Common\Interop\Windows\sspicli\SecPkgContext_StreamSizes.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecurityPackageInfo.cs">
-      <Link>Common\Interop\Windows\sspicli\SecurityPackageInfo.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecurityPackageInfoClass.cs">
-      <Link>Common\Interop\Windows\sspicli\SecurityPackageInfoClass.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SecuritySafeHandles.cs">
-      <Link>Common\Interop\Windows\sspicli\SecuritySafeHandles.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SSPIAuthType.cs">
-      <Link>Common\Interop\Windows\sspicli\SSPIAuthType.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SSPIInterface.cs">
-      <Link>Common\Interop\Windows\sspicli\SSPIInterface.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SSPISecureChannelType.cs">
-      <Link>Common\Interop\Windows\sspicli\SSPISecureChannelType.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\sspicli\SSPIWrapper.cs">
-      <Link>Common\Interop\Windows\sspicli\SSPIWrapper.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Collections\Generic\BidirectionalDictionary.cs">
-      <Link>Common\System\Collections\Generic\BidirectionalDictionary.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Windows.cs">
-      <Link>Common\System\Net\ContextFlagsAdapterPal.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs">
-      <Link>Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Windows.cs">
-      <Link>Common\System\Net\Security\NegotiateStreamPal.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.cs">
-      <Link>Common\System\Net\Security\NetEventSource.Security.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NetEventSource.Security.Windows.cs">
-      <Link>Common\System\Net\Security\NetEventSource.Security.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\SecurityContextTokenHandle.cs">
-      <Link>Common\System\Net\Security\SecurityContextTokenHandle.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\SecurityStatusAdapterPal.Windows.cs">
-      <Link>Common\System\Net\SecurityStatusAdapterPal.Windows.cs</Link>
-    </Compile>
-
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
     </Compile>
@@ -849,6 +741,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
     </Compile>
@@ -858,57 +756,56 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
+    </Compile>
 
+    <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates.cs" />
+    <Compile Include="Common\Interop\Windows\Crypt32\Interop.certificates_types.cs" />
+    <Compile Include="Common\Interop\Windows\Kernel32\Interop.CloseHandle.cs" />
+    <Compile Include="Common\Interop\Windows\Kernel32\Interop.FreeLibrary.cs" />
+    <Compile Include="Common\Interop\Windows\Kernel32\Interop.GetProcAddress.cs" />
+    <Compile Include="Common\Interop\Windows\Kernel32\Interop.LoadLibraryEx.cs" />
+    <Compile Include="Common\Interop\Windows\SChannel\Interop.SecPkgContext_ApplicationProtocol.cs" />
+    <Compile Include="Common\Interop\Windows\SChannel\Interop.SECURITY_STATUS.cs" />
+    <Compile Include="Common\Interop\Windows\SChannel\SecPkgContext_ConnectionInfo.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\GlobalSSPI.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\Interop.SSPI.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\NegotiationInfoClass.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SafeDeleteContext.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecPkgContext_Bindings.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecPkgContext_NegotiationInfoW.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecPkgContext_Sizes.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecPkgContext_StreamSizes.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecurityPackageInfo.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecurityPackageInfoClass.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SecuritySafeHandles.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SSPIAuthType.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SSPIInterface.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SSPISecureChannelType.cs" />
+    <Compile Include="Common\Interop\Windows\sspicli\SSPIWrapper.cs" />
+    <Compile Include="Common\Microsoft\Win32\SafeHandles\SafeLibraryHandle.cs" />
+    <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
+    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
+    <Compile Include="Common\System\Net\DebugCriticalHandleZeroOrMinusOneIsInvalid.cs" />
+    <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
+    <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
+    <Compile Include="Common\System\Net\Security\NetEventSource.Security.Windows.cs" />
+    <Compile Include="Common\System\Net\Security\SecurityContextTokenHandle.cs" />
+    <Compile Include="Common\System\Net\SecurityStatusAdapterPal.Windows.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
 
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
-    <Compile Include="$(CommonPath)\Interop\Unix\Interop.Libraries.cs">
-      <Link>Common\Interop\Unix\Interop.Libraries.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs">
-      <Link>Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Win32\SafeHandles\GssSafeHandles.cs">
-      <Link>Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteContext.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteContext.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeDeleteNegoContext.cs">
-      <Link>Common\System\Net\Security\Unix\SafeDeleteNegoContext.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeCredentials.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeCredentials.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\Unix\SafeFreeNegoCredentials.cs">
-      <Link>Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\ContextFlagsAdapterPal.Unix.cs">
-      <Link>Common\System\Net\ContextFlagsAdapterPal.Unix.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
-      <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>
-    </Compile>
-
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
     </Compile>
@@ -916,6 +813,17 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
 
+    <Compile Include="Common\Interop\Unix\Interop.Libraries.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssApiException.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.GssBuffer.cs" />
+    <Compile Include="Common\Interop\Unix\System.Net.Security.Native\Interop.NetSecurityNative.cs" />
+    <Compile Include="Common\Microsoft\Win32\SafeHandles\GssSafeHandles.cs" />
+    <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
+    <Compile Include="Common\System\Net\Security\Unix\SafeDeleteContext.cs" />
+    <Compile Include="Common\System\Net\Security\Unix\SafeDeleteNegoContext.cs" />
+    <Compile Include="Common\System\Net\Security\Unix\SafeFreeCredentials.cs" />
+    <Compile Include="Common\System\Net\Security\Unix\SafeFreeNegoCredentials.cs" />
+    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
@@ -963,7 +871,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)"  />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <!-- Enable the project reference for debugging purposes. -->
     <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
     <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />

@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.TransactionEnded | RES | CPOOL | Object Id {0}, Connection Id {1}, transaction completed externally.", ObjectID, connection?._objectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.TransactionEnded | RES | CPOOL | Object Id {0}, Connection Id {1}, transaction completed externally.", ObjectID, connection.ObjectID);
                 lock (connection)
                 {
                     if (_atomicTransaction.Equals(transaction))

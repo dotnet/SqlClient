@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlBatchCommandCollection">
     <SqlBatchCommandCollection>
       <summary>
@@ -52,10 +52,10 @@
     </CopyTo2>
     <IndexOf1>
       <summary>
-        Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+        Searches for the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> within the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" /> and returns the zero-based index of the first occurrence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
       </summary>
       <returns>
-        Returns the zero-based index of the first occurence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+        Returns the zero-based index of the first occurrence within the entire <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
       </returns>
     </IndexOf1>
     <IndexOf2>
@@ -87,7 +87,7 @@
     </Insert2>
     <Remove1>
       <summary>
-        Removes the first occurence of a specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.
+        Removes the first occurrence of a specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.
       </summary>
       <returns>
         Returns <see langword="true" /> if an item is successfully removed. Returns false if an item could not be removed or no item was not found.
@@ -95,7 +95,7 @@
     </Remove1>
     <Remove2>
       <param name="item">
-        The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" /> .
+        The object to remove from the <see cref="T:System.Collections.Generic.ICollection`1" />.
       </param>
       <summary>
         Removes the specified <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object from the collection.

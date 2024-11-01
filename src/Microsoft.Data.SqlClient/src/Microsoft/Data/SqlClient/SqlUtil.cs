@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET6_0_OR_GREATER
+#if NET
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, Exception> exceptionConverter = null,
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
         {
             if (timeout > 0)
@@ -987,6 +987,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception JsonDocumentNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_JsonDocumentNotSupportedOnColumnType, columnName));
+        }
+
         internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
@@ -1364,7 +1369,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.
-#if NET6_0_OR_GREATER
+#if NET
                 SQL_UnsupportedSysTxVersion));
 #else
                 GT_UnsupportedSysTxVersion));
@@ -1444,10 +1449,10 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection, int maxNumberOfRedirectRoute)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported, maxNumberOfRedirectRoute)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
@@ -2507,10 +2512,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static Exception SocketDidNotThrow()
         {
-            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
+            return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
 #else
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
@@ -2691,7 +2696,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        ///  Escape a string to be used inside TSQL literal, such as N'somename' or 'somename'
+        ///  Escape a string to be used inside TSQL literal, such as N'some-name' or 'some-name'
         /// </summary>
         internal static string EscapeStringAsLiteral(string input)
         {

@@ -7,10 +7,6 @@ parameters:
   - name: password
     type: string
     default: $(password)
-
-  - name: targetNetCoreVersion
-    type: string
-    default: $(MainTargetNetCoreVersion)
   
   - name: condition
     type: string
@@ -19,8 +15,6 @@ parameters:
 steps:
 # Linux only steps
 - bash: |
-    echo ${{parameters.targetNetCoreVersion }}
-    
     sudo systemctl stop mssql-server
     
     # Password for the SA user (required)

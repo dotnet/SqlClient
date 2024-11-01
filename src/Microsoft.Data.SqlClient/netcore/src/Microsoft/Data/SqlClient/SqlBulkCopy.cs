@@ -596,6 +596,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
                         }
+                        else if (metadata.type == SqlDbTypeExtensions.Json)
+                        {
+                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
+                        }
                         else
                         {
                             AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
@@ -645,7 +649,7 @@ namespace Microsoft.Data.SqlClient
                                         }
                                         updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                     }
-                                    else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml)
+                                    else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
                                     {
                                         // Partial length column prefix (max)
                                         updateBulkCommandText.Append("(max)");
@@ -1213,7 +1217,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             // Check for data streams
-            else if ((_enableStreaming) && (metadata.length == MAX_LENGTH))
+            else if ((_enableStreaming) && ((metadata.length == MAX_LENGTH) || metadata.type == SqlDbTypeExtensions.Json))
             {
                 isSqlType = false;
 
@@ -1229,7 +1233,7 @@ namespace Microsoft.Data.SqlClient
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    else if (((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
+                    else if (((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar || metadata.type == SqlDbTypeExtensions.Json)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -1590,6 +1594,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     case TdsEnums.SQLXMLTYPE:
+                    case TdsEnums.SQLJSON:
                         // Could be either string, SqlCachedBuffer, XmlReader or XmlDataFeed
                         Debug.Assert((value is XmlReader) || (value is SqlCachedBuffer) || (value is string) || (value is SqlString) || (value is XmlDataFeed), "Invalid value type of Xml datatype");
                         if (value is XmlReader)
