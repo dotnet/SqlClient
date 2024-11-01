@@ -13,7 +13,7 @@
       <value>1</value>
     </AlwaysBlock>
     <NeverBlock>
-      <summary>Blocking period OFF for Azure SQL servers, but ON for all other SQL servers.</summary>
+      <summary>Blocking period OFF for all SQL servers, including Azure SQL servers.</summary>
       <value>2</value>
     </NeverBlock>
   </members>

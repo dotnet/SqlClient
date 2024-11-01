@@ -16,17 +16,18 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class MetaType
     {
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type ClassType;   // com+ type
-#if NET6_0_OR_GREATER
+#if NET
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         internal readonly Type SqlType;
@@ -63,11 +64,11 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is100Supported;
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type classType,
-#if NET6_0_OR_GREATER
+#if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
             Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
@@ -123,6 +124,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char ||
             type == SqlDbType.VarChar ||
             type == SqlDbType.Text ||
+            type == SqlDbTypeExtensions.Json ||
             type == SqlDbType.Xml;
 
         private static bool _IsNCharType(SqlDbType type) =>
@@ -364,6 +366,8 @@ namespace Microsoft.Data.SqlClient
                         return s_metaReal;
                     else if (dataType == typeof(SqlXml))
                         return MetaXml;
+                    else if (dataType == typeof(SqlJson))
+                        return s_MetaJson;
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -382,7 +386,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return MetaDateTimeOffset;
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     else if (dataType == typeof(DateOnly))
                     {
                         return s_metaDate;
@@ -657,7 +661,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     case TimeSpan:
                     case DateTimeOffset:
-#if NET6_0_OR_GREATER
+#if NET
                     case TimeOnly:
                     case DateOnly:
 #endif

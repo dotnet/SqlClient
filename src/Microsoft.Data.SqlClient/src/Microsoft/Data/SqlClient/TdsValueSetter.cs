@@ -587,7 +587,7 @@ namespace Microsoft.Data.SqlClient
                     if (SqlDbType.DateTime2 == _metaData.SqlDbType)
                     {
                         long time = value.TimeOfDay.Ticks / TdsEnums.TICKS_FROM_SCALE[_metaData.Scale];
-#if NET6_0_OR_GREATER
+#if NET
                         Span<byte> result_time = stackalloc byte[8];
                         BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
                         _stateObj.WriteByteSpan(result_time.Slice(0, (int)_metaData.MaxLength - 3));
@@ -595,7 +595,7 @@ namespace Microsoft.Data.SqlClient
                         _stateObj.WriteByteArray(BitConverter.GetBytes(time), (int)_metaData.MaxLength - 3, 0);
 #endif
                     }
-#if NET6_0_OR_GREATER
+#if NET
                     Span<byte> result_date = stackalloc byte[4];
                     BinaryPrimitives.WriteInt32LittleEndian(result_date, days);
                     _stateObj.WriteByteSpan(result_date.Slice(0, 3));
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetGuid));
 
-#if NET6_0_OR_GREATER
+#if NET
 
             Span<byte> bytes = stackalloc byte[16];
             value.TryWriteBytes(bytes);
@@ -631,7 +631,7 @@ namespace Microsoft.Data.SqlClient
 
                 _stateObj.WriteByte((byte)_metaData.MaxLength);
             }
-#if NET6_0_OR_GREATER
+#if NET
             _stateObj.WriteByteSpan(bytes);
 #else
             _stateObj.WriteByteArray(bytes, bytes.Length, 0);
@@ -659,7 +659,7 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.WriteByte(length);
             }
             long time = value.Ticks / TdsEnums.TICKS_FROM_SCALE[scale];
-#if NET6_0_OR_GREATER
+#if NET
             Span<byte> result_time = stackalloc byte[8];
             BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
             _stateObj.WriteByteSpan(result_time.Slice(0, length));
@@ -696,7 +696,7 @@ namespace Microsoft.Data.SqlClient
             int days = utcDateTime.Subtract(DateTime.MinValue).Days;
             short offset = (short)value.Offset.TotalMinutes;
 
-#if NET6_0_OR_GREATER
+#if NET
             // In TDS protocol: 
             // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
             //

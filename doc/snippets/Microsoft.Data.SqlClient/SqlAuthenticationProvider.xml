@@ -23,49 +23,52 @@
               /// &lt;/summary&gt;
               public class CustomDeviceCodeFlowAzureAuthenticationProvider : SqlAuthenticationProvider
               {
-                  private const string clientId = "my-client-id";
-                  private const string clientName = "My Application Name";
-                  private const string s_defaultScopeSuffix = "/.default";
+                  private const string ClientId = "my-client-id";
+                  private const string ClientName = "My Application Name";
+                  private const string DefaultScopeSuffix = "/.default";
 
                   // Maintain a copy of the PublicClientApplication object to cache the underlying access tokens it provides
                   private static IPublicClientApplication pcApplication;
 
                   public override async Task&lt;SqlAuthenticationToken&gt; AcquireTokenAsync(SqlAuthenticationParameters parameters)
                   {
-                      string[] scopes = new string[] { parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix };
+                      string[] scopes = [ parameters.Resource.EndsWith(DefaultScopeSuffix) ? parameters.Resource : parameters.Resource + DefaultScopeSuffix ];
 
                       IPublicClientApplication app = pcApplication;
                       if (app == null)
                       {
-                          pcApplication = app = PublicClientApplicationBuilder.Create(clientId)
+                          pcApplication = app = PublicClientApplicationBuilder.Create(ClientId)
                               .WithAuthority(parameters.Authority)
-                              .WithClientName(clientName)
+                              .WithClientName(ClientName)
                               .WithRedirectUri("https://login.microsoftonline.com/common/oauth2/nativeclient")
-                          .Build();
+                              .Build();
                       }
 
                       AuthenticationResult result;
+                      using CancellationTokenSource connectionTimeoutCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(parameters.ConnectionTimeout));
 
                       try
                       {
                           IEnumerable&lt;IAccount&gt; accounts = await app.GetAccountsAsync();
-                          result = await app.AcquireTokenSilent(scopes, accounts.FirstOrDefault()).ExecuteAsync();
+                          result = await app.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
                       }
                       catch (MsalUiRequiredException)
                       {
-                          result = await app.AcquireTokenWithDeviceCode(scopes,
-                                  deviceCodeResult => CustomDeviceFlowCallback(deviceCodeResult)).ExecuteAsync();
+                          result = await app.AcquireTokenWithDeviceCode(scopes, deviceCodeResult => CustomDeviceFlowCallback(deviceCodeResult))
+                              .ExecuteAsync(connectionTimeoutCancellation.Token);
                       }
 
                       return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
                   }
 
-                  public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) => authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow);
+                  public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) =>
+                      authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow);
 
-                  private static Task&lt;int&gt; CustomDeviceFlowCallback(DeviceCodeResult result)
+                  private Task CustomDeviceFlowCallback(DeviceCodeResult result)
                   {
                       Console.WriteLine(result.Message);
-                      return Task.FromResult(0);
+                      return Task.CompletedTask;
                   }
               }
 
@@ -106,16 +109,16 @@
     </SetProvider>
     <BeforeLoad>
       <param name="authenticationMethod">The authentication method.</param>
-      <summary>This method is called immediately before the provider is added to SQL drivers registry.</summary>
+      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
       <remarks>
         Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
       </remarks>
     </BeforeLoad>
     <BeforeUnload>
       <param name="authenticationMethod">The authentication method.</param>
-      <summary>This method is called immediately before the provider is removed from the SQL drivers registry.</summary>
+      <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
       <remarks>
-        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL drivers registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
       </remarks>
     </BeforeUnload>
     <IsSupported>

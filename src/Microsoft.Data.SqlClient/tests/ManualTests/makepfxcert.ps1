@@ -149,7 +149,7 @@ function Invoke-SqlServerCertificateCommand {
       $msg += "`n" + $e.Message
     }
 
-    Write-Output "Certificate generation was not successfull. $msg"
+    Write-Output "Certificate generation was not successful. $msg"
   }
 
   Write-Output "Certificate generation task completed."

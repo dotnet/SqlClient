@@ -186,58 +186,6 @@ namespace Microsoft.Data.SqlClient
             public string serverCertFileName;
         };
 
-        internal struct CTAIPProviderInfo
-        {
-            internal byte[] originalNetworkAddress;
-            internal Boolean fromDataSecurityProxy;
-        };
-
-        struct SNIAuthProviderInfoWrapper
-        {
-            internal object pDelegateContext;
-            internal SqlClientCertificateDelegate pSqlClientCertificateDelegate;
-        };
-
-        internal struct SNICTAIPProviderInfo
-        {
-            internal SNIHandle pConn;
-            internal byte prgbAddress;
-            internal ulong cbAddress;
-            internal bool fFromDataSecurityProxy;
-        };
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct CredHandle
-        {
-            internal IntPtr dwLower;
-            internal IntPtr dwUpper;
-        };
-
-        internal enum ContextAttribute
-        {
-            // sspi.h
-            SECPKG_ATTR_SIZES = 0,
-            SECPKG_ATTR_NAMES = 1,
-            SECPKG_ATTR_LIFESPAN = 2,
-            SECPKG_ATTR_DCE_INFO = 3,
-            SECPKG_ATTR_STREAM_SIZES = 4,
-            SECPKG_ATTR_AUTHORITY = 6,
-            SECPKG_ATTR_PACKAGE_INFO = 10,
-            SECPKG_ATTR_NEGOTIATION_INFO = 12,
-            SECPKG_ATTR_UNIQUE_BINDINGS = 25,
-            SECPKG_ATTR_ENDPOINT_BINDINGS = 26,
-            SECPKG_ATTR_CLIENT_SPECIFIED_TARGET = 27,
-            SECPKG_ATTR_APPLICATION_PROTOCOL = 35,
-
-            // minschannel.h
-            SECPKG_ATTR_REMOTE_CERT_CONTEXT = 0x53,    // returns PCCERT_CONTEXT
-            SECPKG_ATTR_LOCAL_CERT_CONTEXT = 0x54,     // returns PCCERT_CONTEXT
-            SECPKG_ATTR_ROOT_STORE = 0x55,             // returns HCERTCONTEXT to the root store
-            SECPKG_ATTR_ISSUER_LIST_EX = 0x59,         // returns SecPkgContext_IssuerListInfoEx
-            SECPKG_ATTR_CONNECTION_INFO = 0x5A,        // returns SecPkgContext_ConnectionInfo
-            SECPKG_ATTR_UI_INFO = 0x68, // sets SEcPkgContext_UiInfo  
-        }
-
         internal enum ConsumerNumber
         {
             SNI_Consumer_SNI,
@@ -397,12 +345,6 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr LoadLibrary(string dllToLoad);
-
-        [DllImport("secur32.dll", ExactSpelling = true, SetLastError = true)]
-        internal static extern uint QueryContextAttributes(ref CredHandle contextHandle, [In] ContextAttribute attribute, [In] IntPtr buffer);
-
         internal static uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo)
         {
             switch (s_architecture)
@@ -413,21 +355,6 @@ namespace Microsoft.Data.SqlClient
                     return SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
-            }
-        }
-
-        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref SNICTAIPProviderInfo pInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 default:
                     throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
@@ -727,21 +654,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, ref IntPtr pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, ref pbQInfo);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
-            }
-        }
-
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum)
         {
             switch (s_architecture)
@@ -943,68 +855,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
             }
         }
-
-        private static IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return SNINativeManagedWrapperARM64.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return SNINativeManagedWrapperX86.SNIClientCertificateFallbackWrapper(pCallbackContext);
-                default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
-            }
-        }
         #endregion
-
-        internal static uint SNISecGetServerCertificate(SNIHandle pConnectionObject, ref X509Certificate2 certificate)
-        {
-            System.UInt32 ret;
-            CredHandle pSecHandle;
-            X509Certificate pCertContext = null;
-
-            // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
-            bool mustRelease = false;
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                pConnectionObject.DangerousAddRef(ref mustRelease);
-                Debug.Assert(mustRelease, "AddRef Failed!");
-
-                IntPtr secHandlePtr = Marshal.AllocHGlobal(Marshal.SizeOf<CredHandle>());
-
-                ret = SNIGetInfoWrapper(pConnectionObject, QTypes.SNI_QUERY_CONN_SSL_SECCTXTHANDLE, ref secHandlePtr);
-                //ERROR_SUCCESS
-                if (0 == ret)
-                {
-                    // Cast an unmanaged block to pSecHandle;
-                    pSecHandle = Marshal.PtrToStructure<CredHandle>(secHandlePtr);
-
-                    // SEC_E_OK
-                    if (0 == (ret = QueryContextAttributes(ref pSecHandle, ContextAttribute.SECPKG_ATTR_REMOTE_CERT_CONTEXT, pCertContext.Handle)))
-                    {
-                        certificate = new X509Certificate2(pCertContext.Handle);
-                    }
-                }
-                Marshal.FreeHGlobal(secHandlePtr);
-            }
-            finally
-            {
-                if (pCertContext != null)
-                {
-                    pCertContext.Dispose();
-                }
-                if (mustRelease)
-                {
-                    pConnectionObject.DangerousRelease();
-                }
-            }
-            return ret;
-        }
-
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
@@ -1185,46 +1036,10 @@ namespace Microsoft.Data.SqlClient
         {
             UInt32 ret;
             uint ERROR_SUCCESS = 0;
-            SNIAuthProviderInfoWrapper sniAuthInfoWrapper;
 
-            if (authInfo.clientCertificateCallback != null)
-            {
-                sniAuthInfoWrapper.pDelegateContext = authInfo.clientCertificateCallbackContext;
-                sniAuthInfoWrapper.pSqlClientCertificateDelegate = authInfo.clientCertificateCallback;
-
-                authInfo.clientCertificateCallbackContext = sniAuthInfoWrapper;
-                authInfo.clientCertificateCallback = SNIClientCertificateFallbackWrapper;
-            }
+            Debug.Assert(authInfo.clientCertificateCallback == null, "CTAIP support has been removed");
 
             ret = SNIAddProviderWrapper(pConn, providerEnum, ref authInfo);
-
-            if (ret == ERROR_SUCCESS)
-            {
-                // added a provider, need to requery for sync over async support
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
-                Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
-            }
-
-            return ret;
-        }
-
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static uint SNIAddProvider(SNIHandle pConn,
-                                            ProviderEnum providerEnum,
-                                            CTAIPProviderInfo authInfo)
-        {
-            UInt32 ret;
-            uint ERROR_SUCCESS = 0;
-
-
-            SNICTAIPProviderInfo ctaipInfo = new SNICTAIPProviderInfo();
-
-            ctaipInfo.prgbAddress = authInfo.originalNetworkAddress[0];
-            ctaipInfo.cbAddress = (byte)authInfo.originalNetworkAddress.Length;
-            ctaipInfo.fFromDataSecurityProxy = authInfo.fromDataSecurityProxy;
-
-            ret = SNIAddProviderWrapper(pConn, providerEnum, ref ctaipInfo);
 
             if (ret == ERROR_SUCCESS)
             {

@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public int DataLeft => (_dataLength - _dataOffset);
 
         /// <summary>
-        /// Indicates that the packet should be sent out of band bypassing the normal send-recieve lock
+        /// Indicates that the packet should be sent out of band bypassing the normal send-receive lock
         /// </summary>
         public bool IsOutOfBand { get; set; }
 
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Read data from the packet into the buffer at dataOffset for zize and then remove that data from the packet
+        /// Read data from the packet into the buffer at dataOffset for size and then remove that data from the packet
         /// </summary>
         /// <param name="buffer">Buffer</param>
         /// <param name="dataOffset">Data offset to write data at</param>

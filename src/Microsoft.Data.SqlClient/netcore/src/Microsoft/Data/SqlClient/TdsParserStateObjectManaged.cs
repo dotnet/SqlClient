@@ -408,10 +408,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private void ThrowClosedConnection() => throw ADP.ClosedConnectionError();
 
         internal override SSPIContextProvider CreateSSPIContextProvider()
-#if NET8_0_OR_GREATER
             => new NegotiateSSPIContextProvider();
-#else
-            => new ManagedSSPIContextProvider();
-#endif
     }
 }

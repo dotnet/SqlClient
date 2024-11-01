@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient
             _errors = errorCollection;
             _clientConnectionId = conId;
         }
-#if NET8_0_OR_GREATER
+#if NET
         [System.Obsolete]
 #endif
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <inheritdoc cref="System.Exception.GetObjectData" />
-#if NET8_0_OR_GREATER
+#if NET
         [Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
 #endif
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient
         override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
 
-#if NET6_0_OR_GREATER
+#if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />
         protected override DbBatchCommand DbBatchCommand => BatchCommand;
 

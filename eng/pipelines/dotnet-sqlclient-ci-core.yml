@@ -12,12 +12,17 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net6.0, net8.0]
+  default: [net462, net8.0]
 
 - name: targetFrameworksLinux
   displayName: 'Target Frameworks on Non-Windows'
   type: object
-  default: [net6.0, net8.0]
+  default: [net8.0]
+
+- name: netcoreVersionTestUtils
+  displayName: 'Netcore Version for Test Utilities'
+  type: object
+  default: net8.0
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
@@ -39,7 +44,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: codeCovTargetFrameworks
   displayName: 'Code Coverage Target Frameworks'
   type: object
-  default: [net462, net6.0]
+  default: [net462, net8.0]
 
 - name: buildType
   displayName: 'Build Type'
@@ -107,7 +112,8 @@ stages:
           hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
             Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net6.0, net8.0] # list of target frameworks to run
+          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
           useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
@@ -131,7 +137,7 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net6.0] # target frameworks should run tests on x86 as well
+            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86 as well
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
@@ -143,7 +149,6 @@ stages:
             # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
             # SQLAliasName: default: $(SQLAliasName)
             # SQLAliasPort: default: $(SQLAliasPort)
-            # targetNetCoreVersion: default: $(MainTargetNetCoreVersion)
             # databaseName: default: Northwind
             # localDbAppName: default: $(LocalDbAppName)
             # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
@@ -154,6 +159,7 @@ stages:
           images:
             Win22_Sql22: ADO-MMS22-SQL22 
           TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
@@ -181,11 +187,13 @@ stages:
             SQLRootPath: $(SQL22RootPath)
             enableLocalDB: true
 
+
         windows_sql_22_named_instance:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql22_named_instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
           TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
@@ -201,6 +209,7 @@ stages:
             SQLRootPath: $(SQL22RootPath)
             instanceName: $(NamedInstance)
 
+
     # Azure SQL Server - Windows
         windows_azure_sql:
           pool: ${{parameters.defaultPoolName }} 
@@ -208,6 +217,7 @@ stages:
             Win22_Azure_Sql: ADO-MMS22-SQL19
             win11_Azure_Sql: ADO-CI-Win11
           TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
@@ -234,6 +244,7 @@ stages:
           images: 
             Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
           TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
@@ -260,6 +271,7 @@ stages:
           images: 
             Win22_Enclave_Sql19: ADO-MMS22-SQL19
           TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: [AE]
           useManagedSNI: ${{parameters.useManagedSNI }}
@@ -288,9 +300,9 @@ stages:
         linux_sql_19_22:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Sql19: ADO-UB20-Sql19
-            Ubuntu20_Sql22: ADO-UB2004-SQL2022
+            Ubuntu20_Sql22: ADO-UB20-SQL22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
@@ -314,8 +326,9 @@ stages:
         linux_azure_sql:
           pool: ${{parameters.defaultPoolName }}
           images:
-            Ubuntu20_Azure_Sql: ADO-UB20-Sql19
+            Ubuntu20_Azure_Sql: ADO-UB20-Sql22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
@@ -340,8 +353,9 @@ stages:
         linux_enclave_sql:
           pool: ADO-CI-AE-1ES-Pool
           images:
-            Ubuntu20_Enclave_Sql19: ADO-UB20-Sql19
+            Ubuntu20_Enclave_Sql19: ADO-UB20-Sql22
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: [AE]
           useManagedSNI: [true]
@@ -372,6 +386,7 @@ stages:
           images:
             MacOS12_Azure_Sql: macOS-12
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]

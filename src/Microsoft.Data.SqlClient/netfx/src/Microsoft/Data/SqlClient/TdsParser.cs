@@ -182,8 +182,6 @@ namespace Microsoft.Data.SqlClient
 
         private static EncryptionOptions _sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
 
-        private static SNINativeMethodWrapper.SqlClientCertificateDelegate _clientCertificateCallback = new SNINativeMethodWrapper.SqlClientCertificateDelegate(ClientCertificateDelegate);
-
         private EncryptionOptions _encryptionOption = _sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
@@ -245,6 +243,9 @@ namespace Microsoft.Data.SqlClient
 
         // XML metadata substitue sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
+        // JSON metadata substitue sequence
+        private static readonly byte[] s_jsonMetadataSubstituteSequence = { 0xa7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
@@ -493,9 +494,6 @@ namespace Microsoft.Data.SqlClient
                               SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
-                              ServerCertificateValidationCallback serverCallback,
-                              ClientCertificateRetrievalCallback clientCallback,
-                              bool useOriginalAddressInfo,
                               bool disableTnir)
         {
             SqlConnectionEncryptOption encrypt = connectionOptions.Encrypt;
@@ -503,7 +501,6 @@ namespace Microsoft.Data.SqlClient
             bool trustServerCert = connectionOptions.TrustServerCertificate;
             bool integratedSecurity = connectionOptions.IntegratedSecurity;
             SqlAuthenticationMethod authType = connectionOptions.Authentication;
-            string certificate = connectionOptions.Certificate;
             string hostNameInCertificate = connectionOptions.HostNameInCertificate;
             string serverCertificateFilename = connectionOptions.ServerCertificate;
 
@@ -714,11 +711,7 @@ namespace Microsoft.Data.SqlClient
                 instanceName,
                 encrypt,
                 integratedSecurity,
-                !string.IsNullOrEmpty(certificate),
-                useOriginalAddressInfo,
-                serverCertificateFilename,
-                serverCallback,
-                clientCallback);
+                serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -731,8 +724,6 @@ namespace Microsoft.Data.SqlClient
                 encrypt,
                 trustServerCert,
                 integratedSecurity,
-                serverCallback,
-                clientCallback,
                 out marsCapable,
                 out _connHandler._fedAuthRequired,
                 isTlsFirst,
@@ -780,19 +771,13 @@ namespace Microsoft.Data.SqlClient
                     instanceName,
                     encrypt,
                     integratedSecurity,
-                    !string.IsNullOrEmpty(certificate),
-                    useOriginalAddressInfo,
-                    serverCertificateFilename,
-                    serverCallback,
-                    clientCallback);
+                    serverCertificateFilename);
 
                 status = ConsumePreLoginHandshake(
                     authType,
                     encrypt,
                     trustServerCert,
                     integratedSecurity,
-                    serverCallback,
-                    clientCallback,
                     out marsCapable,
                     out _connHandler._fedAuthRequired,
                     isTlsFirst,
@@ -810,7 +795,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_fMARS && marsCapable)
             {
-                // if user explictly disables mars or mars not supported, don't create the session pool
+                // if user explicitly disables mars or mars not supported, don't create the session pool
                 _sessionPool = new TdsParserSessionPool(this);
             }
             else
@@ -1043,18 +1028,14 @@ namespace Microsoft.Data.SqlClient
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
-            bool clientCertificate,
-            bool useCtaip,
-            string serverCertificate,
-            ServerCertificateValidationCallback serverCallback,
-            ClientCertificateRetrievalCallback clientCallback)
+            string serverCertificate)
         {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificate, serverCallback, clientCallback);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificate);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
@@ -1131,20 +1112,6 @@ namespace Microsoft.Data.SqlClient
                                 payload[payloadLength] = (byte)EncryptionOptions.OFF;
                                 _encryptionOption = EncryptionOptions.OFF;
                             }
-
-                            // Inform server of user request.
-                            if (clientCertificate)
-                            {
-                                payload[payloadLength] |= (byte)EncryptionOptions.CLIENT_CERT;
-                                _encryptionOption |= EncryptionOptions.CLIENT_CERT;
-                            }
-                        }
-
-                        // Add CTAIP if requested.
-                        if (useCtaip)
-                        {
-                            payload[payloadLength] |= (byte)EncryptionOptions.CTAIP;
-                            _encryptionOption |= EncryptionOptions.CTAIP;
                         }
 
                         payloadLength += 1;
@@ -1236,7 +1203,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate, ServerCertificateValidationCallback serverCallback, ClientCertificateRetrievalCallback clientCallback)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate)
         {
             uint error = 0;
 
@@ -1258,27 +1225,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.clientCertificateCallback = null;
             authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificate) ? null : serverCertificate;
 
-            if ((_encryptionOption & EncryptionOptions.CLIENT_CERT) != 0)
-            {
-
-                string certificate = _connHandler.ConnectionOptions.Certificate;
-
-                if (certificate.StartsWith("subject:", StringComparison.OrdinalIgnoreCase))
-                {
-                    authInfo.certId = certificate.Substring(8);
-                }
-                else if (certificate.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase))
-                {
-                    authInfo.certId = certificate.Substring(5);
-                    authInfo.certHash = true;
-                }
-
-                if (clientCallback != null)
-                {
-                    authInfo.clientCertificateCallbackContext = clientCallback;
-                    authInfo.clientCertificateCallback = _clientCertificateCallback;
-                }
-            }
+            Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
             error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
 
@@ -1300,7 +1247,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
+            string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
                 if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
@@ -1315,25 +1262,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // Validate server certificate
-            if (serverCallback != null)
-            {
-                X509Certificate2 serverCert = null;
-
-                error = SNINativeMethodWrapper.SNISecGetServerCertificate(_physicalStateObj.Handle, ref serverCert);
-                if (error != TdsEnums.SNI_SUCCESS)
-                {
-                    _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                    ThrowExceptionAndWarning(_physicalStateObj);
-                }
-
-                bool valid = serverCallback(serverCert);
-                if (!valid)
-                {
-                    throw SQL.InvalidServerCertificate();
-                }
-            }
-
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
         }
@@ -1343,8 +1271,6 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionEncryptOption encrypt,
             bool trustServerCert,
             bool integratedSecurity,
-            ServerCertificateValidationCallback serverCallback,
-            ClientCertificateRetrievalCallback clientCallback,
             out bool marsCapable,
             out bool fedAuthRequired,
             bool tlsFirst,
@@ -1401,7 +1327,6 @@ namespace Microsoft.Data.SqlClient
             int payloadLength = 0;
             int option = payload[offset++];
             bool serverSupportsEncryption = false;
-            bool serverSupportsCTAIP = false;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -1489,9 +1414,6 @@ namespace Microsoft.Data.SqlClient
                                 break;
                         }
 
-                        // Check if the server will accept CTAIP.
-                        serverSupportsCTAIP = (serverOption & EncryptionOptions.CTAIP) != 0;
-
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
@@ -1572,13 +1494,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if ((_encryptionOption & EncryptionOptions.CTAIP) != 0 && !serverSupportsCTAIP)
-            {
-                _physicalStateObj.AddError(new SqlError(TdsEnums.CTAIP_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.CTAIPNotSupportedByServer(), "", 0));
-                _physicalStateObj.Dispose();
-                ThrowExceptionAndWarning(_physicalStateObj);
-            }
-
             if ((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON ||
                 (_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN)
             {
@@ -1589,18 +1504,13 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                if (serverCallback != null)
-                {
-                    trustServerCert = true;
-                }
-
                 // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
 
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                    | (is2005OrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+                    | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename, serverCallback, clientCallback);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -1955,7 +1865,7 @@ namespace Microsoft.Data.SqlClient
                     len -= iColon;
                     /*
                         The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                        Fix Bug 370686, if the message is recieved on a Win9x OS, the error message will not contain MESSAGE TEXT
+                        Fix Bug 370686, if the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT
                         per Bug: 269574.  If we get a errormessage with no message text, just return the entire message otherwise
                         return just the message text.
                     */
@@ -3129,7 +3039,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // if we recieved an attention (but this thread didn't send it) then
+            // if we received an attention (but this thread didn't send it) then
             // we throw an Operation Cancelled error
             if (stateObj.HasReceivedAttention)
             {
@@ -6667,6 +6577,10 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
+                case SqlDbTypeExtensions.Json:
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.Json);
+                    break;
+
                 default:
                     Debug.Fail("unknown null sqlType!" + md.type.ToString());
                     break;
@@ -6801,7 +6715,6 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLVARCHAR:
                 case TdsEnums.SQLBIGVARCHAR:
                 case TdsEnums.SQLTEXT:
-                case TdsEnums.SQLJSON:
                     // If bigvarchar(max), we only read the first chunk here,
                     // expecting the caller to read the rest
                     if (encoding == null)
@@ -6817,6 +6730,16 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                     value.SetToString(stringValue);
+                    break;
+                case TdsEnums.SQLJSON:
+                    encoding = Encoding.UTF8;
+                    string jsonStringValue;
+                    result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    value.SetToJson(jsonStringValue);
                     break;
 
                 case TdsEnums.SQLNCHAR:
@@ -8861,6 +8784,11 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
                     return TdsOperationStatus.Done;
                 }
+                else if (token == TdsEnums.SQLJSON)
+                {
+                    tokenLength = -1;
+                    return TdsOperationStatus.Done;
+                }
             }
 
             switch (token & TdsEnums.SQLLenMask)
@@ -10370,7 +10298,8 @@ namespace Microsoft.Data.SqlClient
                                     mt.TDSType != TdsEnums.SQLXMLTYPE &&
                                     mt.TDSType != TdsEnums.SQLIMAGE &&
                                     mt.TDSType != TdsEnums.SQLTEXT &&
-                                    mt.TDSType != TdsEnums.SQLNTEXT, "Type unsupported for encryption");
+                                    mt.TDSType != TdsEnums.SQLNTEXT &&
+                                    mt.TDSType != TdsEnums.SQLJSON, "Type unsupported for encryption");
 
                                 byte[] serializedValue = null;
                                 byte[] encryptedValue = null;
@@ -11668,6 +11597,9 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByte(md.tdsType);
                             stateObj.WriteByte(md.scale);
                             break;
+                        case SqlDbTypeExtensions.Json:
+                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_xmlMetadataSubstituteSequence.Length, 0);
+                            break;
                         default:
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
@@ -11921,6 +11853,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             ccb = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
                             break;
+                        case TdsEnums.SQLJSON:
+                            string strval = (isSqlType) ? ((SqlString)value).Value : (string)value;
+                            ccb = isSqlType ? strval.Length : strval.Length * 2;
+                            ccbStringBytes = Encoding.UTF8.GetByteCount(strval);
+                            break;
 
                         default:
                             ccb = metadata.length;
@@ -11931,9 +11868,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     Debug.Assert(metatype.IsLong &&
                         ((metatype.SqlDbType == SqlDbType.VarBinary && value is StreamDataFeed) ||
-                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar) && value is TextDataFeed) ||
+                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar || metatype.SqlDbType == SqlDbTypeExtensions.Json) && value is TextDataFeed) ||
                          (metatype.SqlDbType == SqlDbType.Xml && value is XmlDataFeed)),
-                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max), Xml data feed should only be assigned to XML(max)");
+                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max) or json, Xml data feed should only be assigned to XML(max)");
                 }
 
 
@@ -11955,6 +11892,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Xml:
                         case SqlDbType.Udt:
+                        case SqlDbTypeExtensions.Json:
                             // plp data
                             WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                             break;
@@ -12904,7 +12842,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size)
+        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size, bool useReadBlock)
         {
             Debug.Assert(encoding == null || !needBom);
             char[] inBuff = new char[constTextBufferSize];
@@ -12931,11 +12869,25 @@ namespace Microsoft.Data.SqlClient
 
                 if (_asyncWrite)
                 {
-                    nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                    if (useReadBlock)
+                    {
+                        nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        nRead = await feed._source.ReadAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                    }
                 }
                 else
                 {
-                    nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                    if (useReadBlock)
+                    {
+                        nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                    }
+                    else
+                    {
+                        nRead = feed._source.Read(inBuff, 0, constTextBufferSize);
+                    }
                 }
 
                 if (nRead == 0)
@@ -13131,7 +13083,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize));
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize, true));
                             }
                         }
                         else
@@ -13169,7 +13121,9 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, null, IsBOMNeeded(type, value), stateObj, paramSize));
+                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? new UTF8Encoding() : null;
+                                bool useReadBlock = type.NullableType == TdsEnums.SQLJSON ? false : true;
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize, useReadBlock));
                             }
                         }
                         else
@@ -14147,33 +14101,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 return instance.GetType().ToString();
-            }
-        }
-
-        private static IntPtr ClientCertificateDelegate(IntPtr ptrContext)
-        {
-            GCHandle clientDelegate = GCHandle.FromIntPtr(ptrContext);
-
-            try
-            {
-                ClientCertificateRetrievalCallback clientCallback = (ClientCertificateRetrievalCallback)clientDelegate.Target;
-
-                X509Certificate2 cert = clientCallback();
-                if (cert != null)
-                {
-                    return cert.Handle;
-                }
-                else
-                {
-                    return IntPtr.Zero;
-                }
-            }
-            catch
-            {
-                // Currently  exceptions are not marshalled back.
-                //
-                Debug.Assert(false);
-                return IntPtr.Zero;
             }
         }
     }    // tdsparser
