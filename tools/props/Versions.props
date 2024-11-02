@@ -25,6 +25,7 @@
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSniVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
+	<SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
