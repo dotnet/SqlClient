@@ -10,6 +10,7 @@
 	<ItemGroup>
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
+    <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" Condition="'$(TargetFramework)' == 'net462'" />
 	</ItemGroup>
 
 </Project>
