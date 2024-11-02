@@ -1941,12 +1941,12 @@ namespace Microsoft.Data.SqlClient
                         if (_fPreserveTransaction)
                         {
                             // if we are reseting, set bit in header by or'ing with other value
-                            stateObj._outBuff[1] = (Byte)(stateObj._outBuff[1] | TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION);
+                            stateObj._outBuff[1] = (byte)(stateObj._outBuff[1] | TdsEnums.ST_RESET_CONNECTION_PRESERVE_TRANSACTION);
                         }
                         else
                         {
                             // if we are reseting, set bit in header by or'ing with other value
-                            stateObj._outBuff[1] = (Byte)(stateObj._outBuff[1] | TdsEnums.ST_RESET_CONNECTION);
+                            stateObj._outBuff[1] = (byte)(stateObj._outBuff[1] | TdsEnums.ST_RESET_CONNECTION);
                         }
 
                         if (!_fMARS)
