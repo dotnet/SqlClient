@@ -9424,7 +9424,7 @@ namespace Microsoft.Data.SqlClient
                 // write variable length portion
                 WriteString(rec.hostName, _physicalStateObj);
 
-                // if we are using SSPI or fed auth MSAL, do not send over username/password, since we will use SSPI instead
+                // if we are using SSPI, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
