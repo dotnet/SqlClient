@@ -8604,7 +8604,7 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(rec.hostName.Length, _physicalStateObj);
                 offset += rec.hostName.Length * 2;
 
-                // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
+                // Only send user/password over if not fSSPI or fed auth MSAL...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
@@ -9165,7 +9165,7 @@ namespace Microsoft.Data.SqlClient
             // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
             // else is using it.  When we don't have MARS enabled, we need to
-            // lock the physical state object to synchronize it's use at least
+            // lock the physical state object to synchronize its use at least
             // until we increment the open results count.  Once it's been
             // incremented the delegated transaction requests will fail, so they
             // won't stomp on anything.
@@ -11622,7 +11622,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                     break;
             } // switch
-              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
         }
 
@@ -12334,7 +12334,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                     break;
             } // switch
-              // return point for accumulated writes, note: non-accumulated writes returned from their case statements
+            // return point for accumulated writes, note: non-accumulated writes returned from their case statements
             return null;
             // Debug.WriteLine("value:  " + value.ToString(CultureInfo.InvariantCulture));
         }
