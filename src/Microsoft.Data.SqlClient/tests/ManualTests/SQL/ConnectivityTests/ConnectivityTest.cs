@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -87,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ConnectionTimeoutInfiniteTest()
+        public static async Task ConnectionTimeoutInfiniteTest()
         {
             // Exercise the special-case infinite connect timeout code path
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
