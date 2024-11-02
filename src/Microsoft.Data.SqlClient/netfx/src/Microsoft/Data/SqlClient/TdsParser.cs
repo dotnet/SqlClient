@@ -8944,7 +8944,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (write)
                 {
-                    WriteInt(8 + initialLength + currentLength, _physicalStateObj); // length of data w/o total length (initil+current+2*sizeof(DWORD))
+                    WriteInt(8 + initialLength + currentLength, _physicalStateObj); // length of data w/o total length (initial + current + 2 * sizeof(DWORD))
                     WriteInt(initialLength, _physicalStateObj);
                     WriteIdentifier(reconnectData._initialDatabase, _physicalStateObj);
                     WriteCollation(reconnectData._initialCollation, _physicalStateObj);
