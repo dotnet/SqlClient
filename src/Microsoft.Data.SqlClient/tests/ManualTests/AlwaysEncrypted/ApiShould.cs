@@ -1983,29 +1983,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, true);
 
-                    Thread[] threads = new Thread[2];
+                    Task[] tasks = new Task[2];
 
                     // Invoke ExecuteReader or ExecuteNonQuery in another thread.
+                    // Use long-running tasks to create the thread. This enables any failed assertions to propagate, rather than
+                    // allowing the exception to kill the thread and the process.
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
-
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    tasks[0].Wait();
+                    tasks[1].Wait();
 
                     CommandHelper.s_sleepDuringTryFetchInputParameterEncryptionInfo?.SetValue(null, false);
 
@@ -2033,26 +2038,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, true);
 
                     // Invoke ExecuteReader or ExecuteNonQuery in another thread.
-                    threads = new Thread[2];
+                    tasks = new Task[2];
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    tasks[0].Wait();
+                    tasks[1].Wait();
 
                     CommandHelper.s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption?.SetValue(null, false);
 
@@ -2079,26 +2088,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, true);
 
-                    threads = new Thread[2];
+                    tasks = new Task[2];
                     if (executeMethod == @"ExecuteReader")
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteReader));
+                        tasks[0] = new Task(Thread_ExecuteReader,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
                     else
                     {
-                        threads[0] = new Thread(new ParameterizedThreadStart(Thread_ExecuteNonQuery));
+                        tasks[0] = new Task(Thread_ExecuteNonQuery,
+                            new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                            TaskCreationOptions.LongRunning);
                     }
-                    threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
+                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[0].Start();
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
+                    tasks[1].Start();
 
                     // Wait for the threads to finish.
-                    threads[0].Join();
-                    threads[1].Join();
+                    tasks[0].Wait();
+                    tasks[1].Wait();
 
                     CommandHelper.s_sleepAfterReadDescribeEncryptionParameterResults?.SetValue(null, false);
 

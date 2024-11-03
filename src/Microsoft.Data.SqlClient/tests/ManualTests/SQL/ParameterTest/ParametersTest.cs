@@ -9,6 +9,8 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
+using System.Threading.Tasks;
+
 #if NET6_0_OR_GREATER
 using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
@@ -886,10 +888,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {
-            var threads = new List<Thread>();
+            var tasks = new List<Task>();
             for (int i = 0; i < 100; i++)
             {
-                var t = new Thread(() =>
+                var t = Task.Factory.StartNew(() =>
                 {
                     for (int j = 0; j < 1000; j++)
                     {
@@ -902,13 +904,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.Fail($"Unexpected exception occurred: {e.Message}");
                         }
                     }
-                });
-                t.Start();
-                threads.Add(t);
+                }, TaskCreationOptions.LongRunning);
+                tasks.Add(t);
             }
-            for (int i = 0; i < threads.Count; i++)
+            for (int i = 0; i < tasks.Count; i++)
             {
-                threads[i].Join();
+                tasks[i].Wait();
             }
         }
 
@@ -927,7 +928,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cm.Parameters.Add(new SqlParameter("@id2", SqlDbType.UniqueIdentifier) { Direction = ParameterDirection.Output });
             try
             {
-                System.Threading.Tasks.Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
+                Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
                 task.Wait();
             }
             catch (Exception)
