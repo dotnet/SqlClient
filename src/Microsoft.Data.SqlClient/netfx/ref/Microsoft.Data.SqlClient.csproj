@@ -27,5 +27,6 @@
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+    <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" />
   </ItemGroup>
 </Project>
