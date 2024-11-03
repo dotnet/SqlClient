@@ -3999,6 +3999,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlDataReader.Read|API> {0}", ObjectID))
             {
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
 
                 try

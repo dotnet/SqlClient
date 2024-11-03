@@ -674,6 +674,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
+    <Compile Include="RuntimeHelpers.cs" />
   </ItemGroup>
 
   <!-- Windows only -->
