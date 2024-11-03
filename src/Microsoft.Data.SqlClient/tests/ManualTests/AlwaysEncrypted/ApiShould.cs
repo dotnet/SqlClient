@@ -2000,7 +2000,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
                             TaskCreationOptions.LongRunning);
                     }
-                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
                     tasks[0].Start();
@@ -2051,7 +2053,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
                             TaskCreationOptions.LongRunning);
                     }
-                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
                     tasks[0].Start();
@@ -2101,7 +2105,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
                             TaskCreationOptions.LongRunning);
                     }
-                    tasks[1] = new Task(Thread_Cancel, TaskCreationOptions.LongRunning);
+                    tasks[1] = new Task(Thread_Cancel,
+                        new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls),
+                        TaskCreationOptions.LongRunning);
 
                     // Start the execute thread.
                     tasks[0].Start();
