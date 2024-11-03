@@ -299,10 +299,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
-                yield return new object[] { connStrAE, @"ExecuteReader", 1 };
-                yield return new object[] { connStrAE, @"ExecuteReader", 3 };
-                yield return new object[] { connStrAE, @"ExecuteNonQuery", 1 };
-                yield return new object[] { connStrAE, @"ExecuteNonQuery", 3 };
+                yield return new object[] { connStrAE, @"ExecuteReader" };
+                yield return new object[] { connStrAE, @"ExecuteReader" };
+                yield return new object[] { connStrAE, @"ExecuteNonQuery" };
+                yield return new object[] { connStrAE, @"ExecuteNonQuery" };
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
