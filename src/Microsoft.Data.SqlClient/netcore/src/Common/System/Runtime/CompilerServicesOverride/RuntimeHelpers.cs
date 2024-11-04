@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Microsoft.Data.SqlClient
+namespace System.Runtime.CompilerServicesOverride
 {
     internal struct RuntimeHelpers
     {

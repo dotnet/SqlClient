@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServicesOverride;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;

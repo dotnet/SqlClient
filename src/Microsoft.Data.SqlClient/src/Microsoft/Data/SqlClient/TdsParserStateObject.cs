@@ -17,8 +17,10 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
     using PacketHandle = IntPtr;
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
+#else
+    using System.Runtime.CompilerServicesOverride;
 #endif
-
+    
     sealed internal class LastIOTimer
     {
         internal long _value;
