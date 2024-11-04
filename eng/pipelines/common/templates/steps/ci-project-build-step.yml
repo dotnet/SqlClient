@@ -34,12 +34,24 @@ parameters:
       - all
 
 steps:
+- task: Powershell@2
+  displayName: 'List Environment Variables [debug]'
+  inputs:
+    targetType: 'inline'
+    script: 'Get-Command dotnet'
+
 - task: UseDotNet@2
   displayName: 'Download .NET SDK'
   inputs:
     packageType: 'sdk'
     version: '9.x'
     includePreviewVersions: true
+
+- task: Powershell@2
+  displayName: 'List Environment Variables [debug]'
+  inputs:
+    targetType: 'inline'
+    script: 'Get-Command dotnet'
 
 - task: Powershell@2
   displayName: 'List Environment Variables [debug]'
