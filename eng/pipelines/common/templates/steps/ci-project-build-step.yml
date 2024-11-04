@@ -43,8 +43,9 @@ steps:
 
 - task: Powershell@2
   displayName: 'List Environment Variables [debug]'
-  targetType: 'inline'
-  script: 'Get-ChildItem env: | Sort-Object Name'
+  inputs:
+    targetType: 'inline'
+    script: 'Get-ChildItem env: | Sort-Object Name'
     
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
