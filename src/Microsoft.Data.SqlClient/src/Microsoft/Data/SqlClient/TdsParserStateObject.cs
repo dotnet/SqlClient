@@ -2426,31 +2426,35 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     Interlocked.Increment(ref _readingCount);
-
-                    handle = SessionHandle;
-
-                    readFromNetwork = !PartialPacketContainsCompletePacket();
-                    if (readFromNetwork)
+                    try
                     {
-                        if (!handle.IsNull)
+                        handle = SessionHandle;
+
+                        readFromNetwork = !PartialPacketContainsCompletePacket();
+                        if (readFromNetwork)
                         {
-                            IncrementPendingCallbacks();
-
-                            readPacket = ReadAsync(handle, out error);
-
-                            if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                            if (!handle.IsNull)
                             {
-                                DecrementPendingCallbacks(false); // Failure - we won't receive callback!
+                                IncrementPendingCallbacks();
+
+                                readPacket = ReadAsync(handle, out error);
+
+                                if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
+                                {
+                                    DecrementPendingCallbacks(false); // Failure - we won't receive callback!
+                                }
                             }
                         }
+                        else
+                        {
+                            readPacket = default;
+                            error = TdsEnums.SNI_SUCCESS;
+                        }
                     }
-                    else
+                    finally
                     {
-                        readPacket = default;
-                        error = TdsEnums.SNI_SUCCESS;
+                        Interlocked.Decrement(ref _readingCount);
                     }
-
-                    Interlocked.Decrement(ref _readingCount);
                 }
 
                 if (handle.IsNull)
