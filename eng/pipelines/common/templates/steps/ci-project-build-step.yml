@@ -38,7 +38,13 @@ steps:
   displayName: 'List Environment Variables [debug]'
   inputs:
     targetType: 'inline'
-    script: 'Get-Command dotnet'
+    script: 'dotnet --list-sdks'
+
+- task: Powershell@2
+  displayName: 'List Environment Variables [debug]'
+  inputs:
+    targetType: 'inline'
+    script: 'dotnet --list-runtimes'
 
 - task: UseDotNet@2
   displayName: 'Download .NET SDK'
@@ -51,13 +57,13 @@ steps:
   displayName: 'List Environment Variables [debug]'
   inputs:
     targetType: 'inline'
-    script: 'Get-Command dotnet'
+    script: 'dotnet --list-sdks'
 
 - task: Powershell@2
   displayName: 'List Environment Variables [debug]'
   inputs:
     targetType: 'inline'
-    script: 'Get-ChildItem env: | Sort-Object Name'
+    script: 'dotnet --list-runtimes'
     
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
