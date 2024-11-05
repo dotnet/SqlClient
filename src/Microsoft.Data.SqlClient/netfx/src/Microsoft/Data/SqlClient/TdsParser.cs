@@ -1839,7 +1839,7 @@ namespace Microsoft.Data.SqlClient
 
             string providerRid = String.Format("SNI_PN{0}", (int)sniError.provider);
             string providerName = StringsHelper.GetString(providerRid);
-            Debug.Assert(!ADP.IsEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
+            Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
             uint win32ErrorCode = sniError.nativeError;
 
             if (sniError.sniError == 0)
@@ -4320,7 +4320,7 @@ namespace Microsoft.Data.SqlClient
 
             // Fail if SSE UserInstance and we have not received this info.
             if (_connHandler.ConnectionOptions.UserInstance &&
-                ADP.IsEmpty(_connHandler.InstanceName))
+                string.IsNullOrEmpty(_connHandler.InstanceName))
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, Server, SQLMessage.UserInstanceFailure(), "", 0));
                 ThrowExceptionAndWarning(stateObj);
@@ -6014,7 +6014,7 @@ namespace Microsoft.Data.SqlClient
                                         TdsParserStateObject stateObj)
         {
             // database
-            if (ADP.IsEmpty(database))
+            if (string.IsNullOrEmpty(database))
             {
                 stateObj.WriteByte(0);
             }
@@ -6025,7 +6025,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // schema
-            if (ADP.IsEmpty(schema))
+            if (string.IsNullOrEmpty(schema))
             {
                 stateObj.WriteByte(0);
             }
@@ -6036,7 +6036,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // type
-            if (ADP.IsEmpty(type))
+            if (string.IsNullOrEmpty(type))
             {
                 stateObj.WriteByte(0);
             }
@@ -9303,7 +9303,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // 4th one
-                if (!ADP.IsEmpty(rec.newPassword) || (rec.newSecurePassword != null && rec.newSecurePassword.Length != 0))
+                if (!string.IsNullOrEmpty(rec.newPassword) || (rec.newSecurePassword != null && rec.newSecurePassword.Length != 0))
                 {
                     log7Flags |= 1 << 24;
                 }
@@ -10112,7 +10112,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                Debug.Assert(!ADP.IsEmpty(rpcext.rpcName), "must have an RPC name");
+                                Debug.Assert(!string.IsNullOrEmpty(rpcext.rpcName), "must have an RPC name");
                                 tempLen = rpcext.rpcName.Length;
                                 WriteShort(tempLen, stateObj);
                                 WriteString(rpcext.rpcName, tempLen, 0, stateObj);
@@ -11155,8 +11155,8 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Xml:
                     stateObj.WriteByte(TdsEnums.SQLXMLTYPE);
                     // Is there a schema
-                    if (ADP.IsEmpty(metaData.TypeSpecificNamePart1) && ADP.IsEmpty(metaData.TypeSpecificNamePart2) &&
-                            ADP.IsEmpty(metaData.TypeSpecificNamePart3))
+                    if (string.IsNullOrEmpty(metaData.TypeSpecificNamePart1) && string.IsNullOrEmpty(metaData.TypeSpecificNamePart2) &&
+                            string.IsNullOrEmpty(metaData.TypeSpecificNamePart3))
                     {
                         stateObj.WriteByte(0);  // schema not present
                     }
