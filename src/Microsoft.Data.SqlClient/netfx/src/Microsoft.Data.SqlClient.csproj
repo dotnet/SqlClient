@@ -115,6 +115,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
       <Link>Interop\Kernel32\Kernel32.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32Safe.netfx.cs">
+      <Link>Interop\Kernel32\Kernel32Safe.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
       <Link>Interop\NtDll\CreateDisposition.cs</Link>
     </Compile>
@@ -749,7 +752,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\SafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperARM64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />

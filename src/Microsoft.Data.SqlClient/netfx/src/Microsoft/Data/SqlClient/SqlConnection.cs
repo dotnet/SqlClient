@@ -26,6 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.SqlServer.Server;
+using Interop.Windows.Kernel32;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -2532,7 +2533,7 @@ namespace Microsoft.Data.SqlClient
         private void CheckSQLDebugOnConnect()
         {
             IntPtr hFileMap;
-            uint pid = (uint)SafeNativeMethods.GetCurrentProcessId();
+            uint pid = (uint)Kernel32Safe.GetCurrentProcessId();
 
             string mapFileName;
 
