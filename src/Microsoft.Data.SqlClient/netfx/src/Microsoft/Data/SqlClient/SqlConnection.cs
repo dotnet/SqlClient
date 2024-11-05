@@ -24,6 +24,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Interop.Windows.AdvApi32;
 using Microsoft.Data.ProviderBase;
 using Microsoft.SqlServer.Server;
 using Interop.Windows.Kernel32;
