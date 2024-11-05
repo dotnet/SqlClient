@@ -250,14 +250,13 @@ namespace Microsoft.Data.SqlClient
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
         private byte[] _tempGuidBytes;
-
-        // NOTE: You must take the internal connection's _parserLock before modifying this
-        internal bool _asyncWrite = false;
-
-
+        
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
         private static readonly byte[] s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+        
+        // NOTE: You must take the internal connection's _parserLock before modifying this
+        internal bool _asyncWrite = false;
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
