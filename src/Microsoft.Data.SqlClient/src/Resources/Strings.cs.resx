@@ -670,112 +670,112 @@
     <value>Určuje nastavení řazení, filtrování a stavu pro jakoukoli tabulku v odpovídajícím objektu DataSet.</value>
   </data>
   <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
+    <value>DataSet nepodporuje pro simpleType atributy union a list.</value>
   </data>
   <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Invalid {0} syntax: missing required '{1}' attribute.</value>
+    <value>Neplatná syntaxe {0}: Chybí povinný atribut {1}.</value>
   </data>
   <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Value '{1}' is invalid for attribute '{0}'.</value>
+    <value>Hodnota {1} je pro atribut {0} neplatná.</value>
   </data>
   <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>The value of attribute '{0}' should be '{1}' or '{2}'.</value>
+    <value>Hodnota atributu {0} musí být {1} nebo {2}.</value>
   </data>
   <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Cannot find ElementType name='{0}'.</value>
+    <value>Název vlastnosti ElementType name={0} nebyl nalezen.</value>
   </data>
   <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>Parent table name is missing in relation '{0}'.</value>
+    <value>V relaci {0} chybí název nadřazené tabulky.</value>
   </data>
   <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>Child table name is missing in relation '{0}'.</value>
+    <value>V relaci {0} chybí název podřízené tabulky.</value>
   </data>
   <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>Parent table key is missing in relation '{0}'.</value>
+    <value>V relaci {0} chybí klíč nadřazené tabulky.</value>
   </data>
   <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>Child table key is missing in relation '{0}'.</value>
+    <value>V relaci {0} chybí klíč podřízené tabulky.</value>
   </data>
   <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Undefined data type: '{0}'.</value>
+    <value>Nedefinovaný datový typ: {0}</value>
   </data>
   <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Data type not defined.</value>
+    <value>Není definován datový typ.</value>
   </data>
   <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Invalid XPath selection inside field node. Cannot find: {0}.</value>
+    <value>Neplatný výběr XPath uvnitř uzlu pole. Nelze najít: {0}.</value>
   </data>
   <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Invalid XPath selection inside selector node: {0}.</value>
+    <value>Neplatný výběr XPath uvnitř uzlu selektoru: {0}</value>
   </data>
   <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Invalid 'Key' node inside constraint named: {0}.</value>
+    <value>Neplatný uzel Key uvnitř omezení s názvem {0}.</value>
   </data>
   <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>The constraint name {0} is already used in the schema.</value>
+    <value>Název omezení {0} je již ve schématu použit.</value>
   </data>
   <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Cannot convert '{0}' to type '{1}'.</value>
+    <value>Typ {0} nejde převést na typ {1}.</value>
   </data>
   <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Missing '{0}' part in '{1}' constraint named '{2}'.</value>
+    <value>Chybí část {0} v omezení {1} s názvem {2}.</value>
   </data>
   <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Invalid Relation definition: different length keys.</value>
+    <value>Neplatná definice relace: Délky klíčů jsou různé.</value>
   </data>
   <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>DataSet doesn't allow the circular reference in the ComplexType named '{0}'.</value>
+    <value>DataSet nepovoluje cyklický odkaz v elementu ComplexType s názvem {0}.</value>
   </data>
   <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>DataSet cannot instantiate an abstract ComplexType for the node {0}.</value>
+    <value>DataSet nemůže vytvářet instance abstraktního elementu ComplexType pro uzel {0}.</value>
   </data>
   <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details.</value>
+    <value>Při zápisu schématu XML došlo k chybě s převaděčem více cílů.  Podrobnosti nejdete v popisu vnitřní výjimky.</value>
   </data>
   <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned.</value>
+    <value>Při zápisu schématu XML došlo k chybě s převaděčem více cílů.  Byl vrácen řetězec s hodnotou null nebo prázdný řetězec.</value>
   </data>
   <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Duplicated declaration '{0}'.</value>
+    <value>Duplicitní deklarace {0}</value>
   </data>
   <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Cannot load diffGram. Table '{0}' is missing in the destination dataset.</value>
+    <value>Nelze načíst diffGram. V cílové datové sadě chybí tabulka {0}.</value>
   </data>
   <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Cannot load diffGram. The 'sql' node is missing.</value>
+    <value>Nelze načíst diffGram. Chybí uzel sql.</value>
   </data>
   <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Column name '{0}' is defined for different mapping types.</value>
+    <value>Název sloupce {0} je definován pro jiné typy mapování.</value>
   </data>
   <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Prefix '{0}' is not valid, because it contains special characters.</value>
+    <value>Předpona {0} je neplatná, protože obsahuje speciální znaky.</value>
   </data>
   <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>Circular reference in self-nested table '{0}'.</value>
+    <value>V tabulce {0} vnořené sama do sebe byl zjištěn cyklický odkaz.</value>
   </data>
   <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly.</value>
+    <value>DataSet nemůže rozšířit entity. Použijte objekt XmlValidatingReader a nastavte vlastnost EntityHandling příslušným způsobem.</value>
   </data>
   <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.</value>
+    <value>Typ {0} neimplementuje rozhraní IXmlSerializable. Nelze proto pokračovat v serializaci.</value>
   </data>
   <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported.</value>
+    <value>Nejde pokračovat v deserializaci. Data neimplementují rozhraní IXMLSerializable, není proto podporován polymorfismus.</value>
   </data>
   <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>DataTable does not support schema inference from Xml.</value>
+    <value>DataTable nepodporuje odvozování schématu z kódu Xml.</value>
   </data>
   <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.</value>
+    <value>Nelze pokračovat v serializaci objektu DataTable {0}. Obsahuje objekt DataRow, který má několik nadřazených řádků na stejném cizím klíči.</value>
   </data>
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>IsDataSet attribute is missing in input Schema.</value>
+    <value>Ve vstupním schématu chybí atribut IsDataSet.</value>
   </data>
   <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
     <value>Nelze určit element DataSet. Atribut IsDataSet existuje více než jednou.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable.</value>
+    <value>DataSet nebude serializovat typy, které implementují rozhraní IDynamicMetaObjectProvider, ale neimplementují také rozhraní IXmlSerializable.</value>
   </data>
   <data name="Expr_NYI" xml:space="preserve">
     <value>Funkce není implementována. {0}.</value>
@@ -1708,13 +1708,13 @@
     <value>Třída XmlDataDocument nepodporuje funkci Clear u objektu DateSet a DataTable.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Cannot remove column since it is built in to this dataSet.</value>
+    <value>Sloupec nelze odebrat, protože je do této sady dataSet integrován.</value>
   </data>
   <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>Relaci nelze odebrat, protože je do tohoto elementu dataSet integrována.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Occurs whenever a property for this control changes.</value>
+    <value>Vyvolá se, když dojde ke změně vlastnosti tohoto ovládacího prvku.</value>
   </data>
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Vyvolá se vždy, když je změněno členství této kolekce.</value>
@@ -1774,7 +1774,7 @@
     <value>Délka argumentu {0} překračuje limit {1}.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
-    <value>Expecting argument of type {1}, but received type {0}.</value>
+    <value>Byl očekáván argument typu {1}, byl však přijat typ {0}.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>Hodnota klíče {0} není platná.</value>
@@ -1819,16 +1819,16 @@
     <value>Metoda SqlBulkCopy.WriteToServer se nezdařila, protože SqlBulkCopy.DestinationTableName je neplatný název s více částmi.</value>
   </data>
   <data name="SQL_TDSParserTableName" xml:space="preserve">
-    <value>Processing of results from SQL Server failed because of an invalid multipart name</value>
+    <value>Zpracování výsledků ze systému SQL Server se nezdařilo kvůli neplatnému názvu s více částmi.</value>
   </data>
   <data name="SQL_UDTTypeName" xml:space="preserve">
-    <value>SqlParameter.UdtTypeName is an invalid multipart name</value>
+    <value>SqlParameter.UdtTypeName je neplatný název s více částmi.</value>
   </data>
   <data name="SQL_TypeName" xml:space="preserve">
-    <value>SqlParameter.TypeName is an invalid multipart name</value>
+    <value>SqlParameter.TypeName je neplatný název více součástí.</value>
   </data>
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
-    <value>SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name</value>
+    <value>Metoda SqlCommand.DeriveParameters se nezdařila, protože hodnota vlastnosti SqlCommand.CommandText představuje neplatný název s více částmi.</value>
   </data>
   <data name="ODBC_ODBCCommandText" xml:space="preserve">
     <value>Metoda OdbcCommandBuilder.DeriveParameters se nezdařila, protože hodnota vlastnosti OdbcCommand.CommandText představuje neplatný název s více částmi.</value>
@@ -1867,7 +1867,7 @@
     <value>Hodnota výčtu {0}, {1}, není podporována zprostředkovatelem dat .Net Framework OleDb.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
+    <value>Hodnota výčtu {0}, {1}, není podporována zprostředkovatelem dat .NET Framework SqlClient.</value>
   </data>
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>Nelze načíst ComputerNameDnsFullyQualified, {0}.</value>
@@ -2476,55 +2476,55 @@
     <value>Ze serveru nelze získat adresu DTC (Distributed Transaction Coordinator) pro server.  Je na serveru povolená služba DTC?</value>
   </data>
   <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters.</value>
+    <value>Délka hodnoty parametru připojení &lt;{0}&gt; překročila povolený počet 65535 znaků.</value>
   </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
-    <value>Invalid 'Packet Size'.  The value must be an integer &gt;= 512 and &lt;= 32768.</value>
+    <value>Neplatná hodnota velikosti paketu.  Hodnota musí být celé číslo &gt;= 512 a &lt;= 32768.</value>
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Neplatná transakce nebo neplatný název bodu pro uložení v rámci transakce.</value>
   </data>
   <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000.</value>
+    <value>Hodnota výčtu {0}, {1}, není podporována systémem SQL Server 7.0 ani systémem SQL Server 2000.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
-    <value>User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string.</value>
+    <value>User Instance a Failover nejsou kompatibilní možnosti.  V připojovacím řetězci zvolte pouze jednu z obou možností.</value>
   </data>
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Možnost Authentication nejde použít s klíčovým slovem Integrated Security.</value>
   </data>
   <data name="SQL_IntegratedWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Možnost Authentication=Active Directory Integrated nelze použít s klíčovými slovy Password nebo PWD připojovacího řetězce.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Možnost Authentication=Active Directory Interactive nelze použít s klíčovými slovy Password nebo PWD připojovacího řetězce.</value>
   </data>
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+    <value>Možnost Authentication=Active Directory Device Code Flow nejde použít s klíčovými slovy User ID, UID, Password a PWD připojovacího řetězce.</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Nastavení Authentication={0} nelze použít s klíčovými slovy Password nebo PWD připojovacího řetězce.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
+    <value>Pokud je nastavená vlastnost Credential, nejde použít možnost Authentication=Active Directory Integrated.</value>
   </data>
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.</value>
+    <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Integrated, nejde nastavit vlastnost Credential.</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
-    <value>Incorrect authentication parameters specified with certificate authentication.</value>
+    <value>Byly zadány nesprávné parametry ověřování pro ověřování certifikátem.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
+    <value>Instance systému SQL Server, ke které jste se pokusili připojit, vyžaduje šifrování, ale tento počítač ho nepodporuje.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to does not support encryption.</value>
+    <value>Instance systému SQL Server, ke které jste se pokusili připojit, nepodporuje šifrování.</value>
   </data>
   <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
     <value>Instance serveru SQL Server, ke které jste se pokusili připojit, nepodporuje CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
-    <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
+    <value>Verze systému SQL Server není podporovaná.  Zprostředkovatele dat .NET Framework SqlClient lze použít pouze se systémem SQL Server verze 7.0 nebo novější.</value>
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>{0} nelze změnit, pokud probíhá asynchronní operace.</value>
@@ -2533,31 +2533,31 @@
     <value>Tento příkaz vyžaduje asynchronní připojení. Nastavte v připojovacím řetězci hodnotu Asynchronous Processing=true.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection has been broken as a result.</value>
+    <value>Časový limit vypršel.  V důsledku toho bylo připojení přerušeno.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
-    <value>Instance failure.</value>
+    <value>Chyba instance</value>
   </data>
   <data name="SQL_CredentialsNotProvided" xml:space="preserve">
-    <value>Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication={0}'.</value>
+    <value>Pokud Authentication={0}, je potřeba zadat buď vlastnost Credential, nebo klíčová slova připojovacího řetězce User ID (UID) i Password (PWD).</value>
   </data>
   <data name="SQL_ChangePasswordArgumentMissing" xml:space="preserve">
-    <value>The '{0}' argument must not be null or empty.</value>
+    <value>Argument {0} nesmí být null nebo prázdný.</value>
   </data>
   <data name="SQL_ChangePasswordConflictsWithSSPI" xml:space="preserve">
-    <value>ChangePassword can only be used with SQL authentication, not with integrated security.</value>
+    <value>Metodu ChangePassword lze používat pouze u ověřování SQL, nikoli u integrovaného zabezpečení.</value>
   </data>
   <data name="SQL_ChangePasswordUseOfUnallowedKey" xml:space="preserve">
-    <value>The keyword '{0}' must not be specified in the connectionString argument to ChangePassword.</value>
+    <value>Klíčové slovo {0} nesmí být zadáno v argumentu connectionString pro metodu ChangePassword.</value>
   </data>
   <data name="SQL_UnknownSysTxIsolationLevel" xml:space="preserve">
-    <value>Unrecognized System.Transactions.IsolationLevel enumeration value: {0}.</value>
+    <value>Nerozpoznaná hodnota výčtu System.Transactions.IsolationLevel: {0}</value>
   </data>
   <data name="SQL_InvalidPartnerConfiguration" xml:space="preserve">
-    <value>Server {0}, database {1} is not configured for database mirroring.</value>
+    <value>Server {0} (databáze {1}) není nakonfigurovaný na zrcadlení databáze.</value>
   </data>
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
-    <value>The connection does not support MultipleActiveResultSets.</value>
+    <value>Připojení nepodporuje parametr MultipleActiveResultSets.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
     <value>Uživatele {0} ve službě Active Directory se nepodařilo ověřit (Authentication={1}).</value>
@@ -2566,16 +2566,16 @@
     <value>Kód chyby: 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>ChangePassword requires SQL Server 9.0 or later.</value>
+    <value>ChangePassword vyžaduje SQL Server 9.0 nebo vyšší verzi.</value>
   </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
-    <value>SSE Instance re-direction is not supported for non-local user instances.</value>
+    <value>Přesměrování instance SSE není podporováno u uživatelských instancí, které nejsou místní.</value>
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>The authentication '{0}' is not supported.</value>
+    <value>Ověřování {0} není podporované.</value>
   </data>
   <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>SQL authentication method '{0}' is not supported.</value>
+    <value>Metoda ověřování SQL {0} není podporována.</value>
   </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
@@ -2584,10 +2584,10 @@
     <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
   </data>
   <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>The provider '{0}' threw an exception while initializing.</value>
+    <value>Při inicializaci zprostředkovatele {0} došlo k výjimce.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>The provider '{0}' does not support authentication '{1}'.</value>
+    <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
   </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
@@ -2602,178 +2602,178 @@
     <value>Asynchronní operace již byla dokončena.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
-    <value>The command execution cannot proceed due to a pending asynchronous operation already in progress.</value>
+    <value>V provádění příkazu nelze pokračovat, protože probíhá asynchronní operace čekající na dokončení.</value>
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
-    <value>Invalid command sent to ExecuteXmlReader.  The command must return an Xml result.</value>
+    <value>Metodě ExecuteXmlReader byl odeslán neplatný příkaz.  Příkaz musí vracet výsledek Xml.</value>
   </data>
   <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Notifications require SQL Server 9.0 or later.</value>
+    <value>Upozornění vyžadují SQL Server 9.0 nebo vyšší verze.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for UdtTypeName.</value>
+    <value>Neplatný formát názvu sestávajícího ze 3 částí pro vlastnost UdtTypeName.</value>
   </data>
   <data name="SQL_InvalidParameterTypeNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for TypeName.</value>
+    <value>Neplatný trojdílný formát názvu pro TypeName.</value>
   </data>
   <data name="SQL_InvalidParameterNameLength" xml:space="preserve">
-    <value>The length of the parameter '{0}' exceeds the limit of 128 characters.</value>
+    <value>Délka parametru {0} překračuje limit 128 znaků.</value>
   </data>
   <data name="SQL_PrecisionValueOutOfRange" xml:space="preserve">
-    <value>Precision value '{0}' is either less than 0 or greater than the maximum allowed precision of 38.</value>
+    <value>Hodnota přesnosti {0} je buď menší než 0, nebo větší než maximální povolená hodnota přesnosti 38.</value>
   </data>
   <data name="SQL_ScaleValueOutOfRange" xml:space="preserve">
     <value>Hodnota měřítka {0} je menší než 0 nebo větší než maximální povolené měřítko 38.</value>
   </data>
   <data name="SQL_TimeScaleValueOutOfRange" xml:space="preserve">
-    <value>Scale value '{0}' is either less than 0 or greater than the maximum allowed scale of 7.</value>
+    <value>Hodnota měřítka {0} je menší než 0 nebo větší než maximální povolené měřítko 7.</value>
   </data>
   <data name="SQL_ParameterInvalidVariant" xml:space="preserve">
-    <value>Parameter '{0}' exceeds the size limit for the sql_variant datatype.</value>
+    <value>Parametr {0} překročil omezení velikosti pro datový typ sql_variant.</value>
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
-    <value>The {0} type parameter '{1}' must have a valid type name.</value>
+    <value>Parametr {1} typu {0} musí mít platný název typu.</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
-    <value>Invalid internal packet size:</value>
+    <value>Neplatná velikost vnitřního paketu:</value>
   </data>
   <data name="SQL_InvalidTDSVersion" xml:space="preserve">
-    <value>The SQL Server instance returned an invalid or unsupported protocol version during login negotiation.</value>
+    <value>Instance systému SQL Server vrátila během vyjednávání přihlašování neplatnou nebo nepodporovanou verzi protokolu.</value>
   </data>
   <data name="SQL_InvalidTDSPacketSize" xml:space="preserve">
-    <value>Invalid Packet Size.</value>
+    <value>Neplatná velikost paketu</value>
   </data>
   <data name="SQL_ParsingError" xml:space="preserve">
-    <value>Internal connection fatal error.</value>
+    <value>Došlo k závažné vnitřní chybě připojení.</value>
   </data>
   <data name="SQL_ParsingErrorWithState" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}</value>
   </data>
   <data name="SQL_ParsingErrorValue" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Value: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, hodnota: {1}</value>
   </data>
   <data name="SQL_ParsingErrorOffset" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Offset: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, posun: {1}</value>
   </data>
   <data name="SQL_ParsingErrorFeatureId" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Feature Id: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, ID funkce: {1}</value>
   </data>
   <data name="SQL_ParsingErrorToken" xml:space="preserve">
     <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, Token: {1}</value>
   </data>
   <data name="SQL_ParsingErrorLength" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Length: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, délka: {1}</value>
   </data>
   <data name="SQL_ParsingErrorStatus" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Status: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, stav: {1}</value>
   </data>
   <data name="SQL_ParsingErrorAuthLibraryType" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Authentication Library Type: {1}</value>
+    <value>Došlo k závažné vnitřní chybě připojení. Chybový stav: {0}, typ knihovny ověřování: {1}</value>
   </data>
   <data name="SQL_ConnectionLockedForBcpEvent" xml:space="preserve">
-    <value>The connection cannot be used because there is an ongoing operation that must be finished.</value>
+    <value>Připojení nelze použít, protože právě probíhá jiná operace, kterou je potřeba dokončit.</value>
   </data>
   <data name="SQL_SNIPacketAllocationFailure" xml:space="preserve">
-    <value>Memory allocation for internal connection failed.</value>
+    <value>Přiřazení paměti pro interní připojení selhalo.</value>
   </data>
   <data name="SQL_SmallDateTimeOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallDateTime overflow.  Value '{0}' is out of range.  Must be between 1/1/1900 12:00:00 AM and 6/6/2079 11:59:59 PM.</value>
+    <value>Přetečení SqlDbType.SmallDateTime.  Hodnota {0} je mimo rozsah.  Hodnota musí být v rozsahu od 1.1.1900 12:00:00 do 6.6.2079 23:59:59.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
-    <value>SqlDbType.Time overflow.  Value '{0}' is out of range.  Must be between 00:00:00.0000000 and 23:59:59.9999999.</value>
+    <value>Přetečení SqlDbType.Time.  Hodnota {0} je mimo rozsah.  Musí být mezi 00:00:00.0000000 a 23:59:59.9999999.</value>
   </data>
   <data name="SQL_MoneyOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallMoney overflow.  Value '{0}' is out of range.  Must be between -214,748.3648 and 214,748.3647.</value>
+    <value>Přetečení SqlDbType.SmallMoney.  Hodnota {0} je mimo rozsah.  Musí být mezi -214 748,3648 a 214 748,3647.</value>
   </data>
   <data name="SQL_CultureIdError" xml:space="preserve">
-    <value>The Collation specified by SQL Server is not supported.</value>
+    <value>Kolace zadaná systémem SQL Server není podporována.</value>
   </data>
   <data name="SQL_OperationCancelled" xml:space="preserve">
-    <value>Operation cancelled by user.</value>
+    <value>Operace byla zrušena uživatelem.</value>
   </data>
   <data name="SQL_SevereError" xml:space="preserve">
     <value>U současného příkazu se stala závažná chyba. Pokud existují nějaké výsledky, měly by se zahodit.</value>
   </data>
   <data name="SQL_SSPIGenerateError" xml:space="preserve">
-    <value>The target principal name is incorrect.  Cannot generate SSPI context.</value>
+    <value>Název cílového objektu zabezpečení je nesprávný.  Kontext SSPI se nedá vygenerovat.</value>
   </data>
   <data name="SQL_InvalidSSPIPacketSize" xml:space="preserve">
-    <value>Invalid SSPI packet size.</value>
+    <value>Neplatná velikost paketu SSPI</value>
   </data>
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
-    <value>Cannot initialize SSPI package.</value>
+    <value>Balíček SSPI nelze inicializovat.</value>
   </data>
   <data name="SQL_Timeout" xml:space="preserve">
-    <value>Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Časový limit vypršel.  Před dokončením operace vypršel časový limit nebo server neodpovídá.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the pre-login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel na začátku fáze před přihlášením.  Důvodem může být to, že pro časový limit připojení byl určen nedostatečný časový interval.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_InitializeConnection" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to create and initialize a socket to the server.  This could be either because the server was unreachable or unable to respond back in time.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel při pokusu o vytvoření a inicializaci soketu směřujícího na server.  Důvodem může být buď to, že server byl nedostupný, nebo to, že nebyl schopen včas odpovědět.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_SendHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while making a pre-login handshake request.  This could be because the server was unable to respond back in time.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel při vytváření požadavku handshake před přihlášením.  Důvodem může být to, že server nebyl schopen včas odpovědět.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_ConsumeHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  This could be because the pre-login handshake failed or the server was unable to respond back in time.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel při pokusu o zpracování potvrzení ověření pomocí metody handshake před přihlášením.  Důvodem může být to, že selhalo ověření pomocí metody handshake před přihlášením nebo že server nedokázal včas odpovědět.</value>
   </data>
   <data name="SQL_Timeout_Login_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel na začátku fáze přihlášení.  Důvodem může být to, že pro časový limit připojení byl určen nedostatečný časový interval.</value>
   </data>
   <data name="SQL_Timeout_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to authenticate the login.  This could be because the server failed to authenticate the user or the server was unable to respond back in time.</value>
+    <value>Vypršel časový limit připojení.  Při pokusu o ověření přihlášení vypršel časový limit.  Důvodem může být to, že se serveru nepodařilo ověřit uživatele nebo že server nebyl schopen včas odpovědět.</value>
   </data>
   <data name="SQL_Timeout_PostLogin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.</value>
+    <value>Vypršel časový limit připojení.  Časový limit vypršel během fáze po přihlášení.  Časový limit pravděpodobně vypršel při čekání, až server dokončí proces přihlášení a zašle zpět odpověď. Mohl také vypršet při pokusu o vytvoření více aktivních připojení.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>K tomuto selhání došlo při pokusu o připojení k serveru {0}.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  </value>
+    <value>K této chybě došlo při pokusu o připojení k cíli směrování. Doba strávená pokusem o připojení k původnímu serveru byla: [Před přihlášením] inicializace={0}; handshake={1}; [Přihlášení] inicializace={2}; ověřování={3}; [Po přihlášení] dokončeno={4};  </value>
   </data>
   <data name="SQL_Duration_PreLogin_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0};</value>
+    <value>Doba strávená pokusem o připojení k tomuto serveru byla: [Před přihlášením] inicializace={0};</value>
   </data>
   <data name="SQL_Duration_PreLoginHandshake" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; </value>
+    <value>Doba strávená pokusem o připojení k tomuto serveru byla: [Před přihlášením] inicializace={0}; handshake={1}; </value>
   </data>
   <data name="SQL_Duration_Login_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; </value>
+    <value>Doba strávená pokusem o připojení k tomuto serveru byla: [Před přihlášením] inicializace={0}; handshake={1}; [Přihlášení] inicializace={2}; </value>
   </data>
   <data name="SQL_Duration_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; </value>
+    <value>Doba strávená pokusem o připojení k tomuto serveru byla: [Před přihlášením] inicializace={0}; handshake={1}; [Přihlášení] inicializace={2}; ověřování={3}; </value>
   </data>
   <data name="SQL_Duration_PostLogin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; </value>
+    <value>Doba strávená pokusem o připojení k tomuto serveru byla: [Před přihlášením] inicializace={0}; handshake={1}; [Přihlášení] inicializace={2}; ověřování={3}; [Po přihlášení] dokončení={4}; </value>
   </data>
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
-    <value>A user instance was requested in the connection string but the server specified does not support this option.</value>
+    <value>V připojovacím řetězci byla vyžadována uživatelská instance, ale zadaný server tuto možnost nepodporuje.</value>
   </data>
   <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>The server certificate failed application validation.</value>
+    <value>Certifikát serveru neprošel ověřením aplikace.</value>
   </data>
   <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Specified data length {0} exceeds the allowed maximum length of {1}.</value>
+    <value>Zadaná délka dat {0} překračuje maximální povolenou délku {1}.</value>
   </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
-    <value>Invalid attempt to read when no data is present.</value>
+    <value>Došlo k neplatnému pokusu o čtení, protože data nebyla k dispozici.</value>
   </data>
   <data name="SQL_NonBlobColumn" xml:space="preserve">
-    <value>Invalid attempt to GetBytes on column '{0}'.  The GetBytes function can only be used on columns of type Text, NText, or Image.</value>
+    <value>Došlo k neplatnému pokusu o použití funkce GetBytes na sloupec {0}.  Funkci GetBytes lze použít pouze na sloupce typu Text, NText nebo Image.</value>
   </data>
   <data name="SQL_NonCharColumn" xml:space="preserve">
-    <value>Invalid attempt to GetChars on column '{0}'.  The GetChars function can only be used on columns of type Text, NText, Xml, VarChar or NVarChar.</value>
+    <value>Došlo k neplatnému pokusu o použití funkce GetChars na sloupec {0}.  Funkci GetChars lze použít pouze na sloupce typu Text, NText, Xml, VarChar nebo NVarChar.</value>
   </data>
   <data name="SQL_StreamNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetStream on column '{0}'. The GetStream function can only be used on columns of type Binary, Image, Udt or VarBinary.</value>
+    <value>Došlo k neplatnému pokusu o použití funkce GetStream pro sloupec {0}. Funkci GetStream lze použít pouze pro sloupce typu Binary, Image, Udt nebo VarBinary.</value>
   </data>
   <data name="SQL_TextReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetTextReader on column '{0}'. The GetTextReader function can only be used on columns of type Char, NChar, NText, NVarChar, Text or VarChar.</value>
+    <value>Došlo k neplatnému pokusu o použití funkce GetTextReader pro sloupec {0}. Funkci GetTextReader lze použít pouze pro sloupce typu Char, NChar, NText, NVarChar, Text nebo VarChar.</value>
   </data>
   <data name="SQL_XmlReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetXmlReader on column '{0}'. The GetXmlReader function can only be used on columns of type Xml.</value>
+    <value>Došlo k neplatnému pokusu o použití funkce GetXmlReader pro sloupec {0}. Funkci GetXmlReader lze použít pouze pro sloupce typu Xml.</value>
   </data>
   <data name="SQL_InvalidBufferSizeOrIndex" xml:space="preserve">
     <value>Posun vyrovnávací paměti {1} zvýšený o počet dostupných bajtů {0} je vyšší než délka předané vyrovnávací paměti.</value>
@@ -2788,22 +2788,22 @@
     <value>Operaci nelze dokončit, protože třída SqlResultSet je zavřena.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the record is read only.</value>
+    <value>{0} nelze volat, pokud je záznam určen jen pro čtení.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operation cannot be completed because the record is read only.</value>
+    <value>Operaci nelze dokončit, protože záznam je jen pro čtení.</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Invalid attempt to call method {0} when the current row is deleted</value>
+    <value>Neplatný pokus o volání metody {0}, pokud je aktuální řádek odstraněn.</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operation cannot be completed because the current row is deleted</value>
+    <value>Operaci nelze dokončit, protože aktuální řádek je odstraněn.</value>
   </data>
   <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed.</value>
+    <value>Operaci nelze dokončit, protože příkaz, který vytvořil objekt SqlResultSet, byl odpojen od původního připojení. Objekt SqlResultSet je uzavřen.</value>
   </data>
   <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet could not be created for the given query with the desired options.</value>
+    <value>SqlResultSet nebylo možné vytvořit pro daný dotaz s požadovanými možnostmi.</value>
   </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>{0} nelze volat, pokud je třída SqlDataRecord určena jen pro čtení.</value>
@@ -2818,7 +2818,7 @@
     <value>Zadanou hodnotu {0} typu {1} ze zdroje dat nelze převést na typ {2} pro sloupec {3} [{4}] řádek {5}.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>Zadanou hodnotu {0} typu {1} ze zdroje dat nelze převést na typ {2} pro sloupec {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Zadaný objekt ColumnMapping se neshoduje s žádným sloupcem ve zdroji ani v cíli.</value>
@@ -2857,13 +2857,13 @@
     <value>Sloupec {0} nepovoluje hodnotu DBNull.Value.</value>
   </data>
   <data name="Sql_BulkLoadLcidMismatch" xml:space="preserve">
-    <value>The locale id '{0}' of the source column '{1}' and the locale id '{2}' of the destination column '{3}' do not match.</value>
+    <value>ID národního prostředí {0} zdrojového sloupce {1} a ID národního prostředí {2} cílového sloupce {3} se neshodují.</value>
   </data>
   <data name="SQL_BulkLoadPendingOperation" xml:space="preserve">
     <value>Došlo k pokusu o vyvolání hromadného kopírování pro objekt, pro který existuje nedokončená operace.</value>
   </data>
   <data name="SQL_ConnectionDoomed" xml:space="preserve">
-    <value>The requested operation cannot be completed because the connection has been broken.</value>
+    <value>Požadovanou operaci nelze dokončit, protože připojení bylo přerušeno.</value>
   </data>
   <data name="SQL_OpenResultCountExceeded" xml:space="preserve">
     <value>Byl překročen počet otevřených výsledků.</value>
@@ -2878,67 +2878,67 @@
     <value>Dávkové aktualizace nejsou u připojení kontextu podporovány.</value>
   </data>
   <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword.</value>
+    <value>Jediné další klíčové slovo řetězce připojení, které by bylo možné používat při požadavku na připojení kontextu, je klíčové slovo Type System Version.</value>
   </data>
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>The context connection does not support Type System Version=SQL Server 2000.</value>
+    <value>Připojení kontextu nepodporuje nastavení Type System Version=SQL Server 2000.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>The context connection is already in use.</value>
+    <value>Připojení kontextu se už používá.</value>
   </data>
   <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>The requested operation requires a SqlClr context, which is only available when running in the Sql Server process.</value>
+    <value>Požadovaná operace vyžaduje kontext SqlClr, který je k dispozici pouze při spuštění v procesu systému Sql Server.</value>
   </data>
   <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code.</value>
+    <value>Požadovaná operace vyžaduje vlákno prováděného procesu systému Sql Server.  Aktuální vlákno bylo spuštěno uživatelským kódem či jiným kódem, který není kódem modulu systému Sql Server.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Nested TransactionScopes are not supported.</value>
+    <value>Vnořené objekty TransactionScopes nejsou podporovány.</value>
   </data>
   <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>The requested operation is not available on the context connection.</value>
+    <value>Požadovaná operace není dostupná u připojení kontextu.</value>
   </data>
   <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Notifications are not available on the context connection.</value>
+    <value>Upozornění nejsou k dispozici u připojení kontextu.</value>
   </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Unexpected server event: {0}.</value>
+    <value>Neočekávaná událost serveru: {0}</value>
   </data>
   <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>User instances are not allowed when running in the Sql Server process.</value>
+    <value>Uživatelské instance nejsou povoleny při spuštění v procesu systému Sql Server.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>Délka argumentu {0} se musí shodovat s délkou argumentu {1}.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
+    <value>Hodnota SqlDbType {0} je pro {1} neplatná.  Podporuje se pouze {2}.</value>
   </data>
   <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent.</value>
+    <value>U předcházejícího řádku odeslaného do SqlPipe došlo k chybě.  Před odesláním dalších dat se musí volat metoda SendResultsEnd.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Too many values.</value>
+    <value>Příliš mnoho hodnot</value>
   </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
-    <value>The Stream does not support writing.</value>
+    <value>Stream nepodporuje zápis.</value>
   </data>
   <data name="SQL_StreamReadNotSupported" xml:space="preserve">
-    <value>The Stream does not support reading.</value>
+    <value>Stream nepodporuje čtení.</value>
   </data>
   <data name="SQL_StreamSeekNotSupported" xml:space="preserve">
-    <value>The Stream does not support seeking.</value>
+    <value>Stream nepodporuje hledání.</value>
   </data>
   <data name="SQL_ExClientConnectionId" xml:space="preserve">
     <value>ClientConnectionId:{0}</value>
   </data>
   <data name="SQL_ExErrorNumberStateClass" xml:space="preserve">
-    <value>Error Number:{0},State:{1},Class:{2}</value>
+    <value>Číslo chyby: {0}, stav: {1}, třída: {2}</value>
   </data>
   <data name="SQL_ExOriginalClientConnectionId" xml:space="preserve">
-    <value>ClientConnectionId before routing:{0}</value>
+    <value>ClientConnectionId před směrováním:{0}</value>
   </data>
   <data name="SQL_ExRoutingDestination" xml:space="preserve">
-    <value>Routing Destination:{0}</value>
+    <value>Cíl směrování:{0}</value>
   </data>
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
@@ -2953,112 +2953,112 @@
     <value>Došlo k chybě dělení nulou.</value>
   </data>
   <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Data is Null. This method or property cannot be called on Null values.</value>
+    <value>Data mají hodnotu Null. Tuto metodu nebo vlastnost nelze volat s hodnotami Null.</value>
   </data>
   <data name="SqlMisc_TruncationMessage" xml:space="preserve">
     <value>Číselná aritmetika způsobila zkrácení.</value>
   </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
-    <value>SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.</value>
+    <value>Přetečení SqlDateTime. Hodnota musí být v rozsahu od 1.1.1753 12:00:00 do 31.12.9999 23:59:59.</value>
   </data>
   <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be concatenated have different collation.</value>
+    <value>Dva řetězce určené ke zřetězení mají různé kolace.</value>
   </data>
   <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be compared have different collation.</value>
+    <value>Dva řetězce určené k porovnání mají různé kolace.</value>
   </data>
   <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Invalid flag value.</value>
+    <value>Neplatná hodnota příznaku</value>
   </data>
   <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Conversion from SqlDecimal to Decimal overflows.</value>
+    <value>Přetečení převodu z typu SqlDecimal na typ Decimal</value>
   </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
-    <value>Conversion overflows.</value>
+    <value>Přetečení převodu</value>
   </data>
   <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Invalid SqlDateTime.</value>
+    <value>Neplatná hodnota SqlDateTime</value>
   </data>
   <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>A time zone was specified. SqlDateTime does not support time zones.</value>
+    <value>Bylo zadáno časové pásmo. SqlDateTime nepodporuje časová pásma.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
-    <value>Invalid array size.</value>
+    <value>Neplatná velikost pole</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>Invalid numeric precision/scale.</value>
+    <value>Neplatná číselná přesnost nebo exponent</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>The input wasn't in a correct format.</value>
+    <value>Vstup nebyl ve správném formátu.</value>
   </data>
   <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>SqlType error.</value>
+    <value>Chyba SqlType</value>
   </data>
   <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>The SqlBytes and SqlChars don't support length of more than 2GB in this version.</value>
+    <value>Třída SqlBytes ani třída SqlChars v této verzi nepodporuje délku větší než 2 GB.</value>
   </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
-    <value>An error occurred while reading.</value>
+    <value>Při čtení došlo k chybě.</value>
   </data>
   <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Stream has been closed or disposed.</value>
+    <value>Stream byl zavřen nebo zrušen.</value>
   </data>
   <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>There is no buffer. Read or write operation failed.</value>
+    <value>Není k dispozici žádná vyrovnávací paměť. Operace čtení nebo zápisu se nezdařila.</value>
   </data>
   <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Cannot set to non-zero length, because current value is Null.</value>
+    <value>Nelze nastavit na nenulovou délku, protože aktuální hodnota je Null.</value>
   </data>
   <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>The buffer is insufficient. Read or write operation failed.</value>
+    <value>Velikost vyrovnávací paměti není dostatečná. Operace čtení nebo zápisu se nezdařila.</value>
   </data>
   <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Cannot write to non-zero offset, because current value is Null.</value>
+    <value>Nelze zapisovat do nenulového posunu, protože aktuální hodnota je Null.</value>
   </data>
   <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer.</value>
+    <value>Nelze zapisovat z posunu, který je větší než aktuální délka. Neinicializovaná data by zůstala ve vyrovnávací paměti.</value>
   </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
-    <value>Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data.</value>
+    <value>Vrácená data mají velikost větší než 2 GB. Pokud chcete získat všechna data, použijte chování příkazu SequentialAccess.</value>
   </data>
   <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument to GetDayOfWeek must be integer between 1 and 7.</value>
+    <value>Argument pro metodu GetDayOfWeek musí být celé číslo v rozmezí od 1 do 7.</value>
   </data>
   <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>SQL Type has not been loaded with data.</value>
+    <value>Pro datový typ SQL ještě nebyla načtena data.</value>
   </data>
   <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>SQL Type has already been loaded with data.</value>
+    <value>Pro datový typ SQL již byla načtena data.</value>
   </data>
   <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Invalid attempt to access a closed XmlReader.</value>
+    <value>Neplatný pokus o přístup k zavřenému objektu XmlReader</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is closed.</value>
+    <value>Pokus o volání metody {0} při zavřeném streamu je neplatný.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-writable.</value>
+    <value>Pokus o volání metody {0} při nezapisovatelném streamu je neplatný.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-readable.</value>
+    <value>Pokus o volání metody {0} při nečitelném streamu je neplatný.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is non-seekable.</value>
+    <value>Pokus o volání metody {0} při neprohledávatelném streamu je neplatný.</value>
   </data>
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Subclass did not override a required method.</value>
+    <value>Podtřída nepřepsala požadovanou metodu.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Nelze vytvořit normalizátor pro {0}.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Vnitřní chyba</value>
   </data>
   <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Command parameter must have a non null and non empty command text.</value>
+    <value>Parametr příkazu musí mít text příkazu, který není null a není prázdný.</value>
   </data>
   <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>MetaData parameter array must have length equivalent to ParameterDirection array argument.</value>
+    <value>Pole parametru MetaData musí mít délku odpovídající argumentu pole ParameterDirection.</value>
   </data>
   <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
     <value>Chyba mapování datového adaptéru.</value>
@@ -3226,10 +3226,10 @@
     <value>V případě hodnoty true používá SQL Server šifrování SSL pro všechna data odesílaná mezi klientem a serverem, pokud je na serveru nainstalován certifikát.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Název hostitele, který se má očekávat v certifikátu serveru při vyjednávání šifrování, pokud se liší od výchozí hodnoty odvozené z Addr/Address/Server.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>Cesta k souboru certifikátu, který se má porovnat s certifikátem TLS/SSL systému SQL Server</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Relace v prostředí služby Component Services (nebo MTS, pokud používáte systém Microsoft Windows NT) by měly být automaticky zařazeny do globální transakce (kde je to nutné).</value>
@@ -3349,46 +3349,46 @@
     <value>Verze produktu, k němuž přistupuje zprostředkovatel dat OLE DB.</value>
   </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
-    <value>Access token to use for authentication.</value>
+    <value>Přístupový token pro ověření</value>
   </data>
   <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>State of connection, synchronous or asynchronous.  'Asynchronous Processing=x' in the connection string.</value>
+    <value>Stav připojení, synchronní nebo asynchronní.  Asynchronous Processing=x v připojovacím řetězci</value>
   </data>
   <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Information used to connect for replication.</value>
+    <value>Informace použité k připojení pro replikaci</value>
   </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
-    <value>Information used to connect to a DataSource, such as 'Data Source=x;Initial Catalog=x;Integrated Security=SSPI'.</value>
+    <value>Informace použité pro připojení k objektu DataSource, například Data Source=x;Initial Catalog=x;Integrated Security=SSPI</value>
   </data>
   <data name="SqlConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Current connection timeout value, 'Connect Timeout=X' in the ConnectionString.</value>
+    <value>Hodnota časového limitu aktuálního připojení, část Connect Timeout=X v řetězci ConnectionString.</value>
   </data>
   <data name="SqlConnection_Database" xml:space="preserve">
-    <value>Current SQL Server database, 'Initial Catalog=X' in the connection string.</value>
+    <value>Aktuální databáze systému SQL Server, část Initial Catalog=X připojovacího řetězce</value>
   </data>
   <data name="SqlConnection_DataSource" xml:space="preserve">
-    <value>Current SqlServer that the connection is opened to, 'Data Source=X' in the connection string.</value>
+    <value>Aktuální SqlServer, k němuž je otevřeno připojení, část Data Source=X připojovacího řetězce</value>
   </data>
   <data name="SqlConnection_PacketSize" xml:space="preserve">
-    <value>Network packet size, 'Packet Size=x' in the connection string.</value>
+    <value>Velikost síťového paketu, část připojovacího řetězce Packet Size=x</value>
   </data>
   <data name="SqlConnection_ServerVersion" xml:space="preserve">
-    <value>Version of the SQL Server accessed by the SqlConnection.</value>
+    <value>Verze systému SQL Server, ke kterému přistupuje objekt SqlConnection</value>
   </data>
   <data name="SqlConnection_WorkstationId" xml:space="preserve">
-    <value>Workstation Id, 'Workstation ID=x' in the connection string.</value>
+    <value>Identifikátor pracovní stanice, část Workstation ID=x připojovacího řetězce</value>
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
-    <value>Collect statistics for this connection.</value>
+    <value>Shromáždit statistiku pro toto připojení.</value>
   </data>
   <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Custom column encryption key store providers.</value>
+    <value>Vlastní zprostředkovatelé úložišť šifrovacích klíčů sloupců</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
-    <value>A guid to represent the physical connection.</value>
+    <value>Identifikátor GUID představující fyzické připojení</value>
   </data>
   <data name="SqlConnection_Credential" xml:space="preserve">
-    <value>User Id and secure password to use for authentication.</value>
+    <value>ID uživatele a zabezpečené heslo pro ověření</value>
   </data>
   <data name="DbConnection_InfoMessage" xml:space="preserve">
     <value>Událost aktivovaná při obdržení zpráv od objektu DataSource.</value>
@@ -3415,10 +3415,10 @@
     <value>Kdy jsou záznamy ovlivněny daným prováděním příkazu.</value>
   </data>
   <data name="SqlCommand_Notification" xml:space="preserve">
-    <value>Notification values used by Microsoft SQL Server.</value>
+    <value>Hodnoty upozornění použité systémem Microsoft SQL Server</value>
   </data>
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
-    <value>Automatic enlistment in notifications used by Microsoft SQL Server.</value>
+    <value>Automatické zařazení do upozornění použitých systémem Microsoft SQL Server</value>
   </data>
   <data name="DbCommandBuilder_ConflictOption" xml:space="preserve">
     <value>Jakým způsobem je automaticky generována klauzule where pro příkazy Update a Delete v případě, že uživatel nezadá nastavení.</value>
@@ -3469,16 +3469,16 @@
     <value>Řetězec přípony připojený za objekty sql</value>
   </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>The DataAdapter for which to automatically generate SqlCommands</value>
+    <value>Vlastnost DataAdapter, pro kterou budou automaticky generovány příkazy SqlCommands</value>
   </data>
   <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>The decimal separator used in numeric literals.</value>
+    <value>Oddělovač desetinných míst použitý v číselných literálech.</value>
   </data>
   <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The character used in a text command as the opening quote for quoting identifiers that contain special characters.</value>
+    <value>Znak použitý v textovém příkazu jako úvodní uvozovka pro uvedení identifikátorů obsahujících speciální znaky.</value>
   </data>
   <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
+    <value>Znak použitý v textovém příkazu jako koncová uvozovka pro uvádění identifikátorů obsahujících speciální znaky.</value>
   </data>
   <data name="DbDataParameter_Precision" xml:space="preserve">
     <value>Nutné nastavovat pouze pro parametry desetinných míst a číselné parametry při použití se scénáři Prepare, FillSchema a CommandBuilder.</value>
@@ -3493,16 +3493,16 @@
     <value>Nativní typ parametru.</value>
   </data>
   <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Name of the parameter, like '@p1'</value>
+    <value>Název parametru, například @p1</value>
   </data>
   <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>The parameter native type.</value>
+    <value>Nativní typ parametru.</value>
   </data>
   <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>The server's name for the type.</value>
+    <value>Název serveru typu.</value>
   </data>
   <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Offset in variable length data types.</value>
+    <value>Posun v datových typech proměnné délky.</value>
   </data>
   <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
     <value>XmlSchemaCollectionDatabase</value>
@@ -3514,16 +3514,16 @@
     <value>XmlSchemaCollectionName</value>
   </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
-    <value>ParameterDirection '{0}' specified for parameter '{1}' is not supported. Table-valued parameters only support ParameterDirection.Input.</value>
+    <value>ParameterDirection {0} zadaný pro parametr {1} není podporován. Parametry s hodnotou tabulky (table-valued parameter) podporují pouze ParameterDirection.Input.</value>
   </data>
   <data name="SqlParameter_DBNullNotSupportedForTVP" xml:space="preserve">
-    <value>DBNull value for parameter '{0}' is not supported. Table-valued parameters cannot be DBNull.</value>
+    <value>Hodnota DBNull parametru {0} není podporována. Parametry s hodnotou tabulek (table-valued parameter) nemohou být DBNull.</value>
   </data>
   <data name="SqlParameter_InvalidTableDerivedPrecisionForTvp" xml:space="preserve">
-    <value>Precision '{0}' required to send all values in column '{1}' exceeds the maximum supported precision '{2}'. The values must all fit in a single precision.</value>
+    <value>Přesnost {0} požadovaná pro odeslání všech hodnot ve sloupci {1} přesahuje maximální podporovanou přesnost {2}. Všechny hodnoty se musí vejít do jedné přesnosti.</value>
   </data>
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
-    <value>TypeName specified for parameter '{0}'.  TypeName must only be set for Structured parameters.</value>
+    <value>TypeName zadaný pro parametr {0}.  TypeName musí být nastaven pouze pro parametry Structured.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
     <value>Typ SqlDbType.Structured je podporován pouze u typů s více hodnotami.</value>
@@ -3535,10 +3535,10 @@
     <value>Neplatné pořadové číslo sloupce v tabulce schématu.  Hodnoty ColumnOrdinals, pokud jsou k dispozici, nesmí mít duplicity ani mezery.</value>
   </data>
   <data name="SQL_EnumeratedRecordMetaDataChanged" xml:space="preserve">
-    <value>Metadata for field '{0}' of record '{1}' did not match the original record's metadata.</value>
+    <value>Metadata pro pole {0} záznamu {1} neodpovídala metadatům původního záznamu.</value>
   </data>
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
-    <value>Number of fields in record '{0}' does not match the number in the original record.</value>
+    <value>Počet polí v záznamu {0} neodpovídá počtu v původním záznamu.</value>
   </data>
   <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
     <value>rozsah: 0 až 8000</value>
@@ -3565,181 +3565,181 @@
     <value>Parametry UDT jsou povoleny v klauzulích where pouze v případě, že jsou součástí primárního klíče.</value>
   </data>
   <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>'{0}' is an invalid user defined type, reason: {1}.</value>
+    <value>{0} je neplatný uživatelsky definovaný typ, důvod: {1}.</value>
   </data>
   <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>supports both in-memory and user-defined formats</value>
+    <value>podporuje formáty v paměti i uživatelsky definované formáty.</value>
   </data>
   <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Native format can't be supported.</value>
+    <value>Nativní formát nelze podporovat.</value>
   </data>
   <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>does not implement IBinarySerialize</value>
+    <value>neimplementuje rozhraní IBinarySerialize.</value>
   </data>
   <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>not serializable</value>
+    <value>neserializovatelné</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>no public constructors</value>
+    <value>žádné veřejné konstruktory</value>
   </data>
   <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>does not implement INullable</value>
+    <value>neimplementuje rozhraní INullable.</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>does not have a public constructor</value>
+    <value>nemá veřejný konstruktor</value>
   </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
-    <value>no UDT attribute</value>
+    <value>žádný atribut UDT</value>
   </data>
   <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serialization without mapping is not yet supported.</value>
+    <value>Serializace bez mapování ještě není podporována.</value>
   </data>
   <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>'public static x Parse(System.Data.SqlTypes.SqlString)' method is missing</value>
+    <value>chybí metoda public static x Parse(System.Data.SqlTypes.SqlString).</value>
   </data>
   <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>'public override string ToString()' method is missing</value>
+    <value>chybí metoda public override string ToString().</value>
   </data>
   <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>'public static x Null { get; }' method is missing</value>
+    <value>chybí metoda public static x Null { get; }.</value>
   </data>
   <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Native format does not support fields (directly or through another field) of type '{0}'</value>
+    <value>Nativní formát nepodporuje pole (přímo nebo prostřednictvím jiného pole) typu {0}.</value>
   </data>
   <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Type is not public</value>
+    <value>Typ není veřejný.</value>
   </data>
   <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Native UDT not sequential layout due to type '{0}'</value>
+    <value>Parametr Native UDT nepředstavuje sekvenční rozložení vzhledem k typu {0}.</value>
   </data>
   <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Native UDT specifies a max byte size</value>
+    <value>Parametr Native UDT určuje maximální velikost v bajtech (byte).</value>
   </data>
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>field '{0}' is marked non-serialized</value>
+    <value>pole {0} je označeno jako neserializované.</value>
   </data>
   <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
     <value>Typ pole {0} je označen jako explicitní rozložení, což není ve formátu Native povoleno.</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Multiple valued assembly references must have a nonzero Assembly Id.</value>
+    <value>Odkazy na sestavení s více hodnotami musí mít nenulové ID sestavení.</value>
   </data>
   <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
     <value>Strukturované typy s více hodnotami lze použít pouze u parametrů a nemohou být vnořeny v jiném typu.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
-    <value>The path name is not valid.</value>
+    <value>Název cesty není platný.</value>
   </data>
   <data name="SqlFileStream_InvalidParameter" xml:space="preserve">
-    <value>An invalid parameter was passed to the function.</value>
+    <value>Funkci byl předán neplatný parametr.</value>
   </data>
   <data name="SqlFileStream_FileAlreadyInTransaction" xml:space="preserve">
-    <value>The process cannot access the file specified because it has been opened in another transaction.</value>
+    <value>Proces nemůže otevřít zadaný soubor, protože byl otevřen v jiné transakci.</value>
   </data>
   <data name="SqlFileStream_PathNotValidDiskResource" xml:space="preserve">
-    <value>The path name is invalid or does not point to a disk file.</value>
+    <value>Název cesty není platný nebo neukazuje na soubor na disku.</value>
   </data>
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
-    <value>Failure while attempting to promote transaction.</value>
+    <value>Chyba při pokusu o zvýšení úrovně transakce</value>
   </data>
   <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Dependency object used to receive query notifications.</value>
+    <value>Objekt závislosti používaný pro příjem upozornění na dotazy</value>
   </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
-    <value>Property to indicate if this dependency is invalid.</value>
+    <value>Vlastnost umožňující označit, zda je tato závislost neplatná.</value>
   </data>
   <data name="SqlDependency_Id" xml:space="preserve">
-    <value>A string that uniquely identifies this dependency object.</value>
+    <value>Řetězec, který jedinečně identifikuje tento objekt závislosti.</value>
   </data>
   <data name="SqlDependency_OnChange" xml:space="preserve">
-    <value>Event that can be used to subscribe for change notifications.</value>
+    <value>Událost, pomocí které lze nastavit odběr upozornění na změny.</value>
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
-    <value>To add a command to existing dependency object.</value>
+    <value>K přidání příkazu k existujícímu objektu závislosti</value>
   </data>
   <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Command is already associated with another dependency object. Can not overwrite.</value>
+    <value>Objekt Command je již spojen s jiným objektem závislosti. Nastavení nelze přepsat.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Tento objekt SqlCommand je již spojen s jiným objektem SqlDependency.</value>
   </data>
   <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency object cannot be created when running inside the SQL Server process.</value>
+    <value>Objekt SqlDependency nelze vytvořit při spuštění z procesu systému SQL Server.</value>
   </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
-    <value>The SQL Server Service Broker for the current database is not enabled, and as a result query notifications are not supported.  Please enable the Service Broker for this database if you wish to use notifications.</value>
+    <value>SQL Server Service Broker pro aktuální databázi není povolen. Nejsou proto podporována upozornění na výsledky dotazů.  Chcete-li používat upozornění, povolte zprostředkovatele Service Broker pro tuto databázi.</value>
   </data>
   <data name="SqlDependency_DefaultOptionsButNoStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called prior to execution of a command added to the SqlDependency instance.</value>
+    <value>Při používání třídy SqlDependency bez zadání hodnoty možností musí být před provedením příkazu přidaného do instance SqlDependency volána metoda SqlDependency.Start().</value>
   </data>
   <data name="SqlDependency_EventNoDuplicate" xml:space="preserve">
-    <value>SqlDependency.OnChange does not support multiple event registrations for the same delegate.</value>
+    <value>Událost SqlDependency.OnChange nepodporuje více registrací událostí pro stejného delegáta.</value>
   </data>
   <data name="SqlDependency_DuplicateStart" xml:space="preserve">
-    <value>SqlDependency does not support calling Start() with different connection strings having the same server, user, and database in the same app domain.</value>
+    <value>SqlDependency nepodporuje volání metody Start() s jinými připojovacími řetězci, ve kterých je nastaven stejný server, uživatel a databáze ve stejné aplikační doméně.</value>
   </data>
   <data name="SqlDependency_IdMismatch" xml:space="preserve">
-    <value>No SqlDependency exists for the key.</value>
+    <value>Pro tento klíč neexistuje žádný objekt SqlDependency.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called for each server that is being executed against.</value>
+    <value>Při používání třídy SqlDependency bez zadání hodnoty možností musí být pro každý server, pro který se provádí příkaz, volána metoda SqlDependency.Start().</value>
   </data>
   <data name="SqlDependency_NoMatchingServerDatabaseStart" xml:space="preserve">
-    <value>SqlDependency.Start has been called for the server the command is executing against more than once, but there is no matching server/user/database Start() call for current command.</value>
+    <value>Byla volána metoda SqlDependency.Start pro server, který se používá pro zpracování příkazu více než jednou, ale neexistuje odpovídající volání metody Start() pro server/uživatele/databázi pro aktuální příkaz.</value>
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
-    <value>Timeout specified is invalid. Timeout cannot be &lt; 0.</value>
+    <value>Zadaný časový limit je neplatný. Časový limit nesmí být menší než nula.</value>
   </data>
   <data name="SQLNotify_ErrorFormat" xml:space="preserve">
     <value>Chyba oznámení. Typ ={0}, Informace ={1}, Zdroj ={2}.</value>
   </data>
   <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>GetMetaData is not valid for this SqlDbType.</value>
+    <value>Metoda GetMetaData není pro tuto hodnotu SqlDbType platná.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>The dbType {0} is invalid for this constructor.</value>
+    <value>Hodnota dbType {0} je pro tento konstruktor neplatná.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Název je příliš dlouhý.</value>
   </data>
   <data name="SqlMetaData_SpecifyBothSortOrderAndOrdinal" xml:space="preserve">
-    <value>The sort order and ordinal must either both be specified, or neither should be specified (SortOrder.Unspecified and -1).  The values given were: order = {0}, ordinal = {1}.</value>
+    <value>Musí být buď zadáno pořadí řazení i řadová číslovka, nebo nesmí být zadána ani jedna z těchto hodnot (SortOrder.Unspecified a -1).  Zadané hodnoty jsou: pořadí (order) = {0}, řadová číslovka (ordinal) = {1}.</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnType" xml:space="preserve">
-    <value>The type of column '{0}' is not supported.  The type is '{1}'</value>
+    <value>Typ sloupce {0} není podporován.  Typ je {1}.</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnMaxLength" xml:space="preserve">
-    <value>The size of column '{0}' is not supported. The size is {1}.</value>
+    <value>Velikost sloupce {0} není podporována. Velikost je {1}.</value>
   </data>
   <data name="SqlProvider_NotEnoughColumnsInStructuredType" xml:space="preserve">
-    <value>There are not enough fields in the Structured type.  Structured types must have at least one field.</value>
+    <value>V typu Structured není dostatek polí.  Typy Structured musí mít nejméně jedno pole.</value>
   </data>
   <data name="SqlProvider_DuplicateSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was specified twice.</value>
+    <value>Řadová číslovka {0} byla zadána dvakrát.</value>
   </data>
   <data name="SqlProvider_MissingSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was not specified.</value>
+    <value>Nebyla zadána řadová číslovka {0}.</value>
   </data>
   <data name="SqlProvider_SortOrdinalGreaterThanFieldCount" xml:space="preserve">
-    <value>The sort ordinal {0} on field {1} exceeds the total number of fields.</value>
+    <value>Řadová číslovka {0} v poli {1} překračuje celkový počet polí.</value>
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>Ve výčtu SqlDataRecord nejsou žádné záznamy. Pokud chcete odeslat parametr vracející tabulku bez řádků, použijte pro hodnotu odkaz s hodnotou null.</value>
   </data>
   <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe does not support executing a command with a connection that is not a context connection.</value>
+    <value>Třída SqlPipe nepodporuje provádění příkazu s připojením, které není připojením kontextu.</value>
   </data>
   <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Message length {0} exceeds maximum length supported of 4000.</value>
+    <value>Délka zprávy {0} překračuje maximální podporovanou délku 4000.</value>
   </data>
   <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Could not use the pipe while it is busy with another operation.</value>
+    <value>Kanál nelze používat, pokud zpracovává jinou operaci.</value>
   </data>
   <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>A result set is currently being sent to the pipe. End the current result set before calling {0}.</value>
+    <value>Sada výsledků dotazu je momentálně odesílána do kanálu. Před voláním metody {0} ukončete aktuální sadu výsledků dotazu.</value>
   </data>
   <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Result set has not been initiated.  Call SendResultSetStart before calling {0}.</value>
+    <value>Sada výsledků dotazu nebyla inicializována.  Před voláním metody {0} volejte metodu SendResultSetStart.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>Zprostředkovatel HTTP:</value>
@@ -3943,43 +3943,43 @@
     <value>V umístění určeném v registru byla nalezena neplatná knihovna SQLUserInstance.dll. Ověřte, zda je funkce Local Database Runtime produktu SQL Server Express řádně nainstalována.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
-    <value>A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.</value>
+    <value>Při vytváření připojení k systému SQL Server došlo k chybě související se sítí nebo s instancí. Server se nenašel nebo nebyl přístupný. Ověřte, zda je název instance správný a zda je SQL Server nakonfigurován tak, aby povoloval vzdálená připojení.</value>
   </data>
   <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
     <value>Klient nemohl vytvořit připojení, protože během inicializace připojení před přihlášením nastala chyba. Mezi možné příčiny patří následující možnosti: klient se pokusil o připojení k nepodporované verzi serveru SQL Server; server byl příliš zaneprázdněný a nemohl přijímat nová připojení; nebo je na serveru nastaveno omezení zdrojů (nedostatek paměti nebo maximální počet povolených připojení).</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</value>
+    <value>Úspěšně bylo vytvořeno připojení k serveru. Potom však došlo k chybě při vyjednávání metodou handshake před přihlašováním.</value>
   </data>
   <data name="Snix_LoginSspi" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred when obtaining the security/SSPI context information for integrated security login.</value>
+    <value>Úspěšně bylo vytvořeno připojení k serveru. Potom však došlo k chybě při pokusu o získání informací o kontextu zabezpečení/SSPI pro integrované zabezpečené přihlášení.</value>
   </data>
   <data name="Snix_Login" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the login process.</value>
+    <value>Úspěšně bylo vytvořeno připojení k serveru. Potom však došlo k chybě během přihlašování.</value>
   </data>
   <data name="Snix_EnableMars" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enabling MARS for this connection.</value>
+    <value>Připojení je otevřeno a přihlášení bylo úspěšné. Potom však došlo k chybě při povolování relace MARS pro toto připojení.</value>
   </data>
   <data name="Snix_AutoEnlist" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enlisting the connection into the current distributed transaction.</value>
+    <value>Otevření připojení a přihlášení bylo úspěšné. Potom však došlo k chybě při zařazování připojení do aktuální distribuované transakce.</value>
   </data>
   <data name="Snix_GetMarsSession" xml:space="preserve">
-    <value>Failed to establish a MARS session in preparation to send the request to the server.</value>
+    <value>Nepodařilo se vytvořit relaci MARS při přípravě na odeslání požadavku na server.</value>
   </data>
   <data name="Snix_Execute" xml:space="preserve">
-    <value>A transport-level error has occurred when sending the request to the server.</value>
+    <value>Při odesílání požadavku na server došlo k chybě na úrovni přenosu.</value>
   </data>
   <data name="Snix_Read" xml:space="preserve">
-    <value>A transport-level error has occurred when receiving results from the server.</value>
+    <value>Při příjmu výsledků ze serveru došlo k chybě na úrovni přenosu.</value>
   </data>
   <data name="Snix_Close" xml:space="preserve">
-    <value>A transport-level error has occurred during connection clean-up.</value>
+    <value>Při čištění připojení došlo k chybě na úrovni přenosu.</value>
   </data>
   <data name="Snix_SendRows" xml:space="preserve">
-    <value>A transport-level error has occurred while sending information to the server.</value>
+    <value>Při odesílání informací na server došlo k chybě na úrovni přenosu.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>Při vyjednávání SSPI metodou handshake došlo k chybě na úrovni přenosu.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: nelze vytvořit pojmenovanou instanci.</value>
@@ -4003,13 +4003,13 @@
     <value>Byl zadán neplatný šifrovací algoritmus klíče: „{0}“. Očekávaná hodnota: {1}.</value>
   </data>
   <data name="TCE_InvalidKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
+    <value>Vnitřní chyba. Byl zadán neplatný šifrovací algoritmus klíče: {0}. Očekávaná hodnota: {1}.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithm" xml:space="preserve">
     <value>Šifrovací algoritmus klíče nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Key encryption algorithm cannot be null.</value>
+    <value>Vnitřní chyba. Šifrovací algoritmus klíče nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_EmptyColumnEncryptionKey" xml:space="preserve">
     <value>Je zadaný prázdný šifrovací klíč sloupce.</value>
@@ -4018,385 +4018,385 @@
     <value>Šifrovací klíč sloupce nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_EmptyEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Empty encrypted column encryption key specified.</value>
+    <value>Vnitřní chyba. Zadal se prázdný šifrovací klíč zašifrovaného sloupce.</value>
   </data>
   <data name="TCE_NullEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Encrypted column encryption key cannot be null.</value>
+    <value>Vnitřní chyba. Šifrovací klíč šifrovaného sloupce nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_LargeCertificatePathLength" xml:space="preserve">
-    <value>Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>Zadaná cesta k certifikátu má {0} bajtů, což překračuje maximální délku {1} bajtů.</value>
   </data>
   <data name="TCE_LargeCertificatePathLengthSysErr" xml:space="preserve">
-    <value>Internal error. Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>Vnitřní chyba. Zadaná cesta k certifikátu má {0} bajtů, což překračuje maximální délku {1} bajtů.</value>
   </data>
   <data name="TCE_NullCertificatePath" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;umístění certifikátu&gt;{2}&lt;úložiště certifikátu&gt;{2}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {0} nebo {1}.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>Vnitřní chyba. Cesta k certifikátu nemůže být null. Použijte následující formát: &lt;umístění certifikátu&gt;{2}&lt;úložiště certifikátu&gt;{2}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {0} nebo {1}.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Cesta k hlavnímu klíči sloupce nemůže být null. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{0}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_NullCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. Cesta k hlavnímu klíči sloupce nemůže být null. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{0}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_NullCngPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Cesta k hlavnímu klíči sloupce nemůže být null. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{0}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_NullCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. Cesta k hlavnímu klíči sloupce nemůže být null. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{0}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;umístění certifikátu&gt;{3}&lt;úložiště certifikátu&gt;{3}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {1} nebo {2}.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>Vnitřní chyba. Neplatná cesta k certifikátu: {0}. Použijte následující formát: &lt;umístění certifikátu&gt;{3}&lt;úložiště certifikátu&gt;{3}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {1} nebo {2}.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Neplatná cesta k hlavnímu klíči sloupce: {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. Neplatná cesta k hlavnímu klíči sloupce: {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Neplatná cesta k hlavnímu klíči sloupce: {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. Neplatná cesta k hlavnímu klíči sloupce: {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;umístění certifikátu&gt;{4}&lt;úložiště certifikátu&gt;{4}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {2} nebo {3}.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>Vnitřní chyba. Umístění certifikátu {0} v cestě k certifikátu {1} není platné. Použijte následující formát: &lt;umístění certifikátu&gt;{4}&lt;úložiště certifikátu&gt;{4}&lt;kryptografický otisk certifikátu&gt;, kde &lt;umístění certifikátu&gt; je {2} nebo {3}.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
-    <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>V cestě k certifikátu {0} je zadané neplatné úložiště certifikátů {1}. Očekávaná hodnota: {2}.</value>
   </data>
   <data name="TCE_InvalidCertificateStoreSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>Vnitřní chyba. V cestě k certifikátu {0} je zadané neplatné úložiště certifikátů {1}. Očekávaná hodnota: {2}.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprint" xml:space="preserve">
-    <value>Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>V cestě k certifikátu {0} je zadaný prázdný kryptografický otisk certifikátu.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprintSysErr" xml:space="preserve">
-    <value>Internal error. Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>Vnitřní chyba. V cestě k certifikátu {0} je zadaný prázdný kryptografický otisk certifikátu.</value>
   </data>
   <data name="TCE_EmptyCspName" xml:space="preserve">
-    <value>Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>V cestě k hlavnímu klíči sloupce je zadaný prázdný název zprostředkovatele kryptografických služeb Microsoft (CSP): {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. V cestě k hlavnímu klíči sloupce je zadaný prázdný název zprostředkovatele kryptografických služeb Microsoft (CSP): {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCngName" xml:space="preserve">
-    <value>Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>V cestě k hlavnímu klíči sloupce je zadaný prázdný název zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG): {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCngNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. V cestě k hlavnímu klíči sloupce je zadaný prázdný název zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG): {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>V cestě k hlavnímu klíči sloupce je zadaný prázdný identifikátor klíče: {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. V cestě k hlavnímu klíči sloupce je zadaný prázdný identifikátor klíče: {0}. Pro klíč uložený ve zprostředkovateli kryptografických služeb Microsoft (CSP) použijte tento formát: &lt;Název zprostředkovatele CSP&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>V cestě k hlavnímu klíči sloupce je zadaný prázdný identifikátor klíče: {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Vnitřní chyba. V cestě k hlavnímu klíči sloupce je zadaný prázdný identifikátor klíče: {0}. Pro klíč uložený ve zprostředkovateli rozhraní API kryptografických služeb Microsoft nové generace (CNG) použijte tento formát: &lt;Název zprostředkovatele CNG&gt;{1}&lt;Identifikátor klíče&gt;.</value>
   </data>
   <data name="TCE_InvalidCspName" xml:space="preserve">
-    <value>Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>Neplatný název zprostředkovatele kryptografických služeb Microsoft (CSP): {0}. Ověřte, jestli je název zprostředkovatele CSP v cestě k hlavnímu klíči sloupce {1} platný a nainstalovaný na počítači.</value>
   </data>
   <data name="TCE_InvalidCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>Vnitřní chyba. Neplatný název zprostředkovatele kryptografických služeb Microsoft (CSP): {0}. Ověřte, jestli je název zprostředkovatele CSP v cestě k hlavnímu klíči sloupce {1} platný a nainstalovaný na počítači.</value>
   </data>
   <data name="TCE_InvalidCspKeyId" xml:space="preserve">
-    <value>Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>Neplatný identifikátor klíče: {0}. Ověřte, jestli je identifikátor klíče v cestě k hlavnímu klíči sloupce {1} platný a je ve zprostředkovateli CSP.</value>
   </data>
   <data name="TCE_InvalidCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>Vnitřní chyba. Neplatný identifikátor klíče: {0}. Ověřte, jestli je identifikátor klíče v cestě k hlavnímu klíči sloupce {1} platný a je ve zprostředkovateli CSP.</value>
   </data>
   <data name="TCE_InvalidCngKey" xml:space="preserve">
-    <value>An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>Při otevírání klíče rozhraní API kryptografických služeb Microsoft nové generace (CNG) došlo k chybě: {0}. Ověřte, jestli má zprostředkovatel CNG platný název {1}, je na nainstalovaný počítači a existuje klíč {2}.</value>
   </data>
   <data name="TCE_InvalidCngKeySysErr" xml:space="preserve">
-    <value>Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>Vnitřní chyba. Při otevírání klíče rozhraní API kryptografických služeb Microsoft nové generace (CNG) došlo k chybě: {0}. Ověřte, jestli má zprostředkovatel CNG platný název {1}, je na nainstalovaný počítači a existuje klíč {2}.</value>
   </data>
   <data name="TCE_CertificateNotFound" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'.</value>
+    <value>Certifikát s kryptografickým otiskem {0} se v úložišti certifikátů {1} v umístění certifikátu {2} nenašel.</value>
   </data>
   <data name="TCE_CertificateNotFoundSysErr" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.</value>
+    <value>Certifikát s kryptografickým otiskem {0} se v úložišti certifikátů {1} v umístění certifikátu {2} nenašel. Ověřte, že je cesta k certifikátu v definici hlavního klíče sloupce v databázi správná a že je certifikát správně naimportovaný do umístění/úložiště certifikátu.</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersionInEncryptedCEK" xml:space="preserve">
     <value>Zadaný šifrovací klíč zašifrovaného sloupce obsahuje neplatnou verzi šifrovacího algoritmu „{0}“. Očekávaná verze je „{1}“.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect.</value>
+    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Délka šifrovaného textu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce šifrovaného textu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (certifikát) v {2}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta k certifikátu není správná.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect.</value>
+    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele kryptografických služeb Microsoft (CSP).</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Délka podpisu zadaného šifrovacího klíče šifrovaného sloupce {0} neodpovídá délce podpisu {1} při použití hlavního klíče sloupce (asymetrický klíč) v {2}. Důvodem může být poškozený šifrovací klíč zašifrovaného sloupce nebo zadaná nesprávná cesta zprostředkovatele rozhraní API kryptografických služeb Microsoft nové generace (CNG).</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce se neshoduje s podpisem vypočítaným s hlavním klíčem sloupce (certifikátem) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Zadaný podpis šifrovacího klíče šifrovaného sloupce neodpovídá podpisu vypočítanému pomocí hlavního klíče sloupce (asymetrický klíč) v {0}. Šifrovací klíč šifrovaného sloupce může být poškozený nebo zadaná cesta není správná.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>Certifikát zadaný v cestě ke klíči {0} nemá privátní klíč k šifrování šifrovacího klíče sloupce. Zkontrolujte, že je certifikát správně naimportovaný.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKeySysErr" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>Certifikát zadaný v cestě ke klíči {0} nemá privátní klíč k dešifrování šifrovacího klíče sloupce. Zkontrolujte, že je certifikát správně naimportovaný.</value>
   </data>
   <data name="TCE_NullColumnEncryptionKeySysErr" xml:space="preserve">
-    <value>Internal error. Column encryption key cannot be null.</value>
+    <value>Vnitřní chyba. Šifrovací klíč sloupce nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>Šifrovací klíč sloupce se úspěšně dešifroval, ale jeho délka {1} se neshoduje s délkou {2} pro algoritmus {0}. Ověřte šifrovanou hodnotu šifrovacího klíče sloupce v databázi.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
-    <value>Encryption type '{1}' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm '{0}' are: {2}.</value>
+    <value>Typ šifrování {1} zadaný pro sloupec v databázi není platný nebo je poškozený. Platné typy šifrování pro algoritmus {0} jsou: {2}.</value>
   </data>
   <data name="TCE_NullPlainText" xml:space="preserve">
-    <value>Internal error. Plaintext value cannot be null.</value>
+    <value>Vnitřní chyba. Hodnota prostého textu nemůže být null.</value>
   </data>
   <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes).</value>
+    <value>Nelze zašifrovat. Výsledkem šifrování je {0} bajtů šifrovaného textu, což je více než maximální povolený limit {1} bajtů. Zadaná hodnota prostého textu je pravděpodobně příliš velká (velikost prostého textu je: {2} bajtů).</value>
   </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
-    <value>Internal error. Ciphertext value cannot be null.</value>
+    <value>Vnitřní chyba. Hodnota šifrovaného textu nemůže být null.</value>
   </data>
   <data name="TCE_InvalidCipherTextSize" xml:space="preserve">
-    <value>Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption.</value>
+    <value>Zadaný šifrovaný text má neplatnou velikost {0} bajtů, což je méně než minimální vyžadovaná velikost pro šifrování ({1} bajtů).</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersion" xml:space="preserve">
-    <value>The specified ciphertext's encryption algorithm version '{0}' does not match the expected encryption algorithm version '{1}'.</value>
+    <value>Zadaná verze {0} šifrovacího algoritmu šifrovaného textu se neshoduje s očekávanou verzí {1} tohoto algoritmu.</value>
   </data>
   <data name="TCE_InvalidAuthenticationTag" xml:space="preserve">
-    <value>Specified ciphertext has an invalid authentication tag.</value>
+    <value>Zadaný šifrovaný text nemá platnou ověřovací značku.</value>
   </data>
   <data name="TCE_NullColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Internal error. Encryption algorithm cannot be null. Valid algorithms are: {0}.</value>
+    <value>Vnitřní chyba. Šifrovací algoritmus nemůže být null. Platné algoritmy jsou: {0}.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatParameterMetadata" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The parameter metadata resultset is missing.</value>
+    <value>Vnitřní chyba. Výsledek vrácený z {0} je neplatný. Chybí sada výsledků dotazu metadat parametru.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatAttestationInfo" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The attestation information resultset is missing for enclave type '{1}'. </value>
+    <value>Vnitřní chyba. Výsledek vrácený z {0} je neplatný. Pro typ enklávy {1} chybí sada výsledků informací o ověření identity. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>Vnitřní chyba. Při naplňování metadat enklávy došlo k chybě. V metadatech šifrování vrácených systémem SQL Server chybí odkazované pořadí šifrovacího klíče sloupce {0}. Maximální pořadí je {1}. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalParameterMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>Vnitřní chyba. Při naplňování metadat parametru došlo k chybě. V metadatech šifrování vrácených systémem SQL Server chybí odkazované pořadí šifrovacího klíče sloupce {0}. Maximální pořadí je {1}. </value>
   </data>
   <data name="TCE_MultipleRowsReturnedForAttestationInfo" xml:space="preserve">
-    <value>Internal error. Error occurred when parsing the results of '{0}'. The attestation information resultset is expected to contain only one row, but it contains multiple rows.</value>
+    <value>Vnitřní chyba. Při parsování výsledků {0} došlo k chybě. Očekává se, že sada výsledků informací o ověřování identity bude obsahovat jen jeden řádek, ale obsahuje jich více.</value>
   </data>
   <data name="TCE_ParamEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameter '{1}' in statement or procedure '{2}' is missing in resultset returned by {0}.</value>
+    <value>Vnitřní chyba. V sadě výsledků dotazu vrácené z {0} chybí metadata pro parametr {1} v příkazu nebo proceduře {2}.</value>
   </data>
   <data name="TCE_ProcEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameters for command '{1}' in a batch is missing in the resultset returned by {0}.</value>
+    <value>Vnitřní chyba. Ve sadě výsledků dotazu, kterou vrátil(a): {0} chybí metadata pro parametry pro příkaz {1} v dávce.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureVerificationFailed" xml:space="preserve">
-    <value>The signature returned by SQL Server for the column master key, specified in key path '{0}', is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance.</value>
+    <value>Podpis, který vrátil SQL Server pro hlavní klíč sloupce zadaný v cestě ke klíči {0}, není platný (neodpovídá vypočítanému podpisu). Vytvořte znovu metadata hlavního klíče sloupce a ujistěte se, že podpis v metadatech se vypočítal pomocí hlavního klíče sloupce, na který metadata odkazují. Pokud se problém nevyřeší, požádejte prosím o pomoc Microsoft.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureNotFound" xml:space="preserve">
-    <value>Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path '{0}', cannot be null or empty.</value>
+    <value>Vnitřní chyba. Podpis, který vrátil SQL Server pro hlavní klíč sloupce s podporou enkláv zadaný v cestě ke klíči {0}, nemůže být null ani prázdný.</value>
   </data>
   <data name="TCE_UnableToVerifyColumnMasterKeySignature" xml:space="preserve">
-    <value>Unable to verify a column master key signature. Error message: {0} </value>
+    <value>Nepovedlo se ověřit podpis hlavního klíče sloupce. Chybová zpráva: {0} </value>
   </data>
   <data name="TCE_ParamEncryptionFailed" xml:space="preserve">
-    <value>Failed to encrypt parameter '{0}'.</value>
+    <value>Parametr {0} se nepodařilo zašifrovat.</value>
   </data>
   <data name="TCE_ColumnDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt column '{0}'.</value>
+    <value>Sloupec {0} se nepodařilo dešifrovat.</value>
   </data>
   <data name="TCE_ParamDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt parameter '{0}'.</value>
+    <value>Parametr {0} se nepodařilo dešifrovat.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Encryption algorithm '{0}' for the column in the database is either invalid or corrupted. Valid algorithms are: {1}.</value>
+    <value>ID šifrovacího algoritmu {0} pro sloupec v databázi není platné nebo je poškozené. Platné algoritmy jsou: {1}.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithmId" xml:space="preserve">
-    <value>Encryption algorithm id '{0}' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: {1}.</value>
+    <value>ID šifrovacího algoritmu {0} pro sloupec v databázi není platné nebo je poškozené. Platná ID šifrovacího algoritmu: {1}.</value>
   </data>
   <data name="TCE_UnsupportedNormalizationVersion" xml:space="preserve">
-    <value>Normalization version '{0}' received from {2} is not supported. Valid normalization versions are: {1}.</value>
+    <value>Normalizační verze {0} přijatá z {2} není podporovaná. Platné normalizační verze jsou: {1}.</value>
   </data>
   <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key. Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Šifrovací klíč sloupce se nepodařilo dešifrovat. Neplatný název zprostředkovatele úložiště klíčů: {0}. Název zprostředkovatele úložiště klíčů musí označovat buď systémového zprostředkovatele úložiště klíčů, nebo vlastního registrovaného zprostředkovatele úložiště klíčů. Platné názvy systémových zprostředkovatelů úložiště klíčů jsou: {1}. Platné (aktuálně registrované) názvy vlastních zprostředkovatelů úložiště klíčů jsou: {2}. Ověřte prosím informace o zprostředkovateli úložiště klíčů v definicích hlavních klíčů sloupce v databázi a zkontrolujte, jestli jsou všichni zprostředkovatelé úložiště vlastních klíčů použití ve vaší aplikaci správně zaregistrovaní.</value>
   </data>
   <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Šifrovací klíč sloupce se nepodařilo dešifrovat pomocí zprostředkovatele úložiště klíčů: {0}. Posledních 10 bajtů šifrovacího klíče šifrovaného sloupce je: {1}.</value>
   </data>
   <data name="TCE_UntrustedKeyPath" xml:space="preserve">
-    <value>Column master key path '{0}' received from server '{1}' is not a trusted key path.</value>
+    <value>Cesta k hlavnímu klíči sloupce {0}, kterou vrátil server {1}, není důvěryhodná cesta ke klíči.</value>
   </data>
   <data name="TCE_KeyDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Šifrovací klíč sloupce se nepodařilo dešifrovat pomocí zprostředkovatele úložiště klíčů: {0}. Ověřte vlastnosti šifrovacího klíče sloupce a jeho hlavního klíče sloupce ve vaší databázi. Posledních 10 bajtů šifrovacího klíče šifrovaného sloupce je: {1}.</value>
   </data>
   <data name="TCE_UnsupportedDatatype" xml:space="preserve">
-    <value>Encryption and decryption of data type '{0}' is not supported.</value>
+    <value>Šifrování a dešifrování datového typu {0} se nepodporuje.</value>
   </data>
   <data name="TCE_DecryptionFailed" xml:space="preserve">
-    <value>Decryption failed. The last 10 bytes of the encrypted column encryption key are: '{0}'. The first 10 bytes of ciphertext are: '{1}'.</value>
+    <value>Dešifrování selhalo. Posledních 10 bajtů šifrovacího klíče šifrovaného sloupce je: {0}. Prvních 10 bajtů šifrovaného textu je: {1}.</value>
   </data>
   <data name="TCE_ExceptionWhenGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error encountered while generating package to be sent to enclave. Error message: {0}</value>
+    <value>Při generování balíčku, který se má poslat do enklávy, došlo k chybě. Chybová zpráva: {0}</value>
   </data>
   <data name="TCE_InvalidKeyIdUnableToCastToUnsignedShort" xml:space="preserve">
-    <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
+    <value>Vnitřní chyba. Zadané ID klíče {0} není platné. Při převodu ID klíče na unsigned short došlo k chybě. Chybová zpráva: {1}</value>
   </data>
   <data name="TCE_InvalidDatabaseIdUnableToCastToUnsignedInt" xml:space="preserve">
-    <value>Internal Error. The given database id '{0}' is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}</value>
+    <value>Vnitřní chyba. Zadané ID databáze {0} není platné. Při převodu ID databáze na unsigned int došlo k chybě. Chybová zpráva: {1}</value>
   </data>
   <data name="TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt" xml:space="preserve">
-    <value>Invalid attestation parameters specified by the enclave provider for enclave type '{0}'. Error occurred when converting the value '{1}' of parameter '{2}' to unsigned int. Error Message: {3}</value>
+    <value>Zprostředkovatel enklávy zadal pro typ enklávy {0} neplatné parametry ověření identity. Při převodu hodnoty {1} parametru {2} na unsigned int došlo k chybě. Chybová zpráva: {3}</value>
   </data>
   <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Neplatný název zprostředkovatele úložiště klíčů: {0}. Název zprostředkovatele úložiště klíčů musí označovat buď systémového zprostředkovatele úložiště klíčů, nebo vlastního registrovaného zprostředkovatele úložiště klíčů. Platné názvy systémových zprostředkovatelů úložiště klíčů jsou: {1}. Platné (aktuálně registrované) názvy vlastních zprostředkovatelů úložiště klíčů jsou: {2}. Ověřte prosím informace o zprostředkovateli úložiště klíčů v definicích hlavních klíčů sloupce v databázi a zkontrolujte, jestli jsou všichni zprostředkovatelé úložiště vlastních klíčů použití ve vaší aplikaci správně zaregistrovaní.</value>
   </data>
   <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
-    <value>Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0} </value>
+    <value>Vnitřní chyba.  Nepovedlo se zašifrovat balíček bajtů, který se má poslat do enklávy. Chybová zpráva: {0} </value>
   </data>
   <data name="TCE_OffsetOutOfBounds" xml:space="preserve">
-    <value>Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument '{0}' for method {1}.{2} is out of bounds.</value>
+    <value>Vnitřní chyba. Nepovedlo se serializovat klíče, které se mají poslat do enklávy. Počáteční posun určený argumentem {0} pro metodu {1}.{2} je mimo rozsah.</value>
   </data>
   <data name="TCE_InsufficientBuffer" xml:space="preserve">
-    <value>Internal Error. The buffer specified by argument '{0}' for method '{1}.{2}' has insufficient space.</value>
+    <value>Vnitřní chyba. Vyrovnávací paměť určená argumentem {0} pro metodu {1}.{2} nemá dostatek místa.</value>
   </data>
   <data name="TCE_ColumnEncryptionKeysNotFound" xml:space="preserve">
-    <value>Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave.</value>
+    <value>Vnitřní chyba. Při pokusu poslat klíče enklávě se nenašly šifrovací klíče šifrovaného sloupce.</value>
   </data>
   <data name="TCE_NullEnclaveSessionDuringQueryExecution" xml:space="preserve">
-    <value>Internal Error. Enclave session is null during query execution. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>Vnitřní chyba. Relace enklávy je při spouštění dotazu null. Typ enklávy je {0} a enclaveAttestationUrl je {1}.</value>
   </data>
   <data name="TCE_NullEnclavePackageForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>Vnitřní chyba. Balíček enklávy je při spouštění dotazu založeného na enklávě null. Typ enklávy je {0} a enclaveAttestationUrl je {1}.</value>
   </data>
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
-    <value>Attestation information was not returned by SQL Server. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>SQL Server nevrátil informace o ověření identity. Typ enklávy je {0} a adresa URL pro ověření identity enklávy je {1}.</value>
   </data>
   <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Unable to establish secure channel. Error Message: {0}</value>
+    <value>Nelze vytvořit zabezpečený kanál (zprostředkovatel Schannel). Chybová zpráva: {0}</value>
   </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Null argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be null.</value>
+    <value>Vnitřní chyba. Při vytváření objektu typu {1} se zadal argument {0} s hodnotou null. Argument {0} nemůže mít hodnotu null.</value>
   </data>
   <data name="TCE_EmptyArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Empty argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be empty.</value>
+    <value>Vnitřní chyba. Při vytváření objektu typu {1} se zadal prázdný argument {0}. Argument {0} nemůže být prázdný.</value>
   </data>
   <data name="TCE_NullArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be null when executing method '{1}.{2}'.</value>
+    <value>Vnitřní chyba. Argument {0} nemůže být při spouštění metody {1}.{2} null.</value>
   </data>
   <data name="TCE_EmptyArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be empty when executing method '{1}.{2}'.</value>
+    <value>Vnitřní chyba. Argument {0} nemůže být při spouštění metody {1}.{2} prázdný.</value>
   </data>
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
-    <value>Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure.</value>
+    <value>Určuje koncový bod služby ověření identity enklávy, pomocí kterého se ověří, jestli enkláva nakonfigurovaná v instanci systému SQL Server pro výpočty se sloupci databáze šifrovanými funkcí Always Encrypted je platná a zabezpečená.</value>
   </data>
   <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}</value>
+    <value>Nepovedlo se přečíst oddíl konfigurace pro zprostředkovatele enkláv. Ujistěte se, že oddíl má v konfiguračním souboru vaší aplikace správný formát. Chybová zpráva: {0}</value>
   </data>
   <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Failed to instantiate an enclave provider with type '{1}' for name '{0}'. Error message: {2} </value>
+    <value>Nepovedlo se vytvořit instanci zprostředkovatele enklávy s typem {1} pro název {0}. Chybová zpráva: {2} </value>
   </data>
   <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty.</value>
+    <value>Vnitřní chyba. Parametr SqlColumnEncryptionEnclaveProviderName nemůže mít hodnotu null nebo být prázdný.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>Při čtení sady výsledků dotazu {0} došlo k chybě. V připojovacím řetězci se nezadala adresa URL pro ověření identity, ale dotaz vyžaduje výpočty v enklávě.  Typ enklávy je {1}. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>Při generování balíčku enklávy došlo k chybě. V připojovacím řetězci se nezadala adresa URL pro ověření identity, ale dotaz vyžaduje výpočty v enklávě.  Typ enklávy je {0}. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations.</value>
+    <value>Vnitřní chyba. Při spouštění dotazu, který vyžaduje výpočty v enklávě, je typ enklávy přijatý ze systému SQL Server null nebo prázdný.</value>
   </data>
   <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section.</value>
+    <value>Aby se dotaz mohl spustit, vyžadují se výpočty v enklávě, ale v konfiguraci aplikace chybí oddíl zprostředkovatele enklávy.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string. </value>
+    <value>Pro typu enklávy {0} a protokol ověření identity {1} se nenašel žádný zprostředkovatel enklávy. Zadejte prosím v připojovacím řetězci správný protokol ověření identity. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
-    <value>Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>Nepovedlo se komunikovat s enklávou. Od zprostředkovatele enklávy byly přijaty informace o relaci enklávy, které jsou null. Typ enklávy je {0} a adresa URL pro ověření identity enklávy je {1}.</value>
   </data>
   <data name="TCE_ParamInvalidForceColumnEncryptionSetting" xml:space="preserve">
-    <value>Cannot set {0} for {3} '{1}' because encryption is not enabled for the statement or procedure '{2}'.</value>
+    <value>Pro {3} ({1}) nejde nastavit {0}, protože šifrování není pro příkaz nebo proceduru {2} povolené.</value>
   </data>
   <data name="TCE_ParamUnExpectedEncryptionMetadata" xml:space="preserve">
-    <value>Cannot execute statement or procedure '{1}' because {2} was set for {3} '{0}' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.</value>
+    <value>Příkaz nebo procedura {1} se nedá spustit, protože pro:{3} ({0}) bylo nastavené {2} a databáze očekává, že se tento parametr pošle jako prostý text. Může to být důsledek chyby v konfiguraci.</value>
   </data>
   <data name="TCE_NotSupportedByServer" xml:space="preserve">
-    <value>{0} instance in use does not support column encryption.</value>
+    <value>Používaná instance {0} nepodporuje šifrování sloupce.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>V připojovacím řetězci jste zadali adresu URL a protokol ověřování identity enklávy, ale použitý SQL Server nepodporuje výpočty založené na enklávě. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>V připojovacím řetězci jste zadali adresu URL ověřování identity enklávy, ale použitý SQL Server nepodporuje výpočty založené na enklávě. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>V připojovacím řetězci jste zadali protokol ověřování identity, ale použitý SQL Server nepodporuje výpočty založené na enklávě. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>V připojovacím řetězci jste zadali adresu URL pro ověření identity enklávy, ale SQL Server nevrátil typ enklávy. Ujistěte se prosím, že máte v instanci správně nakonfigurovaný typ enklávy. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
-    <value>{0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates.</value>
+    <value>Hodnota {0} musí být při provádění dávkových aktualizací u všech příkazů identické ({1}, {2}, {3} {4}).</value>
   </data>
   <data name="TCE_StreamNotSupportOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' as a {1} is not supported.</value>
+    <value>Načtení šifrovaného sloupce {0} jako {1} se nepodporuje.</value>
   </data>
   <data name="TCE_SequentialAccessNotSupportedOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' with {1} is not supported.</value>
+    <value>Načtení šifrovaného sloupce {0} s {1} se nepodporuje.</value>
   </data>
   <data name="TCE_CanOnlyCallOnce" xml:space="preserve">
-    <value>Key store providers cannot be set more than once.</value>
+    <value>Zprostředkovatele úložišť klíčů nejde nastavit víckrát než jednou.</value>
   </data>
   <data name="TCE_NullCustomKeyStoreProviderDictionary" xml:space="preserve">
-    <value>Column encryption key store provider dictionary cannot be null. Expecting a non-null value.</value>
+    <value>Slovník zprostředkovatelů úložišť šifrovacích klíčů sloupce nemůže mít hodnotu null. Očekává se hodnota jiná než null.</value>
   </data>
   <data name="TCE_InvalidCustomKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name '{0}'. '{1}' prefix is reserved for system key store providers.</value>
+    <value>Neplatný název zprostředkovatele úložiště klíčů {0}. Předpona {1} je rezervovaná pro systémové zprostředkovatele úložiště klíčů.</value>
   </data>
   <data name="TCE_NullProviderValue" xml:space="preserve">
-    <value>Null reference specified for key store provider '{0}'. Expecting a non-null value.</value>
+    <value>Pro zprostředkovatele úložiště klíčů {0} je zadaný odkaz null. Očekává se hodnota jiná než null.</value>
   </data>
   <data name="TCE_EmptyProviderName" xml:space="preserve">
-    <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
+    <value>Je zadaný neplatný název zprostředkovatele úložiště klíčů. Názvy zprostředkovatelů úložišť klíčů nemůžou být null ani prázdné.</value>
   </data>
   <data name="TCE_SqlCommand_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Column encryption setting for the command. Overrides the connection level default.</value>
+    <value>Nastavení šifrování sloupce pro příkaz. Přepíše výchozí úroveň připojení.</value>
   </data>
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Default column encryption setting for all the commands on the connection.</value>
+    <value>Výchozí nastavení šifrování sloupce pro všechny příkazy v rámci připojení</value>
   </data>
   <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Forces parameter to be encrypted before sending sensitive data to server. </value>
+    <value>Vynutí, aby se parametry před posláním citlivých dat na server zašifrovaly. </value>
   </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
-    <value>Dictionary object containing SQL Server names and their trusted column master key paths.</value>
+    <value>Objekt slovníku obsahující názvy systémů SQL Server a jejich důvěryhodné cesty k hlavnímu klíči sloupce</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
     <value>Došlo k příliš mnoha přesměrováním. Na jedno přihlášení se povoluje jenom tento počet přesměrování: {0}.</value>
@@ -4456,16 +4456,16 @@
     <value>.database.chinacloudapi.cn</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
-    <value>Defines whether query metadata caching is enabled.</value>
+    <value>Definuje, zda je povolené ukládání metadat dotazu do mezipaměti.</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionKeyCacheTtl" xml:space="preserve">
-    <value>Defines the time-to-live of entries in the column encryption key cache.</value>
+    <value>Definuje hodnotu time-to-live pro záznamy v mezipaměti šifrovacího klíče sloupce.</value>
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
-    <value>Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Časový limit provedení vypršel.  Před dokončením operace vypršel časový limit nebo server neodpovídá.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>Ověření tokenu ověření identity se nezdařilo. Podpis tokenu neodpovídá vypočítanému podpisu s využitím veřejného klíče načteného z koncového bodu veřejného klíče ověření identity v {0}. Ověřte mapování DNS pro koncový bod. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649. Pokud je to správně, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Při opakovaném pokusu o stažení kořenového certifikátu HGS po počátečním požadavku došlo k vnitřní chybě. Obraťte se na služby zákaznické podpory.</value>
@@ -4486,10 +4486,10 @@
     <value>Ověření tokenu ověření identity se nezdařilo. Token má neplatný formát. Obraťte se na služby zákaznické podpory. Podrobnosti o chybě: „{0}“.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Služba ověření identity vrátila kořenový certifikát HGS s vypršenou platností pro adresu URL ověření identity {0}. Zkontrolujte kořenový certifikát služby HGS nakonfigurovaný pro vaši instanci HGS. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>Získaný kořenový certifikát HGS pro adresu URL ověření identity {0} má neplatný formát. Ověřte, že je adresa URL ověření identity správná a že je server HGS online a plně inicializovaný. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud chcete získat další podporu, obraťte se na oddělení služeb zákazníkům. Podrobnosti o chybě: {1}.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Ověření tokenu ověření identity se nezdařilo. Nelze načíst veřejný klíč z koncového bodu veřejného klíče ověření identity nebo má načtený klíč neplatný formát. Podrobnosti o chybě: „{0}“.</value>
@@ -4507,106 +4507,106 @@
     <value>Ověření tokenu ověření identity se během ověřování podpisu nezdařilo. Výjimka: „{0}“.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Ověření tokenu ověření identity se nezdařilo. Deklarace identity {0} v tokenu má neplatnou hodnotu {1}. Ověřte zásady ověření identity. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649. Pokud jsou zásady správné, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Ověření tokenu ověření identity se nezdařilo. V tokenu chybí deklarace identity {0}. Ověřte zásady ověření identity. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2157649. Pokud jsou zásady správné, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Nepovedlo se zkontrolovat, jestli je enkláva spuštěná v produkčním režimu. Obraťte se na služby zákaznické podpory.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Zásady enklávy se nepovedlo ověřit kvůli rozdílu mezi očekávanými a skutečnými hodnotami zásad pro vlastnost {0}. Skutečnost: {1}, očekáváno: {2}. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Ověření podpisu sestavy enklávy se nezdařilo. Podpis sestavy neodpovídá podpisu vypočítanému pomocí kořenového certifikátu HGS. Ověřte mapování DNS pro koncový bod. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud je to správně, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Sestava enklávy přijatá z SQL Server nemá správný formát. Obraťte se na služby zákaznické podpory.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+    <value>Nepovedlo se vytvořit řetěz důvěryhodnosti mezi sestavou stavu hostitele enklávy a kořenovým certifikátem HGS pro adresu URL ověření identity {0} se stavem {1}. Ověřte, že adresa URL ověření identity odpovídá adrese URL nakonfigurované v systému SQL Server. Další podrobnosti najdete na https://go.microsoft.com/fwlink/?linkid=2160553. Pokud klient i SQL Server používají stejnou službu ověření identity, obraťte se na oddělení služeb zákazníkům.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
-    <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
+    <value>Určuje protokol ověření identity pro odpovídající službu ověření identity enklávy.</value>
   </data>
   <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
-    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+    <value>Určuje předvolbu IP adresy při připojování k instancím SQL.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
-    <value>The enclave type '{0}' returned from the server is not supported.</value>
+    <value>Typ enklávy {0} vrácený ze serveru není podporován.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
-    <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
+    <value>Nepovedlo se inicializovat připojení. Protokol ověření identity {0} nepodporuje typ enklávy {1}.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Při generování balíčku enklávy došlo k chybě. V připojovacím řetězci nebyl zadán protokol ověření identity, ale dotaz vyžaduje výpočty v enklávě.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>Velikost UDT musí být menší než {1}, velikost: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Upozornění zabezpečení: Vyjednaný protokol {0} je nezabezpečený protokol a je podporován pouze z důvodu zpětné kompatibility. Doporučená verze protokolu je TLS 1.2 a novější.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
-    <value>The specified value is not valid in the '{0}' enumeration.</value>
+    <value>Zadaná hodnota není ve výčtu {0} platná.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>Zadané informace o pořadí sloupců nejsou platné.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>Sloupec {0} byl zadán více než jednou.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>Seřazený sloupec {0} není v cílové tabulce platný.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>V informacích o pořadí sloupců nemůže být nezadané pořadí řazení.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>V tomto kontextu je zadáno nepodporované ověřování: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Vypršel časový limit interaktivního ověřování služby Active Directory. Odpověď uživatele na žádost o ověření trvala příliš dlouho.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Pokud je nastavená vlastnost Credential, nejde použít možnost Authentication=Active Directory Interactive.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Interactive, nejde nastavit vlastnost Credential.</value>
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
-    <value>Server Process Id (SPID) of the active connection.</value>
+    <value>ID procesu serveru (SPID) aktivního připojení</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Vypršel časový limit ověřování typu Active Directory Device Code Flow. Odpověď uživatele na žádost o ověření trvala příliš dlouho.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.</value>
+    <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Device Code Flow, nejde nastavit vlastnost Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>Pokud bylo v připojovacím řetězci zadáno nastavení Authentication={0}, nejde nastavit vlastnost Credential.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow', if the Credential property has been set.</value>
+    <value>Pokud je nastavená vlastnost Credential, nejde použít možnost Authentication=Active Directory Device Code Flow.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>Pokud je nastavená vlastnost Credential, nejde použít možnost Authentication={0}.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>Při deserializaci byl zjištěn neočekávaný typ.</value>
   </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
-    <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
+    <value>Hodnota {0} je mimo rozsah. Musí být v rozmezí od {1} do {2}.</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry has been canceled at attempt {0}.</value>
+    <value>Opakování bylo zrušeno při pokusu {0}.</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
+    <value>Počet opakování překročil maximální počet {0} pokusů.</value>
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
-    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+    <value>{0} není menší než {1}; {2} nemůže být větší než {3}.</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
     <value>Cílové pole není dostatečně dlouhé, aby bylo možné zkopírovat všechny položky v kolekci. Zkontrolujte index a délku pole.</value>
@@ -4615,37 +4615,37 @@
     <value>Pro požadovanou akci jsou podporována jen jednorozměrná pole.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>Zadanou položku nelze odebrat, protože nebyla nalezena v zadané kolekci.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Vyžaduje se nezáporné číslo.</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>Pokud je u nadřazeného příkazu povolena vlastnost EnableOptimizedParameterBinding, parametr {0} nemůže mít hodnotu Direction Output nebo InputOutput.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>Při načítání přístupového tokenu pomocí metody ověřování {0} vypršel časový limit připojení. Poslední chyba: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>Hlavní název služby (SPN) partnera pro převzetí služeb při selhání</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>Hlavní název služby (SPN) serveru</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>Při cílení na .NET Framework se nepodporuje platforma {0}.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+    <value>Nelze nastavit vlastnost AccessToken, pokud byla nastavena vlastnost AccessTokenCallback.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+    <value>Pokud je klíčové slovo Integrated Security připojovacího řetězce nastavené na hodnotu true nebo SSPI, nejde nastavit vlastnost AccessTokenCallback.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+    <value>Pokud je v připojovacím řetězci nastavená možnost Authentication=Active Directory Default, nejde nastavit vlastnost AccessTokenCallback.</value>
   </data>
   <data name="event_OperationReturnedSomething" xml:space="preserve">
-    <value>{0} returned {1}.</value>
+    <value>Operace {0} vrátila {1}.</value>
   </data>
   <data name="net_auth_message_not_encrypted" xml:space="preserve">
     <value>Chyba protokolu: Přijatá zpráva obsahuje platný podpis, ale nebyla zašifrována podle požadavků platné úrovně ochrany.</value>
@@ -4714,13 +4714,13 @@
     <value>Podpora vazeb kanálů v jiných operačních systémech než Windows není podporována.</value>
   </data>
   <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Target name should be non empty if default credentials are passed.</value>
+    <value>Název cíle by neměl být prázdný, pokud jsou předány výchozí přihlašovací údaje.</value>
   </data>
   <data name="net_nego_protection_level_not_supported" xml:space="preserve">
     <value>Požadovaná úroveň ochrany není podporovaná s aktuálně nainstalovanou implementací rozhraní GSSAPI.</value>
   </data>
   <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Server implementation is not supported.</value>
+    <value>Implementace serveru není podporována.</value>
   </data>
   <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
     <value>Ověřování NTLM není možné s výchozími přihlašovacími údaji na této platformě.</value>
