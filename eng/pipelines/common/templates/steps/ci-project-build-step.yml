@@ -34,14 +34,19 @@ parameters:
       - all
 
 steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: sdk
+    useGlobalJson: true
+
 - task: Powershell@2
-  displayName: 'List Environment Variables [debug]'
+  displayName: 'List SDK versions'
   inputs:
     targetType: 'inline'
     script: 'dotnet --list-sdks'
 
 - task: Powershell@2
-  displayName: 'List Environment Variables [debug]'
+  displayName: 'List runtime versions'
   inputs:
     targetType: 'inline'
     script: 'dotnet --list-runtimes'
