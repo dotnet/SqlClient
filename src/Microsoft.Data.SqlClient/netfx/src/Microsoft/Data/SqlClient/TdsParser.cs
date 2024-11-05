@@ -285,13 +285,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get if data classification is enabled by the server.
         /// </summary>
-        internal bool IsDataClassificationEnabled
-        {
-            get
-            {
-                return (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
-            }
-        }
+        internal bool IsDataClassificationEnabled =>
+                (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
 
         /// <summary>
         /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
@@ -4333,8 +4328,7 @@ namespace Microsoft.Data.SqlClient
 
             // read how many FedAuthInfo options there are
             uint optionsCount;
-            TdsOperationStatus result = stateObj.TryReadUInt32(out optionsCount);
-            if (result != TdsOperationStatus.Done)
+            if (stateObj.TryReadUInt32(out optionsCount) != TdsOperationStatus.Done)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read CountOfInfoIDs in FEDAUTHINFO token stream.");
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadCountOfInfoIds);
