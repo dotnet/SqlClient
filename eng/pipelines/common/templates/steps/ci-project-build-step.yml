@@ -38,11 +38,13 @@ steps:
   inputs:
     packageType: sdk
     version: '8.x'
+    performMultiLevelLookup: true
 
 - task: UseDotNet@2
   inputs:
     packageType: sdk
     useGlobalJson: true
+    performMultiLevelLookup: true
 
 - task: Powershell@2
   displayName: 'List SDK versions'
