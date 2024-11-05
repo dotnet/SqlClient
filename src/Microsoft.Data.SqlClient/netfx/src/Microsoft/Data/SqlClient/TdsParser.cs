@@ -10449,15 +10449,15 @@ namespace Microsoft.Data.SqlClient
                                     String[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
                                     if (!ADP.IsEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
                                     if (!ADP.IsEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
                                     if (TdsEnums.MAX_SERVERNAME < names[2].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
 
                                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
@@ -10512,7 +10512,9 @@ namespace Microsoft.Data.SqlClient
                                         stateObj.WriteByte(TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION);
                                 }
                                 else
+                {
                                     stateObj.WriteByte(precision);
+                }
 
                                 stateObj.WriteByte(scale);
                             }
@@ -10898,7 +10900,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static readonly IEnumerable<Server.SqlDataRecord> __tvpEmptyValue = new List<Server.SqlDataRecord>().AsReadOnly();
         private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //
@@ -10925,7 +10926,7 @@ namespace Microsoft.Data.SqlClient
                 // Value for TVP default is empty list, not NULL
                 if (SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued)
                 {
-                    value = __tvpEmptyValue;
+                    value = Array.Empty<Server.SqlDataRecord>();
                     typeCode = ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
                 }
                 else
@@ -11949,25 +11950,25 @@ namespace Microsoft.Data.SqlClient
 
                 if (callbackId == null)
                 {
-                    throw ADP.ArgumentNull("CallbackId");
+                    throw ADP.ArgumentNull(nameof(callbackId));
                 }
                 else if (UInt16.MaxValue < callbackId.Length)
                 {
-                    throw ADP.ArgumentOutOfRange("CallbackId");
+                    throw ADP.ArgumentOutOfRange(nameof(callbackId));
                 }
 
                 if (service == null)
                 {
-                    throw ADP.ArgumentNull("Service");
+                    throw ADP.ArgumentNull(nameof(service));
                 }
                 else if (UInt16.MaxValue < service.Length)
                 {
-                    throw ADP.ArgumentOutOfRange("Service");
+                    throw ADP.ArgumentOutOfRange(nameof(service));
                 }
 
                 if (-1 > timeout)
                 {
-                    throw ADP.ArgumentOutOfRange("Timeout");
+                    throw ADP.ArgumentOutOfRange(nameof(timeout));
                 }
 
                 // Header Length (uint) (included in size) (already written to output buffer)
@@ -12551,14 +12552,8 @@ namespace Microsoft.Data.SqlClient
                             _parser.WriteInt(count, _stateObj); // write length of chunk
                             task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
                         }
-                        if (task == null)
-                        {
-                            return Task.CompletedTask;
-                        }
-                        else
-                        {
-                            return task;
-                        }
+                        
+                        return task ?? Task.CompletedTask;
                     }
 #if DEBUG
                     finally
