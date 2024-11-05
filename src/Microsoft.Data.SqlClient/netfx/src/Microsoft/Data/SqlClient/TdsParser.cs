@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
 {
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
-    sealed internal partial class TdsParser
+    internal sealed partial class TdsParser
     {
         private static int _objectTypeCount; // EventSource Counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
@@ -160,8 +160,8 @@ namespace Microsoft.Data.SqlClient
         //
 
         // Constants
-        const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
-        const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
+        private const int constBinBufferSize = 4096; // Size of the buffer used to read input parameter of type Stream
+        private const int constTextBufferSize = 4096; // Size of the buffer (in chars) user to read input parameter of type TextReader
         private const string enableTruncateSwitch = "Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"; // for applications that need to maintain backwards compatibility with the previous behavior
 
         // State variables
@@ -3770,7 +3770,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Check if column encryption was on and feature wasn't acknowledged and we aren't going to be routed to another server.
-            if (this.Connection.RoutingInfo == null
+            if (Connection.RoutingInfo == null
                 && _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled
                 && !IsColumnEncryptionSupported)
             {
@@ -8345,7 +8345,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        static internal SqlDecimal AdjustSqlDecimalScale(SqlDecimal d, int newScale)
+        internal static SqlDecimal AdjustSqlDecimalScale(SqlDecimal d, int newScale)
         {
             if (d.Scale != newScale)
             {
@@ -8356,7 +8356,7 @@ namespace Microsoft.Data.SqlClient
             return d;
         }
 
-        static internal decimal AdjustDecimalScale(decimal value, int newScale)
+        internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
             int oldScale = (Decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
 
@@ -8873,7 +8873,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!stateObj._attentionSent, "Invalid attentionSent state at end of ProcessAttention");
         }
 
-        static private int StateValueLength(int dataLen)
+        private static int StateValueLength(int dataLen)
         {
             return dataLen < 0xFF ? (dataLen + 1) : (dataLen + 5);
         }
@@ -12459,11 +12459,11 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        private class TdsOutputStream : Stream
+        private sealed class TdsOutputStream : Stream
         {
-            TdsParser _parser;
-            TdsParserStateObject _stateObj;
-            byte[] _preambleToStrip;
+            private TdsParser _parser;
+            private TdsParserStateObject _stateObj;
+            private byte[] _preambleToStrip;
 
             public TdsOutputStream(TdsParser parser, TdsParserStateObject stateObj, byte[] preambleToStrip)
             {
@@ -12645,11 +12645,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private class ConstrainedTextWriter : TextWriter
+        private sealed class ConstrainedTextWriter : TextWriter
         {
-            TextWriter _next;
-            int _size;
-            int _written;
+            private TextWriter _next;
+            private int _size;
+            private int _written;
 
             public ConstrainedTextWriter(TextWriter next, int size)
             {
@@ -14076,7 +14076,7 @@ namespace Microsoft.Data.SqlClient
 
         private string TraceObjectClass(object instance)
         {
-            if (null == instance)
+            if (instance == null)
             {
                 return "(null)";
             }
