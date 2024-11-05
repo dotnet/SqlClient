@@ -39,18 +39,6 @@ namespace Microsoft.Data.SqlClient
 
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-        static Task completedTask;
-        static Task CompletedTask
-        {
-            get
-            {
-                if (completedTask == null)
-                {
-                    completedTask = Task.FromResult<object>(null);
-                }
-                return completedTask;
-            }
-        }
 
         internal int ObjectID
         {
@@ -12565,7 +12553,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         if (task == null)
                         {
-                            return CompletedTask;
+                            return Task.CompletedTask;
                         }
                         else
                         {
@@ -12698,7 +12686,7 @@ namespace Microsoft.Data.SqlClient
                     return _next.WriteAsync(value);
                 }
 
-                return CompletedTask;
+                return Task.CompletedTask;
             }
 
             public override Task WriteAsync(char[] buffer, int index, int count)
@@ -12713,7 +12701,7 @@ namespace Microsoft.Data.SqlClient
                     return _next.WriteAsync(buffer, index, count);
                 }
 
-                return CompletedTask;
+                return Task.CompletedTask;
             }
 
             public override Task WriteAsync(string value)
