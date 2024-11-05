@@ -670,112 +670,112 @@
     <value>Wskazuje ustawienia sortowania/filtrowania/stanu dla dowolnej tabeli w odpowiadającym elemencie DataSet.</value>
   </data>
   <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
+    <value>Element DataSet nie obsługuje elementu „union” lub „list” jako elementu simpleType.</value>
   </data>
   <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Invalid {0} syntax: missing required '{1}' attribute.</value>
+    <value>Nieprawidłowa składnia {0}: brak wymaganego atrybutu „{1}”.</value>
   </data>
   <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Value '{1}' is invalid for attribute '{0}'.</value>
+    <value>Wartość „{1}” jest nieprawidłowa dla atrybutu „{0}”.</value>
   </data>
   <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>The value of attribute '{0}' should be '{1}' or '{2}'.</value>
+    <value>Atrybut „{0}” powinien mieć wartość „{1}” lub „{2}”.</value>
   </data>
   <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Cannot find ElementType name='{0}'.</value>
+    <value>Nie można odnaleźć elementu ElementType name=„{0}”.</value>
   </data>
   <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>Parent table name is missing in relation '{0}'.</value>
+    <value>Brak nazwy tabeli nadrzędnej w relacji „{0}”.</value>
   </data>
   <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>Child table name is missing in relation '{0}'.</value>
+    <value>Brak nazwy tabeli podrzędnej w relacji „{0}”.</value>
   </data>
   <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>Parent table key is missing in relation '{0}'.</value>
+    <value>Brak klucza tabeli nadrzędnej w relacji „{0}”.</value>
   </data>
   <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>Child table key is missing in relation '{0}'.</value>
+    <value>Brak klucza tabeli podrzędnej w relacji „{0}”.</value>
   </data>
   <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Undefined data type: '{0}'.</value>
+    <value>Niezdefiniowany typ danych: „{0}”.</value>
   </data>
   <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Data type not defined.</value>
+    <value>Typ danych nie jest zdefiniowany.</value>
   </data>
   <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Invalid XPath selection inside field node. Cannot find: {0}.</value>
+    <value>Nieprawidłowy wybór elementu XPath wewnątrz węzła pola. Nie można odnaleźć: {0}.</value>
   </data>
   <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Invalid XPath selection inside selector node: {0}.</value>
+    <value>Nieprawidłowy składnik elementu XPath wewnątrz węzła selektora: {0}.</value>
   </data>
   <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Invalid 'Key' node inside constraint named: {0}.</value>
+    <value>Nieprawidłowy węzeł 'Key' wewnątrz ograniczenia o nazwie: {0}.</value>
   </data>
   <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>The constraint name {0} is already used in the schema.</value>
+    <value>Nazwa ograniczenia {0} jest już używana w schemacie.</value>
   </data>
   <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Cannot convert '{0}' to type '{1}'.</value>
+    <value>Nie można przekonwertować elementu „{0}” na typ „{1}”.</value>
   </data>
   <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Missing '{0}' part in '{1}' constraint named '{2}'.</value>
+    <value>Brak elementu „{0}” w ograniczeniu „{1}” o nazwie „{2}”.</value>
   </data>
   <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Invalid Relation definition: different length keys.</value>
+    <value>Nieprawidłowa definicja relacji (Relation): różne długości klucza.</value>
   </data>
   <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>DataSet doesn't allow the circular reference in the ComplexType named '{0}'.</value>
+    <value>Element DataSet nie zezwala na odwołania cykliczne w elemencie ComplexType o nazwie „{0}”.</value>
   </data>
   <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>DataSet cannot instantiate an abstract ComplexType for the node {0}.</value>
+    <value>Obiekt DataSet nie może utworzyć wystąpienia abstrakcyjnego obiektu ComplexType dla węzła {0}.</value>
   </data>
   <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details.</value>
+    <value>Wystąpił błąd z konwerterem wielu elementów docelowych podczas zapisywania schematu XML.  Zobacz wewnętrzny wyjątek, aby poznać szczegóły.</value>
   </data>
   <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned.</value>
+    <value>Wystąpił błąd z konwerterem wielu elementów docelowych podczas zapisywania schematu XML.  Zwrócono ciąg o wartości null lub pusty.</value>
   </data>
   <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Duplicated declaration '{0}'.</value>
+    <value>Zduplikowana deklaracja „{0}”.</value>
   </data>
   <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Cannot load diffGram. Table '{0}' is missing in the destination dataset.</value>
+    <value>Nie można załadować elementu diffGram. Brak tabeli „{0}” w docelowym zestawie danych.</value>
   </data>
   <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Cannot load diffGram. The 'sql' node is missing.</value>
+    <value>Nie można załadować elementu diffGram. Brak węzła „sql”.</value>
   </data>
   <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Column name '{0}' is defined for different mapping types.</value>
+    <value>Nazwa kolumny „{0}” jest zdefiniowana dla różnych typów mapowania.</value>
   </data>
   <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Prefix '{0}' is not valid, because it contains special characters.</value>
+    <value>Prefiks „{0}” jest nieprawidłowy, ponieważ zawiera znaki specjalne.</value>
   </data>
   <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>Circular reference in self-nested table '{0}'.</value>
+    <value>Cykliczne odwołanie w tabeli „{0}”, która jest zagnieżdżona w samej sobie.</value>
   </data>
   <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly.</value>
+    <value>Element DataSet nie może rozszerzać jednostek. Użyj elementu XmlValidatingReader i odpowiednio ustaw właściwość EntityHandling.</value>
   </data>
   <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.</value>
+    <value>Typ „{0}” nie implementuje interfejsu IXmlSerializable, dlatego nie można kontynuować serializacji.</value>
   </data>
   <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported.</value>
+    <value>Nie można kontynuować deserializacji. Dane nie implementują interfejsu IXMLSerializable, dlatego polimorfizm nie jest obsługiwany.</value>
   </data>
   <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>DataTable does not support schema inference from Xml.</value>
+    <value>Element DataTable nie obsługuje wnioskowania schematu na podstawie danych Xml.</value>
   </data>
   <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.</value>
+    <value>Nie można kontynuować serializowania DataTable „{0}”. Zawiera element DataRow, który ma wiele wierszy nadrzędnych w tym samym kluczu obcym.</value>
   </data>
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>IsDataSet attribute is missing in input Schema.</value>
+    <value>Brak atrybutu IsDataSet w schemacie wejściowym (Schema).</value>
   </data>
   <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
     <value>Nie można określić elementu DataSet. Atrybut IsDataSet istnieje więcej niż raz.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable.</value>
+    <value>Obiekt DataSet nie będzie serializował typów, które implementują interfejs IDynamicMetaObjectProvider, ale nie implementują interfejsu IXmlSerializable.</value>
   </data>
   <data name="Expr_NYI" xml:space="preserve">
     <value>Funkcja nie jest zaimplementowana. {0}.</value>
@@ -1708,13 +1708,13 @@
     <value>Wykonywanie funkcji Clear na elementach DateSet i DataTable nie jest obsługiwane w dokumencie XmlDataDocument.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Cannot remove column since it is built in to this dataSet.</value>
+    <value>Nie można usunąć kolumny, ponieważ jest ona wbudowana do tego elementu dataSet.</value>
   </data>
   <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>Nie można usunąć relacji, ponieważ jest ona wbudowana do tego elementu DataSet.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Occurs whenever a property for this control changes.</value>
+    <value>Występuje za każdym razem, gdy ulega zmianie dowolna właściwość dla tego sterownika.</value>
   </data>
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Występuje, gdy zmieni się członkostwo tej kolekcji.</value>
@@ -1774,7 +1774,7 @@
     <value>Długość argumentu {0} przekracza limit wynoszący {1}.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
-    <value>Expecting argument of type {1}, but received type {0}.</value>
+    <value>Oczekiwano argumentu typu {1}, ale otrzymano typ {0}.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>Nieprawidłowa wartość klucza „{0}”.</value>
@@ -1819,16 +1819,16 @@
     <value>Operacja SqlBulkCopy.WriteToServer nie powiodła się, ponieważ element SqlBulkCopy.DestinationTableName jest nieprawidłową nazwą wieloczęściową</value>
   </data>
   <data name="SQL_TDSParserTableName" xml:space="preserve">
-    <value>Processing of results from SQL Server failed because of an invalid multipart name</value>
+    <value>Przetwarzanie wyników z programu SQL Server nie powiodło się z powodu nieprawidłowej nazwy wieloczęściowej</value>
   </data>
   <data name="SQL_UDTTypeName" xml:space="preserve">
-    <value>SqlParameter.UdtTypeName is an invalid multipart name</value>
+    <value>SqlParameter.UdtTypeName jest nieprawidłową nazwą wieloczęściową</value>
   </data>
   <data name="SQL_TypeName" xml:space="preserve">
-    <value>SqlParameter.TypeName is an invalid multipart name</value>
+    <value>SqlParameter.TypeName jest nieprawidłową nazwą wieloczęściową</value>
   </data>
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
-    <value>SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name</value>
+    <value>Operacja SqlCommand.DeriveParameters nie powiodła się, ponieważ właściwość SqlCommand.CommandText jest nieprawidłową nazwą wieloczęściową</value>
   </data>
   <data name="ODBC_ODBCCommandText" xml:space="preserve">
     <value>Operacja OdbcCommandBuilder.DeriveParameters nie powiodła się, ponieważ właściwość OdbcCommand.CommandText jest nieprawidłową nazwą wieloczęściową.</value>
@@ -1867,7 +1867,7 @@
     <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez dostawcę danych OleDb programu .NET Framework.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
+    <value>Wartość wyliczenia elementu{0} , wynosząca {1}, nie jest obsługiwana przez dostawcę danych SqlClient programu .NET Framework.</value>
   </data>
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>Nie można pobrać danych ComputerNameDnsFullyQualified, {0}.</value>
@@ -2476,55 +2476,55 @@
     <value>Nie można pobrać z serwera adresu koordynatora transakcji rozproszonych (Distributed Transaction Coordinator) dla tego serwera.  Czy usługa DTC jest włączona na serwerze?</value>
   </data>
   <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters.</value>
+    <value>Długość wartości parametru połączenia &lt;{0}&gt; przekracza maksymalną dozwoloną długość 65535 znaków.</value>
   </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
-    <value>Invalid 'Packet Size'.  The value must be an integer &gt;= 512 and &lt;= 32768.</value>
+    <value>Nieprawidłowy „Rozmiar pakietu”.  Wartość musi być liczbą całkowitą z przedziału od 512 do 32768.</value>
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Nieprawidłowa transakcja lub nieprawidłowa nazwa dla punktu, w którym następuje zapis stanu transakcji.</value>
   </data>
   <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000.</value>
+    <value>Wartość wyliczenia elementu {0}, wynosząca {1}, nie jest obsługiwana przez program SQL Server 7.0 ani przez program SQL Server 2000.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
-    <value>User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string.</value>
+    <value>Wystąpienie użytkownika i tryb failover nie są zgodnymi opcjami.  Wybierz tylko jeden z dwóch parametrów połączenia.</value>
   </data>
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Nie można użyć opcji Authentication z opcją Integrated Security.</value>
   </data>
   <data name="SQL_IntegratedWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Nie można użyć słowa kluczowego „Authentication=Active Directory Integrated” z ciągami połączenia „Password” lub „PWD”.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Nie można użyć słowa kluczowego „Authentication=Active Directory Interactive” z ciągami połączenia „Password” lub „PWD”.</value>
   </data>
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+    <value>Nie można użyć słowa kluczowego parametrów połączenia „Authentication=Active Directory Device Code Flow” z parametrami połączenia „User ID”, „UID”, „Password” lub „PWD”.</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Nie można użyć słowa kluczowego „Authentication={0}” z ciągami połączenia „Password” lub „PWD”.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
+    <value>Nie można użyć parametru „Authentication=Active Directory Integrated”, jeśli ustawiono właściwość Credential.</value>
   </data>
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.</value>
+    <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia ustawiono wartość „Authentication=Active Directory Integrated”.</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
-    <value>Incorrect authentication parameters specified with certificate authentication.</value>
+    <value>Określono nieprawidłowe parametry uwierzytelniania z uwierzytelnianiem certyfikatu.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
+    <value>Wystąpienie programu SQL Server, z którym próbowano się połączyć, wymaga szyfrowania, ale ten komputer go nie obsługuje.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to does not support encryption.</value>
+    <value>Wystąpienie programu SQL Server, z którym próbowano się połączyć, nie obsługuje szyfrowania.</value>
   </data>
   <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
     <value>Wystąpienie programu SQL Server, z którym próbowano nawiązać połączenie, nie obsługuje funkcji CTAIP.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
-    <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
+    <value>Nieobsługiwana wersja programu SQL Server.  Dostawcy danych SqlClient programu .NET Framework można używać tylko z programem SQL Server w wersji 7.0 lub nowszej.</value>
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>Nie można zmienić elementu {0}, gdy operacja asynchroniczna jest w toku.</value>
@@ -2533,31 +2533,31 @@
     <value>To polecenie wymaga połączenia asynchronicznego. Ustaw wartość „Asynchronous Processing=true” w parametrach połączenia.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection has been broken as a result.</value>
+    <value>Upłynął limit czasu.  W wyniku tego połączenie zostało przerwane.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
-    <value>Instance failure.</value>
+    <value>Błąd wystąpienia.</value>
   </data>
   <data name="SQL_CredentialsNotProvided" xml:space="preserve">
-    <value>Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication={0}'.</value>
+    <value>Jeśli wartość „Authentication={0}”, należy określić albo właściwość Credential, albo oba słowa kluczowe parametrów połączenia „User ID” i „Password” (lub „UID” i „PWD”).</value>
   </data>
   <data name="SQL_ChangePasswordArgumentMissing" xml:space="preserve">
-    <value>The '{0}' argument must not be null or empty.</value>
+    <value>Argument „{0}” nie może mieć wartości null ani być pusty.</value>
   </data>
   <data name="SQL_ChangePasswordConflictsWithSSPI" xml:space="preserve">
-    <value>ChangePassword can only be used with SQL authentication, not with integrated security.</value>
+    <value>Element ChangePassword może być używany tylko z uwierzytelnianiem SQL, a nie z zabezpieczeniami zintegrowanymi.</value>
   </data>
   <data name="SQL_ChangePasswordUseOfUnallowedKey" xml:space="preserve">
-    <value>The keyword '{0}' must not be specified in the connectionString argument to ChangePassword.</value>
+    <value>Słowo kluczowe „{0}” nie może być określone w argumencie connectionString na potrzeby elementu ChangePassword.</value>
   </data>
   <data name="SQL_UnknownSysTxIsolationLevel" xml:space="preserve">
-    <value>Unrecognized System.Transactions.IsolationLevel enumeration value: {0}.</value>
+    <value>Nierozpoznana wartość wyliczenia System.Transactions.IsolationLevel: {0}.</value>
   </data>
   <data name="SQL_InvalidPartnerConfiguration" xml:space="preserve">
-    <value>Server {0}, database {1} is not configured for database mirroring.</value>
+    <value>Serwer{0}: baza danych {1} nie została skonfigurowana na potrzeby dublowania bazy danych.</value>
   </data>
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
-    <value>The connection does not support MultipleActiveResultSets.</value>
+    <value>Połączenie nie obsługuje elementów MultipleActiveResultSets.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
     <value>Nie można uwierzytelnić użytkownika {0} w usłudze Active Directory (Authentication={1}).</value>
@@ -2566,16 +2566,16 @@
     <value>Kod błędu 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>ChangePassword requires SQL Server 9.0 or later.</value>
+    <value>Element ChangePassword wymaga programu SQL Server 9.0 lub nowszej wersji.</value>
   </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
-    <value>SSE Instance re-direction is not supported for non-local user instances.</value>
+    <value>Przekierowywanie wystąpienia SSE nie jest obsługiwane dla wystąpień użytkowników nielokalnych.</value>
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>The authentication '{0}' is not supported.</value>
+    <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
   </data>
   <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>SQL authentication method '{0}' is not supported.</value>
+    <value>Metoda uwierzytelniania SQL „{0}” nie jest obsługiwana.</value>
   </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>Nie można utworzyć wystąpienia dostawcy uwierzytelniania typu {1} dla elementu {0}.</value>
@@ -2584,10 +2584,10 @@
     <value>Nie można utworzyć wystąpienia elementu SqlAuthenticationInitializer typu {0}.</value>
   </data>
   <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>The provider '{0}' threw an exception while initializing.</value>
+    <value>Dostawca „{0}” zgłosił wyjątek podczas inicjowania.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>The provider '{0}' does not support authentication '{1}'.</value>
+    <value>Dostawca „{0}” nie obsługuje uwierzytelniania „{1}”.</value>
   </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
@@ -2602,178 +2602,178 @@
     <value>Operacja asynchroniczna została już ukończona.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
-    <value>The command execution cannot proceed due to a pending asynchronous operation already in progress.</value>
+    <value>Nie można kontynuować wykonywania polecenia, ponieważ istnieje oczekująca operacja asynchroniczna, która jest już w toku.</value>
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
-    <value>Invalid command sent to ExecuteXmlReader.  The command must return an Xml result.</value>
+    <value>Do elementu ExecuteXmlReader wysłano nieprawidłowe polecenie.  Polecenie musi zwrócić wynik XML.</value>
   </data>
   <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Notifications require SQL Server 9.0 or later.</value>
+    <value>Powiadomienia wymagają programu SQL Server 9.0 lub nowszej wersji.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for UdtTypeName.</value>
+    <value>Nieprawidłowy format nazwy trzyczęściowej dla elementu UdtTypeName.</value>
   </data>
   <data name="SQL_InvalidParameterTypeNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for TypeName.</value>
+    <value>Nieprawidłowy format nazwy trzyczęściowej dla elementu TypeName.</value>
   </data>
   <data name="SQL_InvalidParameterNameLength" xml:space="preserve">
-    <value>The length of the parameter '{0}' exceeds the limit of 128 characters.</value>
+    <value>Długość parametru „{0}” przekracza limit 128 znaków.</value>
   </data>
   <data name="SQL_PrecisionValueOutOfRange" xml:space="preserve">
-    <value>Precision value '{0}' is either less than 0 or greater than the maximum allowed precision of 38.</value>
+    <value>Wartość precyzji „{0}” jest albo mniejsza niż 0, albo większa niż maksymalna dozwolona wartość precyzji wynosząca 38.</value>
   </data>
   <data name="SQL_ScaleValueOutOfRange" xml:space="preserve">
     <value>Wartość skali {0} jest mniejsza niż 0 lub większa niż maksymalna dozwolona wartość skali, wynosząca 38.</value>
   </data>
   <data name="SQL_TimeScaleValueOutOfRange" xml:space="preserve">
-    <value>Scale value '{0}' is either less than 0 or greater than the maximum allowed scale of 7.</value>
+    <value>Wartość skali „{0}” jest mniejsza niż 0 lub większa niż maksymalna dozwolona wartość skali, wynosząca 7.</value>
   </data>
   <data name="SQL_ParameterInvalidVariant" xml:space="preserve">
-    <value>Parameter '{0}' exceeds the size limit for the sql_variant datatype.</value>
+    <value>Parametr „{0}” przekracza limit rozmiaru dla typu danych sql_variant.</value>
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
-    <value>The {0} type parameter '{1}' must have a valid type name.</value>
+    <value>Parametr „{1}” typu {0} musi mieć prawidłową nazwę typu.</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
-    <value>Invalid internal packet size:</value>
+    <value>Nieprawidłowy rozmiar wewnętrzny pakietu:</value>
   </data>
   <data name="SQL_InvalidTDSVersion" xml:space="preserve">
-    <value>The SQL Server instance returned an invalid or unsupported protocol version during login negotiation.</value>
+    <value>Z wystąpienia programu SQL Server została zwrócona nieobsługiwana wersja protokołu podczas negocjacji logowania.</value>
   </data>
   <data name="SQL_InvalidTDSPacketSize" xml:space="preserve">
-    <value>Invalid Packet Size.</value>
+    <value>Nieprawidłowy rozmiar pakietu.</value>
   </data>
   <data name="SQL_ParsingError" xml:space="preserve">
-    <value>Internal connection fatal error.</value>
+    <value>Błąd krytyczny połączenia wewnętrznego.</value>
   </data>
   <data name="SQL_ParsingErrorWithState" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}</value>
   </data>
   <data name="SQL_ParsingErrorValue" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Value: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, wartość: {1}</value>
   </data>
   <data name="SQL_ParsingErrorOffset" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Offset: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, przesunięcie: {1}</value>
   </data>
   <data name="SQL_ParsingErrorFeatureId" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Feature Id: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, identyfikator funkcji: {1}</value>
   </data>
   <data name="SQL_ParsingErrorToken" xml:space="preserve">
     <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, token: {1}</value>
   </data>
   <data name="SQL_ParsingErrorLength" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Length: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, długość: {1}</value>
   </data>
   <data name="SQL_ParsingErrorStatus" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Status: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, stan: {1}</value>
   </data>
   <data name="SQL_ParsingErrorAuthLibraryType" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Authentication Library Type: {1}</value>
+    <value>Błąd krytyczny połączenia wewnętrznego. Stan błędu: {0}, typ biblioteki uwierzytelniania: {1}</value>
   </data>
   <data name="SQL_ConnectionLockedForBcpEvent" xml:space="preserve">
-    <value>The connection cannot be used because there is an ongoing operation that must be finished.</value>
+    <value>Nie można użyć połączenia, ponieważ istnieje aktualnie wykonywana operacja, która musi zostać zakończona.</value>
   </data>
   <data name="SQL_SNIPacketAllocationFailure" xml:space="preserve">
-    <value>Memory allocation for internal connection failed.</value>
+    <value>Alokacja pamięci dla połączenia wewnętrznego nie powiodła się.</value>
   </data>
   <data name="SQL_SmallDateTimeOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallDateTime overflow.  Value '{0}' is out of range.  Must be between 1/1/1900 12:00:00 AM and 6/6/2079 11:59:59 PM.</value>
+    <value>Przepełnienie elementu SqlDbType.SmallDateTime.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 1.01.1900 12:00:00 do 6.06.2079 23:59:59.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
-    <value>SqlDbType.Time overflow.  Value '{0}' is out of range.  Must be between 00:00:00.0000000 and 23:59:59.9999999.</value>
+    <value>Przepełnienie elementu SqlDbType.Time.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od 00:00:00.0000000 do 23:59:59.9999999.</value>
   </data>
   <data name="SQL_MoneyOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallMoney overflow.  Value '{0}' is out of range.  Must be between -214,748.3648 and 214,748.3647.</value>
+    <value>Przepełnienie elementu SqlDbType.SmallType.  Wartość „{0}” jest spoza zakresu.  Musi należeć do zakresu od -214 748,3648 do 214 748,3647.</value>
   </data>
   <data name="SQL_CultureIdError" xml:space="preserve">
-    <value>The Collation specified by SQL Server is not supported.</value>
+    <value>Sortowanie (Collation) określone przez SQL Server nie jest obsługiwane.</value>
   </data>
   <data name="SQL_OperationCancelled" xml:space="preserve">
-    <value>Operation cancelled by user.</value>
+    <value>Operacja została anulowana przez użytkownika.</value>
   </data>
   <data name="SQL_SevereError" xml:space="preserve">
     <value>Wystąpił poważny błąd w bieżącym poleceniu. Ewentualne wyniki należy odrzucić.</value>
   </data>
   <data name="SQL_SSPIGenerateError" xml:space="preserve">
-    <value>The target principal name is incorrect.  Cannot generate SSPI context.</value>
+    <value>Główna nazwa obiektu docelowego jest niepoprawna.  Nie można wygenerować kontekstu SSPI.</value>
   </data>
   <data name="SQL_InvalidSSPIPacketSize" xml:space="preserve">
-    <value>Invalid SSPI packet size.</value>
+    <value>Nieprawidłowy rozmiar pakietu SSPI.</value>
   </data>
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
-    <value>Cannot initialize SSPI package.</value>
+    <value>Nie można zainicjować pakietu SSPI.</value>
   </data>
   <data name="SQL_Timeout" xml:space="preserve">
-    <value>Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Upłynął limit czasu.  Limit czasu upłynął przed ukończeniem operacji lub serwer nie odpowiada.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the pre-login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Upłynął limit czasu połączenia.  Limit czasu upłynął na początku fazy przed logowaniem.  Może to być spowodowane niewystarczającym czasem podanym dla limitu czasu połączenia.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_InitializeConnection" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to create and initialize a socket to the server.  This could be either because the server was unreachable or unable to respond back in time.</value>
+    <value>Upłynął limit czasu połączenia.  Upłynął limit czasu podczas próby utworzenia i zainicjowania gniazda na serwerze.  Może to być spowodowane tym, że serwer jest nieosiągalny lub nie może odpowiedzieć na czas.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_SendHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while making a pre-login handshake request.  This could be because the server was unable to respond back in time.</value>
+    <value>Upłynął limit czasu połączenia.  Upłynął limit czasu podczas wykonywania żądania uzgadniania przed zalogowaniem.  Może to być spowodowane tym, że serwer nie mógł odpowiedzieć na czas.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_ConsumeHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  This could be because the pre-login handshake failed or the server was unable to respond back in time.</value>
+    <value>Upłynął limit czasu połączenia.  Upłynął limit czasu podczas próby użycia potwierdzenia uzgadniania przed zalogowaniem.  Może to być spowodowane tym, że uzgadnianie przed logowaniem nie powiodło się lub serwer nie mógł odpowiedzieć na czas.</value>
   </data>
   <data name="SQL_Timeout_Login_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Upłynął limit czasu połączenia.  Limit czasu upłynął na początku fazy logowania.  Może to być spowodowane niewystarczającym czasem podanym dla limitu czasu połączenia.</value>
   </data>
   <data name="SQL_Timeout_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to authenticate the login.  This could be because the server failed to authenticate the user or the server was unable to respond back in time.</value>
+    <value>Upłynął limit czasu połączenia.  Upłynął limit czasu podczas próby uwierzytelnienia logowania.  Przyczyną może być niepowodzenie uwierzytelnienia użytkownika przez serwer lub brak odpowiedzi serwera na czas.</value>
   </data>
   <data name="SQL_Timeout_PostLogin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.</value>
+    <value>Upłynął limit czasu połączenia.  Limit czasu upłynął w fazie po zalogowaniu.  Upłynął limit czasu połączenia podczas oczekiwania na ukończenie procesu logowania przez serwer i udzielenie odpowiedzi. Być może przekroczono limit czasu podczas próby utworzenia wielu aktywnych połączeń.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>Ten błąd wystąpił podczas próby nawiązania połączenia z serwerem {0}.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  </value>
+    <value>Ten błąd wystąpił podczas próby nawiązania połączenia z miejscem docelowym routingu. Zużycie czasu podczas próby nawiązania połączenia z oryginalnym serwerem: [przed logowaniem] inicjowanie={0}; uzgadnianie={1}; [logowanie] inicjowanie={2}; uwierzytelnianie={3}; [po logowaniu] ukończenie={4};  </value>
   </data>
   <data name="SQL_Duration_PreLogin_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0};</value>
+    <value>Zużycie czasu podczas próby nawiązania połączenia z tym serwerem: [przed logowaniem] inicjowanie={0};</value>
   </data>
   <data name="SQL_Duration_PreLoginHandshake" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; </value>
+    <value>Zużycie czasu podczas próby nawiązania połączenia z tym serwerem: [przed logowaniem] inicjowanie={0}; uzgadnianie={1}; </value>
   </data>
   <data name="SQL_Duration_Login_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; </value>
+    <value>Zużycie czasu podczas próby nawiązania połączenia z tym serwerem: [przed logowaniem] inicjowanie={0}; uzgadnianie={1}; [logowanie] inicjowanie={2}; </value>
   </data>
   <data name="SQL_Duration_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; </value>
+    <value>Zużycie czasu podczas próby nawiązania połączenia z tym serwerem: [przed logowaniem] inicjowanie={0}; uzgadnianie={1}; [logowanie] inicjowanie={2}; uwierzytelnianie={3}; </value>
   </data>
   <data name="SQL_Duration_PostLogin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; </value>
+    <value>Zużycie czasu podczas próby nawiązania połączenia z tym serwerem: [przed logowaniem] inicjowanie={0}; uzgadnianie={1}; [logowanie] inicjowanie={2}; uwierzytelnianie={3}; [po logowaniu] ukończenie={4}; </value>
   </data>
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
-    <value>A user instance was requested in the connection string but the server specified does not support this option.</value>
+    <value>Wystąpienie użytkownika było żądane w parametrach połączenia, ale określony serwer nie obsługuje tej opcji.</value>
   </data>
   <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>The server certificate failed application validation.</value>
+    <value>Weryfikacja aplikacji certyfikatu serwera nie powiodła się.</value>
   </data>
   <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Specified data length {0} exceeds the allowed maximum length of {1}.</value>
+    <value>Określona długość danych {0} przekracza dozwoloną maksymalną długość {1}.</value>
   </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
-    <value>Invalid attempt to read when no data is present.</value>
+    <value>Nieprawidłowa próba odczytu, gdy brak jakichkolwiek danych.</value>
   </data>
   <data name="SQL_NonBlobColumn" xml:space="preserve">
-    <value>Invalid attempt to GetBytes on column '{0}'.  The GetBytes function can only be used on columns of type Text, NText, or Image.</value>
+    <value>Nieprawidłowa próba użycia funkcji GetBytes w kolumnie „{0}”.  Funkcji GetBytes można używać tylko w kolumnach typu Text, NText lub Image.</value>
   </data>
   <data name="SQL_NonCharColumn" xml:space="preserve">
-    <value>Invalid attempt to GetChars on column '{0}'.  The GetChars function can only be used on columns of type Text, NText, Xml, VarChar or NVarChar.</value>
+    <value>Nieprawidłowa próba pobrania programu GetChars w kolumnie „{0}”.  Funkcji GetChars można używać tylko w kolumnach typu Text, NText, Xml, VarChar lub NVarChar.</value>
   </data>
   <data name="SQL_StreamNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetStream on column '{0}'. The GetStream function can only be used on columns of type Binary, Image, Udt or VarBinary.</value>
+    <value>Nieprawidłowa próba użycia funkcji GetStream w kolumnie „{0}”. Funkcji GetStream można używać tylko w kolumnach typu Binary, Image, Udt lub VarBinary.</value>
   </data>
   <data name="SQL_TextReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetTextReader on column '{0}'. The GetTextReader function can only be used on columns of type Char, NChar, NText, NVarChar, Text or VarChar.</value>
+    <value>Nieprawidłowa próba użycia funkcji GetTextReader w kolumnie „{0}”. Funkcji GetTextReader można używać tylko w kolumnach typu Char, NChar, NText, NVarChar, Text lub VarChar.</value>
   </data>
   <data name="SQL_XmlReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetXmlReader on column '{0}'. The GetXmlReader function can only be used on columns of type Xml.</value>
+    <value>Nieprawidłowa próba pobrania elementu GetXmlReader w kolumnie „{0}”. Funkcji GetXmlReader można używać tylko w kolumnach typu Xml.</value>
   </data>
   <data name="SQL_InvalidBufferSizeOrIndex" xml:space="preserve">
     <value>Suma przesunięcia buforu „{1}” i liczby dostępnych bajtów „{0}” jest większa niż długość przekazana w buforze.</value>
@@ -2788,22 +2788,22 @@
     <value>Nie można ukończyć operacji, ponieważ element SqlResultSet jest zamknięty.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the record is read only.</value>
+    <value>Nie można wywołać elementu „{0}”, jeśli rekord jest tylko do odczytu.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operation cannot be completed because the record is read only.</value>
+    <value>Nie można ukończyć operacji, ponieważ rekord jest tylko do odczytu.</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Invalid attempt to call method {0} when the current row is deleted</value>
+    <value>Nieprawidłowa próba wywołania {0} podjęta, gdy bieżący wiersz został usunięty</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operation cannot be completed because the current row is deleted</value>
+    <value>Nie można ukończyć operacji, ponieważ bieżący wiersz został usunięty</value>
   </data>
   <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed.</value>
+    <value>Nie można ukończyć operacji, ponieważ polecenie, przy użyciu którego został utworzony element SqlResultSet, nie ma już skojarzenia z oryginalnym połączeniem. Element SqlResultSet jest zamknięty.</value>
   </data>
   <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet could not be created for the given query with the desired options.</value>
+    <value>Nie można utworzyć elementu SqlResultSet dla podanego zapytania z żądanymi opcjami.</value>
   </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>Nie można wywołać elementu {0}, jeśli element SqlDataRecord jest tylko do odczytu.</value>
@@ -2818,7 +2818,7 @@
     <value>Nie można przekonwertować podanej wartości {0} typu {1} ze źródła danych na typ {2} dla wiersza {5} kolumny {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>Nie można przekonwertować podanej wartości {0} typu {1} ze źródła danych na typ {2} dla kolumny {3} [{4}].</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Podany element ColumnMapping nie jest zgodny z żadną kolumną w lokalizacji źródłowej lub docelowej.</value>
@@ -2857,13 +2857,13 @@
     <value>Kolumna „{0}” nie zezwala na wartości typu DBNull.Value.</value>
   </data>
   <data name="Sql_BulkLoadLcidMismatch" xml:space="preserve">
-    <value>The locale id '{0}' of the source column '{1}' and the locale id '{2}' of the destination column '{3}' do not match.</value>
+    <value>Identyfikator ustawień regionalnych „{0}” kolumny źródłowej „{1}” i identyfikator ustawień regionalnych „{2}” kolumny docelowej „{3}” nie są ze sobą zgodne.</value>
   </data>
   <data name="SQL_BulkLoadPendingOperation" xml:space="preserve">
     <value>Próba wywołania operacji kopiowania zbiorczego w obiekcie, dla którego istnieje oczekująca operacja.</value>
   </data>
   <data name="SQL_ConnectionDoomed" xml:space="preserve">
-    <value>The requested operation cannot be completed because the connection has been broken.</value>
+    <value>Nie można ukończyć żądanej operacji, ponieważ połączenie zostało przerwane.</value>
   </data>
   <data name="SQL_OpenResultCountExceeded" xml:space="preserve">
     <value>Przekroczono liczbę otwartych wyników.</value>
@@ -2878,67 +2878,67 @@
     <value>Przetwarzanie wsadowe aktualizacji nie jest obsługiwane dla połączenia kontekstu.</value>
   </data>
   <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword.</value>
+    <value>Jedynym dodatkowym słowem kluczowym parametrach połączenia, które może być używane podczas żądania połączenia kontekstu, jest słowo kluczowe dotyczące wersji systemu (Type System Version).</value>
   </data>
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>The context connection does not support Type System Version=SQL Server 2000.</value>
+    <value>Połączenie kontekstu nie obsługuje wersji systemu Type System Version=SQL Server 2000.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>The context connection is already in use.</value>
+    <value>Połączenie kontekstu jest już używane.</value>
   </data>
   <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>The requested operation requires a SqlClr context, which is only available when running in the Sql Server process.</value>
+    <value>Żądana operacja wymaga kontekstu SqlClr, który jest dostępny tylko podczas uruchamiania procesu programu Sql Server.</value>
   </data>
   <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code.</value>
+    <value>Żądana operacja wymaga wątku wykonywania programu Sql Server.  Bieżący wątek został uruchomiony przez kod użytkownika lub inny kod aparatu programu innego niż Sql Server.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Nested TransactionScopes are not supported.</value>
+    <value>Zagnieżdżone elementy TransactionScopes nie są obsługiwane.</value>
   </data>
   <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>The requested operation is not available on the context connection.</value>
+    <value>Żądana operacja jest niedostępna dla połączenia kontekstu.</value>
   </data>
   <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Notifications are not available on the context connection.</value>
+    <value>Powiadomienia nie są dostępne dla połączenia kontekstu.</value>
   </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Unexpected server event: {0}.</value>
+    <value>Nieoczekiwane zdarzenie serwera: {0}.</value>
   </data>
   <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>User instances are not allowed when running in the Sql Server process.</value>
+    <value>Wystąpienia użytkownika nie są dozwolone podczas uruchomienia procesu serwera Sql Server.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>Długość {0} musi być zgodna z długością {1}.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
+    <value>Element SqlDbType „{0}” jest nieprawidłowy dla {1}.  Obsługiwany jest tylko element {2}.</value>
   </data>
   <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent.</value>
+    <value>Wystąpił błąd z poprzednim wierszem wysłanym do elementu SqlPipe.  Aby można było wysłać dowolne inne elementy, należy wywołać funkcję SendResultsEnd.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Too many values.</value>
+    <value>Zbyt wiele wartości.</value>
   </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
-    <value>The Stream does not support writing.</value>
+    <value>Element Stream nie obsługuje zapisywania.</value>
   </data>
   <data name="SQL_StreamReadNotSupported" xml:space="preserve">
-    <value>The Stream does not support reading.</value>
+    <value>Element Stream nie obsługuje odczytywania.</value>
   </data>
   <data name="SQL_StreamSeekNotSupported" xml:space="preserve">
-    <value>The Stream does not support seeking.</value>
+    <value>Element Stream nie obsługuje operacji wyszukiwania.</value>
   </data>
   <data name="SQL_ExClientConnectionId" xml:space="preserve">
     <value>ClientConnectionId:{0}</value>
   </data>
   <data name="SQL_ExErrorNumberStateClass" xml:space="preserve">
-    <value>Error Number:{0},State:{1},Class:{2}</value>
+    <value>Numer błędu:{0}, stan:{1}, klasa:{2}</value>
   </data>
   <data name="SQL_ExOriginalClientConnectionId" xml:space="preserve">
-    <value>ClientConnectionId before routing:{0}</value>
+    <value>Wartość ClientConnectionId przed routingiem:{0}</value>
   </data>
   <data name="SQL_ExRoutingDestination" xml:space="preserve">
-    <value>Routing Destination:{0}</value>
+    <value>Lokalizacja docelowa routingu:{0}</value>
   </data>
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
@@ -2953,112 +2953,112 @@
     <value>Wystąpił błąd dzielenia przez zero.</value>
   </data>
   <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Data is Null. This method or property cannot be called on Null values.</value>
+    <value>Dane mają wartość null. Tej metody lub właściwości nie można wywołać dla wartości null.</value>
   </data>
   <data name="SqlMisc_TruncationMessage" xml:space="preserve">
     <value>Arytmetyka numeryczna powoduje obcięcie.</value>
   </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
-    <value>SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.</value>
+    <value>Przepełnienie elementu SqlDateTime. Musi należeć do zakresu od 1.01.1753 12:00:00 do 31.12.9999 23:59:59.</value>
   </data>
   <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be concatenated have different collation.</value>
+    <value>Dwa ciągi, które mają zostać złączone, są posortowane w różny sposób.</value>
   </data>
   <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be compared have different collation.</value>
+    <value>Dwa ciągi, które mają zostać porównane, są posortowane w różny sposób.</value>
   </data>
   <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Invalid flag value.</value>
+    <value>Nieprawidłowa wartość flagi.</value>
   </data>
   <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Conversion from SqlDecimal to Decimal overflows.</value>
+    <value>Konwersja z elementu SqlDecimal na element Decimal spowodowała przepełnienie.</value>
   </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
-    <value>Conversion overflows.</value>
+    <value>Przepełnienie konwersji.</value>
   </data>
   <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Invalid SqlDateTime.</value>
+    <value>Nieprawidłowy element SqlDateTime.</value>
   </data>
   <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>A time zone was specified. SqlDateTime does not support time zones.</value>
+    <value>Określono strefę czasową. Element SqlDateTime nie obsługuje stref czasowych.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
-    <value>Invalid array size.</value>
+    <value>Nieprawidłowy rozmiar tablicy.</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>Invalid numeric precision/scale.</value>
+    <value>Nieprawidłowa skala/precyzja numeryczna.</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>The input wasn't in a correct format.</value>
+    <value>Dane wejściowe były w niepoprawnym formacie.</value>
   </data>
   <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>SqlType error.</value>
+    <value>Błąd elementu SqlType.</value>
   </data>
   <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>The SqlBytes and SqlChars don't support length of more than 2GB in this version.</value>
+    <value>W tej wersji elementy SqlBytes i SqlChars nie obsługują długości przekraczającej 2GB.</value>
   </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
-    <value>An error occurred while reading.</value>
+    <value>Wystąpił błąd podczas odczytu.</value>
   </data>
   <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Stream has been closed or disposed.</value>
+    <value>Element Stream został zamknięty lub usunięty.</value>
   </data>
   <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>There is no buffer. Read or write operation failed.</value>
+    <value>Brak buforu. Operacja odczytu lub zapisu nie powiodła się.</value>
   </data>
   <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Cannot set to non-zero length, because current value is Null.</value>
+    <value>Nie można ustawić długości na niezerową, ponieważ bieżąca wartość jest równa Null.</value>
   </data>
   <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>The buffer is insufficient. Read or write operation failed.</value>
+    <value>Bufor jest niewystarczający. Operacja odczytu lub zapisu nie powiodła się.</value>
   </data>
   <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Cannot write to non-zero offset, because current value is Null.</value>
+    <value>Nie można zapisać danych do przesunięcia niezerowego, ponieważ bieżąca wartość jest równa Null.</value>
   </data>
   <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer.</value>
+    <value>Nie można zapisać z przesunięcia większego niż bieżąca długość. Spowoduje to pozostawienie niezainicjowanych danych w buforze.</value>
   </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
-    <value>Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data.</value>
+    <value>Zwrócone dane mają rozmiar większy niż 2 Gb. Użyj zachowania polecenia SequentialAccess, aby uzyskać wszystkie dane.</value>
   </data>
   <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument to GetDayOfWeek must be integer between 1 and 7.</value>
+    <value>Argument dla elementu GetDayOfWeek musi być liczbą całkowitą z przedziału od 1 do 7.</value>
   </data>
   <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>SQL Type has not been loaded with data.</value>
+    <value>Element SQL Type nie został załadowany z danymi.</value>
   </data>
   <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>SQL Type has already been loaded with data.</value>
+    <value>Element SQL Type został już załadowany z danymi.</value>
   </data>
   <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Invalid attempt to access a closed XmlReader.</value>
+    <value>Nieprawidłowa próba uzyskania dostępu do zamkniętego elementu XmlReader.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is closed.</value>
+    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest zamknięty.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-writable.</value>
+    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest nie do zapisu.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-readable.</value>
+    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest nie do odczytu.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is non-seekable.</value>
+    <value>Nieprawidłowa próba wywołania elementu {0} podjęta, gdy strumień jest niemożliwy do wyszukiwania.</value>
   </data>
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Subclass did not override a required method.</value>
+    <value>Podklasa nie przesłoniła wymaganej metody.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Nie można utworzyć normalizatora dla „{0}”.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Błąd wewnętrzny</value>
   </data>
   <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Command parameter must have a non null and non empty command text.</value>
+    <value>Parametr polecenia musi mieć niezerowy i niepusty tekst polecenia.</value>
   </data>
   <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>MetaData parameter array must have length equivalent to ParameterDirection array argument.</value>
+    <value>Tablica parametru MetaData musi mieć długość odpowiadającą argumentowi tablicy ParameterDirection.</value>
   </data>
   <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
     <value>Błąd mapowania karty danych.</value>
@@ -3226,10 +3226,10 @@
     <value>Gdy ma wartość true, program SQL Server używa szyfrowania SSL dla wszystkich danych przesyłanych między klientem a serwerem, jeśli serwer ma zainstalowany certyfikat.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Nazwa hosta oczekiwana w certyfikacie serwera podczas negocjowania szyfrowania, jeśli różni się od wartości domyślnej pochodzącej od elementu Addr/Address/Server.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>Ścieżka do pliku certyfikatu zgodnego z certyfikatem TLS/SSL programu SQL Server.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Sesje w środowisku usług składowych (Component Services) (lub MTS, jeśli jest używany system operacyjny Microsoft Windows NT) powinny być automatycznie rejestrowane w transakcji globalnej, jeśli to wymagane.</value>
@@ -3349,46 +3349,46 @@
     <value>Wersja produktu, do której uzyskuje dostęp dostawca OLE DB.</value>
   </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
-    <value>Access token to use for authentication.</value>
+    <value>Token dostępu używany na potrzeby uwierzytelniania.</value>
   </data>
   <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>State of connection, synchronous or asynchronous.  'Asynchronous Processing=x' in the connection string.</value>
+    <value>Stan połączenia, synchroniczny lub asynchroniczny.  „Przetwarzanie asynchroniczne=x” w parametrach połączenia.</value>
   </data>
   <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Information used to connect for replication.</value>
+    <value>Informacje używane do połączenia na potrzeby replikacji.</value>
   </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
-    <value>Information used to connect to a DataSource, such as 'Data Source=x;Initial Catalog=x;Integrated Security=SSPI'.</value>
+    <value>Informacje używane do połączenia ze źródłem danych DataSource, na przykład „Data Source=x;Initial Catalog=x;Integrated Security=SSPI”.</value>
   </data>
   <data name="SqlConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Current connection timeout value, 'Connect Timeout=X' in the ConnectionString.</value>
+    <value>Bieżąca wartość limitu czasu połączenia, „Connect Timeout=X” w elemencie ConnectionString.</value>
   </data>
   <data name="SqlConnection_Database" xml:space="preserve">
-    <value>Current SQL Server database, 'Initial Catalog=X' in the connection string.</value>
+    <value>Bieżąca baza danych SQL Server, „Initial Catalog=X” w parametrach połączenia.</value>
   </data>
   <data name="SqlConnection_DataSource" xml:space="preserve">
-    <value>Current SqlServer that the connection is opened to, 'Data Source=X' in the connection string.</value>
+    <value>Bieżący serwer SqlServer, do którego jest otwarte połączenie, „Data Source=X” w parametrach połączenia.</value>
   </data>
   <data name="SqlConnection_PacketSize" xml:space="preserve">
-    <value>Network packet size, 'Packet Size=x' in the connection string.</value>
+    <value>Rozmiar pakietu sieciowego, „Packet Size=x” w parametrach połączenia.</value>
   </data>
   <data name="SqlConnection_ServerVersion" xml:space="preserve">
-    <value>Version of the SQL Server accessed by the SqlConnection.</value>
+    <value>Wersja serwera SQL Server, do której uzyskuje dostęp element SqlConnection.</value>
   </data>
   <data name="SqlConnection_WorkstationId" xml:space="preserve">
-    <value>Workstation Id, 'Workstation ID=x' in the connection string.</value>
+    <value>Element Workstation Id, 'Workstation ID=x' w parametrach połączenia.</value>
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
-    <value>Collect statistics for this connection.</value>
+    <value>Gromadzenie danych statystycznych dla tego połączenia.</value>
   </data>
   <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Custom column encryption key store providers.</value>
+    <value>Niestandardowi dostawcy magazynu kluczy szyfrowania kolumn.</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
-    <value>A guid to represent the physical connection.</value>
+    <value>Identyfikator GUID służący do reprezentowania połączenia fizycznego.</value>
   </data>
   <data name="SqlConnection_Credential" xml:space="preserve">
-    <value>User Id and secure password to use for authentication.</value>
+    <value>Identyfikator użytkownika i bezpieczne hasło, które będą używane do uwierzytelniania.</value>
   </data>
   <data name="DbConnection_InfoMessage" xml:space="preserve">
     <value>Zdarzenie wyzwalane, gdy nadchodzą komunikaty z elementu DataSource.</value>
@@ -3415,10 +3415,10 @@
     <value>W przypadku modyfikowania rekordów przez daną instrukcję przez wykonanie polecenia.</value>
   </data>
   <data name="SqlCommand_Notification" xml:space="preserve">
-    <value>Notification values used by Microsoft SQL Server.</value>
+    <value>Wartości powiadomienia używane przez program Microsoft SQL Server.</value>
   </data>
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
-    <value>Automatic enlistment in notifications used by Microsoft SQL Server.</value>
+    <value>Automatyczne umieszczanie w powiadomieniach używane przez program Microsoft SQL Server.</value>
   </data>
   <data name="DbCommandBuilder_ConflictOption" xml:space="preserve">
     <value>Sposób automatycznego generowania klauzuli where dla poleceń Update i Delete, gdy nie został określony przez użytkownika.</value>
@@ -3469,16 +3469,16 @@
     <value>Ciąg sufiksu otaczający obiekty sql</value>
   </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>The DataAdapter for which to automatically generate SqlCommands</value>
+    <value>Element DataAdapter, dla którego mają być automatycznie generowane elementy SqlCommands</value>
   </data>
   <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>The decimal separator used in numeric literals.</value>
+    <value>Separator dziesiętny używany w literałach numerycznych.</value>
   </data>
   <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The character used in a text command as the opening quote for quoting identifiers that contain special characters.</value>
+    <value>Znak używany w poleceniu tekstowym jako cudzysłów otwierający dla identyfikatorów, które zawierają znaki specjalne.</value>
   </data>
   <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
+    <value>Znak używany w poleceniu tekstowym jako cudzysłów zamykający dla identyfikatorów, które zawierają znaki specjalne.</value>
   </data>
   <data name="DbDataParameter_Precision" xml:space="preserve">
     <value>W przypadku korzystania ze scenariuszy Prepare, FillSchema i CommandBuilder opcję tę należy ustawić tylko dla parametrów numerycznych i dziesiętnych.</value>
@@ -3493,16 +3493,16 @@
     <value>Macierzysty typ parametru.</value>
   </data>
   <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Name of the parameter, like '@p1'</value>
+    <value>Nazwa parametru, np. „@p1”</value>
   </data>
   <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>The parameter native type.</value>
+    <value>Macierzysty typ parametru.</value>
   </data>
   <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>The server's name for the type.</value>
+    <value>Nazwa serwera dla typu.</value>
   </data>
   <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Offset in variable length data types.</value>
+    <value>Przesunięcie w typach danych o zmiennej długości.</value>
   </data>
   <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
     <value>XmlSchemaCollectionDatabase</value>
@@ -3514,16 +3514,16 @@
     <value>XmlSchemaCollectionName</value>
   </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
-    <value>ParameterDirection '{0}' specified for parameter '{1}' is not supported. Table-valued parameters only support ParameterDirection.Input.</value>
+    <value>Parametr ParameterDirection „{0}” określony dla parametru „{1}” nie jest obsługiwany. Parametry z wartościami przechowywanych w tabeli obsługują tylko parametr ParameterDirection.Input.</value>
   </data>
   <data name="SqlParameter_DBNullNotSupportedForTVP" xml:space="preserve">
-    <value>DBNull value for parameter '{0}' is not supported. Table-valued parameters cannot be DBNull.</value>
+    <value>Wartość DBNull parametru „{0}” nie jest obsługiwana. Parametry wartościowane w tabeli nie mogą być parametrami DBNull.</value>
   </data>
   <data name="SqlParameter_InvalidTableDerivedPrecisionForTvp" xml:space="preserve">
-    <value>Precision '{0}' required to send all values in column '{1}' exceeds the maximum supported precision '{2}'. The values must all fit in a single precision.</value>
+    <value>Dokładność „{0}” wymagana do wysłania wszystkich wartości w kolumnie „{1}” przekracza maksymalną obsługiwaną precyzję „{2}”. Wszystkie wartości muszą zmieścić się w pojedynczej precyzji.</value>
   </data>
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
-    <value>TypeName specified for parameter '{0}'.  TypeName must only be set for Structured parameters.</value>
+    <value>Określono element TypeName dla parametru „{0}”.  Właściwość TypeName może być ustawiona tylko dla parametrów strukturalnych.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
     <value>Typ SqlDbType.Structured jest obsługiwany tylko w przypadku typów o wielu wartościach.</value>
@@ -3535,10 +3535,10 @@
     <value>Nieprawidłowe liczby porządkowe kolumn w tabeli schematów.  Właściwości ColumnOrdinals, jeśli istnieją, nie mogą mieć duplikatów ani przerw.</value>
   </data>
   <data name="SQL_EnumeratedRecordMetaDataChanged" xml:space="preserve">
-    <value>Metadata for field '{0}' of record '{1}' did not match the original record's metadata.</value>
+    <value>Metadane pola „{0}” rekordu „{1}” nie pasują do metadanych oryginalnego rekordu.</value>
   </data>
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
-    <value>Number of fields in record '{0}' does not match the number in the original record.</value>
+    <value>Liczba pól w rekordzie „{0}” jest niezgodna z liczbą w rekordzie oryginalnym.</value>
   </data>
   <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
     <value>zakres: 0–8000</value>
@@ -3565,181 +3565,181 @@
     <value>Parametry UDT nie są dozwolone w klauzuli where, chyba że są częścią klucza podstawowego.</value>
   </data>
   <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>'{0}' is an invalid user defined type, reason: {1}.</value>
+    <value>„{0}” jest nieprawidłowym typem zdefiniowanym przez użytkownika, przyczyna: {1}.</value>
   </data>
   <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>supports both in-memory and user-defined formats</value>
+    <value>obsługuje zarówno formaty w pamięci, jak i formaty zdefiniowane przez użytkownika</value>
   </data>
   <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Native format can't be supported.</value>
+    <value>Nie można obsłużyć formatu macierzystego.</value>
   </data>
   <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>does not implement IBinarySerialize</value>
+    <value>nie implementuje interfejsu IBinarySerialize</value>
   </data>
   <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>not serializable</value>
+    <value>nie można serializować</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>no public constructors</value>
+    <value>brak konstruktorów publicznych</value>
   </data>
   <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>does not implement INullable</value>
+    <value>nie implementuje interfejsu INullable</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>does not have a public constructor</value>
+    <value>nie ma konstruktora publicznego</value>
   </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
-    <value>no UDT attribute</value>
+    <value>brak atrybutu UDT</value>
   </data>
   <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serialization without mapping is not yet supported.</value>
+    <value>Serializacja bez mapowania nie jest jeszcze obsługiwana.</value>
   </data>
   <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>'public static x Parse(System.Data.SqlTypes.SqlString)' method is missing</value>
+    <value>brak metody „public static x Parse(System.Data.SqlTypes.SqlString)”</value>
   </data>
   <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>'public override string ToString()' method is missing</value>
+    <value>brak metody „public override string ToString()”</value>
   </data>
   <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>'public static x Null { get; }' method is missing</value>
+    <value>brak metody „public static x Null { get; }”</value>
   </data>
   <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Native format does not support fields (directly or through another field) of type '{0}'</value>
+    <value>Format macierzysty nie obsługuje pól (jawnie ani przez inne pole) typu „{0}”</value>
   </data>
   <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Type is not public</value>
+    <value>Typ nie jest publiczny</value>
   </data>
   <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Native UDT not sequential layout due to type '{0}'</value>
+    <value>Natywny układ UDT nie jest układem sekwencyjnym z powodu typu „{0}”</value>
   </data>
   <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Native UDT specifies a max byte size</value>
+    <value>Format macierzysty UDT (Native UDT) określa maksymalny rozmiar w bajtach (byte)</value>
   </data>
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>field '{0}' is marked non-serialized</value>
+    <value>pole „{0}” jest oznaczone jako nieserializowane</value>
   </data>
   <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
     <value>Typ pola „{0}” jest oznaczony jako układ jawny, co jest niedozwolone w formacie natywnym</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Multiple valued assembly references must have a nonzero Assembly Id.</value>
+    <value>Odwołania do zestawów mające wiele wartości muszą mieć niezerowy identyfikator zestawu.</value>
   </data>
   <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
     <value>Typy strukturalne o wielu wartościach mogą być używane tylko dla parametrów i nie mogą być zagnieżdżane w innych typach.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
-    <value>The path name is not valid.</value>
+    <value>Nazwa ścieżki jest nieprawidłowa.</value>
   </data>
   <data name="SqlFileStream_InvalidParameter" xml:space="preserve">
-    <value>An invalid parameter was passed to the function.</value>
+    <value>Przekazano nieprawidłowy parametr do funkcji.</value>
   </data>
   <data name="SqlFileStream_FileAlreadyInTransaction" xml:space="preserve">
-    <value>The process cannot access the file specified because it has been opened in another transaction.</value>
+    <value>Proces nie może uzyskać dostępu do określonego pliku, ponieważ został on już otwarty w innej transakcji.</value>
   </data>
   <data name="SqlFileStream_PathNotValidDiskResource" xml:space="preserve">
-    <value>The path name is invalid or does not point to a disk file.</value>
+    <value>Nazwa ścieżki jest nieprawidłowa lub nie wskazuje pliku dyskowego.</value>
   </data>
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
-    <value>Failure while attempting to promote transaction.</value>
+    <value>Błąd podczas próby podwyższenia poziomu transakcji.</value>
   </data>
   <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Dependency object used to receive query notifications.</value>
+    <value>Obiekt zależności używany do obierania powiadomień dotyczących zapytań.</value>
   </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
-    <value>Property to indicate if this dependency is invalid.</value>
+    <value>Właściwość wskazująca, czy dana zależność jest nieprawidłowa.</value>
   </data>
   <data name="SqlDependency_Id" xml:space="preserve">
-    <value>A string that uniquely identifies this dependency object.</value>
+    <value>Ciąg unikatowo identyfikujący ten obiekt zależności.</value>
   </data>
   <data name="SqlDependency_OnChange" xml:space="preserve">
-    <value>Event that can be used to subscribe for change notifications.</value>
+    <value>Zdarzenie, które może być używane w celu subskrybowania powiadomień o zmianach.</value>
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
-    <value>To add a command to existing dependency object.</value>
+    <value>Dodawanie polecenia do istniejącego obiektu zależności.</value>
   </data>
   <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Command is already associated with another dependency object. Can not overwrite.</value>
+    <value>Polecenie jest już skojarzone z innym obiektem zależności. Nie można zastąpić.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Ten obiekt SqlCommand został już skojarzony z innym obiektem SqlDependency.</value>
   </data>
   <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency object cannot be created when running inside the SQL Server process.</value>
+    <value>Obiektu SqlDependency nie można utworzyć podczas uruchomienia wewnątrz procesu programu SQL Server.</value>
   </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
-    <value>The SQL Server Service Broker for the current database is not enabled, and as a result query notifications are not supported.  Please enable the Service Broker for this database if you wish to use notifications.</value>
+    <value>Usługa Microsoft SQL Server Service Broker dla bieżącej bazy danych nie jest włączony i w wyniku tego powiadomienia o zapytaniach nie są obsługiwane.  Włącz usługę Service Broker dla tej bazy danych, jeśli chcesz używać powiadomień.</value>
   </data>
   <data name="SqlDependency_DefaultOptionsButNoStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called prior to execution of a command added to the SqlDependency instance.</value>
+    <value>W przypadku korzystania z elementu SqlDependency bez podawania wartości opcji funkcja SqlDependency.Start() musi być wywoływana przed wykonaniem polecenia dodanego do wystąpienia elementu SqlDependency.</value>
   </data>
   <data name="SqlDependency_EventNoDuplicate" xml:space="preserve">
-    <value>SqlDependency.OnChange does not support multiple event registrations for the same delegate.</value>
+    <value>Element SqlDependency.OnChange nie obsługuje rejestracji wielu zdarzeń dla tego samego obiektu delegowanego.</value>
   </data>
   <data name="SqlDependency_DuplicateStart" xml:space="preserve">
-    <value>SqlDependency does not support calling Start() with different connection strings having the same server, user, and database in the same app domain.</value>
+    <value>Element SqlDependency nie obsługuje wywoływania funkcji Start() z innymi parametrami połączenia, które mają ten sam serwer, użytkownika i bazę danych w tej samej domenie aplikacji.</value>
   </data>
   <data name="SqlDependency_IdMismatch" xml:space="preserve">
-    <value>No SqlDependency exists for the key.</value>
+    <value>Dla tego klucza nie istnieje żaden element SqlDependency.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called for each server that is being executed against.</value>
+    <value>W przypadku korzystania z elementu SqlDependency bez podawania wartości opcji funkcja SqlDependency.Start() musi zostać wywołana dla każdego serwera, na którym jest wykonywana.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerDatabaseStart" xml:space="preserve">
-    <value>SqlDependency.Start has been called for the server the command is executing against more than once, but there is no matching server/user/database Start() call for current command.</value>
+    <value>Funkcja SqlDependency.Start została wywołana więcej niż raz dla serwera, na którym wykonywane jest polecenie, ale nie ma pasującej funkcji Start() serwera/użytkownika/bazy danych dla bieżącego polecenia.</value>
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
-    <value>Timeout specified is invalid. Timeout cannot be &lt; 0.</value>
+    <value>Określony limit czasu jest nieprawidłowy. Limit czasu nie może być &lt; 0.</value>
   </data>
   <data name="SQLNotify_ErrorFormat" xml:space="preserve">
     <value>Błąd powiadomienia. Typ={0}, Info={1}, Źródło={2}.</value>
   </data>
   <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>GetMetaData is not valid for this SqlDbType.</value>
+    <value>Element GetMetaData nie jest prawidłowy dla tego elementu SqlDbType.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>The dbType {0} is invalid for this constructor.</value>
+    <value>Typ dbType {0} jest nieprawidłowy dla tego konstruktora.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Nazwa jest za długa.</value>
   </data>
   <data name="SqlMetaData_SpecifyBothSortOrderAndOrdinal" xml:space="preserve">
-    <value>The sort order and ordinal must either both be specified, or neither should be specified (SortOrder.Unspecified and -1).  The values given were: order = {0}, ordinal = {1}.</value>
+    <value>Należy określić zarówno kolejność sortowania, jak i numer porządkowy albo nie należy określać żadnego (SortOrder.Unspecified i -1).  Podane wartości: porządek = {0}, numer porządkowy = {1}.</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnType" xml:space="preserve">
-    <value>The type of column '{0}' is not supported.  The type is '{1}'</value>
+    <value>Typ kolumny „{0}” nie jest obsługiwany.  Typ to „{1}”</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnMaxLength" xml:space="preserve">
-    <value>The size of column '{0}' is not supported. The size is {1}.</value>
+    <value>Rozmiar kolumny „{0}” nie jest obsługiwany. Rozmiar jest {1}.</value>
   </data>
   <data name="SqlProvider_NotEnoughColumnsInStructuredType" xml:space="preserve">
-    <value>There are not enough fields in the Structured type.  Structured types must have at least one field.</value>
+    <value>Brak wystarczającej liczby pól w typie strukturalnym.  Typy strukturalne muszą mieć co najmniej jedno pole.</value>
   </data>
   <data name="SqlProvider_DuplicateSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was specified twice.</value>
+    <value>Liczba porządkowa sortowania {0} została określona dwukrotnie.</value>
   </data>
   <data name="SqlProvider_MissingSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was not specified.</value>
+    <value>Nie określono porządkowej sortowania {0}.</value>
   </data>
   <data name="SqlProvider_SortOrdinalGreaterThanFieldCount" xml:space="preserve">
-    <value>The sort ordinal {0} on field {1} exceeds the total number of fields.</value>
+    <value>Liczba porządkowa sortowania {0} w polu {1} przekracza całkowitą liczbę pól.</value>
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>Brak rekordów w wyliczeniu SqlDataRecord. Aby wysłać parametr z wartościami przechowywanymi w tabeli bez wierszy, użyj odwołania o wartości null.</value>
   </data>
   <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe does not support executing a command with a connection that is not a context connection.</value>
+    <value>Element SqlPipe nie obsługuje wykonywania polecenia dla połączenia, które nie jest połączeniem kontekstu.</value>
   </data>
   <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Message length {0} exceeds maximum length supported of 4000.</value>
+    <value>Długość komunikatu {0} przekracza maksymalną obsługiwaną długość wynoszącą 4000.</value>
   </data>
   <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Could not use the pipe while it is busy with another operation.</value>
+    <value>Nie można użyć potoku, gdy jest zajęty inną operacją.</value>
   </data>
   <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>A result set is currently being sent to the pipe. End the current result set before calling {0}.</value>
+    <value>Zestaw wyników jest obecnie wysyłany do potoku. Zakończ bieżący zestaw wyników przed wywołaniem {0}.</value>
   </data>
   <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Result set has not been initiated.  Call SendResultSetStart before calling {0}.</value>
+    <value>Zestaw wyników nie został zainicjowany.  Wywołaj metodę SendResultSetStart przed wywołaniem {0}.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>Dostawca HTTP</value>
@@ -3943,43 +3943,43 @@
     <value>W lokalizacji określonej w rejestrze znaleziono nieprawidłowy plik SQLUserInstance.dll. Sprawdź, czy funkcja Local Database Runtime serwera SQL Server Express jest poprawnie zainstalowana.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
-    <value>A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.</value>
+    <value>Wystąpił błąd związany z siecią lub wystąpieniem podczas nawiązywania połączenia z programem SQL Server. Nie znaleziono serwera lub był on niedostępny. Sprawdź, czy nazwa wystąpienia jest poprawna i czy program SQL Server jest skonfigurowany do zezwalania na połączenia zdalne.</value>
   </data>
   <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
     <value>Klient nie mógł nawiązać połączenia z powodu błędu podczas procesu inicjalizacji połączenia przed zalogowaniem. Możliwe przyczyny są następujące: klient próbował połączyć się z nieobsługiwaną wersją serwera SQL Server; serwer był zbyt zajęty, aby zaakceptować nowe połączenia; lub wystąpiło ograniczenie zasobów (niewystarczająca ilość pamięci lub maksymalna dozwolona liczba połączeń) na serwerze.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</value>
+    <value>Połączenie z serwerem zostało pomyślnie ustanowione, ale wystąpił błąd podczas uzgadniania przed logowaniem.</value>
   </data>
   <data name="Snix_LoginSspi" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred when obtaining the security/SSPI context information for integrated security login.</value>
+    <value>Połączenie z serwerem zostało pomyślnie ustanowione, ale wystąpił błąd podczas uzyskiwania informacji kontekstu zabezpieczeń SSPI na potrzeby logowania zabezpieczeń zintegrowanych.</value>
   </data>
   <data name="Snix_Login" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the login process.</value>
+    <value>Połączenie z serwerem zostało pomyślnie ustanowione, ale wystąpił błąd podczas procesu logowania.</value>
   </data>
   <data name="Snix_EnableMars" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enabling MARS for this connection.</value>
+    <value>Połączenie zostało otwarte i logowanie powiodło się, ale wystąpił błąd podczas włączania elementu MARS dla tego połączenia.</value>
   </data>
   <data name="Snix_AutoEnlist" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enlisting the connection into the current distributed transaction.</value>
+    <value>Połączenie zostało otwarte i logowanie powiodło się, ale wystąpił błąd podczas rejestracji połączenia w bieżącej transakcji rozproszonej.</value>
   </data>
   <data name="Snix_GetMarsSession" xml:space="preserve">
-    <value>Failed to establish a MARS session in preparation to send the request to the server.</value>
+    <value>Nie powiodło się ustanowienie sesji MARS w przygotowaniu do wysłania żądania do serwera.</value>
   </data>
   <data name="Snix_Execute" xml:space="preserve">
-    <value>A transport-level error has occurred when sending the request to the server.</value>
+    <value>Wystąpił błąd poziomu transportu podczas wysyłania żądania do serwera.</value>
   </data>
   <data name="Snix_Read" xml:space="preserve">
-    <value>A transport-level error has occurred when receiving results from the server.</value>
+    <value>Wystąpił błąd poziomu transportu podczas odbierania wyników z serwera.</value>
   </data>
   <data name="Snix_Close" xml:space="preserve">
-    <value>A transport-level error has occurred during connection clean-up.</value>
+    <value>Wystąpił błąd poziomu transportu podczas czyszczenia połączenia.</value>
   </data>
   <data name="Snix_SendRows" xml:space="preserve">
-    <value>A transport-level error has occurred while sending information to the server.</value>
+    <value>Wystąpił błąd poziomu transportu podczas wysyłania informacji do serwera.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>Wystąpił błąd poziomu transportu podczas uzgadniania SSPI.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: nie można utworzyć wystąpienia nazwanego.</value>
@@ -4003,13 +4003,13 @@
     <value>Określono nieprawidłowy algorytm szyfrowania klucza: „{0}”. Oczekiwana wartość: „{1}”.</value>
   </data>
   <data name="TCE_InvalidKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
+    <value>Błąd wewnętrzny. Określono nieprawidłowy algorytm szyfrowania klucza: „{0}”. Oczekiwana wartość: „{1}”.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithm" xml:space="preserve">
     <value>Algorytm szyfrowania klucza nie może mieć wartości null.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Key encryption algorithm cannot be null.</value>
+    <value>Błąd wewnętrzny. Algorytm szyfrowania klucza nie może mieć wartości null.</value>
   </data>
   <data name="TCE_EmptyColumnEncryptionKey" xml:space="preserve">
     <value>Określono pusty klucz szyfrowania kolumny.</value>
@@ -4018,385 +4018,385 @@
     <value>Klucz szyfrowania kolumny nie może mieć wartości null.</value>
   </data>
   <data name="TCE_EmptyEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Empty encrypted column encryption key specified.</value>
+    <value>Błąd wewnętrzny. Określono pusty zaszyfrowany klucz szyfrowania kolumny.</value>
   </data>
   <data name="TCE_NullEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Encrypted column encryption key cannot be null.</value>
+    <value>Błąd wewnętrzny. Zaszyfrowany klucz szyfrowania kolumny nie może mieć wartości null.</value>
   </data>
   <data name="TCE_LargeCertificatePathLength" xml:space="preserve">
-    <value>Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>Długość określonej ścieżki certyfikatu to {0} bajtów — przekracza ona maksymalną długość wynoszącą {1} bajtów.</value>
   </data>
   <data name="TCE_LargeCertificatePathLengthSysErr" xml:space="preserve">
-    <value>Internal error. Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>Błąd wewnętrzny. Długość określonej ścieżki certyfikatu to {0} bajtów — przekracza ona maksymalną długość wynoszącą {1} bajtów.</value>
   </data>
   <data name="TCE_NullCertificatePath" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>Błąd wewnętrzny. Ścieżka certyfikatu nie może mieć wartości null. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{2}&lt;certyfikat magazynu&gt;{2}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{0}” lub „{1}”.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{0}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_NullCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{0}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_NullCngPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{0}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_NullCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Ścieżka klucza głównego kolumny nie może mieć wartości null. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{0}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa ścieżka certyfikatu: „{0}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{3}&lt;certyfikat magazynu&gt;{3}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{1}” lub „{2}”.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa ścieżka klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa lokalizacja certyfikatu „{0}” w ścieżce certyfikatu „{1}”. Użyj następującego formatu: &lt;lokalizacja certyfikatu&gt;{4}&lt;certyfikat magazynu&gt;{4}&lt;odcisk palca certyfikatu&gt;, gdzie &lt;lokalizacja certyfikatu&gt; to „{2}” lub „{3}”.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
-    <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>W ścieżce certyfikatu „{1}” określono nieprawidłowy magazyn certyfikatów „{0}”. Oczekiwana wartość: „{2}”.</value>
   </data>
   <data name="TCE_InvalidCertificateStoreSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>Błąd wewnętrzny. W ścieżce certyfikatu „{1}” określono nieprawidłowy magazyn certyfikatów „{0}”. Oczekiwana wartość: „{2}”.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprint" xml:space="preserve">
-    <value>Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>Określono pusty odcisk palca certyfikatu w ścieżce certyfikatu „{0}”.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprintSysErr" xml:space="preserve">
-    <value>Internal error. Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>Błąd wewnętrzny. Określono pusty odcisk palca certyfikatu w ścieżce certyfikatu „{0}”.</value>
   </data>
   <data name="TCE_EmptyCspName" xml:space="preserve">
-    <value>Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Pusta nazwa dostawcy usług kryptograficznych (CSP) firmy Microsoft określona w ścieżce klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Pusta nazwa dostawcy usług kryptograficznych (CSP) firmy Microsoft określona w ścieżce klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCngName" xml:space="preserve">
-    <value>Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Pusta nazwa dostawcy interfejsu API kryptografii firmy Microsoft: nazwa dostawcy następnej generacji (CNG) określona w ścieżce klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCngNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. Pusta nazwa dostawcy interfejsu API kryptografii firmy Microsoft: nazwa dostawcy następnej generacji (CNG) określona w ścieżce klucza głównego kolumny: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>W ścieżce klucza głównego kolumny określono pusty identyfikator klucza: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. W ścieżce klucza głównego kolumny określono pusty identyfikator klucza: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy usług kryptograficznych (CSP) firmy Microsoft: &lt;Nazwa dostawcy CSP&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>W ścieżce klucza głównego kolumny określono pusty identyfikator klucza: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Błąd wewnętrzny. W ścieżce klucza głównego kolumny określono pusty identyfikator klucza: „{0}”. Użyj następującego formatu dla klucza przechowywanego u dostawcy interfejsu API kryptografii nowej generacji (CNG) firmy Microsoft: &lt;Nazwa dostawcy CNG&gt;{1}&lt;Identyfikator klucza&gt;.</value>
   </data>
   <data name="TCE_InvalidCspName" xml:space="preserve">
-    <value>Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>Nieprawidłowa nazwa dostawcy usług kryptograficznych (CSP) firmy Microsoft: „{0}”. Sprawdź, czy nazwa dostawcy CSP w ścieżce klucza głównego kolumny „{1}” jest prawidłowa i zainstalowana na maszynie.</value>
   </data>
   <data name="TCE_InvalidCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowa nazwa dostawcy usług kryptograficznych (CSP) firmy Microsoft: „{0}”. Sprawdź, czy nazwa dostawcy CSP w ścieżce klucza głównego kolumny „{1}” jest prawidłowa i zainstalowana na maszynie.</value>
   </data>
   <data name="TCE_InvalidCspKeyId" xml:space="preserve">
-    <value>Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>Nieprawidłowy identyfikator klucza: „{0}”. Sprawdź, czy identyfikator klucza w ścieżce klucza głównego kolumny „{1}” jest prawidłowy i istnieje w dostawcy CSP.</value>
   </data>
   <data name="TCE_InvalidCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>Błąd wewnętrzny. Nieprawidłowy identyfikator klucza: „{0}”. Sprawdź, czy identyfikator klucza w ścieżce klucza głównego kolumny „{1}” jest prawidłowy i istnieje w dostawcy CSP.</value>
   </data>
   <data name="TCE_InvalidCngKey" xml:space="preserve">
-    <value>An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>Wystąpił błąd podczas otwierania klucza interfejsu API kryptografii firmy Microsoft: klucz nowej generacji (CNG): „{0}”. Sprawdź, czy nazwa dostawcy CNG „{1}” jest prawidłowa, zainstalowana na maszynie i czy klucz „{2}” istnieje.</value>
   </data>
   <data name="TCE_InvalidCngKeySysErr" xml:space="preserve">
-    <value>Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>Błąd wewnętrzny. Wystąpił błąd podczas otwierania klucza interfejsu API kryptografii firmy Microsoft: klucz nowej generacji (CNG): „{0}”. Sprawdź, czy nazwa dostawcy CNG „{1}” jest prawidłowa, zainstalowana na maszynie i czy klucz „{2}” istnieje.</value>
   </data>
   <data name="TCE_CertificateNotFound" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'.</value>
+    <value>Nie odnaleziono certyfikatu z odciskiem palca „{0}” w magazynie certyfikatów „{1}” w lokalizacji certyfikatów „{2}”.</value>
   </data>
   <data name="TCE_CertificateNotFoundSysErr" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.</value>
+    <value>Nie odnaleziono certyfikatu z odciskiem palca „{0}” w magazynie certyfikatów „{1}” w lokalizacji certyfikatów „{2}”. Sprawdź, czy ścieżka certyfikatu w definicji klucza głównego kolumny w bazie danych jest poprawna, a certyfikat został poprawnie zaimportowany do lokalizacji/magazynu certyfikatów.</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersionInEncryptedCEK" xml:space="preserve">
     <value>Określony zaszyfrowany klucz szyfrowania kolumny zawiera nieprawidłową wersję algorytmu szyfrowania „{0}”. Oczekiwana wersja to „{1}”.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect.</value>
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy usług kryptograficznych firmy Microsoft (CSP) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Określona długość szyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością tekstu szyfrowanego: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (certyfikatu) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka certyfikatu może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect.</value>
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy usług kryptograficznych firmy Microsoft (CSP) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Określona długość podpisu zaszyfrowanego klucza szyfrowania kolumny: {0} nie jest zgodna z długością podpisu: {1} w przypadku używania klucza głównego kolumny (klucza asymetrycznego) w „{2}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka dostawcy interfejsu API kryptografii firmy Microsoft: ścieżka dostawcy następnej generacji (CNG) może być niepoprawna.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Określony podpis zaszyfrowanego klucza szyfrowania kolumny jest niezgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (certyfikatu) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Określony zaszyfrowany podpis klucza szyfrowania kolumny nie jest zgodny z podpisem obliczonym przy użyciu klucza głównego kolumny (klucz asymetryczny) w elemencie „{0}”. Zaszyfrowany klucz szyfrowania kolumny może być uszkodzony lub określona ścieżka może być nieprawidłowa.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>Certyfikat określony w ścieżce klucza „{0}” nie ma klucza prywatnego do szyfrowania klucza szyfrowania kolumny. Sprawdź, czy certyfikat został zaimportowany poprawnie.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKeySysErr" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>Certyfikat określony w ścieżce klucza „{0}” nie ma klucza prywatnego do odszyfrowywania klucza szyfrowania kolumny. Sprawdź, czy certyfikat został zaimportowany poprawnie.</value>
   </data>
   <data name="TCE_NullColumnEncryptionKeySysErr" xml:space="preserve">
-    <value>Internal error. Column encryption key cannot be null.</value>
+    <value>Błąd wewnętrzny. Klucz szyfrowania kolumny nie może mieć wartości null.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>Klucz szyfrowania kolumny został pomyślnie odszyfrowany, ale jego długość: {1} jest niezgodna z długością: {2} algorytmu „{0}”. Sprawdź zaszyfrowaną wartość klucza szyfrowania kolumny w bazie danych.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
-    <value>Encryption type '{1}' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm '{0}' are: {2}.</value>
+    <value>Typ szyfrowania „{1}” określony dla kolumny w bazie danych jest nieprawidłowy lub uszkodzony. Prawidłowe typy szyfrowania dla algorytmu „{0}” to: {2}.</value>
   </data>
   <data name="TCE_NullPlainText" xml:space="preserve">
-    <value>Internal error. Plaintext value cannot be null.</value>
+    <value>Błąd wewnętrzny. Zwykły tekst nie może mieć wartości null.</value>
   </data>
   <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes).</value>
+    <value>Nie można zaszyfrować. Szyfrowanie spowodowało {0} B szyfru, który przekracza maksymalny dozwolony limit {1} B. Określona wartość w postaci zwykłego tekstu jest prawdopodobnie za duża (rozmiar zwykłego tekstu: {2} B).</value>
   </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
-    <value>Internal error. Ciphertext value cannot be null.</value>
+    <value>Błąd wewnętrzny. Tekst szyfrowany nie może mieć wartości null.</value>
   </data>
   <data name="TCE_InvalidCipherTextSize" xml:space="preserve">
-    <value>Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption.</value>
+    <value>Określony tekst szyfrowany ma nieprawidłowy rozmiar równy {0} B, który jest mniejszy niż minimalny rozmiar równy {1} B wymagany do odszyfrowywania.</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersion" xml:space="preserve">
-    <value>The specified ciphertext's encryption algorithm version '{0}' does not match the expected encryption algorithm version '{1}'.</value>
+    <value>Wersja algorytmu szyfrowania określonego tekstu szyfrowanego „{0}” jest niezgodna z oczekiwaną wersją algorytmu szyfrowania „{1}”.</value>
   </data>
   <data name="TCE_InvalidAuthenticationTag" xml:space="preserve">
-    <value>Specified ciphertext has an invalid authentication tag.</value>
+    <value>Określony tekst szyfrowany zawiera nieprawidłowy tag uwierzytelniania.</value>
   </data>
   <data name="TCE_NullColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Internal error. Encryption algorithm cannot be null. Valid algorithms are: {0}.</value>
+    <value>Błąd wewnętrzny. Algorytm szyfrowania nie może mieć wartości null. Prawidłowe algorytmy to: {0}.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatParameterMetadata" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The parameter metadata resultset is missing.</value>
+    <value>Błąd wewnętrzny. Wynik zwrócony przez „{0}” jest nieprawidłowy. Brak zestawu wyników metadanych parametru.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatAttestationInfo" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The attestation information resultset is missing for enclave type '{1}'. </value>
+    <value>Błąd wewnętrzny. Wynik zwrócony przez „{0}” jest nieprawidłowy. Brak zestawu wyników informacji o zaświadczaniu dla typu enklawy „{1}”. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>Błąd wewnętrzny. Wystąpił błąd podczas wypełniania metadanych enklawy. Brak numeru porządkowego klucza szyfrowania kolumny „{0}” w metadanych szyfrowania zwróconych przez program SQL Server. Maksymalna liczba porządkowa to „{1}”. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalParameterMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>Błąd wewnętrzny. Wystąpił błąd podczas wypełniania metadanych parametru. Brak numeru porządkowego klucza szyfrowania kolumny „{0}” w metadanych szyfrowania zwróconych przez program SQL Server. Maksymalna liczba porządkowa to „{1}”. </value>
   </data>
   <data name="TCE_MultipleRowsReturnedForAttestationInfo" xml:space="preserve">
-    <value>Internal error. Error occurred when parsing the results of '{0}'. The attestation information resultset is expected to contain only one row, but it contains multiple rows.</value>
+    <value>Błąd wewnętrzny. Wystąpił błąd podczas analizowania wyników operacji „{0}”. Zestaw wyników informacji o zaświadczaniu powinien zawierać tylko jeden wiersz, ale zawiera wiele wierszy.</value>
   </data>
   <data name="TCE_ParamEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameter '{1}' in statement or procedure '{2}' is missing in resultset returned by {0}.</value>
+    <value>Błąd wewnętrzny. Brak metadanych parametru „{1}” w instrukcji lub procedurze „{2}” w zestawie wyników zwróconym przez element {0}.</value>
   </data>
   <data name="TCE_ProcEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameters for command '{1}' in a batch is missing in the resultset returned by {0}.</value>
+    <value>Błąd wewnętrzny. Brak metadanych parametrów polecenia „{1}” w partii w zestawie wyników zwróconych przez element {0}.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureVerificationFailed" xml:space="preserve">
-    <value>The signature returned by SQL Server for the column master key, specified in key path '{0}', is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance.</value>
+    <value>Sygnatura zwrócona przez program SQL Server dla klucza głównego kolumny określona w ścieżce klucza „{0}” jest nieprawidłowa (nie jest zgodna z obliczoną sygnaturą). Utwórz ponownie metadane klucza głównego kolumny, upewniając się, że podpis wewnątrz metadanych jest obliczany przy użyciu klucza głównego kolumny, do którego odwołuje się metadane. Jeśli błąd będzie się powtarzać, skontaktuj się z firmą Microsoft w celu uzyskania pomocy.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureNotFound" xml:space="preserve">
-    <value>Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path '{0}', cannot be null or empty.</value>
+    <value>Błąd wewnętrzny. Sygnatura zwrócona przez program SQL Server dla klucza głównego kolumny z włączoną enklawą, określona w ścieżce klucza „{0}”, nie może mieć wartości null ani być pusta.</value>
   </data>
   <data name="TCE_UnableToVerifyColumnMasterKeySignature" xml:space="preserve">
-    <value>Unable to verify a column master key signature. Error message: {0} </value>
+    <value>Nie można zweryfikować podpisu klucza głównego kolumny. Komunikat o błędzie: {0} </value>
   </data>
   <data name="TCE_ParamEncryptionFailed" xml:space="preserve">
-    <value>Failed to encrypt parameter '{0}'.</value>
+    <value>Nie można zaszyfrować parametru „{0}”.</value>
   </data>
   <data name="TCE_ColumnDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt column '{0}'.</value>
+    <value>Nie można odszyfrować kolumny „{0}”.</value>
   </data>
   <data name="TCE_ParamDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt parameter '{0}'.</value>
+    <value>Nie można odszyfrować parametru „{0}”.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Encryption algorithm '{0}' for the column in the database is either invalid or corrupted. Valid algorithms are: {1}.</value>
+    <value>Algorytm szyfrowania „{0}” dla kolumny w bazie danych jest nieprawidłowy lub uszkodzony. Prawidłowe algorytmy to: {1}.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithmId" xml:space="preserve">
-    <value>Encryption algorithm id '{0}' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: {1}.</value>
+    <value>Identyfikator algorytmu szyfrowania „{0}” dla kolumny w bazie danych jest nieprawidłowy lub uszkodzony. Prawidłowe identyfikatory algorytmów szyfrowania: {1}.</value>
   </data>
   <data name="TCE_UnsupportedNormalizationVersion" xml:space="preserve">
-    <value>Normalization version '{0}' received from {2} is not supported. Valid normalization versions are: {1}.</value>
+    <value>Wersja normalizacji „{0}” odebrana z {2} nie jest obsługiwana. Prawidłowe wersje normalizacji: {1}.</value>
   </data>
   <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key. Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Nie można odszyfrować klucza szyfrowania kolumny. Nieprawidłowa nazwa dostawcy magazynu kluczy: „{0}”. Nazwa dostawcy magazynu kluczy musi oznaczać dostawcę magazynu kluczy systemowych lub zarejestrowanego niestandardowego dostawcę magazynu kluczy. Prawidłowe nazwy dostawców magazynu kluczy systemowych to: {1}. Prawidłowe (obecnie zarejestrowane) niestandardowe nazwy dostawców magazynu kluczy to: {2}. Zweryfikuj informacje o dostawcy magazynu kluczy w definicjach kluczy głównych kolumn w bazie danych i sprawdź, czy wszyscy dostawcy magazynu kluczy niestandardowych używany w aplikacji są poprawnie zarejestrowani.</value>
   </data>
   <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Nie można odszyfrować klucza szyfrowania kolumny przy użyciu dostawcy magazynu kluczy: „{0}”. Ostatnie 10 bajtów zaszyfrowanego klucza szyfrowania kolumny to: „{1}”.</value>
   </data>
   <data name="TCE_UntrustedKeyPath" xml:space="preserve">
-    <value>Column master key path '{0}' received from server '{1}' is not a trusted key path.</value>
+    <value>Ścieżka klucza głównego kolumny „{0}” otrzymana z serwera „{1}” nie jest zaufaną ścieżką klucza.</value>
   </data>
   <data name="TCE_KeyDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Nie można odszyfrować klucza szyfrowania kolumny przy użyciu dostawcy magazynu kluczy: „{0}”. Sprawdź właściwości klucza szyfrowania kolumny i jego klucza głównego kolumny w bazie danych. Ostatnie 10 bajtów zaszyfrowanego klucza szyfrowania kolumny to: „{1}”.</value>
   </data>
   <data name="TCE_UnsupportedDatatype" xml:space="preserve">
-    <value>Encryption and decryption of data type '{0}' is not supported.</value>
+    <value>Szyfrowanie i odszyfrowywanie typu danych „{0}” nie jest obsługiwane.</value>
   </data>
   <data name="TCE_DecryptionFailed" xml:space="preserve">
-    <value>Decryption failed. The last 10 bytes of the encrypted column encryption key are: '{0}'. The first 10 bytes of ciphertext are: '{1}'.</value>
+    <value>Odszyfrowywanie nie powiodło się. Ostatnie 10 bajtów zaszyfrowanego klucza szyfrowania kolumny to: „{0}”. Pierwsze 10 bajtów tekstu szyfrowego to: „{1}”.</value>
   </data>
   <data name="TCE_ExceptionWhenGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error encountered while generating package to be sent to enclave. Error message: {0}</value>
+    <value>Wystąpił błąd podczas generowania pakietu do wysłania do enklawy. Komunikat o błędzie: {0}</value>
   </data>
   <data name="TCE_InvalidKeyIdUnableToCastToUnsignedShort" xml:space="preserve">
-    <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
+    <value>Błąd wewnętrzny. Podany identyfikator klucza „{0}” jest nieprawidłowy. Wystąpił błąd podczas konwertowania identyfikatora klucza na krótki bez podpisu. Komunikat o błędzie: {1}</value>
   </data>
   <data name="TCE_InvalidDatabaseIdUnableToCastToUnsignedInt" xml:space="preserve">
-    <value>Internal Error. The given database id '{0}' is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}</value>
+    <value>Błąd wewnętrzny. Podany identyfikator bazy danych „{0}” jest nieprawidłowy. Wystąpił błąd podczas konwertowania identyfikatora bazy danych na niepodpisaną liczbę całkowitą. Komunikat o błędzie: {1}</value>
   </data>
   <data name="TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt" xml:space="preserve">
-    <value>Invalid attestation parameters specified by the enclave provider for enclave type '{0}'. Error occurred when converting the value '{1}' of parameter '{2}' to unsigned int. Error Message: {3}</value>
+    <value>Dostawca enklawy określił nieprawidłowe parametry zaświadczania dla typu enklawy „{0}”. Wystąpił błąd podczas konwertowania wartości „{1}” parametru „{2}” na niepodpisaną liczbę całkowitą. Komunikat o błędzie: {3}</value>
   </data>
   <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Nieprawidłowa nazwa dostawcy magazynu kluczy: „{0}”. Nazwa dostawcy magazynu kluczy musi oznaczać dostawcę magazynu kluczy systemowych lub zarejestrowanego niestandardowego dostawcę magazynu kluczy. Prawidłowe nazwy dostawców magazynu kluczy systemowych to: {1}. Prawidłowe (obecnie zarejestrowane) niestandardowe nazwy dostawców magazynu kluczy to: {2}. Zweryfikuj informacje o dostawcy magazynu kluczy w definicjach kluczy głównych kolumn w bazie danych i sprawdź, czy wszyscy dostawcy magazynu kluczy niestandardowych używany w aplikacji są poprawnie zarejestrowani.</value>
   </data>
   <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
-    <value>Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0} </value>
+    <value>Błąd wewnętrzny.  Nie można zaszyfrować pakietu bajtów do wysłania do enklawy. Komunikat o błędzie: {0} </value>
   </data>
   <data name="TCE_OffsetOutOfBounds" xml:space="preserve">
-    <value>Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument '{0}' for method {1}.{2} is out of bounds.</value>
+    <value>Błąd wewnętrzny. Nie można serializować kluczy do wysłania do enklawy. Przesunięcie początkowe określone przez argument „{0}” dla metody {1}. Element {2} jest poza zakresem.</value>
   </data>
   <data name="TCE_InsufficientBuffer" xml:space="preserve">
-    <value>Internal Error. The buffer specified by argument '{0}' for method '{1}.{2}' has insufficient space.</value>
+    <value>Błąd wewnętrzny. Bufor określony przez argument „{0}” dla metody „{1}.{2}” ma niewystarczające miejsce.</value>
   </data>
   <data name="TCE_ColumnEncryptionKeysNotFound" xml:space="preserve">
-    <value>Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave.</value>
+    <value>Błąd wewnętrzny. Nie można odnaleźć kluczy szyfrowania kolumn zaszyfrowanych podczas próby wysłania kluczy do enklawy.</value>
   </data>
   <data name="TCE_NullEnclaveSessionDuringQueryExecution" xml:space="preserve">
-    <value>Internal Error. Enclave session is null during query execution. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>Błąd wewnętrzny. Sesja enklawy ma wartość null podczas wykonywania zapytania. Typ enklawy to „{0}”, a element enclaveAttestationUrl to „{1}”.</value>
   </data>
   <data name="TCE_NullEnclavePackageForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>Błąd wewnętrzny. Pakiet enklawy ma wartość null podczas wykonywania zapytania opartego na enklawie. Typ enklawy to „{0}”, a element enclaveAttestationUrl to „{1}”.</value>
   </data>
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
-    <value>Attestation information was not returned by SQL Server. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>Program SQL Server nie zwrócił informacji o zaświadczaniach. Typ enklawy to „{0}”, a adres URL zaświadczania enklawy to „{1}”.</value>
   </data>
   <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Unable to establish secure channel. Error Message: {0}</value>
+    <value>Nie można ustanowić bezpiecznego kanału. Komunikat o błędzie: {0}</value>
   </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Null argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be null.</value>
+    <value>Błąd wewnętrzny. Argument o wartości null „{0}” określony podczas konstruowania obiektu typu „{1}”. Element „{0}” nie może mieć wartości null.</value>
   </data>
   <data name="TCE_EmptyArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Empty argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be empty.</value>
+    <value>Błąd wewnętrzny. Podczas konstruowania obiektu typu „{1}” określono pusty argument „{0}”. Element „{0}” nie może być pusty.</value>
   </data>
   <data name="TCE_NullArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be null when executing method '{1}.{2}'.</value>
+    <value>Błąd wewnętrzny. Argument „{0}” nie może mieć wartości null podczas wykonywania metody „{1}.{2}”.</value>
   </data>
   <data name="TCE_EmptyArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be empty when executing method '{1}.{2}'.</value>
+    <value>Błąd wewnętrzny. Argument „{0}” nie może być pusty podczas wykonywania metody „{1}.{2}”.</value>
   </data>
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
-    <value>Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure.</value>
+    <value>Określa punkt końcowy usługi zaświadczania enklawy, która będzie używana do sprawdzenia, czy enklawa skonfigurowana w wystąpieniu programu SQL Server dla obliczeń w kolumnach bazy danych zaszyfrowanych przy użyciu funkcji Always Encrypted jest prawidłowa i bezpieczna.</value>
   </data>
   <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}</value>
+    <value>Nie można odczytać sekcji konfiguracji dla dostawców enklawy. Upewnij się, że sekcja jest poprawnie sformatowana w pliku konfiguracji aplikacji. Komunikat o błędzie: {0}</value>
   </data>
   <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Failed to instantiate an enclave provider with type '{1}' for name '{0}'. Error message: {2} </value>
+    <value>Nie można utworzyć wystąpienia dostawcy enklawy typu „{1}” dla nazwy „{0}”. Komunikat o błędzie: {2} </value>
   </data>
   <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty.</value>
+    <value>Błąd wewnętrzny. Właściwość SqlColumnEncryptionEnchaveProviderName nie może mieć wartości null ani być pusta.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>Wystąpił błąd podczas odczytywania zestawu wyników „{0}”. Adres URL zaświadczania nie został określony w parametrach połączenia, ale zapytanie wymaga obliczeń enklawy.  Typ enklawy to „{1}”. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>Wystąpił błąd podczas generowania pakietu enklawy. Adres URL zaświadczania nie został określony w parametrach połączenia, ale zapytanie wymaga obliczeń enklawy.  Typ enklawy to „{0}”. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations.</value>
+    <value>Błąd wewnętrzny. Typ enklawy odebrany z programu SQL Server ma wartość null lub jest pusty podczas wykonywania zapytania wymagającego obliczeń enklawy.</value>
   </data>
   <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section.</value>
+    <value>Wykonanie zapytania wymaga obliczeń enklawy, ale w konfiguracji aplikacji brakuje sekcji dostawcy enklawy.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string. </value>
+    <value>Nie znaleziono dostawcy enklawy dla typu enklawy „{0}” i protokołu zaświadczania „{1}”. Określ poprawny protokół zaświadczania w parametrach połączenia. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
-    <value>Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>Nie można nawiązać komunikacji z enklawą. Odebrano informacje o sesji enklawy o wartości null od dostawcy enklawy. Typ enklawy to „{0}”, a adres URL zaświadczania enklawy to „{1}”.</value>
   </data>
   <data name="TCE_ParamInvalidForceColumnEncryptionSetting" xml:space="preserve">
-    <value>Cannot set {0} for {3} '{1}' because encryption is not enabled for the statement or procedure '{2}'.</value>
+    <value>Nie można ustawić elementu {0} dla {3} „{1}”, ponieważ dla instrukcji lub procedury „{2}” nie włączono szyfrowania.</value>
   </data>
   <data name="TCE_ParamUnExpectedEncryptionMetadata" xml:space="preserve">
-    <value>Cannot execute statement or procedure '{1}' because {2} was set for {3} '{0}' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.</value>
+    <value>Nie można wykonać instrukcji lub procedury „{1}”, ponieważ ustawiono {2} dla {3} „{0}”, a baza danych oczekuje wysłania tego parametru jako zwykłego tekstu. Może to być spowodowane błędem konfiguracji.</value>
   </data>
   <data name="TCE_NotSupportedByServer" xml:space="preserve">
-    <value>{0} instance in use does not support column encryption.</value>
+    <value>Używane wystąpienie {0} nie obsługuje szyfrowania kolumn.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Określono adres URL zaświadczania enklawy i protokół zaświadczania w parametrach połączenia, ale używany program SQL Server nie obsługuje obliczeń opartych na enklawach — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Określono adres URL zaświadczania enklawy w parametrach połączenia, ale używany program SQL Server nie obsługuje obliczeń opartych na enklawie — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Określono protokół zaświadczania w parametrach połączenia, ale używany program SQL Server nie obsługuje obliczeń opartych na enklawie — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Określono adres URL zaświadczania enklawy w parametrach połączenia, ale program SQL Server nie zwrócił typu enklawy. Upewnij się, że typ enklawy jest poprawnie skonfigurowany w Twoim wystąpieniu — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
-    <value>{0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates.</value>
+    <value>W przypadku przeprowadzania aktualizacji wsadowych element {0} powinien być identyczny we wszystkich poleceniach ({1}, {2}, {3}, {4}).</value>
   </data>
   <data name="TCE_StreamNotSupportOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' as a {1} is not supported.</value>
+    <value>Pobieranie zaszyfrowanej kolumny „{0}” jako {1} nie jest obsługiwane.</value>
   </data>
   <data name="TCE_SequentialAccessNotSupportedOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' with {1} is not supported.</value>
+    <value>Pobieranie zaszyfrowanej kolumny „{0}” z {1} nie jest obsługiwane.</value>
   </data>
   <data name="TCE_CanOnlyCallOnce" xml:space="preserve">
-    <value>Key store providers cannot be set more than once.</value>
+    <value>Nie można ustawić dostawców magazynu kluczy więcej niż raz.</value>
   </data>
   <data name="TCE_NullCustomKeyStoreProviderDictionary" xml:space="preserve">
-    <value>Column encryption key store provider dictionary cannot be null. Expecting a non-null value.</value>
+    <value>Słownik dostawcy magazynu kluczy szyfrowania kolumn nie może mieć wartości null. Oczekiwano wartości innej niż null.</value>
   </data>
   <data name="TCE_InvalidCustomKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name '{0}'. '{1}' prefix is reserved for system key store providers.</value>
+    <value>Nieprawidłowa nazwa dostawcy magazynu kluczy „{0}”. Prefiks „{1}” jest zarezerwowany dla dostawców magazynu kluczy systemowych.</value>
   </data>
   <data name="TCE_NullProviderValue" xml:space="preserve">
-    <value>Null reference specified for key store provider '{0}'. Expecting a non-null value.</value>
+    <value>Określono odwołanie o wartości null dla dostawcy magazynu kluczy „{0}”. Oczekiwano wartości innej niż null.</value>
   </data>
   <data name="TCE_EmptyProviderName" xml:space="preserve">
-    <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
+    <value>Określono nieprawidłową nazwę dostawcy magazynu kluczy. Nazwy dostawców magazynu kluczy nie mogą mieć wartości null ani być puste.</value>
   </data>
   <data name="TCE_SqlCommand_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Column encryption setting for the command. Overrides the connection level default.</value>
+    <value>Ustawienie szyfrowania kolumn dla polecenia. Zastępuje domyślny poziom połączenia.</value>
   </data>
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Default column encryption setting for all the commands on the connection.</value>
+    <value>Domyślne ustawienie szyfrowania kolumny dla wszystkich poleceń w ramach połączenia.</value>
   </data>
   <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Forces parameter to be encrypted before sending sensitive data to server. </value>
+    <value>Wymusza szyfrowanie parametru przed wysłaniem poufnych danych na serwer. </value>
   </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
-    <value>Dictionary object containing SQL Server names and their trusted column master key paths.</value>
+    <value>Obiekt słownika zawierający nazwy programu SQL Server i ich zaufane ścieżki klucza głównego kolumny.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
     <value>Wystąpiło zbyt wiele przekierowań. Dozwolone jest tylko ograniczona liczba ({0}) przekierowania na logowanie.</value>
@@ -4456,16 +4456,16 @@
     <value>.database.chinacloudapi.cn</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
-    <value>Defines whether query metadata caching is enabled.</value>
+    <value>Określa, czy jest włączone buforowanie metadanych zapytań.</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionKeyCacheTtl" xml:space="preserve">
-    <value>Defines the time-to-live of entries in the column encryption key cache.</value>
+    <value>Określa czas wygaśnięcia wpisów w pamięci podręcznej klucza szyfrowania kolumny.</value>
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
-    <value>Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Upłynął limit czasu wykonywania.  Limit czasu upłynął przed ukończeniem operacji lub serwer nie odpowiada.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem. Podpis tokenu jest niezgodny z obliczoną sygnaturą przy użyciu klucza publicznego pobranego z punktu końcowego klucza publicznego zaświadczania w lokalizacji „{0}”. Zweryfikuj mapowanie DNS dla punktu końcowego — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Wystąpił błąd wewnętrzny podczas ponawiania próby pobrania certyfikatu głównego usługi Ochrona hosta po niepowodzeniu początkowego żądania. Skontaktuj się z Działem Obsługi Klienta.</value>
@@ -4486,10 +4486,10 @@
     <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem. Token ma nieprawidłowy format. Skontaktuj się z Działem Obsługi Klienta. Szczegóły błędu: „{0}”.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Usługa zaświadczania zwróciła wygasły certyfikat główny usługi Ochrona hosta dla adresu URL zaświadczania „{0}”. Sprawdź certyfikat główny usługi Ochrona hosta skonfigurowany dla wystąpienia usługi Ochrona hosta — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>Uzyskany certyfikat główny usługi Ochrona hosta dla adresu URL zaświadczania „{0}” ma nieprawidłowy format. Sprawdź, czy adres URL zaświadczania jest poprawny, a serwer usługi Ochrona hosta jest w trybie online i w pełni zainicjowany — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Aby uzyskać dodatkowe wsparcie, skontaktuj się z pomocą techniczną. Szczegóły błędu: „{1}”.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem. Nie można pobrać klucza publicznego z punktu końcowego klucza publicznego zaświadczania lub pobrany klucz ma nieprawidłowy format. Szczegóły błędu: „{0}”.</value>
@@ -4507,106 +4507,106 @@
     <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem podczas sprawdzania poprawności podpisu. Wyjątek: „{0}”.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem. Oświadczenie „{0}” w tokenie ma nieprawidłową wartość „{1}”. Sprawdź zasady zaświadczania — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów. Jeśli zasady są prawidłowe, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Weryfikacja tokenu zaświadczania zakończyła się niepowodzeniem. W tokenie brakuje oświadczenia „{0}”. Sprawdź zasady zaświadczania — zobacz https://go.microsoft.com/fwlink/?linkid=2157649, aby uzyskać więcej szczegółów. Jeśli zasady są prawidłowe, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Nie można sprawdzić, czy enklawa działa w trybie produkcyjnym. Skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Nie można zweryfikować zasad enklawy z powodu różnicy między oczekiwanymi i rzeczywistymi wartościami zasad dotyczących właściwości „{0}”. Wartość rzeczywista: „{1}”, oczekiwano: „{2}” — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Weryfikacja podpisu w raporcie enklawy zakończyła się niepowodzeniem. Podpis raportu jest niezgodny z podpisem obliczonym przy użyciu certyfikatu głównego usługi Ochrona hosta. Sprawdź mapowanie DNS dla punktu końcowego — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli to ustawienie jest poprawne, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Raport enklawy odebrany z systemu SQL Server nie ma prawidłowego formatu. Skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+    <value>Nie można zbudować łańcucha zaufania między raportem o kondycji hosta enklawy a certyfikatem głównym usługi Ochrona hosta dla adresu URL zaświadczania „{0}” ze stanem: „{1}”. Sprawdź, czy adres URL zaświadczania jest zgodny z adresem URL skonfigurowanym w programie SQL Server — zobacz https://go.microsoft.com/fwlink/?linkid=2160553, aby uzyskać więcej szczegółów. Jeśli zarówno klient, jak i platforma SQL Server korzystają z tej samej usługi zaświadczania, skontaktuj się z Działem Obsługi Klienta.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
-    <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
+    <value>Określa protokół zaświadczania dla odpowiedniej usługi zaświadczania enklawy.</value>
   </data>
   <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
-    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+    <value>Określa preferencję adresu IP podczas nawiązywania połączenia z wystąpieniami SQL.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
-    <value>The enclave type '{0}' returned from the server is not supported.</value>
+    <value>Typ enklawy „{0}” zwracany z serwera nie jest obsługiwany.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
-    <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
+    <value>Nie można zainicjować połączenia. Protokół zaświadczania „{0}” nie obsługuje typu enklawy „{1}”.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Wystąpił błąd podczas generowania pakietu enklawy. Protokół zaświadczania nie został określony w parametrach połączenia, ale zapytanie wymaga obliczeń enklawy.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>Rozmiar UDT musi być mniejszy niż {1}, rozmiar: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Ostrzeżenie o zabezpieczeniach: negocjowany protokół {0} jest niezabezpieczony i obsługiwany tylko w celu zapewnienia zgodności z poprzednimi wersjami. Zalecana wersja protokołu to TLS 1.2 i nowsza.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
-    <value>The specified value is not valid in the '{0}' enumeration.</value>
+    <value>Określona wartość jest nieprawidłowa w wyliczeniu „{0}”.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>Podana wskazówka dotycząca kolejności kolumn jest nieprawidłowa.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>Kolumna „{0}” została określona więcej niż raz.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>Posortowana kolumna „{0}” jest nieprawidłowa w tabeli docelowej.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Wskazówka dotycząca kolejności kolumn nie może mieć nieokreślonej kolejności sortowania.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Nieobsługiwane uwierzytelnianie określone w tym kontekście: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Upłynął limit czasu uwierzytelniania interaktywnego usługi Active Directory. Użytkownik potrzebował zbyt dużo czasu, aby odpowiedzieć na żądanie uwierzytelnienia.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Nie można użyć opcji „Authentication=Active Directory Interactive”, jeśli właściwość Credential została ustawiona.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Interactive”.</value>
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
-    <value>Server Process Id (SPID) of the active connection.</value>
+    <value>Identyfikator procesu serwera (SPID) aktywnego połączenia.</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Upłynął limit czasu uwierzytelniania przepływu kodu urządzenia usługi Active Directory. Użytkownik potrzebował zbyt dużo czasu, aby odpowiedzieć na żądanie uwierzytelnienia.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.</value>
+    <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Device Code Flow”.</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>Nie można ustawić właściwości Credential, jeśli w parametrach połączenia określono wartość „Authentication={0}”.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow', if the Credential property has been set.</value>
+    <value>Nie można użyć opcji „Authentication=Active Directory Device Code Flow”, jeśli właściwość Credential została ustawiona.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>Nie można użyć elementu „Authentication={0}”, jeśli właściwość Credential została ustawiona.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>Wykryto nieoczekiwany typ podczas deserializacji.</value>
   </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
-    <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
+    <value>Wartość „{0}” jest spoza zakresu. Musi mieścić się w zakresie od {1} do {2}.</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry has been canceled at attempt {0}.</value>
+    <value>Ponowna próba została anulowana podczas próby {0}.</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
+    <value>Liczba ponownych prób przekroczyła maksymalną liczbę prób {0}.</value>
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
-    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+    <value>Wartość „{0}” nie jest mniejsza niż „{1}”; wartość „{2}” nie może być większa niż „{3}”.</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
     <value>Tablica docelowa ma zbyt małą długość, aby móc skopiować wszystkie elementy kolekcji. Sprawdź indeks tablicy i jej długość.</value>
@@ -4615,37 +4615,37 @@
     <value>Dla żądanej akcji są obsługiwane tylko tablice jednowymiarowe.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>Nie można usunąć określonego elementu, ponieważ nie znaleziono go w określonej kolekcji.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Wymagana jest liczba nieujemna.</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>Parametr „{0}” nie może mieć wartości Direction Output ani InputOutput, gdy właściwość EnableOptimizedParameterBinding jest włączona w poleceniu nadrzędnym.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>Upłynął limit czasu połączenia podczas pobierania tokenu dostępu przy użyciu metody uwierzytelniania „{0}”. Ostatni błąd: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>Główna nazwa usługi (SPN) partnera trybu failover.</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>Główna nazwa usługi (SPN) serwera.</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>Platforma „{0}” nie jest obsługiwana podczas określania wartości docelowej programu .NET Framework.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+    <value>Nie można ustawić właściwości AccessToken, jeśli ustawiono właściwość AccessTokenCallback.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+    <value>Nie można ustawić właściwości AccessTokenCallback, jeśli słowo kluczowe parametrów połączenia „Integrated Security” ma wartość „true” lub „SSPI”.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+    <value>Nie można ustawić właściwości AccessTokenCallback, jeśli w parametrach połączenia określono wartość „Authentication=Active Directory Default”.</value>
   </data>
   <data name="event_OperationReturnedSomething" xml:space="preserve">
-    <value>{0} returned {1}.</value>
+    <value>{0} zwrócono {1}.</value>
   </data>
   <data name="net_auth_message_not_encrypted" xml:space="preserve">
     <value>Błąd protokołu: odebrana wiadomość zawiera prawidłowy podpis, ale nie została zaszyfrowana, czego wymagają ustawienia obowiązującego poziomu zabezpieczeń.</value>
@@ -4714,13 +4714,13 @@
     <value>Brak obsługi powiązania kanałów w systemach operacyjnych innych niż Windows.</value>
   </data>
   <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Target name should be non empty if default credentials are passed.</value>
+    <value>Nazwa obiektu docelowego nie może być pusta, jeśli zostaną przekazane poświadczenia domyślne.</value>
   </data>
   <data name="net_nego_protection_level_not_supported" xml:space="preserve">
     <value>Żądany poziom ochrony nie jest obsługiwany przez aktualnie zainstalowane wdrożenie interfejsu GSSAPI.</value>
   </data>
   <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Server implementation is not supported.</value>
+    <value>Implementacja serwera nie jest obsługiwana.</value>
   </data>
   <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
     <value>Uwierzytelnianie NTLM nie jest możliwe w przypadku poświadczeń domyślnych na tej platformie.</value>
