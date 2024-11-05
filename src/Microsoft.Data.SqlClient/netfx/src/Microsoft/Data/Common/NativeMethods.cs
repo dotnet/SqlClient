@@ -11,35 +11,6 @@ namespace Microsoft.Data.Common
     internal static class NativeMethods
     {
         private const string Advapi32 = "advapi32.dll";
-        private const string Kernel32 = "kernel32.dll";
-
-        [DllImport(Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-        [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr MapViewOfFile(IntPtr hFileMappingObject, int dwDesiredAccess, int dwFileOffsetHigh, int dwFileOffsetLow, IntPtr dwNumberOfBytesToMap);
-
-        // OpenFileMappingA contains a security venerability, in the unicode->ansi conversion 
-        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
-        // Specify marshaling for pinvoke string arguments
-        [DllImport(Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]
-        [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr OpenFileMappingA(int dwDesiredAccess, bool bInheritHandle, [MarshalAs(UnmanagedType.LPStr)] string lpName);
-
-        // CreateFileMappingA contains a security venerability, in the unicode->ansi conversion 
-        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
-        // Specify marshaling for pinvoke string arguments        
-        [DllImport(Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        //        [DllImport(ExternDll.Kernel32, CharSet=System.Runtime.InteropServices.CharSet.Ansi)]
-        [ResourceExposure(ResourceScope.Machine)]
-        static internal extern IntPtr CreateFileMappingA(IntPtr hFile, IntPtr pAttr, int flProtect, int dwMaximumSizeHigh, int dwMaximumSizeLow, [MarshalAs(UnmanagedType.LPStr)] string lpName);
-
-        [DllImport(Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
-        [ResourceExposure(ResourceScope.Machine)]
-        static internal extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
-
-        [DllImport(Kernel32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
-        [ResourceExposure(ResourceScope.Machine)]
-        static internal extern bool CloseHandle(IntPtr handle);
 
         [DllImport(Advapi32, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
