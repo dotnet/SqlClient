@@ -1731,7 +1731,7 @@ namespace Microsoft.Data.SqlClient
                     // report exception to pending async operation
                     // before OnConnectionClosed overrides the exception
                     // due to connection close notification through references
-                    var taskSource = stateObj._networkPacketTaskSource;
+                    TaskCompletionSource<object> taskSource = stateObj._networkPacketTaskSource;
                     if (taskSource != null)
                     {
                         taskSource.TrySetException(ADP.ExceptionWithStackTrace(exception));
@@ -1741,7 +1741,7 @@ namespace Microsoft.Data.SqlClient
                 if (asyncClose)
                 {
                     // Wait until we have the parser lock, then try to close
-                    var connHandler = _connHandler;
+                    SqlInternalConnectionTds connHandler = _connHandler;
                     Action<Action> wrapCloseAction = closeAction =>
                     {
                         Task.Factory.StartNew(() =>
@@ -3075,7 +3075,7 @@ namespace Microsoft.Data.SqlClient
 
             while (tokenLength > processedLength)
             {
-                var env = new SqlEnvChange();
+                SqlEnvChange env = new SqlEnvChange();
                 TdsOperationStatus result = stateObj.TryReadByte(out env._type);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -3936,7 +3936,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            var labels = new List<Label>(numLabels);
+            List<Label> labels = new List<Label>(numLabels);
             for (ushort i = 0; i < numLabels; i++)
             {
                 result = TryReadSensitivityLabel(stateObj, out string label, out string id);
@@ -3953,7 +3953,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            var informationTypes = new List<InformationType>(numInformationTypes);
+            List<InformationType> informationTypes = new List<InformationType>(numInformationTypes);
             for (ushort i = 0; i < numInformationTypes; i++)
             {
                 result = TryReadSensitivityInformationType(stateObj, out string informationType, out string id);
@@ -3985,7 +3985,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            var columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
+            List<ColumnSensitivity> columnSensitivities = new List<ColumnSensitivity>(numResultColumns);
             for (ushort columnNum = 0; columnNum < numResultColumns; columnNum++)
             {
                 // get sensitivity properties for all the different sources which were used in generating the column output
@@ -3994,7 +3994,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-                var sensitivityProperties = new List<SensitivityProperty>(numSources);
+                List<SensitivityProperty> sensitivityProperties = new List<SensitivityProperty>(numSources);
                 for (ushort sourceNum = 0; sourceNum < numSources; sourceNum++)
                 {
                     // get the label index and then lookup label to use for source
@@ -8658,12 +8658,12 @@ namespace Microsoft.Data.SqlClient
             else
             {
 #if NETFRAMEWORK
-                var charData = s.ToCharArray(offset, numChars);
-                var byteData = encoding.GetBytes(charData, 0, numChars);
+                char[] charData = s.ToCharArray(offset, numChars);
+                byte[] byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
 #else
-                var byteData = encoding.GetBytes(s, offset, numChars);
+                byte[] byteData = encoding.GetBytes(s, offset, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
 #endif
