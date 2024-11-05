@@ -5,7 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     // https://msdn.microsoft.com/en-us/library/windows/hardware/ff550671.aspx
     [StructLayout(LayoutKind.Sequential)]

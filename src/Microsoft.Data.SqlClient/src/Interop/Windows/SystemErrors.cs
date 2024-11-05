@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Interop_TEMP.Windows
+namespace Interop.Windows
 {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms681382.aspx
     internal partial class SystemErrors

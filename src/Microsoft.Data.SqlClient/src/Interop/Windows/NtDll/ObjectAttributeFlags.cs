@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     [Flags]
     internal enum ObjectAttributeFlags : uint

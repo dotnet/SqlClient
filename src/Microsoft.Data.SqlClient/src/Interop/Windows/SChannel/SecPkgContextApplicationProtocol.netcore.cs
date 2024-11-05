@@ -7,7 +7,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Interop_TEMP.Windows.SChannel
+namespace Interop.Windows.SChannel
 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct SecPkgContextApplicationProtocol

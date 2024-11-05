@@ -4,7 +4,7 @@
 
 #if NET
 
-namespace Interop_TEMP.Windows.SChannel
+namespace Interop.Windows.SChannel
 {
     internal enum ApplicationProtocolNegotiationExt
     {

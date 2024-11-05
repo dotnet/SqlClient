@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Interop_TEMP.Windows.Kernel32
+namespace Interop.Windows.Kernel32
 {
     /// <summary>
     /// <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/defining-i-o-control-codes">RequiredAccess</a>.
