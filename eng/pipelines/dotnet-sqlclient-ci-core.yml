@@ -384,7 +384,7 @@ stages:
           pool: $(defaultHostedPoolName)
           hostedPool: true
           images:
-            MacOS12_Azure_Sql: macOS-12
+            MacOSLatest_Azure_Sql: macos-latest
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
