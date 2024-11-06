@@ -736,7 +736,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperARM64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
