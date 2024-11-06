@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -200,6 +201,12 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
+
+#if DEBUG
+                    var certType = X509Certificate2.GetCertContentType(data);
+                    Debug.Assert(certType == X509ContentType.Cert, $"Expected type {X509ContentType.Cert} but got {certType}");
+#endif
+
 #if !NET9_0_OR_GREATER
                     certificateCollection.Import(data);
 #else
