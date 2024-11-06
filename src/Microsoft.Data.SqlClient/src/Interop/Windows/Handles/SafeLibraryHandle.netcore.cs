@@ -14,7 +14,7 @@ namespace Interop_TEMP.Windows.Handles
 
         override protected bool ReleaseHandle()
         {
-            return Interop.Kernel32.FreeLibrary(handle);
+            return Kernel32.Kernel32.FreeLibrary(handle);
         }
     }
 }

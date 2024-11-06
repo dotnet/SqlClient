@@ -10,6 +10,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Interop_TEMP.Windows;
+using Interop_TEMP.Windows.Kernel32;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -568,7 +570,7 @@ namespace Microsoft.Data.SqlTypes
             StringBuilder buffer = new StringBuilder(path.Length + 1);
 
             // If everything goes correctly, we only need to call this once
-            int fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+            int fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
 
             // If our buffer was smaller than required, the buffer will be empty, but the full
             // path size will be the size we should reallocate to.
@@ -576,7 +578,7 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Reallocate the buffer and try again
                 buffer.Capacity = fullPathLength;
-                fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+                fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
             }
 
             // If the method tells us the full path length is 0, then we have an error condition.
@@ -818,7 +820,7 @@ namespace Microsoft.Data.SqlTypes
                 //   takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(path);
 
-                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+                Kernel32.SetThreadErrorMode(Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 // Make the interop call to open the file
                 int retval;
@@ -864,7 +866,7 @@ namespace Microsoft.Data.SqlTypes
                 }
                 finally
                 {
-                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                    Kernel32.SetThreadErrorMode(oldMode, out oldMode);
                 }
 
                 // Handle error codes from the interop call
@@ -873,13 +875,13 @@ namespace Microsoft.Data.SqlTypes
                     case 0:
                         break;
 
-                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                    case SystemErrors.ERROR_SHARING_VIOLATION:
                         throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
-                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                    case SystemErrors.ERROR_INVALID_PARAMETER:
                         throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
-                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
+                    case SystemErrors.ERROR_FILE_NOT_FOUND:
                         DirectoryNotFoundException dirNotFoundException = new DirectoryNotFoundException();
                         ADP.TraceExceptionAsReturnValue(dirNotFoundException);
                         throw dirNotFoundException;
@@ -900,12 +902,12 @@ namespace Microsoft.Data.SqlTypes
                 // Make sure the file handle is usable for us
                 if (fileHandle.IsInvalid)
                 {
-                    Win32Exception e = new Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    Win32Exception e = new Win32Exception(SystemErrors.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
 
-                if (Interop.Kernel32.GetFileType(fileHandle) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                if (Kernel32.GetFileType(fileHandle) != FileTypes.FILE_TYPE_DISK)
                 {
                     fileHandle.Dispose();
                     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
@@ -916,13 +918,13 @@ namespace Microsoft.Data.SqlTypes
                 // we need to tell SQL Server to preserve the existing file contents.
                 if (access is FileAccess.ReadWrite)
                 {
-                    uint ioControlCode = Interop.Kernel32.CTL_CODE(
-                        Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
+                    uint ioControlCode = Kernel32.CtlCode(
+                        Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode,
-                        (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
-                        (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
+                        (byte)IoControlTransferType.METHOD_BUFFERED,
+                        (byte)IoControlCodeAccess.FILE_ANY_ACCESS);
 
-                    if (!Interop.Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
+                    if (!Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
                     {
                         Win32Exception e = new Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);
