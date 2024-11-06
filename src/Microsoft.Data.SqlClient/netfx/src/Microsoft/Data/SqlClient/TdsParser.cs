@@ -6710,19 +6710,35 @@ namespace Microsoft.Data.SqlClient
                         if (isPlp)
                         {
                             char[] cc = null;
+                            bool buffIsRented = false;
+                            result = TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length, supportRentedBuff: true, rentedBuff: ref buffIsRented);
+                            
+                            if (result == TdsOperationStatus.Done)
+                            {
+                                if (length > 0)
+                                {
+                                    s = new string(cc, 0, length);
+                                }
+                                else
+                                {
+                                    s = "";
+                                }
+                            }
 
-                            result = TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length);
+                            if (buffIsRented)
+                            {
+                                // do not use clearArray:true on the rented array because it can be massively larger
+                                // than the space we've used and we would incur performance clearing memory that
+                                // we haven't used and can't leak out information.
+                                // clear only the length that we know we have used.
+                                cc.AsSpan(0, length).Clear();
+                                ArrayPool<char>.Shared.Return(cc, clearArray: false);
+                                cc = null;
+                            }
+
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
-                            }
-                            if (length > 0)
-                            {
-                                s = new string(cc, 0, length);
-                            }
-                            else
-                            {
-                                s = "";
                             }
                         }
                         else
@@ -13680,8 +13696,9 @@ namespace Microsoft.Data.SqlClient
         internal int ReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj)
         {
             int charsRead;
+            bool rentedBuff = false;
             Debug.Assert(stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            TdsOperationStatus result = TryReadPlpUnicodeChars(ref buff, offst, len, stateObj, out charsRead);
+            TdsOperationStatus result = TryReadPlpUnicodeChars(ref buff, offst, len, stateObj, out charsRead, supportRentedBuff: false, ref rentedBuff);
             if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
@@ -13693,13 +13710,12 @@ namespace Microsoft.Data.SqlClient
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
-        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead)
+        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead, bool supportRentedBuff, ref bool rentedBuff)
         {
             int charsRead = 0;
             int charsLeft = 0;
             char[] newbuf;
-            TdsOperationStatus result;
-
+            
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
@@ -13707,18 +13723,29 @@ namespace Microsoft.Data.SqlClient
                 return TdsOperationStatus.Done;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL),
-                    "Out of sync plp read request");
+            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL), "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
 
-            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            // If total length is known up front, the length isn't specified as unknown 
+            // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
+            // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && len < (int.MaxValue >> 1))
             {
-                buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                if (supportRentedBuff && len < 1073741824) // 1 Gib
+                {
+                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
+                    rentedBuff = true;
+                }
+                else
+                {
+                    buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                    rentedBuff = false;
+                }
             }
 
+            TdsOperationStatus result;
             if (stateObj._longlenleft == 0)
             {
                 result = stateObj.TryReadPlpLength(false, out _);
@@ -13740,11 +13767,26 @@ namespace Microsoft.Data.SqlClient
                 charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
                 if ((buff == null) || (buff.Length < (offst + charsRead)))
                 {
-                    // Grow the array
-                    newbuf = new char[offst + charsRead];
+                    bool returnRentedBufferAfterCopy = rentedBuff;
+                    if (supportRentedBuff && (offst + charsRead) < 1073741824) // 1 Gib
+                    {
+                        newbuf = ArrayPool<char>.Shared.Rent(offst + charsRead);
+                        rentedBuff = true;
+                    }
+                    else
+                    {
+                        newbuf = new char[offst + charsRead];
+                        rentedBuff = false;
+                    }
+
                     if (buff != null)
                     {
                         Buffer.BlockCopy(buff, 0, newbuf, 0, offst * 2);
+                        if (returnRentedBufferAfterCopy)
+                        {
+                            buff.AsSpan(0, offst).Clear();
+                            ArrayPool<char>.Shared.Return(buff, clearArray: false);
+                        }
                     }
                     buff = newbuf;
                 }
