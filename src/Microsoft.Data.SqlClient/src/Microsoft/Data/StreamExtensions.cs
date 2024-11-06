@@ -8,15 +8,14 @@ namespace System.IO
         internal static void ReadExactly(this Stream stream, byte[] buffer, int offset, int count)
         {
             var totalRead = 0;
-            while (totalRead < buffer.Length)
+            do
             {
-                var read = stream.Read(buffer, totalRead, count);
+                var read = stream.Read(buffer, offset + totalRead, count - totalRead);
                 if (read is 0)
                     throw new EndOfStreamException();
 
                 totalRead += read;
-                count -= read;
-            }
+            } while (totalRead < count);
         }
     }
 }

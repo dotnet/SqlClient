@@ -153,7 +153,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     result = _nullInstance;
                     s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
-                    s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
 
                     return result;
                 }
