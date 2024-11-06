@@ -180,7 +180,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AliasName = c.AliasName;
             IsJsonSupported = c.IsJsonSupported;
 
+#if NET9_0_OR_GREATER
+//TODO: set protocol here
+#else
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+#endif
 
             if (TracingEnabled)
             {

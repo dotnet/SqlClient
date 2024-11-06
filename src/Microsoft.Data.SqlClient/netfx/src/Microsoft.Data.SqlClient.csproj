@@ -742,6 +742,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\StreamExtensions.cs">
+      <Link>Microsoft\Data\StreamExtensions.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
