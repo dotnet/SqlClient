@@ -202,7 +202,6 @@ jobs:
         targetFramework: ${{ parameters.targetFramework }}
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
-        configuration: 'Debug'
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
@@ -213,7 +212,6 @@ jobs:
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
-        configuration: 'Debug'
   
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}: # run x86 tests
     - powershell: |

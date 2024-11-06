@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsJsonSupported = c.IsJsonSupported;
 
 #if NET9_0_OR_GREATER
-//TODO: set protocol here
+//TODO: set protocol here?
 #else
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 #endif
