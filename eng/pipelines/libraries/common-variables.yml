@@ -6,7 +6,7 @@
 
 variables:
   - name: Configuration
-    value: Release
+    value: Debug
   - name: CommitHead
     value: '' # the value will be extracted from the repo's head  
   - name: REPOROOT
