@@ -202,10 +202,9 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
 
-#if DEBUG
                     var certType = X509Certificate2.GetCertContentType(data);
+                    Console.WriteLine($"Cert content type: {certType}");
                     Debug.Assert(certType == X509ContentType.Cert, $"Expected type {X509ContentType.Cert} but got {certType}");
-#endif
 
 #if !NET9_0_OR_GREATER
                     certificateCollection.Import(data);
