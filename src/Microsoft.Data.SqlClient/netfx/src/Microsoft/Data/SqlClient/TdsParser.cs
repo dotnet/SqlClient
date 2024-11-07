@@ -1170,7 +1170,7 @@ namespace Microsoft.Data.SqlClient
                         payload[payloadLength++] = (byte)((0x0000ff00 & actId.Sequence) >> 8);
                         payload[payloadLength++] = (byte)((0x00ff0000 & actId.Sequence) >> 16);
                         payload[payloadLength++] = (byte)((0xff000000 & actId.Sequence) >> 24);
-                        int actIdSize = GUID_SIZE + sizeof(UInt32);
+                        int actIdSize = GUID_SIZE + sizeof(uint);
                         offset += actIdSize;
                         optionDataSize += actIdSize;
 
@@ -4259,7 +4259,7 @@ namespace Microsoft.Data.SqlClient
                     { throw SQL.InvalidTDSVersion(); }
                     _is2012 = true;
                     break;
-                case (uint)TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
+                case TdsEnums.TDS8_MAJOR << 24 | TdsEnums.TDS8_MINOR:
                     if (increment != TdsEnums.TDS8_INCREMENT)
                     { throw SQL.InvalidTDSVersion(); }
                     _is2022 = true;
@@ -4879,9 +4879,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             // always read as sql types
-            Debug.Assert(valLen < (ulong)(Int32.MaxValue), "ProcessReturnValue received data size > 2Gb");
+            Debug.Assert(valLen < (ulong)(int.MaxValue), "ProcessReturnValue received data size > 2Gb");
 
-            int intlen = valLen > (ulong)(Int32.MaxValue) ? Int32.MaxValue : (int)valLen;
+            int intlen = valLen > (ulong)(int.MaxValue) ? int.MaxValue : (int)valLen;
 
             if (rec.metaType.IsPlp)
             {
@@ -5057,7 +5057,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _physicalStateObj.WriteByte(sizeof(UInt32) + sizeof(byte));
+                _physicalStateObj.WriteByte(sizeof(uint) + sizeof(byte));
                 WriteUnsignedInt(collation._info, _physicalStateObj);
                 _physicalStateObj.WriteByte(collation._sortId);
             }
@@ -7080,7 +7080,7 @@ namespace Microsoft.Data.SqlClient
             if (isPlp)
             {
                 // We must read the column value completely, no matter what length is passed in
-                length = Int32.MaxValue;
+                length = int.MaxValue;
             }
 
             //DEVNOTE: When modifying the following routines (for deserialization) please pay attention to
@@ -10392,8 +10392,8 @@ namespace Microsoft.Data.SqlClient
                                         }
                                         else
                                         {
-                                            Debug.Assert(value is System.Data.SqlTypes.SqlChars, "Unknown value for Ansi datatype");
-                                            s = new String(((System.Data.SqlTypes.SqlChars)value).Value);
+                                            Debug.Assert(value is SqlChars, "Unknown value for Ansi datatype");
+                                            s = new string(((SqlChars)value).Value);
                                         }
                                     }
                                     else
@@ -10487,12 +10487,12 @@ namespace Microsoft.Data.SqlClient
 
                                     // Split the input name. TypeName is returned as single 3 part name during DeriveParameters.
                                     // NOTE: ParseUdtTypeName throws if format is incorrect
-                                    String[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
-                                    if (!ADP.IsEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
+                                    string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
+                                    if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
                                     {
                                         throw ADP.ArgumentOutOfRange("names");
                                     }
-                                    if (!ADP.IsEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
+                                    if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
                                     {
                                         throw ADP.ArgumentOutOfRange("names");
                                     }
@@ -12375,9 +12375,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteInt(codePageByteSize, stateObj);               // chunk length
                     }
-                    if (value is System.Data.SqlTypes.SqlChars)
+                    if (value is SqlChars)
                     {
-                        String sch = new String(((System.Data.SqlTypes.SqlChars)value).Value);
+                        string sch = new string(((SqlChars)value).Value);
 
                         return WriteEncodingChar(sch, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
@@ -12712,7 +12712,6 @@ namespace Microsoft.Data.SqlClient
 
             public override void Write(char[] buffer, int index, int count)
             {
-
                 ValidateWriteParameters(buffer, index, count);
 
                 Debug.Assert(_size >= _written);
@@ -13025,7 +13024,6 @@ namespace Microsoft.Data.SqlClient
                             {
                                 WriteInt(actualLength, stateObj);               // chunk length
                             }
-
                             return stateObj.WriteByteArray((byte[])value, actualLength, offset, canAccumulate: false);
                         }
                     }
