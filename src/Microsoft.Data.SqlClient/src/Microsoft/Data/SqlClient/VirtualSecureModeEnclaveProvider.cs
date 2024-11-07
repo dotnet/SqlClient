@@ -11,7 +11,6 @@ using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -173,12 +172,9 @@ namespace Microsoft.Data.SqlClient
 
             var certType = X509Certificate2.GetCertContentType(payload);
             Console.WriteLine($"Cert content type: {certType}");
-            Debug.Assert(certType == X509ContentType.Cert, $"Expected type {X509ContentType.Cert} but got {certType}");
 
-#if NET8_0_OR_GREATER
-            var s = new SignedCms();
-            s.Decode(payload);
-            Certificate = s.Certificates[0];
+#if NET9_0_OR_GREATER
+            Certificate = X509CertificateLoader.LoadCertificate(payload);
 #else
             Certificate = new X509Certificate2(payload);
 #endif

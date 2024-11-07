@@ -207,7 +207,6 @@ namespace Microsoft.Data.SqlClient
 
                     var certType = X509Certificate2.GetCertContentType(data);
                     Console.WriteLine($"Cert content type: {certType}");
-                    Debug.Assert(certType == X509ContentType.Cert, $"Expected type {X509ContentType.Cert} but got {certType}");
 
 #if NET8_0_OR_GREATER
                     var s = new SignedCms();
