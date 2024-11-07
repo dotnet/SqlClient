@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
+using Interop.Windows.Kernel32;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
@@ -121,7 +122,7 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_localDBCreateInstance == null)
                         {
-                            IntPtr functionAddr = SafeNativeMethods.GetProcAddress(UserInstanceDLLHandle, "LocalDBCreateInstance");
+                            IntPtr functionAddr = Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBCreateInstance");
 
                             if (functionAddr == IntPtr.Zero)
                             {
@@ -162,7 +163,7 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_localDBFormatMessage == null)
                         {
-                            IntPtr functionAddr = SafeNativeMethods.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+                            IntPtr functionAddr = Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
 
                             if (functionAddr == IntPtr.Zero)
                             {
