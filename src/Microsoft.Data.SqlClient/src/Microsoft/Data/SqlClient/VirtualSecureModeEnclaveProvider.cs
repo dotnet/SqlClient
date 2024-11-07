@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
-using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 
@@ -169,9 +168,6 @@ namespace Microsoft.Data.SqlClient
         public HealthReport(byte[] payload)
         {
             Size = payload.Length;
-
-            var certType = X509Certificate2.GetCertContentType(payload);
-            Console.WriteLine($"Cert content type: {certType}");
 
 #if NET9_0_OR_GREATER
             Certificate = X509CertificateLoader.LoadCertificate(payload);

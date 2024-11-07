@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-#if NET8_0_OR_GREATER
+#if NET9_0_OR_GREATER
 using System.Security.Cryptography.Pkcs;
 #endif
 using System.Threading;
@@ -204,11 +204,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-
-                    var certType = X509Certificate2.GetCertContentType(data);
-                    Console.WriteLine($"Cert content type: {certType}");
-
-#if NET8_0_OR_GREATER
+#if NET9_0_OR_GREATER
                     var s = new SignedCms();
                     s.Decode(data);
                     certificateCollection.AddRange(s.Certificates);

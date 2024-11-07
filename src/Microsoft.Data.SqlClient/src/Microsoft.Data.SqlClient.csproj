@@ -3,14 +3,17 @@
 		<TargetFrameworks>net8.0;net462</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
+    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
 	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+  </ItemGroup>
 	<ItemGroup>
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
 	</ItemGroup>
 
 </Project>
