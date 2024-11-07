@@ -815,7 +815,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperARM64.cs" />
-    <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />

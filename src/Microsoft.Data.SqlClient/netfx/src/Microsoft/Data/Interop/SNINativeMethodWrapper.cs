@@ -17,6 +17,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeMethodWrapper
     {
+        private static ISniNativeMethods NativeMethodsX64 = new SniNativeMethodsX64();
+
         private static int s_sniMaxComposedSpnLength = -1;
         private static readonly System.Runtime.InteropServices.Architecture s_architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
@@ -82,7 +84,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIAddProvider(pConn, ProvNum, ref pInfo);
+                    return NativeMethodsX64.SniAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProvider(pConn, ProvNum, ref pInfo);
                 default:
@@ -97,7 +99,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
+                    return NativeMethodsX64.SniAddProvider(pConn, ProvNum, ref pInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIAddProviderWrapper(pConn, ProvNum, ref pInfo);
                 default:
@@ -112,7 +114,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNICheckConnection(pConn);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNICheckConnection(pConn);
+                    return NativeMethodsX64.SniCheckConnection(pConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNICheckConnection(pConn);
                 default:
@@ -127,7 +129,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIClose(pConn);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIClose(pConn);
+                    return NativeMethodsX64.SniClose(pConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIClose(pConn);
                 default:
@@ -143,7 +145,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperARM64.SNIGetLastError(out pErrorStruct);
                     break;
                 case System.Runtime.InteropServices.Architecture.X64:
-                    SNINativeManagedWrapperX64.SNIGetLastError(out pErrorStruct);
+                    NativeMethodsX64.SniGetLastError(out pErrorStruct);
                     break;
                 case System.Runtime.InteropServices.Architecture.X86:
                     SNINativeManagedWrapperX86.SNIGetLastError(out pErrorStruct);
@@ -161,7 +163,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperARM64.SNIPacketRelease(pPacket);
                     break;
                 case System.Runtime.InteropServices.Architecture.X64:
-                    SNINativeManagedWrapperX64.SNIPacketRelease(pPacket);
+                    NativeMethodsX64.SniPacketRelease(pPacket);
                     break;
                 case System.Runtime.InteropServices.Architecture.X86:
                     SNINativeManagedWrapperX86.SNIPacketRelease(pPacket);
@@ -179,7 +181,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperARM64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
                 case System.Runtime.InteropServices.Architecture.X64:
-                    SNINativeManagedWrapperX64.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
+                    NativeMethodsX64.SniPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
                 case System.Runtime.InteropServices.Architecture.X86:
                     SNINativeManagedWrapperX86.SNIPacketReset(pConn, IOType, pPacket, ConsNum);
@@ -196,7 +198,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
+                    return NativeMethodsX64.SniQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
                 default:
@@ -211,7 +213,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIQueryInfo(QType, ref pbQInfo);
+                    return NativeMethodsX64.SniQueryInfo(QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIQueryInfo(QType, ref pbQInfo);
                 default:
@@ -226,7 +228,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIReadAsync(pConn, ref ppNewPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIReadAsync(pConn, ref ppNewPacket);
+                    return NativeMethodsX64.SniReadAsync(pConn, ref ppNewPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIReadAsync(pConn, ref ppNewPacket);
                 default:
@@ -241,7 +243,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
+                    return NativeMethodsX64.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 default:
@@ -256,7 +258,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIRemoveProvider(pConn, ProvNum);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIRemoveProvider(pConn, ProvNum);
+                    return NativeMethodsX64.SniRemoveProvider(pConn, ProvNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIRemoveProvider(pConn, ProvNum);
                 default:
@@ -271,7 +273,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNISecInitPackage(ref pcbMaxToken);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNISecInitPackage(ref pcbMaxToken);
+                    return NativeMethodsX64.SniSecInitPackage(ref pcbMaxToken);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNISecInitPackage(ref pcbMaxToken);
                 default:
@@ -286,7 +288,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNISetInfo(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNISetInfo(pConn, QType, ref pbQInfo);
+                    return NativeMethodsX64.SniSetInfo(pConn, QType, ref pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNISetInfo(pConn, QType, ref pbQInfo);
                 default:
@@ -301,7 +303,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNITerminate();
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNITerminate();
+                    return NativeMethodsX64.SniTerminate();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNITerminate();
                 default:
@@ -316,7 +318,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
+                    return NativeMethodsX64.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWaitForSSLHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 default:
@@ -331,7 +333,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.UnmanagedIsTokenRestricted(token, out isRestricted);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.UnmanagedIsTokenRestricted(token, out isRestricted);
+                    return NativeMethodsX64.SniIsTokenRestricted(token, out isRestricted);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.UnmanagedIsTokenRestricted(token, out isRestricted);
                 default:
@@ -346,7 +348,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.GetSniMaxComposedSpnLength();
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.GetSniMaxComposedSpnLength();
+                    return NativeMethodsX64.SniGetMaxComposedSpnLength();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.GetSniMaxComposedSpnLength();
                 default:
@@ -361,7 +363,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
@@ -376,7 +378,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
+                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out pbQInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
@@ -391,7 +393,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out portNum);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out portNum);
+                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out portNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out portNum);
                 default:
@@ -406,7 +408,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+                    return NativeMethodsX64.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 default:
@@ -421,7 +423,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIGetInfoWrapper(pConn, QType, out provNum);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIGetInfoWrapper(pConn, QType, out provNum);
+                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out provNum);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
                 default:
@@ -436,7 +438,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIInitialize(pmo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIInitialize(pmo);
+                    return NativeMethodsX64.SniInitialize(pmo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIInitialize(pmo);
                 default:
@@ -451,7 +453,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
+                    return NativeMethodsX64.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 default:
@@ -473,7 +475,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
+                    return NativeMethodsX64.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 default:
@@ -488,7 +490,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIPacketAllocateWrapper(pConn, IOType);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIPacketAllocateWrapper(pConn, IOType);
+                    return NativeMethodsX64.SniPacketAllocateWrapper(pConn, IOType);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIPacketAllocateWrapper(pConn, IOType);
                 default:
@@ -503,7 +505,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
+                    return NativeMethodsX64.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 default:
@@ -519,7 +521,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperARM64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
                 case System.Runtime.InteropServices.Architecture.X64:
-                    SNINativeManagedWrapperX64.SNIPacketSetData(pPacket, pbBuf, cbBuf);
+                    NativeMethodsX64.SniPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
                 case System.Runtime.InteropServices.Architecture.X86:
                     SNINativeManagedWrapperX86.SNIPacketSetData(pPacket, pbBuf, cbBuf);
@@ -547,7 +549,7 @@ namespace Microsoft.Data.SqlClient
                     case System.Runtime.InteropServices.Architecture.Arm64:
                         return SNINativeManagedWrapperARM64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     case System.Runtime.InteropServices.Architecture.X64:
-                        return SNINativeManagedWrapperX64.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
+                        return NativeMethodsX64.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     case System.Runtime.InteropServices.Architecture.X86:
                         return SNINativeManagedWrapperX86.SNISecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     default:
@@ -563,7 +565,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWriteAsyncWrapper(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIWriteAsyncWrapper(pConn, pPacket);
+                    return NativeMethodsX64.SniWriteAsyncWrapper(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWriteAsyncWrapper(pConn, pPacket);
                 default:
@@ -578,7 +580,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIWriteSyncOverAsync(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIWriteSyncOverAsync(pConn, pPacket);
+                    return NativeMethodsX64.SniWriteSyncOverAsync(pConn, pPacket);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIWriteSyncOverAsync(pConn, pPacket);
                 default:
@@ -630,7 +632,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIServerEnumOpen();
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIServerEnumOpen();
+                    return NativeMethodsX64.SniServerEnumOpen();
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIServerEnumOpen();
                 default:
@@ -644,7 +646,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.Arm64:
                     return SNINativeManagedWrapperARM64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
                 case System.Runtime.InteropServices.Architecture.X64:
-                    return SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+                    return NativeMethodsX64.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
                 case System.Runtime.InteropServices.Architecture.X86:
                     return SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
                 default:
@@ -660,7 +662,7 @@ namespace Microsoft.Data.SqlClient
                     SNINativeManagedWrapperARM64.SNIServerEnumClose(packet);
                     break;
                 case System.Runtime.InteropServices.Architecture.X64:
-                    SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
+                    NativeMethodsX64.SniServerEnumClose(packet);
                     break;
                 case System.Runtime.InteropServices.Architecture.X86:
                     SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
