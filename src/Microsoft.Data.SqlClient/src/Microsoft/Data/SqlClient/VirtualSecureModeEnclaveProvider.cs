@@ -11,7 +11,6 @@ using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient
 {
