@@ -8,8 +8,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization.Json;
+using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -169,10 +171,12 @@ namespace Microsoft.Data.SqlClient
         {
             Size = payload.Length;
 
-#if !NET9_0_OR_GREATER
-            Certificate = new X509Certificate2(payload);
+#if NET8_0_OR_GREATER
+            var s = new SignedCms();
+            s.Decode(payload);
+            Certificate = s.Certificates[0];
 #else
-            Certificate = X509CertificateLoader.LoadCertificate(payload);
+            Certificate = new X509Certificate2(payload);
 #endif
         }
 

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net462</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -10,6 +10,7 @@
 	<ItemGroup>
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
 	</ItemGroup>
 
 </Project>

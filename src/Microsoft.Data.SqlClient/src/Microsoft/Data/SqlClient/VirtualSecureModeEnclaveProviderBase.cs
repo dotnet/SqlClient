@@ -6,6 +6,9 @@ using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+#if NET8_0_OR_GREATER
+using System.Security.Cryptography.Pkcs;
+#endif
 using System.Threading;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -206,10 +209,12 @@ namespace Microsoft.Data.SqlClient
                     Console.WriteLine($"Cert content type: {certType}");
                     Debug.Assert(certType == X509ContentType.Cert, $"Expected type {X509ContentType.Cert} but got {certType}");
 
-#if !NET9_0_OR_GREATER
-                    certificateCollection.Import(data);
+#if NET8_0_OR_GREATER
+                    var s = new SignedCms();
+                    s.Decode(data);
+                    certificateCollection.AddRange(s.Certificates);
 #else
-                    certificateCollection.Add(X509CertificateLoader.LoadCertificate(data));
+                    certificateCollection.Import(data);
 #endif
                 }
                 catch (CryptographicException exception)

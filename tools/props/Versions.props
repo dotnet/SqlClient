@@ -35,6 +35,7 @@
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
+    <SystemSecurityCryptographyPkcsVersion>8.0.1</SystemSecurityCryptographyPkcsVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
