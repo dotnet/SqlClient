@@ -25,18 +25,6 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    internal struct SNIErrorDetails
-    {
-        public string errorMessage;
-        public uint nativeError;
-        public uint sniErrorNumber;
-        public int provider;
-        public uint lineNumber;
-        public string function;
-        public Exception exception;
-    }
-
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
@@ -1925,8 +1913,6 @@ namespace Microsoft.Data.SqlClient
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
-
-
 
         internal bool Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {

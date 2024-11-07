@@ -10,6 +10,17 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class TdsParser
     {
+        internal struct SNIErrorDetails
+        {
+            public string errorMessage;
+            public uint nativeError;
+            public uint sniErrorNumber;
+            public int provider;
+            public uint lineNumber;
+            public string function;
+            public Exception exception;
+        }
+
         internal struct ReliabilitySection
         {
             /// <summary>
