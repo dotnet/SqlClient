@@ -3,7 +3,6 @@
 		<TargetFrameworks>net8.0;net462</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
