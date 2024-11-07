@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -10,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
     public class SqlConfigurableRetryLogicTest
     {
         [Fact]
-        public async void InvalidExecute()
+        public async Task InvalidExecute()
         {
             SqlRetryLogicOption option = new SqlRetryLogicOption()
             {
