@@ -87,5 +87,40 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
             }
         }
+
+        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
+        internal void BestEffortCleanup()
+        {
+            _state = TdsParserState.Broken;
+
+            var stateObj = _physicalStateObj;
+            if (stateObj != null)
+            {
+                var stateObjHandle = stateObj.Handle;
+                if (stateObjHandle != null)
+                {
+                    stateObjHandle.Dispose();
+                }
+            }
+
+            if (_fMARS)
+            {
+                var sessionPool = _sessionPool;
+                if (sessionPool != null)
+                {
+                    sessionPool.BestEffortCleanup();
+                }
+
+                var marsStateObj = _pMarsPhysicalConObj;
+                if (marsStateObj != null)
+                {
+                    var marsStateObjHandle = marsStateObj.Handle;
+                    if (marsStateObjHandle != null)
+                    {
+                        marsStateObjHandle.Dispose();
+                    }
+                }
+            }
+        }
     }
 }
