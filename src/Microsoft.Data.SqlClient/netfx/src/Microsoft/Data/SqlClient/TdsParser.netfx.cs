@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System;
 using System.Net;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -175,6 +176,44 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _connHandler.pendingSQLDNSObject = null;
+            }
+        }
+
+        internal bool RunReliably(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
+        {
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                {
+                    tdsReliabilitySection.Start();
+#endif //DEBUG
+                    return Run(runBehavior, cmdHandler, dataStream, bulkCopyHandler, stateObj);
+#if DEBUG
+                }
+                finally
+                {
+                    tdsReliabilitySection.Stop();
+                }
+#endif //DEBUG
+            }
+            catch (OutOfMemoryException)
+            {
+                _connHandler.DoomThisConnection();
+                throw;
+            }
+            catch (StackOverflowException)
+            {
+                _connHandler.DoomThisConnection();
+                throw;
+            }
+            catch (ThreadAbortException)
+            {
+                _connHandler.DoomThisConnection();
+                throw;
             }
         }
     }
