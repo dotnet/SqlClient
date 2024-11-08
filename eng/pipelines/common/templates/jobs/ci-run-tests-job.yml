@@ -47,6 +47,10 @@ parameters:
     type: boolean
     default: false
 
+  - name: enableX64Test
+    type: boolean
+    default: true
+
   - name: testSet
     type: string
   
@@ -197,6 +201,7 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
+  - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: ../steps/build-all-tests-step.yml@self # build tests
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
