@@ -118,20 +118,35 @@
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Libraries.cs">
       <Link>Interop\Interop.Libraries.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
-      <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\CreateDisposition.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
-      <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\CreateOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.NtCreateFile.cs">
-      <Link>Interop\NtDll\Interop.NtCreateFile.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\DesiredAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
-      <Link>Interop\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
-      <Link>Interop\NtDll\Interop.SecurityQualityOfService.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
+      <Link>Common\Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\IoStatusBlock.cs">
+      <Link>Interop\NtDll\IoStatusBlock.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\ObjecAttributes.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
+      <Link>Common\Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
       <Link>Interop\UnicodeString.cs</Link>

@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Interop_TEMP.Windows;
 using Interop_TEMP.Windows.Kernel32;
+using Interop_TEMP.Windows.NtDll;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -762,31 +763,31 @@ namespace Microsoft.Data.SqlTypes
             DemandAccessPermission(path, access);
             #endif
 
-            Interop.NtDll.CreateOptions createOptions = 0;
-            Interop.NtDll.CreateDisposition createDisposition = 0;
-            Interop.NtDll.DesiredAccess desiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES |
-                                                        Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            CreateOptions createOptions = 0;
+            CreateDisposition createDisposition = 0;
+            DesiredAccess desiredAccess = DesiredAccess.FILE_READ_ATTRIBUTES |
+                                          DesiredAccess.SYNCHRONIZE;
             FileShare shareAccess = 0;
 
             switch (access)
             {
                 case FileAccess.Read:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA;
                     shareAccess = FileShare.Delete | FileShare.ReadWrite;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    createDisposition = CreateDisposition.FILE_OPEN;
                     break;
 
                 case FileAccess.Write:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 case FileAccess.ReadWrite:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA |
-                                      Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA |
+                                     DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 // Note: default case is heuristically unreachable due to check above.
@@ -794,22 +795,22 @@ namespace Microsoft.Data.SqlTypes
 
             if ((options & FileOptions.WriteThrough) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+                createOptions |= CreateOptions.FILE_WRITE_THROUGH;
             }
 
             if ((options & FileOptions.Asynchronous) == 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+                createOptions |= CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
             if ((options & FileOptions.SequentialScan) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+                createOptions |= CreateOptions.FILE_SEQUENTIAL_ONLY;
             }
 
             if ((options & FileOptions.RandomAccess) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+                createOptions |= CreateOptions.FILE_RANDOM_ACCESS;
             }
 
             SafeFileHandle fileHandle = null;
@@ -835,7 +836,7 @@ namespace Microsoft.Data.SqlTypes
 
                     #if NETFRAMEWORK
                     const string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,
@@ -844,12 +845,12 @@ namespace Microsoft.Data.SqlTypes
                         shareAccess: shareAccess,
                         createDisposition: createDisposition,
                         createOptions: createOptions,
-                        impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                        impersonationLevel: ImpersonationLevel.SecurityAnonymous,
                         isDynamicTracking: false,
                         isEffectiveOnly: false);
                     #else
                     const string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,
@@ -887,8 +888,8 @@ namespace Microsoft.Data.SqlTypes
                         throw dirNotFoundException;
 
                     default:
-                        uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                        if (error == Interop.NtDll.ERROR_MR_MID_NOT_FOUND)
+                        uint error = NtDll.RtlNtStatusToDosError(retval);
+                        if (error == SystemErrors.ERROR_MR_MID_NOT_FOUND)
                         {
                             // status code could not be mapped to a Win32 error code
                             error = (uint)retval;
