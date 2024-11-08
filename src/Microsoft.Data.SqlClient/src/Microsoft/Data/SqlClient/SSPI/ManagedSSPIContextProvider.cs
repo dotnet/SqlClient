@@ -1,4 +1,4 @@
-﻿#if NET6
+﻿#if NET6_0
 
 using System;
 using Microsoft.Data.SqlClient.SNI;
