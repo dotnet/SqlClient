@@ -10384,7 +10384,7 @@ namespace Microsoft.Data.SqlClient
                                         else
                                         {
                                             Debug.Assert(value is SqlChars, "Unknown value for Ansi datatype");
-                                            s = new string(((SqlChars)value).Value)
+                                            s = new string(((SqlChars)value).Value);
                                         }
                                     }
                                     else
