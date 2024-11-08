@@ -9,7 +9,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
 using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
 #endif
@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()

@@ -3169,7 +3169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public string LastName { get; set; }
     }
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     public record CustomerDateOnly(int Id, string FirstName, string LastName, DateOnly DateOfBirth, TimeOnly TimeOfDay);
 #endif
 

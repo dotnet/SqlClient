@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
         [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task ReadAsyncContentsCompletes()
         {
