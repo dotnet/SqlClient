@@ -128,7 +128,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml
-		..\doc\snippets\Microsoft.Data.SqlClient\SQLDebugging.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SQLDebugging.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml

@@ -6450,7 +6450,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 stateObj.HasPendingData = false;
-                                
+
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
@@ -8445,6 +8445,7 @@ namespace Microsoft.Data.SqlClient
 
             return len;
         }
+
         internal int WriteUTF8SupportFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 5; // 1byte = featureID, 4bytes = featureData length, sizeof(DWORD)

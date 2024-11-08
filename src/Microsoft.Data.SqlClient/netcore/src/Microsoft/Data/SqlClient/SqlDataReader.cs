@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -917,7 +918,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_stateObj != null)
                             {  // reader not closed while we waited for the lock
-                               // TryCloseInternal will clear out the snapshot when it is done
+                                // TryCloseInternal will clear out the snapshot when it is done
                                 if (_snapshot != null)
                                 {
 #if DEBUG
@@ -2045,6 +2046,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
+        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
         override public char GetChar(int i)
         {
             throw ADP.NotSupported();
@@ -3020,7 +3022,7 @@ namespace Microsoft.Data.SqlClient
                 // Stream is only for Binary, Image, VarBinary, Udt, Xml and Timestamp(RowVersion) types
                 MetaType metaType = metaData.metaType;
                 if (
-                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) && 
+                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) &&
                     metaType.SqlDbType != SqlDbType.Variant
                 )
                 {
@@ -4361,7 +4363,7 @@ namespace Microsoft.Data.SqlClient
                         // simply rip the order token off the wire
                         if (b == TdsEnums.SQLORDER)
                         {
-                            //  same logic as SetAltMetaDataSet
+                            // same logic as SetAltMetaDataSet
                             result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -5382,7 +5384,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #endif
-        
+
         internal abstract class SqlDataReaderBaseAsyncCallContext<T> : AAsyncBaseCallContext<SqlDataReader, T>
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;

@@ -670,112 +670,112 @@
     <value>İlgili DataSet içindeki herhangi bir tablonun sıralama/filtreleme/durum ayarlarını gösterir.</value>
   </data>
   <data name="Xml_SimpleTypeNotSupported" xml:space="preserve">
-    <value>DataSet doesn't support 'union' or 'list' as simpleType.</value>
+    <value>DataSet, 'union' ve 'list' türlerini simpleType olarak desteklemiyor.</value>
   </data>
   <data name="Xml_MissingAttribute" xml:space="preserve">
-    <value>Invalid {0} syntax: missing required '{1}' attribute.</value>
+    <value>Geçersiz {0} sözdizimi: gerekli '{1}' özniteliği eksik.</value>
   </data>
   <data name="Xml_ValueOutOfRange" xml:space="preserve">
-    <value>Value '{1}' is invalid for attribute '{0}'.</value>
+    <value>'{1}' değeri '{0}' özniteliği için geçersizdir.</value>
   </data>
   <data name="Xml_AttributeValues" xml:space="preserve">
-    <value>The value of attribute '{0}' should be '{1}' or '{2}'.</value>
+    <value>'{0}' özniteliğinin değeri '{1}' veya '{2}' olmalı.</value>
   </data>
   <data name="Xml_ElementTypeNotFound" xml:space="preserve">
-    <value>Cannot find ElementType name='{0}'.</value>
+    <value>Bulunamayan ElementType name='{0}'.</value>
   </data>
   <data name="Xml_RelationParentNameMissing" xml:space="preserve">
-    <value>Parent table name is missing in relation '{0}'.</value>
+    <value>'{0}' ilişkisinde üst tablo adı eksik.</value>
   </data>
   <data name="Xml_RelationChildNameMissing" xml:space="preserve">
-    <value>Child table name is missing in relation '{0}'.</value>
+    <value>'{0}' ilişkisinde alt tablo adı eksik.</value>
   </data>
   <data name="Xml_RelationTableKeyMissing" xml:space="preserve">
-    <value>Parent table key is missing in relation '{0}'.</value>
+    <value>'{0}' ilişkisinde üst tablo anahtarı eksik.</value>
   </data>
   <data name="Xml_RelationChildKeyMissing" xml:space="preserve">
-    <value>Child table key is missing in relation '{0}'.</value>
+    <value>'{0}' ilişkisinde alt tablo anahtarı eksik.</value>
   </data>
   <data name="Xml_UndefinedDatatype" xml:space="preserve">
-    <value>Undefined data type: '{0}'.</value>
+    <value>Tanımlanmamış veri türü: '{0}'.</value>
   </data>
   <data name="Xml_DatatypeNotDefined" xml:space="preserve">
-    <value>Data type not defined.</value>
+    <value>Veri türü tanımlı değil.</value>
   </data>
   <data name="Xml_InvalidField" xml:space="preserve">
-    <value>Invalid XPath selection inside field node. Cannot find: {0}.</value>
+    <value>Alan düğümünde geçersiz XPath seçimi. {0} bulunamıyor.</value>
   </data>
   <data name="Xml_InvalidSelector" xml:space="preserve">
-    <value>Invalid XPath selection inside selector node: {0}.</value>
+    <value>Seçici düğümünde geçersiz XPath seçimi: {0}.</value>
   </data>
   <data name="Xml_InvalidKey" xml:space="preserve">
-    <value>Invalid 'Key' node inside constraint named: {0}.</value>
+    <value>{0} adlı kısıtlamada geçersiz 'Key' düğümü.</value>
   </data>
   <data name="Xml_DuplicateConstraint" xml:space="preserve">
-    <value>The constraint name {0} is already used in the schema.</value>
+    <value>{0} kısıtlama adı bu şemada zaten kullanılıyor.</value>
   </data>
   <data name="Xml_CannotConvert" xml:space="preserve">
-    <value>Cannot convert '{0}' to type '{1}'.</value>
+    <value>'{0}', '{1}' türüne dönüştürülemiyor.</value>
   </data>
   <data name="Xml_MissingRefer" xml:space="preserve">
-    <value>Missing '{0}' part in '{1}' constraint named '{2}'.</value>
+    <value>'{2}' adlı '{1}' kısıtlamasında '{0}' kısmı eksik.</value>
   </data>
   <data name="Xml_MismatchKeyLength" xml:space="preserve">
-    <value>Invalid Relation definition: different length keys.</value>
+    <value>Geçersiz Relation tanımı: anahtarlar farklı uzunlukta.</value>
   </data>
   <data name="Xml_CircularComplexType" xml:space="preserve">
-    <value>DataSet doesn't allow the circular reference in the ComplexType named '{0}'.</value>
+    <value>DataSet, '{0}' adlı ComplexType içindeki döngüsel başvuruya izin vermiyor.</value>
   </data>
   <data name="Xml_CannotInstantiateAbstract" xml:space="preserve">
-    <value>DataSet cannot instantiate an abstract ComplexType for the node {0}.</value>
+    <value>DataSet, {0} düğümü için soyut ComplexType örneği oluşturamıyor.</value>
   </data>
   <data name="Xml_MultipleTargetConverterError" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details.</value>
+    <value>Bir Xml Şeması yazılırken çoklu hedef dönüştürücüde bir hata oluştu.  Ayrıntılar için iç özel duruma bakın.</value>
   </data>
   <data name="Xml_MultipleTargetConverterEmpty" xml:space="preserve">
-    <value>An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned.</value>
+    <value>Bir Xml Şeması yazılırken çoklu hedef dönüştürücüde bir hata oluştu.  Null veya boş bir dize döndürüldü.</value>
   </data>
   <data name="Xml_MergeDuplicateDeclaration" xml:space="preserve">
-    <value>Duplicated declaration '{0}'.</value>
+    <value>Yinelenen bildirim '{0}'.</value>
   </data>
   <data name="Xml_MissingTable" xml:space="preserve">
-    <value>Cannot load diffGram. Table '{0}' is missing in the destination dataset.</value>
+    <value>diffGram yüklenemiyor. Hedef veri kümesinde '{0}' tablosu eksik.</value>
   </data>
   <data name="Xml_MissingSQL" xml:space="preserve">
-    <value>Cannot load diffGram. The 'sql' node is missing.</value>
+    <value>diffGram yüklenemiyor. 'sql' düğümü eksik.</value>
   </data>
   <data name="Xml_ColumnConflict" xml:space="preserve">
-    <value>Column name '{0}' is defined for different mapping types.</value>
+    <value>Sütun adı '{0}' farklı eşleştirme türleri için tanımlı.</value>
   </data>
   <data name="Xml_InvalidPrefix" xml:space="preserve">
-    <value>Prefix '{0}' is not valid, because it contains special characters.</value>
+    <value>Önek '{0}' geçerli değil, özel karakterler içeriyor.</value>
   </data>
   <data name="Xml_NestedCircular" xml:space="preserve">
-    <value>Circular reference in self-nested table '{0}'.</value>
+    <value>Kendi kendine iç içe '{0}' tablosunda döngüsel başvuru.</value>
   </data>
   <data name="Xml_FoundEntity" xml:space="preserve">
-    <value>DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly.</value>
+    <value>DataSet varlıkları genişletemiyor. XmlValidatingReader kullanın ve EntityHandling özelliğini buna göre ayarlayın.</value>
   </data>
   <data name="Xml_PolymorphismNotSupported" xml:space="preserve">
-    <value>Type '{0}' does not implement IXmlSerializable interface therefore can not proceed with serialization.</value>
+    <value>'{0}' türü IXmlSerializable arabirimini uygulamadığından serileştirme işlemi sürdürülemiyor.</value>
   </data>
   <data name="Xml_CanNotDeserializeObjectType" xml:space="preserve">
-    <value>Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported.</value>
+    <value>Seri durumdan çıkarma işlemine devam edilemiyor. Veriler IXMLSerializable uygulamadığından, değişik aşamalardan geçme desteklenmiyor.</value>
   </data>
   <data name="Xml_DataTableInferenceNotSupported" xml:space="preserve">
-    <value>DataTable does not support schema inference from Xml.</value>
+    <value>DataTable, Xml'den şema çıkarsamayı desteklemiyor.</value>
   </data>
   <data name="Xml_MultipleParentRows" xml:space="preserve">
-    <value>Cannot proceed with serializing DataTable '{0}'. It contains a DataRow which has multiple parent rows on the same Foreign Key.</value>
+    <value>DataTable '{0}' seri hale getirme işlemine devam edilemiyor. Aynı Yabancı Anahtarda birden çok üst satırı olan bir DataRow içeriyor.</value>
   </data>
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
-    <value>IsDataSet attribute is missing in input Schema.</value>
+    <value>Girdi Schema içinde IsDataSet özniteliği eksik.</value>
   </data>
   <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
     <value>DataSet Öğesi belirlenemiyor. IsDataSet özniteliği birden çok kez var.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
-    <value>DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable.</value>
+    <value>DataSet, IDynamicMetaObjectProvider'ı uygulayan ancak beraberinde IXmlSerializable'ı da uygulamayan türleri seri hale getirmez.</value>
   </data>
   <data name="Expr_NYI" xml:space="preserve">
     <value>Özellik uygulanmadı. {0}.</value>
@@ -1708,13 +1708,13 @@
     <value>XmlDataDocument üzerindeki DateSet ve DataTable Clear işlevi desteklenmiyor.</value>
   </data>
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
-    <value>Cannot remove column since it is built in to this dataSet.</value>
+    <value>Bu dataSet'e yerleşik olduğundan sütun kaldırılamaz.</value>
   </data>
   <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>Bu ilişki, dataSet içinde yerleşik olduğundan kaldırılamaz.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
-    <value>Occurs whenever a property for this control changes.</value>
+    <value>Bu denetimin bir özelliği değiştiğinde hep ortaya çıkar.</value>
   </data>
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>Bu koleksiyonun üyeliği her değiştiğinde gerçekleşir.</value>
@@ -1774,7 +1774,7 @@
     <value>'{0}' bağımsız değişkeninin uzunluğu, bu değişkenin '{1}' sınırını aştı.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
-    <value>Expecting argument of type {1}, but received type {0}.</value>
+    <value>{1} türünde bağımsız değişken beklenirken {0} türü alındı.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValue" xml:space="preserve">
     <value>'{0}' anahtarı için geçersiz değer.</value>
@@ -1819,16 +1819,16 @@
     <value>SqlBulkCopy.DestinationTableName geçersiz bir çok parçalı ad olduğundan SqlBulkCopy.WriteToServer başarısız oldu</value>
   </data>
   <data name="SQL_TDSParserTableName" xml:space="preserve">
-    <value>Processing of results from SQL Server failed because of an invalid multipart name</value>
+    <value>Geçersiz bir çok parçalı ad nedeniyle SQL Server sonuçları işlenemedi</value>
   </data>
   <data name="SQL_UDTTypeName" xml:space="preserve">
-    <value>SqlParameter.UdtTypeName is an invalid multipart name</value>
+    <value>SqlParameter.UdtTypeName geçersiz bir çok parçalı ad</value>
   </data>
   <data name="SQL_TypeName" xml:space="preserve">
-    <value>SqlParameter.TypeName is an invalid multipart name</value>
+    <value>SqlParameter.TypeName, geçersiz bir çok parçalı ad</value>
   </data>
   <data name="SQL_SqlCommandCommandText" xml:space="preserve">
-    <value>SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name</value>
+    <value>SqlCommand.CommandText özelliğinin değeri, geçersiz çoklu bir ad olduğundan SqlCommand.DeriveParameters başarısız oldu</value>
   </data>
   <data name="ODBC_ODBCCommandText" xml:space="preserve">
     <value>OdbcCommand.CommandText özelliğinin değeri geçersiz bir çok parçalı ad olduğundan OdbcCommandBuilder.DeriveParameters başarısız oldu</value>
@@ -1867,7 +1867,7 @@
     <value>{0} Numaralandırma değeri {1}, .NET Framework OleDb Veri Sağlayıcısı tarafından desteklenmiyor.</value>
   </data>
   <data name="SQL_NotSupportedEnumerationValue" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider.</value>
+    <value>{0} numaralandırma değeri, {1}, .NET Framework SqlClient Veri Sağlayıcısı tarafından desteklenmiyor.</value>
   </data>
   <data name="ADP_ComputerNameEx" xml:space="preserve">
     <value>ComputerNameDnsFullyQualified {0} alınamadı.</value>
@@ -2476,55 +2476,55 @@
     <value>Sunucu için dağıtılmış işlem düzenleyicisinin adresi sunucudan alınamıyor.  DTC sunucuda etkin mi?</value>
   </data>
   <data name="SQL_InvalidOptionLength" xml:space="preserve">
-    <value>The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters.</value>
+    <value>&lt;{0}&gt; bağlantı parametresi değerinin uzunluğu izin verilen 65535 karakterlik en fazla uzunluğu aşıyor.</value>
   </data>
   <data name="SQL_InvalidPacketSizeValue" xml:space="preserve">
-    <value>Invalid 'Packet Size'.  The value must be an integer &gt;= 512 and &lt;= 32768.</value>
+    <value>Geçersiz 'Paket Boyutu'.  Değer &gt;= 512 ve &lt;= 32768 bir tamsayı olmalıdır.</value>
   </data>
   <data name="SQL_NullEmptyTransactionName" xml:space="preserve">
     <value>Geçersiz işlem veya işlem içinde kaydedilecek nokta için geçersiz ad.</value>
   </data>
   <data name="SQL_SnapshotNotSupported" xml:space="preserve">
-    <value>The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000.</value>
+    <value>{0} numaralandırma değeri {1}, SQL Server 7.0 veya SQL Server 2000 tarafından desteklenmiyor.</value>
   </data>
   <data name="SQL_UserInstanceFailoverNotCompatible" xml:space="preserve">
-    <value>User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string.</value>
+    <value>Kullanıcı Örneği ve Yük Devretme uyumlu seçenekler değil.  Lütfen bağlantı dizesinde ikisinden yalnızca birini seçin.</value>
   </data>
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>'Integrated Security' ile 'Authentication' kullanılamıyor.</value>
   </data>
   <data name="SQL_IntegratedWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>'Password' veya 'PWD' bağlantı dizesi anahtar sözcükleriyle 'Authentication=Active Directory Integrated' kullanılamaz.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>'Password' veya 'PWD' bağlantı dizesi anahtar sözcükleriyle 'Authentication=Active Directory Interactive' kullanılamaz.</value>
   </data>
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow' with 'User ID', 'UID', 'Password' or 'PWD' connection string keywords.</value>
+    <value>'Authentication=Active Directory Device Code Flow', 'User ID', 'UID', 'Password' veya 'PWD' bağlantı dizesi anahtar sözcükleriyle birlikte kullanılamaz.</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>'Authentication={0}', 'Password' veya 'PWD' bağlantı dizesi anahtar sözcükleriyle birlikte kullanılamaz.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Integrated', if the Credential property has been set.</value>
+    <value>Credential özelliği ayarlandıysa 'Authentication=Active Directory Integrated' kullanılamaz.</value>
   </data>
   <data name="SQL_SettingCredentialWithIntegrated" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Integrated' has been specified in the connection string.</value>
+    <value>Bağlantı dizesinde 'Authentication=Active Directory Integrated' belirtildiyse, Credential özelliği ayarlanamaz.</value>
   </data>
   <data name="SQL_Certificate" xml:space="preserve">
-    <value>Incorrect authentication parameters specified with certificate authentication.</value>
+    <value>Sertifika kimlik doğrulaması ile belirtilen kimlik doğrulama parametreleri hatalı.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByClient" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it.</value>
+    <value>Bağlanmaya çalıştığınız SQL Server örneği şifreleme gerektiriyor, ancak bu makine şifrelemeyi desteklemiyor.</value>
   </data>
   <data name="SQL_EncryptionNotSupportedByServer" xml:space="preserve">
-    <value>The instance of SQL Server you attempted to connect to does not support encryption.</value>
+    <value>Bağlanmaya çalıştığınız SQL Server örneği şifrelemeyi desteklemiyor.</value>
   </data>
   <data name="SQL_CTAIPNotSupportedByServer" xml:space="preserve">
     <value>Bağlanmaya çalıştığınız SQL Server örneği CTAIP'yi desteklemiyor.</value>
   </data>
   <data name="SQL_InvalidSQLServerVersionUnknown" xml:space="preserve">
-    <value>Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later.</value>
+    <value>Desteklenmeyen SQL Server sürümü.  .NET Framework SqlClient Veri Sağlayıcısı yalnızca SQL Server sürüm 7.0 ve üstü ile kullanılabilir.</value>
   </data>
   <data name="SQL_CannotModifyPropertyAsyncOperationInProgress" xml:space="preserve">
     <value>Zaman uyumsuz işlem yürütülürken {0} değiştirilemez.</value>
@@ -2533,31 +2533,31 @@
     <value>Bu komut, zaman uyumsuz bağlantı gerektiriyor. Bağlantı dizesinde “Asynchronous Processing=true” ayarını yapın.</value>
   </data>
   <data name="SQL_FatalTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection has been broken as a result.</value>
+    <value>Zaman aşımı süresi sona erdi.  Sonuç olarak bağlantı kesildi.</value>
   </data>
   <data name="SQL_InstanceFailure" xml:space="preserve">
-    <value>Instance failure.</value>
+    <value>Örnek hatası.</value>
   </data>
   <data name="SQL_CredentialsNotProvided" xml:space="preserve">
-    <value>Either Credential or both 'User ID' and 'Password' (or 'UID' and 'PWD') connection string keywords must be specified, if 'Authentication={0}'.</value>
+    <value>'Authentication={0}' ise, Credential veya hem 'User ID' hem de 'Password' (ya da 'UID' ve 'PWD') bağlantı dizesi anahtar sözcükleri belirtilmelidir.</value>
   </data>
   <data name="SQL_ChangePasswordArgumentMissing" xml:space="preserve">
-    <value>The '{0}' argument must not be null or empty.</value>
+    <value>'{0}' bağımsız değişkeni null veya boş olmamalı.</value>
   </data>
   <data name="SQL_ChangePasswordConflictsWithSSPI" xml:space="preserve">
-    <value>ChangePassword can only be used with SQL authentication, not with integrated security.</value>
+    <value>ChangePassword, yalnızca SQL kimlik doğrulamayla kullanılabilir, tümleşik güvenlikle kullanılamaz.</value>
   </data>
   <data name="SQL_ChangePasswordUseOfUnallowedKey" xml:space="preserve">
-    <value>The keyword '{0}' must not be specified in the connectionString argument to ChangePassword.</value>
+    <value>'{0}' anahtar sözcüğü, ChangePassword'e yönelik connectionString bağımsız değişkeninde belirtilmemeli.</value>
   </data>
   <data name="SQL_UnknownSysTxIsolationLevel" xml:space="preserve">
-    <value>Unrecognized System.Transactions.IsolationLevel enumeration value: {0}.</value>
+    <value>Tanınmayan System.Transactions.IsolationLevel numaralandırma değeri: {0}.</value>
   </data>
   <data name="SQL_InvalidPartnerConfiguration" xml:space="preserve">
-    <value>Server {0}, database {1} is not configured for database mirroring.</value>
+    <value>Sunucu {0}, veritabanı {1} veritabanı yansıtma için yapılandırılmadı.</value>
   </data>
   <data name="SQL_MarsUnsupportedOnConnection" xml:space="preserve">
-    <value>The connection does not support MultipleActiveResultSets.</value>
+    <value>Bağlantı, MultipleActiveResultSets'i desteklemiyor.</value>
   </data>
   <data name="SQL_MSALFailure" xml:space="preserve">
     <value>{0} kullanıcısının kimliği, Active Directory’de doğrulanamadı (Authentication={1}).</value>
@@ -2566,16 +2566,16 @@
     <value>Hata kodu 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
-    <value>ChangePassword requires SQL Server 9.0 or later.</value>
+    <value>ChangePassword, SQL Server 9.0 veya sonraki sürümünü gerektirir.</value>
   </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
-    <value>SSE Instance re-direction is not supported for non-local user instances.</value>
+    <value>SSE Örneği yeniden yönlendirmesi, yerel olmayan kullanıcı örnekleri için desteklenmiyor.</value>
   </data>
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>The authentication '{0}' is not supported.</value>
+    <value>'{0}' kimlik doğrulaması desteklenmiyor.</value>
   </data>
   <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
-    <value>SQL authentication method '{0}' is not supported.</value>
+    <value>SQL kimlik doğrulaması metodu '{0}' desteklenmiyor.</value>
   </data>
   <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>'{0}' için '{1}' türüne sahip bir kimlik doğrulama sağlayıcısı örneği oluşturulamadı.</value>
@@ -2584,10 +2584,10 @@
     <value>'{0}' türüne sahip bir SqlAuthenticationInitializer örneği oluşturulamadı.</value>
   </data>
   <data name="SQL_CannotInitializeAuthProvider" xml:space="preserve">
-    <value>The provider '{0}' threw an exception while initializing.</value>
+    <value>‘{0}’ adlı sağlayıcı başlatılırken bir özel durum oluşturdu.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>The provider '{0}' does not support authentication '{1}'.</value>
+    <value>'{0}' adlı sağlayıcı, '{1}' kimlik doğrulamasını desteklemiyor.</value>
   </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
@@ -2602,178 +2602,178 @@
     <value>Zaman uyumsuz işlem zaten tamamlandı.</value>
   </data>
   <data name="SQL_PendingBeginXXXExists" xml:space="preserve">
-    <value>The command execution cannot proceed due to a pending asynchronous operation already in progress.</value>
+    <value>Beklemedeki zaman uyumsuz bir işlem sürdüğünden, komutun yürütülmesine devam edilemiyor.</value>
   </data>
   <data name="SQL_NonXmlResult" xml:space="preserve">
-    <value>Invalid command sent to ExecuteXmlReader.  The command must return an Xml result.</value>
+    <value>ExecuteXmlReader'a geçersiz komut gönderildi.  Komut bir Xml sonucu döndürmelidir.</value>
   </data>
   <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
-    <value>Notifications require SQL Server 9.0 or later.</value>
+    <value>Bildirimler, SQL Server 9.0 veya sonraki sürümünü gerektirir.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for UdtTypeName.</value>
+    <value>UdtTypeName için geçersiz 3 parçalı ad biçimi.</value>
   </data>
   <data name="SQL_InvalidParameterTypeNameFormat" xml:space="preserve">
-    <value>Invalid 3 part name format for TypeName.</value>
+    <value>TypeName'in 3 parçalı ad biçimi geçersiz.</value>
   </data>
   <data name="SQL_InvalidParameterNameLength" xml:space="preserve">
-    <value>The length of the parameter '{0}' exceeds the limit of 128 characters.</value>
+    <value>'{0}' parametresinin uzunluğu, 128 karakter sınırını aşıyor.</value>
   </data>
   <data name="SQL_PrecisionValueOutOfRange" xml:space="preserve">
-    <value>Precision value '{0}' is either less than 0 or greater than the maximum allowed precision of 38.</value>
+    <value>Kesinlik değeri '{0}', ya 0'dan küçük ya da izin verilen en fazla kesinlik olan 38'den büyük.</value>
   </data>
   <data name="SQL_ScaleValueOutOfRange" xml:space="preserve">
     <value>'{0}' ölçek değeri, ya 0'dan küçük ya da izin verilen maksimum ölçek olan 38'den büyük olmalıdır.</value>
   </data>
   <data name="SQL_TimeScaleValueOutOfRange" xml:space="preserve">
-    <value>Scale value '{0}' is either less than 0 or greater than the maximum allowed scale of 7.</value>
+    <value>'{0}' ölçek değeri, ya 0'dan küçük ya da izin verilen maksimum ölçek olan 7'den büyük olmalıdır.</value>
   </data>
   <data name="SQL_ParameterInvalidVariant" xml:space="preserve">
-    <value>Parameter '{0}' exceeds the size limit for the sql_variant datatype.</value>
+    <value>'{0}' parametresi, sql_variant veri türünün boyut sınırını aşıyor.</value>
   </data>
   <data name="SQL_ParameterTypeNameRequired" xml:space="preserve">
-    <value>The {0} type parameter '{1}' must have a valid type name.</value>
+    <value>{0} tür parametresi '{1}' geçerli bir tür adına sahip olmalıdır.</value>
   </data>
   <data name="SQL_InvalidInternalPacketSize" xml:space="preserve">
-    <value>Invalid internal packet size:</value>
+    <value>Geçersiz iç paket boyutu:</value>
   </data>
   <data name="SQL_InvalidTDSVersion" xml:space="preserve">
-    <value>The SQL Server instance returned an invalid or unsupported protocol version during login negotiation.</value>
+    <value>SQL Server örneği, oturum açma anlaşması sırasında geçersiz veya desteklenmeyen bir protokol döndürdü.</value>
   </data>
   <data name="SQL_InvalidTDSPacketSize" xml:space="preserve">
-    <value>Invalid Packet Size.</value>
+    <value>Geçersiz Paket boyutu.</value>
   </data>
   <data name="SQL_ParsingError" xml:space="preserve">
-    <value>Internal connection fatal error.</value>
+    <value>Önemli iç bağlantı hatası.</value>
   </data>
   <data name="SQL_ParsingErrorWithState" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu: {0}</value>
   </data>
   <data name="SQL_ParsingErrorValue" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Value: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Değer: {1}</value>
   </data>
   <data name="SQL_ParsingErrorOffset" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Offset: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Uzaklık: {1}</value>
   </data>
   <data name="SQL_ParsingErrorFeatureId" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Feature Id: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Özellik Kimliği: {1}</value>
   </data>
   <data name="SQL_ParsingErrorToken" xml:space="preserve">
     <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Belirteç : {1}</value>
   </data>
   <data name="SQL_ParsingErrorLength" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Length: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Uzunluk: {1}</value>
   </data>
   <data name="SQL_ParsingErrorStatus" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Status: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Durum: {1}</value>
   </data>
   <data name="SQL_ParsingErrorAuthLibraryType" xml:space="preserve">
-    <value>Internal connection fatal error. Error state: {0}, Authentication Library Type: {1}</value>
+    <value>Önemli iç bağlantı hatası. Hata durumu:{0}, Kimlik Doğrulama Kitaplığı Türü: {1}</value>
   </data>
   <data name="SQL_ConnectionLockedForBcpEvent" xml:space="preserve">
-    <value>The connection cannot be used because there is an ongoing operation that must be finished.</value>
+    <value>Bağlantı, bitirilmesi gereken bir işlem olduğundan kullanılamıyor.</value>
   </data>
   <data name="SQL_SNIPacketAllocationFailure" xml:space="preserve">
-    <value>Memory allocation for internal connection failed.</value>
+    <value>İç bağlantı için bellek ayrılamadı.</value>
   </data>
   <data name="SQL_SmallDateTimeOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallDateTime overflow.  Value '{0}' is out of range.  Must be between 1/1/1900 12:00:00 AM and 6/6/2079 11:59:59 PM.</value>
+    <value>SqlDbType.SmallDateTime taşması.  {0} değeri aralığın dışında.  1/1/1900 00:00:00 ile 6/6/2079 11:59:59 arasında olmalıdır.</value>
   </data>
   <data name="SQL_TimeOverflow" xml:space="preserve">
-    <value>SqlDbType.Time overflow.  Value '{0}' is out of range.  Must be between 00:00:00.0000000 and 23:59:59.9999999.</value>
+    <value>SqlDbType.Time taşması.  {0} değeri aralığın dışında.  00:00:00.0000000 ile 23:59:59.9999999 arasında olmalıdır.</value>
   </data>
   <data name="SQL_MoneyOverflow" xml:space="preserve">
-    <value>SqlDbType.SmallMoney overflow.  Value '{0}' is out of range.  Must be between -214,748.3648 and 214,748.3647.</value>
+    <value>SqlDbType.SmallMoney taşması.  {0} değeri aralığın dışında.  214,748.3648 ile 214,748.3647 arasında olmalıdır.</value>
   </data>
   <data name="SQL_CultureIdError" xml:space="preserve">
-    <value>The Collation specified by SQL Server is not supported.</value>
+    <value>SQL Server tarafından belirtilen Collation desteklenmiyor.</value>
   </data>
   <data name="SQL_OperationCancelled" xml:space="preserve">
-    <value>Operation cancelled by user.</value>
+    <value>İşlem kullanıcı tarafından iptal edildi.</value>
   </data>
   <data name="SQL_SevereError" xml:space="preserve">
     <value>Geçerli komutta önemli bir hata oluştu.  Varsa, sonuçlar atılmalıdır.</value>
   </data>
   <data name="SQL_SSPIGenerateError" xml:space="preserve">
-    <value>The target principal name is incorrect.  Cannot generate SSPI context.</value>
+    <value>Hedef asıl adı yanlış.  SSPI bağlamı üretilemiyor.</value>
   </data>
   <data name="SQL_InvalidSSPIPacketSize" xml:space="preserve">
-    <value>Invalid SSPI packet size.</value>
+    <value>Geçersiz SSPI paket boyutu.</value>
   </data>
   <data name="SQL_SSPIInitializeError" xml:space="preserve">
-    <value>Cannot initialize SSPI package.</value>
+    <value>SSPI paketi başlatılamıyor.</value>
   </data>
   <data name="SQL_Timeout" xml:space="preserve">
-    <value>Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Zaman aşımı süresi sona erdi.  İşlem tamamlanmadan zaman aşımı süresi doldu veya sunucu yanıt vermiyor.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the pre-login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Ön oturum açma aşaması başında zaman aşımı süresi doldu.  Bunun nedeni bağlantı zaman aşımı için sağlanan sürenin yetersiz olması olabilir.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_InitializeConnection" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to create and initialize a socket to the server.  This could be either because the server was unreachable or unable to respond back in time.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Sunucuya bir yuva oluşturulmaya ve başlatılmaya çalışılırken zaman aşımı süresi doldu.  Bunun nedeni sunucuya ulaşılamaması ya da zamanında yanıt verilememesi olabilir.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_SendHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while making a pre-login handshake request.  This could be because the server was unable to respond back in time.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Ön oturum açma el sıkışma isteği yapılırken zaman aşımı süresi doldu.  Bunun nedeni sunucunun zamanında yanıt verememesi olabilir.</value>
   </data>
   <data name="SQL_Timeout_PreLogin_ConsumeHandshake" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  This could be because the pre-login handshake failed or the server was unable to respond back in time.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Ön oturum açma el sıkışma onayını tüketmeye çalışırken zaman aşımı süresi doldu.  Bunun nedeni ön oturum açma el sıkışmasının başarısız olması veya sunucunun zamanında yanıt verememesi olabilir.</value>
   </data>
   <data name="SQL_Timeout_Login_Begin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed at the start of the login phase.  This could be because of insufficient time provided for connection timeout.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Oturum açma aşaması başında zaman aşımı süresi doldu.  Bunun nedeni bağlantı zaman aşımı için sağlanan sürenin yetersiz olması olabilir.</value>
   </data>
   <data name="SQL_Timeout_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed while attempting to authenticate the login.  This could be because the server failed to authenticate the user or the server was unable to respond back in time.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Oturum açma kimliğini doğrulamaya çalışırken zaman aşımı süresi doldu.  Bunun nedeni, sunucunun kullanıcının kimliğini doğrulayamaması veya sunucunun zamanında yanıt verememesi olabilir.</value>
   </data>
   <data name="SQL_Timeout_PostLogin" xml:space="preserve">
-    <value>Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections.</value>
+    <value>Bağlantı Zaman Aşımı Süresi Doldu.  Oturum açma sonrası aşamada zaman aşımı süresi doldu.  Bağlantı sunucunun oturum açma işlemini tamamlaması ve yanıt vermesi için beklerken veya birden fazla etkin bağlantı oluşturmaya çalışırken zaman aşımına uğramış olabilir.</value>
   </data>
   <data name="SQL_Timeout_FailoverInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the {0} server.</value>
+    <value>Bu hata {0} sunucusuna bağlanmaya çalışılırken meydana geldi.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
-    <value>This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  </value>
+    <value>Bu hata, yönlendirme hedefine bağlanmaya çalışılırken meydana geldi. Orijinal sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={0}; [Oturum Açma] başlatma={1}; kimlik doğrulaması={2}; [Oturum Açma Sonrası] tamamlandı={3};  </value>
   </data>
   <data name="SQL_Duration_PreLogin_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0};</value>
+    <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0};</value>
   </data>
   <data name="SQL_Duration_PreLoginHandshake" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; </value>
+    <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={1}; </value>
   </data>
   <data name="SQL_Duration_Login_Begin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; </value>
+    <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={1}; [Oturum Açma] başlatma={2}; </value>
   </data>
   <data name="SQL_Duration_Login_ProcessConnectionAuth" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; </value>
+    <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={1}; [Oturum Açma] başlatma={2}; kimlik doğrulaması={3}; </value>
   </data>
   <data name="SQL_Duration_PostLogin" xml:space="preserve">
-    <value>The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; </value>
+    <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={1}; [Oturum Açma] başlatma={2}; kimlik doğrulaması={3}; [Oturum Açma Sonrası] tamamlandı={4}; </value>
   </data>
   <data name="SQL_UserInstanceFailure" xml:space="preserve">
-    <value>A user instance was requested in the connection string but the server specified does not support this option.</value>
+    <value>Bağlantı dizesinde kullanıcı örneği istendi, ancak belirtilen sunucu bu seçeneği desteklemiyor.</value>
   </data>
   <data name="SQL_InvalidServerCertificate" xml:space="preserve">
-    <value>The server certificate failed application validation.</value>
+    <value>Sunucu sertifikası uygulama doğrulamasında başarısız oldu.</value>
   </data>
   <data name="SQL_ExceedsMaxDataLength" xml:space="preserve">
-    <value>Specified data length {0} exceeds the allowed maximum length of {1}.</value>
+    <value>Belirtilen veri uzunluğu {0}, izin verilen en fazla veri uzunluğunu {1} aşıyor.</value>
   </data>
   <data name="SQL_InvalidRead" xml:space="preserve">
-    <value>Invalid attempt to read when no data is present.</value>
+    <value>Hiç veri yokken okuma girişimi geçersiz.</value>
   </data>
   <data name="SQL_NonBlobColumn" xml:space="preserve">
-    <value>Invalid attempt to GetBytes on column '{0}'.  The GetBytes function can only be used on columns of type Text, NText, or Image.</value>
+    <value>'{0}' sütununda geçersiz GetBytes denemesi.  GetBytes işlevi yalnızca Text, NText veya Image türündeki sütunlarda kullanılabilir.</value>
   </data>
   <data name="SQL_NonCharColumn" xml:space="preserve">
-    <value>Invalid attempt to GetChars on column '{0}'.  The GetChars function can only be used on columns of type Text, NText, Xml, VarChar or NVarChar.</value>
+    <value>'{0}' sütununda geçersiz GetChars denemesi.  GetChars işlevi yalnızca Text, NText, Xml, VarChar veya NVarChar türündeki sütunlarda kullanılabilir.</value>
   </data>
   <data name="SQL_StreamNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetStream on column '{0}'. The GetStream function can only be used on columns of type Binary, Image, Udt or VarBinary.</value>
+    <value>'{0}' sütununda geçersiz GetStream denemesi. GetStream işlevi yalnızca Binary, Image, Udt veya VarBinary türündeki sütunlarda kullanılabilir.</value>
   </data>
   <data name="SQL_TextReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetTextReader on column '{0}'. The GetTextReader function can only be used on columns of type Char, NChar, NText, NVarChar, Text or VarChar.</value>
+    <value>'{0}' sütununda geçersiz GetTextReader denemesi. GetTextReader işlevi yalnızca Char, NChar, NText, NVarChar, Text veya VarChar türündeki sütunlarda kullanılabilir.</value>
   </data>
   <data name="SQL_XmlReaderNotSupportOnColumnType" xml:space="preserve">
-    <value>Invalid attempt to GetXmlReader on column '{0}'. The GetXmlReader function can only be used on columns of type Xml.</value>
+    <value>'{0}' sütununda geçersiz GetXmlReader denemesi. GetXmlReader işlevi yalnızca Xml türündeki sütunlarda kullanılabilir.</value>
   </data>
   <data name="SQL_InvalidBufferSizeOrIndex" xml:space="preserve">
     <value>Arabellek uzaklığı '{1}' artı kullanılabilir bayt sayısı '{0}', geçirilen arabelleğin uzunluğundan büyük.</value>
@@ -2788,22 +2788,22 @@
     <value>SqlResultSet kapalı olduğundan işlem tamamlanamıyor.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly" xml:space="preserve">
-    <value>'{0}' cannot be called when the record is read only.</value>
+    <value>Kayıt salt okunur olduğunda '{0}' çağrılamaz.</value>
   </data>
   <data name="SQL_SqlRecordReadOnly2" xml:space="preserve">
-    <value>Operation cannot be completed because the record is read only.</value>
+    <value>Kayıt salt okunur olduğundan işlem tamamlanamıyor.</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted" xml:space="preserve">
-    <value>Invalid attempt to call method {0} when the current row is deleted</value>
+    <value>Geçerli satır silinmişken geçersiz bir {0} metodunu çağırma girişimi</value>
   </data>
   <data name="SQL_SqlResultSetRowDeleted2" xml:space="preserve">
-    <value>Operation cannot be completed because the current row is deleted</value>
+    <value>Geçerli satır silindiğinden işlem tamamlanamıyor</value>
   </data>
   <data name="SQL_SqlResultSetCommandNotInSameConnection" xml:space="preserve">
-    <value>Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed.</value>
+    <value>SqlResultSet'i oluşturan komutun özgün bağlantıyla ilişkisi kesildiği için işlem tamamlanamıyor. SqlResultSet kapalı.</value>
   </data>
   <data name="SQL_SqlResultSetNoAcceptableCursor" xml:space="preserve">
-    <value>SqlResultSet could not be created for the given query with the desired options.</value>
+    <value>SqlResultSet, verilen sorgu için istenen seçeneklerle oluşturulamadı.</value>
   </data>
   <data name="SQL_SqlUpdatableRecordReadOnly" xml:space="preserve">
     <value>SqlDataRecord salt okunur olduğunda '{0}' çağrılamaz.</value>
@@ -2818,7 +2818,7 @@
     <value>Veri kaynağından {1} türünde verilen{0} değeri, Sütun {3} [{4}] Satır {5} için {2} türüne dönüştürülemez.</value>
   </data>
   <data name="SQL_BulkLoadCannotConvertValueWithoutRowNo" xml:space="preserve">
-    <value>The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}].</value>
+    <value>Veri kaynağından {1} türünde verilen {0} değeri, {3} [{4}] sütunu için {2} türüne dönüştürülemez.</value>
   </data>
   <data name="SQL_BulkLoadNonMatchingColumnMapping" xml:space="preserve">
     <value>Verilen ColumnMapping, kaynak veya hedefteki hiçbir sütunla eşleşmiyor .</value>
@@ -2857,13 +2857,13 @@
     <value>'{0}' sütunu DBNull.Value kullanımına izin vermiyor.</value>
   </data>
   <data name="Sql_BulkLoadLcidMismatch" xml:space="preserve">
-    <value>The locale id '{0}' of the source column '{1}' and the locale id '{2}' of the destination column '{3}' do not match.</value>
+    <value>'{1}' kaynak sütunun yerel ayar kimliği '{0}' ile '{3}' hedef sütunun yerel ayar kimliği '{2}' eşleşmiyor.</value>
   </data>
   <data name="SQL_BulkLoadPendingOperation" xml:space="preserve">
     <value>Bekleyen bir işlemi olan nesne üzerinde toplu kopyalama başlatma girişimi.</value>
   </data>
   <data name="SQL_ConnectionDoomed" xml:space="preserve">
-    <value>The requested operation cannot be completed because the connection has been broken.</value>
+    <value>İstenen işlem, bağlantı kesildiği için tamamlanamıyor.</value>
   </data>
   <data name="SQL_OpenResultCountExceeded" xml:space="preserve">
     <value>Açık sonuç sayısı aşıldı.</value>
@@ -2878,67 +2878,70 @@
     <value>Güncelleştirmelerin toplu işlenmesi, içerik bağlantısında desteklenmiyor.</value>
   </data>
   <data name="SQL_ContextAllowsLimitedKeywords" xml:space="preserve">
-    <value>The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword.</value>
+    <value>İçerik bağlantısı istenirken kullanılabilecek tek ek bağlantı dizesi anahtar sözcüğü, Type System Version anahtar sözcüğüdür.</value>
   </data>
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
-    <value>The context connection does not support Type System Version=SQL Server 2000.</value>
+    <value>İçerik bağlantısı, Type System Version=SQL Server 2000 desteklemiyor.</value>
+  </data>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
-    <value>The context connection is already in use.</value>
+    <value>İçerik bağlantısı zaten kullanılıyor.</value>
   </data>
   <data name="SQL_ContextUnavailableOutOfProc" xml:space="preserve">
-    <value>The requested operation requires a SqlClr context, which is only available when running in the Sql Server process.</value>
+    <value>İstenen işlem, yalnızca Sql Server işleminde çalışılırken kullanılabilen bir SqlClr içeriği gerektiriyor.</value>
   </data>
   <data name="SQL_ContextUnavailableWhileInProc" xml:space="preserve">
-    <value>The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code.</value>
+    <value>İstenen işlem bir Sql Server yürütme iş parçacığı gerektirir.  Geçerli iş parçacığı kullanıcı kodu veya diğer Sql Server motoru olmayan kodlar tarafından başlatılmıştır.</value>
   </data>
   <data name="SQL_NestedTransactionScopesNotSupported" xml:space="preserve">
-    <value>Nested TransactionScopes are not supported.</value>
+    <value>İç içe TransactionScopes desteklenmiyor.</value>
   </data>
   <data name="SQL_NotAvailableOnContextConnection" xml:space="preserve">
-    <value>The requested operation is not available on the context connection.</value>
+    <value>İstenen işlem içerik bağlantısında kullanılamıyor.</value>
   </data>
   <data name="SQL_NotificationsNotAvailableOnContextConnection" xml:space="preserve">
-    <value>Notifications are not available on the context connection.</value>
+    <value>İçerik bağlantısında bildirim kullanılamıyor.</value>
   </data>
   <data name="SQL_UnexpectedSmiEvent" xml:space="preserve">
-    <value>Unexpected server event: {0}.</value>
+    <value>Beklenmeyen sunucu olayı: {0}.</value>
   </data>
   <data name="SQL_UserInstanceNotAvailableInProc" xml:space="preserve">
-    <value>User instances are not allowed when running in the Sql Server process.</value>
+    <value>Sql Server işleminde çalışırken kullanıcı örneklerine izin verilmez.</value>
   </data>
   <data name="SQL_ArgumentLengthMismatch" xml:space="preserve">
     <value>‘{0}’ uzunluğu, ‘{1}’ uzunluğu ile aynı olmalıdır.</value>
   </data>
   <data name="SQL_InvalidSqlDbTypeWithOneAllowedType" xml:space="preserve">
-    <value>The SqlDbType '{0}' is invalid for {1}.  Only {2} is supported.</value>
+    <value>SqlDbType '{0}' {1} için geçersiz.  Yalnızca {2} desteklenir.</value>
   </data>
   <data name="SQL_PipeErrorRequiresSendEnd" xml:space="preserve">
-    <value>An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent.</value>
+    <value>SqlPipe'a gönderilen önceki satırla ilgili bir hata oluştu.  Başka bir şey gönderilmeden önce SendResultsEnd çağrılmalıdır.</value>
   </data>
   <data name="SQL_TooManyValues" xml:space="preserve">
-    <value>Too many values.</value>
+    <value>Çok fazla değer.</value>
   </data>
   <data name="SQL_StreamWriteNotSupported" xml:space="preserve">
-    <value>The Stream does not support writing.</value>
+    <value>Stream yazmayı desteklemiyor.</value>
   </data>
   <data name="SQL_StreamReadNotSupported" xml:space="preserve">
-    <value>The Stream does not support reading.</value>
+    <value>Stream okumayı desteklemiyor.</value>
   </data>
   <data name="SQL_StreamSeekNotSupported" xml:space="preserve">
-    <value>The Stream does not support seeking.</value>
+    <value>Stream aramayı desteklemiyor.</value>
   </data>
   <data name="SQL_ExClientConnectionId" xml:space="preserve">
     <value>ClientConnectionId:{0}</value>
   </data>
   <data name="SQL_ExErrorNumberStateClass" xml:space="preserve">
-    <value>Error Number:{0},State:{1},Class:{2}</value>
+    <value>Hata Numarası: {0},Durum: {1},Sınıf:{2}</value>
   </data>
   <data name="SQL_ExOriginalClientConnectionId" xml:space="preserve">
-    <value>ClientConnectionId before routing:{0}</value>
+    <value>Yönlendirmeden önce ClientConnectionId:{0}</value>
   </data>
   <data name="SQL_ExRoutingDestination" xml:space="preserve">
-    <value>Routing Destination:{0}</value>
+    <value>Yönlendirme Hedefi:{0}</value>
   </data>
   <data name="SqlMisc_NullString" xml:space="preserve">
     <value>Null</value>
@@ -2953,112 +2956,112 @@
     <value>Sıfıra bölme hatasıyla karşılaşıldı.</value>
   </data>
   <data name="SqlMisc_NullValueMessage" xml:space="preserve">
-    <value>Data is Null. This method or property cannot be called on Null values.</value>
+    <value>Veri Null. Bu metot veya özellik Null değerler için çağrılamaz.</value>
   </data>
   <data name="SqlMisc_TruncationMessage" xml:space="preserve">
     <value>Sayısal matematiksel işlem kesmeye neden oldu.</value>
   </data>
   <data name="SqlMisc_DateTimeOverflowMessage" xml:space="preserve">
-    <value>SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM.</value>
+    <value>SqlDateTime taşması. 1/1/1753 00:00:00 ile 31/12/9999 23:59:59 arasında olmalıdır.</value>
   </data>
   <data name="SqlMisc_ConcatDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be concatenated have different collation.</value>
+    <value>Bitiştirilecek iki dizenin alfabe düzeni farklı.</value>
   </data>
   <data name="SqlMisc_CompareDiffCollationMessage" xml:space="preserve">
-    <value>Two strings to be compared have different collation.</value>
+    <value>Karşılaştırılacak iki dizenin alfabe düzeni farklı.</value>
   </data>
   <data name="SqlMisc_InvalidFlagMessage" xml:space="preserve">
-    <value>Invalid flag value.</value>
+    <value>Geçersiz bayrak değeri.</value>
   </data>
   <data name="SqlMisc_NumeToDecOverflowMessage" xml:space="preserve">
-    <value>Conversion from SqlDecimal to Decimal overflows.</value>
+    <value>SqlDecimal'den Decimal'e dönüştürmede taşma.</value>
   </data>
   <data name="SqlMisc_ConversionOverflowMessage" xml:space="preserve">
-    <value>Conversion overflows.</value>
+    <value>Dönüştürmede taşma.</value>
   </data>
   <data name="SqlMisc_InvalidDateTimeMessage" xml:space="preserve">
-    <value>Invalid SqlDateTime.</value>
+    <value>Geçersiz SqlDateTime.</value>
   </data>
   <data name="SqlMisc_TimeZoneSpecifiedMessage" xml:space="preserve">
-    <value>A time zone was specified. SqlDateTime does not support time zones.</value>
+    <value>Bir saat dilimi belirtildi. SqlDateTime saat dilimlerini desteklemiyor.</value>
   </data>
   <data name="SqlMisc_InvalidArraySizeMessage" xml:space="preserve">
-    <value>Invalid array size.</value>
+    <value>Geçersiz dizi boyutu.</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>Invalid numeric precision/scale.</value>
+    <value>Geçersiz sayısal kesinlik/ölçek.</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
-    <value>The input wasn't in a correct format.</value>
+    <value>Girdi doğru biçimde değildi.</value>
   </data>
   <data name="SqlMisc_SqlTypeMessage" xml:space="preserve">
-    <value>SqlType error.</value>
+    <value>SqlType hatası.</value>
   </data>
   <data name="SqlMisc_LenTooLargeMessage" xml:space="preserve">
-    <value>The SqlBytes and SqlChars don't support length of more than 2GB in this version.</value>
+    <value>SqlBytes ve SqlChars, bu sürümde 2GB'den fazla uzunluğu desteklemiyor.</value>
   </data>
   <data name="SqlMisc_StreamErrorMessage" xml:space="preserve">
-    <value>An error occurred while reading.</value>
+    <value>Okuma sırasında hata oluştu.</value>
   </data>
   <data name="SqlMisc_StreamClosedMessage" xml:space="preserve">
-    <value>Stream has been closed or disposed.</value>
+    <value>Stream kapatıldı veya kaldırıldı.</value>
   </data>
   <data name="SqlMisc_NoBufferMessage" xml:space="preserve">
-    <value>There is no buffer. Read or write operation failed.</value>
+    <value>Arabellek yok. Okuma veya yazma işlemi başarısız oldu.</value>
   </data>
   <data name="SqlMisc_SetNonZeroLenOnNullMessage" xml:space="preserve">
-    <value>Cannot set to non-zero length, because current value is Null.</value>
+    <value>Geçerli değer Null olduğundan, sıfır olmayan bir uzunluğa ayarlanamıyor.</value>
   </data>
   <data name="SqlMisc_BufferInsufficientMessage" xml:space="preserve">
-    <value>The buffer is insufficient. Read or write operation failed.</value>
+    <value>Arabellek yetersiz. Okuma veya yazma işlemi başarısız oldu.</value>
   </data>
   <data name="SqlMisc_WriteNonZeroOffsetOnNullMessage" xml:space="preserve">
-    <value>Cannot write to non-zero offset, because current value is Null.</value>
+    <value>Geçerli değer Null olduğundan, sıfır olmayan uzaklığa yazdırılamıyor.</value>
   </data>
   <data name="SqlMisc_WriteOffsetLargerThanLenMessage" xml:space="preserve">
-    <value>Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer.</value>
+    <value>Geçerli uzunluktan daha büyük bir kaydırmadan yazılamıyor. Arabellekte başlatılmamış veri bırakır.</value>
   </data>
   <data name="SqlMisc_TruncationMaxDataMessage" xml:space="preserve">
-    <value>Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data.</value>
+    <value>Döndürülen veri boyutu 2 Gb'den büyük. Tüm verileri almak için SequentialAccess komut davranışını kullanın.</value>
   </data>
   <data name="SqlMisc_InvalidFirstDayMessage" xml:space="preserve">
-    <value>Argument to GetDayOfWeek must be integer between 1 and 7.</value>
+    <value>GetDayOfWeek bağımsız değişkeni 1 ile 7 arasında bir tamsayı olmalı.</value>
   </data>
   <data name="SqlMisc_NotFilledMessage" xml:space="preserve">
-    <value>SQL Type has not been loaded with data.</value>
+    <value>SQL Type'a veriler yüklenmemiş.</value>
   </data>
   <data name="SqlMisc_AlreadyFilledMessage" xml:space="preserve">
-    <value>SQL Type has already been loaded with data.</value>
+    <value>SQL Type'a veriler önceden yüklenmiş.</value>
   </data>
   <data name="SqlMisc_ClosedXmlReaderMessage" xml:space="preserve">
-    <value>Invalid attempt to access a closed XmlReader.</value>
+    <value>Kapalı bir XmlReader'a erişme denemesi geçersiz.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamClosed" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is closed.</value>
+    <value>Akış kapalıyken geçersiz bir {0} çağırma denemesi.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonWritable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-writable.</value>
+    <value>Akış yazılabilir değilken, geçersiz bir {0} çağırma denemesi.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonReadable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream non-readable.</value>
+    <value>Akış okunabilir değilken, geçersiz bir {0} çağırma denemesi.</value>
   </data>
   <data name="SqlMisc_InvalidOpStreamNonSeekable" xml:space="preserve">
-    <value>Invalid attempt to call {0} when the stream is non-seekable.</value>
+    <value>Akış aranabilir değilken, geçersiz bir {0} çağırma denemesi.</value>
   </data>
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
-    <value>Subclass did not override a required method.</value>
+    <value>Alt sınıf gerekli metodu geçersiz kılamadı.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>'{0}' için normalleştirici oluşturulamıyor.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>İç Hata</value>
   </data>
   <data name="Sql_NullCommandText" xml:space="preserve">
-    <value>Command parameter must have a non null and non empty command text.</value>
+    <value>Komut parametresinin null ve boş olmayan bir komut metni olmalı.</value>
   </data>
   <data name="Sql_MismatchedMetaDataDirectionArrayLengths" xml:space="preserve">
-    <value>MetaData parameter array must have length equivalent to ParameterDirection array argument.</value>
+    <value>MetaData parametre dizisinin uzunluğu, ParameterDirection dizisi bağımsız değişkenine eşit olmalı.</value>
   </data>
   <data name="ADP_AdapterMappingExceptionMessage" xml:space="preserve">
     <value>Veri bağdaştırıcısı eşleme hatası.</value>
@@ -3226,10 +3229,10 @@
     <value>Doğru olduğunda, sunucunun yüklü bir sertifikası varsa istemci ile sunucu arasında gönderilen tüm veriler için SQL Server tarafından SSL şifrelemesi kullanılır.</value>
   </data>
   <data name="DbConnectionString_HostNameInCertificate" xml:space="preserve">
-    <value>The hostname to be expected in the server's certificate when encryption is negotiated, if it's different from the default value derived from Addr/Address/Server.</value>
+    <value>Addr/Address/Server'dan türetilen varsayılan değerden farklıysa, şifreleme anlaşması yapıldığında sunucunun sertifikasında beklenecek ana bilgisayar adı.</value>
   </data>
   <data name="DbConnectionString_ServerCertificate" xml:space="preserve">
-    <value>The path to a certificate file to match against the SQL Server TLS/SSL certificate.</value>
+    <value>SQL Server TLS/SSL sertifikasıyla eşleştirilecek sertifika dosyasının yolu.</value>
   </data>
   <data name="DbConnectionString_Enlist" xml:space="preserve">
     <value>Bileşen Hizmetleri (veya Microsoft Windows NT kullanıyorsanız, MTS) ortamındaki oturumlar, gerektiğinde genel bir işlemde otomatik olarak kaydedilmelidir.</value>
@@ -3349,46 +3352,46 @@
     <value>OLE DB Sağlayıcısı tarafından erişilen ürünün sürümü.</value>
   </data>
   <data name="SqlConnection_AccessToken" xml:space="preserve">
-    <value>Access token to use for authentication.</value>
+    <value>Kimlik doğrulama için kullanılacak erişim belirteci.</value>
   </data>
   <data name="SqlConnection_Asynchronous" xml:space="preserve">
-    <value>State of connection, synchronous or asynchronous.  'Asynchronous Processing=x' in the connection string.</value>
+    <value>Bağlantı durumu, zaman uyumlu veya zaman uyumsuz.  Bağlantı dizesinde “Asynchronous Processing=x”.</value>
   </data>
   <data name="SqlConnection_Replication" xml:space="preserve">
-    <value>Information used to connect for replication.</value>
+    <value>Çoğaltmaya bağlanmak için kullanılan bilgiler.</value>
   </data>
   <data name="SqlConnection_ConnectionString" xml:space="preserve">
-    <value>Information used to connect to a DataSource, such as 'Data Source=x;Initial Catalog=x;Integrated Security=SSPI'.</value>
+    <value>Bir DataSource'a bağlanmak için kullanılan bilgiler, 'Data Source=x;Initial Catalog=x;Integrated Security=SSPI' gibi.</value>
   </data>
   <data name="SqlConnection_ConnectionTimeout" xml:space="preserve">
-    <value>Current connection timeout value, 'Connect Timeout=X' in the ConnectionString.</value>
+    <value>Geçerli bağlantı zaman aşımı süresi, ConnectionString’de 'Connect Timeout=X'.</value>
   </data>
   <data name="SqlConnection_Database" xml:space="preserve">
-    <value>Current SQL Server database, 'Initial Catalog=X' in the connection string.</value>
+    <value>Geçerli SQL Server veritabanı, bağlantı dizesindeki 'Initial Catalog=X'.</value>
   </data>
   <data name="SqlConnection_DataSource" xml:space="preserve">
-    <value>Current SqlServer that the connection is opened to, 'Data Source=X' in the connection string.</value>
+    <value>Bağlantının açıldığı geçerli SqlServer, bağlantı dizesindeki 'Data Source=X'.</value>
   </data>
   <data name="SqlConnection_PacketSize" xml:space="preserve">
-    <value>Network packet size, 'Packet Size=x' in the connection string.</value>
+    <value>Ağ paket boyutu, bağlantı dizesindeki 'Packet Size=x'.</value>
   </data>
   <data name="SqlConnection_ServerVersion" xml:space="preserve">
-    <value>Version of the SQL Server accessed by the SqlConnection.</value>
+    <value>SqlConnection tarafından erişilen SQL Server'ın sürümü.</value>
   </data>
   <data name="SqlConnection_WorkstationId" xml:space="preserve">
-    <value>Workstation Id, 'Workstation ID=x' in the connection string.</value>
+    <value>İş istasyonu kimliği, bağlantı dizesindeki 'Workstation ID=x'.</value>
   </data>
   <data name="SqlConnection_StatisticsEnabled" xml:space="preserve">
-    <value>Collect statistics for this connection.</value>
+    <value>Bu bağlantı için istatistik topla.</value>
   </data>
   <data name="SqlConnection_CustomColumnEncryptionKeyStoreProviders" xml:space="preserve">
-    <value>Custom column encryption key store providers.</value>
+    <value>Özel sütun şifreleme anahtarı deposu sağlayıcıları.</value>
   </data>
   <data name="SqlConnection_ClientConnectionId" xml:space="preserve">
-    <value>A guid to represent the physical connection.</value>
+    <value>Fiziksel bağlantıyı temsil eden bir guid.</value>
   </data>
   <data name="SqlConnection_Credential" xml:space="preserve">
-    <value>User Id and secure password to use for authentication.</value>
+    <value>Kimlik doğrulaması için kullanılacak kullanıcı kimliği ve güvenlik parolası.</value>
   </data>
   <data name="DbConnection_InfoMessage" xml:space="preserve">
     <value>DataSource'tan iletiler geldiğinde harekete geçirilen olay.</value>
@@ -3415,10 +3418,10 @@
     <value>Kayıtlar, komutun yürütülmesi sırasında verilen bir deyimden etkilendikleri zaman.</value>
   </data>
   <data name="SqlCommand_Notification" xml:space="preserve">
-    <value>Notification values used by Microsoft SQL Server.</value>
+    <value>Microsoft SQL Server tarafından kullanılan bildirim değerleri.</value>
   </data>
   <data name="SqlCommand_NotificationAutoEnlist" xml:space="preserve">
-    <value>Automatic enlistment in notifications used by Microsoft SQL Server.</value>
+    <value>Bildirimlerde Microsoft SQL Server tarafından kullanılan otomatik kayıt.</value>
   </data>
   <data name="DbCommandBuilder_ConflictOption" xml:space="preserve">
     <value>Where yan tümcesinin, kullanıcı tarafından belirtilmediği durumlarda Update ve Delete komutları için otomatik olarak üretilme şekli.</value>
@@ -3469,16 +3472,16 @@
     <value>sql nesnelerini çevreleyen sonek dizesi</value>
   </data>
   <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
-    <value>The DataAdapter for which to automatically generate SqlCommands</value>
+    <value>Kendisi için otomatik olarak SqlCommands üretilecek DataAdapter</value>
   </data>
   <data name="SqlCommandBuilder_DecimalSeparator" xml:space="preserve">
-    <value>The decimal separator used in numeric literals.</value>
+    <value>Sayı sabit değerlerinde kullanılan ondalık ayırıcı.</value>
   </data>
   <data name="SqlCommandBuilder_QuotePrefix" xml:space="preserve">
-    <value>The character used in a text command as the opening quote for quoting identifiers that contain special characters.</value>
+    <value>Bir metin komutunda, özel karakterler içeren tanımlayıcıları tırnak içine almak için açılış tırnak işareti olarak kullanılan karakter.</value>
   </data>
   <data name="SqlCommandBuilder_QuoteSuffix" xml:space="preserve">
-    <value>The character used in a text command as the closing quote for quoting identifiers that contain special characters.</value>
+    <value>Bir metin komutunda, özel karakterler içeren tanımlayıcıları tırnak içine almak için kapanış tırnak işareti olarak kullanılan karakter.</value>
   </data>
   <data name="DbDataParameter_Precision" xml:space="preserve">
     <value>Yalnızca, ondalık ve sayı parametrelerinin Prepare, FillSchema ve CommandBuilder senaryoları ile kullanıldığı durumlar için ayarlanması gerekir.</value>
@@ -3493,16 +3496,16 @@
     <value>Yerel parametre türü.</value>
   </data>
   <data name="SqlParameter_ParameterName" xml:space="preserve">
-    <value>Name of the parameter, like '@p1'</value>
+    <value>Parametrenin adı, '@p1' gibi</value>
   </data>
   <data name="SqlParameter_SqlDbType" xml:space="preserve">
-    <value>The parameter native type.</value>
+    <value>Yerel parametre türü.</value>
   </data>
   <data name="SqlParameter_TypeName" xml:space="preserve">
-    <value>The server's name for the type.</value>
+    <value>Tür için sunucu adı.</value>
   </data>
   <data name="SqlParameter_Offset" xml:space="preserve">
-    <value>Offset in variable length data types.</value>
+    <value>Değişken uzunlukta veri türlerinde uzaklık.</value>
   </data>
   <data name="SqlParameter_XmlSchemaCollectionDatabase" xml:space="preserve">
     <value>XmlSchemaCollectionDatabase</value>
@@ -3514,16 +3517,16 @@
     <value>XmlSchemaCollectionName</value>
   </data>
   <data name="SqlParameter_UnsupportedTVPOutputParameter" xml:space="preserve">
-    <value>ParameterDirection '{0}' specified for parameter '{1}' is not supported. Table-valued parameters only support ParameterDirection.Input.</value>
+    <value>'{1}' parametresi için belirtilen ParameterDirection '{0}' desteklenmiyor. Tablo değerli parametreler yalnızca ParameterDirection.Input'u destekler.</value>
   </data>
   <data name="SqlParameter_DBNullNotSupportedForTVP" xml:space="preserve">
-    <value>DBNull value for parameter '{0}' is not supported. Table-valued parameters cannot be DBNull.</value>
+    <value>'{0}' parametresi için DBNull değeri desteklenmiyor. Tablo değerli parametreler DBNull olamaz.</value>
   </data>
   <data name="SqlParameter_InvalidTableDerivedPrecisionForTvp" xml:space="preserve">
-    <value>Precision '{0}' required to send all values in column '{1}' exceeds the maximum supported precision '{2}'. The values must all fit in a single precision.</value>
+    <value>'{1}' sütunundaki tüm değerleri göndermek için gereken '{0}' duyarlığı, desteklenen maksimum '{2}' duyarlığını aşıyor. Değerlerin tümü tek bir duyarlığa sığmalıdır.</value>
   </data>
   <data name="SqlParameter_UnexpectedTypeNameForNonStruct" xml:space="preserve">
-    <value>TypeName specified for parameter '{0}'.  TypeName must only be set for Structured parameters.</value>
+    <value>'{0}' parametresi için TypeName belirtildi.  TypeName yalnızca Yapılandırılmış parametreler için ayarlanmalıdır.</value>
   </data>
   <data name="MetaType_SingleValuedStructNotSupported" xml:space="preserve">
     <value>SqlDbType.Structured türü yalnızca çok değer alabilen türler için desteklenir.</value>
@@ -3535,10 +3538,10 @@
     <value>Şema tablosunda geçersiz sütun sıra sayısı.  Varsa ColumnOrdinals, yinelenen öğelere veya boşluklara sahip olmamalıdır.</value>
   </data>
   <data name="SQL_EnumeratedRecordMetaDataChanged" xml:space="preserve">
-    <value>Metadata for field '{0}' of record '{1}' did not match the original record's metadata.</value>
+    <value>'{0}' kaydının '{1}' alanındaki meta veriler, özgün kaydın meta verileriyle eşleşmiyor.</value>
   </data>
   <data name="SQL_EnumeratedRecordFieldCountChanged" xml:space="preserve">
-    <value>Number of fields in record '{0}' does not match the number in the original record.</value>
+    <value>'{0}' kaydındaki alanların sayısı, özgün kayıttaki sayıyla eşleşmiyor.</value>
   </data>
   <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
     <value>aralık: 0-8000</value>
@@ -3565,181 +3568,181 @@
     <value>UDT parametrelerinin, birincil anahtarın parçası olmadıkları sürece where yan tümcesinde kullanılmasına izin verilmez.</value>
   </data>
   <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
-    <value>'{0}' is an invalid user defined type, reason: {1}.</value>
+    <value>'{0}' geçersiz bir kullanıcı tanımlı tür, neden: {1}.</value>
   </data>
   <data name="SqlUdtReason_MultipleSerFormats" xml:space="preserve">
-    <value>supports both in-memory and user-defined formats</value>
+    <value>hem bellek içi, hem de kullanıcı tanımlı biçimleri destekler</value>
   </data>
   <data name="SqlUdtReason_CannotSupportNative" xml:space="preserve">
-    <value>Native format can't be supported.</value>
+    <value>Yerel biçim desteklenemiyor.</value>
   </data>
   <data name="SqlUdtReason_CannotSupportUserDefined" xml:space="preserve">
-    <value>does not implement IBinarySerialize</value>
+    <value>IBinarySerialize uygulanmıyor</value>
   </data>
   <data name="SqlUdtReason_NotSerializable" xml:space="preserve">
-    <value>not serializable</value>
+    <value>seri hale getirilemez</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructors" xml:space="preserve">
-    <value>no public constructors</value>
+    <value>ortak oluşturucu yok</value>
   </data>
   <data name="SqlUdtReason_NotNullable" xml:space="preserve">
-    <value>does not implement INullable</value>
+    <value>INullable uygulanamıyor</value>
   </data>
   <data name="SqlUdtReason_NoPublicConstructor" xml:space="preserve">
-    <value>does not have a public constructor</value>
+    <value>ortak oluşturucusu yok</value>
   </data>
   <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
-    <value>no UDT attribute</value>
+    <value>UDT özniteliği yok</value>
   </data>
   <data name="SqlUdtReason_MaplessNotYetSupported" xml:space="preserve">
-    <value>Serialization without mapping is not yet supported.</value>
+    <value>Eşleme olmadan serileştirme işlemi henüz desteklenmiyor.</value>
   </data>
   <data name="SqlUdtReason_ParseMethodMissing" xml:space="preserve">
-    <value>'public static x Parse(System.Data.SqlTypes.SqlString)' method is missing</value>
+    <value>'public static x Parse(System.Data.SqlTypes.SqlString)' metodu eksik</value>
   </data>
   <data name="SqlUdtReason_ToStringMethodMissing" xml:space="preserve">
-    <value>'public override string ToString()' method is missing</value>
+    <value>'public override string ToString()' metodu eksik</value>
   </data>
   <data name="SqlUdtReason_NullPropertyMissing" xml:space="preserve">
-    <value>'public static x Null { get; }' method is missing</value>
+    <value>'public static x Null { get; }' metodu eksik</value>
   </data>
   <data name="SqlUdtReason_NativeFormatNoFieldSupport" xml:space="preserve">
-    <value>Native format does not support fields (directly or through another field) of type '{0}'</value>
+    <value>Yerel biçim (doğrudan veya başka bir alan aracılığıyla) '{0}' türündeki alanları desteklemez</value>
   </data>
   <data name="SqlUdtReason_TypeNotPublic" xml:space="preserve">
-    <value>Type is not public</value>
+    <value>Tür ortak değil</value>
   </data>
   <data name="SqlUdtReason_NativeUdtNotSequentialLayout" xml:space="preserve">
-    <value>Native UDT not sequential layout due to type '{0}'</value>
+    <value>Native UDT, '{0}' türü nedeniyle sıralı düzen değil</value>
   </data>
   <data name="SqlUdtReason_NativeUdtMaxByteSize" xml:space="preserve">
-    <value>Native UDT specifies a max byte size</value>
+    <value>Native UDT en yüksek byte boyutu belirtiyor</value>
   </data>
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
-    <value>field '{0}' is marked non-serialized</value>
+    <value>'{0}' alanı seri hale getirilmemiş olarak işaretli</value>
   </data>
   <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
     <value>'{0}' alanı türü, Native biçimde izin verilmeyen açık düzen olarak işaretli</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
-    <value>Multiple valued assembly references must have a nonzero Assembly Id.</value>
+    <value>Birden çok değeri olan bütünleştirilmiş kod başvurularının sıfır olmayan Bütünleştirilmiş Kod Tanımlayıcısı olmalıdır.</value>
   </data>
   <data name="SQLTVP_TableTypeCanOnlyBeParameter" xml:space="preserve">
     <value>Çok değer alabilen Structured türleri yalnızca parametreler için kullanılabilir ve başka bir türün içine yerleştirilemez.</value>
   </data>
   <data name="SqlFileStream_InvalidPath" xml:space="preserve">
-    <value>The path name is not valid.</value>
+    <value>Yol adı geçerli değil.</value>
   </data>
   <data name="SqlFileStream_InvalidParameter" xml:space="preserve">
-    <value>An invalid parameter was passed to the function.</value>
+    <value>İşleve geçersiz bir parametre geçirildi.</value>
   </data>
   <data name="SqlFileStream_FileAlreadyInTransaction" xml:space="preserve">
-    <value>The process cannot access the file specified because it has been opened in another transaction.</value>
+    <value>İşlem başka bir harekette açık olduğundan belirtilen dosyaya erişemedi.</value>
   </data>
   <data name="SqlFileStream_PathNotValidDiskResource" xml:space="preserve">
-    <value>The path name is invalid or does not point to a disk file.</value>
+    <value>Yol adı geçerli değil veya diskteki bir dosyayı göstermiyor.</value>
   </data>
   <data name="SqlDelegatedTransaction_PromotionFailed" xml:space="preserve">
-    <value>Failure while attempting to promote transaction.</value>
+    <value>İşlem yükseltilmeye çalışılırken hata oluştu.</value>
   </data>
   <data name="SqlDependency_SqlDependency" xml:space="preserve">
-    <value>Dependency object used to receive query notifications.</value>
+    <value>Sorgu bildirimleri almak için kullanılan bağımlılık nesnesi.</value>
   </data>
   <data name="SqlDependency_HasChanges" xml:space="preserve">
-    <value>Property to indicate if this dependency is invalid.</value>
+    <value>Bu bağımlılığın geçersiz olup olmadığını gösteren özellik.</value>
   </data>
   <data name="SqlDependency_Id" xml:space="preserve">
-    <value>A string that uniquely identifies this dependency object.</value>
+    <value>Bu bağımlılık nesnesini benzersiz bir biçimde tanımlayan dize.</value>
   </data>
   <data name="SqlDependency_OnChange" xml:space="preserve">
-    <value>Event that can be used to subscribe for change notifications.</value>
+    <value>Değişiklik bildirimlerine abone olmak için kullanılabilecek olay.</value>
   </data>
   <data name="SqlDependency_AddCommandDependency" xml:space="preserve">
-    <value>To add a command to existing dependency object.</value>
+    <value>Var olan bağımlılık nesnesine komut eklemek için.</value>
   </data>
   <data name="SqlDependency_Duplicate" xml:space="preserve">
-    <value>Command is already associated with another dependency object. Can not overwrite.</value>
+    <value>Komut zaten başka bir bağımlılık nesnesiyle ilişkilendirilmiş. Üzerine yazılamaz.</value>
   </data>
   <data name="SQLNotify_AlreadyHasCommand" xml:space="preserve">
     <value>Bu SqlCommand nesnesi, zaten başka bir SqlDependency nesnesiyle ilişkilendirildi.</value>
   </data>
   <data name="SqlNotify_SqlDepCannotBeCreatedInProc" xml:space="preserve">
-    <value>SqlDependency object cannot be created when running inside the SQL Server process.</value>
+    <value>SqlDependency nesnesi, SQL Server işleminde çalışılırken oluşturulamaz.</value>
   </data>
   <data name="SqlDependency_DatabaseBrokerDisabled" xml:space="preserve">
-    <value>The SQL Server Service Broker for the current database is not enabled, and as a result query notifications are not supported.  Please enable the Service Broker for this database if you wish to use notifications.</value>
+    <value>Geçerli veritabanı için SQL Server Hizmet Aracısı etkin değil ve sonuç olarak sorgu bildirimleri desteklenmiyor.  Bildirimleri kullanmak istiyorsanız lütfen bu veritabanı için Hizmet Aracısını etkinleştirin.</value>
   </data>
   <data name="SqlDependency_DefaultOptionsButNoStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called prior to execution of a command added to the SqlDependency instance.</value>
+    <value>SqlDependency, seçenek değeri sağlamadan kullanıldığında, SqlDependency örneğine eklenen komut yürütülmeden önce SqlDependency.Start() çağrılmalı.</value>
   </data>
   <data name="SqlDependency_EventNoDuplicate" xml:space="preserve">
-    <value>SqlDependency.OnChange does not support multiple event registrations for the same delegate.</value>
+    <value>SqlDependency.OnChange, aynı temsilci için birden çok olay kaydını desteklemiyor.</value>
   </data>
   <data name="SqlDependency_DuplicateStart" xml:space="preserve">
-    <value>SqlDependency does not support calling Start() with different connection strings having the same server, user, and database in the same app domain.</value>
+    <value>SqlDependency, aynı uygulama etki alanında aynı sunucu, kullanıcı ve veritabanına sahip farklı bağlantı dizeleri kullanılarak Start() çağrılmasını desteklemiyor.</value>
   </data>
   <data name="SqlDependency_IdMismatch" xml:space="preserve">
-    <value>No SqlDependency exists for the key.</value>
+    <value>Anahtar için SqlDependency yok.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerStart" xml:space="preserve">
-    <value>When using SqlDependency without providing an options value, SqlDependency.Start() must be called for each server that is being executed against.</value>
+    <value>SqlDependency seçenek sağlanmadan kullanıldığında, yürütüldüğü her kullanıcı için SqlDependency.Start() çağrılmalıdır.</value>
   </data>
   <data name="SqlDependency_NoMatchingServerDatabaseStart" xml:space="preserve">
-    <value>SqlDependency.Start has been called for the server the command is executing against more than once, but there is no matching server/user/database Start() call for current command.</value>
+    <value>SqlDependency.Start, komutun yürütüldüğü sunucuda birkaç defa çağrıldı, ancak geçerli komut için eşleşen bir sunucu/kullanıcı/veritabanı Start() çağrısı yok.</value>
   </data>
   <data name="SqlDependency_InvalidTimeout" xml:space="preserve">
-    <value>Timeout specified is invalid. Timeout cannot be &lt; 0.</value>
+    <value>Belirtilen zaman aşımı geçersiz. Zaman aşımı &lt; 0 olamaz.</value>
   </data>
   <data name="SQLNotify_ErrorFormat" xml:space="preserve">
     <value>Bildirim Hatası. Tür={0}, Bilgi={1}, Kaynak={2}.</value>
   </data>
   <data name="SqlMetaData_NoMetadata" xml:space="preserve">
-    <value>GetMetaData is not valid for this SqlDbType.</value>
+    <value>GetMetaData bu SqlDbType için geçersiz.</value>
   </data>
   <data name="SqlMetaData_InvalidSqlDbTypeForConstructorFormat" xml:space="preserve">
-    <value>The dbType {0} is invalid for this constructor.</value>
+    <value>dbType {0} bu oluşturucu için geçersiz.</value>
   </data>
   <data name="SqlMetaData_NameTooLong" xml:space="preserve">
     <value>Ad çok uzun.</value>
   </data>
   <data name="SqlMetaData_SpecifyBothSortOrderAndOrdinal" xml:space="preserve">
-    <value>The sort order and ordinal must either both be specified, or neither should be specified (SortOrder.Unspecified and -1).  The values given were: order = {0}, ordinal = {1}.</value>
+    <value>Hem sıralama düzeni hem de sıra sayısı belirtilmeli veya her ikisi de belirtilmemelidir (SortOrder.Unspecified ve -1).  Girilen değerler: sıra = {0}, sıra sayısı = {1}.</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnType" xml:space="preserve">
-    <value>The type of column '{0}' is not supported.  The type is '{1}'</value>
+    <value>'{0}' sütun türü desteklenmiyor.  Tür '{1}'</value>
   </data>
   <data name="SqlProvider_InvalidDataColumnMaxLength" xml:space="preserve">
-    <value>The size of column '{0}' is not supported. The size is {1}.</value>
+    <value>'{0}' sütununun boyutu desteklenmiyor. Boyut: {1}.</value>
   </data>
   <data name="SqlProvider_NotEnoughColumnsInStructuredType" xml:space="preserve">
-    <value>There are not enough fields in the Structured type.  Structured types must have at least one field.</value>
+    <value>Yapılandırılmış türde yeterli alan yok.  Yapılandırılmış türler en az bir alana sahip olmalıdır.</value>
   </data>
   <data name="SqlProvider_DuplicateSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was specified twice.</value>
+    <value>Sıra sayısı {0} iki kez belirtildi.</value>
   </data>
   <data name="SqlProvider_MissingSortOrdinal" xml:space="preserve">
-    <value>The sort ordinal {0} was not specified.</value>
+    <value>Sıra sayısı {0} belirtilmedi.</value>
   </data>
   <data name="SqlProvider_SortOrdinalGreaterThanFieldCount" xml:space="preserve">
-    <value>The sort ordinal {0} on field {1} exceeds the total number of fields.</value>
+    <value>{1} alanındaki {0} sıra sayısı toplam alan sayısını aşıyor.</value>
   </data>
   <data name="IEnumerableOfSqlDataRecordHasNoRows" xml:space="preserve">
     <value>SqlDataRecord numaralandırması içinde kayıt yok. Satır içermeyen tablo değerli bir parametre göndermek için değer olarak bunun yerine bir null başvuru kullanın.</value>
   </data>
   <data name="SqlPipe_CommandHookedUpToNonContextConnection" xml:space="preserve">
-    <value>SqlPipe does not support executing a command with a connection that is not a context connection.</value>
+    <value>SqlPipe, içerik bağlantısı olmayan bir bağlantıyla komut yürütmeyi desteklemez.</value>
   </data>
   <data name="SqlPipe_MessageTooLong" xml:space="preserve">
-    <value>Message length {0} exceeds maximum length supported of 4000.</value>
+    <value>İleti uzunluğu {0}, desteklenen en fazla uzunluk olan 4000'i aşıyor.</value>
   </data>
   <data name="SqlPipe_IsBusy" xml:space="preserve">
-    <value>Could not use the pipe while it is busy with another operation.</value>
+    <value>Kanal, başka bir işlemle meşgulken kullanılamadı.</value>
   </data>
   <data name="SqlPipe_AlreadyHasAnOpenResultSet" xml:space="preserve">
-    <value>A result set is currently being sent to the pipe. End the current result set before calling {0}.</value>
+    <value>Şu anda kanala bir sonuç kümesi gönderiliyor. {0}‘i çağırmadan önce geçerli sonuç kümesini sonlandırın.</value>
   </data>
   <data name="SqlPipe_DoesNotHaveAnOpenResultSet" xml:space="preserve">
-    <value>Result set has not been initiated.  Call SendResultSetStart before calling {0}.</value>
+    <value>Sonuç kümesi başlatılmadı.  {0}'i çağırmadan önce SendResultSetStart'ı çağırın.</value>
   </data>
   <data name="SNI_PN0" xml:space="preserve">
     <value>HTTP Sağlayıcısı</value>
@@ -3943,43 +3946,43 @@
     <value>Kayıt defterinde belirtilen konumda geçersiz SQLUserInstance.dll bulundu. SQL Server Express'in Yerel Veritabanı Çalışma Zamanı özelliğinin düzgün yüklendiğini doğrulayın.</value>
   </data>
   <data name="Snix_Connect" xml:space="preserve">
-    <value>A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.</value>
+    <value>SQL Server'a bağlantı kurulurken ağla ilgili veya örneğe özel bir hata oluştu. Sunucu bulunamadı ya da sunucuya erişilemiyor. Örnek adının doğru olduğunu ve SQL Server'ın uzaktan bağlantılara izin verecek şekilde yapılandırıldığını doğrulayın.</value>
   </data>
   <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
     <value>İstemci, oturum açmadan önce bağlantı başlatma işlemi sırasında oluşan bir hata nedeniyle bağlantı kuramadı. Olası nedenlerden bazıları şunlardır: İstemci, SQL Server'ın desteklenmeyen bir sürümüne bağlanmaya çalıştı, sunucu yeni bağlantı kabul edemeyecek kadar meşguldü veya sunucuda bir kaynak sınırlandırması vardı (yetersiz bellek ya da izin verilen maksimum bağlantı sayısı).</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the pre-login handshake.</value>
+    <value>Sunucuyla başarılı bir şekilde bağlantı kuruldu, ancak sonra oturum açma öncesi el sıkışması sırasında hata oluştu.</value>
   </data>
   <data name="Snix_LoginSspi" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred when obtaining the security/SSPI context information for integrated security login.</value>
+    <value>Sunucuyla başarılı bir şekilde bağlantı kuruldu, ancak sonra tümleşik güvenlik oturumu için güvenlik/SSPI içeriği bilgisi alınırken hata oluştu.</value>
   </data>
   <data name="Snix_Login" xml:space="preserve">
-    <value>A connection was successfully established with the server, but then an error occurred during the login process.</value>
+    <value>Sunucuyla başarılı bir şekilde bağlantı kuruldu, ancak sonra oturum açma işlemi sırasında hata oluştu.</value>
   </data>
   <data name="Snix_EnableMars" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enabling MARS for this connection.</value>
+    <value>Bağlantı açık ve oturum açma işlemi başarılıydı, ancak bu bağlantı için MARS etkinleştirilirken hata oluştu.</value>
   </data>
   <data name="Snix_AutoEnlist" xml:space="preserve">
-    <value>Connection open and login was successful, but then an error occurred while enlisting the connection into the current distributed transaction.</value>
+    <value>Bağlantı açık ve oturum açma işlemi başarılıydı, ancak sonra bağlantıyı geçerli dağıtılmış işleme kaydederken hata oluştu.</value>
   </data>
   <data name="Snix_GetMarsSession" xml:space="preserve">
-    <value>Failed to establish a MARS session in preparation to send the request to the server.</value>
+    <value>İsteği sunucuya gönderme hazırlığı sırasında MARS oturumu açılamadı.</value>
   </data>
   <data name="Snix_Execute" xml:space="preserve">
-    <value>A transport-level error has occurred when sending the request to the server.</value>
+    <value>Sunucuya istek gönderilirken aktarım düzeyi hatası oluştu.</value>
   </data>
   <data name="Snix_Read" xml:space="preserve">
-    <value>A transport-level error has occurred when receiving results from the server.</value>
+    <value>Sunucudan sonuçlar alınırken aktarım düzeyi hatası oluştu.</value>
   </data>
   <data name="Snix_Close" xml:space="preserve">
-    <value>A transport-level error has occurred during connection clean-up.</value>
+    <value>Bağlantı temizleme sırasında bir aktarım düzeyi hata oluştu.</value>
   </data>
   <data name="Snix_SendRows" xml:space="preserve">
-    <value>A transport-level error has occurred while sending information to the server.</value>
+    <value>Sunucuya bilgi gönderilirken aktarım düzeyi hatası oluştu.</value>
   </data>
   <data name="Snix_ProcessSspi" xml:space="preserve">
-    <value>A transport-level error has occurred during SSPI handshake.</value>
+    <value>SSPI el sıkışması sırasında aktarım düzeyi hatası oluştu.</value>
   </data>
   <data name="LocalDB_CreateFailed" xml:space="preserve">
     <value>Local Database Runtime: Adlandırılmış örnek oluşturulamıyor.</value>
@@ -4003,13 +4006,13 @@
     <value>Geçersiz anahtar şifreleme algoritması belirtildi: '{0}'. Beklenen değer: '{1}'.</value>
   </data>
   <data name="TCE_InvalidKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key encryption algorithm specified: '{0}'. Expected value: '{1}'.</value>
+    <value>İç hata. Geçersiz anahtar şifreleme algoritması belirtildi: '{0}'. Beklenen değer: '{1}'.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithm" xml:space="preserve">
     <value>Anahtar şifreleme algoritması null olamaz.</value>
   </data>
   <data name="TCE_NullKeyEncryptionAlgorithmSysErr" xml:space="preserve">
-    <value>Internal error. Key encryption algorithm cannot be null.</value>
+    <value>İç hata. Anahtar şifreleme algoritması null olamaz.</value>
   </data>
   <data name="TCE_EmptyColumnEncryptionKey" xml:space="preserve">
     <value>Boş sütun şifreleme anahtarı belirtildi.</value>
@@ -4018,385 +4021,385 @@
     <value>Sütun şifreleme anahtarı null olamaz.</value>
   </data>
   <data name="TCE_EmptyEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Empty encrypted column encryption key specified.</value>
+    <value>İç hata. Boş şifrelenmiş sütun şifreleme anahtarı belirtildi.</value>
   </data>
   <data name="TCE_NullEncryptedColumnEncryptionKey" xml:space="preserve">
-    <value>Internal error. Encrypted column encryption key cannot be null.</value>
+    <value>İç hata. Şifrelenmiş sütun şifreleme anahtarı null olamaz.</value>
   </data>
   <data name="TCE_LargeCertificatePathLength" xml:space="preserve">
-    <value>Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>Belirtilen sertifika yolunun içerdiği {0} bayt, uzunluk üst sınırı olan {1} baytı aşıyor.</value>
   </data>
   <data name="TCE_LargeCertificatePathLengthSysErr" xml:space="preserve">
-    <value>Internal error. Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes.</value>
+    <value>İç hata. Belirtilen sertifika yolunun içerdiği {0} bayt, uzunluk üst sınırı olan {1} baytı aşıyor.</value>
   </data>
   <data name="TCE_NullCertificatePath" xml:space="preserve">
-    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+    <value>İç hata. Sertifika yolu null olamaz. Şu biçimi kullanın: &lt;sertifika konumu&gt;{2}&lt;sertifika deposu&gt;{2}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{0}' veya '{1}' değerindedir.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Sütun ana anahtar yolu null olamaz. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_NullCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Sütun ana anahtar yolu null olamaz. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_NullCngPath" xml:space="preserve">
-    <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>Sütun ana anahtar yolu null olamaz. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_NullCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Sütun ana anahtar yolu null olamaz. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{0}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
-    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+    <value>İç hata. Geçerli sertifika yolu: '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{3}&lt;sertifika deposu&gt;{3}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{1}' veya '{2}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCspPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPath" xml:space="preserve">
-    <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCngPathSysErr" xml:space="preserve">
-    <value>Internal error. Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Geçersiz sütun ana anahtar yolu: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCertificateLocation" xml:space="preserve">
-    <value>Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificateLocationSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate location '{0}' in certificate path '{1}'. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{2}' or '{3}'.</value>
+    <value>İç hata. Sertifika yolu '{1}'de geçersiz sertifika konumu '{0}'. Şu biçimi kullanın: &lt;sertifika konumu&gt;{4}&lt;sertifika deposu&gt;{4}&lt;sertifika parmak izi&gt;; burada &lt;sertifika konumu&gt;, '{2}' veya '{3}' değerindedir.</value>
   </data>
   <data name="TCE_InvalidCertificateStore" xml:space="preserve">
-    <value>Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>Sertifika yolu '{1}'de belirtilen geçersiz sertifika deposu '{0}'. Beklenen değer: '{2}'.</value>
   </data>
   <data name="TCE_InvalidCertificateStoreSysErr" xml:space="preserve">
-    <value>Internal error. Invalid certificate store '{0}' specified in certificate path '{1}'. Expected value: '{2}'.</value>
+    <value>İç hata. Sertifika yolu '{1}'de belirtilen geçersiz sertifika deposu '{0}'. Beklenen değer: '{2}'.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprint" xml:space="preserve">
-    <value>Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>'{0}' sertifika yolunda belirtilen boş sertifika parmak izi.</value>
   </data>
   <data name="TCE_EmptyCertificateThumbprintSysErr" xml:space="preserve">
-    <value>Internal error. Empty certificate thumbprint specified in certificate path '{0}'.</value>
+    <value>İç hata. '{0}' sertifika yolunda belirtilen boş sertifika parmak izi.</value>
   </data>
   <data name="TCE_EmptyCspName" xml:space="preserve">
-    <value>Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Sütun ana anahtar yolunda belirtilen boş Microsoft şifreleme hizmeti sağlayıcısı (CSP) adı: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Sütun ana anahtar yolunda belirtilen boş Microsoft şifreleme hizmeti sağlayıcısı (CSP) adı: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCngName" xml:space="preserve">
-    <value>Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Boş Microsoft Şifreleme API'si: Sütun ana anahtar yolunda belirtilen Yeni Nesil (CNG) sağlayıcı adı: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCngNameSysErr" xml:space="preserve">
-    <value>Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Boş Microsoft Şifreleme API'si: Sütun ana anahtar yolunda belirtilen Yeni Nesil (CNG) sağlayıcı adı: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Sütun ana anahtar yolunda belirtilen boş anahtar tanımlayıcısı: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Sütun ana anahtar yolunda belirtilen boş anahtar tanımlayıcısı: '{0}'. Microsoft şifreleme hizmeti sağlayıcısı (CSP) içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CSP Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyId" xml:space="preserve">
-    <value>Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>Sütun ana anahtar yolunda belirtilen boş anahtar tanımlayıcısı: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_EmptyCngKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Empty key identifier specified in column master key path: '{0}'. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
+    <value>İç hata. Sütun ana anahtar yolunda belirtilen boş anahtar tanımlayıcısı: '{0}'. Microsoft Şifreleme API'si: Yeni Nesil Şifreleme (CNG) sağlayıcısı içinde depolanan bir anahtar için şu biçimi kullanın: &lt;CNG Sağlayıcısı Adı&gt;{1}&lt;Anahtar Tanımlayıcısı&gt;.</value>
   </data>
   <data name="TCE_InvalidCspName" xml:space="preserve">
-    <value>Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>Geçersiz Microsoft şifreleme hizmeti sağlayıcısı (CSP) adı: '{0}'. Sütun ana anahtar yolu '{1}' içindeki CSP sağlayıcı adının geçerli olduğunu ve makinede yüklü olduğunu doğrulayın.</value>
   </data>
   <data name="TCE_InvalidCspNameSysErr" xml:space="preserve">
-    <value>Internal error. Invalid Microsoft cryptographic service provider (CSP) name: '{0}'. Verify that the CSP provider name in column master key path: '{1}' is valid and installed on the machine.</value>
+    <value>İç hata. Geçersiz Microsoft şifreleme hizmeti sağlayıcısı (CSP) adı: '{0}'. Sütun ana anahtar yolu '{1}' içindeki CSP sağlayıcı adının geçerli olduğunu ve makinede yüklü olduğunu doğrulayın.</value>
   </data>
   <data name="TCE_InvalidCspKeyId" xml:space="preserve">
-    <value>Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>Geçersiz anahtar tanımlayıcısı: '{0}'. '{1}' sütun ana anahtar yolundaki anahtar tanımlayıcısının geçerli olduğunu ve CSP'de bulunduğunu doğrulayın.</value>
   </data>
   <data name="TCE_InvalidCspKeyIdSysErr" xml:space="preserve">
-    <value>Internal error. Invalid key identifier: '{0}'. Verify that the key identifier in column master key path: '{1}' is valid and exists in the CSP.</value>
+    <value>İç hata. Geçersiz anahtar tanımlayıcısı: '{0}'. '{1}' sütun ana anahtar yolundaki anahtar tanımlayıcısının geçerli olduğunu ve CSP'de bulunduğunu doğrulayın.</value>
   </data>
   <data name="TCE_InvalidCngKey" xml:space="preserve">
-    <value>An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>Microsoft Şifreleme API'si açılırken bir hata oluştu: Yeni Nesil (CNG) anahtarı: '{0}'. CNG sağlayıcı adı '{1}'nin geçerli olduğunu, makineye yüklendiğini ve '{2}' anahtarının mevcut olduğunu doğrulayın.</value>
   </data>
   <data name="TCE_InvalidCngKeySysErr" xml:space="preserve">
-    <value>Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: '{0}'. Verify that the CNG provider name '{1}' is valid, installed on the machine, and the key '{2}' exists.</value>
+    <value>İç hata. Microsoft Şifreleme API'si açılırken bir hata oluştu: Yeni Nesil (CNG) anahtarı: '{0}'. CNG sağlayıcı adı '{1}'nin geçerli olduğunu, makineye yüklendiğini ve '{2}' anahtarının mevcut olduğunu doğrulayın.</value>
   </data>
   <data name="TCE_CertificateNotFound" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'.</value>
+    <value>'{0}' parmak izine sahip sertifika, '{2}' sertifika konumundaki '{1}' sertifika deposunda bulunamadı.</value>
   </data>
   <data name="TCE_CertificateNotFoundSysErr" xml:space="preserve">
-    <value>Certificate with thumbprint '{0}' not found in certificate store '{1}' in certificate location '{2}'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.</value>
+    <value>'{0}' parmak izine sahip sertifika, '{2}' sertifika konumundaki '{1}' sertifika deposunda bulunamadı. Veritabanındaki sütun ana anahtar tanımındaki sertifika yolunun doğru olduğunu ve sertifikanın sertifika konumuna/deposuna doğru şekilde aktarıldığını doğrulayın.</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersionInEncryptedCEK" xml:space="preserve">
     <value>Belirtilen şifreli sütun şifreleme anahtarı, geçersiz bir şifreleme algoritması sürümü ('{0}') içeriyor. Beklenen sürüm: '{1}'.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme Hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidCiphertextLengthInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının şifreli metin uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken şifreli metin uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEK" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (certificate) in '{2}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (sertifika) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen sertifika yolu hatalı olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCsp" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft şifreleme hizmeti sağlayıcısı (CSP) yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidSignatureInEncryptedCEKCng" xml:space="preserve">
-    <value>The specified encrypted column encryption key's signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in '{2}'. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarının imza uzunluğu {0}, '{2}' konumundaki sütun ana anahtarı (asimetrik anahtar) kullanılırken imza uzunluğu {1} ile eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk olabilir veya belirtilen Microsoft Şifreleme API: Yeni Nesil (CNG) sağlayıcı yolu yanlış olabilir.</value>
   </data>
   <data name="TCE_InvalidCertificateSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (sertifika) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
   <data name="TCE_InvalidSignature" xml:space="preserve">
-    <value>The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in '{0}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.</value>
+    <value>Belirtilen şifrelenmiş sütun şifreleme anahtarı imzası, '{0}' konumundaki sütun ana anahtarı (asimetrik anahtar) ile hesaplanan imzayla eşleşmiyor. Şifrelenmiş sütun şifreleme anahtarı bozuk veya belirtilen yol hatalı olabilir.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKey" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>'{0}' anahtar yolunda belirtilen sertifika, bir sütun şifreleme anahtarını şifreleyecek özel anahtara sahip değil. Sertifikanın doğru şekilde içe aktarıldığını doğrulayın.</value>
   </data>
   <data name="TCE_CertificateWithNoPrivateKeySysErr" xml:space="preserve">
-    <value>Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.</value>
+    <value>'{0}' anahtar yolunda belirtilen sertifika, sütun şifreleme anahtarının şifresini çözmek için özel bir anahtara sahip değil. Sertifikanın doğru şekilde içe aktarıldığını doğrulayın.</value>
   </data>
   <data name="TCE_NullColumnEncryptionKeySysErr" xml:space="preserve">
-    <value>Internal error. Column encryption key cannot be null.</value>
+    <value>İç hata. Sütun şifreleme anahtarı null olamaz.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>Sütun şifreleme anahtarının şifresi başarıyla çözüldü, ancak uzunluğu {1}, '{0}' algoritmasının uzunluğu {2} ile eşleşmiyor. Veritabanındaki sütun şifreleme anahtarının şifreli değerini doğrulayın.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
-    <value>Encryption type '{1}' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm '{0}' are: {2}.</value>
+    <value>Veritabanındaki sütun için belirtilen şifreleme türü '{1}' geçersiz veya bozuk. '{0}' algoritması için geçerli şifreleme türleri: {2}.</value>
   </data>
   <data name="TCE_NullPlainText" xml:space="preserve">
-    <value>Internal error. Plaintext value cannot be null.</value>
+    <value>İç hata. Düz metin değeri null olamaz.</value>
   </data>
   <data name="TCE_VeryLargeCiphertext" xml:space="preserve">
-    <value>Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes).</value>
+    <value>Şifrelenemiyor. Şifreleme sonucunda {0} bayt şifreli metin elde edildi ve bu da izin verilen maksimum sınır olan {1} baytı aşıyor. Belirtilen düz metin değeri büyük olasılıkla çok büyük (düz metin boyutu: {2} bayt).</value>
   </data>
   <data name="TCE_NullCipherText" xml:space="preserve">
-    <value>Internal error. Ciphertext value cannot be null.</value>
+    <value>İç hata. Şifreli metin değeri null olamaz.</value>
   </data>
   <data name="TCE_InvalidCipherTextSize" xml:space="preserve">
-    <value>Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption.</value>
+    <value>Belirtilen şifreli metin, şifre çözme için gerekli olan en az {1} bayt değerinin altında {0} bayt'lık geçersiz bir boyuta sahip.</value>
   </data>
   <data name="TCE_InvalidAlgorithmVersion" xml:space="preserve">
-    <value>The specified ciphertext's encryption algorithm version '{0}' does not match the expected encryption algorithm version '{1}'.</value>
+    <value>Belirtilen şifreli metnin şifreleme algoritma sürümü '{0}', beklenen şifreleme algoritma sürümü '{1}' ile eşleşmiyor.</value>
   </data>
   <data name="TCE_InvalidAuthenticationTag" xml:space="preserve">
-    <value>Specified ciphertext has an invalid authentication tag.</value>
+    <value>Belirtilen şifreli metin geçersiz bir kimlik doğrulama etiketi içeriyor.</value>
   </data>
   <data name="TCE_NullColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Internal error. Encryption algorithm cannot be null. Valid algorithms are: {0}.</value>
+    <value>İç hata. Şifreleme algoritması null olamaz. Geçerli algoritmalar:{0}.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatParameterMetadata" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The parameter metadata resultset is missing.</value>
+    <value>İç hata. '{0}' tarafından döndürülen sonuç geçersiz. Meta veri sonuç kümesi parametresi eksik.</value>
   </data>
   <data name="TCE_UnexpectedDescribeParamFormatAttestationInfo" xml:space="preserve">
-    <value>Internal error. The result returned by '{0}' is invalid. The attestation information resultset is missing for enclave type '{1}'. </value>
+    <value>İç hata. '{0}' tarafından döndürülen sonuç geçersiz. Kapanım türü '{1}' için kanıtlama bilgileri sonuç kümesi eksik. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>İç hata. Kapanım meta verileri doldurulurken hata oluştu. Başvurulan sütun şifreleme anahtarı sıra numarası '{0}', SQL Server tarafından döndürülen şifreleme meta verilerinde eksik. En fazla sıra sayısı '{1}'. </value>
   </data>
   <data name="TCE_InvalidEncryptionKeyOrdinalParameterMetadata" xml:space="preserve">
-    <value>Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal '{0}' is missing in the encryption metadata returned by SQL Server. Max ordinal is '{1}'. </value>
+    <value>İç hata. Parametre meta verileri doldurulurken hata oluştu. Başvurulan sütun şifreleme anahtarı sıra numarası '{0}', SQL Server tarafından döndürülen şifreleme meta verilerinde eksik. En fazla sıra sayısı '{1}'. </value>
   </data>
   <data name="TCE_MultipleRowsReturnedForAttestationInfo" xml:space="preserve">
-    <value>Internal error. Error occurred when parsing the results of '{0}'. The attestation information resultset is expected to contain only one row, but it contains multiple rows.</value>
+    <value>İç hata. '{0}' sonuçları ayrıştırılırken hata oluştu. Kanıtlama bilgileri sonuç kümesinin yalnızca bir satır içermesi beklenir, ancak birden çok satır içeriyor.</value>
   </data>
   <data name="TCE_ParamEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameter '{1}' in statement or procedure '{2}' is missing in resultset returned by {0}.</value>
+    <value>İç hata. '{2}' deyimindeki veya yordamındaki '{1}' parametresine ait meta veri {0} tarafından döndürülen sonuç kümesinde yok.</value>
   </data>
   <data name="TCE_ProcEncryptionMetaDataMissing" xml:space="preserve">
-    <value>Internal error. Metadata for parameters for command '{1}' in a batch is missing in the resultset returned by {0}.</value>
+    <value>İç hata. Bir toplu işteki '{1}' komutu için parametrelerin meta verisi {0} tarafından döndürülen sonuç kümesinde yok.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureVerificationFailed" xml:space="preserve">
-    <value>The signature returned by SQL Server for the column master key, specified in key path '{0}', is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance.</value>
+    <value>'{0}' anahtar yolunda belirtilen sütun ana anahtarı için SQL Server tarafından döndürülen imza geçersiz (hesaplanan imzayla eşleşmiyor). Sütun ana anahtar meta verilerini yeniden oluşturun ve meta verilerin içindeki imzanın meta verilerde başvurulan sütun ana anahtarı kullanılarak hesaplandığından emin olun. Hata devam ederse lütfen yardım için Microsoft ile iletişime geçin.</value>
   </data>
   <data name="TCE_ColumnMasterKeySignatureNotFound" xml:space="preserve">
-    <value>Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path '{0}', cannot be null or empty.</value>
+    <value>İç hata. '{0}' anahtar yolunda belirtilen kapanım özellikli sütun ana anahtarı için SQL Server tarafından döndürülen imza null veya boş olamaz.</value>
   </data>
   <data name="TCE_UnableToVerifyColumnMasterKeySignature" xml:space="preserve">
-    <value>Unable to verify a column master key signature. Error message: {0} </value>
+    <value>Sütun ana anahtarı imzası doğrulanamıyor. Hata iletisi: {0} </value>
   </data>
   <data name="TCE_ParamEncryptionFailed" xml:space="preserve">
-    <value>Failed to encrypt parameter '{0}'.</value>
+    <value>'{0}' parametresini şifreleme işlemi başarısız oldu.</value>
   </data>
   <data name="TCE_ColumnDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt column '{0}'.</value>
+    <value>'{0}' sütununun şifresini çözme işlemi başarısız.</value>
   </data>
   <data name="TCE_ParamDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt parameter '{0}'.</value>
+    <value>'{0}' parametresinin şifre çözme işlemi başarısız oldu.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithm" xml:space="preserve">
-    <value>Encryption algorithm '{0}' for the column in the database is either invalid or corrupted. Valid algorithms are: {1}.</value>
+    <value>Veritabanındaki sütun için '{0}' şifreleme algoritması geçersiz veya bozuk. Geçerli algoritmalar:{1}.</value>
   </data>
   <data name="TCE_UnknownColumnEncryptionAlgorithmId" xml:space="preserve">
-    <value>Encryption algorithm id '{0}' for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: {1}.</value>
+    <value>Veritabanındaki sütun için '{0}' şifreleme algoritması kimliği geçersiz veya bozuk. Geçerli şifreleme algoritması kimlikleri: {1}.</value>
   </data>
   <data name="TCE_UnsupportedNormalizationVersion" xml:space="preserve">
-    <value>Normalization version '{0}' received from {2} is not supported. Valid normalization versions are: {1}.</value>
+    <value>{2}'den alınan '{0}' normalleştirme sürümü desteklenmiyor. Geçerli normalleştirme sürümleri: {1}.</value>
   </data>
   <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key. Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Bir sütun şifreleme anahtarının şifresi çözülemedi. Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{0}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
   </data>
   <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Anahtar deposu sağlayıcısı kullanılarak bir sütun şifreleme anahtarının şifresi çözülemedi: '{0}'. Şifrelenmiş sütun şifreleme anahtarının son 10 baytı: '{1}'.</value>
   </data>
   <data name="TCE_UntrustedKeyPath" xml:space="preserve">
-    <value>Column master key path '{0}' received from server '{1}' is not a trusted key path.</value>
+    <value>'{1}' sunucusundan alınan sütun ana anahtar yolu '{0}', güvenilen bir anahtar yolu değil.</value>
   </data>
   <data name="TCE_KeyDecryptionFailed" xml:space="preserve">
-    <value>Failed to decrypt a column encryption key using key store provider: '{0}'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{1}'.</value>
+    <value>Anahtar deposu sağlayıcısı kullanılarak bir sütun şifreleme anahtarının şifresi çözülemedi: '{0}'. Veritabanınızdaki sütun şifreleme anahtarının ve sütun ana anahtarının özelliklerini doğrulayın. Şifrelenmiş sütun şifreleme anahtarının son 10 baytı: '{1}'.</value>
   </data>
   <data name="TCE_UnsupportedDatatype" xml:space="preserve">
-    <value>Encryption and decryption of data type '{0}' is not supported.</value>
+    <value>'{0}' veri türünün şifrelenmesi veya şifresinin çözülmesi desteklenmiyor.</value>
   </data>
   <data name="TCE_DecryptionFailed" xml:space="preserve">
-    <value>Decryption failed. The last 10 bytes of the encrypted column encryption key are: '{0}'. The first 10 bytes of ciphertext are: '{1}'.</value>
+    <value>Şifre çözülemedi. Şifrelenmiş sütun şifreleme anahtarının son 10 baytı: '{0}'. Şifre metinlerinin ilk 10 baytı: '{1}'.</value>
   </data>
   <data name="TCE_ExceptionWhenGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error encountered while generating package to be sent to enclave. Error message: {0}</value>
+    <value>Kapanıma gönderilecek paket oluşturulurken hata oluştu. Hata iletisi: {0}</value>
   </data>
   <data name="TCE_InvalidKeyIdUnableToCastToUnsignedShort" xml:space="preserve">
-    <value>Internal Error. The given key id '{0}' is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}</value>
+    <value>İç Hata. Verilen anahtar kimliği '{0}' geçerli değil. Anahtar kimliği işaretsiz kısaya dönüştürülürken hata oluştu. Hata İletisi: {1}</value>
   </data>
   <data name="TCE_InvalidDatabaseIdUnableToCastToUnsignedInt" xml:space="preserve">
-    <value>Internal Error. The given database id '{0}' is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}</value>
+    <value>İç Hata. Verilen veritabanı kimliği '{0}' geçerli değil. Veritabanı kimliği işaretsiz int’e dönüştürülürken hata oluştu. Hata İletisi: {1}</value>
   </data>
   <data name="TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt" xml:space="preserve">
-    <value>Invalid attestation parameters specified by the enclave provider for enclave type '{0}'. Error occurred when converting the value '{1}' of parameter '{2}' to unsigned int. Error Message: {3}</value>
+    <value>Kapanım sağlayıcısı tarafından '{0}' kapanım türü için belirtilen geçersiz kanıtlama parametreleri. '{2}' parametresinin '{1}' değeri işaretsiz int'e dönüştürülürken hata oluştu. Hata İletisi: {3}</value>
   </data>
   <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name: '{0}'. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly.</value>
+    <value>Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{0}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
   </data>
   <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
-    <value>Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0} </value>
+    <value>İç Hata.  Kapanıma gönderilecek bayt paketi şifrelenemedi. Hata İletisi: {0} </value>
   </data>
   <data name="TCE_OffsetOutOfBounds" xml:space="preserve">
-    <value>Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument '{0}' for method {1}.{2} is out of bounds.</value>
+    <value>İç Hata. Kapanıma gönderilecek anahtarlar seri hale getirilemedi. Yöntem {1} için '{0}' bağımsız değişkeni tarafından belirtilen başlangıç kaydırması.{2} sınırların dışında.</value>
   </data>
   <data name="TCE_InsufficientBuffer" xml:space="preserve">
-    <value>Internal Error. The buffer specified by argument '{0}' for method '{1}.{2}' has insufficient space.</value>
+    <value>İç Hata. '{1}.{2}' metodu için '{0}' bağımsız değişkeni tarafından belirtilen arabellekteki alan yetersiz.</value>
   </data>
   <data name="TCE_ColumnEncryptionKeysNotFound" xml:space="preserve">
-    <value>Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave.</value>
+    <value>İç Hata. Şifreli sütun şifreleme anahtarları kapanıma gönderilmeye çalışılırken bulunamadı.</value>
   </data>
   <data name="TCE_NullEnclaveSessionDuringQueryExecution" xml:space="preserve">
-    <value>Internal Error. Enclave session is null during query execution. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>İç Hata. Kapanım oturumu sorgu yürütme sırasında null. Kapanım tipi '{0}' ve enclaveAttestationUrl '{1}'.</value>
   </data>
   <data name="TCE_NullEnclavePackageForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is '{0}' and enclaveAttestationUrl is '{1}'.</value>
+    <value>İç Hata. Kapanım tabanlı bir sorgunun yürütülmesi sırasında kapanım paketi null. Kapanım tipi '{0}' ve enclaveAttestationUrl '{1}'.</value>
   </data>
   <data name="TCE_AttestationInfoNotReturnedFromSQLServer" xml:space="preserve">
-    <value>Attestation information was not returned by SQL Server. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>Kanıtlama bilgileri SQL Server tarafından döndürülmedi. Kapanım türü '{0}' ve kapanım kanıtlama URL'si '{1}'.</value>
   </data>
   <data name="TCE_UnableToEstablishSecureChannel" xml:space="preserve">
-    <value>Unable to establish secure channel. Error Message: {0}</value>
+    <value>Güvenli kanal kurulamadı. Hata İletisi: {0}</value>
   </data>
   <data name="TCE_NullArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Null argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be null.</value>
+    <value>İç Hata. '{1}' türünde bir nesne oluşturulurken '{0}' null bağımsız değişkeni belirtildi. '{0}' null olamaz.</value>
   </data>
   <data name="TCE_EmptyArgumentInConstructorInternal" xml:space="preserve">
-    <value>Internal Error. Empty argument '{0}' specified when constructing an object of type '{1}'. '{0}' cannot be empty.</value>
+    <value>İç Hata. '{1}' türünde bir nesne oluşturulurken boş '{0}' bağımsız değişkeni belirtildi. '{0}' boş olamaz.</value>
   </data>
   <data name="TCE_NullArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be null when executing method '{1}.{2}'.</value>
+    <value>İç Hata. '{0}' bağımsız değişkeni '{1}.{2}' metodu yürütülürken null olamaz.</value>
   </data>
   <data name="TCE_EmptyArgumentInternal" xml:space="preserve">
-    <value>Internal Error. Argument '{0}' cannot be empty when executing method '{1}.{2}'.</value>
+    <value>İç Hata. '{0}' bağımsız değişkeni '{1}.{2}' metodu yürütülürken boş olamaz.</value>
   </data>
   <data name="TCE_DbConnectionString_EnclaveAttestationUrl" xml:space="preserve">
-    <value>Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure.</value>
+    <value>Always Encrypted kullanılarak şifrelenen veritabanı sütunlarındaki hesaplamalar için SQL Server örneğinde yapılandırılan kapanımın geçerli ve güvenli olup olmadığını doğrulamak amacıyla kullanılacak bir kapanım kanıtlama hizmeti uç noktası belirtir.</value>
   </data>
   <data name="TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig" xml:space="preserve">
-    <value>Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}</value>
+    <value>Kapanım sağlayıcıları için yapılandırma bölümü okunamadı. Uygulama yapılandırma dosyanızda bölümün doğru biçimlendirildiğinden emin olun. Hata İletisi: {0}</value>
   </data>
   <data name="TCE_CannotCreateSqlColumnEncryptionEnclaveProvider" xml:space="preserve">
-    <value>Failed to instantiate an enclave provider with type '{1}' for name '{0}'. Error message: {2} </value>
+    <value>'{0}' adı için '{1}' türüne sahip kapanım sağlayıcısının örneği oluşturulamadı. Hata iletisi: {2} </value>
   </data>
   <data name="TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty" xml:space="preserve">
-    <value>Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty.</value>
+    <value>İç Hata. SqlColumnEncryptionEnclaveProviderName null veya boş olamaz.</value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe" xml:space="preserve">
-    <value>Error occurred when reading '{0}' resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{1}'. </value>
+    <value>'{0}' sonuç kümesi okunurken hata oluştu. Kanıtlama URL'si bağlantı dizesinde belirtilmemiş, ancak sorgu kapanım hesaplamaları gerektiriyor.  Kapanım Türü '{1}'. </value>
   </data>
   <data name="TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is '{0}'. </value>
+    <value>Kapanım paketi oluşturulurken hata oluştu. Kanıtlama URL'si bağlantı dizesinde belirtilmemiş, ancak sorgu kapanım hesaplamaları gerektiriyor.  Kapanım türü '{0}'. </value>
   </data>
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
-    <value>Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations.</value>
+    <value>İç Hata. Kapanım hesaplamaları gerektiren bir sorgu yürütülürken SQL Server'dan alınan kapanım türü null veya boş.</value>
   </data>
   <data name="TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery" xml:space="preserve">
-    <value>Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section.</value>
+    <value>Bir sorgunun yürütülmesi kapanım hesaplamaları gerektiriyor ancak uygulama yapılandırmasında kapanım sağlayıcısı bölümü eksik.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
-    <value>No enclave provider found for enclave type '{0}' and attestation protocol '{1}'. Please specify the correct attestation protocol in the connection string. </value>
+    <value>Kapanım türü '{0}' ve kanıtlama protokolü '{1}' için kapanım sağlayıcısı bulunamadı. Lütfen bağlantı dizesinde doğru kanıtlama protokolünü belirtin. </value>
   </data>
   <data name="TCE_NullEnclaveSessionReturnedFromProvider" xml:space="preserve">
-    <value>Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is '{0}' and enclave attestation URL is '{1}'.</value>
+    <value>Kapanımla iletişim kurulamıyor. Kapanım sağlayıcısından alınan null kapanım oturum bilgisi. Kapanım türü '{0}' ve kapanım kanıtlama URL'si '{1}'.</value>
   </data>
   <data name="TCE_ParamInvalidForceColumnEncryptionSetting" xml:space="preserve">
-    <value>Cannot set {0} for {3} '{1}' because encryption is not enabled for the statement or procedure '{2}'.</value>
+    <value>'{2}' deyimi veya yordamı için şifreleme etkinleştirilmediğinden, {3} '{1}' için {0} ayarlanamıyor.</value>
   </data>
   <data name="TCE_ParamUnExpectedEncryptionMetadata" xml:space="preserve">
-    <value>Cannot execute statement or procedure '{1}' because {2} was set for {3} '{0}' and the database expects this parameter to be sent as plaintext. This may be due to a configuration error.</value>
+    <value>{2}, {3} '{0}' için ayarlandığından ve veritabanı bu parametrenin düz metin olarak gönderilmesini beklediğinden, '{1}' deyimi veya yordamı yürütülemiyor. Bunun nedeni bir yapılandırma hatası olabilir.</value>
   </data>
   <data name="TCE_NotSupportedByServer" xml:space="preserve">
-    <value>{0} instance in use does not support column encryption.</value>
+    <value>Kullanımdaki {0} örneği sütun şifrelemeyi desteklemiyor.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Bağlantı dizesinde kapanım kanıtlama URL'sini ve kanıtlama protokolünü belirttiniz, ancak kullanılan SQL Server kapanım tabanlı hesaplamaları desteklemiyor - daha fazla ayrıntı için https://go.microsoft.com/fwlink/?linkid=2157649 adresine bakın.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Bağlantı dizesinde kapanım kanıtlama URL'sini belirttiniz, ancak kullanılan SQL Server kapanım tabanlı hesaplamaları desteklemiyor - daha fazla ayrıntı için bkz. https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Bağlantı dizesinde kanıtlama protokolünü belirttiniz, ancak kullanılan SQL Server kapanım tabanlı hesaplamaları desteklemiyor - Daha fazla ayrıntı için bkz. https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Bağlantı dizesinde kapanım kanıtı URL'sini belirttiniz ancak SQL Server bir kapanım türü döndürmedi. Lütfen kapanım türünün örneğinizde doğru yapılandırıldığından emin olun - daha fazla ayrıntı için https://go.microsoft.com/fwlink/?linkid=2157649 adresine bakın.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
-    <value>{0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates.</value>
+    <value>Toplu güncelleştirme yapılırken, {0} tüm komutlarda ({1}, {2}, {3}, {4}) aynı olmalıdır.</value>
   </data>
   <data name="TCE_StreamNotSupportOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' as a {1} is not supported.</value>
+    <value>'{0}' şifreli sütununun {1} olarak alınması desteklenmiyor.</value>
   </data>
   <data name="TCE_SequentialAccessNotSupportedOnEncryptedColumn" xml:space="preserve">
-    <value>Retrieving encrypted column '{0}' with {1} is not supported.</value>
+    <value>'{0}' şifreli sütununun {1} ile alınması desteklenmiyor.</value>
   </data>
   <data name="TCE_CanOnlyCallOnce" xml:space="preserve">
-    <value>Key store providers cannot be set more than once.</value>
+    <value>Anahtar deposu sağlayıcıları bir kereden fazla ayarlanamaz.</value>
   </data>
   <data name="TCE_NullCustomKeyStoreProviderDictionary" xml:space="preserve">
-    <value>Column encryption key store provider dictionary cannot be null. Expecting a non-null value.</value>
+    <value>Sütun şifreleme anahtar deposu sağlayıcı sözlüğü null olamaz. Null olmayan bir değer bekleniyor.</value>
   </data>
   <data name="TCE_InvalidCustomKeyStoreProviderName" xml:space="preserve">
-    <value>Invalid key store provider name '{0}'. '{1}' prefix is reserved for system key store providers.</value>
+    <value>Anahtar deposu sağlayıcı adı '{0}' geçersiz. '{1}' öneki, sistem anahtar deposu sağlayıcıları için ayrılmıştır.</value>
   </data>
   <data name="TCE_NullProviderValue" xml:space="preserve">
-    <value>Null reference specified for key store provider '{0}'. Expecting a non-null value.</value>
+    <value>Anahtar deposu sağlayıcısı '{0}' için null referans belirtildi. Null olmayan bir değer bekleniyor.</value>
   </data>
   <data name="TCE_EmptyProviderName" xml:space="preserve">
-    <value>Invalid key store provider name specified. Key store provider names cannot be null or empty.</value>
+    <value>Geçersiz anahtar deposu sağlayıcı adı belirtildi. Anahtar deposu sağlayıcı adları null veya boş olamaz.</value>
   </data>
   <data name="TCE_SqlCommand_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Column encryption setting for the command. Overrides the connection level default.</value>
+    <value>Komut için sütun şifreleme ayarı. Varsayılan bağlantı düzeyini geçersiz kılar.</value>
   </data>
   <data name="TCE_DbConnectionString_ColumnEncryptionSetting" xml:space="preserve">
-    <value>Default column encryption setting for all the commands on the connection.</value>
+    <value>Bağlantıdaki tüm komutlar için varsayılan sütun şifreleme ayarı.</value>
   </data>
   <data name="TCE_SqlParameter_ForceColumnEncryption" xml:space="preserve">
-    <value>Forces parameter to be encrypted before sending sensitive data to server. </value>
+    <value>Gizli veriler sunucuya gönderilmeden önce parametrenin şifrelenmesini gerektirir. </value>
   </data>
   <data name="TCE_SqlConnection_TrustedColumnMasterKeyPaths" xml:space="preserve">
-    <value>Dictionary object containing SQL Server names and their trusted column master key paths.</value>
+    <value>SQL Server adlarını ve bunların güvenilen sütun ana anahtar yollarını içeren sözlük nesnesi.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
     <value>Çok fazla yeniden yönlendirme oluştu. Her oturumda yalnızca {0} yeniden yönlendirmeye izin verilir.</value>
@@ -4456,16 +4459,16 @@
     <value>.database.chinacloudapi.cn</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
-    <value>Defines whether query metadata caching is enabled.</value>
+    <value>Sorgu meta verilerini önbelleğe almanın etkin olup olmadığını tanımlar.</value>
   </data>
   <data name="TCE_SqlConnection_ColumnEncryptionKeyCacheTtl" xml:space="preserve">
-    <value>Defines the time-to-live of entries in the column encryption key cache.</value>
+    <value>Sütun şifreleme anahtar önbelleğindeki girişlerin yaşam süresini tanımlar.</value>
   </data>
   <data name="SQL_Timeout_Execution" xml:space="preserve">
-    <value>Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.</value>
+    <value>Yürütme Zaman Aşımı Süresi Doldu.  İşlem tamamlanmadan zaman aşımı süresi doldu veya sunucu yanıt vermiyor.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>Bir kanıtlama belirteci doğrulanamadı. Belirteç imzası, '{0}' konumundaki kanıtlama ortak anahtarı uç noktasından alınan ortak anahtar kullanılarak hesaplanan imzayla eşleşmiyor. Uç nokta için DNS eşlemesini doğrulayın. Daha fazla bilgi için bkz. https://go.microsoft.com/fwlink/?linkid=2157649. Doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>İlk istek başarısız olduktan sonra HGS kök sertifikasının indirilmesi yeniden denenirken iç hata oluştu. Müşteri Destek Hizmetleri'ne başvurun.</value>
@@ -4486,10 +4489,10 @@
     <value>Bir kanıtlama belirteci doğrulanamadı. Belirteç geçersiz bir biçime sahip. Müşteri Destek Hizmetleri'ne başvurun. Hata ayrıntıları: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Kanıtlama hizmeti, '{0}' kanıtlama URL'si için süresi dolmuş bir HGS kök sertifikası döndürdü. HGS örneğiniz için yapılandırılmış HGS kök sertifikasını kontrol edin - daha fazla ayrıntı için bkz. https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>'{0}' kanıtlama URL'si için alınan HGS kök sertifikası geçersiz bir biçime sahip. Kanıtlama URL'sinin doğru olduğunu ve HGS sunucusunun çevrimiçi ve tamamen başlatılmış olduğunu doğrulayın - daha fazla ayrıntı için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Daha fazla destek için Müşteri Destek Hizmetleri'ne başvurun. Hata ayrıntıları: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Bir kanıtlama belirteci doğrulanamadı. Kanıtlama ortak anahtar uç noktasından ortak anahtar alınamıyor veya alınan anahtarın biçimi geçersiz. Hata ayrıntıları: '{0}'.</value>
@@ -4507,106 +4510,106 @@
     <value>İmza doğrulaması sırasında kanıtlama belirteci doğrulanamadı. Özel durum: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Bir kanıtlama belirteci doğrulanamadı. Belirteçteki '{0}' talebi geçersiz '{1}' değerine sahip. Kanıtlama politikasını doğrulayın - daha fazla bilgi için bkz. https://go.microsoft.com/fwlink/?linkid=2157649. İlke doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Kanıtlama belirteci doğrulanamadı. Belirteçte '{0}' talebi eksik. Kanıtlama politikasını doğrulayın - daha fazla bilgi için bkz. https://go.microsoft.com/fwlink/?linkid=2157649. İlke doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Kapanımın üretim modunda çalışıp çalışmadığı denetlenemedi. Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>'{0}' özelliğindeki ilkenin beklenen ve gerçek değerleri arasındaki fark nedeniyle kapanım ilkesi doğrulanamadı. Gerçek: '{1}', Beklenen: '{2}' - daha fazla bilgi için bkz. https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Kapanım raporunun imza doğrulaması başarısız oldu. Rapor imzası, HGS kök sertifikası kullanılarak hesaplanan imzayla eşleşmiyor. Uç nokta için DNS eşlemesini doğrulayın - daha fazla için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Doğruysa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server'dan alınan kapanım raporu doğru biçimde değil. Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+    <value>Kapanım konağının sistem durumu raporu ile '{1}' durumlu '{0}' kanıtlama URL'si için HGS kök sertifikası arasında bir güven zinciri oluşturulamadı. Kanıtlama URL'sinin SQL Server'da yapılandırılan URL ile eşleştiğini doğrulayın - daha fazla ayrıntı için bkz. https://go.microsoft.com/fwlink/?linkid=2160553. Hem istemci hem de SQL Server aynı kanıtlama hizmetini kullanıyorsa Müşteri Destek Hizmetleri'ne başvurun.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
-    <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
+    <value>İlgili kapanım kanıtlama hizmeti için bir onaylama protokolü belirtir.</value>
   </data>
   <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
-    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+    <value>SQL örneklerine bağlanırken bir IP adresi tercihi belirtir.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
-    <value>The enclave type '{0}' returned from the server is not supported.</value>
+    <value>Sunucudan döndürülen '{0}' kapanım türü desteklenmiyor.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupportEnclaveType" xml:space="preserve">
-    <value>Failed to initialize connection. The attestation protocol '{0}' does not support the enclave type '{1}'.</value>
+    <value>Bağlantı başlatılamadı. Doğrulama protokolü '{0}', kapanım türü türünü '{1}'.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage" xml:space="preserve">
-    <value>Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations.</value>
+    <value>Kapanım paketi oluşturulurken hata oluştu. Kanıtlama Protokolü bağlantı dizesinde belirtilmemiş, ancak sorgu kapanım hesaplamaları gerektiriyor.</value>
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
-    <value>UDT size must be less than {1}, size: {0}</value>
+    <value>UDT boyutu {1}'den küçük olmalıdır, boyut: {0}</value>
   </data>
   <data name="SEC_ProtocolWarning" xml:space="preserve">
-    <value>Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later.</value>
+    <value>Güvenlik Uyarısı: Anlaşmalı {0} güvensiz bir protokol olup yalnızca geriye dönük uyumluluk için desteklenir. Önerilen protokol sürümü TLS 1.2 ve üzeridir.</value>
   </data>
   <data name="net_invalid_enum" xml:space="preserve">
-    <value>The specified value is not valid in the '{0}' enumeration.</value>
+    <value>Belirtilen değer '{0}' sabit listesinde geçerli değil.</value>
   </data>
   <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
-    <value>The given column order hint is not valid.</value>
+    <value>Verilen sütun sırası ipucu geçerli değil.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
-    <value>The column '{0}' was specified more than once.</value>
+    <value>'{0}' sütunu birden fazla kez belirtildi.</value>
   </data>
   <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
-    <value>The sorted column '{0}' is not valid in the destination table.</value>
+    <value>Sıralanan '{0}' sütunu hedef tabloda geçerli değil.</value>
   </data>
   <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
-    <value>A column order hint cannot have an unspecified sort order.</value>
+    <value>Bir sütun sırası ipucu belirtilmemiş bir sıralama düzenine sahip olamaz.</value>
   </data>
   <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
-    <value>Unsupported authentication specified in this context: {0}</value>
+    <value>Bu bağlamda belirtilen desteklenmeyen kimlik doğrulama: {0}</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
-    <value>Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Active Directory Etkileşimli kimlik doğrulaması zaman aşımına uğradı. Kullanıcının kimlik doğrulama isteğine yanıt vermesi çok uzun sürdü.</value>
   </data>
   <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Interactive', if the Credential property has been set.</value>
+    <value>Kimlik Bilgisi özelliği ayarlanmışsa 'Authentication=Active Directory Interactive' kullanılamaz.</value>
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Interactive' has been specified in the connection string.</value>
+    <value>Bağlantı dizesinde 'Authentication=Active Directory Interactive' belirtildiyse, Kimlik Bilgisi özelliği ayarlanamaz.</value>
   </data>
   <data name="SqlConnection_ServerProcessId" xml:space="preserve">
-    <value>Server Process Id (SPID) of the active connection.</value>
+    <value>Etkin bağlantının Sunucu İşlem Kimliği (SPID).</value>
   </data>
   <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
-    <value>Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request.</value>
+    <value>Active Directory Cihaz Kodu Akış kimlik doğrulaması zaman aşımına uğradı. Kullanıcının kimlik doğrulama isteğine yanıt vermesi çok uzun sürdü.</value>
   </data>
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication=Active Directory Device Code Flow' has been specified in the connection string.</value>
+    <value>Bağlantı dizesinde 'Authentication=Active Directory Device Code Flow' belirtildiyse, Kimlik Bilgisi özelliği ayarlanamaz.</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>Bağlantı dizesinde 'Authentication={0}' belirtilmişse Kimlik Bilgisi özelliği ayarlanamaz.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication=Active Directory Device Code Flow', if the Credential property has been set.</value>
+    <value>Kimlik Bilgisi özelliği ayarlanmışsa 'Authentication=Active Directory Device Code Flow' kullanılamaz.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>Kimlik Bilgisi özelliği ayarlanmışsa 'Authentication={0}' kullanılamaz.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>Seri durumdan çıkarma sırasında beklenmeyen tür algılandı.</value>
   </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
-    <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
+    <value>{0} değeri aralığın dışında. {1} ile {2} arasında olmalıdır.</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry has been canceled at attempt {0}.</value>
+    <value>Yeniden deneme {0} denemesinde iptal edildi.</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
+    <value>Yeniden deneme sayısı maksimum {0} denemeyi aştı.</value>
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
-    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+    <value>'{0}', '{1}'den küçük değil; '{2}', '{3}'ten büyük olamaz.</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
     <value>Hedef dizi, koleksiyondaki tüm öğeleri kopyalamak için yeterince uzun değil. Dizi dizinini ve uzunluğunu denetleyin.</value>
@@ -4615,37 +4618,37 @@
     <value>Yalnızca tek boyutlu diziler, istenen eylem için destekleniyor.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>Belirtilen öğe belirtilen Koleksiyonda bulunamadığı için kaldırılamıyor.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Negatif olmayan sayı gerekiyor.</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>Üst komutta EnableOptimizedParameterBinding etkinleştirildiğinde '{0}' parametresinin Yön Çıkışı veya InputOutput’u olamaz.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
-    <value>Connection timed out while retrieving an access token using '{0}' authentication method. Last error: {1}: {2}</value>
+    <value>'{0}' kimlik doğrulama yöntemi kullanılarak bir erişim belirteci alınırken bağlantı zaman aşımına uğradı. Son Hata: {1}: {2}</value>
   </data>
   <data name="DbConnectionString_FailoverPartnerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the failover partner.</value>
+    <value>Yük devretme ortağının hizmet asıl adı (SPN).</value>
   </data>
   <data name="DbConnectionString_ServerSPN" xml:space="preserve">
-    <value>The service principal name (SPN) of the server.</value>
+    <value>Sunucunun hizmet asıl adı (SPN).</value>
   </data>
   <data name="SNI_PlatformNotSupportedNetFx" xml:space="preserve">
-    <value>The '{0}' platform is not supported when targeting .NET Framework.</value>
+    <value>.NET Framework hedeflenirken '{0}' platformu desteklenmez.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessToken property if the AccessTokenCallback has been set.</value>
+    <value>AccessTokenCallback ayarlanmışsa AccessToken özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+    <value>'Integrated Security' bağlantı dizesi anahtar sözcüğü 'true' veya 'SSPI' olarak ayarlanmışsa AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
-    <value>Cannot set the AccessTokenCallback property if 'Authentication=Active Directory Default' has been specified in the connection string.</value>
+    <value>Bağlantı dizesinde 'Authentication=Active Directory Default' belirtilmişse AccessTokenCallback özelliği ayarlanamaz.</value>
   </data>
   <data name="event_OperationReturnedSomething" xml:space="preserve">
-    <value>{0} returned {1}.</value>
+    <value>{0} {1} döndürdü.</value>
   </data>
   <data name="net_auth_message_not_encrypted" xml:space="preserve">
     <value>Protokol hatası: Alınan ileti geçerli bir imza içeriyor ancak geçerli Koruma Düzeyinin gerektirdiği gibi şifrelenmemiş.</value>
@@ -4714,13 +4717,13 @@
     <value>Windows dışındaki işletim sistemlerinde kanal bağlama desteği bulunmuyor.</value>
   </data>
   <data name="net_nego_not_supported_empty_target_with_defaultcreds" xml:space="preserve">
-    <value>Target name should be non empty if default credentials are passed.</value>
+    <value>Varsayılan kimlik bilgileri geçilirse hedef adı boş olmamalıdır.</value>
   </data>
   <data name="net_nego_protection_level_not_supported" xml:space="preserve">
     <value>İstenen koruma düzeyi, şu anda yüklü olan GSSAPI uygulamasıyla desteklenmiyor.</value>
   </data>
   <data name="net_nego_server_not_supported" xml:space="preserve">
-    <value>Server implementation is not supported.</value>
+    <value>Sunucu uygulaması desteklenmiyor.</value>
   </data>
   <data name="net_ntlm_not_possible_default_cred" xml:space="preserve">
     <value>Bu platformda, NTLM kimlik doğrulaması varsayılan kimlik bilgileriyle mümkün değildir.</value>

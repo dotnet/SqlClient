@@ -2,18 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.IO;
 using System.Runtime.InteropServices;
 
-internal static partial class Interop
+namespace Interop_TEMP.Windows
 {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa380518.aspx
     // https://msdn.microsoft.com/en-us/library/windows/hardware/ff564879.aspx
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe struct UNICODE_STRING
+    internal unsafe struct UnicodeString
     {
         /// <summary>
-        /// Length, in bytes, not including the the null, if any.
+        /// Length, in bytes, not including the null, if any.
         /// </summary>
         internal ushort Length;
 
@@ -27,7 +26,7 @@ internal static partial class Interop
         /// </summary>
         internal char* Buffer;
 
-        public UNICODE_STRING(char* buffer, int length)
+        public UnicodeString(char* buffer, int length)
         {
             Length = checked((ushort)(length * sizeof(char)));
             MaximumLength = checked((ushort)(length * sizeof(char)));
