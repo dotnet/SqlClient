@@ -1341,7 +1341,7 @@
                 <item><c>Sql Password</c></item>
               </list>
               <para>
-                For additional information see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication5">Using Azure Active Directory authentication with SqlClient</see>.
+                For additional information see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication">Using Azure Active Directory authentication with SqlClient</see>.
               </para>
             </description>
           </item>
