@@ -1545,7 +1545,7 @@
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
-      <related type="Article" href="https://learn.microsoft.com/dotnet/framework/data/adonet/sql/bulk-copy-operations-in-sql-server">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-operations-sql-server">
         Performing Bulk Copy Operations
       </related>
       <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
