@@ -159,7 +159,7 @@ stages:
           hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
             Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
-          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
+          TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
@@ -239,7 +239,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql22_x86: ADO-MMS22-SQL22 
-          TargetFrameworks: ${{parameters.targetFrameworks }}
+          TargetFrameworks: [net462]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
