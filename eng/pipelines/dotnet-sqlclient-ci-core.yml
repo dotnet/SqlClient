@@ -163,7 +163,7 @@ stages:
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
-          useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
+          useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
           codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
           configSqlFor: local # setup Sql Server (local | azure | enclave)
           operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
@@ -243,7 +243,7 @@ stages:
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
-          useManagedSNI: ${{parameters.useManagedSNI }}
+          useManagedSNI: [false]
           codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
