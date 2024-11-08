@@ -201,8 +201,7 @@ jobs:
           ${{ if parameters.configProperties.FileStreamDirectory }}:
             fileStreamDirectory: ${{ parameters.configProperties.FileStreamDirectory }}
 
-  - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
-    - template: ../steps/build-all-tests-step.yml@self # build tests
+      - template: ../steps/build-all-tests-step.yml@self # build tests
       parameters:
         targetFramework: ${{ parameters.targetFramework }}
         referenceType: ${{ parameters.buildType }}
@@ -210,6 +209,7 @@ jobs:
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
+  - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: ../steps/run-all-tests-step.yml@self # run tests
       parameters:
         debug: ${{ parameters.debug }}
