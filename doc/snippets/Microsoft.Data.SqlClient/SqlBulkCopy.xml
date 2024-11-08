@@ -227,7 +227,7 @@
       <example>
         For examples demonstrating how to use <c>SqlBulkCopy</c> in a transaction, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see>.
       </example>
-      <related type="Article" href="https://learn.microsoft.com/dotnet/framework/data/adonet/sql/bulk-copy-operations-in-sql-server">
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-operations-sql-server">
         Performing Bulk Copy Operations
       </related>
       <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
