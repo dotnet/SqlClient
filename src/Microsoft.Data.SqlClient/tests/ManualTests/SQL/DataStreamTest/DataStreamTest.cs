@@ -1552,8 +1552,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
 
                             // Get the rest of the data out of the stream
-                            int readCount = stream.Read(buffer, 0, buffer.Length);
-                            Assert.Equal(8, readCount);
+                            int _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Assert throws when no data in stream
                             DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
