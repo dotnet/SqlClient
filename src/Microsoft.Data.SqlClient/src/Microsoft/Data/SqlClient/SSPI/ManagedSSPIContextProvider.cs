@@ -1,4 +1,4 @@
-﻿#if NET8_0_OR_GREATER
+﻿#if NET6
 
 using System;
 using Microsoft.Data.SqlClient.SNI;
