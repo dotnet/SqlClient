@@ -64,21 +64,21 @@ jobs:
       dotnet tool install --global dotnet-coverage
 
       $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetFx\ -Recurse -File -Filter *.coverage
+      $filesCommandLine = $files -join ' '
+      
       # echo $files
       mkdir coverageNetFxXml
-      $counter=0
-      foreach ($file in $files) {
-        & dotnet-coverage merge $file.FullName --output coverageNetFxXml\$((++$counter)).coveragexml --output-format xml
-      }
+
+      & dotnet-coverage merge $filesCommandLine --output coverageNetFxXml\merged.coveragexml --output-format xml      
 
       $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetCore\ -Recurse -File -Filter *.coverage
+      $filesCommandLine = $files -join ' '
+      
       # echo $files
       mkdir coverageNetCoreXml
-      $counter=0
-      foreach ($file in $files) {
-        & dotnet-coverage merge $file.FullName --output coverageNetCoreXml\$((++$counter)).coveragexml --output-format xml
-      }
 
+      & dotnet-coverage merge $filesCommandLine --output coverageNetCoreXml\merged.coveragexml --output-format xml
+      
       # dir coverageNetFxXml\
       # dir coverageNetCoreXml\
 
