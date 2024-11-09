@@ -684,9 +684,6 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\SystemErrors.cs">
       <Link>Interop\Windows\SystemErrors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Interop\Windows\Interop.Libraries.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\FileTypes.cs">
       <Link>Interop\Windows\Kernel32\FileTypes.cs</Link>
     </Compile>
