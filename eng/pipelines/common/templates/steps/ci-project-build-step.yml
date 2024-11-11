@@ -34,20 +34,16 @@ parameters:
       - all
 
 steps:
-- task: Powershell@2
-  displayName: 'Install .NET 9.0 SDK'
+- task: UseDotNet@2
   inputs:
-    targetType: 'inline'
-    script: |
-        dotnet --info
-        
-        Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-        
-        $channel = "9.0"
-        
-        .\dotnet-install.ps1 -Channel $channel -Quality preview
-        
-        dotnet --info
+    packageType: sdk
+    version: '8.x'
+
+- task: UseDotNet@2
+  inputs:
+    packageType: sdk
+    version: '9.x'
+    includePreviewVersions: true
 
 - task: Powershell@2
   displayName: 'List SDK versions'
