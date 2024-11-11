@@ -18,6 +18,7 @@ namespace Microsoft.Data.SqlClient
     internal static class SNINativeMethodWrapper
     {
         private static ISniNativeMethods NativeMethodsArm = new SniNativeMethodsArm64();
+        private static ISniNativeMethods NativeNotSupported = new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture);
         private static ISniNativeMethods NativeMethodsX64 = new SniNativeMethodsX64();
         private static ISniNativeMethods NativeMethodsX86 = new SniNativeMethodsX86();
 
@@ -90,7 +91,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniAddProvider(pConn, ProvNum, ref pInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniAddProvider(pConn, ProvNum, ref pInfo);
             }
         }
 
@@ -105,7 +106,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniAddProvider(pConn, ProvNum, ref pInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniAddProvider(pConn, ProvNum, ref pInfo);
             }
         }
 
@@ -120,7 +121,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniCheckConnection(pConn);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniCheckConnection(pConn);
             }
         }
 
@@ -135,7 +136,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniClose(pConn);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniClose(pConn);
             }
         }
 
@@ -153,7 +154,8 @@ namespace Microsoft.Data.SqlClient
                     NativeMethodsX86.SniGetLastError(out pErrorStruct);
                     break;
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    NativeNotSupported.SniGetLastError(out pErrorStruct);
+                    break;
             }
         }
 
@@ -171,7 +173,8 @@ namespace Microsoft.Data.SqlClient
                     NativeMethodsX86.SniPacketRelease(pPacket);
                     break;
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    NativeNotSupported.SniPacketRelease(pPacket);
+                    break;
             }
         }
 
@@ -189,7 +192,8 @@ namespace Microsoft.Data.SqlClient
                     NativeMethodsX86.SniPacketReset(pConn, IOType, pPacket, ConsNum);
                     break;
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    NativeNotSupported.SniPacketReset(pConn, IOType, pPacket, ConsNum);
+                    break;
             }
         }
 
@@ -204,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniQueryInfo(QType, ref pbQInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniQueryInfo(QType, ref pbQInfo);
             }
         }
 
@@ -219,7 +223,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniQueryInfo(QType, ref pbQInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniQueryInfo(QType, ref pbQInfo);
             }
         }
 
@@ -234,7 +238,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniReadAsync(pConn, ref ppNewPacket);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniReadAsync(pConn, ref ppNewPacket);
             }
         }
 
@@ -249,7 +253,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
             }
         }
 
@@ -264,7 +268,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniRemoveProvider(pConn, ProvNum);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniRemoveProvider(pConn, ProvNum);
             }
         }
 
@@ -279,7 +283,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniSecInitPackage(ref pcbMaxToken);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniSecInitPackage(ref pcbMaxToken);
             }
         }
 
@@ -294,7 +298,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniSetInfo(pConn, QType, ref pbQInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniSetInfo(pConn, QType, ref pbQInfo);
             }
         }
 
@@ -309,7 +313,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniTerminate();
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniTerminate();
             }
         }
 
@@ -324,7 +328,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
             }
         }
 
@@ -339,7 +343,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniIsTokenRestricted(token, out isRestricted);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniIsTokenRestricted(token, out isRestricted);
             }
         }
 
@@ -354,7 +358,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetMaxComposedSpnLength();
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetMaxComposedSpnLength();
             }
         }
 
@@ -369,7 +373,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out pbQInfo);
             }
         }
 
@@ -384,7 +388,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out pbQInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out pbQInfo);
             }
         }
 
@@ -399,7 +403,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out portNum);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out portNum);
             }
         }
 
@@ -414,7 +418,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
             }
         }
 
@@ -429,7 +433,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out provNum);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out provNum);
             }
         }
 
@@ -444,7 +448,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniInitialize(pmo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniInitialize(pmo);
             }
         }
 
@@ -459,7 +463,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
             }
         }
 
@@ -481,7 +485,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
             }
         }
 
@@ -496,7 +500,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniPacketAllocateWrapper(pConn, IOType);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniPacketAllocateWrapper(pConn, IOType);
             }
         }
 
@@ -511,7 +515,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
             }
         }
 
@@ -529,7 +533,8 @@ namespace Microsoft.Data.SqlClient
                     NativeMethodsX86.SniPacketSetData(pPacket, pbBuf, cbBuf);
                     break;
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    NativeNotSupported.SniPacketSetData(pPacket, pbBuf, cbBuf);
+                    break;
             }
         }
 
@@ -555,7 +560,7 @@ namespace Microsoft.Data.SqlClient
                     case System.Runtime.InteropServices.Architecture.X86:
                         return NativeMethodsX86.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                     default:
-                        throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                        return NativeNotSupported.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
                 }
             }
         }
@@ -571,7 +576,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniWriteAsyncWrapper(pConn, pPacket);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniWriteAsyncWrapper(pConn, pPacket);
             }
         }
 
@@ -586,7 +591,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniWriteSyncOverAsync(pConn, pPacket);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniWriteSyncOverAsync(pConn, pPacket);
             }
         }
         #endregion
@@ -638,7 +643,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniServerEnumOpen();
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniServerEnumOpen();
             }
         }
         internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more)
@@ -652,7 +657,7 @@ namespace Microsoft.Data.SqlClient
                 case System.Runtime.InteropServices.Architecture.X86:
                     return NativeMethodsX86.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    return NativeNotSupported.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
             }
         }
 
@@ -670,7 +675,8 @@ namespace Microsoft.Data.SqlClient
                     NativeMethodsX86.SniServerEnumClose(packet);
                     break;
                 default:
-                    throw ADP.SNIPlatformNotSupported(s_architecture.ToString());
+                    NativeNotSupported.SniServerEnumClose(packet);
+                    break;
             }
         }
 

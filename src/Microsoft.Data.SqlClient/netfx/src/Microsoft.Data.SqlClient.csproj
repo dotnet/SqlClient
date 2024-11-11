@@ -199,6 +199,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeMethodsArm64.netfx.cs">
       <Link>Interop\Windows\Sni\SniNativeMethodsArm64.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeMethodsNotSupported.netfx.cs">
+      <Link>Interop\Windows\Sni\SniNativeMethodsNotSupported.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeMethodsX64.netfx.cs">
       <Link>Interop\Windows\Sni\SniNativeMethodsX64.netfx.cs</Link>
     </Compile>
