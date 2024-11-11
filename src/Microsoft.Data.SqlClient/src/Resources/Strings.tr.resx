@@ -2883,6 +2883,9 @@
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
     <value>İçerik bağlantısı, Type System Version=SQL Server 2000 desteklemiyor.</value>
   </data>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+  </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>İçerik bağlantısı zaten kullanılıyor.</value>
   </data>

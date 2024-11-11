@@ -2883,6 +2883,9 @@
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
     <value>컨텍스트 연결은 Type System Version=SQL Server 2000을 지원하지 않습니다.</value>
   </data>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+  </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>컨텍스트 연결이 이미 사용 중입니다.</value>
   </data>
