@@ -63,10 +63,10 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
             internal const string ServerSPN = DbConnectionStringDefaults.ServerSPN;
             internal const string FailoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
+            internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
 #if NETFRAMEWORK
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
-            internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
             internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
 #endif // NETFRAMEWORK
         }
@@ -261,6 +261,7 @@ namespace Microsoft.Data.SqlClient
         private readonly ApplicationIntent _applicationIntent;
         private readonly string _applicationName;
         private readonly string _attachDBFileName;
+        private readonly bool _contextConnection;
         private readonly string _currentLanguage;
         private readonly string _dataSource;
         private readonly string _localDBInstance; // created based on datasource, set to NULL if datasource is not LocalDB
@@ -289,11 +290,8 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
-#if NETFRAMEWORK
-            bool runningInProc = InOutOfProcHelper.InProc;
-#else
+#if !NETFRAMEWORK
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
-            ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
 
             // Network Library has its own special error message
             if (ContainsKey(KEY.Network_Library))
@@ -325,6 +323,7 @@ namespace Microsoft.Data.SqlClient
             _applicationIntent = ConvertValueToApplicationIntent();
             _applicationName = ConvertValueToString(KEY.Application_Name, DEFAULT.Application_Name);
             _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DEFAULT.AttachDBFilename);
+            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
             _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
             _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
@@ -348,6 +347,11 @@ namespace Microsoft.Data.SqlClient
 
             _userID = ConvertValueToString(KEY.User_ID, DEFAULT.User_ID);
             _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
+
+            if (_contextConnection)
+            {
+                throw SQL.ContextConnectionIsUnsupported();
+            }
 
             if (_loadBalanceTimeout < 0)
             {
@@ -386,34 +390,8 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
-            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
-            _encrypt = ConvertValueToSqlConnectionEncrypt();
-            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
-
-            if (_contextConnection)
-            {
-                // We have to be running in the engine for you to request a
-                // context connection.
-
-                if (!runningInProc)
-                {
-                    throw SQL.ContextUnavailableOutOfProc();
-                }
-
-                // When using a context connection, we need to ensure that no
-                // other connection string keywords are specified.
-
-                foreach (KeyValuePair<string, string> entry in Parsetable)
-                {
-                    if (entry.Key != KEY.Context_Connection &&
-                        entry.Key != KEY.Type_System_Version)
-                    {
-                        throw SQL.ContextAllowsLimitedKeywords();
-                    }
-                }
-            }
 
             if (_networkLibrary != null)
             { // MDAC 83525
@@ -522,12 +500,6 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2000, StringComparison.OrdinalIgnoreCase))
             {
-#if NETFRAMEWORK
-                if (_contextConnection)
-                {
-                    throw SQL.ContextAllowsOnlyTypeSystem2005();
-                }
-#endif
                 _typeSystemVersion = TypeSystem.SQLServer2000;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
@@ -653,6 +625,7 @@ namespace Microsoft.Data.SqlClient
             _packetSize = connectionOptions._packetSize;
             _applicationName = connectionOptions._applicationName;
             _attachDBFileName = connectionOptions._attachDBFileName;
+            _contextConnection = connectionOptions._contextConnection;
             _currentLanguage = connectionOptions._currentLanguage;
             _dataSource = dataSource;
             _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
@@ -676,7 +649,6 @@ namespace Microsoft.Data.SqlClient
             _hostNameInCertificate = connectionOptions._hostNameInCertificate;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
-            _contextConnection = connectionOptions._contextConnection;
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
             _networkLibrary = connectionOptions._networkLibrary;
             _typeSystemAssemblyVersion = connectionOptions._typeSystemAssemblyVersion;
@@ -721,6 +693,9 @@ namespace Microsoft.Data.SqlClient
         internal ApplicationIntent ApplicationIntent => _applicationIntent;
         internal string ApplicationName => _applicationName;
         internal string AttachDBFilename => _attachDBFileName;
+        // Return a constant value rather than _contextConnection. This allows the JIT to trim
+        // the code paths referencing it.
+        internal bool ContextConnection => false;
         internal string CurrentLanguage => _currentLanguage;
         internal string DataSource => _dataSource;
         internal string LocalDBInstance => _localDBInstance;
@@ -1192,11 +1167,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         private readonly bool _connectionReset;
-        private readonly bool _contextConnection;
         private readonly bool _transparentNetworkIPResolution;
         private readonly string _networkLibrary;
 
-        internal bool ContextConnection => _contextConnection;
         internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
         internal string NetworkLibrary => _networkLibrary;
 

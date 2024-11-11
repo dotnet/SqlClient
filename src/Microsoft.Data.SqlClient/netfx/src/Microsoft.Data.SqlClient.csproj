@@ -100,53 +100,53 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Errors.cs">
-      <Link>Interop\Interop.Errors.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
+      <Link>Interop\SystemErrors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.CTL_CODE.cs">
-      <Link>Interop\Kernel32\Interop.CTL_CODE.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\FileTypes.cs">
+      <Link>Interop\Kernel32\FileTypes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
-      <Link>Interop\Kernel32\Interop.DeviceIoControl.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlCodeAccess.cs">
+      <Link>Interop\Kernel32\IoControlCodeAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.FileTypes.cs">
-      <Link>Interop\Kernel32\Interop.FileTypes.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlTransferType.cs">
+      <Link>Interop\Kernel32\IoControlTransferType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Interop\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
+      <Link>Interop\Kernel32\Kernel32.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
-      <Link>Interop\Kernel32\Interop.GetFullPathName.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
+      <Link>Interop\NtDll\CreateDisposition.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
-      <Link>Interop\Kernel32\Interop.IoControlCodeAccess.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
+      <Link>Interop\NtDll\CreateOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
-      <Link>Interop\Kernel32\Interop.IoControlTransferType.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
+      <Link>Interop\NtDll\DesiredAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Libraries.cs">
-      <Link>Interop\Interop.Libraries.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
+      <Link>Interop\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs">
-      <Link>Interop\Kernel32\Interop.SetThreadErrorMode.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
+      <Link>Interop\NtDll\ImpersonaltionLevel.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
-      <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\IoStatusBlock.cs">
+      <Link>Interop\NtDll\IoStatusBlock.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
-      <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
+      <Link>Interop\NtDll\NtDll.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.NtCreateFile.cs">
-      <Link>Interop\NtDll\Interop.NtCreateFile.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
+      <Link>Interop\NtDll\ObjectAttributes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
-      <Link>Interop\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
+      <Link>Interop\NtDll\ObjecAttributes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
-      <Link>Interop\NtDll\Interop.SecurityQualityOfService.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
+      <Link>Interop\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.UNICODE_STRING.cs">
-      <Link>Interop\Interop.UNICODE_STRING.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
+      <Link>Interop\UnicodeString.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>

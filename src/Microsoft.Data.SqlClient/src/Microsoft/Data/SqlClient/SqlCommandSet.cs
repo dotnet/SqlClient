@@ -249,18 +249,11 @@ namespace Microsoft.Data.SqlClient
         {
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-#else
-            ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 #endif
             using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
-#if NETFRAMEWORK
-                if (Connection.IsContextConnection)
-                {
-                    throw SQL.BatchedUpdatesNotAvailableOnContextConnection();
-                }
                 ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
-#endif
+
                 BatchCommand.SetBatchRPCMode(true);
                 BatchCommand.Parameters.Clear();
                 for (int index = 0; index < _commandList.Count; index++)

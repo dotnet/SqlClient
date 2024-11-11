@@ -7,24 +7,10 @@
 using System;
 using System.Runtime.InteropServices;
 
-internal static partial class Interop
+namespace Interop.Windows.SChannel
 {
-    internal enum ApplicationProtocolNegotiationStatus
-    {
-        None = 0,
-        Success,
-        SelectedClientOnly
-    }
-
-    internal enum ApplicationProtocolNegotiationExt
-    {
-        None = 0,
-        NPN,
-        ALPN
-    }
-
     [StructLayout(LayoutKind.Sequential)]
-    internal class SecPkgContext_ApplicationProtocol
+    internal struct SecPkgContextApplicationProtocol
     {
         private const int MaxProtocolIdSize = 0xFF;
 
