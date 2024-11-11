@@ -17,13 +17,15 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SNINativeMethodWrapper
     {
-        private static ISniNativeMethods NativeMethodsArm = new SniNativeMethodsArm64();
-        private static ISniNativeMethods NativeNotSupported = new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture);
-        private static ISniNativeMethods NativeMethodsX64 = new SniNativeMethodsX64();
-        private static ISniNativeMethods NativeMethodsX86 = new SniNativeMethodsX86();
+        private static readonly ISniNativeMethods NativeMethods = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => new SniNativeMethodsArm64(),
+            Architecture.X64 => new SniNativeMethodsX64(),
+            Architecture.X86 => new SniNativeMethodsX86(),
+            _ => new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture)
+        };
 
         private static int s_sniMaxComposedSpnLength = -1;
-        private static readonly System.Runtime.InteropServices.Architecture s_architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
         private const int SniOpenTimeOut = -1; // infinite
         
@@ -80,392 +82,81 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region DLL Imports
-        internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniAddProvider(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniAddProvider(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniAddProvider(pConn, ProvNum, ref pInfo);
-                default:
-                    return NativeNotSupported.SniAddProvider(pConn, ProvNum, ref pInfo);
-            }
-        }
 
-        internal static uint SNIAddProviderWrapper(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniAddProvider(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniAddProvider(pConn, ProvNum, ref pInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniAddProvider(pConn, ProvNum, ref pInfo);
-                default:
-                    return NativeNotSupported.SniAddProvider(pConn, ProvNum, ref pInfo);
-            }
-        }
+        internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo) =>
+            NativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
 
-        internal static uint SNICheckConnection([In] SNIHandle pConn)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniCheckConnection(pConn);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniCheckConnection(pConn);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniCheckConnection(pConn);
-                default:
-                    return NativeNotSupported.SniCheckConnection(pConn);
-            }
-        }
+        internal static uint SNIAddProviderWrapper(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo) =>
+            NativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
 
-        internal static uint SNIClose(IntPtr pConn)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniClose(pConn);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniClose(pConn);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniClose(pConn);
-                default:
-                    return NativeNotSupported.SniClose(pConn);
-            }
-        }
+        internal static uint SNICheckConnection([In] SNIHandle pConn) =>
+            NativeMethods.SniCheckConnection(pConn);
 
-        internal static void SNIGetLastError(out SniError pErrorStruct)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    NativeMethodsArm.SniGetLastError(out pErrorStruct);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X64:
-                    NativeMethodsX64.SniGetLastError(out pErrorStruct);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X86:
-                    NativeMethodsX86.SniGetLastError(out pErrorStruct);
-                    break;
-                default:
-                    NativeNotSupported.SniGetLastError(out pErrorStruct);
-                    break;
-            }
-        }
+        internal static uint SNIClose(IntPtr pConn) =>
+            NativeMethods.SniClose(pConn);
 
-        internal static void SNIPacketRelease(IntPtr pPacket)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    NativeMethodsArm.SniPacketRelease(pPacket);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X64:
-                    NativeMethodsX64.SniPacketRelease(pPacket);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X86:
-                    NativeMethodsX86.SniPacketRelease(pPacket);
-                    break;
-                default:
-                    NativeNotSupported.SniPacketRelease(pPacket);
-                    break;
-            }
-        }
+        internal static void SNIGetLastError(out SniError pErrorStruct) =>
+            NativeMethods.SniGetLastError(out pErrorStruct);
 
-        internal static void SNIPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    NativeMethodsArm.SniPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X64:
-                    NativeMethodsX64.SniPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X86:
-                    NativeMethodsX86.SniPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
-                default:
-                    NativeNotSupported.SniPacketReset(pConn, IOType, pPacket, ConsNum);
-                    break;
-            }
-        }
+        internal static void SNIPacketRelease(IntPtr pPacket) =>
+            NativeMethods.SniPacketRelease(pPacket);
 
-        internal static uint SNIQueryInfo(QueryType QType, ref uint pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniQueryInfo(QType, ref pbQInfo);
-                default:
-                    return NativeNotSupported.SniQueryInfo(QType, ref pbQInfo);
-            }
-        }
+        internal static void SNIPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum) =>
+            NativeMethods.SniPacketReset(pConn, IOType, pPacket, ConsNum);
 
-        internal static uint SNIQueryInfo(QueryType QType, ref IntPtr pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniQueryInfo(QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniQueryInfo(QType, ref pbQInfo);
-                default:
-                    return NativeNotSupported.SniQueryInfo(QType, ref pbQInfo);
-            }
-        }
+        internal static uint SNIQueryInfo(QueryType QType, ref uint pbQInfo) =>
+            NativeMethods.SniQueryInfo(QType, ref pbQInfo);
 
-        internal static uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniReadAsync(pConn, ref ppNewPacket);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniReadAsync(pConn, ref ppNewPacket);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniReadAsync(pConn, ref ppNewPacket);
-                default:
-                    return NativeNotSupported.SniReadAsync(pConn, ref ppNewPacket);
-            }
-        }
+        internal static uint SNIQueryInfo(QueryType QType, ref IntPtr pbQInfo) =>
+            NativeMethods.SniQueryInfo(QType, ref pbQInfo);
 
-        internal static uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-                default:
-                    return NativeNotSupported.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
-            }
-        }
+        internal static uint SNIReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket) =>
+            NativeMethods.SniReadAsync(pConn, ref ppNewPacket);
 
-        internal static uint SNIRemoveProvider(SNIHandle pConn, Provider ProvNum)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniRemoveProvider(pConn, ProvNum);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniRemoveProvider(pConn, ProvNum);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniRemoveProvider(pConn, ProvNum);
-                default:
-                    return NativeNotSupported.SniRemoveProvider(pConn, ProvNum);
-            }
-        }
+        internal static uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout) =>
+            NativeMethods.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
 
-        internal static uint SNISecInitPackage(ref uint pcbMaxToken)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniSecInitPackage(ref pcbMaxToken);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniSecInitPackage(ref pcbMaxToken);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniSecInitPackage(ref pcbMaxToken);
-                default:
-                    return NativeNotSupported.SniSecInitPackage(ref pcbMaxToken);
-            }
-        }
+        internal static uint SNIRemoveProvider(SNIHandle pConn, Provider ProvNum) =>
+            NativeMethods.SniRemoveProvider(pConn, ProvNum);
 
-        internal static uint SNISetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniSetInfo(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniSetInfo(pConn, QType, ref pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniSetInfo(pConn, QType, ref pbQInfo);
-                default:
-                    return NativeNotSupported.SniSetInfo(pConn, QType, ref pbQInfo);
-            }
-        }
+        internal static uint SNISecInitPackage(ref uint pcbMaxToken) =>
+            NativeMethods.SniSecInitPackage(ref pcbMaxToken);
 
-        internal static uint SNITerminate()
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniTerminate();
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniTerminate();
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniTerminate();
-                default:
-                    return NativeNotSupported.SniTerminate();
-            }
-        }
+        internal static uint SNISetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo) =>
+            NativeMethods.SniSetInfo(pConn, QType, ref pbQInfo);
 
-        internal static uint SNIWaitForSSLHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-                default:
-                    return NativeNotSupported.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-            }
-        }
+        internal static uint SNITerminate() =>
+            NativeMethods.SniTerminate();
 
-        internal static uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniIsTokenRestricted(token, out isRestricted);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniIsTokenRestricted(token, out isRestricted);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniIsTokenRestricted(token, out isRestricted);
-                default:
-                    return NativeNotSupported.SniIsTokenRestricted(token, out isRestricted);
-            }
-        }
+        internal static uint SNIWaitForSSLHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion) =>
+            NativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
 
-        private static uint GetSniMaxComposedSpnLength()
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetMaxComposedSpnLength();
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetMaxComposedSpnLength();
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetMaxComposedSpnLength();
-                default:
-                    return NativeNotSupported.SniGetMaxComposedSpnLength();
-            }
-        }
+        internal static uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted) =>
+            NativeMethods.SniIsTokenRestricted(token, out isRestricted);
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                default:
-                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-            }
-        }
+        private static uint GetSniMaxComposedSpnLength() =>
+            NativeMethods.SniGetMaxComposedSpnLength();
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-                default:
-                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-            }
-        }
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo) =>
+            NativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetInfoWrapper(pConn, QType, out portNum);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out portNum);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out portNum);
-                default:
-                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out portNum);
-            }
-        }
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo) =>
+            NativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
 
-        private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-                default:
-                    return NativeNotSupported.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-            }
-        }
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum) =>
+            NativeMethods.SniGetInfoWrapper(pConn, QType, out portNum);
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniGetInfoWrapper(pConn, QType, out provNum);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniGetInfoWrapper(pConn, QType, out provNum);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniGetInfoWrapper(pConn, QType, out provNum);
-                default:
-                    return NativeNotSupported.SniGetInfoWrapper(pConn, QType, out provNum);
-            }
-        }
+        private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen) =>
+            NativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
 
-        private static uint SNIInitialize([In] IntPtr pmo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniInitialize(pmo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniInitialize(pmo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniInitialize(pmo);
-                default:
-                    return NativeNotSupported.SniInitialize(pmo);
-            }
-        }
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum) =>
+            NativeMethods.SniGetInfoWrapper(pConn, QType, out provNum);
 
-        private static uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-                default:
-                    return NativeNotSupported.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-            }
-        }
+        private static uint SNIInitialize([In] IntPtr pmo) =>
+            NativeMethods.SniInitialize(pmo);
+
+        private static uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>
+            NativeMethods.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
 
         private static uint SNIOpenWrapper(
             [In] ref SniConsumerInfo pConsumerInfo,
@@ -474,127 +165,63 @@ namespace Microsoft.Data.SqlClient
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
             SqlConnectionIPAddressPreference ipPreference,
-            [In] ref SniDnsCacheInfo pDNSCachedInfo)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
-                default:
-                    return NativeNotSupported.SniOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
-            }
-        }
+            [In] ref SniDnsCacheInfo pDNSCachedInfo) =>
+            NativeMethods.SniOpenWrapper(
+                ref pConsumerInfo,
+                szConnect,
+                pConn,
+                out ppConn,
+                fSync,
+                ipPreference,
+                ref pDNSCachedInfo);
 
-        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniPacketAllocateWrapper(pConn, IOType);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniPacketAllocateWrapper(pConn, IOType);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniPacketAllocateWrapper(pConn, IOType);
-                default:
-                    return NativeNotSupported.SniPacketAllocateWrapper(pConn, IOType);
-            }
-        }
+        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType) =>
+            NativeMethods.SniPacketAllocateWrapper(pConn, IOType);
 
-        private static uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-                default:
-                    return NativeNotSupported.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-            }
-        }
+        private static uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize) =>
+            NativeMethods.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
 
-        private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    NativeMethodsArm.SniPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X64:
-                    NativeMethodsX64.SniPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X86:
-                    NativeMethodsX86.SniPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
-                default:
-                    NativeNotSupported.SniPacketSetData(pPacket, pbBuf, cbBuf);
-                    break;
-            }
-        }
+        private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf) =>
+            NativeMethods.SniPacketSetData(pPacket, pbBuf, cbBuf);
 
         private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
             [In, Out] ReadOnlySpan<byte> pIn,
             [In, Out] byte[] pOut,
             [In] ref uint pcbOut,
-            [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
+            [MarshalAsAttribute(UnmanagedType.Bool)]
+            out bool pfDone,
             byte* szServerInfo,
             uint cbServerInfo,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword)
+            [MarshalAsAttribute(UnmanagedType.LPWStr)]
+            string pwszUserName,
+            [MarshalAsAttribute(UnmanagedType.LPWStr)]
+            string pwszPassword)
         {
             fixed (byte* pInPtr = pIn)
             {
-                switch (s_architecture)
-                {
-                    case System.Runtime.InteropServices.Architecture.Arm64:
-                        return NativeMethodsArm.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                    case System.Runtime.InteropServices.Architecture.X64:
-                        return NativeMethodsX64.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                    case System.Runtime.InteropServices.Architecture.X86:
-                        return NativeMethodsX86.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                    default:
-                        return NativeNotSupported.SniSecGenClientContextWrapper(pConn, pInPtr, (uint)pIn.Length, pOut, ref pcbOut, out pfDone, szServerInfo, cbServerInfo, pwszUserName, pwszPassword);
-                }
+                return NativeMethods.SniSecGenClientContextWrapper(
+                    pConn,
+                    pInPtr,
+                    (uint)pIn.Length,
+                    pOut,
+                    ref pcbOut,
+                    out pfDone,
+                    szServerInfo,
+                    cbServerInfo,
+                    pwszUserName,
+                    pwszPassword);
             }
         }
 
-        private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniWriteAsyncWrapper(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniWriteAsyncWrapper(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniWriteAsyncWrapper(pConn, pPacket);
-                default:
-                    return NativeNotSupported.SniWriteAsyncWrapper(pConn, pPacket);
-            }
-        }
+        private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket) =>
+            NativeMethods.SniWriteAsyncWrapper(pConn, pPacket);
 
-        private static uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniWriteSyncOverAsync(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniWriteSyncOverAsync(pConn, pPacket);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniWriteSyncOverAsync(pConn, pPacket);
-                default:
-                    return NativeNotSupported.SniWriteSyncOverAsync(pConn, pPacket);
-            }
-        }
+        private static uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket) =>
+            NativeMethods.SniWriteSyncOverAsync(pConn, pPacket);
+        
         #endregion
+        
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
             return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
@@ -632,53 +259,14 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(IntPtr.Zero);
         }
 
-        internal static IntPtr SNIServerEnumOpen()
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniServerEnumOpen();
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniServerEnumOpen();
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniServerEnumOpen();
-                default:
-                    return NativeNotSupported.SniServerEnumOpen();
-            }
-        }
-        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    return NativeMethodsArm.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
-                case System.Runtime.InteropServices.Architecture.X64:
-                    return NativeMethodsX64.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
-                case System.Runtime.InteropServices.Architecture.X86:
-                    return NativeMethodsX86.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
-                default:
-                    return NativeNotSupported.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
-            }
-        }
+        internal static IntPtr SNIServerEnumOpen() =>
+            NativeMethods.SniServerEnumOpen();
+        
+        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more) =>
+            NativeMethods.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
 
-        internal static void SNIServerEnumClose([In] IntPtr packet)
-        {
-            switch (s_architecture)
-            {
-                case System.Runtime.InteropServices.Architecture.Arm64:
-                    NativeMethodsArm.SniServerEnumClose(packet);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X64:
-                    NativeMethodsX64.SniServerEnumClose(packet);
-                    break;
-                case System.Runtime.InteropServices.Architecture.X86:
-                    NativeMethodsX86.SniServerEnumClose(packet);
-                    break;
-                default:
-                    NativeNotSupported.SniServerEnumClose(packet);
-                    break;
-            }
-        }
+        internal static void SNIServerEnumClose([In] IntPtr packet) =>
+            NativeMethods.SniServerEnumClose(packet);
 
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
