@@ -4,7 +4,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct SecurityQualityOfService

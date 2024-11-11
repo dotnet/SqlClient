@@ -2,14 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if !NETFRAMEWORK && !NET8_0_OR_GREATER
+#if NET
 
-internal static partial class Interop
+namespace Interop.Windows.SChannel
 {
-    internal static partial class Libraries
+    internal enum ApplicationProtocolNegotiationExt
     {
-        // Shims
-        internal const string NetSecurityNative = "System.Net.Security.Native";
+        None = 0,
+        NPN,
+        ALPN
     }
 }
 

@@ -10,10 +10,10 @@ using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
 
 #if !NETFRAMEWORK
-using Interop_TEMP.Windows.Handles;
+using Interop.Windows.Handles;
 #endif
 
-namespace Interop_TEMP.Windows.Kernel32
+namespace Interop.Windows.Kernel32
 {
     internal static class Kernel32
     {
