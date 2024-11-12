@@ -24,6 +24,10 @@ namespace Microsoft.Data.SqlClient
 
             _pMarsPhysicalConObj.IncrementPendingCallbacks();
             SessionHandle handle = _pMarsPhysicalConObj.SessionHandle;
+            // we do not need to consider partial packets when making this read because we
+            // expect this read to pend. a partial packet should not exist at setup of the
+            // parser
+            Debug.Assert(_physicalStateObj.PartialPacket==null);
             temp = _pMarsPhysicalConObj.ReadAsync(handle, out error);
 
             Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");

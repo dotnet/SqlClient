@@ -2070,11 +2070,20 @@ namespace Microsoft.Data.SqlClient
 
                 if (!IsValidTdsToken(token))
                 {
-                    Debug.Fail($"unexpected token; token = {token,-2:X2}");
+#if DEBUG
+                    string message = stateObj.DumpBuffer();
+                    Debug.Fail(message);
+#endif 
+                    //Debug.Fail($"unexpected token; token = {token,-2:X2}");
                     _state = TdsParserState.Broken;
                     _connHandler.BreakConnection();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
+#if DEBUG
+                    throw new InvalidOperationException(message);
+#else
                     throw SQL.ParsingError();
+#endif
+
                 }
 
                 int tokenLength;
@@ -4155,6 +4164,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
+            
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
@@ -4553,7 +4563,6 @@ namespace Microsoft.Data.SqlClient
                 collation = null;
                 return result;
             }
-
             if (SqlCollation.Equals(_cachedCollation, info, sortId))
             {
                 collation = _cachedCollation;
@@ -5277,7 +5286,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
-                {    
+                {
                     result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
                     if (result != TdsOperationStatus.Done)
                     {
