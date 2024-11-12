@@ -64,26 +64,34 @@ jobs:
       dotnet tool install --global dotnet-coverage
 
       $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetFx\ -Recurse -File -Filter *.coverage
-      
-      foreach ($file in $files) {
-        Copy-Item -Path $file.FullName -Destination $(Build.SourcesDirectory)\coverageNetFx
-      }
 
       # echo $files
       mkdir coverageNetFxXml
+      $counter=0
 
-      & dotnet-coverage merge $(Build.SourcesDirectory)\coverageNetFx\*.coverage --output coverageNetFxXml\merged.coveragexml --output-format xml      
+      $commandArguments = @()
+      foreach ($file in $files) {
+        $commandArguments += "merge $file.FullName --output coverageNetFxXml\$((++$counter)).coveragexml --output-format xml"
+      }
+
+      // Process the files in parallel
+      $commandArguments | ForEach-Object -Parallel {
+        & dotnet-coverage $_
+      }
 
       $files = Get-ChildItem $(Build.SourcesDirectory)\coverageNetCore\ -Recurse -File -Filter *.coverage
-      
-      foreach ($file in $files) {
-        Copy-Item -Path $file.FullName -Destination $(Build.SourcesDirectory)\coverageNetCore
-      }
-      
       # echo $files
       mkdir coverageNetCoreXml
+      $counter=0
+      
+      foreach ($file in $files) {
+        $commandArguments += "merge $(file.FullName) --output coverageNetCoreXml\$((++$counter)).coveragexml --output-format xml"
+      }
 
-      & dotnet-coverage merge $(Build.SourcesDirectory)\coverageNetCore\*.coverage --output coverageNetCoreXml\merged.coveragexml --output-format xml
+      // Process the files in parallel
+      $commandArguments | ForEach-Object -Parallel {
+        & dotnet-coverage $_
+      }
       
       # dir coverageNetFxXml\
       # dir coverageNetCoreXml\
