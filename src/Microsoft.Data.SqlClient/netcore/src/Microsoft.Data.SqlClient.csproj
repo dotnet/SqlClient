@@ -616,7 +616,6 @@
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
-    <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
     <Compile Include="Common\System\Net\Security\SecurityBuffer.cs" />
     <Compile Include="Common\System\Net\Security\SecurityBufferType.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
@@ -762,8 +761,6 @@
     </Compile>
     
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
-    <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
-    <Compile Include="Common\System\Net\Security\NetEventSource.Security.Windows.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
