@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public static IEnumerable<object[]> GetStorageTypeValues()
         {
-#if NET6_0_OR_GREATER
+#if NET
             return Enum.GetValues<SqlBufferProxy.StorageType>()
                 .Select(x => new object[] { x });
 #else
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             public void SetToNullOfType(StorageType storageType)
             {
-#if NET6_0_OR_GREATER
+#if NET
                 _setToNullOfTypeMethod
                     .Invoke(_instance, BindingFlags.DoNotWrapExceptions, null, new object[] { (int)storageType }, null);
 #else
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             private T GetPropertyValue<T>(PropertyInfo property)
             {
-#if NET6_0_OR_GREATER
+#if NET
                 return (T)property.GetValue(_instance, BindingFlags.DoNotWrapExceptions, null, null, null);
 #else
                 try
@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             private void SetPropertyValue(PropertyInfo property, object value)
             {
-#if NET6_0_OR_GREATER
+#if NET
                 property.SetValue(_instance, value, BindingFlags.DoNotWrapExceptions, null, null, null);
 #else
                 try

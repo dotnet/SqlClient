@@ -607,7 +607,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data. Null Bitmap: {1}, Null bitmap length: {2}", stateObj.ObjectID, _nullBitmap, _nullBitmap.Length);
 
                 return TdsOperationStatus.Done;
             }
@@ -986,7 +986,7 @@ namespace Microsoft.Data.SqlClient
                                               _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
                 _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
                                               _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
-#if NET6_0_OR_GREATER
+#if NET
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
 #endif
                 _inBytesUsed += _inputHeaderLen;

@@ -19,14 +19,17 @@ namespace Microsoft.Data.SqlClient
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
+        internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
         private static Tristate s_suppressInsecureTLSWarning;
         private static Tristate s_makeReadAsyncBlocking;
         private static Tristate s_useMinimumLoginTimeout;
+        // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
+        private static Tristate s_legacyVarTimeZeroScaleBehaviour;
 
-#if NET6_0_OR_GREATER
+#if NET
         static LocalAppContextSwitches()
         {
             IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
@@ -174,6 +177,33 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_useMinimumLoginTimeout == Tristate.True;
+            }
+        }
+
+
+        /// <summary>
+        /// When set to 'true' this will output a scale value of 7 (DEFAULT_VARTIME_SCALE) when the scale 
+        /// is explicitly set to zero for VarTime data types ('datetime2', 'datetimeoffset' and 'time')
+        /// If no scale is set explicitly it will continue to output scale of 7 (DEFAULT_VARTIME_SCALE)
+        /// regardsless of switch value.
+        /// This app context switch defaults to 'true'.
+        /// </summary>
+        public static bool LegacyVarTimeZeroScaleBehaviour
+        {
+            get
+            {
+                if (s_legacyVarTimeZeroScaleBehaviour == Tristate.NotInitialized)
+                {
+                    if (!AppContext.TryGetSwitch(LegacyVarTimeZeroScaleBehaviourString, out bool returnedValue))
+                    {
+                        s_legacyVarTimeZeroScaleBehaviour = Tristate.True;
+                    }
+                    else
+                    {
+                        s_legacyVarTimeZeroScaleBehaviour = returnedValue ? Tristate.True : Tristate.False;
+                    }
+                }
+                return s_legacyVarTimeZeroScaleBehaviour == Tristate.True;
             }
         }
     }

@@ -69,13 +69,13 @@
                   // Pass the SqlConnectionStringBuilder an existing 
                   // connection string, and you can retrieve and
                   // modify any of the elements.
-                  builder.ConnectionString = "server=(local);user id=ab;" +
-                      "password= a!Pass113;initial catalog=AdventureWorks";
+                  builder.ConnectionString = "server=(local);integrated security=SSPI;
+                    initial catalog=AdventureWorks";
           
                   // Now that the connection string has been parsed,
                   // you can work with individual items.
-                  Console.WriteLine(builder.Password);
-                  builder.Password = "new@1Password";
+                  Console.WriteLine(builder.InitialCatalog);
+                  builder.InitialCatalog = "Northwind";
           
                   // You can refer to connection keys using strings, 
                   // as well. When you use this technique (the default
@@ -587,22 +587,6 @@
       </example>
       <exception cref="T:System.ArgumentNullException"><paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
     </ContainsKey>
-    <ContextConnection>
-      <summary>
-        Obsolete. Gets or sets a value that indicates whether a client/server or in-process connection to SQL Server should be made.
-      </summary>
-      <value>
-        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ContextConnection" /> property, or <see langword="false" /> if none has been supplied.
-      </value>
-      <remarks>
-        <para>
-          This property corresponds to the "Context Connection" key within the connection string.
-        </para>
-        <note type="note">
-          The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /> property returns <see langword="null" /> if the connection string for the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is "context connection=true".
-        </note>
-      </remarks>
-    </ContextConnection>
     <CurrentLanguage>
       <summary>
         Gets or sets the language used for database server warning or error messages..
@@ -925,7 +909,7 @@
                   try
                   {
                       string connectString =
-                          "Data Source=(local);User ID=ab;Password=MyPassword;" +
+                          "Data Source=(local);Integrated Security=SSPI" +
                           "Initial Catalog=AdventureWorks";
           
                       SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
@@ -1477,10 +1461,8 @@
         </note>
         <!-- SqlConnectionStringBuilder_Remove -->
         <code language="c#">
-          using System;
-          using System.Data;
           using Microsoft.Data.SqlClient;
-          
+
           class Program
           {
               static void Main()
@@ -1488,23 +1470,24 @@
                   try
                   {
                       string connectString =
-                          "Data Source=(local);User ID=ab;Password= a1Pass@@11;" +
-                          "Initial Catalog=AdventureWorks";
-          
+                          "Data Source=(local);User ID=ab;";
+
                       SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
                       Console.WriteLine("Original: " + builder.ConnectionString);
-          
+
                       // Use the Remove method
-                      // in order to reset the user ID and password back to their
-                      // default (empty string) values. 
+                      // in order to reset the user ID back to its
+                      // default (empty string) value. 
                       builder.Remove("User ID");
-                      builder.Remove("Password");
-          
+
                       // Turn on integrated security:
                       builder.IntegratedSecurity = true;
-          
+
+                      // Turn off encryption for local db
+                      builder.Encrypt = false;
+
                       Console.WriteLine("Modified: " + builder.ConnectionString);
-          
+
                       using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                       {
                           connection.Open();
@@ -1516,7 +1499,7 @@
                   {
                       Console.WriteLine(ex.Message);
                   }
-          
+
                   Console.WriteLine("Press any key to finish.");
                   Console.ReadLine();
               }
@@ -1526,8 +1509,9 @@
           The example displays the following text in the console window:
         </para>
         <code>
-          Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password= a1Pass@@11
-          Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True Database=AdventureWorks
+          Original: Data Source=(local);User ID=ab;
+          Modified: Data Source=(local);Integrated Security=True; Encrypt=false
+          Database = master
         </code>
       </example>
       <exception cref="T:System.ArgumentNullException">

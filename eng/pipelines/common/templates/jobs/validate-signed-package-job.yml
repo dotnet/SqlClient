@@ -56,6 +56,9 @@ jobs:
   - name: ProductVersion    #MDS product version (MDS validation)
     value: $(NugetPackageVersion)
 
+  - name: BuildType
+    value: $[ stageDependencies.buildMDS.build_signed_package.outputs['GetBuildType.CDP_BUILD_TYPE_COPY'] ]
+
   - ${{ if parameters.isPreview }}:
     - name: extractedNugetPath
       value: $(extractedNugetRootPath).$(PreviewNugetPackageVersion)
@@ -69,7 +72,7 @@ jobs:
     displayName: 'Print Environment Variables'
 
   - task: NuGetToolInstaller@1
-    displayName: 'Use NuGet '
+    displayName: 'Use NuGet'
 
   - powershell: |
       #Sets Variables for AssemblyFileVersion, AssemblyVersion and NugetPackageVersion
@@ -121,7 +124,9 @@ jobs:
     displayName: 'Verify nuget signature'
 
   - powershell: |
-      if($env:CDP_BUILD_TYPE -eq 'Official')
+      $buildType = [string]"$(BuildType)" 
+
+      if($buildType -eq 'Official')
       {
           # Recursively find all .dll files in TempFolder (installed nuget folder)
           # Microsoft.Data.SqlClient.dll and Microsoft.Data.SqlClient.resources.dll (in localized folders) should have strong name

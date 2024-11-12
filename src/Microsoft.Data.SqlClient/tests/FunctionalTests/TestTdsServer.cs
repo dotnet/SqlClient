@@ -54,6 +54,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 ? new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Mandatory }
                 : new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
+            server.Endpoint = server._endpoint.ServerEndPoint;
             return server;
         }
 
@@ -65,5 +66,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Dispose() => _endpoint?.Stop();
 
         public string ConnectionString { get; private set; }
+
+        public IPEndPoint Endpoint { get; private set; }
     }
 }

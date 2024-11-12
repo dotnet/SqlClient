@@ -102,6 +102,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("ServerSPN = server2")]
         [InlineData("Failover Partner SPN = server3")]
         [InlineData("FailoverPartnerSPN = server4")]
+        [InlineData("Context Connection = false")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
@@ -110,7 +111,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public static readonly IEnumerable<object[]> ConnectionStringTestsNetFx_TestCases = new[]
         {
             new object[] { "Connection Reset = false" },
-            new object[] { "Context Connection = false" },
             new object[] { "Network Library = dbmssocn" },
             new object[] { "Network = dbnmpntw" },
             new object[] { "Net = dbmsrpcn" },

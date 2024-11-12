@@ -340,6 +340,9 @@ namespace Microsoft.Data.SqlClient
         internal bool IsAdvancedTraceOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTrace);
 
         [NonEvent]
+        internal bool IsAdvancedTraceBinOn() => Log.IsEnabled(EventLevel.Verbose, Keywords.AdvancedTraceBin);
+
+        [NonEvent]
         internal bool IsCorrelationEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.CorrelationTrace);
 
         [NonEvent]
@@ -838,11 +841,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args)
+        internal void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
-            if (Log.IsAdvancedTraceOn())
+            if (Log.IsAdvancedTraceBinOn())
             {
-                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+
+                if (args1 is byte[] args1Bytes)
+                {
+#if NET
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, Convert.ToHexString(args1Bytes), args2?.ToString() ?? NullStr));
+#else
+
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, BitConverter.ToString(args1Bytes).Replace("-", ""), args2?.ToString() ?? NullStr));
+#endif
+                }
+                else
+                {
+                    AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                }
             }
         }
 

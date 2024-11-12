@@ -25,6 +25,7 @@
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSniVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
+    <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
@@ -33,6 +34,7 @@
     <MicrosoftExtensionsCachingMemoryVersion>6.0.1</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>

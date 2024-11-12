@@ -15,13 +15,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlSchemaInfoTest
     {
         #region TestMethods
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TestGetSchema()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public static void TestGetSchema(bool openTransaction)
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();
-                DataTable dataBases = conn.GetSchema("DATABASES");
+                DataTable dataBases;
+
+                if (openTransaction)
+                {
+                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    {
+                        dataBases = conn.GetSchema("DATABASES");
+                    }
+                }
+                else
+                {
+                    dataBases = conn.GetSchema("DATABASES");
+                }
 
                 Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
 

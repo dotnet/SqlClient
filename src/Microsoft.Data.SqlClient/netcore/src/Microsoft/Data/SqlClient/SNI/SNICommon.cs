@@ -232,51 +232,12 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
                     {
-#if NET8_0_OR_GREATER
                         X509Certificate2 cert2 = serverCert as X509Certificate2;
                         if (!cert2.MatchesHostname(serverNameToValidate))
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name or HNIC does not match the Subject/SAN in Certificate.", args0: connectionId, args1: serverNameToValidate);
                             messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                         }
-#else
-                        // To Do: include certificate SAN (Subject Alternative Name) check.
-                        string certServerName = serverCert.Subject.Substring(serverCert.Subject.IndexOf('=') + 1);
-
-                        // Verify that target server name matches subject in the certificate
-                        if (serverNameToValidate.Length > certServerName.Length)
-                        {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name is of greater length than Subject in Certificate.", args0: connectionId, args1: serverNameToValidate);
-                            messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
-                        }
-                        else if (serverNameToValidate.Length == certServerName.Length)
-                        {
-                            // Both strings have the same length, so serverNameToValidate must be a FQDN
-                            if (!serverNameToValidate.Equals(certServerName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name does not match Subject in Certificate.", args0: connectionId, args1: serverNameToValidate);
-                                messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
-                            }
-                        }
-                        else
-                        {
-                            if (string.Compare(serverNameToValidate, 0, certServerName, 0, serverNameToValidate.Length, StringComparison.OrdinalIgnoreCase) != 0)
-                            {
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name does not match Subject in Certificate.", args0: connectionId, args1: serverNameToValidate);
-                                messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
-                            }
-
-                            // Server name matches cert name for its whole length, so ensure that the
-                            // character following the server name is a '.'. This will avoid
-                            // having server name "ab" match "abc.corp.company.com"
-                            // (Names have different lengths, so the target server can't be a FQDN.)
-                            if (certServerName[serverNameToValidate.Length] != '.')
-                            {
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Connection Id {0}, serverNameToValidate {1}, Target Server name does not match Subject in Certificate.", args0: connectionId, args1: serverNameToValidate);
-                                messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
-                            }
-                        }
-#endif
                     }
 
                     if (messageBuilder.Length > 0)
