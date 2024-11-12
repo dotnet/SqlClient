@@ -8,10 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
-using Interop.Windows.Secur32;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
@@ -74,50 +71,6 @@ namespace Microsoft.Data.SqlClient
             fixed (byte* pin_dispatcher = &data[0])
             {
                 SqlDependencyProcessDispatcherStorage.NativeSetData(pin_dispatcher, data.Length);
-            }
-        }
-
-        unsafe internal class SqlDependencyProcessDispatcherStorage
-        {
-
-            static void* data;
-
-            static int size;
-            static volatile int thelock; // Int used for a spin-lock.
-
-            public static void* NativeGetData(out int passedSize)
-            {
-                passedSize = size;
-                return data;
-            }
-
-            internal static bool NativeSetData(void* passedData, int passedSize)
-            {
-                bool success = false;
-
-                while (0 != Interlocked.CompareExchange(ref thelock, 1, 0))
-                { // Spin until we have the lock.
-                    Thread.Sleep(50); // Sleep with short-timeout to prevent starvation.
-                }
-                Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
-
-                if (data == null)
-                {
-                    data = Marshal.AllocHGlobal(passedSize).ToPointer();
-
-                    Trace.Assert(data != null);
-
-                    System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
-
-                    Trace.Assert(0 == size); // Size should still be zero at this point.
-                    size = passedSize;
-                    success = true;
-                }
-
-                int result = Interlocked.CompareExchange(ref thelock, 0, 1);
-                Trace.Assert(1 == result); // The release of the lock should have been successful.  
-
-                return success;
             }
         }
 
