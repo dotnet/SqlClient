@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Net;
+using Interop.Common.Sni;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
@@ -1800,15 +1801,15 @@ namespace Microsoft.Data.SqlClient
                 // handle special SNI error codes that are converted into exception which is not a SqlException.
                 switch (sniError.sniError)
                 {
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
+                    case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
                         throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
 
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
+                    case SniErrors.MultiSubnetFailoverWithInstanceSpecified:
                         // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
                         throw SQL.MultiSubnetFailoverWithInstanceSpecified();
 
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
+                    case SniErrors.MultiSubnetFailoverWithNonTcpProtocol:
                         // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                         throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
 
@@ -1876,7 +1877,7 @@ namespace Microsoft.Data.SqlClient
                     errorMessage = SQL.GetSNIErrorMessage((int)sniError.sniError);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (sniError.sniError == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
+                if (sniError.sniError == SniErrors.LocalDBErrorCode)
                 {
                     errorMessage += LocalDBAPI.GetLocalDBMessage((int)sniError.nativeError);
                     win32ErrorCode = 0;
