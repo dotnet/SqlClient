@@ -618,7 +618,6 @@
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
     <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
-    <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
     <Compile Include="Common\System\Net\Security\SecurityBuffer.cs" />
     <Compile Include="Common\System\Net\Security\SecurityBufferType.cs" />
     <Compile Include="Common\System\Net\SecurityStatusPal.cs" />
