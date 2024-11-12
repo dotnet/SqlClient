@@ -766,7 +766,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
     <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
     <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
     <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
