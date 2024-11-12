@@ -616,7 +616,6 @@
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
-    <Compile Include="Common\System\Net\InternalException.cs" />
     <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
     <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
     <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
