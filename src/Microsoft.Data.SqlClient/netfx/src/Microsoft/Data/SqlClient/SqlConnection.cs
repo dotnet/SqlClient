@@ -24,8 +24,10 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Interop.Windows.AdvApi32;
 using Microsoft.Data.ProviderBase;
 using Microsoft.SqlServer.Server;
+using Interop.Windows.Kernel32;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -2532,7 +2534,7 @@ namespace Microsoft.Data.SqlClient
         private void CheckSQLDebugOnConnect()
         {
             IntPtr hFileMap;
-            uint pid = (uint)SafeNativeMethods.GetCurrentProcessId();
+            uint pid = (uint)Kernel32Safe.GetCurrentProcessId();
 
             string mapFileName;
 
@@ -2548,11 +2550,11 @@ namespace Microsoft.Data.SqlClient
 
             mapFileName = mapFileName + pid.ToString(CultureInfo.InvariantCulture);
 
-            hFileMap = NativeMethods.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
+            hFileMap = Kernel32.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
 
             if (ADP.s_ptrZero != hFileMap)
             {
-                IntPtr pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
+                IntPtr pMemMap = Kernel32.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
                 if (ADP.s_ptrZero != pMemMap)
                 {
                     SqlDebugContext sdc = new SqlDebugContext();
@@ -3098,12 +3100,12 @@ namespace Microsoft.Data.SqlClient
             }
             if (pMemMap != IntPtr.Zero)
             {
-                NativeMethods.UnmapViewOfFile(pMemMap);
+                Kernel32.UnmapViewOfFile(pMemMap);
                 pMemMap = IntPtr.Zero;
             }
             if (hMemMap != IntPtr.Zero)
             {
-                NativeMethods.CloseHandle(hMemMap);
+                Kernel32.CloseHandle(hMemMap);
                 hMemMap = IntPtr.Zero;
             }
             active = false;

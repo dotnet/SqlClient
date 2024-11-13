@@ -7,18 +7,22 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+
+#if NETFRAMEWORK
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using Interop.Windows.Kernel32;
+#else
+using System.Net.Sockets;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
