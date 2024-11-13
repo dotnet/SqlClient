@@ -4,7 +4,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Interop_TEMP.Windows
+namespace Interop.Windows
 {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/aa380518.aspx
     // https://msdn.microsoft.com/en-us/library/windows/hardware/ff564879.aspx

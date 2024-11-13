@@ -10,10 +10,10 @@ using Microsoft.Data.Common;
 using Microsoft.Win32.SafeHandles;
 
 #if !NETFRAMEWORK
-using Interop_TEMP.Windows.Handles;
+using Interop.Windows.Handles;
 #endif
 
-namespace Interop_TEMP.Windows.Kernel32
+namespace Interop.Windows.Kernel32
 {
     internal static class Kernel32
     {
@@ -44,6 +44,27 @@ namespace Interop_TEMP.Windows.Kernel32
             return (uint)((deviceType << 16) | (access << 14) | (function << 2) | method);
         }
 
+        #if NETFRAMEWORK
+        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
+        [ResourceExposure(ResourceScope.Machine)]
+        internal static extern bool CloseHandle(IntPtr handle);
+        #endif
+
+        #if NETFRAMEWORK
+        // CreateFileMappingA contains a security venerability, in the unicode->ansi conversion
+        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
+        // Specify marshaling for pinvoke string arguments
+        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [ResourceExposure(ResourceScope.Machine)]
+        internal static extern IntPtr CreateFileMappingA(
+            IntPtr hFile,
+            IntPtr pAttr,
+            int flProtect,
+            int dwMaximumSizeHigh,
+            int dwMaximumSizeLow,
+            [MarshalAs(UnmanagedType.LPStr)] string lpName);
+        #endif
+
         [DllImport(DllName, CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool DeviceIoControl(
             SafeFileHandle fileHandle,
@@ -55,7 +76,7 @@ namespace Interop_TEMP.Windows.Kernel32
             out uint cbBytesReturned,
             IntPtr overlapped);
 
-        #if !NETFRAMEWORK
+        #if NET
         [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
         public static extern bool FreeLibrary([In] IntPtr hModule);
         #endif
@@ -63,6 +84,7 @@ namespace Interop_TEMP.Windows.Kernel32
         [DllImport(DllName, SetLastError = true)]
         internal static extern int GetFileType(SafeHandle hFile);
 
+        #if NETFRAMEWORK
         [DllImport(DllName, SetLastError = true, CharSet = CharSet.Unicode)]
         [ResourceExposure(ResourceScope.Machine)]
         internal static extern int GetFullPathName(
@@ -70,23 +92,53 @@ namespace Interop_TEMP.Windows.Kernel32
             int numBufferChars,
             StringBuilder buffer,
             IntPtr lpFilePartOrNull);
+        #endif
 
-        #if !NETFRAMEWORK
+        #if NET
         [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
         #endif
 
-        #if !NETFRAMEWORK
+        #if NET
         [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false)]
         public static extern IntPtr GetProcAddress(SafeLibraryHandle hModule, string lpProcName);
         #endif
 
-        #if !NETFRAMEWORK
+        #if NET
         [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern SafeLibraryHandle LoadLibraryExW([In] string lpwLibFileName, [In] IntPtr hFile, [In] uint dwFlags);
         #endif
 
+        #if NETFRAMEWORK
+        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto)]
+        [ResourceExposure(ResourceScope.Machine)]
+        internal static extern IntPtr MapViewOfFile(
+            IntPtr hFileMappingObject,
+            int dwDesiredAccess,
+            int dwFileOffsetHigh,
+            int dwFileOffsetLow,
+            IntPtr dwNumberOfBytesToMap);
+        #endif
+
+        #if NETFRAMEWORK
+        // OpenFileMappingA contains a security venerability, in the unicode->ansi conversion
+        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
+        // Specify marshaling for pinvoke string arguments
+        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+        [ResourceExposure(ResourceScope.Machine)]
+        internal static extern IntPtr OpenFileMappingA(
+            int dwDesiredAccess,
+            bool bInheritHandle,
+            [MarshalAs(UnmanagedType.LPStr)] string lpName);
+        #endif
+
         [DllImport(DllName, SetLastError = true, ExactSpelling = true)]
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
+
+        #if NETFRAMEWORK
+        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto)]
+        [ResourceExposure(ResourceScope.Machine)]
+        internal static extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
+        #endif
     }
 }

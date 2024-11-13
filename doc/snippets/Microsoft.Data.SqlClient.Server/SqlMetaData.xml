@@ -615,7 +615,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, and default server. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -644,7 +644,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -676,7 +676,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, precision, scale, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType>
@@ -931,7 +931,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, user-defined type, SQL Server type, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -966,7 +966,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, locale, compare options, and server default. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -1001,7 +1001,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, database name, owning schema, object name, and default server. This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
@@ -1045,7 +1045,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> class with the specified column name, type, maximum length, precision, scale, locale ID, compare options, and user-defined type (UDT). This form of the constructor supports table-valued parameters by allowing you to specify if the column is unique in the table-valued parameter, the sort order for the column, and the ordinal of the sort column.
       </summary>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
     </ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <Adjust>
@@ -1505,7 +1505,7 @@
           This property can only be set in one of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> constructors.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
         </para>
       </remarks>
     </IsUniqueKey>
@@ -1597,7 +1597,7 @@
           This property can only be set in one of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> constructors.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
         </para>
       </remarks>
     </SortOrder>
@@ -1616,7 +1616,7 @@
           This property can only be set in one of the <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" /> constructors.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
         </para>
       </remarks>
     </SortOrdinal>
