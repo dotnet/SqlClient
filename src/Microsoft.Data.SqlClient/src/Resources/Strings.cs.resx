@@ -2884,7 +2884,7 @@
     <value>Připojení kontextu nepodporuje nastavení Type System Version=SQL Server 2000.</value>
   </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
-    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+    <value>Připojení ke kontextu pomocí Microsoft.Data.SqlClient není podporováno.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>Připojení kontextu se už používá.</value>
