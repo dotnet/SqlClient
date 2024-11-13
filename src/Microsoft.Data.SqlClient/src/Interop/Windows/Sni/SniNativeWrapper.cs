@@ -17,14 +17,17 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class SniNativeWrapper
     {
-        //netcore private static readonly ISniNativeMethods NativeMethods = new SniNativeMethods();
-        //netfx   private static readonly ISniNativeMethods NativeMethods = RuntimeInformation.ProcessArchitecture switch
-        //netfx   {
-        //netfx       Architecture.Arm64 => new SniNativeMethodsArm64(),
-        //netfx       Architecture.X64 => new SniNativeMethodsX64(),
-        //netfx       Architecture.X86 => new SniNativeMethodsX86(),
-        //netfx       _ => new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture)
-        //netfx   };
+        #if NETFRAMEWORK
+        private static readonly ISniNativeMethods NativeMethods = RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.Arm64 => new SniNativeMethodsArm64(),
+            Architecture.X64 => new SniNativeMethodsX64(),
+            Architecture.X86 => new SniNativeMethodsX86(),
+            _ => new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture)
+        };
+        #else
+        private static readonly ISniNativeMethods NativeMethods = new SniNativeMethods();
+        #endif
 
         private static int s_sniMaxComposedSpnLength = -1;
 
@@ -44,7 +47,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //netfx---
+        #if NETFRAMEWORK
         static AppDomain GetDefaultAppDomainInternal()
         {
             return AppDomain.CurrentDomain;
@@ -82,16 +85,14 @@ namespace Microsoft.Data.SqlClient
                 SqlDependencyProcessDispatcherStorage.NativeSetData(pin_dispatcher, data.Length);
             }
         }
-        //---netfx 
-
+        #endif
 
         #region DLL Imports
         
         internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo) =>
             NativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
 
-        //netcore internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo) =>
-        //netfx   internal static uint SNIAddProviderWrapper(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo) =>
+        internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo) =>
             NativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
 
         internal static uint SNICheckConnection([In] SNIHandle pConn) =>
@@ -145,8 +146,10 @@ namespace Microsoft.Data.SqlClient
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo) =>
             NativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
 
-        //netfx private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo) =>
-        //netfx    NativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
+        #if NETFRAMEWORK
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo) =>
+            NativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
+        #endif
 
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum) =>
             NativeMethods.SniGetInfoWrapper(pConn, QType, out portNum);
@@ -188,23 +191,7 @@ namespace Microsoft.Data.SqlClient
 
         private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf) =>
             NativeMethods.SniPacketSetData(pPacket, pbBuf, cbBuf);
-
-        //netcore---
-        private static unsafe uint SNISecGenClientContextWrapper(
-            [In] SNIHandle pConn,
-            [In, Out] byte* pIn,
-            uint cbIn,
-            [In, Out] byte[] pOut,
-            [In] ref uint pcbOut,
-            [MarshalAsAttribute(UnmanagedType.Bool)] out bool pfDone,
-            byte* szServerInfo,
-            uint cbServerInfo,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszUserName,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)] string pwszPassword) =>
-            NativeMethods.SniSecGenClientContextWrapper(pConn, pIn, cbIn, pOut, ref pcbOut, out pfDone, szServerInfo,
-                cbServerInfo, pwszUserName, pwszPassword);
-        //---netcore
-        //netfx---
+        
         private static unsafe uint SNISecGenClientContextWrapper(
             [In] SNIHandle pConn,
             [In, Out] ReadOnlySpan<byte> pIn,
@@ -234,7 +221,6 @@ namespace Microsoft.Data.SqlClient
                     pwszPassword);
             }
         }
-        //---netfx
 
         private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket) =>
             NativeMethods.SniWriteAsyncWrapper(pConn, pPacket);
@@ -248,14 +234,12 @@ namespace Microsoft.Data.SqlClient
         internal static void SNIServerEnumClose([In] IntPtr packet) =>
             NativeMethods.SniServerEnumClose(packet);
 
-        //netcore internal static int SNIServerEnumRead([In] IntPtr packet,
-        //netcore     [In] [MarshalAs(UnmanagedType.LPArray)]
-        //netcore     char[] readBuffer,
-        //netcore     [In] int bufferLength,
-        //netcore     [MarshalAs(UnmanagedType.Bool)] out bool more) =>
-        //netcore     NativeMethods.SniServerEnumRead(packet, readBuffer, bufferLength, out more);
-        //netfx   internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more) =>
-        //netfx       NativeMethods.SniServerEnumRead(packet, readbuffer, bufferLength, out more);
+        internal static int SNIServerEnumRead(
+            [In] IntPtr packet,
+            [In] [MarshalAs(UnmanagedType.LPArray)] char[] readBuffer,
+            [In] int bufferLength,
+            [MarshalAs(UnmanagedType.Bool)] out bool more) =>
+            NativeMethods.SniServerEnumRead(packet, readBuffer, bufferLength, out more);
         
         #endregion
 
@@ -277,14 +261,12 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
         {
             UInt32 ret;
-            //netfx uint ERROR_SUCCESS = 0;
             uint connIPLen = 0;
 
             int bufferSize = SniIP6AddrStringBufferLength;
             StringBuilder addrBuffer = new StringBuilder(bufferSize);
 
             ret = SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out connIPLen);
-            //netfx Debug.Assert(ret == ERROR_SUCCESS, "SNIGetPeerAddrStrWrapper fail");
 
             connIPStr = addrBuffer.ToString(0, Convert.ToInt32(connIPLen));
 
@@ -321,9 +303,12 @@ namespace Microsoft.Data.SqlClient
             bool fSync,
             int timeout,
             bool fParallel,
-            //netfx Int32 transparentNetworkResolutionStateNo,
-            //netfx Int32 totalTimeout,
-            //netfx Boolean isAzureSqlServerEndpoint,
+            
+            #if NETFRAMEWORK
+            Int32 transparentNetworkResolutionStateNo,
+            Int32 totalTimeout,
+            #endif
+            
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
             string hostNameInCertificate)
@@ -345,23 +330,25 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.timeout = timeout;
                 clientConsumerInfo.fParallel = fParallel;
 
-                //netfx switch (transparentNetworkResolutionStateNo)
-                //netfx {
-                //netfx     case (0):
-                //netfx         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
-                //netfx         break;
-                //netfx     case (1):
-                //netfx         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.SequentialMode;
-                //netfx         break;
-                //netfx     case (2):
-                //netfx         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.ParallelMode;
-                //netfx         break;
-                //netfx };
-                //netfx clientConsumerInfo.totalTimeout = totalTimeout;
+                #if NETFRAMEWORK
+                switch (transparentNetworkResolutionStateNo)
+                {
+                    case (0):
+                        clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
+                        break;
+                    case (1):
+                        clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.SequentialMode;
+                        break;
+                    case (2):
+                        clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.ParallelMode;
+                        break;
+                };
+                clientConsumerInfo.totalTimeout = totalTimeout;
+                #else
+                clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
+                clientConsumerInfo.totalTimeout = SniOpenTimeOut;
+                #endif
 
-
-                //netcore clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
-                //netcore clientConsumerInfo.totalTimeout = SniOpenTimeOut;
                 clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(constring);
 
                 clientConsumerInfo.ipAddressPreference = ipPreference;
@@ -387,7 +374,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-	//netfx---
+	    #if NETFRAMEWORK
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SNIAddProvider(SNIHandle pConn,
@@ -399,7 +386,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(authInfo.clientCertificateCallback == null, "CTAIP support has been removed");
 
-            ret = SNIAddProviderWrapper(pConn, providerEnum, ref authInfo);
+            ret = SNIAddProvider(pConn, providerEnum, ref authInfo);
 
             if (ret == ERROR_SUCCESS)
             {
@@ -410,7 +397,7 @@ namespace Microsoft.Data.SqlClient
 
             return ret;
         }
-	//---netfx 
+	    #endif
 
         internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket)
         {
@@ -430,7 +417,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //netfx---
+        #if NETFRAMEWORK
         //[ResourceExposure(ResourceScope::None)]
         //
         // Notes on SecureString: Writing out security sensitive information to managed buffer should be avoid as these can be moved
@@ -554,7 +541,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-        //---netfx
+        #endif
 
 
         internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
@@ -564,9 +551,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return SNISecGenClientContextWrapper(
                     pConnectionObject,
-                    //netcore pInBuff,
-                    //netcore (uint)inBuff.Length,
-                    //netfx   inBuff,
+                    inBuff,
                     OutBuff,
                     ref sendLength,
                     out _,
@@ -603,17 +588,6 @@ namespace Microsoft.Data.SqlClient
     }
 }
 
-//netcore---
-namespace Microsoft.Data
-{
-    internal static partial class SafeNativeMethods
-    {
-        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
-        internal static extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName);
-    }
-}
-//---netcore
-
 namespace Microsoft.Data
 {
     internal static class Win32NativeMethods
@@ -621,7 +595,7 @@ namespace Microsoft.Data
         internal static bool IsTokenRestrictedWrapper(IntPtr token)
         {
             bool isRestricted;
-            uint result = SNINativeMethodWrapper.UnmanagedIsTokenRestricted(token, out isRestricted);
+            uint result = SniNativeWrapper.UnmanagedIsTokenRestricted(token, out isRestricted);
 
             if (result != 0)
             {
