@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Interop.Windows.Sni
 {
-    internal class SniNativeMethodsArm64 : ISniNativeMethods
+    internal sealed class SniNativeMethodsArm64 : ISniNativeMethods
     {
         private const string DllName = "Microsoft.Data.SqlClient.SNI.arm64.dll";
 

@@ -12,7 +12,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Interop.Windows.Sni
 {
-    internal class SniNativeMethodsNotSupported : ISniNativeMethods
+    internal sealed class SniNativeMethodsNotSupported : ISniNativeMethods
     {
         private readonly string _architecture;
         
