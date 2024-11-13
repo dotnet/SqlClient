@@ -258,8 +258,10 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.PendingBeginXXXExists();
                     }
 
+#if NETFRAMEWORK
                     RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -268,20 +270,19 @@ namespace Microsoft.Data.SqlClient
                         tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
-
+#endif
                         Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
                         if (TryConsumeMetaData() != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
                         }
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally
                     {
                         tdsReliabilitySection.Stop();
                     }
-#endif //DEBUG
+#endif
                 }
                 return _metaData;
             }
@@ -856,27 +857,29 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: false);
 
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+#endif
+#if NETFRAMEWORK && DEBUG
+            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                tdsReliabilitySection.Start();
 #else
-                {
-#endif //DEBUG
-                    TdsOperationStatus result = TryCleanPartialRead();
-                    Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
-                    Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+            {
+#endif
+                TdsOperationStatus result = TryCleanPartialRead();
+                Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
+                Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
+            }
+#if NETFRAMEWORK && DEBUG
+            finally
+            {
+                tdsReliabilitySection.Stop();
+            }
+#endif
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Dispose/*' />
@@ -995,10 +998,13 @@ namespace Microsoft.Data.SqlClient
             bool aborting = false;
             bool cleanDataFailed = false;
             TdsOperationStatus result;
+
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -1007,7 +1013,7 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Start();
 #else
                 {
-#endif //DEBUG
+#endif
                     if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
                     {
                         // It is possible for this to be called during connection close on a
@@ -1063,12 +1069,12 @@ namespace Microsoft.Data.SqlClient
                     RestoreServerSettings(parser, stateObj);
                     return TdsOperationStatus.Done;
                 }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 finally
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif
             }
             finally
             {
@@ -1108,9 +1114,10 @@ namespace Microsoft.Data.SqlClient
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
 
-
+#if NETFRAMEWORK
                     RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -1119,7 +1126,7 @@ namespace Microsoft.Data.SqlClient
                         tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
+#endif
                         // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
                         if (!wasClosed && stateObj != null)
                         {
@@ -1139,12 +1146,12 @@ namespace Microsoft.Data.SqlClient
                         }
                         // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally
                     {
                         tdsReliabilitySection.Stop();
                     }
-#endif //DEBUG
+#endif
 
                     // do not retry here
                     result = TrySetMetaData(null, false);
@@ -1726,8 +1733,10 @@ namespace Microsoft.Data.SqlClient
         {
             remaining = 0;
             TdsOperationStatus result;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -1736,7 +1745,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #else
             {
-#endif //DEBUG
+#endif
                 int cbytes = 0;
                 AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
 
@@ -1963,7 +1972,7 @@ namespace Microsoft.Data.SqlClient
                 remaining = cbytes;
                 return TdsOperationStatus.Done;
             }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
             finally
             {
                 tdsReliabilitySection.Stop();
@@ -2020,16 +2029,19 @@ namespace Microsoft.Data.SqlClient
 
             bytesRead = 0;
             TdsOperationStatus result;
-
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 tdsReliabilitySection.Start();
-#endif //DEBUG
+#else
+            {
+#endif
                 if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
                 {
                     // No data left or nothing requested, return 0
@@ -2070,13 +2082,13 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                 }
-#if DEBUG
             }
+#if NETFRAMEWORK && DEBUG
             finally
             {
                 tdsReliabilitySection.Stop();
             }
-#endif //DEBUG
+#endif
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
@@ -2348,8 +2360,10 @@ namespace Microsoft.Data.SqlClient
 
         private long GetCharsFromPlpData(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
         {
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -2358,7 +2372,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #else
             {
-#endif //DEBUG
+#endif
                 long cch;
 
                 AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
@@ -2447,12 +2461,12 @@ namespace Microsoft.Data.SqlClient
                 _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
                 return cch;
             }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
             finally
             {
                 tdsReliabilitySection.Stop();
             }
-#endif //DEBUG
+#endif
         }
 
         internal long GetStreamingXmlChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
@@ -3547,11 +3561,13 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
-				RuntimeHelpers.PrepareConstrainedRegions();
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif 
 
                 try
                 {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -3560,7 +3576,7 @@ namespace Microsoft.Data.SqlClient
                	        tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
+#endif
                         statistics = SqlStatistics.StartTimer(Statistics);
 
                         SetTimeout(_defaultTimeoutMilliseconds);
@@ -3694,12 +3710,12 @@ namespace Microsoft.Data.SqlClient
                         more = success;
                         return TdsOperationStatus.Done;
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally 
                     {
                 	    tdsReliabilitySection.Stop();
                     }
-#endif //DEBUG
+#endif
                 }
                 finally
                 {
@@ -3735,11 +3751,13 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
 
                 try
                 {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -3748,7 +3766,7 @@ namespace Microsoft.Data.SqlClient
                         tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
+#endif
                         TdsOperationStatus result;
                         statistics = SqlStatistics.StartTimer(Statistics);
 
@@ -3906,7 +3924,7 @@ namespace Microsoft.Data.SqlClient
 
                         return TdsOperationStatus.Done;
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally
                     {
                         tdsReliabilitySection.Stop();
@@ -3971,9 +3989,10 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: null);
-
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
+#endif
+#if NETFRAMEWORK && DEBUG
             TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -3982,7 +4001,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #else
             {
-#endif //DEBUG
+#endif
 	            Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
 	            Debug.Assert(_sharedState._nextColumnDataToRead <= _metaData.Length, "_sharedState._nextColumnDataToRead too large");
 	
@@ -3999,12 +4018,12 @@ namespace Microsoft.Data.SqlClient
 	
 	            Debug.Assert(_data[i] != null, " data buffer is null?");
             }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
             finally
             {
                 tdsReliabilitySection.Stop();
             }
-#endif //DEBUG
+#endif
 
             return TdsOperationStatus.Done;
         }
@@ -4047,23 +4066,28 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InvalidRead();
             }
-            RuntimeHelpers.PrepareConstrainedRegions();
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                    return TryReadColumnInternal(i, readHeaderOnly: true);
-#if DEBUG
-                }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+#if NETFRAMEWORK && DEBUG
+            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+                tdsReliabilitySection.Start();
+#else
+            {
+#endif
+                return TryReadColumnInternal(i, readHeaderOnly: true);
+            }
+#if NETFRAMEWORK && DEBUG
+            finally
+            {
+                tdsReliabilitySection.Stop();
+            }
+#endif
         }
 
         internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly = false, bool forStreaming = false)
@@ -5535,17 +5559,23 @@ namespace Microsoft.Data.SqlClient
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
                     bool internalReadSuccess = false;
+#if NETFRAMEWORK
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
                         tdsReliabilitySection.Start();
+#else
+                    {
+#endif
                         internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done;
                     }
+#if NETFRAMEWORK
                     finally
                     {
                         tdsReliabilitySection.Stop();
                     }
+#endif
 
                     if (internalReadSuccess)
                     {
