@@ -100,9 +100,6 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\AdvApi32\AdvApi32.netfx.cs">
-      <Link>Interop\AdvApi32\AdvApi32.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\FileTypes.cs">
       <Link>Interop\Kernel32\FileTypes.cs</Link>
     </Compile>
