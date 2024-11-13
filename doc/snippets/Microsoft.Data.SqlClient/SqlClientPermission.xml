@@ -37,7 +37,7 @@
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.
       </summary>
       <remarks>
-          The <see cref="T:System.Security.Permissions.PermissionState" /> enumeration takes precedence over the <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> property. Therefore, if you set <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> to <see langword="false" />, you must also set <see cref="T:System.Security.Permissions.PermissionState" /> to <c>None</c> to prevent a user from making a connection using a blank password. For an example demonstrating how to use security demands, see <see href='/dotnet/framework/data/adonet/code-access-security'>Code Access Security and ADO.NET</see>.
+          The <see cref="T:System.Security.Permissions.PermissionState" /> enumeration takes precedence over the <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> property. Therefore, if you set <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> to <see langword="false" />, you must also set <see cref="T:System.Security.Permissions.PermissionState" /> to <c>None</c> to prevent a user from making a connection using a blank password. For an example demonstrating how to use security demands, see <see href='https://learn.microsoft.com/dotnet/framework/data/adonet/code-access-security'>Code Access Security and ADO.NET</see>.
       </remarks>
     </ctor>
     <Add name="connectionStringAndRestrictionsStringAndBehavior">
