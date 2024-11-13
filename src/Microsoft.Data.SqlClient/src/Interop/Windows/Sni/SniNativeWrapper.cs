@@ -497,77 +497,47 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-        
-        
-        
-        #if NETFRAMEWORK
-        static AppDomain GetDefaultAppDomainInternal()
-        {
-            return AppDomain.CurrentDomain;
-        }
 
-        internal static _AppDomain GetDefaultAppDomain()
-        {
-            return GetDefaultAppDomainInternal();
-        }
-
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static byte[] GetData()
-        {
-            int size;
-            IntPtr ptr = (IntPtr)(SqlDependencyProcessDispatcherStorage.NativeGetData(out size));
-            byte[] result = null;
-
-            if (ptr != IntPtr.Zero)
-            {
-                result = new byte[size];
-                Marshal.Copy(ptr, result, 0, size);
-            }
-
-            return result;
-        }
-
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static void SetData(Byte[] data)
-        {
-            //cli::pin_ptr<System::Byte> pin_dispatcher = &data[0];
-            fixed (byte* pin_dispatcher = &data[0])
-            {
-                SqlDependencyProcessDispatcherStorage.NativeSetData(pin_dispatcher, data.Length);
-            }
-        }
-        #endif
-
-        #region DLL Imports
+        #region Private Methods
 
         private static uint GetSniMaxComposedSpnLength() =>
             s_nativeMethods.SniGetMaxComposedSpnLength();
 
+        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
+        {
+            native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
+            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
+                ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
+                : IntPtr.Zero;
+            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
+                ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
+                : IntPtr.Zero;
+            native_consumerInfo.ConsumerKey = consumerInfo.key;
+        }
+        
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-
+        
         #if NETFRAMEWORK
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
         #endif
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum) =>
-            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out portNum);
-
-        private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen) =>
-            s_nativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-
         private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QType, out provNum);
-
+        
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum) =>
+            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out portNum);
+        
+        private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen) =>
+            s_nativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
+        
         private static uint SNIInitialize([In] IntPtr pmo) =>
             s_nativeMethods.SniInitialize(pmo);
-
+        
         private static uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>
             s_nativeMethods.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-
+        
         private static uint SNIOpenWrapper(
             [In] ref SniConsumerInfo pConsumerInfo,
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
@@ -632,18 +602,47 @@ namespace Microsoft.Data.SqlClient
             s_nativeMethods.SniWriteSyncOverAsync(pConn, pPacket);
 
         #endregion
-
-        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
+        
+        
+        #if NETFRAMEWORK
+        static AppDomain GetDefaultAppDomainInternal()
         {
-            native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
-                ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
-                : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
-                ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
-                : IntPtr.Zero;
-            native_consumerInfo.ConsumerKey = consumerInfo.key;
+            return AppDomain.CurrentDomain;
         }
+
+        internal static _AppDomain GetDefaultAppDomain()
+        {
+            return GetDefaultAppDomainInternal();
+        }
+
+        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        internal unsafe static byte[] GetData()
+        {
+            int size;
+            IntPtr ptr = (IntPtr)(SqlDependencyProcessDispatcherStorage.NativeGetData(out size));
+            byte[] result = null;
+
+            if (ptr != IntPtr.Zero)
+            {
+                result = new byte[size];
+                Marshal.Copy(ptr, result, 0, size);
+            }
+
+            return result;
+        }
+
+        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        internal unsafe static void SetData(Byte[] data)
+        {
+            //cli::pin_ptr<System::Byte> pin_dispatcher = &data[0];
+            fixed (byte* pin_dispatcher = &data[0])
+            {
+                SqlDependencyProcessDispatcherStorage.NativeSetData(pin_dispatcher, data.Length);
+            }
+        }
+        #endif
     }
 }
 
