@@ -300,8 +300,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
                 yield return new object[] { connStrAE, @"ExecuteReader" };
-                yield return new object[] { connStrAE, @"ExecuteReader" };
-                yield return new object[] { connStrAE, @"ExecuteNonQuery" };
                 yield return new object[] { connStrAE, @"ExecuteNonQuery" };
             }
         }

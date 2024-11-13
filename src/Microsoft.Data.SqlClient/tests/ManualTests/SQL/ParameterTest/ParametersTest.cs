@@ -888,29 +888,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {
-            var tasks = new List<Task>();
-            for (int i = 0; i < 100; i++)
+            var tasks = new Task[100];
+            for (int i = 0; i < tasks.Length; i++)
             {
                 var t = Task.Factory.StartNew(() =>
                 {
                     for (int j = 0; j < 1000; j++)
                     {
-                        try
-                        {
-                            RunParameterTest();
-                        }
-                        catch (Exception e)
-                        {
-                            Assert.Fail($"Unexpected exception occurred: {e.Message}");
-                        }
+                        RunParameterTest();
                     }
                 }, TaskCreationOptions.LongRunning);
-                tasks.Add(t);
+                tasks[i] = t;
             }
-            for (int i = 0; i < tasks.Count; i++)
-            {
-                tasks[i].Wait();
-            }
+            Task.WaitAll(tasks);
         }
 
         private static void RunParameterTest()
