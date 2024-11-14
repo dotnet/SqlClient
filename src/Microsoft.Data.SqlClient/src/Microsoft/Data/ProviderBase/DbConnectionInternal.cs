@@ -935,6 +935,22 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory.GetSchema(outerConnection, collectionName, restrictions);
         }
 
+        protected internal virtual Task<DataTable> GetSchemaAsync(
+            DbConnectionFactory factory,
+            DbConnectionPoolGroup poolGroup,
+            DbConnection outerConnection,
+            string collectionName,
+            string[] restrictions,
+            CancellationToken cancellationToken)
+        {
+            Debug.Assert(outerConnection is not null, "outerConnection may not be null.");
+
+            DbMetaDataFactory metaDataFactory = factory.GetMetaDataFactory(poolGroup, this);
+            Debug.Assert(metaDataFactory is not null, "metaDataFactory may not be null.");
+
+            return metaDataFactory.GetSchemaAsync(outerConnection, collectionName, restrictions, cancellationToken);
+        }
+
         protected virtual bool ObtainAdditionalLocksForClose()
         {
             // No additional locks in default implementation

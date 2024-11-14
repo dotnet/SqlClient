@@ -6,6 +6,7 @@ using Microsoft.Data.Common;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.Data.ProviderBase
@@ -35,6 +36,9 @@ namespace Microsoft.Data.ProviderBase
         public override void EnlistTransaction(System.Transactions.Transaction transaction) => throw ADP.ClosedConnectionError();
 
         protected internal override DataTable GetSchema(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions)
+            => throw ADP.ClosedConnectionError();
+
+        protected internal override Task<DataTable> GetSchemaAsync(DbConnectionFactory factory, DbConnectionPoolGroup poolGroup, DbConnection outerConnection, string collectionName, string[] restrictions, CancellationToken cancellationToken)
             => throw ADP.ClosedConnectionError();
 
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();

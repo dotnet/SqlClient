@@ -10,6 +10,8 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 
 namespace Microsoft.Data.ProviderBase
@@ -107,7 +109,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        private DataTable ExecuteCommand(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection)
+        private async ValueTask<DataTable> ExecuteCommandAsync(DataRow requestedCollectionRow, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             DataTable metaDataCollectionsTable = _metaDataCollectionsDataSet.Tables[DbMetaDataCollectionNames.MetaDataCollections];
             DataColumn populationStringColumn = metaDataCollectionsTable.Columns[PopulationStringKey];
@@ -158,7 +160,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 try
                 {
-                    reader = command.ExecuteReader();
+                    reader = isAsync ? await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false) : command.ExecuteReader();
                 }
                 catch (Exception e)
                 {
@@ -175,13 +177,18 @@ namespace Microsoft.Data.ProviderBase
                     Locale = CultureInfo.InvariantCulture
                 };
 
+                cancellationToken.ThrowIfCancellationRequested();
+#if NET
+                DataTable schemaTable = isAsync ? await reader.GetSchemaTableAsync(cancellationToken).ConfigureAwait(false) : reader.GetSchemaTable();
+#else
                 DataTable schemaTable = reader.GetSchemaTable();
+#endif
                 foreach (DataRow row in schemaTable.Rows)
                 {
                     resultTable.Columns.Add(row["ColumnName"] as string, (Type)row["DataType"] as Type);
                 }
                 object[] values = new object[resultTable.Columns.Count];
-                while (reader.Read())
+                while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read())
                 {
                     reader.GetValues(values);
                     resultTable.Rows.Add(values);
@@ -390,6 +397,12 @@ namespace Microsoft.Data.ProviderBase
         }
 
         public virtual DataTable GetSchema(DbConnection connection, string collectionName, string[] restrictions)
+            => GetSchemaCore(connection, collectionName, restrictions, false, default).Result;
+
+        public virtual async Task<DataTable> GetSchemaAsync(DbConnection connection, string collectionName, string[] restrictions, CancellationToken cancellationToken)
+            => await GetSchemaCore(connection, collectionName, restrictions, true, cancellationToken).ConfigureAwait(false);
+
+        private async ValueTask<DataTable> GetSchemaCore(DbConnection connection, string collectionName, string[] restrictions, bool isAsync, CancellationToken cancellationToken)
         {
             Debug.Assert(_metaDataCollectionsDataSet != null);
 
@@ -399,6 +412,7 @@ namespace Microsoft.Data.ProviderBase
 
             string[] hiddenColumns;
 
+            cancellationToken.ThrowIfCancellationRequested();
             DataRow requestedCollectionRow = FindMetaDataCollectionRow(collectionName);
             string exactCollectionName = requestedCollectionRow[collectionNameColumn, DataRowVersion.Current] as string;
 
@@ -416,6 +430,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             string populationMechanism = requestedCollectionRow[populationMechanismColumn, DataRowVersion.Current] as string;
 
             DataTable requestedSchema;
@@ -439,7 +454,6 @@ namespace Microsoft.Data.ProviderBase
                         throw ADP.TooManyRestrictions(exactCollectionName);
                     }
 
-
                     requestedSchema = CloneAndFilterCollection(exactCollectionName, hiddenColumns);
 
                     // TODO: Consider an alternate method that doesn't involve special casing -- perhaps _prepareCollection
@@ -453,11 +467,11 @@ namespace Microsoft.Data.ProviderBase
                     break;
 
                 case SqlCommandKey:
-                    requestedSchema = ExecuteCommand(requestedCollectionRow, restrictions, connection);
+                    requestedSchema = await ExecuteCommandAsync(requestedCollectionRow, restrictions, connection, isAsync, cancellationToken).ConfigureAwait(false);
                     break;
 
                 case PrepareCollectionKey:
-                    requestedSchema = PrepareCollection(exactCollectionName, restrictions, connection);
+                    requestedSchema = await PrepareCollectionAsync(exactCollectionName, restrictions, connection, isAsync, cancellationToken).ConfigureAwait(false);
                     break;
 
                 default:
@@ -514,7 +528,7 @@ namespace Microsoft.Data.ProviderBase
             _metaDataCollectionsDataSet.ReadXml(reader);
         }
 
-        protected virtual DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
+        protected virtual ValueTask<DataTable> PrepareCollectionAsync(string collectionName, string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
         {
             throw ADP.NotSupported();
         }

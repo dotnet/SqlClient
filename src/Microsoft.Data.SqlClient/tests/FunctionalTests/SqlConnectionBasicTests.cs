@@ -191,10 +191,11 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void ClosedConnectionSchemaRetrieval()
+        public async Task ClosedConnectionSchemaRetrieval()
         {
             using SqlConnection connection = new(string.Empty);
             Assert.Throws<InvalidOperationException>(() => connection.GetSchema());
+            await Assert.ThrowsAsync<InvalidOperationException>(() => connection.GetSchemaAsync());
         }
 
         [Theory]
