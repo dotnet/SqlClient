@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient
                 result = SniNativeWrapper.SniGetConnectionPort(Handle, ref portFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
 
-                result = SniNativeWrapper.SniGetConnectionIPString(Handle, ref IPStringFromSNI);
+                result = SniNativeWrapper.SniGetConnectionIpString(Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 
                 pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
