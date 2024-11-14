@@ -456,18 +456,7 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
         
-        
         #if NETFRAMEWORK
-        static AppDomain GetDefaultAppDomainInternal()
-        {
-            return AppDomain.CurrentDomain;
-        }
-
-        internal static _AppDomain GetDefaultAppDomain()
-        {
-            return GetDefaultAppDomainInternal();
-        }
-
         [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         internal static unsafe byte[] GetData()
