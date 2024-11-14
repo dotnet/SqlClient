@@ -10,5 +10,8 @@ namespace Microsoft.Data
     {
         internal static string GetLocalDBMessage(int hrCode) =>
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
+
+        internal static string GetLocalDbInstanceNameFromServerName(string serverName) =>
+            null;
     }
 }
