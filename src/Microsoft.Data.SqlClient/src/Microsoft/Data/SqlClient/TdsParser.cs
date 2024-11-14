@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient
                            clientInterfaceName,
                            sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
 
-            if (sspiWriter is { })
+            if (sspiWriter is not null)
             {
                 _writers.Return(sspiWriter);
             }
