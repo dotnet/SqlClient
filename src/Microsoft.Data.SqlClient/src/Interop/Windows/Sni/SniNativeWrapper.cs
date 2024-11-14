@@ -3,15 +3,19 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+
+#if NETFRAMEWORK
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
+using System.Security;
+using Interop.Windows;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -20,7 +24,10 @@ namespace Microsoft.Data.SqlClient
         #region Member Variables
         
         private const int SniIpv6AddrStringBufferLength = 48;
+        
+        #if NET
         private const int SniOpenTimeOut = -1;
+        #endif
         
         #if NETFRAMEWORK
         private static readonly ISniNativeMethods s_nativeMethods = RuntimeInformation.ProcessArchitecture switch
@@ -52,8 +59,8 @@ namespace Microsoft.Data.SqlClient
 
         #region Public Methods
         
-        internal static uint SniAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo) =>
-            s_nativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
+        internal static uint SniAddProvider(SNIHandle pConn, Provider provNum, ref AuthProviderInfo pInfo) =>
+            s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
         
         #if NETFRAMEWORK
         [ResourceExposure(ResourceScope.None)]
@@ -62,28 +69,24 @@ namespace Microsoft.Data.SqlClient
             Provider providerEnum,
             AuthProviderInfo authInfo)
         {
-            UInt32 ret;
-            uint ERROR_SUCCESS = 0;
-
             Debug.Assert(authInfo.clientCertificateCallback == null, "CTAIP support has been removed");
 
-            ret = SniAddProvider(pConn, providerEnum, ref authInfo);
-
-            if (ret == ERROR_SUCCESS)
+            uint ret = SniAddProvider(pConn, providerEnum, ref authInfo);
+            if (ret == SystemErrors.ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
                 ret = s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
-                Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
+                Debug.Assert(ret == SystemErrors.ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
             return ret;
         }
         #endif
         
-        internal static uint SniAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo) =>
-            s_nativeMethods.SniAddProvider(pConn, ProvNum, ref pInfo);
+        internal static uint SniAddProvider(SNIHandle pConn, Provider provNum, ref uint pInfo) =>
+            s_nativeMethods.SniAddProvider(pConn, provNum, ref pInfo);
         
-        internal static uint SniCheckConnection([In] SNIHandle pConn) =>
+        internal static uint SniCheckConnection(SNIHandle pConn) =>
             s_nativeMethods.SniCheckConnection(pConn);
         
         internal static uint SniClose(IntPtr pConn) =>
@@ -92,58 +95,69 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId) =>
             s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
         
-        internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
+        internal static uint SniGetConnectionIpString(SNIHandle pConn, ref string connIpStr)
         {
-            UInt32 ret;
-            uint connIPLen = 0;
+            StringBuilder addrBuffer = new StringBuilder(SniIpv6AddrStringBufferLength);
 
-            int bufferSize = SniIpv6AddrStringBufferLength;
-            StringBuilder addrBuffer = new StringBuilder(bufferSize);
+            uint ret = s_nativeMethods.SniGetPeerAddrStrWrapper(
+                pConn,
+                SniIpv6AddrStringBufferLength,
+                addrBuffer,
+                out uint connIpLen);
 
-            ret = s_nativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out connIPLen);
-
-            connIPStr = addrBuffer.ToString(0, Convert.ToInt32(connIPLen));
+            connIpStr = addrBuffer.ToString(0, Convert.ToInt32(connIpLen));
 
             return ret;
         }
         
-        internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
-        {
-            return s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
-        }
+        internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum) =>
+            s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
         
         internal static void SniGetLastError(out SniError pErrorStruct) =>
             s_nativeMethods.SniGetLastError(out pErrorStruct);
         
-        internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum)
-        {
-            return s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
-        }
+        internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum) =>
+            s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
 
         internal static uint SniInitialize() =>
             s_nativeMethods.SniInitialize(IntPtr.Zero);
         
-        internal static uint SniIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted) =>
+        internal static uint SniIsTokenRestricted(IntPtr token, out bool isRestricted) =>
             s_nativeMethods.SniIsTokenRestricted(token, out isRestricted);
         
-        internal static unsafe uint SniOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
+        internal static uint SniOpenMarsSession(
+            ConsumerInfo consumerInfo,
+            SNIHandle parent,
+            ref IntPtr pConn,
+            bool fSync,
+            SqlConnectionIPAddressPreference ipPreference,
+            SQLDNSInfo cachedDnsInfo)
         {
             // initialize consumer info for MARS
-            SniConsumerInfo native_consumerInfo = new SniConsumerInfo();
-            MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
+            SniConsumerInfo nativeConsumerInfo = new SniConsumerInfo();
+            MarshalConsumerInfo(consumerInfo, ref nativeConsumerInfo);
 
-            SniDnsCacheInfo native_cachedDNSInfo = new SniDnsCacheInfo();
-            native_cachedDNSInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
-            native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
-            native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
-            native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
+            SniDnsCacheInfo nativeCachedDnsInfo = new SniDnsCacheInfo()
+            {
+                wszCachedFQDN = cachedDnsInfo?.FQDN,
+                wszCachedTcpIPv4 = cachedDnsInfo?.AddrIPv4,
+                wszCachedTcpIPv6 = cachedDnsInfo?.AddrIPv6,
+                wszCachedTcpPort = cachedDnsInfo?.Port,
+            };
 
-            return s_nativeMethods.SniOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
+            return s_nativeMethods.SniOpenWrapper(
+                pConsumerInfo: ref nativeConsumerInfo,
+                connect: "session:",
+                pConn: parent,
+                ppConn: out pConn,
+                fSync,
+                ipPreference,
+                pDnsCacheInfo: ref nativeCachedDnsInfo);
         }
         
         internal static unsafe uint SniOpenSyncEx(
             ConsumerInfo consumerInfo,
-            string constring,
+            string connString,
             ref IntPtr pConn,
             byte[] spnBuffer,
             byte[] instanceName,
@@ -153,25 +167,25 @@ namespace Microsoft.Data.SqlClient
             bool fParallel,
             
             #if NETFRAMEWORK
-            Int32 transparentNetworkResolutionStateNo,
-            Int32 totalTimeout,
+            int transparentNetworkResolutionStateNo,
+            int totalTimeout,
             #endif
             
             SqlConnectionIPAddressPreference ipPreference,
-            SQLDNSInfo cachedDNSInfo,
+            SQLDNSInfo cachedDnsInfo,
             string hostNameInCertificate)
         {
-            fixed (byte* pin_instanceName = &instanceName[0])
+            fixed (byte* pInstanceName = instanceName)
             {
                 SniClientConsumerInfo clientConsumerInfo = new SniClientConsumerInfo();
 
                 // initialize client ConsumerInfo part first
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
-                clientConsumerInfo.wszConnectionString = constring;
+                clientConsumerInfo.wszConnectionString = connString;
                 clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = Prefix.UNKNOWN_PREFIX;
-                clientConsumerInfo.szInstanceName = pin_instanceName;
+                clientConsumerInfo.szInstanceName = pInstanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
                 clientConsumerInfo.fSynchronousConnection = fSync;
@@ -181,13 +195,13 @@ namespace Microsoft.Data.SqlClient
                 #if NETFRAMEWORK
                 switch (transparentNetworkResolutionStateNo)
                 {
-                    case (0):
+                    case 0:
                         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
                         break;
-                    case (1):
+                    case 1:
                         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.SequentialMode;
                         break;
-                    case (2):
+                    case 2:
                         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.ParallelMode;
                         break;
                 };
@@ -197,35 +211,33 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.totalTimeout = SniOpenTimeOut;
                 #endif
 
-                clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(constring);
+                clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(connString);
 
                 clientConsumerInfo.ipAddressPreference = ipPreference;
-                clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
-                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
+                clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDnsInfo?.FQDN;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDnsInfo?.AddrIPv4;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDnsInfo?.AddrIPv6;
+                clientConsumerInfo.DNSCacheInfo.wszCachedTcpPort = cachedDnsInfo?.Port;
 
-                if (spnBuffer != null)
+                if (spnBuffer is not null)
                 {
-                    fixed (byte* pin_spnBuffer = &spnBuffer[0])
+                    fixed (byte* pSpnBuffer = spnBuffer)
                     {
-                        clientConsumerInfo.szSPN = pin_spnBuffer;
+                        clientConsumerInfo.szSPN = pSpnBuffer;
                         clientConsumerInfo.cchSPN = (uint)spnBuffer.Length;
                         return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
                     }
                 }
-                else
-                {
-                    // else leave szSPN null (SQL Auth)
-                    return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
-                }
+
+                // Otherwise leave szSPN null (SQL Auth)
+                return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
             }
         }
 
-        internal static void SniPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket) =>
-            pPacket = s_nativeMethods.SniPacketAllocateWrapper(pConn, IOType);
+        internal static void SniPacketAllocate(SafeHandle pConn, IoType ioType, ref IntPtr pPacket) =>
+            pPacket = s_nativeMethods.SniPacketAllocateWrapper(pConn, ioType);
         
-        internal static unsafe uint SniPacketGetData(IntPtr packet, byte[] readBuffer, ref uint dataSize) =>
+        internal static uint SniPacketGetData(IntPtr packet, byte[] readBuffer, ref uint dataSize) =>
             s_nativeMethods.SniPacketGetDataWrapper(packet, readBuffer, (uint)readBuffer.Length, out dataSize);
         
         internal static void SniPacketRelease(IntPtr pPacket) =>
@@ -233,46 +245,47 @@ namespace Microsoft.Data.SqlClient
         
         internal static unsafe void SniPacketSetData(SNIPacket packet, byte[] data, int length)
         {
-            fixed (byte* pin_data = &data[0])
+            fixed (byte* pData = data)
             {
-                s_nativeMethods.SniPacketSetData(packet, pin_data, (uint)length);
+                s_nativeMethods.SniPacketSetData(packet, pData, (uint)length);
             }
         }
         
         #if NETFRAMEWORK
-        //[ResourceExposure(ResourceScope::None)]
-        //
-        // Notes on SecureString: Writing out security sensitive information to managed buffer should be avoid as these can be moved
-        //    around by GC. There are two set of information which falls into this category: passwords and new changed password which
-        //    are passed in as SecureString by a user. Writing out clear passwords information is delayed until this layer to ensure that
-        //    the information is written out to buffer which is pinned in this method already. This also ensures that processing a clear password
-        //    is done right before it is written out to SNI_Packet where gets encrypted properly. 
-        //    TdsParserStaticMethods.EncryptPassword operation is also done here to minimize the time the clear password is held in memory. Any changes
-        //    to loose encryption algorithm is changed it should be done in both in this method as well as TdsParserStaticMethods.EncryptPassword.
-        //  Up to current release, it is also guaranteed that both password and new change password will fit into a single login packet whose size is fixed to 4096
-        //        So, there is no splitting logic is needed.
-        internal static void SniPacketSetData(SNIPacket packet,
-                                      Byte[] data,
-                                      Int32 length,
-                                      SecureString[] passwords,            // pointer to the passwords which need to be written out to SNI Packet
-                                      Int32[] passwordOffsets    // Offset into data buffer where the password to be written out to
-                                      )
+        // Notes on SecureString: Writing out security sensitive information to managed buffer
+        //    should be avoided as these can be moved around by GC. There are two set of
+        //    information which falls into this category: passwords and new changed password which
+        //    are passed in as SecureString by a user. Writing out clear passwords information is
+        //    delayed until this layer to ensure that the information is written out to buffer
+        //    which is pinned in this method already. This also ensures that processing a clear
+        //    password is done right before it is written out to SNI_Packet where gets encrypted
+        //    properly. TdsParserStaticMethods.EncryptPassword operation is also done here to
+        //    minimize the time the clear password is held in memory. Any time loose encryption
+        //    algorithms are changed it should be done in both in this method and
+        //    TdsParserStaticMethods.EncryptPassword.
+        //    Up to current release, it is also guaranteed that both password and new change
+        //    password will fit into a single login packet whose size is fixed to 4096 So, no
+        //    splitting logic is needed.
+        internal static void SniPacketSetData(
+            SNIPacket packet,
+            byte[] data,
+            int length,
+            SecureString[] passwords, // pointer to the passwords which need to be written out to SNI Packet
+            int[] passwordOffsets)    // Offset into data buffer where the password to be written out to
         {
-            Debug.Assert(passwords == null || (passwordOffsets != null && passwords.Length == passwordOffsets.Length), "The number of passwords does not match the number of password offsets");
+            Debug.Assert(passwords is null || (passwordOffsets is not null && passwords.Length == passwordOffsets.Length), "The number of passwords does not match the number of password offsets");
 
             bool mustRelease = false;
             bool mustClearBuffer = false;
             IntPtr clearPassword = IntPtr.Zero;
 
-            // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
+            // provides a guaranteed finally block – without this it isn’t guaranteed – non-
+            // interruptible by fatal exceptions
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 unsafe
                 {
-
-                    fixed (byte* pin_data = &data[0])
-                    { }
                     if (passwords != null)
                     {
                         // Process SecureString
@@ -281,48 +294,40 @@ namespace Microsoft.Data.SqlClient
                             // SecureString is used
                             if (passwords[i] != null)
                             {
-                                // provides a guaranteed finally block – without this it isn’t guaranteed – non interruptable by fatal exceptions
+                                // provides a guaranteed finally block – without this it isn’t
+                                // guaranteed – non-interruptible by fatal exceptions
                                 RuntimeHelpers.PrepareConstrainedRegions();
                                 try
                                 {
-                                    // ==========================================================================
-                                    //  Get the clear text of secure string without converting it to String type
-                                    // ==========================================================================
+                                    // ============================================================
+                                    // Get the clear text of secure string without converting it
+                                    // to string type
+                                    // ============================================================
                                     clearPassword = Marshal.SecureStringToCoTaskMemUnicode(passwords[i]);
 
-                                    // ==========================================================================================================================
-                                    //  Losely encrypt the clear text - The encryption algorithm should exactly match the TdsParserStaticMethods.EncryptPassword
-                                    // ==========================================================================================================================
+                                    // ============================================================
+                                    // Loosely encrypt the clear text - The encryption algorithm
+                                    // should exactly match the TdsParserStaticMethods.EncryptPassword
+                                    // ============================================================
+                                    char* pwChar = (char*)clearPassword.ToPointer();
+                                    byte* pByte = (byte*)clearPassword.ToPointer();
 
-                                    unsafe
+                                    int passwordsLength = passwords[i].Length;
+                                    for (int j = 0; j < passwordsLength; ++j)
                                     {
-
-                                        char* pwChar = (char*)clearPassword.ToPointer();
-                                        byte* pByte = (byte*)(clearPassword.ToPointer());
-
-
-
-
-                                        int s;
-                                        byte bLo;
-                                        byte bHi;
-                                        int passwordsLength = passwords[i].Length;
-                                        for (int j = 0; j < passwordsLength; ++j)
-                                        {
-                                            s = (int)*pwChar;
-                                            bLo = (byte)(s & 0xff);
-                                            bHi = (byte)((s >> 8) & 0xff);
-                                            *(pByte++) = (Byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
-                                            *(pByte++) = (Byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
-                                            ++pwChar;
-                                        }
-
-                                        // ===========================================================
-                                        //  Write out the losely encrypted passwords to data buffer
-                                        // ===========================================================
-                                        mustClearBuffer = true;
-                                        Marshal.Copy(clearPassword, data, passwordOffsets[i], passwordsLength * 2);
+                                        int s = *pwChar;
+                                        byte bLo = (byte)(s & 0xff);
+                                        byte bHi = (byte)((s >> 8) & 0xff);
+                                        *(pByte++) = (byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
+                                        *(pByte++) = (byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
+                                        ++pwChar;
                                     }
+
+                                    // ============================================================
+                                    //  Write out the loosely encrypted passwords to data buffer
+                                    // ============================================================
+                                    mustClearBuffer = true;
+                                    Marshal.Copy(clearPassword, data, passwordOffsets[i], passwordsLength * 2);
                                 }
                                 finally
                                 {
@@ -362,14 +367,14 @@ namespace Microsoft.Data.SqlClient
         }
         #endif
         
-        internal static void SniPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum) =>
-            s_nativeMethods.SniPacketReset(pConn, IOType, pPacket, ConsNum);
+        internal static void SniPacketReset(SNIHandle pConn, IoType ioType, SNIPacket pPacket, ConsumerNumber consNum) =>
+            s_nativeMethods.SniPacketReset(pConn, ioType, pPacket, consNum);
         
-        internal static uint SniQueryInfo(QueryType QType, ref uint pbQInfo) =>
-            s_nativeMethods.SniQueryInfo(QType, ref pbQInfo);
+        internal static uint SniQueryInfo(QueryType qType, ref uint pbQInfo) =>
+            s_nativeMethods.SniQueryInfo(qType, ref pbQInfo);
         
-        internal static uint SniQueryInfo(QueryType QType, ref IntPtr pbQInfo) =>
-            s_nativeMethods.SniQueryInfo(QType, ref pbQInfo);
+        internal static uint SniQueryInfo(QueryType qType, ref IntPtr pbQInfo) =>
+            s_nativeMethods.SniQueryInfo(qType, ref pbQInfo);
         
         internal static uint SniReadAsync(SNIHandle pConn, ref IntPtr ppNewPacket) =>
             s_nativeMethods.SniReadAsync(pConn, ref ppNewPacket);
@@ -377,13 +382,13 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout) =>
             s_nativeMethods.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
         
-        internal static uint SniRemoveProvider(SNIHandle pConn, Provider ProvNum) =>
-            s_nativeMethods.SniRemoveProvider(pConn, ProvNum);
+        internal static uint SniRemoveProvider(SNIHandle pConn, Provider provNum) =>
+            s_nativeMethods.SniRemoveProvider(pConn, provNum);
         
         internal static unsafe uint SniSecGenClientContext(
             SNIHandle pConnectionObject,
             ReadOnlySpan<byte> inBuff,
-            byte[] OutBuff,
+            byte[] outBuff,
             ref uint sendLength,
             byte[] serverUserName)
         {
@@ -394,7 +399,7 @@ namespace Microsoft.Data.SqlClient
                     pConn: pConnectionObject,
                     pIn: pInBuff,
                     cbIn: (uint)inBuff.Length,
-                    pOut: OutBuff,
+                    pOut: outBuff,
                     pcbOut: ref sendLength,
                     pfDone: out _,
                     szServerInfo: pServerUserName,
@@ -407,54 +412,46 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniSecInitPackage(ref uint pcbMaxToken) =>
             s_nativeMethods.SniSecInitPackage(ref pcbMaxToken);
         
-        internal static void SniServerEnumClose([In] IntPtr packet) =>
+        internal static void SniServerEnumClose(IntPtr packet) =>
             s_nativeMethods.SniServerEnumClose(packet);
         
         internal static IntPtr SniServerEnumOpen() =>
             s_nativeMethods.SniServerEnumOpen();
         
-        internal static int SniServerEnumRead(
-            [In] IntPtr packet,
-            [In] [MarshalAs(UnmanagedType.LPArray)] char[] readBuffer,
-            [In] int bufferLength,
-            [MarshalAs(UnmanagedType.Bool)] out bool more) =>
+        internal static int SniServerEnumRead(IntPtr packet, char[] readBuffer, int bufferLength, out bool more) =>
             s_nativeMethods.SniServerEnumRead(packet, readBuffer, bufferLength, out more);
         
-        internal static uint SniSetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo) =>
-            s_nativeMethods.SniSetInfo(pConn, QType, ref pbQInfo);
+        internal static uint SniSetInfo(SNIHandle pConn, QueryType qType, ref uint pbQInfo) =>
+            s_nativeMethods.SniSetInfo(pConn, qType, ref pbQInfo);
         
         internal static uint SniTerminate() =>
             s_nativeMethods.SniTerminate();
         
-        internal static uint SniWaitForSslHandshakeToComplete([In] SNIHandle pConn, int dwMilliseconds, out uint pProtocolVersion) =>
+        internal static uint SniWaitForSslHandshakeToComplete(
+            SNIHandle pConn,
+            int dwMilliseconds,
+            out uint pProtocolVersion) =>
             s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out pProtocolVersion);
-        
-        internal static uint SniWritePacket(SNIHandle pConn, SNIPacket packet, bool sync)
-        {
-            if (sync)
-            {
-                return s_nativeMethods.SniWriteSyncOverAsync(pConn, packet);
-            }
-            else
-            {
-                return s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
-            }
-        }
+
+        internal static uint SniWritePacket(SNIHandle pConn, SNIPacket packet, bool sync) =>
+            sync
+                ? s_nativeMethods.SniWriteSyncOverAsync(pConn, packet)
+                : s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
         
         #endregion
 
         #region Private Methods
 
-        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
+        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo nativeConsumerInfo)
         {
-            native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
-            native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
+            nativeConsumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
+            nativeConsumerInfo.fnReadComp = consumerInfo.readDelegate is not null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.readDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.fnWriteComp = consumerInfo.writeDelegate != null
+            nativeConsumerInfo.fnWriteComp = consumerInfo.writeDelegate is not null
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
-            native_consumerInfo.ConsumerKey = consumerInfo.key;
+            nativeConsumerInfo.ConsumerKey = consumerInfo.key;
         }
         
         #endregion
@@ -473,10 +470,9 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static byte[] GetData()
+        internal static unsafe byte[] GetData()
         {
-            int size;
-            IntPtr ptr = (IntPtr)(SqlDependencyProcessDispatcherStorage.NativeGetData(out size));
+            IntPtr ptr = (IntPtr)SqlDependencyProcessDispatcherStorage.NativeGetData(out int size);
             byte[] result = null;
 
             if (ptr != IntPtr.Zero)
@@ -490,12 +486,11 @@ namespace Microsoft.Data.SqlClient
 
         [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal unsafe static void SetData(Byte[] data)
+        internal static unsafe void SetData(byte[] data)
         {
-            //cli::pin_ptr<System::Byte> pin_dispatcher = &data[0];
-            fixed (byte* pin_dispatcher = &data[0])
+            fixed (byte* pDispatcher = data)
             {
-                SqlDependencyProcessDispatcherStorage.NativeSetData(pin_dispatcher, data.Length);
+                SqlDependencyProcessDispatcherStorage.NativeSetData(pDispatcher, data.Length);
             }
         }
         #endif
