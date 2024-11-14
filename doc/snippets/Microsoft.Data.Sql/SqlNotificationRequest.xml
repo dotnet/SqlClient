@@ -1,98 +1,120 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlNotificationRequest">
-        <SqlNotificationRequest>
-            <summary>Represents a request for notification for a given command.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-This class provides low-level access to the query notification services exposed by SQL Server 2005. For most applications the <xref:Microsoft.Data.SqlClient.SqlDependency> class provides a simpler way of using query notifications. However, if you need fine control over when notifications occur, or you need to customize the message data returned as part of a notification, the <xref:Microsoft.Data.Sql.SqlNotificationRequest> class is the one to use.  
-
-]]></format>
-            </remarks>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </SqlNotificationRequest>
-        <ctor1>
-            <summary>Creates a new instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class with default values.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-If the parameterless constructor is used to create a <xref:Microsoft.Data.Sql.SqlNotificationRequest> object, that instance must have its <xref:Microsoft.Data.Sql.SqlNotificationRequest.UserData%2A> and <xref:Microsoft.Data.Sql.SqlNotificationRequest.Options%2A> properties initialized before assigning the object to a <xref:Microsoft.Data.SqlClient.SqlCommand> object's <xref:Microsoft.Data.SqlClient.SqlCommand.Notification%2A> property. The default values used by the constructor are NULL (`Nothing` in Visual Basic) for the <xref:Microsoft.Data.Sql.SqlNotificationRequest.UserData%2A>, an empty string for the <xref:Microsoft.Data.Sql.SqlNotificationRequest.Options%2A>, and zero for the <xref:Microsoft.Data.Sql.SqlNotificationRequest.Timeout%2A>.  
-
-]]></format>
-            </remarks>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </ctor1>
-        <ctor2>
-            <param name="userData">A string that contains an application-specific identifier for this notification. It is not used by the notifications infrastructure, but it allows you to associate notifications with the application state. The value indicated in this parameter is included in the Service Broker queue message.</param>
-            <param name="options">A string that contains the Service Broker service name where notification messages are posted, and it must include a database name or a Service Broker instance GUID that restricts the scope of the service name lookup to a particular database. For more information about the format of the <paramref name="options" /> parameter, see <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" />.</param>
-            <param name="timeout">The time, in seconds, to wait for a notification message.</param>
-            <summary>Creates a new instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class with a user-defined string that identifies a particular notification request, the name of a predefined SQL Server 2005 Service Broker service name, and the time-out period, measured in seconds.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-This constructor allows you to initialize a new <xref:Microsoft.Data.Sql.SqlNotificationRequest> instance, providing your own identifier, the SQL Server 2005 Service Broker service name, and a time-out value.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">The value of the <paramref name="options" /> parameter is NULL.</exception>
-            <exception cref="T:System.ArgumentOutOfRangeException">The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see langword="uint16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.</exception>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </ctor2>
-        <Options>
-            <summary>Gets or sets the SQL Server Service Broker service name where notification messages are posted.</summary>
-            <value>
-            <see langword="string" /> that contains the SQL Server 2005 Service Broker service name where notification messages are posted and the database or service broker instance GUID to scope the server name lookup.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-    
-## Remarks  
-The value of the <xref:Microsoft.Data.Sql.SqlNotificationRequest.Options%2A> property has the following format:  
-
-`service=<service-name>{;(local database=<database>|broker instance=<broker instance>)}`  
-
-For example, if you use the service "myservice" in the database "AdventureWorks" the format is:  
-
-`service=myservice;local database=AdventureWorks`  
-
-The SQL Server Service Broker service must be previously configured on the server. In addition, a Service Broker service and queue must be defined and security access granted as needed. See the SQL Server 2005 documentation for more information.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">The value is NULL.</exception>
-            <exception cref="T:System.ArgumentException">The value is longer than <see langword="uint16.MaxValue" />.</exception>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </Options>
-        <Timeout>
-            <summary>Gets or sets a value that specifies how long SQL Server waits for a change to occur before the operation times out.</summary>
-            <value>A signed integer value that specifies, in seconds, how long SQL Server waits for a change to occur before the operation times out.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-After the time-out period expires, the notification is sent even if no change takes place. The <xref:Microsoft.Data.Sql.SqlNotificationRequest.Timeout%2A> property defaults to the value set on the server.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentOutOfRangeException">The value is less than zero.</exception>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </Timeout>
-        <UserData>    
-            <summary>Gets or sets an application-specific identifier for this notification.</summary>
-            <value>A <see langword="string" /> value of the application-specific identifier for this notification.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-    
-## Remarks  
-This value is not used by the notifications infrastructure. Instead, it is a mechanism that allows an application to associate notifications with application state. The value specified in the <xref:Microsoft.Data.Sql.SqlNotificationRequest.UserData%2A> property is included in the SQL Server 2005 queue message.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentException">The value is longer than <see langword="uint16.MaxValue" />.</exception>
-            <related type="Article" href="/sql/connect/ado-net/sql/query-notifications-sql-server">Using Query Notifications</related>
-        </UserData>
-    </members>
+﻿<docs>
+  <members name="SqlNotificationRequest">
+    <SqlNotificationRequest>
+      <summary>
+        Represents a request for notification for a given command.
+      </summary>
+      <remarks>
+        This class provides low-level access to the query notification services exposed by SQL Server 2005. For most applications the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> class provides a simpler way of using query notifications. However, if you need fine control over when notifications occur, or you need to customize the message data returned as part of a notification, the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class is the one to use.
+      </remarks>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </SqlNotificationRequest>
+    <ctor1>
+      <summary>
+        Creates a new instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class with default values.
+      </summary>
+      <remarks>
+        If the parameterless constructor is used to create a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object, that instance must have its <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" /> and <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" /> properties initialized before assigning the object to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object's <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property. The default values used by the constructor are <see langword="null" /> (<c>Nothing</c> in Visual Basic) for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" />, an empty string for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" />, and zero for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Timeout" />.
+      </remarks>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </ctor1>
+    <ctor2>
+      <param name="userData">
+        A string that contains an application-specific identifier for this notification. It is not used by the notifications infrastructure, but it allows you to associate notifications with the application state. The value indicated in this parameter is included in the Service Broker queue message.
+      </param>
+      <param name="options">
+        A string that contains the Service Broker service name where notification messages are posted, and it must include a database name or a Service Broker instance GUID that restricts the scope of the service name lookup to a particular database. For more information about the format of the <paramref name="options" /> parameter, see <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" />.
+      </param>
+      <param name="timeout">
+        The time, in seconds, to wait for a notification message.
+      </param>
+      <summary>
+        Creates a new instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class with a user-defined string that identifies a particular notification request, the name of a predefined SQL Server 2005 Service Broker service name, and the time-out period, measured in seconds.
+      </summary>
+      <remarks>
+        This constructor allows you to initialize a new <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> instance, providing your own identifier, the SQL Server 2005 Service Broker service name, and a time-out value.
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        The value of the <paramref name="options" /> parameter is <see langword="null" />.
+      </exception>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see cref="F:System.UInt16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.
+      </exception>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </ctor2>
+    <Options>
+      <summary>
+        Gets or sets the SQL Server Service Broker service name where notification messages are posted.
+      </summary>
+      <value>
+        <see cref="T:System.String" /> that contains the SQL Server 2005 Service Broker service name where notification messages are posted and the database or service broker instance GUID to scope the server name lookup.
+      </value>
+      <remarks>
+        <para>
+          The value of the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" /> property has the following format:
+        </para>
+        <code>
+          service=&lt;service-name&gt;{;(local database=&lt;database&gt;|broker instance=&lt;broker instance&gt;)}
+        </code>
+        <para>
+          For example, if you use the service "myservice" in the database "AdventureWorks" the format is:
+        </para>
+        <code>
+          service=myservice;local database=AdventureWorks
+        </code>
+        <para>
+          The SQL Server Service Broker service must be previously configured on the server. In addition, a Service Broker service and queue must be defined and security access granted as needed. See the SQL Server 2005 documentation for more information.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        The value is <see langword="null" />.
+      </exception>
+      <exception cref="T:System.ArgumentException">
+        The value is longer than <see cref="F:System.UInt16.MaxValue" />.
+      </exception>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </Options>
+    <Timeout>
+      <summary>
+        Gets or sets a value that specifies how long SQL Server waits for a change to occur before the operation times out.
+      </summary>
+      <value>
+        A signed integer value that specifies, in seconds, how long SQL Server waits for a change to occur before the operation times out.
+      </value>
+      <remarks>
+        After the time-out period expires, the notification is sent even if no change takes place. The <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Timeout" /> property defaults to the value set on the server.
+      </remarks>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The value is less than zero.
+      </exception>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </Timeout>
+    <UserData>
+      <summary>
+        Gets or sets an application-specific identifier for this notification.
+      </summary>
+      <value>
+        A <see cref="T:System.String" /> value of the application-specific identifier for this notification.
+      </value>
+      <remarks>
+        This value is not used by the notifications infrastructure. Instead, it is a mechanism that allows an application to associate notifications with application state. The value specified in the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" /> property is included in the SQL Server 2005 queue message.
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        The value is longer than <see cref="F:System.UInt16.MaxValue" />.
+      </exception>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
+        Using Query Notifications
+      </seealso>
+    </UserData>
+  </members>
 </docs>

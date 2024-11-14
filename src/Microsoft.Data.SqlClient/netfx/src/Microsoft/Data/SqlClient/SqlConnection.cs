@@ -24,8 +24,10 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Interop.Windows.AdvApi32;
 using Microsoft.Data.ProviderBase;
 using Microsoft.SqlServer.Server;
+using Interop.Windows.Kernel32;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -311,9 +313,6 @@ namespace Microsoft.Data.SqlClient
         internal WindowsIdentity _lastIdentity;
         internal WindowsIdentity _impersonateIdentity;
         private int _reconnectCount;
-        private ServerCertificateValidationCallback _serverCertificateValidationCallback;
-        private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
-        private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
@@ -430,9 +429,6 @@ namespace Microsoft.Data.SqlClient
             }
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
-            _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
-            _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
-            _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
             CacheConnectionStringProperties();
         }
 
@@ -660,11 +656,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        private bool UsesCertificate(SqlConnectionString opt)
-        {
-            return opt != null && opt.UsesCertificate;
-        }
-
         internal SqlConnectionString.TransactionBindingEnum TransactionBinding
         {
             get
@@ -752,7 +743,7 @@ namespace Microsoft.Data.SqlClient
 
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, null));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null));
             }
         }
 
@@ -774,7 +765,7 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
                 _accessTokenCallback = value;
             }
         }
@@ -863,7 +854,7 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -1214,7 +1205,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback));
             }
         }
 
@@ -1333,45 +1324,6 @@ namespace Microsoft.Data.SqlClient
                 _fireInfoMessageEventOnUserErrors = value;
             }
         }
-
-
-#if ADONET_CERT_AUTH
-         public ServerCertificateValidationCallback ServerCertificateValidationCallback {
-            get {
-                return _serverCertificateValidationCallback;
-            }
-            set {
-                _serverCertificateValidationCallback = value;
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
-            }
-        }
-
-        // The exceptions from client certificate callback are not rethrown and instead an SSL
-        // exchange fails with CRYPT_E_NOT_FOUND = 0x80092004
-        public ClientCertificateRetrievalCallback ClientCertificateRetrievalCallback {
-            get {
-                return _clientCertificateRetrievalCallback;
-            }
-            set {
-                _clientCertificateRetrievalCallback = value;
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
-            }
-        }
-#endif
-
-#if ADONET_ORIGINAL_CLIENT_ADDRESS
-
-        public SqlClientOriginalNetworkAddressInfo OriginalNetworkAddressInfo {
-            get {
-                return _originalNetworkAddressInfo;
-            }
-            set {
-                _originalNetworkAddressInfo = value;
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
-            }
-        }
-
-#endif
 
         // Approx. number of times that the internal connection has been reconnected
         internal int ReconnectCount
@@ -2176,7 +2128,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesCertificate(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
+                if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
                 {
                     _lastIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
                 }
@@ -2582,7 +2534,7 @@ namespace Microsoft.Data.SqlClient
         private void CheckSQLDebugOnConnect()
         {
             IntPtr hFileMap;
-            uint pid = (uint)SafeNativeMethods.GetCurrentProcessId();
+            uint pid = (uint)Kernel32Safe.GetCurrentProcessId();
 
             string mapFileName;
 
@@ -2598,11 +2550,11 @@ namespace Microsoft.Data.SqlClient
 
             mapFileName = mapFileName + pid.ToString(CultureInfo.InvariantCulture);
 
-            hFileMap = NativeMethods.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
+            hFileMap = Kernel32.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
 
             if (ADP.s_ptrZero != hFileMap)
             {
-                IntPtr pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
+                IntPtr pMemMap = Kernel32.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
                 if (ADP.s_ptrZero != pMemMap)
                 {
                     SqlDebugContext sdc = new SqlDebugContext();
@@ -2777,7 +2729,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newPassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2833,7 +2785,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newSecurePassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2878,7 +2830,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordRequires2005();
                 }
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null, accessTokenCallback: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
@@ -3115,300 +3067,6 @@ namespace Microsoft.Data.SqlClient
         }
     } // SqlConnection
 
-    // TODO: This really belongs in it's own source file...
-    //
-    // This is a private interface for the SQL Debugger
-    // You must not change the guid for this coclass
-    // or the iid for the ISQLDebug interface
-    //
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
-    [
-    ComVisible(true),
-    ClassInterface(ClassInterfaceType.None),
-    Guid("afef65ad-4577-447a-a148-83acadd3d4b9"),
-    ]
-    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-    public sealed class SQLDebugging : ISQLDebug
-    {
-
-        // Security stuff
-        const int STANDARD_RIGHTS_REQUIRED = (0x000F0000);
-        const int DELETE = (0x00010000);
-        const int READ_CONTROL = (0x00020000);
-        const int WRITE_DAC = (0x00040000);
-        const int WRITE_OWNER = (0x00080000);
-        const int SYNCHRONIZE = (0x00100000);
-        const int FILE_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x000001FF);
-        const uint GENERIC_READ = (0x80000000);
-        const uint GENERIC_WRITE = (0x40000000);
-        const uint GENERIC_EXECUTE = (0x20000000);
-        const uint GENERIC_ALL = (0x10000000);
-
-        const int SECURITY_DESCRIPTOR_REVISION = (1);
-        const int ACL_REVISION = (2);
-
-        const int SECURITY_AUTHENTICATED_USER_RID = (0x0000000B);
-        const int SECURITY_LOCAL_SYSTEM_RID = (0x00000012);
-        const int SECURITY_BUILTIN_DOMAIN_RID = (0x00000020);
-        const int SECURITY_WORLD_RID = (0x00000000);
-        const byte SECURITY_NT_AUTHORITY = 5;
-        const int DOMAIN_GROUP_RID_ADMINS = (0x00000200);
-        const int DOMAIN_ALIAS_RID_ADMINS = (0x00000220);
-
-        const int sizeofSECURITY_ATTRIBUTES = 12; // sizeof(SECURITY_ATTRIBUTES);
-        const int sizeofSECURITY_DESCRIPTOR = 20; // sizeof(SECURITY_DESCRIPTOR);
-        const int sizeofACCESS_ALLOWED_ACE = 12; // sizeof(ACCESS_ALLOWED_ACE);
-        const int sizeofACCESS_DENIED_ACE = 12; // sizeof(ACCESS_DENIED_ACE);
-        const int sizeofSID_IDENTIFIER_AUTHORITY = 6; // sizeof(SID_IDENTIFIER_AUTHORITY)
-        const int sizeofACL = 8; // sizeof(ACL);
-
-        private IntPtr CreateSD(ref IntPtr pDacl)
-        {
-            IntPtr pSecurityDescriptor = IntPtr.Zero;
-            IntPtr pUserSid = IntPtr.Zero;
-            IntPtr pAdminSid = IntPtr.Zero;
-            IntPtr pNtAuthority = IntPtr.Zero;
-            int cbAcl = 0;
-            bool status = false;
-
-            pNtAuthority = Marshal.AllocHGlobal(sizeofSID_IDENTIFIER_AUTHORITY);
-            if (pNtAuthority == IntPtr.Zero)
-                goto cleanup;
-            Marshal.WriteInt32(pNtAuthority, 0, 0);
-            Marshal.WriteByte(pNtAuthority, 4, 0);
-            Marshal.WriteByte(pNtAuthority, 5, SECURITY_NT_AUTHORITY);
-
-            status =
-            NativeMethods.AllocateAndInitializeSid(
-            pNtAuthority,
-            (byte)1,
-            SECURITY_AUTHENTICATED_USER_RID,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            ref pUserSid);
-
-            if (!status || pUserSid == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            status =
-            NativeMethods.AllocateAndInitializeSid(
-            pNtAuthority,
-            (byte)2,
-            SECURITY_BUILTIN_DOMAIN_RID,
-            DOMAIN_ALIAS_RID_ADMINS,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            ref pAdminSid);
-
-            if (!status || pAdminSid == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            status = false;
-            pSecurityDescriptor = Marshal.AllocHGlobal(sizeofSECURITY_DESCRIPTOR);
-            if (pSecurityDescriptor == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            for (int i = 0; i < sizeofSECURITY_DESCRIPTOR; i++)
-                Marshal.WriteByte(pSecurityDescriptor, i, (byte)0);
-            cbAcl = sizeofACL
-            + (2 * (sizeofACCESS_ALLOWED_ACE))
-            + sizeofACCESS_DENIED_ACE
-            + NativeMethods.GetLengthSid(pUserSid)
-            + NativeMethods.GetLengthSid(pAdminSid);
-
-            pDacl = Marshal.AllocHGlobal(cbAcl);
-            if (pDacl == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            // rights must be added in a certain order.  Namely, deny access first, then add access
-            if (NativeMethods.InitializeAcl(pDacl, cbAcl, ACL_REVISION))
-                if (NativeMethods.AddAccessDeniedAce(pDacl, ACL_REVISION, WRITE_DAC, pUserSid))
-                    if (NativeMethods.AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_READ, pUserSid))
-                        if (NativeMethods.AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, pAdminSid))
-                            if (NativeMethods.InitializeSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION))
-                                if (NativeMethods.SetSecurityDescriptorDacl(pSecurityDescriptor, true, pDacl, false))
-                                {
-                                    status = true;
-                                }
-
-                            cleanup:
-            if (pNtAuthority != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(pNtAuthority);
-            }
-            if (pAdminSid != IntPtr.Zero)
-                NativeMethods.FreeSid(pAdminSid);
-            if (pUserSid != IntPtr.Zero)
-                NativeMethods.FreeSid(pUserSid);
-            if (status)
-                return pSecurityDescriptor;
-            else
-            {
-                if (pSecurityDescriptor != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(pSecurityDescriptor);
-                }
-            }
-            return IntPtr.Zero;
-        }
-
-        // SxS: using file mapping API (CreateFileMapping)
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        bool ISQLDebug.SQLDebug(int dwpidDebugger, int dwpidDebuggee, [MarshalAs(UnmanagedType.LPStr)] string pszMachineName,
-        [MarshalAs(UnmanagedType.LPStr)] string pszSDIDLLName, int dwOption, int cbData, byte[] rgbData)
-        {
-            bool result = false;
-            IntPtr hFileMap = IntPtr.Zero;
-            IntPtr pMemMap = IntPtr.Zero;
-            IntPtr pSecurityDescriptor = IntPtr.Zero;
-            IntPtr pSecurityAttributes = IntPtr.Zero;
-            IntPtr pDacl = IntPtr.Zero;
-
-            // validate the structure
-            if (pszMachineName == null || pszSDIDLLName == null)
-            {
-                return false;
-            }
-
-            if (pszMachineName.Length > TdsEnums.SDCI_MAX_MACHINENAME ||
-                pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
-            {
-                return false;
-            }
-
-            // note that these are ansi strings
-            Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);
-            byte[] rgbMachineName = cp.GetBytes(pszMachineName);
-            byte[] rgbSDIDLLName = cp.GetBytes(pszSDIDLLName);
-
-            if (rgbData != null && cbData > TdsEnums.SDCI_MAX_DATA)
-            {
-                return false;
-            }
-
-            string mapFileName;
-
-            // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.s_isPlatformNT5)
-            {
-                mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
-            }
-            else
-            {
-                mapFileName = TdsEnums.SDCI_MAPFILENAME;
-            }
-
-            mapFileName = mapFileName + dwpidDebuggee.ToString(CultureInfo.InvariantCulture);
-
-            // Create Security Descriptor
-            pSecurityDescriptor = CreateSD(ref pDacl);
-            pSecurityAttributes = Marshal.AllocHGlobal(sizeofSECURITY_ATTRIBUTES);
-            if ((pSecurityDescriptor == IntPtr.Zero) || (pSecurityAttributes == IntPtr.Zero))
-                return false;
-
-            Marshal.WriteInt32(pSecurityAttributes, 0, sizeofSECURITY_ATTRIBUTES); // nLength = sizeof(SECURITY_ATTRIBUTES)
-            Marshal.WriteIntPtr(pSecurityAttributes, 4, pSecurityDescriptor); // lpSecurityDescriptor = pSecurityDescriptor
-            Marshal.WriteInt32(pSecurityAttributes, 8, 0); // bInheritHandle = FALSE
-            hFileMap = NativeMethods.CreateFileMappingA(
-            ADP.s_invalidPtr/*INVALID_HANDLE_VALUE*/,
-            pSecurityAttributes,
-            0x4/*PAGE_READWRITE*/,
-            0,
-            Marshal.SizeOf(typeof(MEMMAP)),
-            mapFileName);
-
-            if (IntPtr.Zero == hFileMap)
-            {
-                goto cleanup;
-            }
-
-
-            pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x6/*FILE_MAP_READ|FILE_MAP_WRITE*/, 0, 0, IntPtr.Zero);
-
-            if (IntPtr.Zero == pMemMap)
-            {
-                goto cleanup;
-            }
-
-            // copy data to memory-mapped file
-            // layout of MEMMAP structure is:
-            // uint dbgpid
-            // uint fOption
-            // byte[32] machineName
-            // byte[16] sdiDllName
-            // uint dbData
-            // byte[255] vData
-            int offset = 0;
-            Marshal.WriteInt32(pMemMap, offset, (int)dwpidDebugger);
-            offset += 4;
-            Marshal.WriteInt32(pMemMap, offset, (int)dwOption);
-            offset += 4;
-            Marshal.Copy(rgbMachineName, 0, ADP.IntPtrOffset(pMemMap, offset), rgbMachineName.Length);
-            offset += TdsEnums.SDCI_MAX_MACHINENAME;
-            Marshal.Copy(rgbSDIDLLName, 0, ADP.IntPtrOffset(pMemMap, offset), rgbSDIDLLName.Length);
-            offset += TdsEnums.SDCI_MAX_DLLNAME;
-            Marshal.WriteInt32(pMemMap, offset, (int)cbData);
-            offset += 4;
-            if (rgbData != null)
-            {
-                Marshal.Copy(rgbData, 0, ADP.IntPtrOffset(pMemMap, offset), (int)cbData);
-            }
-            NativeMethods.UnmapViewOfFile(pMemMap);
-            result = true;
-        cleanup:
-            if (result == false)
-            {
-                if (hFileMap != IntPtr.Zero)
-                    NativeMethods.CloseHandle(hFileMap);
-            }
-            if (pSecurityAttributes != IntPtr.Zero)
-                Marshal.FreeHGlobal(pSecurityAttributes);
-            if (pSecurityDescriptor != IntPtr.Zero)
-                Marshal.FreeHGlobal(pSecurityDescriptor);
-            if (pDacl != IntPtr.Zero)
-                Marshal.FreeHGlobal(pDacl);
-            return result;
-        }
-    }
-
-    // this is a private interface to com+ users
-    // do not change this guid
-    [
-    ComImport,
-    ComVisible(true),
-    Guid("6cb925bf-c3c0-45b3-9f44-5dd67c7b7fe8"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown),
-    BestFitMapping(false, ThrowOnUnmappableChar = true),
-    ]
-    interface ISQLDebug
-    {
-
-        [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-        bool SQLDebug(
-        int dwpidDebugger,
-        int dwpidDebuggee,
-        [MarshalAs(UnmanagedType.LPStr)] string pszMachineName,
-        [MarshalAs(UnmanagedType.LPStr)] string pszSDIDLLName,
-        int dwOption,
-        int cbData,
-        byte[] rgbData);
-    }
-
     sealed class SqlDebugContext : IDisposable
     {
         // context data
@@ -3442,12 +3100,12 @@ namespace Microsoft.Data.SqlClient
             }
             if (pMemMap != IntPtr.Zero)
             {
-                NativeMethods.UnmapViewOfFile(pMemMap);
+                Kernel32.UnmapViewOfFile(pMemMap);
                 pMemMap = IntPtr.Zero;
             }
             if (hMemMap != IntPtr.Zero)
             {
-                NativeMethods.CloseHandle(hMemMap);
+                Kernel32.CloseHandle(hMemMap);
                 hMemMap = IntPtr.Zero;
             }
             active = false;

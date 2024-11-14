@@ -94,6 +94,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
+        // JSON Coloumn type
+        public static readonly bool IsJsonSupported = false;
+
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname
         public static bool IsAzureSynapse
@@ -175,6 +178,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManagedIdentitySupported = c.ManagedIdentitySupported;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
+            IsJsonSupported = c.IsJsonSupported;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -586,6 +590,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
+        public static void CreateTable(SqlConnection sqlConnection, string tableName, string createBody)
+        {
+            DropTable(sqlConnection, tableName);
+            string tableCreate = "CREATE TABLE " + tableName + createBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = tableCreate;
+                command.ExecuteNonQuery();
+            }
+        }
+
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
             ResurrectConnection(sqlConnection);
@@ -951,6 +966,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             hostname = string.Empty;
             port = -1;
             instanceName = string.Empty;
+
+            // Remove leading and trailing spaces
+            dataSource = dataSource.Trim();
 
             if (dataSource.Contains(":"))
             {

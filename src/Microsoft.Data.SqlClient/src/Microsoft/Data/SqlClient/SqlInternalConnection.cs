@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
-#if NET6_0_OR_GREATER
+#if NET
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
         internal SqlCommand.ExecuteXmlReaderAsyncCallContext CachedCommandExecuteXmlReaderAsyncContext;
@@ -196,19 +196,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
+
+#if NETFRAMEWORK
 
         abstract internal bool Is2000
         {
             get;
         }
 
+
         abstract internal bool Is2005OrNewer
         {
             get;
         }
-
+#endif
         internal bool IsAzureSQLConnection
         {
             get
@@ -220,7 +222,6 @@ namespace Microsoft.Data.SqlClient
                 _isAzureSQLConnection = value;
             }
         }
-#endif
 
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {

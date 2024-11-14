@@ -139,12 +139,6 @@ namespace Microsoft.Data.SqlClient
         internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
-        private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
-
-        // Certificate auth calbacks.
-        ServerCertificateValidationCallback _serverCallback;
-        ClientCertificateRetrievalCallback _clientCallback;
-        SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
@@ -211,6 +205,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal SQLDNSInfo pendingSQLDNSObject = null;
+
+        // Json Support Flag
+        internal bool IsJsonSupportEnabled = false;
 
         // TCE flags
         internal byte _tceVersionSupported;
@@ -285,7 +282,7 @@ namespace Microsoft.Data.SqlClient
         private int _asyncCommandCount; // number of async Begins minus number of async Ends.
 
         // FOR SSE
-        private string _instanceName = String.Empty;
+        private string _instanceName = string.Empty;
 
         // FOR NOTIFICATIONS
         private DbConnectionPoolIdentity _identity; // Used to lookup info for notification matching Start().
@@ -394,11 +391,11 @@ namespace Microsoft.Data.SqlClient
         internal SyncAsyncLock _parserLock = new SyncAsyncLock();
         private int _threadIdOwningParserLock = -1;
 
-        private SqlConnectionTimeoutErrorInternal timeoutErrorInternal;
+        private SqlConnectionTimeoutErrorInternal _timeoutErrorInternal;
 
         internal SqlConnectionTimeoutErrorInternal TimeoutErrorInternal
         {
-            get { return timeoutErrorInternal; }
+            get { return _timeoutErrorInternal; }
         }
 
         // OTHER STATE VARIABLES AND REFERENCES
@@ -428,11 +425,8 @@ namespace Microsoft.Data.SqlClient
                 bool redirectedUserInstance,
                 SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
                 SessionData reconnectSessionData = null,
-                ServerCertificateValidationCallback serverCallback = null,
-                ClientCertificateRetrievalCallback clientCallback = null,
                 DbConnectionPool pool = null,
                 string accessToken = null,
-                SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
                 bool applyTransientFaultHandling = false,
                 Func<SqlAuthenticationParameters, CancellationToken,
                 Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
@@ -493,15 +487,10 @@ namespace Microsoft.Data.SqlClient
             _accessTokenCallback = accessTokenCallback;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
-
-            _serverCallback = serverCallback;
-            _clientCallback = clientCallback;
-            _originalNetworkAddressInfo = originalNetworkAddressInfo;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
-            Debug.Assert(credential == null || (String.IsNullOrEmpty(connectionOptions.UserID) && String.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
+            Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) && string.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
 
             Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity, "Cannot use SqlCredential and Integrated Security");
             Debug.Assert(credential == null || !connectionOptions.ContextConnection, "Cannot use SqlCredential with context connection");
@@ -514,7 +503,7 @@ namespace Microsoft.Data.SqlClient
                 _originalLanguage = connectionOptions.CurrentLanguage;
             }
 
-            timeoutErrorInternal = new SqlConnectionTimeoutErrorInternal();
+            _timeoutErrorInternal = new SqlConnectionTimeoutErrorInternal();
             _credential = credential;
 
             _parserLock.Wait(canReleaseFromAnyThread: false);
@@ -1173,7 +1162,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            string transactionName = name == null ? String.Empty : name;
+            string transactionName = name == null ? string.Empty : name;
 
             if (!_parser.Is2005OrNewer)
             {
@@ -1638,7 +1627,9 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
-            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo, encrypt);
+            requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+
+            _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
 
         private void LoginFailure()
@@ -1676,17 +1667,17 @@ namespace Microsoft.Data.SqlClient
                 failoverPartner = ConnectionOptions.FailoverPartner;
             }
 
-            timeoutErrorInternal.SetInternalSourceType(useFailoverPartner ? SqlConnectionInternalSourceType.Failover : SqlConnectionInternalSourceType.Principle);
+            _timeoutErrorInternal.SetInternalSourceType(useFailoverPartner ? SqlConnectionInternalSourceType.Failover : SqlConnectionInternalSourceType.Principle);
 
             bool hasFailoverPartner = !ADP.IsEmpty(failoverPartner);
 
             // Open the connection and Login
             try
             {
-                timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
+                _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
                 if (hasFailoverPartner)
                 {
-                    timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
+                    _timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
                     LoginWithFailover(
                                 useFailoverPartner,
                                 dataSource,
@@ -1700,9 +1691,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    timeoutErrorInternal.SetFailoverScenario(false); // not a failover scenario
-                    LoginNoFailover(dataSource, newPassword, newSecurePassword, redirectedUserInstance,
-                            connectionOptions, credential, timeout);
+                    _timeoutErrorInternal.SetFailoverScenario(false); // not a failover scenario
+                    LoginNoFailover(dataSource, 
+                            newPassword, 
+                            newSecurePassword, 
+                            redirectedUserInstance,
+                            connectionOptions, 
+                            credential, 
+                            timeout);
                 }
 
                 if (!IsAzureSQLConnection)
@@ -1710,7 +1706,7 @@ namespace Microsoft.Data.SqlClient
                     // If not a connection to Azure SQL, Readonly with FailoverPartner is not supported
                     if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
                     {
-                        if (!String.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
+                        if (!string.IsNullOrEmpty(ConnectionOptions.FailoverPartner))
                         {
                             throw SQL.ROR_FailoverNotSupportedConnString();
                         }
@@ -1719,11 +1715,9 @@ namespace Microsoft.Data.SqlClient
                         {
                             throw SQL.ROR_FailoverNotSupportedServer(this);
                         }
-
                     }
                 }
-
-                timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+                _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
             catch (Exception e)
             {
@@ -1734,7 +1728,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 throw;
             }
-            timeoutErrorInternal.SetAllCompleteMarker();
+            _timeoutErrorInternal.SetAllCompleteMarker();
 
 #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();
@@ -1846,7 +1840,7 @@ namespace Microsoft.Data.SqlClient
                     _parser.Disconnect();
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 try
                 {
@@ -1878,7 +1872,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
                         }
 
                         if (timeout.IsExpired)
@@ -1887,7 +1881,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         serverInfo = new ServerInfo(ConnectionOptions, _routingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
-                        timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = serverInfo.UserServerName;
 
@@ -1896,7 +1890,7 @@ namespace Microsoft.Data.SqlClient
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         _currentFailoverPartner = null;
-                        _instanceName = String.Empty;
+                        _instanceName = string.Empty;
 
                         routingAttempts++;
 
@@ -1944,10 +1938,10 @@ namespace Microsoft.Data.SqlClient
                     }
                     Debug.Assert(ConnectionOptions.ApplicationIntent != ApplicationIntent.ReadOnly, "FAILOVER+AppIntent=RO: Should already fail (at LOGSHIPNODE in OnEnvChange)");
 
-                    timeoutErrorInternal.ResetAndRestartPhase();
-                    timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
-                    timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
-                    timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
+                    _timeoutErrorInternal.ResetAndRestartPhase();
+                    _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
+                    _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
+                    _timeoutErrorInternal.SetFailoverScenario(true); // this is a failover scenario
                     LoginWithFailover(
                                 true,   // start by using failover partner, since we already failed to connect to the primary
                                 serverInfo,
@@ -2102,10 +2096,12 @@ namespace Microsoft.Data.SqlClient
                 // Re-allocate parser each time to make sure state is known
                 // RFC 50002652 - if parser was created by previous attempt, dispose it to properly close the socket, if created
                 if (_parser != null)
+                {
                     _parser.Disconnect();
+                }
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, String.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
 
                 ServerInfo currentServerInfo;
                 if (useFailoverHost)
@@ -2123,12 +2119,12 @@ namespace Microsoft.Data.SqlClient
                         failoverServerInfo.SetDerivedNames(protocol, ServerProvidedFailOverPartner);
                     }
                     currentServerInfo = failoverServerInfo;
-                    timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
+                    _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Failover);
                 }
                 else
                 {
                     currentServerInfo = primaryServerInfo;
-                    timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Principle);
+                    _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.Principle);
                 }
 
                 try
@@ -2147,20 +2143,22 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
                         }
                         routingAttempts++;
 
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", _routingInfo.ServerName);
 
                         if (_parser != null)
+                        {
                             _parser.Disconnect();
+                        }
 
                         _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                         currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
-                        timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
+                        _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = currentServerInfo.UserServerName;
 
@@ -2169,7 +2167,7 @@ namespace Microsoft.Data.SqlClient
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
                         CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
                         _currentFailoverPartner = null;
-                        _instanceName = String.Empty;
+                        _instanceName = string.Empty;
 
                         AttemptOneLogin(
                                 currentServerInfo,
@@ -2294,7 +2292,7 @@ namespace Microsoft.Data.SqlClient
         // Common code path for making one attempt to establish a connection and log in to server.
         private void AttemptOneLogin(ServerInfo serverInfo, string newPassword, SecureString newSecurePassword, TimeoutTimer timeout, bool withFailover = false, bool isFirstTransparentAttempt = true, bool disableTnir = false)
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
 
             _routingInfo = null; // forget routing information
 
@@ -2306,23 +2304,20 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions,
                             withFailover,
                             isFirstTransparentAttempt,
-                            _serverCallback,
-                            _clientCallback,
-                            _originalNetworkAddressInfo != null,
                             disableTnir);
 
-            timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
-            timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
+            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
             this.Login(serverInfo, timeout, newPassword, newSecurePassword, ConnectionOptions.Encrypt);
 
-            timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
-            timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
+            _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
 
             CompleteLogin(!ConnectionOptions.Pooling);
 
-            timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
+            _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
         }
 
 
@@ -2338,7 +2333,7 @@ namespace Microsoft.Data.SqlClient
         // PREPARED COMMAND METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        protected override object ObtainAdditionalLocksForClose()
+        protected override bool ObtainAdditionalLocksForClose()
         {
             bool obtainParserLock = !ThreadHasParserLockForClose;
             Debug.Assert(obtainParserLock || _parserLock.ThreadMayHaveLock(), "Thread claims to have lock, but lock is not taken");
@@ -2350,10 +2345,9 @@ namespace Microsoft.Data.SqlClient
             return obtainParserLock;
         }
 
-        protected override void ReleaseAdditionalLocksForClose(object lockToken)
+        protected override void ReleaseAdditionalLocksForClose(bool lockToken)
         {
-            Debug.Assert(lockToken is bool, "Lock token should be boolean");
-            if ((bool)lockToken)
+            if (lockToken)
             {
                 ThreadHasParserLockForClose = false;
                 _parserLock.Release();
@@ -2788,7 +2782,7 @@ namespace Microsoft.Data.SqlClient
             // Username to use in error messages.
             string username = null;
 
-            var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
+            SqlAuthenticationProvider authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
@@ -3236,6 +3230,24 @@ namespace Microsoft.Data.SqlClient
 
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
 
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_JSONSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for JSONSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte jsonSupportVersion = data[0];
+                        if (jsonSupportVersion == 0 || jsonSupportVersion > TdsEnums.MAX_SUPPORTED_JSON_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for JSONSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        IsJsonSupportEnabled = true;
                         break;
                     }
 

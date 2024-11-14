@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
+        public Table ColumnDecryptErrorTestTable { get; private set; }
         public Table SqlParameterPropertiesTable { get; private set; }
         public Table DateOnlyTestTable { get; private set; }
         public Table End2EndSmokeTable { get; private set; }
@@ -126,6 +127,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             BulkCopyAETestTable = new BulkCopyAETestTable(GenerateUniqueName("BulkCopyAETestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
             tables.Add(BulkCopyAETestTable);
+
+            ColumnDecryptErrorTestTable = new ColumnDecryptErrorTestTable(GenerateUniqueName("ColumnDecryptErrorTestTable"), columnEncryptionKeys[0], columnEncryptionKeys[1]);
+            tables.Add(ColumnDecryptErrorTestTable);
 
             SqlParameterPropertiesTable = new SqlParameterPropertiesTable(GenerateUniqueName("SqlParameterPropertiesTable"));
             tables.Add(SqlParameterPropertiesTable);

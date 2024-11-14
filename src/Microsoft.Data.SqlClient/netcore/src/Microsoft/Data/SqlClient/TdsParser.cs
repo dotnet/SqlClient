@@ -50,6 +50,16 @@ namespace Microsoft.Data.SqlClient
             internal static void Assert(string message)
             {
             }
+
+            [Conditional("NETFRAMEWORK")]
+            internal void Start()
+            {
+            }
+
+            [Conditional("NETFRAMEWORK")]
+            internal void Stop()
+            {
+            }
         }
 
         private static int _objectTypeCount; // EventSource counter
@@ -104,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlInternalTransaction _currentTransaction;
         private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
-
+        // SQLHOT 483
         //  need to hold on to the transaction id if distributed transaction merely rolls back without defecting.
         private long _retainedTransactionId = SqlInternalTransaction.NullTransactionId;
 
@@ -135,6 +145,7 @@ namespace Microsoft.Data.SqlClient
         private bool _is2022 = false;
 
         private byte[][] _sniSpnBuffer = null;
+        // UNDONE - need to have some for both instances - both command and default???
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
@@ -154,8 +165,15 @@ namespace Microsoft.Data.SqlClient
         // XML metadata substitute sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+        // JSON metadata substitute sequence
+        private static readonly byte[] s_jsonMetadataSubstituteSequence = { 0xa7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
+
+        // now data length is 1 byte
+        // First bit is 1 indicating client support failover partner with readonly intent
+        private static readonly byte[] s_featureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
@@ -361,7 +379,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (stateObj._attentionSent)
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParser.ProcessPendingAck | INFO | Connection Object Id {0}, State Obj Id {1}, Processing Attention.", _connHandler._objectID, stateObj.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.ProcessPendingAck | INFO | Connection Object Id {0}, State Obj Id {1}, Processing Attention.", _connHandler.ObjectID, stateObj.ObjectID);
                 ProcessAttention(stateObj);
             }
         }
@@ -405,7 +423,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler._objectID,
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
@@ -526,6 +544,7 @@ namespace Microsoft.Data.SqlClient
                 _encryptionOption = EncryptionOptions.NOT_SUP;
             }
 
+            // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
 
@@ -550,7 +569,6 @@ namespace Microsoft.Data.SqlClient
 
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
-
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
                     timeout, out instanceName,
@@ -631,7 +649,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
 
-            // create a new packet encryption changes the internal packet size
+            // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
         }
 
@@ -670,6 +688,9 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserStateObject GetSession(object owner)
         {
             TdsParserStateObject session = null;
+
+            // TODO: Ideally, we would not care what we do here -- the session pooler would know whether it should have either one (non-MARS) or many (MARS) sessions.
+
             if (MARSOn)
             {
                 session = _sessionPool.GetSession(owner);
@@ -747,6 +768,9 @@ namespace Microsoft.Data.SqlClient
             byte[] payload = new byte[(int)PreLoginOptions.NUMOPT * 5 + TdsEnums.MAX_PRELOGIN_PAYLOAD_LENGTH];
             int payloadLength = 0;
 
+            // UNDONE - need to do some length verification to ensure packet does not
+            // get too big!!!  Not beyond it's max length!
+            
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
                 int optionDataSize = 0;
@@ -923,7 +947,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // create a new packet encryption changes the internal packet size
+            // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
         }
 
@@ -936,7 +960,8 @@ namespace Microsoft.Data.SqlClient
             bool tlsFirst,
             string serverCert)
         {
-            marsCapable = _fMARS; // Assign default value
+            // Assign default values
+            marsCapable = _fMARS; 
             fedAuthRequired = false;
             bool is2005OrLater = false;
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
@@ -975,7 +1000,7 @@ namespace Microsoft.Data.SqlClient
             if (payload[0] == 0xaa)
             {
                 // If the first byte is 0xAA, we are connecting to a 6.5 or earlier server, which
-                // is not supported.
+                // is not supported.  SQL BU DT 296425
                 throw SQL.InvalidSQLServerVersionUnknown();
             }
 
@@ -1193,7 +1218,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 if (_physicalStateObj.HasOpenResult)
-                { // Need to decrement openResultCount for all pending operations.
+                { // SQL BU DT 383773 - need to decrement openResultCount for all pending operations.
                     _physicalStateObj.DecrementOpenResultCount();
                 }
             }
@@ -1349,6 +1374,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
                 {
+                    // DevDiv2 Bug 459546: With "MultiSubnetFailover=yes" in the Connection String, SQLClient incorrectly throws a Timeout using shorter time slice (3-4 seconds), not honoring the actual 'Connect Timeout'
+                    // http://vstfdevdiv:8080/DevDiv2/DevDiv/_workitems/edit/459546
                     // For Multisubnet Failover we slice the timeout to make reconnecting faster (with the assumption that the server will not failover instantaneously)
                     // However, when timeout occurs we need to not doom the internal connection and also to mark the TdsParser as closed such that the login will be will retried
                     breakConnection = false;
@@ -1534,8 +1561,8 @@ namespace Microsoft.Data.SqlClient
                         len -= iColon;
                         /*
                             The error message should come back in the following format: "TCP Provider: MESSAGE TEXT"
-                            If the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT
-                            If we get an error message with no message text, just return the entire message otherwise
+                            Fix Bug 370686, if the message is received on a Win9x OS, the error message will not contain MESSAGE TEXT
+                            per Bug: 269574.  If we get a errormessage with no message text, just return the entire message otherwise
                             return just the message text.
                         */
                         if (len > 0)
@@ -1774,14 +1801,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if NET6_0_OR_GREATER
             BinaryPrimitives.TryWriteInt32LittleEndian(buffer, value);
-#else
-            buffer[0] = (byte)(value & 0xff);
-            buffer[1] = (byte)((value >> 8) & 0xff);
-            buffer[2] = (byte)((value >> 16) & 0xff);
-            buffer[3] = (byte)((value >> 24) & 0xff);
-#endif
         }
 
         //
@@ -2127,7 +2147,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                     else if (error.Class < TdsEnums.FATAL_ERROR_CLASS)
                                     {
-                                        // Continue results processing for all non-fatal errors (<20)
+                                        // VSTFDEVDIV 479643: continue results processing for all non-fatal errors (<20)
 
                                         stateObj.AddError(error);
 
@@ -2139,7 +2159,7 @@ namespace Microsoft.Data.SqlClient
                                         // halt processing.
 
                                         if (dataStream != null)
-                                        {
+                                        { // Webdata 104560
                                             if (!dataStream.IsInitialized)
                                             {
                                                 runBehavior = RunBehavior.UntilDone;
@@ -2182,7 +2202,8 @@ namespace Microsoft.Data.SqlClient
                                 dataStream.BrowseModeInfoConsumed = true;
                             }
                             else
-                            { // no dataStream
+                            { 
+                                // no dataStream
                                 result = stateObj.TrySkipBytes(tokenLength);
                                 if (result != TdsOperationStatus.Done)
                                 {
@@ -2195,8 +2216,8 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLDONE:
                     case TdsEnums.SQLDONEPROC:
                     case TdsEnums.SQLDONEINPROC:
-                        {
-                            // RunBehavior can be modified
+                       {
+                            // RunBehavior can be modified - see SQL BU DT 269516 & 290090
                             result = TryProcessDone(cmdHandler, dataStream, ref runBehavior, stateObj);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -2279,6 +2300,7 @@ namespace Microsoft.Data.SqlClient
                                         case TdsEnums.ENV_DEFECTDTC:
                                         case TdsEnums.ENV_TRANSACTIONENDED:
                                         case TdsEnums.ENV_COMMITTRAN:
+                                            // SQLHOT 483
                                             //  Must clear the retain id if the server-side transaction ends by anything other
                                             //  than rollback.
                                             _retainedTransactionId = SqlInternalTransaction.NullTransactionId;
@@ -2313,6 +2335,7 @@ namespace Microsoft.Data.SqlClient
                                                 }
                                                 else
                                                 {
+                                                    // TODO: While not techically necessary at this point, we are not certain whether TransactionEnded indicates Committed, Aborted or Unknown - this is fine for now, but we should investigate.
                                                     _currentTransaction.Completed(TransactionState.Unknown);
                                                 }
                                                 _currentTransaction = null;
@@ -2474,6 +2497,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (bulkCopyHandler != null)
                             {
+                                // TODO: Consider improving Bulk Copy performance by avoiding boxing.
                                 result = TryProcessRow(stateObj._cleanupMetaData, bulkCopyHandler.CreateRowBuffer(), bulkCopyHandler.CreateIndexMap(), stateObj);
                                 if (result != TdsOperationStatus.Done)
                                 {
@@ -2608,22 +2632,25 @@ namespace Microsoft.Data.SqlClient
                             result = stateObj.TryStartNewRow(isNullCompressed: false);
                             if (result != TdsOperationStatus.Done)
                             {
+                                // altrows are not currently null compressed
                                 return result;
                             }
 
-                            // read will call run until dataReady. Must not read any data if ReturnImmediately set
+                            // read will call run until dataReady. Must not read any data if return immediately set
                             if (RunBehavior.ReturnImmediately != (RunBehavior.ReturnImmediately & runBehavior))
                             {
                                 ushort altRowId;
                                 result = stateObj.TryReadUInt16(out altRowId);
                                 if (result != TdsOperationStatus.Done)
                                 {
+                                    // get altRowId
                                     return result;
                                 }
 
                                 result = TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetaData(altRowId), stateObj);
                                 if (result != TdsOperationStatus.Done)
                                 {
+                                    // skip altRow
                                     return result;
                                 }
                             }
@@ -2802,6 +2829,8 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_LOCALEID:
+                        // UNDONE: this LCID may be incorrect for OEM code pages on 7.0
+                        // need a way to get lcid from code page
                         result = TryReadTwoStringFields(env, stateObj);
                         if (result != TdsOperationStatus.Done)
                         {
@@ -2941,6 +2970,7 @@ namespace Microsoft.Data.SqlClient
                         result = stateObj.TryReadInt32(out env._newLength);
                         if (result != TdsOperationStatus.Done)
                         {
+                            // new value has 4 byte length
                             return result;
                         }
                         // read new value with 4 byte length
@@ -3188,7 +3218,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (reader != null)
-                {
+                { // SQL BU DT 269516
                     if (!reader.IsInitialized)
                     {
                         run = RunBehavior.UntilDone;
@@ -3198,13 +3228,13 @@ namespace Microsoft.Data.SqlClient
 
             // Similar to above, only with a more severe error.  In this case, if we received
             // the done_srverror, this exception will be added to the collection regardless.
-            // The server will always break the connection in this case.
+            // MDAC #93896.  Also, per Ashwin, the server will always break the connection in this case.
             if ((TdsEnums.DONE_SRVERROR == (TdsEnums.DONE_SRVERROR & status)) && (RunBehavior.Clean != (RunBehavior.Clean & run)))
             {
                 stateObj.AddError(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.SevereError(), "", 0, exception: null, batchIndex: cmd?.GetCurrentBatchIndex() ?? -1));
 
                 if (reader != null)
-                {
+                { // SQL BU DT 269516
                     if (!reader.IsInitialized)
                     {
                         run = RunBehavior.UntilDone;
@@ -3817,7 +3847,7 @@ namespace Microsoft.Data.SqlClient
             // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
             // 0x71000001 -> 2000 SP1
             // 0x72xx0002 -> 2005 RTM
-
+            // information provided by S. Ashwin
             switch (majorMinor)
             {
                 case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
@@ -4094,7 +4124,8 @@ namespace Microsoft.Data.SqlClient
 
             string server;
 
-            // If the server field is not received use the locally cached value.
+            // MDAC bug #49307 - server sometimes does not send over server field! In those cases
+            // we will use our locally cached value.
             if (byteLen == 0)
             {
                 server = _server;
@@ -4344,10 +4375,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-
-                // UTF8 collation
+            
                 if (rec.collation.IsUTF8)
-                {
+                { // UTF8 collation
                     rec.encoding = Encoding.UTF8;
                 }
                 else
@@ -4602,10 +4632,10 @@ namespace Microsoft.Data.SqlClient
                 // were removed in Win2k and beyond, however Sql Server still supports them.
                 // In this case we will mask off the sort id (the leading 1). If that fails,
                 // or we have a culture id other than the cases below, we throw an error and
-                // throw away the rest of the results.
+                // throw away the rest of the results. For additional info, see MDAC 65963.
 
-                //  Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
-                //  This should be treated as an error and functionality switches into the following logic.
+                // SqlHot 50001398: Sometimes GetCultureInfo will return CodePage 0 instead of throwing.
+                // This should be treated as an error and functionality switches into the following logic.
                 if (!success || codePage == 0)
                 {
                     switch (cultureId)
@@ -5174,7 +5204,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && ((tdsType != TdsEnums.SQLJSON)))
             {
                 result = TryProcessCollation(stateObj, out col.collation);
                 if (result != TdsOperationStatus.Done)
@@ -5182,9 +5212,8 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                // UTF8 collation
                 if (col.collation.IsUTF8)
-                {
+                { // UTF8 collation
                     col.encoding = Encoding.UTF8;
                 }
                 else
@@ -5339,6 +5368,9 @@ namespace Microsoft.Data.SqlClient
             MultiPartTableName mpt;
             while (length > 0)
             {
+                // UNDONE: BUG(?) SQL 8.003 returns two tables sometimes
+                // (select orderid from orders where orderid < ?)
+                // need to investigate
                 TdsOperationStatus result = TryProcessOneTable(stateObj, ref length, out mpt);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -5516,7 +5548,7 @@ namespace Microsoft.Data.SqlClient
                     col.multiPartTableName = reader.TableNames[col.tableNum - 1];
                 }
 
-                // Expressions are readonly
+                // MDAC 60109: expressions are readonly
                 if (col.IsExpression)
                 {
                     col.Updatability = 0;
@@ -5820,6 +5852,10 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
+                case SqlDbTypeExtensions.Json:
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.Json);
+                    break;
+
                 default:
                     Debug.Fail("unknown null sqlType!" + md.type.ToString());
                     break;
@@ -5967,6 +6003,17 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                     value.SetToString(stringValue);
+                    break;
+
+                case TdsEnums.SQLJSON:
+                    encoding = Encoding.UTF8;
+                    string jsonStringValue;
+                    result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    value.SetToJson(jsonStringValue);
                     break;
 
                 case TdsEnums.SQLNCHAR:
@@ -6388,27 +6435,43 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (stateObj is not null)
                             {
-                                // call to decrypt column keys has failed. The data wont be decrypted.
-                                // Not setting the value to false, forces the driver to look for column value.
-                                // Packet received from Key Vault will throws invalid token header.
-                                if (stateObj.HasPendingData)
+                                // Throwing an exception here circumvents the normal pending data checks and cleanup processes,
+                                // so we need to ensure the appropriate state. Increment the _nextColumnDataToRead index because
+                                // we already read the encrypted column data; Otherwise we'll double count and attempt to drain a
+                                // corresponding number of bytes a second time. We don't want the rest of the pending data to
+                                // interfere with future operations, so we must drain it. Set HasPendingData to false to indicate
+                                // that we successfully drained the data.
+
+                                // The SqlDataReader also maintains a state called dataReady. We need to set that to false if we've
+                                // drained the data off the connection. Otherwise, a consumer that catches the exception may
+                                // continue to use the reader and will timeout waiting to read data that doesn't exist.
+
+                                // Order matters here. Must increment column before draining data.
+                                // Update state objects after draining data.
+
+
+
+                                if (stateObj._readerState != null)
                                 {
-                                    // Drain the pending data now if setting the HasPendingData to false.
-                                    // SqlDataReader.TryCloseInternal can not drain if HasPendingData = false.
-                                    DrainData(stateObj);
+                                    stateObj._readerState._nextColumnDataToRead++;
                                 }
+
+                                DrainData(stateObj);
+
+                                if (stateObj._readerState != null)
+                                {
+                                    stateObj._readerState._dataReady = false;
+                                }
+
                                 stateObj.HasPendingData = false;
+
                             }
                             throw SQL.ColumnDecryptionFailed(columnName, null, e);
                         }
                     }
                     else
                     {
-#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
-#endif
                     }
                     break;
 
@@ -6420,6 +6483,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNCHAR:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
+                case TdsEnums.SQLJSON:
                     result = TryReadSqlStringValue(value, tdsType, length, md.encoding, isPlp, stateObj);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -6724,11 +6788,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-#if NET8_0_OR_GREATER
                         value.SqlBinary = SqlBinary.WrapBytes(b);
-#else
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
-#endif
 
                         break;
                     }
@@ -7316,6 +7376,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
+        	// UNDONE: can I use SqlMoney.ToInt64()?
             int[] bits = decimal.GetBits(value.Value);
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
@@ -7617,11 +7678,7 @@ namespace Microsoft.Data.SqlClient
 
 
             Span<uint> data = stackalloc uint[4];
-#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
-#else
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
-#endif
             byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
@@ -7646,11 +7703,7 @@ namespace Microsoft.Data.SqlClient
                 stateObj.WriteByte(0);
 
             Span<uint> data = stackalloc uint[4];
-#if NET8_0_OR_GREATER
             d.WriteTdsValue(data);
-#else
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data[0], out data[1], out data[2], out data[3]);
-#endif
             WriteUnsignedInt(data[0], stateObj);
             WriteUnsignedInt(data[1], stateObj);
             WriteUnsignedInt(data[2], stateObj);
@@ -7922,6 +7975,8 @@ namespace Microsoft.Data.SqlClient
 
         internal int GetEncodingCharLength(string value, int numChars, int charOffset, Encoding encoding)
         {
+            // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
+            // UNDONE: (PERF) going through these steps twice when we write out a value?
             if (string.IsNullOrEmpty(value))
             {
                 return 0;
@@ -7957,6 +8012,7 @@ namespace Microsoft.Data.SqlClient
                              colmeta.tdsType == TdsEnums.SQLBIGVARCHAR ||
                              colmeta.tdsType == TdsEnums.SQLBIGVARBINARY ||
                              colmeta.tdsType == TdsEnums.SQLNVARCHAR ||
+                             colmeta.tdsType == TdsEnums.SQLJSON ||
                              // Large UDTs is WinFS-only
                              colmeta.tdsType == TdsEnums.SQLUDT,
                              "GetDataLength:Invalid streaming datatype");
@@ -8022,6 +8078,11 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(tokenLength == TdsEnums.SQL_USHORTVARMAXLEN, "Invalid token stream for xml datatype");
                     return TdsOperationStatus.Done;
                 }
+                else if (token == TdsEnums.SQLJSON)
+                {
+                    tokenLength = -1;
+                    return TdsOperationStatus.Done;
+                }
             }
 
             switch (token & TdsEnums.SQLLenMask)
@@ -8048,6 +8109,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (0 == (token & 0x0c))
                     {
+                        // UNDONE: This should be uint
                         return stateObj.TryReadInt32(out tokenLength);
                     }
                     else
@@ -8094,6 +8156,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                // UNDONE - should not be catching all exceptions!!!
                 if (!ADP.IsCatchableExceptionType(e))
                 {
                     throw;
@@ -8282,6 +8345,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(dataLen, _physicalStateObj);
                 _physicalStateObj.WriteByte(options);
 
+                // write workflow for FedAuthLibrary.MSAL
                 // write accessToken for FedAuthLibrary.SecurityToken
                 switch (fedAuthFeatureData.libraryType)
                 {
@@ -8355,6 +8419,24 @@ namespace Microsoft.Data.SqlClient
             return len; // size of data written
         }
 
+        internal int WriteAzureSQLSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = featureData
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
+
+                // Feature Data length
+                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+
+                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+            }
+
+            return len;
+        }
+
         internal int WriteDataClassificationFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
@@ -8383,6 +8465,7 @@ namespace Microsoft.Data.SqlClient
 
             return len;
         }
+
         internal int WriteUTF8SupportFeatureRequest(bool write /* if false just calculates the length */)
         {
             int len = 5; // 1byte = featureID, 4bytes = featureData length, sizeof(DWORD)
@@ -8406,6 +8489,24 @@ namespace Microsoft.Data.SqlClient
                 // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_SQLDNSCACHING);
                 WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+
+        internal int WriteJsonSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_JSONSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_JSON_VERSION);
             }
 
             return len;
@@ -8447,7 +8548,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 WriteInt(rec.packetSize, _physicalStateObj);
                 WriteInt(TdsEnums.CLIENT_PROG_VER, _physicalStateObj);
-                WriteInt(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), _physicalStateObj);
+                WriteInt(TdsParserStaticMethods.GetCurrentProcessIdForTdsLoginOnly(), _physicalStateObj); //MDAC 84718
                 WriteInt(0, _physicalStateObj); // connectionID is unused
 
                 // Log7Flags (DWORD)
@@ -8532,7 +8633,7 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(rec.hostName.Length, _physicalStateObj);
                 offset += rec.hostName.Length * 2;
 
-                // Only send user/password over if not fSSPI...  If both user/password and SSPI are in login
+                // Only send user/password over if not fSSPI or fed auth MSAL...  If both user/password and SSPI are in login
                 // rec, only SSPI is used.  Confirmed same behavior as in luxor.
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
@@ -8585,6 +8686,8 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(rec.database.Length, _physicalStateObj);
                 offset += rec.database.Length * 2;
 
+                // UNDONE: NIC address
+                // previously we declared the array and simply sent it over - byte[] of 0's
                 if (s_nicAddress == null)
                 {
                     s_nicAddress = TdsParserStaticMethods.GetNetworkPhysicalAddressForTdsLoginOnly();
@@ -8670,6 +8773,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                // UNDONE - should not be catching all exceptions!!!
                 if (ADP.IsCatchableExceptionType(e))
                 {
                     // be sure to wipe out our buffer if we started sending stuff
@@ -8708,6 +8812,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     length += WriteGlobalTransactionsFeatureRequest(write);
                 }
+                if ((requestedFeatures & TdsEnums.FeatureExtension.AzureSQLSupport) != 0)
+                {
+                    length += WriteAzureSQLSupportFeatureRequest(write);
+                }
                 if ((requestedFeatures & TdsEnums.FeatureExtension.DataClassification) != 0)
                 {
                     length += WriteDataClassificationFeatureRequest(write);
@@ -8720,6 +8828,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                 {
                     length += WriteSQLDNSCachingFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
+                {
+                    length += WriteJsonSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
@@ -8836,7 +8949,7 @@ namespace Microsoft.Data.SqlClient
                 return null;
             }
 
-            // Promote, Commit and Rollback requests for
+            // SQLBUDT #20010853 - Promote, Commit and Rollback requests for
             // delegated transactions often happen while there is an open result
             // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
@@ -8910,7 +9023,7 @@ namespace Microsoft.Data.SqlClient
                         // Only assign the passed in transaction if it is not equal to the current transaction.
                         // And, if it is not equal, the current actually should be null.  Anything else
                         // is a unexpected state.  The concern here is mainly for the mixed use of
-                        // T-SQL and API transactions.
+                        // T-SQL and API transactions.  See SQL BU DT 345300 for full details and repro.
 
                         // Expected states:
                         // 1) _pendingTransaction = null, _currentTransaction = null, non null transaction
@@ -9035,7 +9148,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e);
 
             if (stateObj.HasOpenResult)
-            { // Need to decrement openResultCount if operation failed.
+            { // SQL BU DT 383773 - need to decrement openResultCount if operation failed.
                 stateObj.DecrementOpenResultCount();
             }
 
@@ -9050,6 +9163,7 @@ namespace Microsoft.Data.SqlClient
                 bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
                 try
                 {
+                    // Dev11 Bug 385286 : ExecuteNonQueryAsync hangs when trying to write a parameter which generates ArgumentException and while handling that exception the server disconnects the connection
                     // Need to set this to true such that if we have an error sending\processing the attention, we won't deadlock ourselves
                     _connHandler.ThreadHasParserLockForClose = true;
 
@@ -9079,12 +9193,12 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.ConnectionLockedForBcpEvent();
             }
 
-            // Promote, Commit and Rollback requests for
+            // SQLBUDT #20010853 - Promote, Commit and Rollback requests for
             // delegated transactions often happen while there is an open result
             // set, so we need to handle them by using a different MARS session,
             // otherwise we'll write on the physical state objects while someone
             // else is using it.  When we don't have MARS enabled, we need to
-            // lock the physical state object to synchronize it's use at least
+            // lock the physical state object to synchronize its use at least
             // until we increment the open results count.  Once it's been
             // incremented the delegated transaction requests will fail, so they
             // won't stomp on anything.
@@ -9180,6 +9294,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                // UNDONE - should not be catching all exceptions!!!
                 if (!ADP.IsCatchableExceptionType(e))
                 {
                     throw;
@@ -9214,7 +9329,7 @@ namespace Microsoft.Data.SqlClient
                 _SqlRPC rpcext = null;
                 int tempLen;
 
-                // Promote, Commit and Rollback requests for
+                // SQLBUDT #20010853 - Promote, Commit and Rollback requests for
                 // delegated transactions often happen while there is an open result
                 // set, so we need to handle them by using a different MARS session,
                 // otherwise we'll write on the physical state objects while someone
@@ -9330,7 +9445,7 @@ namespace Microsoft.Data.SqlClient
                                 throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 
-                            // Validate parameters are not variable length without size and with null value.
+                            // Validate parameters are not variable length without size and with null value.  MDAC 66522
                             param.Validate(i, isCommandProc);
 
                             // type (parameter record stores the MetaType class which is a helper that encapsulates all the type information we need here)
@@ -9569,7 +9684,8 @@ namespace Microsoft.Data.SqlClient
                     mt.TDSType != TdsEnums.SQLXMLTYPE &&
                     mt.TDSType != TdsEnums.SQLIMAGE &&
                     mt.TDSType != TdsEnums.SQLTEXT &&
-                    mt.TDSType != TdsEnums.SQLNTEXT, "Type unsupported for encryption");
+                    mt.TDSType != TdsEnums.SQLNTEXT &&
+                    mt.TDSType != TdsEnums.SQLJSON, "Type unsupported for encryption");
 
                 byte[] serializedValue = null;
                 byte[] encryptedValue = null;
@@ -9682,7 +9798,7 @@ namespace Microsoft.Data.SqlClient
                     maxsize = (size > codePageByteSize) ? size : codePageByteSize;
                     if (maxsize == 0)
                     {
-                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types
+                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
                         if (mt.IsNCharType)
                             maxsize = 2;
                         else
@@ -9775,6 +9891,7 @@ namespace Microsoft.Data.SqlClient
 
                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
 
+                                    // UNDONE - re-org to use code below to write value!
                     if (!isNull)
                     {
                         WriteUnsignedLong((ulong)udtVal.Length, stateObj); // PLP length
@@ -9790,10 +9907,11 @@ namespace Microsoft.Data.SqlClient
                         WriteUnsignedLong(TdsEnums.SQL_PLP_NULL, stateObj); // PLP Null.
                     }
                     return null; // End of UDT - continue to next parameter.
+                                 // UNDONE - need to re-org not to continue at a later point in time.
                 }
                 else if (mt.IsPlp)
                 {
-                    if (mt.SqlDbType != SqlDbType.Xml)
+                    if (mt.SqlDbType != SqlDbType.Xml && mt.SqlDbType != SqlDbTypeExtensions.Json)
                         WriteShort(TdsEnums.SQL_USHORTVARMAXLEN, stateObj);
                 }
                 else if ((!mt.IsVarTime) && (mt.SqlDbType != SqlDbType.Date))
@@ -9833,53 +9951,56 @@ namespace Microsoft.Data.SqlClient
 
             // write out collation or xml metadata
 
-            if (_is2005 && (mt.SqlDbType == SqlDbType.Xml))
+            if ((mt.SqlDbType == SqlDbType.Xml || mt.SqlDbType == SqlDbTypeExtensions.Json))
             {
-                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
-                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
-                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
+                if (mt.SqlDbType == SqlDbType.Xml)
                 {
-                    stateObj.WriteByte(1);  //Schema present flag
-
-                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                        !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                        !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                     {
-                        tempLen = (param.XmlSchemaCollectionDatabase).Length;
-                        stateObj.WriteByte((byte)(tempLen));
-                        WriteString(param.XmlSchemaCollectionDatabase, tempLen, 0, stateObj);
+                        stateObj.WriteByte(1);   //Schema present flag
+
+                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
+                        {
+                            tempLen = (param.XmlSchemaCollectionDatabase).Length;
+                            stateObj.WriteByte((byte)(tempLen));
+                            WriteString(param.XmlSchemaCollectionDatabase, tempLen, 0, stateObj);
+                        }
+                        else
+                        {
+                            stateObj.WriteByte(0);       // No dbname
+                        }
+
+                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
+                        {
+                            tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
+                            stateObj.WriteByte((byte)(tempLen));
+                            WriteString(param.XmlSchemaCollectionOwningSchema, tempLen, 0, stateObj);
+                        }
+                        else
+                        {
+                            stateObj.WriteByte(0);      // no xml schema name
+                        }
+                        if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
+                        {
+                            tempLen = (param.XmlSchemaCollectionName).Length;
+                            WriteShort((short)(tempLen), stateObj);
+                            WriteString(param.XmlSchemaCollectionName, tempLen, 0, stateObj);
+                        }
+                        else
+                        {
+                            WriteShort(0, stateObj);       // No xml schema collection name
+                        }
+
                     }
                     else
                     {
-                        stateObj.WriteByte(0);       // No dbname
+                        stateObj.WriteByte(0);       // No schema
                     }
-
-                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
-                    {
-                        tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
-                        stateObj.WriteByte((byte)(tempLen));
-                        WriteString(param.XmlSchemaCollectionOwningSchema, tempLen, 0, stateObj);
-                    }
-                    else
-                    {
-                        stateObj.WriteByte(0);      // no xml schema name
-                    }
-
-                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
-                    {
-                        tempLen = (param.XmlSchemaCollectionName).Length;
-                        WriteShort((short)(tempLen), stateObj);
-                        WriteString(param.XmlSchemaCollectionName, tempLen, 0, stateObj);
-                    }
-                    else
-                    {
-                        WriteShort(0, stateObj);       // No xml schema collection name
-                    }
-                }
-                else
-                {
-                    stateObj.WriteByte(0);       // No schema
                 }
             }
-            else if (mt.IsCharType)
+            else if (mt.IsCharType && mt.SqlDbType != SqlDbTypeExtensions.Json)
             {
                 // if it is not supplied, simply write out our default collation, otherwise, write out the one attached to the parameter
                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
@@ -9950,7 +10071,6 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteEnclaveInfo(TdsParserStateObject stateObj, byte[] enclavePackage)
         {
-
             //If the server supports enclave computations, write enclave info.
             if (TceVersionSupported >= TdsEnums.MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT)
             {
@@ -10164,7 +10284,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Char:
                     stateObj.WriteByte(TdsEnums.SQLBIGCHAR);
                     WriteUnsignedShort(checked((ushort)(metaData.MaxLength)), stateObj);
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.DateTime:
@@ -10196,13 +10316,13 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.NChar:
                     stateObj.WriteByte(TdsEnums.SQLNCHAR);
                     WriteUnsignedShort(checked((ushort)(metaData.MaxLength * 2)), stateObj);
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.NText:
                     stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.NVarChar:
@@ -10215,7 +10335,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteUnsignedShort(checked((ushort)(metaData.MaxLength * 2)), stateObj);
                     }
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Real:
@@ -10241,7 +10361,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Text:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Timestamp:
@@ -10259,7 +10379,7 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.VarChar:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)metaData.MaxLength), stateObj);
-                    WriteUnsignedInt(_defaultCollation._info, stateObj);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
                     stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Variant:
@@ -10663,6 +10783,10 @@ namespace Microsoft.Data.SqlClient
 
                     WriteShort(flags, stateObj); // write the flags
 
+                    // todo:
+                    // for xml WriteTokenLength results in a no-op
+                    // discuss ...
+                    // xml datatype does not have token length in its metadata. So it should be a noop.
 
                     switch (md.type)
                     {
@@ -10673,6 +10797,7 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByte(md.scale);
                             break;
                         case SqlDbType.Xml:
+                            // TODO: This doesn't look right. Needs fixing.
                             stateObj.WriteByteArray(s_xmlMetadataSubstituteSequence, s_xmlMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbType.Udt:
@@ -10687,6 +10812,9 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.DateTimeOffset:
                             stateObj.WriteByte(md.tdsType);
                             stateObj.WriteByte(md.scale);
+                            break;
+                        case SqlDbTypeExtensions.Json:
+                            stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         default:
                             stateObj.WriteByte(md.tdsType);
@@ -10942,7 +11070,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             ccb = ((isSqlType) ? ((SqlString)value).Value.Length : ((string)value).Length) * 2;
                             break;
-
+                        case TdsEnums.SQLJSON:
+                            string strval = (isSqlType) ? ((SqlString)value).Value : (string)value;
+                            ccb = isSqlType ? strval.Length : strval.Length * 2;
+                            ccbStringBytes = Encoding.UTF8.GetByteCount(strval);
+                            break;
                         default:
                             ccb = metadata.length;
                             break;
@@ -10952,9 +11084,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     Debug.Assert(metatype.IsLong &&
                         ((metatype.SqlDbType == SqlDbType.VarBinary && value is StreamDataFeed) ||
-                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar) && value is TextDataFeed) ||
+                         ((metatype.SqlDbType == SqlDbType.VarChar || metatype.SqlDbType == SqlDbType.NVarChar || metatype.SqlDbType == SqlDbTypeExtensions.Json) && value is TextDataFeed) ||
                          (metatype.SqlDbType == SqlDbType.Xml && value is XmlDataFeed)),
-                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max), Xml data feed should only be assigned to XML(max)");
+                   "Stream data feed should only be assigned to VarBinary(max), Text data feed should only be assigned to [N]VarChar(max) or json, Xml data feed should only be assigned to XML(max)");
                 }
 
 
@@ -10976,6 +11108,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Xml:
                         case SqlDbType.Udt:
+                        case SqlDbTypeExtensions.Json:
                             // plp data
                             WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                             break;
@@ -11048,7 +11181,6 @@ namespace Microsoft.Data.SqlClient
         {
             // Function to send over additional payload header data for 2005 and beyond only.
             // We may need to update the mars header length if mars header is changed in the future
-
             WriteShort(TdsEnums.HEADERTYPE_MARS, stateObj);
 
             if (transaction != null && SqlInternalTransaction.NullTransactionId != transaction.TransactionId)
@@ -11102,7 +11234,7 @@ namespace Microsoft.Data.SqlClient
                 // SSBDeployment Length (ushort)
                 // SSBDeployment UnicodeStream (unicode text)
                 // Timeout (uint) -- optional
-                // Don't send timeout value if it is 0
+                // WEBDATA 102263: Don't send timeout value if it is 0
 
                 int headerLength = 4 + 2 + 2 + (callbackId.Length * 2) + 2 + (service.Length * 2);
                 if (timeout > 0)
@@ -11147,6 +11279,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(timeout, stateObj);
         }
 
+        // Write the trace header data, not including the trace header length
         private void WriteTraceHeaderData(TdsParserStateObject stateObj)
         {
             Debug.Assert(this.IncludeTraceHeader, "WriteTraceHeaderData can only be called on a 2012 or higher version server and bid trace with the control bit are on");
@@ -11240,6 +11373,8 @@ namespace Microsoft.Data.SqlClient
                         if (0 != (token & 0x80))
                             tokenLength = 2;
                         else if (0 == (token & 0x0c))
+
+                            // UNDONE: This should be uint
                             tokenLength = 4;
                         else
                             tokenLength = 1;
@@ -11454,10 +11589,18 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSON:
 
                     if (type.IsPlp)
                     {
-                        if (IsBOMNeeded(type, value))
+                        if (type.NullableType == TdsEnums.SQLJSON)
+                        {
+                            // TODO : Performance and BOM check. For more details see https://github.com/dotnet/SqlClient/issues/2852
+                            byte[] jsonAsBytes = Encoding.UTF8.GetBytes(value.ToString());
+                            WriteInt(jsonAsBytes.Length, stateObj);
+                            return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
+                        }
+                        else if (IsBOMNeeded(type, value))
                         {
                             WriteInt(actualLength + 2, stateObj);               // chunk length
                             WriteShort(TdsEnums.XMLUNICODEBOM, stateObj);
@@ -11848,7 +11991,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size)
+        private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size, bool useReadBlock)
         {
             Debug.Assert(encoding == null || !needBom);
             char[] inBuff = ArrayPool<char>.Shared.Rent(constTextBufferSize);
@@ -11876,11 +12019,25 @@ namespace Microsoft.Data.SqlClient
 
                     if (_asyncWrite)
                     {
-                        nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        if (useReadBlock)
+                        {
+                            nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            nRead = await feed._source.ReadAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
                     }
                     else
                     {
-                        nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        if (useReadBlock)
+                        {
+                            nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        }
+                        else
+                        {
+                            nRead = feed._source.Read(inBuff, 0, constTextBufferSize);
+                        }
                     }
 
                     if (nRead == 0)
@@ -12081,7 +12238,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize));
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, _defaultEncoding, false, stateObj, paramSize, true));
                             }
                         }
                         else
@@ -12104,6 +12261,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
+                case TdsEnums.SQLJSON: 
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");
@@ -12118,14 +12276,23 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, null, IsBOMNeeded(type, value), stateObj, paramSize));
+                                Encoding encoding = type.NullableType == TdsEnums.SQLJSON ? new UTF8Encoding() : null;
+                                bool useReadBlock = type.NullableType == TdsEnums.SQLJSON ? false : true;
+                                return NullIfCompletedWriteTask(WriteTextFeed(tdf, encoding, IsBOMNeeded(type, value), stateObj, paramSize, useReadBlock));
                             }
                         }
                         else
                         {
                             if (type.IsPlp)
                             {
-                                if (IsBOMNeeded(type, value))
+                                if (type.NullableType == TdsEnums.SQLJSON)
+                                {
+                                    // TODO : Performance and BOM check. Saurabh 
+                                    byte[] jsonAsBytes = Encoding.UTF8.GetBytes((string)value);
+                                    WriteInt(jsonAsBytes.Length, stateObj);
+                                    return stateObj.WriteByteArray(jsonAsBytes, jsonAsBytes.Length, 0, canAccumulate: false);
+                                }
+                                else if (IsBOMNeeded(type, value))
                                 {
                                     WriteInt(actualLength + 2, stateObj);               // chunk length
                                     WriteShort(TdsEnums.XMLUNICODEBOM, stateObj);
@@ -12631,7 +12798,7 @@ namespace Microsoft.Data.SqlClient
                         WriteInt(unchecked((int)TdsEnums.VARLONGNULL), stateObj);
                     }
                 }
-                else if (type.NullableType == TdsEnums.SQLXMLTYPE || unknownLength)
+                else if (type.NullableType is TdsEnums.SQLXMLTYPE or TdsEnums.SQLJSON || unknownLength)
                 {
                     WriteUnsignedLong(TdsEnums.SQL_PLP_UNKNOWNLEN, stateObj);
                 }

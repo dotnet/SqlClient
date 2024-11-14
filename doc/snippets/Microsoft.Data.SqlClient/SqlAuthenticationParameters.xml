@@ -1,55 +1,59 @@
-<docs>
-    <members name="SqlAuthenticationParameters">
-        <SqlAuthenticationParameters>
-            <summary>Represents AD authentication parameters passed by a driver to authentication providers.</summary>
-        </SqlAuthenticationParameters>
-        <ctor>
-            <param name="authenticationMethod">One of the enumeration values that specifies the authentication method.</param>
-            <param name="serverName">The server name.</param>
-            <param name="databaseName">The database name.</param>
-            <param name="resource">The resource URI.</param>
-            <param name="authority">The authority URI.</param>
-            <param name="userId">The user login name/ID.</param>
-            <param name="password">The user password.</param>
-            <param name="connectionId">The connection ID.</param>
-            <param name="connectionTimeout">The connection timeout value in seconds.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password, connection ID and connection timeout value.</summary>
-        </ctor>
-        <AuthenticationMethod>
-            <summary>Gets the authentication method.</summary>
-            <value>The authentication method.</value>
-        </AuthenticationMethod>
-        <Resource>
-            <summary>The resource URIs.</summary>
-            <value>The resource URI.</value>
-        </Resource>
-        <Authority>
-            <summary>Gets the authority URI.</summary>
-            <value>The authority URI.</value>
-        </Authority>
-        <UserId>
-            <summary>Gets the user login name/ID.</summary>
-            <value>The user login name/ID.</value>
-        </UserId>
-        <Password>
-            <summary>Gets the user password.</summary>
-            <value>The user password.</value>
-        </Password>
-        <ConnectionId>
-            <summary>Gets the connection ID.</summary>
-            <value>The connection ID.</value>
-        </ConnectionId>
-        <ServerName>
-            <summary>Gets the server name.</summary>
-            <value>The server name.</value>
-        </ServerName>
-        <DatabaseName>
-            <summary>Gets the database name.</summary>
-            <value>The database name.</value>
-        </DatabaseName>
-        <ConnectionTimeout>
-            <summary>Gets the connection timeout value.</summary>
-            <value>The connection timeout value to be passed to Cancellation Token Source.</value>
-        </ConnectionTimeout>
-    </members>
+﻿<docs>
+  <members name="SqlAuthenticationParameters">
+    <SqlAuthenticationParameters>
+      <summary>
+        Represents AD authentication parameters passed by a driver to authentication providers.
+      </summary>
+    </SqlAuthenticationParameters>
+    <ctor>
+      <param name="authenticationMethod">One of the enumeration values that specifies the authentication method.</param>
+      <param name="serverName">The server name.</param>
+      <param name="databaseName">The database name.</param>
+      <param name="resource">The resource URI.</param>
+      <param name="authority">The authority URI.</param>
+      <param name="userId">The user login name/ID.</param>
+      <param name="password">The user password.</param>
+      <param name="connectionId">The connection ID.</param>
+      <param name="connectionTimeout">The connection timeout value in seconds.</param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password, connection ID and connection timeout value.
+      </summary>
+    </ctor>
+    <AuthenticationMethod>
+      <summary>Gets the authentication method.</summary>
+      <value>The authentication method.</value>
+    </AuthenticationMethod>
+    <Resource>
+      <summary>The resource URIs.</summary>
+      <value>The resource URI.</value>
+    </Resource>
+    <Authority>
+      <summary>Gets the authority URI.</summary>
+      <value>The authority URI.</value>
+    </Authority>
+    <UserId>
+      <summary>Gets the user login name/ID.</summary>
+      <value>The user login name/ID.</value>
+    </UserId>
+    <Password>
+      <summary>Gets the user password.</summary>
+      <value>The user password.</value>
+    </Password>
+    <ConnectionId>
+      <summary>Gets the connection ID.</summary>
+      <value>The connection ID.</value>
+    </ConnectionId>
+    <ServerName>
+      <summary>Gets the server name.</summary>
+      <value>The server name.</value>
+    </ServerName>
+    <DatabaseName>
+      <summary>Gets the database name.</summary>
+      <value>The database name.</value>
+    </DatabaseName>
+    <ConnectionTimeout>
+      <summary>Gets the connection timeout value.</summary>
+      <value>The connection timeout value to be passed to Cancellation Token Source.</value>
+    </ConnectionTimeout>
+  </members>
 </docs>

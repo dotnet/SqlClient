@@ -2,7 +2,7 @@
 
 :: Default target frameworks
 set netfxVersion=net462
-set netcoreVersion=net6.0
+set netcoreVersion=net8.0
 
 :: Accept two parameters for .NET Framework and .NET versions.
 :: Examples: 
@@ -28,7 +28,6 @@ call :pauseOnError msbuild -t:Clean
 
 echo Building .NET Framework %netfxVersion% Tests ...
 call :pauseOnError msbuild -p:Configuration="Release"
-call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetStAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetFx
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetFx -p:TargetNetFxVersion=%netfxVersion%
 
@@ -40,7 +39,6 @@ echo Building .NET %netcoreVersion% Tests ...
 call pause
 call :pauseOnError msbuild -t:Clean
 call :pauseOnError msbuild -p:Configuration="Release"
-call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetStAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildAKVNetCoreAllOS
 call :pauseOnError msbuild -p:Configuration="Release" -t:BuildTestsNetCore -p:TargetNetCoreVersion=%netcoreVersion%
 

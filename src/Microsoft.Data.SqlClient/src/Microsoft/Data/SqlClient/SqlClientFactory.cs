@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
             return SqlDataSourceEnumerator.Instance;
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch => true;
 

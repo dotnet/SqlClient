@@ -7,18 +7,22 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+
+#if NETFRAMEWORK
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using Interop.Windows.Kernel32;
+#else
+using System.Net.Sockets;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -60,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-#if NET6_0_OR_GREATER
+#if NET
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
                     onSuccess: static (object state) =>
@@ -128,7 +132,7 @@ namespace Microsoft.Data.SqlClient
             Action onSuccess,
             Action<Exception> onFailure = null,
             Action onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, Exception> exceptionConverter = null,
@@ -273,7 +277,7 @@ namespace Microsoft.Data.SqlClient
             Action<object> onSuccess,
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
-#if NET6_0_OR_GREATER
+#if NET
             Func<Exception, Exception> exceptionConverter = null
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
@@ -440,7 +444,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
         {
             if (timeout > 0)
@@ -987,6 +991,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception JsonDocumentNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_JsonDocumentNotSupportedOnColumnType, columnName));
+        }
+
         internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
@@ -1364,7 +1373,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.
-#if NET6_0_OR_GREATER
+#if NET
                 SQL_UnsupportedSysTxVersion));
 #else
                 GT_UnsupportedSysTxVersion));
@@ -1444,10 +1453,10 @@ namespace Microsoft.Data.SqlClient
             return exc;
         }
 
-        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection)
+        internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection, int maxNumberOfRedirectRoute)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported, maxNumberOfRedirectRoute)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection, innerException: null, batchCommand: null);
             exc._doNotReconnect = true;
             return exc;
@@ -2423,6 +2432,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsInUse));
         }
+        static internal Exception ContextConnectionIsUnsupported()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextConnectionIsUnsupported));
+        }
         static internal Exception ContextUnavailableOutOfProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ContextUnavailableOutOfProc));
@@ -2507,10 +2520,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NET6_0_OR_GREATER
+#if NET
         internal static Exception SocketDidNotThrow()
         {
-            return new InternalException(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
+            return new Exception(StringsHelper.GetString(Strings.SQL_SocketDidNotThrow, nameof(SocketException), nameof(SocketError.WouldBlock)));
         }
 #else
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
@@ -2691,7 +2704,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        ///  Escape a string to be used inside TSQL literal, such as N'somename' or 'somename'
+        ///  Escape a string to be used inside TSQL literal, such as N'some-name' or 'some-name'
         /// </summary>
         internal static string EscapeStringAsLiteral(string input)
         {
@@ -2771,54 +2784,10 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-#if NETFRAMEWORK
-    sealed internal class InOutOfProcHelper
+    internal static class InOutOfProcHelper
     {
-        private static readonly InOutOfProcHelper SingletonInstance = new InOutOfProcHelper();
-
-        private bool _inProc = false;
-
-        // InOutOfProcHelper detects whether it's running inside the server or not.  It does this
-        //  by checking for the existence of a well-known function export on the current process.
-        //  Note that calling conventions, etc. do not matter -- we'll never call the function, so
-        //  only the name match or lack thereof matter.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        private InOutOfProcHelper()
-        {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // SafeNativeMethods.GetModuleHandle calls into kernel32.dll, so return early to avoid
-                // a System.EntryPointNotFoundException on non-Windows platforms, e.g. Mono.
-                return;
-            }
-            // Don't need to close this handle...
-            // SxS: we use this method to check if we are running inside the SQL Server process. This call should be safe in SxS environment.
-            IntPtr handle = Common.SafeNativeMethods.GetModuleHandle(null);
-            if (IntPtr.Zero != handle)
-            {
-                // SQLBU 359301: Currently, the server exports different names for x86 vs. AMD64 and IA64.  Supporting both names
-                //  for now gives the server time to unify names across platforms without breaking currently-working ones.
-                //  We can remove the obsolete name once the server is changed.
-                if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "_______SQL______Process______Available@0"))
-                {
-                    _inProc = true;
-                }
-                else if (IntPtr.Zero != Common.SafeNativeMethods.GetProcAddress(handle, "______SQL______Process______Available"))
-                {
-                    _inProc = true;
-                }
-            }
-        }
-
         internal static bool InProc
-        {
-            get
-            {
-                return SingletonInstance._inProc;
-            }
-        }
+            => false;
     }
-#endif
 }
 

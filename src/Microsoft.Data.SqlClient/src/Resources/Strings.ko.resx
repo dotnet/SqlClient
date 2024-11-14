@@ -411,7 +411,7 @@
   <data name="DataCategory_Replication" xml:space="preserve">
     <value>복제</value>
   </data>
-  <data name="DataCategory_ConnectionResilency" xml:space="preserve">
+  <data name="DataCategory_ConnectionResiliency" xml:space="preserve">
     <value>연결 복구</value>
   </data>
   <data name="ExtendedPropertiesDescr" xml:space="preserve">
@@ -771,8 +771,8 @@
   <data name="Xml_IsDataSetAttributeMissingInSchema" xml:space="preserve">
     <value>IsDataSet 특성이 입력 Schema에 없습니다.</value>
   </data>
-  <data name="Xml_TooManyIsDataSetAtributeInSchema" xml:space="preserve">
-    <value>DataSet 요소를 확인할 수 없습니다. IsDataSet 특성이 둘 이상 있습니다.</value>
+  <data name="Xml_TooManyIsDataSetAttributeInSchema" xml:space="preserve">
+    <value>DataSet 요소를 확인할 수 없습니다. IsDataSet 속성이 두 개 이상 있습니다.</value>
   </data>
   <data name="Xml_DynamicWithoutXmlSerializable" xml:space="preserve">
     <value>데이터 세트은 IDynamicMetaObjectProvider를 구현하면서 IXmlSerializable은 구현하지 않는 형식을 직렬화하지 않습니다.</value>
@@ -813,11 +813,11 @@
   <data name="Expr_UnknownToken1" xml:space="preserve">
     <value>{0}이(가) 필요한데 {2} 위치의 실제 토큰은 {1}입니다.</value>
   </data>
-  <data name="Expr_DatatypeConvertion" xml:space="preserve">
+  <data name="Expr_DatatypeConversion" xml:space="preserve">
     <value>{0}에서 {1}(으)로 변환할 수 없습니다.</value>
   </data>
-  <data name="Expr_DatavalueConvertion" xml:space="preserve">
-    <value>'{0}' 값을 {1} 형식으로 변환할 수 없습니다.</value>
+  <data name="Expr_DatavalueConversion" xml:space="preserve">
+    <value>'{0}' 값을 '{1}' 형식으로 변환할 수 없습니다.</value>
   </data>
   <data name="Expr_InvalidName" xml:space="preserve">
     <value>열 이름[{0}]이 잘못되었습니다.</value>
@@ -879,8 +879,8 @@
   <data name="Expr_ComputeNotAggregate" xml:space="preserve">
     <value>계산할 수 없습니다. '{0}' 식은 집계식이 아닙니다.</value>
   </data>
-  <data name="Expr_FilterConvertion" xml:space="preserve">
-    <value>'{0}' 필터 식은 Boolean 형식으로 계산되지 않습니다.</value>
+  <data name="Expr_FilterConversion" xml:space="preserve">
+    <value>'{0}' 필터 식은 부울 형식으로 계산되지 않습니다.</value>
   </data>
   <data name="Expr_InvalidType" xml:space="preserve">
     <value>형식 이름 '{0}'이(가) 잘못되었습니다.</value>
@@ -1113,7 +1113,7 @@
   <data name="DataColumn_SetAddedAndModifiedCalledOnNonUnchanged" xml:space="preserve">
     <value>SetAdded 및 SetModified는 DataRowState가 Unchanged인 DataRows에서만 호출할 수 있습니다.</value>
   </data>
-  <data name="DataColumn_OrdinalExceedMaximun" xml:space="preserve">
+  <data name="DataColumn_OrdinalExceedMaximum" xml:space="preserve">
     <value>서수 '{0}'이(가) 최대 수를 초과합니다.</value>
   </data>
   <data name="DataColumn_NullableTypesNotSupported" xml:space="preserve">
@@ -1464,8 +1464,8 @@
   <data name="DataMerge_PrimaryKeyColumnsMismatch" xml:space="preserve">
     <value>PrimaryKey의 열이 일치하지 않습니다 : &lt;target&gt;.{0} 및 &lt;source&gt;.{1}.</value>
   </data>
-  <data name="DataMerge_ReltionKeyColumnsMismatch" xml:space="preserve">
-    <value>해당 키에 일치하지 않는 열이 있으므로 Relation {0}을(를) 병합할 수 없습니다.</value>
+  <data name="DataMerge_RelationKeyColumnsMismatch" xml:space="preserve">
+    <value>해당 키에 일치하지 않는 열이 있으므로 관계 {0}을(를) 병합할 수 없습니다.</value>
   </data>
   <data name="DataMerge_MissingColumnDefinition" xml:space="preserve">
     <value>{0} 대상 테이블에 {1} 열의 정의가 없습니다.</value>
@@ -1650,8 +1650,8 @@
   <data name="RbTree_EnumerationBroken" xml:space="preserve">
     <value>컬렉션이 수정되었습니다. 열거 작업이 실행되지 않았을 수 있습니다.</value>
   </data>
-  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration" xml:space="preserve">
-    <value>단순 유형 '{0}'이(가) 다른 '{1}'(으)로 이미 선언되었습니다.</value>
+  <data name="NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration" xml:space="preserve">
+    <value>단순 형식 '{0}'이(가) 다른 '{1}'(으)로 이미 선언되었습니다.</value>
   </data>
   <data name="DataDom_Foliation" xml:space="preserve">
     <value>foliation이 잘못되었습니다.</value>
@@ -1710,7 +1710,7 @@
   <data name="StrongTyping_CannotRemoveColumn" xml:space="preserve">
     <value>이 열은 현재 dataSet에 내장되어 있으므로 제거할 수 없습니다.</value>
   </data>
-  <data name="StrongTyping_CananotRemoveRelation" xml:space="preserve">
+  <data name="StrongTyping_CannotRemoveRelation" xml:space="preserve">
     <value>이 관계는 현재 dataSet에 내장되어 있으므로 제거할 수 없습니다.</value>
   </data>
   <data name="propertyChangedEventDescr" xml:space="preserve">
@@ -1719,7 +1719,7 @@
   <data name="collectionChangedEventDescr" xml:space="preserve">
     <value>이 컬렉션의 멤버가 변경될 때마다 발생합니다.</value>
   </data>
-  <data name="StrongTyping_CananotAccessDBNull" xml:space="preserve">
+  <data name="StrongTyping_CannotAccessDBNull" xml:space="preserve">
     <value>값이 DBNull이므로 가져올 수 없습니다.</value>
   </data>
   <data name="ADP_PropertyNotSupported" xml:space="preserve">
@@ -1914,7 +1914,7 @@
   <data name="ADP_ConnectionRequired_Clone" xml:space="preserve">
     <value>업데이트하려면 명령 복제에서 연결 개체를 사용해야 합니다. 명령 복제의 Connection 속성이 초기화되지 않았습니다.</value>
   </data>
-  <data name="ADP_ConnecitonRequired_UpdateRows" xml:space="preserve">
+  <data name="ADP_ConnectionRequired_UpdateRows" xml:space="preserve">
     <value>업데이트하려면 연결이 필요합니다.</value>
   </data>
   <data name="ADP_OpenConnectionRequired_Insert" xml:space="preserve">
@@ -2883,6 +2883,9 @@
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
     <value>컨텍스트 연결은 Type System Version=SQL Server 2000을 지원하지 않습니다.</value>
   </data>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Microsoft.Data.SqlClient를 사용하여 컨텍스트 연결에 연결할 수 없습니다.</value>
+  </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>컨텍스트 연결이 이미 사용 중입니다.</value>
   </data>
@@ -3618,8 +3621,8 @@
   <data name="SqlUdtReason_NonSerializableField" xml:space="preserve">
     <value>필드 '{0}'이(가) serialize되지 않은 것으로 표시되어 있습니다.</value>
   </data>
-  <data name="SqlUdtReason_NativeFormatExplictLayoutNotAllowed" xml:space="preserve">
-    <value>필드 '{0}'의 유형이 Native 형식에서 허용되지 않는 명시적 레이아웃으로 표시되어 있습니다.</value>
+  <data name="SqlUdtReason_NativeFormatExplicitLayoutNotAllowed" xml:space="preserve">
+    <value>필드 {0}의 유형이 네이티브 형식에서 허용되지 않는 명시적 레이아웃으로 표시되어 있습니다.</value>
   </data>
   <data name="SqlUdtReason_MultivaluedAssemblyId" xml:space="preserve">
     <value>값이 여러 개인 어셈블리 참조에는 0이 아닌 어셈블리 ID가 있어야 합니다.</value>
@@ -3945,7 +3948,7 @@
   <data name="Snix_Connect" xml:space="preserve">
     <value>SQL Server에 연결을 설정하는 중에 네트워크 관련 또는 인스턴스 관련 오류가 발생했습니다. 서버를 찾을 수 없거나 액세스할 수 없습니다. 인스턴스 이름이 올바르고 SQL Server가 원격 연결을 허용하도록 구성되어 있는지 확인하십시오.</value>
   </data>
-  <data name="Snix_PreLoginBeforeSuccessfullWrite" xml:space="preserve">
+  <data name="Snix_PreLoginBeforeSuccessfulWrite" xml:space="preserve">
     <value>로그인하기 전에 연결을 초기화하는 동안 오류가 발생하여 클라이언트에서 서버에 연결하지 못했습니다. 지원되지 않는 버전의 SQL Server를 연결하려고 했거나 서버가 사용 중이어서 새로운 연결을 허용하지 않았거나 서버의 리소스 제한(메모리 또는 최대 허용 연결 수) 때문에 이러한 문제가 발생할 수 있습니다.</value>
   </data>
   <data name="Snix_PreLogin" xml:space="preserve">
@@ -4399,7 +4402,7 @@
     <value>SQL Server 이름과 해당하는 신뢰할 수 있는 열 마스터 키 경로가 포함된 사전 개체입니다.</value>
   </data>
   <data name="SQLROR_RecursiveRoutingNotSupported" xml:space="preserve">
-    <value>둘 이상의 리디렉션이 발생했습니다. 로그인당 하나의 리디렉션만 허용됩니다.</value>
+    <value>리디렉션이 너무 많이 발생했습니다. 로그인당{0}번의 리디렉션만 허용됩니다.</value>
   </data>
   <data name="SQLROR_FailoverNotSupported" xml:space="preserve">
     <value>ApplicationIntent ReadOnly 연결 옵션을 사용하여 미러된 SQL Server 인스턴스에 연결할 수 없습니다.</value>
@@ -4425,7 +4428,7 @@
   <data name="SQLCR_EncryptionChanged" xml:space="preserve">
     <value>복구를 시도하는 동안 서버에서 SSL 암호화를 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
-  <data name="SQLCR_TDSVestionNotPreserved" xml:space="preserve">
+  <data name="SQLCR_TDSVersionNotPreserved" xml:space="preserve">
     <value>복구를 시도하는 동안 서버에서 요청된 정확한 클라이언트 TDS 버전을 유지하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
   <data name="SQLCR_AllAttemptsFailed" xml:space="preserve">
@@ -4739,5 +4742,8 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>서버에서 제공하는 인증서가 ServerCertificate 옵션에서 제공하는 인증서와 일치하지 않습니다.</value>
+  </data>
+  <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
+    <value>열 '{0}'의 JsonDocument를 가져오려는 시도가 잘못되었습니다. JsonDocument는 json 형식의 열에 대해서만 지원됩니다.</value>
   </data>
 </root>

@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
         // => ECDiffieHellmanPublicKey.ToByteArray() is not supported in Unix
         internal static byte[] GetECDiffieHellmanPublicKeyBlob(ECDiffieHellman ecDiffieHellman)
         {
-#if NET6_0_OR_GREATER	
+#if NET
             byte[] keyBlob = new byte[ECCPublicKeyBlob.Size];
 
             // Set magic number
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static RSA CreateRSAFromPublicKeyBlob(byte[] keyBlob)
         {
-#if NET6_0_OR_GREATER	
+#if NET	
             Debug.Assert(keyBlob.Length == RSAPublicKeyBlob.Size, $"RSA public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {RSAPublicKeyBlob.Size}");
 
             byte[] exponent = new byte[RSAPublicKeyBlob.ExponentSize];
@@ -102,12 +102,12 @@ namespace Microsoft.Data.SqlClient
 #else
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new RSACng(key);
-#endif	    
+#endif
         }
 
         internal static ECDiffieHellman CreateECDiffieHellmanFromPublicKeyBlob(byte[] keyBlob)
         {
-#if NET6_0_OR_GREATER
+#if NET
             Debug.Assert(keyBlob.Length == ECCPublicKeyBlob.Size, $"ECC public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {ECCPublicKeyBlob.Size}");
 
             byte[] x = new byte[ECCPublicKeyBlob.KeySize];
@@ -129,12 +129,12 @@ namespace Microsoft.Data.SqlClient
 #else
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new ECDiffieHellmanCng(key);
-#endif	    
+#endif
         }
 
         internal static ECDiffieHellman CreateECDiffieHellman(int keySize)
         {
-#if NET6_0_OR_GREATER	
+#if NET
             // platform agnostic creates a key of the correct size but does not
             // set the key derivation type or algorithm, these must be set by calling
             // DeriveKeyFromHash later in DeriveKey
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static byte[] DeriveKey(ECDiffieHellman ecDiffieHellman, ECDiffieHellmanPublicKey publicKey)
         {
-#if NET6_0_OR_GREATER	
+#if NET
             // see notes in CreateECDDiffieHellman
             return ecDiffieHellman.DeriveKeyFromHash(publicKey, HashAlgorithmName.SHA256);
 #else
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static RSA GetRSAFromCertificate(X509Certificate2 certificate)
         {
-#if NET6_0_OR_GREATER
+#if NET
             return certificate.GetRSAPublicKey();
 #else
             RSAParameters parameters;

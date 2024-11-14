@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*' />
-#if NET6_0_OR_GREATER
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         public virtual Type GetFieldType(int ordinal) => GetFieldTypeFrameworkSpecific(ordinal);
