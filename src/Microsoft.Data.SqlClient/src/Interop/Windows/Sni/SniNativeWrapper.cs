@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_sniMaxComposedSpnLength == -1)
                 {
-                    s_sniMaxComposedSpnLength = checked((int)GetSniMaxComposedSpnLength());
+                    s_sniMaxComposedSpnLength = checked((int)s_nativeMethods.SniGetMaxComposedSpnLength());
                 }
                 return s_sniMaxComposedSpnLength;
             }
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                ret = SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
+                ret = s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
@@ -89,10 +89,8 @@ namespace Microsoft.Data.SqlClient
         internal static uint SNIClose(IntPtr pConn) =>
             s_nativeMethods.SniClose(pConn);
         
-        internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
-        {
-            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
-        }
+        internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId) =>
+            s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
         
         internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
         {
@@ -102,7 +100,7 @@ namespace Microsoft.Data.SqlClient
             int bufferSize = SniIpv6AddrStringBufferLength;
             StringBuilder addrBuffer = new StringBuilder(bufferSize);
 
-            ret = SNIGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out connIPLen);
+            ret = s_nativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out connIPLen);
 
             connIPStr = addrBuffer.ToString(0, Convert.ToInt32(connIPLen));
 
@@ -111,7 +109,7 @@ namespace Microsoft.Data.SqlClient
         
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
-            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
+            return s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
         }
         
         internal static void SNIGetLastError(out SniError pErrorStruct) =>
@@ -119,13 +117,11 @@ namespace Microsoft.Data.SqlClient
         
         internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum)
         {
-            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
+            return s_nativeMethods.SniGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
-        
-        internal static uint SNIInitialize()
-        {
-            return SNIInitialize(IntPtr.Zero);
-        }
+
+        internal static uint SNIInitialize() =>
+            s_nativeMethods.SniInitialize(IntPtr.Zero);
         
         internal static uint UnmanagedIsTokenRestricted([In] IntPtr token, [MarshalAs(UnmanagedType.Bool)] out bool isRestricted) =>
             s_nativeMethods.SniIsTokenRestricted(token, out isRestricted);
@@ -142,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
             native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
+            return s_nativeMethods.SniOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
         
         internal static unsafe uint SNIOpenSyncEx(
@@ -215,26 +211,22 @@ namespace Microsoft.Data.SqlClient
                     {
                         clientConsumerInfo.szSPN = pin_spnBuffer;
                         clientConsumerInfo.cchSPN = (uint)spnBuffer.Length;
-                        return SNIOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                        return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
                     }
                 }
                 else
                 {
                     // else leave szSPN null (SQL Auth)
-                    return SNIOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
+                    return s_nativeMethods.SniOpenSyncExWrapper(ref clientConsumerInfo, out pConn);
                 }
             }
         }
+
+        internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket) =>
+            pPacket = s_nativeMethods.SniPacketAllocateWrapper(pConn, IOType);
         
-        internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket)
-        {
-            pPacket = SNIPacketAllocateWrapper(pConn, IOType);
-        }
-        
-        internal static unsafe uint SNIPacketGetData(IntPtr packet, byte[] readBuffer, ref uint dataSize)
-        {
-            return SNIPacketGetDataWrapper(packet, readBuffer, (uint)readBuffer.Length, out dataSize);
-        }
+        internal static unsafe uint SNIPacketGetData(IntPtr packet, byte[] readBuffer, ref uint dataSize) =>
+            s_nativeMethods.SniPacketGetDataWrapper(packet, readBuffer, (uint)readBuffer.Length, out dataSize);
         
         internal static void SNIPacketRelease(IntPtr pPacket) =>
             s_nativeMethods.SniPacketRelease(pPacket);
@@ -243,7 +235,7 @@ namespace Microsoft.Data.SqlClient
         {
             fixed (byte* pin_data = &data[0])
             {
-                SNIPacketSetData(packet, pin_data, (uint)length);
+                s_nativeMethods.SniPacketSetData(packet, pin_data, (uint)length);
             }
         }
         
@@ -347,10 +339,7 @@ namespace Microsoft.Data.SqlClient
                     packet.DangerousAddRef(ref mustRelease);
                     Debug.Assert(mustRelease, "AddRef Failed!");
 
-                    fixed (byte* pin_data = &data[0])
-                    {
-                        SNIPacketSetData(packet, pin_data, (uint)length);
-                    }
+                    SNIPacketSetData(packet, data, length);
                 }
             }
             finally
@@ -388,21 +377,27 @@ namespace Microsoft.Data.SqlClient
         internal static uint SNIReadSyncOverAsync(SNIHandle pConn, ref IntPtr ppNewPacket, int timeout) =>
             s_nativeMethods.SniReadSyncOverAsync(pConn, ref ppNewPacket, timeout);
         
-        internal static unsafe uint SNISecGenClientContext(SNIHandle pConnectionObject, ReadOnlySpan<byte> inBuff, byte[] OutBuff, ref uint sendLength, byte[] serverUserName)
+        internal static unsafe uint SNISecGenClientContext(
+            SNIHandle pConnectionObject,
+            ReadOnlySpan<byte> inBuff,
+            byte[] OutBuff,
+            ref uint sendLength,
+            byte[] serverUserName)
         {
-            fixed (byte* pin_serverUserName = &serverUserName[0])
-                //netcore fixed (byte* pInBuff = inBuff)
+            fixed (byte* pServerUserName = serverUserName) 
+            fixed (byte* pInBuff = inBuff)
             {
-                return SNISecGenClientContextWrapper(
-                    pConnectionObject,
-                    inBuff,
-                    OutBuff,
-                    ref sendLength,
-                    out _,
-                    pin_serverUserName,
-                    (uint)serverUserName.Length,
-                    null,
-                    null);
+                return s_nativeMethods.SniSecGenClientContextWrapper(
+                    pConn: pConnectionObject,
+                    pIn: pInBuff,
+                    cbIn: (uint)inBuff.Length,
+                    pOut: OutBuff,
+                    pcbOut: ref sendLength,
+                    pfDone: out _,
+                    szServerInfo: pServerUserName,
+                    cbServerInfo: (uint)serverUserName.Length,
+                    pwszUserName: null,
+                    pwszPassword: null);
             }
         }
         
@@ -435,20 +430,17 @@ namespace Microsoft.Data.SqlClient
         {
             if (sync)
             {
-                return SNIWriteSyncOverAsync(pConn, packet);
+                return s_nativeMethods.SniWriteSyncOverAsync(pConn, packet);
             }
             else
             {
-                return SNIWriteAsyncWrapper(pConn, packet);
+                return s_nativeMethods.SniWriteAsyncWrapper(pConn, packet);
             }
         }
         
         #endregion
 
         #region Private Methods
-
-        private static uint GetSniMaxComposedSpnLength() =>
-            s_nativeMethods.SniGetMaxComposedSpnLength();
 
         private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
         {
@@ -461,91 +453,6 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
         }
-        
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo) =>
-            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-        
-        #if NETFRAMEWORK
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo) =>
-            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out pbQInfo);
-        #endif
-
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum) =>
-            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out provNum);
-        
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum) =>
-            s_nativeMethods.SniGetInfoWrapper(pConn, QType, out portNum);
-        
-        private static uint SNIGetPeerAddrStrWrapper([In] SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLen) =>
-            s_nativeMethods.SniGetPeerAddrStrWrapper(pConn, bufferSize, addrBuffer, out addrLen);
-        
-        private static uint SNIInitialize([In] IntPtr pmo) =>
-            s_nativeMethods.SniInitialize(pmo);
-        
-        private static uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>
-            s_nativeMethods.SniOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
-        
-        private static uint SNIOpenWrapper(
-            [In] ref SniConsumerInfo pConsumerInfo,
-            [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
-            [In] SNIHandle pConn,
-            out IntPtr ppConn,
-            [MarshalAs(UnmanagedType.Bool)] bool fSync,
-            SqlConnectionIPAddressPreference ipPreference,
-            [In] ref SniDnsCacheInfo pDNSCachedInfo) =>
-            s_nativeMethods.SniOpenWrapper(
-                ref pConsumerInfo,
-                szConnect,
-                pConn,
-                out ppConn,
-                fSync,
-                ipPreference,
-                ref pDNSCachedInfo);
-        
-        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType) =>
-            s_nativeMethods.SniPacketAllocateWrapper(pConn, IOType);
-        
-        private static uint SNIPacketGetDataWrapper([In] IntPtr packet, [In, Out] byte[] readBuffer, uint readBufferLength, out uint dataSize) =>
-            s_nativeMethods.SniPacketGetDataWrapper(packet, readBuffer, readBufferLength, out dataSize);
-        
-        private static unsafe void SNIPacketSetData(SNIPacket pPacket, [In] byte* pbBuf, uint cbBuf) =>
-            s_nativeMethods.SniPacketSetData(pPacket, pbBuf, cbBuf);
-        
-        private static unsafe uint SNISecGenClientContextWrapper(
-            [In] SNIHandle pConn,
-            [In, Out] ReadOnlySpan<byte> pIn,
-            [In, Out] byte[] pOut,
-            [In] ref uint pcbOut,
-            [MarshalAsAttribute(UnmanagedType.Bool)]
-            out bool pfDone,
-            byte* szServerInfo,
-            uint cbServerInfo,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)]
-            string pwszUserName,
-            [MarshalAsAttribute(UnmanagedType.LPWStr)]
-            string pwszPassword)
-        {
-            fixed (byte* pInPtr = pIn)
-            {
-                return s_nativeMethods.SniSecGenClientContextWrapper(
-                    pConn,
-                    pInPtr,
-                    (uint)pIn.Length,
-                    pOut,
-                    ref pcbOut,
-                    out pfDone,
-                    szServerInfo,
-                    cbServerInfo,
-                    pwszUserName,
-                    pwszPassword);
-            }
-        }
-        
-        private static uint SNIWriteAsyncWrapper(SNIHandle pConn, [In] SNIPacket pPacket) =>
-            s_nativeMethods.SniWriteAsyncWrapper(pConn, pPacket);
-        
-        private static uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket) =>
-            s_nativeMethods.SniWriteSyncOverAsync(pConn, pPacket);
         
         #endregion
         
