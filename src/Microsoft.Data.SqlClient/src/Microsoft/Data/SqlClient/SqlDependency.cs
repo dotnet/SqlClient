@@ -13,6 +13,7 @@ using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
+using Interop.Windows.Sni;
 #endif
 using System.Text;
 using System.Threading;
@@ -462,7 +463,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
-            byte[] nativeStorage = SniNativeWrapper.GetData();
+            byte[] nativeStorage = SqlDependencyProcessDispatcherStorage.NativeGetData();
 
             if (nativeStorage == null)
             {
@@ -489,7 +490,9 @@ namespace Microsoft.Data.SqlClient
                             SqlClientObjRef objRef = new(s_processDispatcher);
                             DataContractSerializer serializer = new(objRef.GetType());
                             GetSerializedObject(objRef, serializer, stream);
-                            SniNativeWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
+                            
+                            // Native will be forced to synchronize and not overwrite.
+                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray()); 
                         }
                     }
                     else
