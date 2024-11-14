@@ -522,33 +522,5 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-        
-        #if NETFRAMEWORK
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal static unsafe byte[] GetData()
-        {
-            IntPtr ptr = (IntPtr)SqlDependencyProcessDispatcherStorage.NativeGetData(out int size);
-            byte[] result = null;
-
-            if (ptr != IntPtr.Zero)
-            {
-                result = new byte[size];
-                Marshal.Copy(ptr, result, 0, size);
-            }
-
-            return result;
-        }
-
-        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        internal static unsafe void SetData(byte[] data)
-        {
-            fixed (byte* pDispatcher = data)
-            {
-                SqlDependencyProcessDispatcherStorage.NativeSetData(pDispatcher, data.Length);
-            }
-        }
-        #endif
     }
 }

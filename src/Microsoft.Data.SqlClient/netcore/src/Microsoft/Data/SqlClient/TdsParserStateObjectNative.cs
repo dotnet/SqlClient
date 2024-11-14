@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
             spns = new[] { serverSPN.TrimEnd() };
         }
 
-        protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
+        protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
         {
             Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
             return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
