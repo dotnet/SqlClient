@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
 
 #if NETFRAMEWORK
 using System.Diagnostics;
@@ -121,9 +120,17 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SniInitialize() =>
             s_nativeMethods.SniInitialize(IntPtr.Zero);
-        
-        internal static uint SniIsTokenRestricted(IntPtr token, out bool isRestricted) =>
-            s_nativeMethods.SniIsTokenRestricted(token, out isRestricted);
+
+        internal static uint SniIsTokenRestricted(IntPtr token, out bool isRestricted)
+        {
+            uint result = s_nativeMethods.SniIsTokenRestricted(token, out isRestricted);
+            if (result != 0)
+            {
+                Marshal.ThrowExceptionForHR(unchecked((int)result));
+            }
+
+            return result;
+        }
         
         internal static uint SniOpenMarsSession(
             ConsumerInfo consumerInfo,
@@ -483,24 +490,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
         #endif
-    }
-}
-
-namespace Microsoft.Data
-{
-    internal static class Win32NativeMethods
-    {
-        internal static bool IsTokenRestrictedWrapper(IntPtr token)
-        {
-            bool isRestricted;
-            uint result = SniNativeWrapper.SniIsTokenRestricted(token, out isRestricted);
-
-            if (result != 0)
-            {
-                Marshal.ThrowExceptionForHR(unchecked((int)result));
-            }
-
-            return isRestricted;
-        }
     }
 }
