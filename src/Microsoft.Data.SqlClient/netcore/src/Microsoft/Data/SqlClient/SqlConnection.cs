@@ -2307,13 +2307,6 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
 
-        //
-        // SQL DEBUGGING SUPPORT
-        //
-
-        // this only happens once per connection
-        // SxS: using named file mapping APIs
-
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
