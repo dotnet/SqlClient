@@ -45,6 +45,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'",
             $"'{NotRequiredProviderName}'");
 
+        private HashSet<string> _cancellationExceptionMessages = new HashSet<string>()
+        {
+            "A severe error occurred on the current command.  The results, if any, should be discarded.\r\nOperation cancelled by user.",
+            "A severe error occurred on the current command.  The results, if any, should be discarded.",
+            "Operation cancelled by user.",
+            "The request failed to run because the batch is aborted, this can be caused by abort signal sent from client, or another request is running in the same session, which makes the session busy.\r\nOperation cancelled by user."
+        };
+
         public ApiShould(PlatformSpecificTestContext context)
         {
             _fixture = context.Fixture;
@@ -1969,7 +1977,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                // WAITFOR DELAY is present to ensure that the command is always executing by the time the cancellation occurs.
+                // Without this, a command which has completed by the time the cancellation occurs will fail the test. It's last
+                // in the command to ensure that cancellation is tested while row data or metadata is flowing.
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId; WAITFOR DELAY '00:00:00.150'",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -3144,8 +3155,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Wait for the cancellation thread to open this lock...
                 cancelCommandTestParamsObject.StartWorkloadSignal.Wait();
 
-                Exception ex = Assert.ThrowsAny<Exception>(() => (reader = sqlCommand.ExecuteReader()).Read());
-                Assert.Equal(@"Operation cancelled by user.", ex.Message);
+                Exception ex = Assert.ThrowsAny<Exception>(() =>
+                {
+                    reader = sqlCommand.ExecuteReader();
+                    while (reader.Read())
+                    { }
+                });
+                Assert.Contains(ex.Message, _cancellationExceptionMessages);
             }
             finally
             {
@@ -3169,7 +3185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 cancelCommandTestParamsObject.StartWorkloadSignal.Wait();
 
                 Exception ex = Assert.ThrowsAny<Exception>(() => sqlCommand.ExecuteNonQuery());
-                Assert.Equal(@"Operation cancelled by user.", ex.Message);
+                Assert.Contains(ex.Message, _cancellationExceptionMessages);
             }
             finally
             {
