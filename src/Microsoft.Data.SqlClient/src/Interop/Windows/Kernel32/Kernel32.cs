@@ -44,27 +44,6 @@ namespace Interop.Windows.Kernel32
             return (uint)((deviceType << 16) | (access << 14) | (function << 2) | method);
         }
 
-        #if NETFRAMEWORK
-        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
-        [ResourceExposure(ResourceScope.Machine)]
-        internal static extern bool CloseHandle(IntPtr handle);
-        #endif
-
-        #if NETFRAMEWORK
-        // CreateFileMappingA contains a security venerability, in the unicode->ansi conversion
-        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
-        // Specify marshaling for pinvoke string arguments
-        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        [ResourceExposure(ResourceScope.Machine)]
-        internal static extern IntPtr CreateFileMappingA(
-            IntPtr hFile,
-            IntPtr pAttr,
-            int flProtect,
-            int dwMaximumSizeHigh,
-            int dwMaximumSizeLow,
-            [MarshalAs(UnmanagedType.LPStr)] string lpName);
-        #endif
-
         [DllImport(DllName, CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern bool DeviceIoControl(
             SafeFileHandle fileHandle,
@@ -109,36 +88,7 @@ namespace Interop.Windows.Kernel32
         public static extern SafeLibraryHandle LoadLibraryExW([In] string lpwLibFileName, [In] IntPtr hFile, [In] uint dwFlags);
         #endif
 
-        #if NETFRAMEWORK
-        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto)]
-        [ResourceExposure(ResourceScope.Machine)]
-        internal static extern IntPtr MapViewOfFile(
-            IntPtr hFileMappingObject,
-            int dwDesiredAccess,
-            int dwFileOffsetHigh,
-            int dwFileOffsetLow,
-            IntPtr dwNumberOfBytesToMap);
-        #endif
-
-        #if NETFRAMEWORK
-        // OpenFileMappingA contains a security venerability, in the unicode->ansi conversion
-        // Its possible to spoof the directory and construct ../ sequences,  See FxCop Warning
-        // Specify marshaling for pinvoke string arguments
-        [DllImport(DllName, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        [ResourceExposure(ResourceScope.Machine)]
-        internal static extern IntPtr OpenFileMappingA(
-            int dwDesiredAccess,
-            bool bInheritHandle,
-            [MarshalAs(UnmanagedType.LPStr)] string lpName);
-        #endif
-
         [DllImport(DllName, SetLastError = true, ExactSpelling = true)]
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
-
-        #if NETFRAMEWORK
-        [DllImport(DllName, ExactSpelling = true, CharSet = CharSet.Auto)]
-        [ResourceExposure(ResourceScope.Machine)]
-        internal static extern bool UnmapViewOfFile(IntPtr lpBaseAddress);
-        #endif
     }
 }
