@@ -260,6 +260,7 @@
     <Compile Include="SQL\Batch\BatchTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <Reference Include="System.Transactions" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Transactions" />
   </ItemGroup>
