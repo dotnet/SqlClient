@@ -660,7 +660,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
 
@@ -713,12 +712,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
       <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\UnicodeString.cs">
       <Link>Interop\Windows\UnicodeString.cs</Link>
