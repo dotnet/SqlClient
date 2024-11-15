@@ -3,31 +3,23 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Microsoft.Data.Common;
 using System.Transactions;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    sealed internal class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
+    internal sealed class SqlDelegatedTransaction : IPromotableSinglePhaseNotification
     {
         private static int _objectTypeCount;
-        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+
         private const int _globalTransactionsTokenVersionSizeInBytes = 4; // the size of the version in the PromotedDTCToken for Global Transactions
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
 
         // WARNING!!! Multithreaded object!
-        // Locking strategy: Any potentailly-multithreaded operation must first lock the associated connection, then
+        // Locking strategy: Any potentially-multithreaded operation must first lock the associated connection, then
         //  validate this object's active state.  Locked activities should ONLY include Sql-transaction state altering activities
         //  or notifications of same. Updates to the connection's association with the transaction or to the connection pool
         //  may be initiated here AFTER the connection lock is released, but should NOT fall under this class's locking strategy.
@@ -35,6 +27,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection _connection;            // the internal connection that is the root of the transaction
         private System.Data.IsolationLevel _isolationLevel;        // the IsolationLevel of the transaction we delegated to the server
         private SqlInternalTransaction _internalTransaction;   // the SQL Server transaction we're delegating to
+
         private Transaction _atomicTransaction;
 
         private bool _active;                // Is the transaction active?
@@ -87,12 +80,13 @@ namespace Microsoft.Data.SqlClient
             // transaction.
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, delegating transaction.", ObjectID, connection.ObjectID);
+            SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | Object Id {0}, Client Connection Id {1}, delegating transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-
+#endif
             try
             {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -101,10 +95,10 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Start();
 #else
                 {
-#endif //DEBUG
+#endif
                     if (connection.IsEnlistedInTransaction)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, was enlisted, now defecting.", ObjectID, connection.ObjectID);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Initialize | RES | CPOOL | {0}, Client Connection Id {1}, was enlisted, now defecting.", ObjectID, usersConnection?.ClientConnectionId);
 
                         // defect first
                         connection.EnlistNull();
@@ -123,12 +117,12 @@ namespace Microsoft.Data.SqlClient
 
                     _active = true;
                 }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 finally
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif
             }
             catch (System.OutOfMemoryException e)
             {
@@ -155,25 +149,26 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public Byte[] Promote()
+        public byte[] Promote()
         {
             // Operations that might be affected by multi-threaded use MUST be done inside the lock.
             //  Don't read values off of the connection outside the lock unless it doesn't really matter
             //  from an operational standpoint (i.e. logging connection's ObjectID should be fine,
             //  but the PromotedDTCToken can change over calls. so that must be protected).
             SqlInternalConnection connection = GetValidConnection();
-
             Exception promoteException;
             byte[] returnValue = null;
+
             if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, promoting transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
-
+#endif
                 try
                 {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
                     RuntimeHelpers.PrepareConstrainedRegions();
@@ -182,7 +177,7 @@ namespace Microsoft.Data.SqlClient
                         tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
+#endif
                         lock (connection)
                         {
                             try
@@ -230,12 +225,12 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally
                     {
                         tdsReliabilitySection.Stop();
                     }
-#endif //DEBUG
+#endif
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -258,13 +253,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        // Safely access Transction status - as it's possible Transaction is not in right state.
-                        if(Transaction?.TransactionInformation?.Status == System.Transactions.TransactionStatus.Aborted)
+                        // Safely access Transaction status - as it's possible Transaction is not in right state.
+                        if (Transaction?.TransactionInformation?.Status != TransactionStatus.Aborted)
                         {
                             throw SQL.PromotionFailed(promoteException);
                         }
                     }
-                    catch(TransactionException te)
+                    catch (TransactionException te)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Transaction exception occurred: {2}.", ObjectID, usersConnection?.ClientConnectionId, te.Message);
                         // Throw promote exception if transaction state is unknown.
@@ -274,13 +269,13 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // The transaction was aborted externally, since it's already doomed above, we only log the same.
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted during promote.", ObjectID, connection.ObjectID);
+                    SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Aborted during promotion.", ObjectID, usersConnection?.ClientConnectionId);
                 }
             }
             else
             {
                 // The transaction was aborted externally, doom the connection to make sure it's eventually rolled back and log the same.
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection null, aborted before promoting.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | {0}, Connection null, aborted before promoting.", ObjectID);
             }
             return returnValue;
         }
@@ -293,13 +288,15 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                 tdsReliabilitySection.Start();
 #endif //DEBUG
                 SqlConnection usersConnection = connection.Connection;
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Rollback | RES | CPOOL | Object Id {0}, Client Connection Id {1}, rolling back transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, rolling back transaction.", ObjectID, connection.ObjectID);
+#endif
                 try
                 {
                     lock (connection)
@@ -326,15 +323,15 @@ namespace Microsoft.Data.SqlClient
                             // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
                             connection.DoomThisConnection();
 
-                            // Unlike SinglePhaseCommit, a rollback is a rollback, regardless 
+                            // Unlike SinglePhaseCommit, a rollback is a rollback, regardless
                             // of how it happens, so SysTx won't throw an exception, and we
-                            // don't want to throw an exception either, because SysTx isn't 
+                            // don't want to throw an exception either, because SysTx isn't
                             // handling it and it may create a fail fast scenario. In the end,
                             // there is no way for us to communicate to the consumer that this
                             // failed for more serious reasons than usual.
-                            // 
+                            //
                             // This is a bit like "should you throw if Close fails", however,
-                            // it only matters when you really need to know.  In that case, 
+                            // it only matters when you really need to know.  In that case,
                             // we have the tracing that we're doing to fallback on for the
                             // investigation.
                         }
@@ -365,18 +362,18 @@ namespace Microsoft.Data.SqlClient
                     usersConnection.Abort(e);
                     throw;
                 }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                 finally
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif
             }
             else
             {
                 // The transaction was aborted, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection null, aborted before rollback.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Rollback | RES | CPOOL | Object Id {0}, Connection null, aborted before rollback.", ObjectID);
             }
         }
 
@@ -389,21 +386,23 @@ namespace Microsoft.Data.SqlClient
             if (connection != null)
             {
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.SinglePhaseCommit | RES | CPOOL | Object Id {0}, Client Connection Id {1}, committing transaction.", ObjectID, usersConnection?.ClientConnectionId);
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
 
                 try
                 {
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
                     try
                     {
                         tdsReliabilitySection.Start();
 #else
                     {
-#endif //DEBUG
+#endif
                         // If the connection is doomed, we can be certain that the
-                        // transaction will eventually be rolled back, and we shouldn't
+                        // transaction will eventually be rolled back or has already been aborted externally, and we shouldn't
                         // attempt to commit it.
                         if (connection.IsConnectionDoomed)
                         {
@@ -412,6 +411,7 @@ namespace Microsoft.Data.SqlClient
                                 _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                                 _connection = null;
                             }
+
                             enlistment.Aborted(SQL.ConnectionDoomed());
                         }
                         else
@@ -425,7 +425,7 @@ namespace Microsoft.Data.SqlClient
                                     ValidateActiveOnConnection(connection);
 
                                     _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
-                                    _connection = null;   // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
+                                    _connection = null; // Set prior to ExecuteTransaction call in case this initiates a TransactionEnd event
 
                                     connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                                     commitException = null;
@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 // We eat the exception.  This is called on the SysTx
-                                // thread, not the applications thread.  If we don't 
+                                // thread, not the applications thread.  If we don't
                                 // eat the exception an UnhandledException will occur,
                                 // causing the process to FailFast.
                             }
@@ -484,12 +484,12 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-#if DEBUG
+#if NETFRAMEWORK && DEBUG
                     finally
                     {
                         tdsReliabilitySection.Stop();
                     }
-#endif //DEBUG
+#endif
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -511,13 +511,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // The transaction was aborted before we could commit, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection null, aborted before commit.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.SinglePhaseCommit | RES | CPOOL | Object Id {0}, Connection null, aborted before commit.", ObjectID);
             }
         }
 
         // Event notification that transaction ended. This comes from the subscription to the Transaction's
         //  ended event via the internal connection. If it occurs without a prior Rollback or SinglePhaseCommit call,
-        //  it indicates the transaction was ended externally (generally that one the the DTC participants aborted
+        //  it indicates the transaction was ended externally (generally that one of the DTC participants aborted
         //  the transaction).
         internal void TransactionEnded(Transaction transaction)
         {
@@ -525,8 +525,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}, Connection {1}, transaction completed externally.", ObjectID, connection.ObjectID);
-
+                SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.TransactionEnded | RES | CPOOL | Object Id {0}, Connection Id {1}, transaction completed externally.", ObjectID, connection.ObjectID);
                 lock (connection)
                 {
                     if (_atomicTransaction.Equals(transaction))
@@ -546,7 +545,7 @@ namespace Microsoft.Data.SqlClient
         private SqlInternalConnection GetValidConnection()
         {
             SqlInternalConnection connection = _connection;
-            if (connection == null && _atomicTransaction.TransactionInformation.Status != TransactionStatus.Aborted)
+            if (connection == null && Transaction.TransactionInformation.Status != TransactionStatus.Aborted)
             {
                 throw ADP.ObjectDisposed(this);
             }
@@ -582,9 +581,13 @@ namespace Microsoft.Data.SqlClient
         // Skip first 4 bytes since they contain the version
         private Guid GetGlobalTxnIdentifierFromToken()
         {
+#if NET
+            return new Guid(new ReadOnlySpan<byte>(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes, 16));
+#else
             byte[] txnGuid = new byte[16];
             Buffer.BlockCopy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
             return new Guid(txnGuid);
+#endif
         }
     }
 }

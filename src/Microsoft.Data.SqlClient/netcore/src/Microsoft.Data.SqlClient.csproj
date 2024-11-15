@@ -437,6 +437,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependency.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependency.cs</Link>
     </Compile>
@@ -652,8 +655,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
@@ -662,7 +663,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
 
@@ -715,12 +715,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
       <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
       <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
