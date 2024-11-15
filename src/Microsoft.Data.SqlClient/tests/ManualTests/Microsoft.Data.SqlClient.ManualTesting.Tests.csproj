@@ -264,11 +264,10 @@
     <Compile Include="SQL\Batch\BatchTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+    <Reference Include="System.Transactions" />
     <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Reference Include="System.Transactions" />
-    <Reference Include="System.ServiceProcess" />
     <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
