@@ -348,7 +348,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.Equal(dtoffset, reader.GetFieldValue<DateTimeOffset>(11));
                         Assert.Equal(new DateTime(2022, 10, 23), reader.GetFieldValue<DateTime>(12));
                         Assert.Equal(new TimeSpan(0, 22, 7, 44), reader.GetFieldValue<TimeSpan>(13));
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                         Assert.Equal(new DateOnly(2022, 10, 23), reader.GetFieldValue<DateOnly>(12));
                         Assert.Equal(new TimeOnly(22, 7, 44), reader.GetFieldValue<TimeOnly>(13));
 #endif
@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         /// <summary>
         /// Covers GetFieldValue<T> for SqlBuffer class
         /// </summary>

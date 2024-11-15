@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
     public class SqlDataSourceEnumeratorTest
