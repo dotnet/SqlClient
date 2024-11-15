@@ -1922,16 +1922,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
-        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
+            => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
-        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
+        public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, cancellationToken) :
+                InternalOpenAsync(overrides, cancellationToken);
+
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
@@ -1977,7 +1981,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion);
+                        completed = TryOpen(completion, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1996,7 +2000,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(() => completion.TrySetCanceled());
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2020,13 +2024,15 @@ namespace Microsoft.Data.SqlClient
             SqlConnection _parent;
             TaskCompletionSource<DbConnectionInternal> _retry;
             TaskCompletionSource<object> _result;
+            SqlConnectionOverrides _overrides;
             CancellationTokenRegistration _registration;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
+                _overrides = overrides;
                 _registration = registration;
             }
 
@@ -2062,7 +2068,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry);
+                                result = _parent.TryOpen(_retry, _overrides);
                             }
                             if (result)
                             {
@@ -2138,9 +2144,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 result = TryOpenInner(retry);
             }
-
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
 
             return result;
         }
