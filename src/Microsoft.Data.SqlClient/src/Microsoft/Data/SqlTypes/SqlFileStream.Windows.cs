@@ -10,6 +10,9 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Interop.Windows;
+using Interop.Windows.Kernel32;
+using Interop.Windows.NtDll;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32.SafeHandles;
@@ -568,7 +571,7 @@ namespace Microsoft.Data.SqlTypes
             StringBuilder buffer = new StringBuilder(path.Length + 1);
 
             // If everything goes correctly, we only need to call this once
-            int fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+            int fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
 
             // If our buffer was smaller than required, the buffer will be empty, but the full
             // path size will be the size we should reallocate to.
@@ -576,7 +579,7 @@ namespace Microsoft.Data.SqlTypes
             {
                 // Reallocate the buffer and try again
                 buffer.Capacity = fullPathLength;
-                fullPathLength = Interop.Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
+                fullPathLength = Kernel32.GetFullPathName(path, buffer.Capacity, buffer, IntPtr.Zero);
             }
 
             // If the method tells us the full path length is 0, then we have an error condition.
@@ -760,31 +763,31 @@ namespace Microsoft.Data.SqlTypes
             DemandAccessPermission(path, access);
             #endif
 
-            Interop.NtDll.CreateOptions createOptions = 0;
-            Interop.NtDll.CreateDisposition createDisposition = 0;
-            Interop.NtDll.DesiredAccess desiredAccess = Interop.NtDll.DesiredAccess.FILE_READ_ATTRIBUTES |
-                                                        Interop.NtDll.DesiredAccess.SYNCHRONIZE;
+            CreateOptions createOptions = 0;
+            CreateDisposition createDisposition = 0;
+            DesiredAccess desiredAccess = DesiredAccess.FILE_READ_ATTRIBUTES |
+                                          DesiredAccess.SYNCHRONIZE;
             FileShare shareAccess = 0;
 
             switch (access)
             {
                 case FileAccess.Read:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA;
                     shareAccess = FileShare.Delete | FileShare.ReadWrite;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OPEN;
+                    createDisposition = CreateDisposition.FILE_OPEN;
                     break;
 
                 case FileAccess.Write:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 case FileAccess.ReadWrite:
-                    desiredAccess |= Interop.NtDll.DesiredAccess.FILE_READ_DATA |
-                                      Interop.NtDll.DesiredAccess.FILE_WRITE_DATA;
+                    desiredAccess |= DesiredAccess.FILE_READ_DATA |
+                                     DesiredAccess.FILE_WRITE_DATA;
                     shareAccess = FileShare.Delete | FileShare.Read;
-                    createDisposition = Interop.NtDll.CreateDisposition.FILE_OVERWRITE;
+                    createDisposition = CreateDisposition.FILE_OVERWRITE;
                     break;
 
                 // Note: default case is heuristically unreachable due to check above.
@@ -792,22 +795,22 @@ namespace Microsoft.Data.SqlTypes
 
             if ((options & FileOptions.WriteThrough) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_WRITE_THROUGH;
+                createOptions |= CreateOptions.FILE_WRITE_THROUGH;
             }
 
             if ((options & FileOptions.Asynchronous) == 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
+                createOptions |= CreateOptions.FILE_SYNCHRONOUS_IO_NONALERT;
             }
 
             if ((options & FileOptions.SequentialScan) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_SEQUENTIAL_ONLY;
+                createOptions |= CreateOptions.FILE_SEQUENTIAL_ONLY;
             }
 
             if ((options & FileOptions.RandomAccess) != 0)
             {
-                createOptions |= Interop.NtDll.CreateOptions.FILE_RANDOM_ACCESS;
+                createOptions |= CreateOptions.FILE_RANDOM_ACCESS;
             }
 
             SafeFileHandle fileHandle = null;
@@ -818,7 +821,7 @@ namespace Microsoft.Data.SqlTypes
                 //   takes place to create the mappedPath.
                 string mappedPath = InitializeNtPath(path);
 
-                Interop.Kernel32.SetThreadErrorMode(Interop.Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
+                Kernel32.SetThreadErrorMode(Kernel32.SEM_FAILCRITICALERRORS, out uint oldMode);
 
                 // Make the interop call to open the file
                 int retval;
@@ -833,7 +836,7 @@ namespace Microsoft.Data.SqlTypes
 
                     #if NETFRAMEWORK
                     const string traceEventMessage = "<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, fileAttributes=0x00, shareAccess=0x{3}, dwCreateDisposition=0x{4}, createOptions=0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,
@@ -842,12 +845,12 @@ namespace Microsoft.Data.SqlTypes
                         shareAccess: shareAccess,
                         createDisposition: createDisposition,
                         createOptions: createOptions,
-                        impersonationLevel: Interop.ImpersonationLevel.SecurityAnonymous,
+                        impersonationLevel: ImpersonationLevel.SecurityAnonymous,
                         isDynamicTracking: false,
                         isEffectiveOnly: false);
                     #else
                     const string traceEventMessage = "SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}";
-                    (retval, handle) = Interop.NtDll.CreateFile(
+                    (retval, handle) = NtDll.CreateFile(
                         path: mappedPath,
                         eaName: EaNameString,
                         eaValue: transactionContext,
@@ -864,7 +867,7 @@ namespace Microsoft.Data.SqlTypes
                 }
                 finally
                 {
-                    Interop.Kernel32.SetThreadErrorMode(oldMode, out oldMode);
+                    Kernel32.SetThreadErrorMode(oldMode, out oldMode);
                 }
 
                 // Handle error codes from the interop call
@@ -873,20 +876,20 @@ namespace Microsoft.Data.SqlTypes
                     case 0:
                         break;
 
-                    case Interop.Errors.ERROR_SHARING_VIOLATION:
+                    case SystemErrors.ERROR_SHARING_VIOLATION:
                         throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
-                    case Interop.Errors.ERROR_INVALID_PARAMETER:
+                    case SystemErrors.ERROR_INVALID_PARAMETER:
                         throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
-                    case Interop.Errors.ERROR_FILE_NOT_FOUND:
+                    case SystemErrors.ERROR_FILE_NOT_FOUND:
                         DirectoryNotFoundException dirNotFoundException = new DirectoryNotFoundException();
                         ADP.TraceExceptionAsReturnValue(dirNotFoundException);
                         throw dirNotFoundException;
 
                     default:
-                        uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
-                        if (error == Interop.NtDll.ERROR_MR_MID_NOT_FOUND)
+                        uint error = NtDll.RtlNtStatusToDosError(retval);
+                        if (error == SystemErrors.ERROR_MR_MID_NOT_FOUND)
                         {
                             // status code could not be mapped to a Win32 error code
                             error = (uint)retval;
@@ -900,12 +903,12 @@ namespace Microsoft.Data.SqlTypes
                 // Make sure the file handle is usable for us
                 if (fileHandle.IsInvalid)
                 {
-                    Win32Exception e = new Win32Exception(Interop.Errors.ERROR_INVALID_HANDLE);
+                    Win32Exception e = new Win32Exception(SystemErrors.ERROR_INVALID_HANDLE);
                     ADP.TraceExceptionAsReturnValue(e);
                     throw e;
                 }
 
-                if (Interop.Kernel32.GetFileType(fileHandle) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
+                if (Kernel32.GetFileType(fileHandle) != FileTypes.FILE_TYPE_DISK)
                 {
                     fileHandle.Dispose();
                     throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
@@ -916,13 +919,13 @@ namespace Microsoft.Data.SqlTypes
                 // we need to tell SQL Server to preserve the existing file contents.
                 if (access is FileAccess.ReadWrite)
                 {
-                    uint ioControlCode = Interop.Kernel32.CTL_CODE(
-                        Interop.Kernel32.FILE_DEVICE_FILE_SYSTEM,
+                    uint ioControlCode = Kernel32.CtlCode(
+                        Kernel32.FILE_DEVICE_FILE_SYSTEM,
                         IoControlCodeFunctionCode,
-                        (byte)Interop.Kernel32.IoControlTransferType.METHOD_BUFFERED,
-                        (byte)Interop.Kernel32.IoControlCodeAccess.FILE_ANY_ACCESS);
+                        (byte)IoControlTransferType.METHOD_BUFFERED,
+                        (byte)IoControlCodeAccess.FILE_ANY_ACCESS);
 
-                    if (!Interop.Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
+                    if (!Kernel32.DeviceIoControl(fileHandle, ioControlCode, IntPtr.Zero, 0, IntPtr.Zero, 0, out _, IntPtr.Zero))
                     {
                         Win32Exception e = new Win32Exception(Marshal.GetLastWin32Error());
                         ADP.TraceExceptionAsReturnValue(e);

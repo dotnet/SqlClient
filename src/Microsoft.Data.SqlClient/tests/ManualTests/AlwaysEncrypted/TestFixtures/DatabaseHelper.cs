@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.ExecuteNonQuery();
         }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
         /// <summary>
         /// Insert CustomerDateOnly record into table
         /// </summary>
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     case "int":
                         Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
                         break;
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                     case "DateOnly":
                         Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(2001, 1, 31), "FAILED: read DateOnly value does not match.");
                         break;

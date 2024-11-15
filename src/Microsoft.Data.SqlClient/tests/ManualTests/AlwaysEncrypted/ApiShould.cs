@@ -700,7 +700,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public async void TestExecuteReaderAsyncWithLargeQuery(string connectionString)
+        public async Task TestExecuteReaderAsyncWithLargeQuery(string connectionString)
         {
             string randomName = DataTestUtility.GetUniqueName(Guid.NewGuid().ToString().Replace("-", ""), false);
             if (randomName.Length > 50)
@@ -3248,7 +3248,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public string LastName { get; set; }
     }
 
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
     public record CustomerDateOnly(int Id, string FirstName, string LastName, DateOnly DateOfBirth, TimeOnly TimeOfDay);
 #endif
 
