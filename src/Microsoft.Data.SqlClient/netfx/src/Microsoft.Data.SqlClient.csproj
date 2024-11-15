@@ -100,8 +100,8 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
-      <Link>Interop\SystemErrors.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\AdvApi32\AdvApi32.netfx.cs">
+      <Link>Interop\AdvApi32\AdvApi32.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\FileTypes.cs">
       <Link>Interop\Kernel32\FileTypes.cs</Link>
@@ -114,6 +114,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
       <Link>Interop\Kernel32\Kernel32.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32Safe.netfx.cs">
+      <Link>Interop\Kernel32\Kernel32Safe.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
       <Link>Interop\NtDll\CreateDisposition.cs</Link>
@@ -144,6 +147,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
       <Link>Interop\NtDll\SecurityQualityOfService.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
+      <Link>Interop\SystemErrors.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
       <Link>Interop\UnicodeString.cs</Link>
@@ -228,9 +234,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\TimeoutTimer.cs">
       <Link>Microsoft\Data\ProviderBase\TimeoutTimer.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
@@ -748,8 +751,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\SafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperARM64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />

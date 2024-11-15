@@ -1238,15 +1238,6 @@ namespace Microsoft.Data.SqlClient
 
 namespace Microsoft.Data
 {
-    internal static partial class SafeNativeMethods
-    {
-        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
-        internal static extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName);
-    }
-}
-
-namespace Microsoft.Data
-{
     internal static class Win32NativeMethods
     {
         internal static bool IsTokenRestrictedWrapper(IntPtr token)
