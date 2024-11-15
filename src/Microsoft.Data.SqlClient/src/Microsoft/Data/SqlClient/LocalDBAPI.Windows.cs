@@ -118,13 +118,16 @@ namespace Microsoft.Data
             }
         }
         
-        //netcore---
         private static IntPtr UserInstanceDLLHandle
         {
             get
             {
                 if (s_userInstanceDLLHandle == IntPtr.Zero)
                 {
+                    #if NETFRAMEWORK
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    #endif
+                    
                     lock (s_dllLock)
                     {
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
@@ -132,7 +135,11 @@ namespace Microsoft.Data
                             SniNativeWrapper.SniQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
+                                #if NETFRAMEWORK
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
+                                #else
                                 SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.UserInstanceDLLHandle | LocalDB - handle obtained");
+                                #endif
                             }
                             else
                             {
@@ -145,44 +152,6 @@ namespace Microsoft.Data
                 return s_userInstanceDLLHandle;
             }
         }
-        //---netcore
-        //netfx---
-        private static IntPtr UserInstanceDLLHandle
-        {
-            get
-            {
-                if (s_userInstanceDLLHandle == IntPtr.Zero)
-                {
-                    bool lockTaken = false;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        Monitor.Enter(s_dllLock, ref lockTaken);
-                        if (s_userInstanceDLLHandle == IntPtr.Zero)
-                        {
-                            SniNativeWrapper.SniQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
-                            if (s_userInstanceDLLHandle != IntPtr.Zero)
-                            {
-                                SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
-                            }
-                            else
-                            {
-                                SniError sniError = new SniError();
-                                SniNativeWrapper.SniGetLastError(out sniError);
-                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        if (lockTaken)
-                            Monitor.Exit(s_dllLock);
-                    }
-                }
-                return s_userInstanceDLLHandle;
-            }
-        }
-        //---netfx
 
         //netfx---
         internal static void AssertLocalDBPermissions()
