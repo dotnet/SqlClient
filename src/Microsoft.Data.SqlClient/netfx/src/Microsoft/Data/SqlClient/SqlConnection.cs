@@ -2145,9 +2145,6 @@ namespace Microsoft.Data.SqlClient
                 result = TryOpenInner(retry);
             }
 
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
-
             return result;
         }
 

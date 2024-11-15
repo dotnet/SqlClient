@@ -1974,9 +1974,6 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
-
             var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
