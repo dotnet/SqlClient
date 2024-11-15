@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient
 
         private static void ThrowInvalidOperationException_AdvancedTooFar(int capacity)
         {
-            throw new InvalidOperationException($"Buffer advanced to far: {capacity}");
+            throw new InvalidOperationException($"Buffer advanced too far: {capacity}");
         }
 
         private static void ThrowOutOfMemoryException(uint capacity)
