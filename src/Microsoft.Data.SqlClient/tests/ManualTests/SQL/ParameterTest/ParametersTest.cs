@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 #if !NETFRAMEWORK
 using Microsoft.SqlServer.Types;
