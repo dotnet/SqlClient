@@ -22,29 +22,40 @@ namespace Microsoft.Data
     {
         private const int const_ErrorMessageBufferSize = 1024;      // Buffer size for Local DB error message 1K will be enough for all messages
         private const uint const_LOCALDB_TRUNCATE_ERR_MESSAGE = 1;// flag for LocalDBFormatMessage that indicates that message can be truncated if it does not fit in the buffer
-        //netfx private const string Const_partialTrustFlagKey = "ALLOW_LOCALDB_IN_PARTIAL_TRUST";
         private const string LocalDbPrefix = @"(localdb)\";
         private const string LocalDbPrefix_NP = @"np:\\.\pipe\LOCALDB#";
-
-        //netfx private static readonly object s_configLock = new object();
+        
+        #if NETFRAMEWORK
+        private const string Const_partialTrustFlagKey = "ALLOW_LOCALDB_IN_PARTIAL_TRUST";
+        #endif
+        
         private static readonly object s_dllLock = new object();
+        
+        #if NETFRAMEWORK
+        private static readonly object s_configLock = new object();
+        #endif
 
-        //netfx private static PermissionSet _fullTrust = null;
-        //netfx private static bool _partialTrustFlagChecked = false;
-        //netfx private static bool _partialTrustAllowed = false;
-        //netfx private static Dictionary<string, InstanceInfo> s_configurableInstances = null;
-        //netfx private static LocalDBCreateInstanceDelegate s_localDBCreateInstance = null;
         private static LocalDBFormatMessageDelegate s_localDBFormatMessage = null;
         //This is copy of handle that SNI maintains, so we are responsible for freeing it - therefore there we are not using SafeHandle
         private static IntPtr s_userInstanceDLLHandle = IntPtr.Zero;
+        
+        #if NETFRAMEWORK
+        private static PermissionSet _fullTrust = null;
+        private static bool _partialTrustFlagChecked = false;
+        private static bool _partialTrustAllowed = false;
+        private static Dictionary<string, InstanceInfo> s_configurableInstances = null;
+        private static LocalDBCreateInstanceDelegate s_localDBCreateInstance = null;
+        #endif
 
-        //netfx---
+        #if NETFRAMEWORK
         [SuppressUnmanagedCodeSecurity]
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate int LocalDBCreateInstanceDelegate([MarshalAs(UnmanagedType.LPWStr)] string version, [MarshalAs(UnmanagedType.LPWStr)] string instance, UInt32 flags);
-        //---netfx
+        #endif
         
+        #if NETFRAMEWORK
         [SuppressUnmanagedCodeSecurity]
+        #endif
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private delegate int LocalDBFormatMessageDelegate(int hrLocalDB, uint dwFlags, uint dwLanguageId, StringBuilder buffer, ref uint buflen);
         
