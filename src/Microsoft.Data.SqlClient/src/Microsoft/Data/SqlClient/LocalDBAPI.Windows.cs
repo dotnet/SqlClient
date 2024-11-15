@@ -53,47 +53,39 @@ namespace Microsoft.Data
         private delegate int LocalDBCreateInstanceDelegate([MarshalAs(UnmanagedType.LPWStr)] string version, [MarshalAs(UnmanagedType.LPWStr)] string instance, UInt32 flags);
         #endif
         
-        #if NETFRAMEWORK
         [SuppressUnmanagedCodeSecurity]
-        #endif
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private delegate int LocalDBFormatMessageDelegate(int hrLocalDB, uint dwFlags, uint dwLanguageId, StringBuilder buffer, ref uint buflen);
         
-        //netfx---
+        #if NETFRAMEWORK
         private static LocalDBCreateInstanceDelegate LocalDBCreateInstance
         {
             get
             {
                 if (s_localDBCreateInstance == null)
                 {
-                    bool lockTaken = false;
                     RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    
+                    lock (s_dllLock)
                     {
-                        Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_localDBCreateInstance == null)
                         {
-                            IntPtr functionAddr = Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBCreateInstance");
-
+                            IntPtr functionAddr = LoadProcAddress();
                             if (functionAddr == IntPtr.Zero)
                             {
                                 int hResult = Marshal.GetLastWin32Error();
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.LocalDBCreateInstance> GetProcAddress for LocalDBCreateInstance error 0x{0}", hResult);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_MethodNotFound"));
                             }
+                            
                             s_localDBCreateInstance = (LocalDBCreateInstanceDelegate)Marshal.GetDelegateForFunctionPointer(functionAddr, typeof(LocalDBCreateInstanceDelegate));
                         }
-                    }
-                    finally
-                    {
-                        if (lockTaken)
-                            Monitor.Exit(s_dllLock);
                     }
                 }
                 return s_localDBCreateInstance;
             }
         }
-        //---netfx
+        #endif
         
         private static LocalDBFormatMessageDelegate LocalDBFormatMessage
         {
