@@ -128,8 +128,8 @@ namespace Microsoft.Data.ProviderBase
                 throw ADP.TooManyRestrictions(collectionName);
             }
 
-            DbCommand command = connection.CreateCommand();
             SqlConnection castConnection = connection as SqlConnection;
+            SqlCommand command = castConnection.CreateCommand();
 
             command.CommandText = sqlCommand;
             command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
@@ -155,7 +155,7 @@ namespace Microsoft.Data.ProviderBase
                 command.Parameters.Add(restrictionParameter);
             }
 
-            DbDataReader reader = null;
+            SqlDataReader reader = null;
             try
             {
                 try
@@ -178,11 +178,8 @@ namespace Microsoft.Data.ProviderBase
                 };
 
                 cancellationToken.ThrowIfCancellationRequested();
-#if NET
                 DataTable schemaTable = isAsync ? await reader.GetSchemaTableAsync(cancellationToken).ConfigureAwait(false) : reader.GetSchemaTable();
-#else
-                DataTable schemaTable = reader.GetSchemaTable();
-#endif
+
                 foreach (DataRow row in schemaTable.Rows)
                 {
                     resultTable.Columns.Add(row["ColumnName"] as string, (Type)row["DataType"] as Type);

@@ -1697,6 +1697,24 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTableAsync/*' />
+        public Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled<DataTable>(cancellationToken);
+            }
+
+            try
+            {
+                return Task.FromResult(GetSchemaTable());
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException<DataTable>(ex);
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
         override public bool GetBoolean(int i)
         {

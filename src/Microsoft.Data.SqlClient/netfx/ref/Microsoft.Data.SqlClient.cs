@@ -5,6 +5,10 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
+using System.Data;
+using System.Threading.Tasks;
+using System.Threading;
+
 [assembly: System.CLSCompliant(true)]
 [assembly: System.Resources.NeutralResourcesLanguageAttribute("en-US")]
 namespace Microsoft.Data
@@ -1371,6 +1375,8 @@ namespace Microsoft.Data.SqlClient
         public virtual System.Data.SqlTypes.SqlXml GetSqlXml(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*'/>
         public override System.Data.DataTable GetSchemaTable() { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTableAsync/*' />
+        public Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*'/>
         public override System.IO.Stream GetStream(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetString/*'/>
