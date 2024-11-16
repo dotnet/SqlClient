@@ -24,10 +24,8 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Interop.Windows.AdvApi32;
 using Microsoft.Data.ProviderBase;
 using Microsoft.SqlServer.Server;
-using Interop.Windows.Kernel32;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -283,8 +281,6 @@ namespace Microsoft.Data.SqlClient
             }
             return new List<string>(0);
         }
-
-        private SqlDebugContext _sdc;   // SQL Debugging support
 
         private bool _AsyncCommandInProgress;
 
@@ -1522,14 +1518,12 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
+                SqlStatistics statistics = null;
+
+                TdsParser bestEffortCleanupTarget = null;
+                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    SqlStatistics statistics = null;
-
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
 #if DEBUG
                         TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -1540,72 +1534,62 @@ namespace Microsoft.Data.SqlClient
 #else
                     {
 #endif //DEBUG
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                            statistics = SqlStatistics.StartTimer(Statistics);
+                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                        statistics = SqlStatistics.StartTimer(Statistics);
 
-                            Task reconnectTask = _currentReconnectionTask;
-                            if (reconnectTask != null && !reconnectTask.IsCompleted)
+                        Task reconnectTask = _currentReconnectionTask;
+                        if (reconnectTask != null && !reconnectTask.IsCompleted)
+                        {
+                            CancellationTokenSource cts = _reconnectionCancellationSource;
+                            if (cts != null)
                             {
-                                CancellationTokenSource cts = _reconnectionCancellationSource;
-                                if (cts != null)
-                                {
-                                    cts.Cancel();
-                                }
-                                AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                                if (State != ConnectionState.Open)
-                                {// if we cancelled before the connection was opened
-                                    OnStateChange(DbConnectionInternal.StateChangeClosed);
-                                }
+                                cts.Cancel();
                             }
-                            CancelOpenAndWait();
-                            CloseInnerConnection();
-                            GC.SuppressFinalize(this);
-
-                            if (Statistics != null)
-                            {
-                                _statistics._closeTimestamp = ADP.TimerCurrent();
+                            AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                            if (State != ConnectionState.Open)
+                            {// if we cancelled before the connection was opened
+                                OnStateChange(DbConnectionInternal.StateChangeClosed);
                             }
                         }
+                        CancelOpenAndWait();
+                        CloseInnerConnection();
+                        GC.SuppressFinalize(this);
+
+                        if (Statistics != null)
+                        {
+                            _statistics._closeTimestamp = ADP.TimerCurrent();
+                        }
+                    }
 #if DEBUG
                         finally
                         {
                             tdsReliabilitySection.Stop();
                         }
 #endif //DEBUG
-                    }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        Abort(e);
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
-                    finally
-                    {
-                        SqlStatistics.StopTimer(statistics);
-                        //dispose windows identity once connection is closed.
-                        if (_lastIdentity != null)
-                        {
-                            _lastIdentity.Dispose();
-                        }
-                    }
+                }
+                catch (System.OutOfMemoryException e)
+                {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    Abort(e);
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
                 }
                 finally
                 {
-                    SqlDebugContext sdc = _sdc;
-                    _sdc = null;
-                    if (sdc != null)
+                    SqlStatistics.StopTimer(statistics);
+                    //dispose windows identity once connection is closed.
+                    if (_lastIdentity != null)
                     {
-                        sdc.Dispose();
+                        _lastIdentity.Dispose();
                     }
                 }
             }
@@ -1922,16 +1906,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
-        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
+            => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
-        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
+        public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, cancellationToken) :
+                InternalOpenAsync(overrides, cancellationToken);
+
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
@@ -1977,7 +1965,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion);
+                        completed = TryOpen(completion, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1996,7 +1984,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(() => completion.TrySetCanceled());
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2060,13 +2048,15 @@ namespace Microsoft.Data.SqlClient
             SqlConnection _parent;
             TaskCompletionSource<DbConnectionInternal> _retry;
             TaskCompletionSource<object> _result;
+            SqlConnectionOverrides _overrides;
             CancellationTokenRegistration _registration;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
+                _overrides = overrides;
                 _registration = registration;
             }
 
@@ -2102,7 +2092,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry);
+                                result = _parent.TryOpen(_retry, _overrides);
                             }
                             if (result)
                             {
@@ -2179,9 +2169,6 @@ namespace Microsoft.Data.SqlClient
                 result = TryOpenInner(retry);
             }
 
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
-
             return result;
         }
 
@@ -2246,7 +2233,6 @@ namespace Microsoft.Data.SqlClient
                             tdsInnerConnection.Parser.Statistics = null;
                             _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
                         }
-                        CompleteOpen();
                     }
                 }
 #if DEBUG
@@ -2451,40 +2437,6 @@ namespace Microsoft.Data.SqlClient
         // PRIVATE METHODS
         //
 
-        // SxS: using Debugger.IsAttached
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        private void CompleteOpen()
-        {
-            Debug.Assert(ConnectionState.Open == State, "CompleteOpen not open");
-            // be sure to mark as open so SqlDebugCheck can issue Query
-
-            // check to see if we need to hook up sql-debugging if a debugger is attached
-            // We only need this check for 2000 and earlier servers.
-            if (!GetOpenConnection().Is2005OrNewer &&
-                    System.Diagnostics.Debugger.IsAttached)
-            {
-                bool debugCheck = false;
-                try
-                {
-                    new SecurityPermission(SecurityPermissionFlag.UnmanagedCode).Demand(); // MDAC 66682, 69017
-                    debugCheck = true;
-                }
-                catch (SecurityException e)
-                {
-                    ADP.TraceExceptionWithoutRethrow(e);
-                }
-
-                if (debugCheck)
-                {
-                    // if we don't have Unmanaged code permission, don't check for debugging
-                    // but let the connection be opened while under the debugger
-                    CheckSQLDebugOnConnect();
-                }
-            }
-        }
-
         internal SqlInternalConnection GetOpenConnection()
         {
             SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
@@ -2560,193 +2512,6 @@ namespace Microsoft.Data.SqlClient
             {
                 notified = false;
             }
-        }
-
-        //
-        // SQL DEBUGGING SUPPORT
-        //
-
-        // this only happens once per connection
-        // SxS: using named file mapping APIs
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        private void CheckSQLDebugOnConnect()
-        {
-            IntPtr hFileMap;
-            uint pid = (uint)Kernel32Safe.GetCurrentProcessId();
-
-            string mapFileName;
-
-            // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.s_isPlatformNT5)
-            {
-                mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
-            }
-            else
-            {
-                mapFileName = TdsEnums.SDCI_MAPFILENAME;
-            }
-
-            mapFileName = mapFileName + pid.ToString(CultureInfo.InvariantCulture);
-
-            hFileMap = Kernel32.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
-
-            if (ADP.s_ptrZero != hFileMap)
-            {
-                IntPtr pMemMap = Kernel32.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
-                if (ADP.s_ptrZero != pMemMap)
-                {
-                    SqlDebugContext sdc = new SqlDebugContext();
-                    sdc.hMemMap = hFileMap;
-                    sdc.pMemMap = pMemMap;
-                    sdc.pid = pid;
-
-                    // optimization: if we only have to refresh memory-mapped data at connection open time
-                    // optimization: then call here instead of in CheckSQLDebug() which gets called
-                    // optimization: at command execution time
-                    // RefreshMemoryMappedData(sdc);
-
-                    // delaying setting out global state until after we issue this first SQLDebug command so that
-                    // we don't reentrantly call into CheckSQLDebug
-                    CheckSQLDebug(sdc);
-                    // now set our global state
-                    _sdc = sdc;
-                }
-            }
-        }
-
-        // This overload is called by the Command object when executing stored procedures.  Note that
-        // if SQLDebug has never been called, it is a noop.
-        internal void CheckSQLDebug()
-        {
-            if (_sdc != null)
-            {
-                CheckSQLDebug(_sdc);
-            }
-        }
-
-        // SxS: using GetCurrentThreadId
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        [SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)] // MDAC 66682, 69017
-        private void CheckSQLDebug(SqlDebugContext sdc)
-        {
-            // check to see if debugging has been activated
-            Debug.Assert(sdc != null, "SQL Debug: invalid null debugging context!");
-
-#pragma warning disable 618
-            uint tid = (uint)AppDomain.GetCurrentThreadId();    // Sql Debugging doesn't need fiber support;
-#pragma warning restore 618
-            RefreshMemoryMappedData(sdc);
-
-            // UNDONE: do I need to remap the contents of pMemMap each time I call into here?
-            // UNDONE: current behavior is to only marshal the contents of the memory-mapped file
-            // UNDONE: at connection open time.
-
-            // If we get here, the debugger must be hooked up.
-            if (!sdc.active)
-            {
-                if (sdc.fOption/*TdsEnums.SQLDEBUG_ON*/)
-                {
-                    // turn on
-                    sdc.active = true;
-                    sdc.tid = tid;
-                    try
-                    {
-                        IssueSQLDebug(TdsEnums.SQLDEBUG_ON, sdc.machineName, sdc.pid, sdc.dbgpid, sdc.sdiDllName, sdc.data);
-                        sdc.tid = 0; // reset so that the first successful time through, we notify the server of the context switch
-                    }
-                    catch
-                    {
-                        sdc.active = false;
-                        throw;
-                    }
-                }
-            }
-
-            // be sure to pick up thread context switch, especially the first time through
-            if (sdc.active)
-            {
-                if (!sdc.fOption/*TdsEnums.SQLDEBUG_OFF*/)
-                {
-                    // turn off and free the memory
-                    sdc.Dispose();
-                    // okay if we throw out here, no state to clean up
-                    IssueSQLDebug(TdsEnums.SQLDEBUG_OFF, null, 0, 0, null, null);
-                }
-                else
-                {
-                    // notify server of context change
-                    if (sdc.tid != tid)
-                    {
-                        sdc.tid = tid;
-                        try
-                        {
-                            IssueSQLDebug(TdsEnums.SQLDEBUG_CONTEXT, null, sdc.pid, sdc.tid, null, null);
-                        }
-                        catch
-                        {
-                            sdc.tid = 0;
-                            throw;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void IssueSQLDebug(uint option, string machineName, uint pid, uint id, string sdiDllName, byte[] data)
-        {
-
-            if (GetOpenConnection().Is2005OrNewer)
-            {
-                // TODO: When 2005 actually supports debugging, we need to modify this method to do the right thing(tm)
-                return;
-            }
-
-            // CONSIDER: we could cache three commands, one for each mode {on, off, context switch}
-            // CONSIDER: but debugging is not the performant case so save space instead amd rebuild each time
-            SqlCommand c = new SqlCommand(TdsEnums.SP_SDIDEBUG, this);
-            c.CommandType = CommandType.StoredProcedure;
-
-            // context param
-            SqlParameter p = new SqlParameter(null, SqlDbType.VarChar, TdsEnums.SQLDEBUG_MODE_NAMES[option].Length);
-            p.Value = TdsEnums.SQLDEBUG_MODE_NAMES[option];
-            c.Parameters.Add(p);
-
-            if (option == TdsEnums.SQLDEBUG_ON)
-            {
-                // debug dll name
-                p = new SqlParameter(null, SqlDbType.VarChar, sdiDllName.Length);
-                p.Value = sdiDllName;
-                c.Parameters.Add(p);
-                // debug machine name
-                p = new SqlParameter(null, SqlDbType.VarChar, machineName.Length);
-                p.Value = machineName;
-                c.Parameters.Add(p);
-            }
-
-            if (option != TdsEnums.SQLDEBUG_OFF)
-            {
-                // client pid
-                p = new SqlParameter(null, SqlDbType.Int);
-                p.Value = pid;
-                c.Parameters.Add(p);
-                // dbgpid or tid
-                p = new SqlParameter(null, SqlDbType.Int);
-                p.Value = id;
-                c.Parameters.Add(p);
-            }
-
-            if (option == TdsEnums.SQLDEBUG_ON)
-            {
-                // debug data
-                p = new SqlParameter(null, SqlDbType.VarBinary, data != null ? data.Length : 0);
-                p.Value = data;
-                c.Parameters.Add(p);
-            }
-
-            c.ExecuteNonQuery();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
@@ -2920,23 +2685,6 @@ namespace Microsoft.Data.SqlClient
            ).Unwrap();
         }
 
-
-        // updates our context with any changes made to the memory-mapped data by an external process
-        static private void RefreshMemoryMappedData(SqlDebugContext sdc)
-        {
-            Debug.Assert(ADP.s_ptrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
-            // copy memory mapped file contents into managed types
-            MEMMAP memMap = (MEMMAP)Marshal.PtrToStructure(sdc.pMemMap, typeof(MEMMAP));
-            sdc.dbgpid = memMap.dbgpid;
-            sdc.fOption = (memMap.fOption == 1) ? true : false;
-            // xlate ansi byte[] -> managed strings
-            Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);
-            sdc.machineName = cp.GetString(memMap.rgbMachineName, 0, memMap.rgbMachineName.Length);
-            sdc.sdiDllName = cp.GetString(memMap.rgbDllName, 0, memMap.rgbDllName.Length);
-            // just get data reference
-            sdc.data = memMap.rgbData;
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />
         public void ResetStatistics()
         {
@@ -3106,73 +2854,4 @@ namespace Microsoft.Data.SqlClient
             return retval;
         }
     } // SqlConnection
-
-    sealed class SqlDebugContext : IDisposable
-    {
-        // context data
-        internal uint pid = 0;
-        internal uint tid = 0;
-        internal bool active = false;
-        // memory-mapped data
-        internal IntPtr pMemMap = ADP.s_ptrZero;
-        internal IntPtr hMemMap = ADP.s_ptrZero;
-        internal uint dbgpid = 0;
-        internal bool fOption = false;
-        internal string machineName = null;
-        internal string sdiDllName = null;
-        internal byte[] data = null;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        // using CloseHandle and UnmapViewOfFile - no exposure
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Nothing to do here
-                ;
-            }
-            if (pMemMap != IntPtr.Zero)
-            {
-                Kernel32.UnmapViewOfFile(pMemMap);
-                pMemMap = IntPtr.Zero;
-            }
-            if (hMemMap != IntPtr.Zero)
-            {
-                Kernel32.CloseHandle(hMemMap);
-                hMemMap = IntPtr.Zero;
-            }
-            active = false;
-        }
-
-        ~SqlDebugContext()
-        {
-            Dispose(false);
-        }
-
-    }
-
-    // native interop memory mapped structure for sdi debugging
-    [StructLayoutAttribute(LayoutKind.Sequential, Pack = 1)]
-    internal struct MEMMAP
-    {
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint dbgpid; // id of debugger
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint fOption; // 1 - start debugging, 0 - stop debugging
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        internal byte[] rgbMachineName;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        internal byte[] rgbDllName;
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint cbData;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 255)]
-        internal byte[] rgbData;
-    }
 } // Microsoft.Data.SqlClient namespace

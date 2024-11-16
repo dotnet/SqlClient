@@ -2,16 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
-namespace Interop.Windows.SChannel
+namespace Interop.Windows.Sni
 {
-    internal enum ApplicationProtocolNegotiationExt
+    internal enum IoType
     {
-        None = 0,
-        NPN,
-        ALPN
+        READ,
+        WRITE,
     }
 }
-
-#endif

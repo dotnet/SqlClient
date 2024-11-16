@@ -2920,6 +2920,39 @@
         Any error returned by SQL Server that occurred while opening the connection.
       </exception>
     </OpenAsync>
+    <OpenAsyncWithOverrides>
+      <param name="overrides">
+        Options to override default connection open behavior.
+      </param>
+      <param name="cancellationToken">
+        The cancellation instruction.
+      </param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" />, which opens a database connection with the property settings specified by the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" />. The cancellation token can be used to request that the operation be abandoned before the connection timeout elapses.  Exceptions will be propagated via the returned Task. If the connection timeout time elapses without successfully connecting, the returned Task will be marked as faulted with an Exception. The implementation returns a Task without blocking the calling thread for both pooled and non-pooled connections.
+      </summary>
+      <returns>
+        A task representing the asynchronous operation.
+      </returns>
+      <remarks>
+        <para>
+          After calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Connecting" /> until the returned <see cref="T:System.Threading.Tasks.Task" /> is completed. Then, if the connection was successful, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Open" />. If the connection fails, <see cref="P:Microsoft.Data.SqlClient.SqlConnection.State" /> must return <see cref="F:System.Data.ConnectionState.Closed" />.
+        </para>
+        <para>
+          A call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> will attempt to cancel or close the corresponding <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync" /> call. For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        </para>
+      </remarks>
+      <exception cref="T:System.InvalidOperationException">
+        <para>
+          Calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(Microsoft.Data.SqlClient.SqlConnectionOverrides, System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
+        </para>
+        <para>
+          A connection was not available from the connection pool before the connection time out elapsed.
+        </para>
+      </exception>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        Any error returned by SQL Server that occurred while opening the connection.
+      </exception>
+    </OpenAsyncWithOverrides>
     <PacketSize>
       <summary>
         Gets the size (in bytes) of network packets used to communicate with an instance of SQL Server.

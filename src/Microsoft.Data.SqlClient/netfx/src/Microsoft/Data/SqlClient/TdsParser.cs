@@ -18,6 +18,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Net;
+using Interop.Common.Sni;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
@@ -813,14 +815,14 @@ namespace Microsoft.Data.SqlClient
             string IPStringFromSNI = string.Empty;
             IPAddress IPFromSNI;
             isTcpProtocol = false;
-            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+            Provider providerNumber = Provider.INVALID_PROV;
 
             if (string.IsNullOrEmpty(userProtocol))
             {
 
                 result = SNINativeMethodWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
-                isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+                isTcpProtocol = (providerNumber == Provider.TCP_PROV);
             }
             else if (userProtocol == TdsEnums.TCP)
             {
@@ -864,7 +866,7 @@ namespace Microsoft.Data.SqlClient
             UInt32 error = 0;
 
             // Remove SSL (Encryption) SNI provider since we only wanted to encrypt login.
-            error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV);
+            error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, Provider.SSL_PROV);
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -891,7 +893,7 @@ namespace Microsoft.Data.SqlClient
                 UInt32 info = 0;
 
                 // Add SMUX (MARS) SNI provider.
-                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, SNINativeMethodWrapper.ProviderEnum.SMUX_PROV, ref info);
+                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, Provider.SMUX_PROV, ref info);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -1214,7 +1216,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Add SSL (Encryption) SNI provider.
-            SNINativeMethodWrapper.AuthProviderInfo authInfo = new SNINativeMethodWrapper.AuthProviderInfo();
+            AuthProviderInfo authInfo = new AuthProviderInfo();
             authInfo.flags = info;
             authInfo.tlsFirst = encrypt == SqlConnectionEncryptOption.Strict;
             authInfo.certId = null;
@@ -1225,7 +1227,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
-            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, SNINativeMethodWrapper.ProviderEnum.SSL_PROV, authInfo);
+            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, Provider.SSL_PROV, authInfo);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -1790,7 +1792,7 @@ namespace Microsoft.Data.SqlClient
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
-            SNINativeMethodWrapper.SNI_Error sniError = new SNINativeMethodWrapper.SNI_Error();
+            SniError sniError = new SniError();
             SNINativeMethodWrapper.SNIGetLastError(out sniError);
 
             if (sniError.sniError != 0)
@@ -1799,15 +1801,15 @@ namespace Microsoft.Data.SqlClient
                 // handle special SNI error codes that are converted into exception which is not a SqlException.
                 switch (sniError.sniError)
                 {
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
+                    case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
                         throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
 
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
+                    case SniErrors.MultiSubnetFailoverWithInstanceSpecified:
                         // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
                         throw SQL.MultiSubnetFailoverWithInstanceSpecified();
 
-                    case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
+                    case SniErrors.MultiSubnetFailoverWithNonTcpProtocol:
                         // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                         throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
 
@@ -1875,7 +1877,7 @@ namespace Microsoft.Data.SqlClient
                     errorMessage = SQL.GetSNIErrorMessage((int)sniError.sniError);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (sniError.sniError == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
+                if (sniError.sniError == SniErrors.LocalDBErrorCode)
                 {
                     errorMessage += LocalDBAPI.GetLocalDBMessage((int)sniError.nativeError);
                     win32ErrorCode = 0;
@@ -3152,7 +3154,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
-                            uint bufferSizeResult = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+                            uint bufferSizeResult = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
