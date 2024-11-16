@@ -3,18 +3,21 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Configuration;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
-using System.Threading;
-using Interop.Windows.Kernel32;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient;
+using Interop.Windows.Kernel32;
+
+#if NETFRAMEWORK
+using System.Collections.Generic;
+using System.Configuration;
+using System.Runtime.CompilerServices;
+using System.Threading;
+#endif
 
 namespace Microsoft.Data
 {
@@ -153,12 +156,14 @@ namespace Microsoft.Data
             }
         }
 
-        //netfx---
+        #if NETFRAMEWORK
         internal static void AssertLocalDBPermissions()
         {
             _partialTrustAllowed = true;
         }
+        #endif
         
+        #if NETFRAMEWORK
         internal static void CreateLocalDBInstance(string instance)
         {
             DemandLocalDBPermissions();
@@ -224,8 +229,10 @@ namespace Microsoft.Data
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.CreateLocalDBInstance> Finished creation of instance {0}", instance);
             instanceInfo.created = true; // mark instance as created
-        } // CreateLocalDbInstance
+        }
+        #endif
         
+        #if NETFRAMEWORK
         internal static void DemandLocalDBPermissions()
         {
             if (!_partialTrustAllowed)
@@ -250,7 +257,7 @@ namespace Microsoft.Data
                 _fullTrust.Demand();
             }
         }
-        //---netfx
+        #endif
         
         // check if name is in format (localdb)\<InstanceName - not empty> and return instance name if it is
         // localDB can also have a format of np:\\.\pipe\LOCALDB#<some number>\tsql\query
@@ -286,7 +293,6 @@ namespace Microsoft.Data
                 StringBuilder buffer = new StringBuilder((int)const_ErrorMessageBufferSize);
                 uint len = (uint)buffer.Capacity;
 
-
                 // First try for current culture
                 int hResult = LocalDBFormatMessage(hrLocalDB: hrCode, dwFlags: const_LOCALDB_TRUNCATE_ERR_MESSAGE, dwLanguageId: (uint)CultureInfo.CurrentCulture.LCID,
                     buffer: buffer, buflen: ref len);
@@ -302,14 +308,12 @@ namespace Microsoft.Data
                     if (hResult >= 0)
                         return buffer.ToString();
                     else
-                        //netfx   return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", StringsHelper.GetString("LocalDB_UnobtainableMessage"), hResult);
-                        //netcore return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", Strings.LocalDB_UnobtainableMessage, hResult);
+                        return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", Strings.LocalDB_UnobtainableMessage, hResult);
                 }
             }
             catch (SqlException exc)
             {
-                //netfx   return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", StringsHelper.GetString("LocalDB_UnobtainableMessage"), exc.Message);
-                //netcore return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", Strings.LocalDB_UnobtainableMessage, exc.Message);
+                return string.Format(CultureInfo.CurrentCulture, "{0} ({1}).", Strings.LocalDB_UnobtainableMessage, exc.Message);
             }
         }
         
@@ -317,7 +321,10 @@ namespace Microsoft.Data
         {
             s_userInstanceDLLHandle = IntPtr.Zero;
             s_localDBFormatMessage = null;
-            //netfx s_localDBCreateInstance = null;
+            
+            #if NETFRAMEWORK
+            s_localDBCreateInstance = null;
+            #endif
         }
         
         private static SqlException CreateLocalDBException(string errorMessage, string instance = null, int localDbError = 0, int sniError = 0)
@@ -331,9 +338,7 @@ namespace Microsoft.Data
             if (sniError != 0)
             {
                 string sniErrorMessage = SQL.GetSNIErrorMessage(sniError);
-                //netfx   errorMessage = String.Format((IFormatProvider)null, "{0} (error: {1} - {2})",
-                //netcore errorMessage = string.Format("{0} (error: {1} - {2})",
-                    errorMessage, sniError, sniErrorMessage);
+                errorMessage = string.Format("{0} (error: {1} - {2})", errorMessage, sniError, sniErrorMessage);
             }
 
             collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, errorMessage, null, 0));
@@ -349,9 +354,13 @@ namespace Microsoft.Data
         }
         
         private static IntPtr LoadProcAddress() =>
+            #if NETFRAMEWORK
             Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+            #else
+            Kernel32.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+            #endif
 
-        //netfx---
+        #if NETFRAMEWORK
         private class InstanceInfo
         {
             internal InstanceInfo(string version)
@@ -363,6 +372,6 @@ namespace Microsoft.Data
             internal readonly string version;
             internal bool created;
         }
-        //---netfx
+        #endif
     }
 }
