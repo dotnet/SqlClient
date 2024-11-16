@@ -786,6 +786,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
     </Compile>
@@ -804,9 +807,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
