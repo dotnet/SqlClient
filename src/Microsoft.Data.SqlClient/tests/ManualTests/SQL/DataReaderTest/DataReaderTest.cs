@@ -9,7 +9,6 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -63,29 +62,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
             } while (reader.NextResult());
-            Assert.Contains("ColInteger", columnNames);
-            Assert.Contains("ColString", columnNames);
-        }
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task MultiQuerySchemaAsync()
-        {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
-            using SqlCommand command = connection.CreateCommand();
-            // Use multiple queries
-            command.CommandText = "SELECT 1 as ColInteger;  SELECT 'STRING' as ColString";
-            using SqlDataReader reader = await command.ExecuteReaderAsync();
-            HashSet<string> columnNames = new();
-            do
-            {
-                DataTable schemaTable = await reader.GetSchemaTableAsync();
-                foreach (DataRow myField in schemaTable.Rows)
-                {
-                    columnNames.Add(myField["ColumnName"].ToString());
-                }
-
-            } while (await reader.NextResultAsync());
             Assert.Contains("ColInteger", columnNames);
             Assert.Contains("ColString", columnNames);
         }

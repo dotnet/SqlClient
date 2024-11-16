@@ -8,7 +8,6 @@ using System.Data.SqlTypes;
 using System.Text;
 using Xunit;
 using Microsoft.SqlServer.Server;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -506,7 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
-        public async Task TestSchemaTable()
+        public void TestSchemaTable()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
             using (SqlCommand cmd = new SqlCommand("select * from lines", conn))
@@ -517,28 +516,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     DataTable syncSchemaTable = reader.GetSchemaTable();
-                    DataTable asyncSchemaTable = await reader.GetSchemaTableAsync();
 
                     string expectedSchemaTableValues =
                         "ids, 0, 4, 10, 255, False, , , , ids, , , System.Int32, True, 8, , , False, False, False, , False, False, System.Data.SqlTypes.SqlInt32, int, , , , , 8, False, " + Environment.NewLine +
                         "pos, 1, 20, 255, 255, False, , , , pos, , , Line, True, 29, , , False, False, False, , False, False, Line, UdtTestDb.dbo.Line, , , , Line, Shapes, Version=1.2.0.0, Culture=neutral, PublicKeyToken=a3e3aa32e6a16344, 29, False, " + Environment.NewLine;
 
-                    Assert.Equal(syncSchemaTable.Rows.Count, asyncSchemaTable.Rows.Count);
-                    Assert.Equal(syncSchemaTable.Columns.Count, asyncSchemaTable.Columns.Count);
-
                     StringBuilder builder = new StringBuilder();
                     for (int i = 0; i < syncSchemaTable.Rows.Count; i++)
                     {
                         DataRow syncRow = syncSchemaTable.Rows[i];
-                        DataRow asyncRow = asyncSchemaTable.Rows[i];
 
                         for (int j = 0; j < syncSchemaTable.Columns.Count; j++)
                         {
                             DataColumn syncColumn = syncSchemaTable.Columns[j];
-                            DataColumn asyncColumn = asyncSchemaTable.Columns[j];
-
-                            Assert.Equal(syncColumn.ColumnName, asyncColumn.ColumnName);
-                            Assert.Equal(syncRow[syncColumn], asyncRow[asyncColumn]);
 
                             builder.Append(syncRow[syncColumn] + ", ");
                         }
