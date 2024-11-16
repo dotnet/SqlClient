@@ -16,6 +16,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
@@ -1490,17 +1491,17 @@ namespace Microsoft.Data.SqlClient
                     // handle special SNI error codes that are converted into exception which is not a SqlException.
                     switch (details.sniErrorNumber)
                     {
-                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs:
+                        case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                             // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.");
                             throw SQL.MultiSubnetFailoverWithMoreThan64IPs();
 
-                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified:
+                        case SniErrors.MultiSubnetFailoverWithInstanceSpecified:
                             // Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported.");
                             throw SQL.MultiSubnetFailoverWithInstanceSpecified();
 
-                        case (int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol:
+                        case SniErrors.MultiSubnetFailoverWithNonTcpProtocol:
                             // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.
                             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError|ERR|ADV> Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol.");
                             throw SQL.MultiSubnetFailoverWithNonTcpProtocol();
@@ -1587,7 +1588,7 @@ namespace Microsoft.Data.SqlClient
                         errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
 
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                        if (details.sniErrorNumber == (int)SNINativeMethodWrapper.SniSpecialErrors.LocalDBErrorCode)
+                        if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
                             errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
                             win32ErrorCode = 0;
