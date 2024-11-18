@@ -51,7 +51,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("14590", TestPlatforms.Windows)]
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
@@ -76,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         provider.Retrying += (s, e) =>
                         {
                             currentRetries = e.RetryCount;
-                            // Try to create database just after first faliure.
+                            // Try to create database just after first failure.
                             if (createDBTask == null || createDBTask.Status == TaskStatus.Faulted)
                             {
                                 cmd.CommandText = $"IF (NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) CREATE DATABASE [{database}];";
@@ -100,7 +99,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRetries > 0);
         }
 
-        [ActiveIssue("25147")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
