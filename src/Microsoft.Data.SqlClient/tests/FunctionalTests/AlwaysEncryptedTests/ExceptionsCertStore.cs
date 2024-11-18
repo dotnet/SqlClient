@@ -42,13 +42,21 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Fact]
         public void CertificateWithNoPrivateKey()
         {
+#if NET
+            string expectedMessage = string.Format("Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly. (Parameter 'masterKeyPath')", ExceptionCertFixture.masterKeyPathNPK);
+#else
             string expectedMessage = string.Format("Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\r\nParameter name: masterKeyPath", ExceptionCertFixture.masterKeyPathNPK);
+#endif
             ArgumentException e = Assert.Throws<ArgumentException>(() => 
                 ExceptionCertFixture.certStoreProvider.EncryptColumnEncryptionKey(
                 ExceptionCertFixture.masterKeyPathNPK, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
             Assert.Contains(expectedMessage, e.Message);
 
+#if NET
+            expectedMessage = string.Format("Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly. (Parameter 'masterKeyPath')", ExceptionCertFixture.masterKeyPathNPK);
+#else
             expectedMessage = string.Format("Certificate specified in key path '{0}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\r\nParameter name: masterKeyPath", ExceptionCertFixture.masterKeyPathNPK);
+#endif
             e = Assert.Throws<ArgumentException>(() => 
                 ExceptionCertFixture.certStoreProvider.DecryptColumnEncryptionKey(
                 ExceptionCertFixture.masterKeyPathNPK, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
