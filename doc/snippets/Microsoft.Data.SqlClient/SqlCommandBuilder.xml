@@ -165,7 +165,7 @@
           You can only use <c>DeriveParameters</c> with stored procedures. You cannot use <c>DeriveParameters</c> with extended stored procedures. You cannot use <c>DeriveParameters</c> to populate the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> with arbitrary Transact-SQL statements, such as a parameterized SELECT statement.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/configure-parameters">Configuring parameters</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/configure-parameters">Configuring parameters</see>.
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -201,7 +201,7 @@
           After the SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" /> will still be using information from the previous statement, which might not be correct. The SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetDeleteCommand" />.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetDeleteCommand2>
@@ -240,7 +240,7 @@
           </item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetDeleteCommand3>
@@ -262,7 +262,7 @@
           After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetInsertCommand2>
@@ -301,7 +301,7 @@
           </item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetInsertCommand3>
@@ -379,7 +379,7 @@
           After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetUpdateCommand" />.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetUpdateCommand2>
@@ -418,7 +418,7 @@
           </item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
         </para>
       </remarks>
     </GetUpdateCommand3>
@@ -516,13 +516,13 @@
       <returns>
         The unquoted identifier, with embedded quotes properly unescaped.
       </returns>
-      <seealso href="/sql/connect/ado-net/retrieving-modifying-data">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/retrieving-modifying-data">
         Connecting and Retrieving Data in ADO.NET
       </seealso>
-      <seealso type="Article" href="/sql/connect/ado-net/sql/">
+      <seealso type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/sql/">
         Using the .NET Framework Data Provider for SQL Server
       </seealso>
-      <seealso type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
+      <seealso type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
         Overview of the SqlClient driver
       </seealso>
     </UnquoteIdentifier>

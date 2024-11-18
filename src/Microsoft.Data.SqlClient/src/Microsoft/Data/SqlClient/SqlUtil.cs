@@ -7,18 +7,23 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Interop.Common.Sni;
 using Microsoft.Data.Common;
+
+#if NETFRAMEWORK
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using Interop.Windows.Kernel32;
+#else
+using System.Net.Sockets;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1416,19 +1421,22 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MultiSubnetFailoverWithMoreThan64IPs()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs);
+            // @TODO: This can be uint
+            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithMoreThan64IPs);
             return ADP.InvalidOperation(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithInstanceSpecified()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified);
+            // @TODO: This can be uint
+            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithInstanceSpecified);
             return ADP.Argument(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithNonTcpProtocol()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol);
+            // @TODO: This can be uint
+            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithNonTcpProtocol);
             return ADP.Argument(msg);
         }
 
@@ -2477,9 +2485,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// gets a message for SNI error (sniError must be valid, non-zero error code)
         /// </summary>
+        // @TODO: This can be uint
         internal static string GetSNIErrorMessage(int sniError)
         {
-            Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
+            Debug.Assert(sniError > 0 && sniError <= (int)SniErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return StringsHelper.GetResourceString(errorMessageId);

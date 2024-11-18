@@ -38,6 +38,9 @@
   </ItemGroup>  
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+    <Compile Include="$(CommonSourceRoot)\Interop\Common\Sni\SniErrors.cs">
+      <Link>Interop\Common\Sni\SniErrors.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -434,6 +437,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependency.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependency.cs</Link>
     </Compile>
@@ -554,9 +560,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
       <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
     </Compile>
@@ -619,16 +622,7 @@
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
-    <Compile Include="Common\System\Net\ContextFlagsPal.cs" />
-    <Compile Include="Common\System\Net\InternalException.cs" />
-    <Compile Include="Common\System\Net\Logging\DebugThreadTracking.cs" />
-    <Compile Include="Common\System\Net\Logging\NetEventSource.Common.cs" />
-    <Compile Include="Common\System\Net\NegotiationInfoClass.cs" />
-    <Compile Include="Common\System\Net\Security\SecurityBuffer.cs" />
-    <Compile Include="Common\System\Net\Security\SecurityBufferType.cs" />
-    <Compile Include="Common\System\Net\SecurityStatusPal.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
-    <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
@@ -648,7 +642,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -662,8 +655,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
@@ -672,7 +663,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netcore.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
 
@@ -726,14 +716,44 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
       <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationExt.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
+      <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs">
-      <Link>Interop\Windows\SChannel\ApplicationProtocolNegotiationStatus.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs">
-      <Link>Interop\Windows\SChannel\SecPkgContextApplicationProtocol.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerNumber.cs">
+      <Link>Interop\Windows\Sni\ConsumerNumber.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
+      <Link>Interop\Windows\Sni\Delegates.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\IoType.cs">
+      <Link>Interop\Windows\Sni\IoType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Prefix.cs">
+      <Link>Interop\Windows\Sni\Prefix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Provider.cs">
+      <Link>Interop\Windows\Sni\Provider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\QueryType.cs">
+      <Link>Interop\Windows\Sni\QueryType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniClientConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniClientConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniDnsCacheInfo.cs">
+      <Link>Interop\Windows\Sni\SniDnsCacheInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniError.cs">
+      <Link>Interop\Windows\Sni\SniError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
+      <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\UnicodeString.cs">
       <Link>Interop\Windows\UnicodeString.cs</Link>
@@ -769,12 +789,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Common\System\Collections\Generic\BidirectionalDictionary.cs" />
-    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Windows.cs" />
-    <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Windows.cs" />
-    <Compile Include="Common\System\Net\Security\NetEventSource.Security.cs" />
-    <Compile Include="Common\System\Net\Security\NetEventSource.Security.Windows.cs" />
-    <Compile Include="Common\System\Net\SecurityStatusAdapterPal.Windows.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
@@ -795,8 +809,6 @@
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
     
-    <Compile Include="Common\System\Net\Security\NegotiateStreamPal.Unix.cs" />
-    <Compile Include="Common\System\Net\ContextFlagsAdapterPal.Unix.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />

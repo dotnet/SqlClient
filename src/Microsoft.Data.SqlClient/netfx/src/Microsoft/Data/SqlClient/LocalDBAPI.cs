@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
+using Interop.Windows.Kernel32;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
@@ -79,14 +81,14 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
-                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
+                            SNINativeMethodWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
                             }
                             else
                             {
-                                SNINativeMethodWrapper.SNI_Error sniError = new SNINativeMethodWrapper.SNI_Error();
+                                SniError sniError = new SniError();
                                 SNINativeMethodWrapper.SNIGetLastError(out sniError);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
                             }
@@ -121,7 +123,7 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_localDBCreateInstance == null)
                         {
-                            IntPtr functionAddr = SafeNativeMethods.GetProcAddress(UserInstanceDLLHandle, "LocalDBCreateInstance");
+                            IntPtr functionAddr = Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBCreateInstance");
 
                             if (functionAddr == IntPtr.Zero)
                             {
@@ -162,7 +164,7 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_localDBFormatMessage == null)
                         {
-                            IntPtr functionAddr = SafeNativeMethods.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+                            IntPtr functionAddr = Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
 
                             if (functionAddr == IntPtr.Zero)
                             {

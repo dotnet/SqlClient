@@ -1,41 +1,43 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
-using System.Threading;
 
-namespace Microsoft.Data.Common
+namespace Interop.Windows.Kernel32
 {
-
-    [SuppressUnmanagedCodeSecurityAttribute()]
-    internal static class SafeNativeMethods
+    /// <remarks>
+    /// Be insanely careful when using methods from this class. They are configured to skip
+    /// runtime security checks.
+    /// </remarks>
+    [SuppressUnmanagedCodeSecurity]
+    internal static class Kernel32Safe
     {
         private const string Kernel32 = "kernel32.dll";
 
         // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/sysinfo/base/getcomputernameex.asp
         [DllImport(Kernel32, CharSet = CharSet.Unicode, EntryPoint = "GetComputerNameExW", SetLastError = true)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);
+        internal static extern int GetComputerNameEx(int nameType, StringBuilder nameBuffer, ref int bufferSize);
 
-        [DllImport(Kernel32, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+        [DllImport(Kernel32, CharSet = CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
-        static internal extern int GetCurrentProcessId();
+        internal static extern int GetCurrentProcessId();
 
         [DllImport(Kernel32, CharSet = CharSet.Auto, BestFitMapping = false, ThrowOnUnmappableChar = true)]
-        //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Auto)]
         [ResourceExposure(ResourceScope.Process)]
-        static internal extern IntPtr GetModuleHandle([MarshalAs(UnmanagedType.LPTStr), In] string moduleName/*lpctstr*/);
+        internal static extern IntPtr GetModuleHandle([MarshalAs(UnmanagedType.LPTStr), In] string moduleName);
 
         [DllImport(Kernel32, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
-        //        [DllImport(ExternDll.Kernel32, CharSet=CharSet.Ansi)]
         [ResourceExposure(ResourceScope.None)]
-        static internal extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName/*lpcstr*/);
-
+        internal static extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName);
     }
 }
+
+#endif

@@ -2884,7 +2884,7 @@
     <value>La connexion du contexte ne prend pas en charge Type System Version=SQL Server 2000.</value>
   </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
-    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+    <value>La connexion à la connexion de contexte à l’aide de Microsoft.Data.SqlClient n’est pas prise en charge.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>La connexion du contexte est déjà en cours d'utilisation.</value>

@@ -24,7 +24,7 @@
           sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, and each destination column is in the same ordinal position as its corresponding source column, the column names do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using<b>SqlBulkCopy</b>only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -130,7 +130,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -239,7 +239,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy based on the ordinal positions of the columns.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -353,7 +353,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -467,7 +467,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -580,7 +580,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -689,7 +689,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -805,7 +805,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -921,7 +921,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b> sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
@@ -1037,7 +1037,7 @@
           The following example bulk copies data from a source table in the <b>AdventureWorks</b>  sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> objects are used to create a column map for the bulk copy.
         </para>
         <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
+          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
         </note>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
