@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TimeoutCancel(tcp_connStr);
         }
 
-        [ActiveIssue("12167")]
+        [ActiveIssue("12167", typeof(DataTestUtility), nameof(DataTestUtility.UseManagedSNIOnWindows))] // Managed SNI does not seem to work here
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeoutCancelNP()
@@ -178,15 +178,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             CancelAndDisposePreparedCommand(np_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         public static void TimeOutDuringRead()
         {
             TimeOutDuringRead(tcp_connStr);
         }
 
-        [ActiveIssue("5541")]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotNamedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public static void TimeOutDuringReadNP()
         {
@@ -357,7 +355,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
 
                     string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                    DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
+                    var ex = Assert.Throws<SqlException>(() => ExecuteReaderOnCmd(cmd));
+                    Assert.Equal(errorMessage, ex.Message);
 
                     VerifyConnection(cmd);
                 }
