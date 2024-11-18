@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         private readonly string masterKeyEncAlgo = "RSA_OAEP";
 
         [Fact]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void EmptyCertificateThumbprint()
         {
             string dummyPath = string.Format("CurrentUser/My/");
@@ -28,7 +27,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Fact]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void CertificateNotFound()
         {
             string dummyPath = string.Format("CurrentUser/My/JunkThumbprint");
@@ -41,9 +39,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Matches(expectedMessage, e.Message);
         }
 
-#if NETFRAMEWORK
         [Fact]
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public void CertificateWithNoPrivateKey()
         {
             string expectedMessage = string.Format("Certificate specified in key path '{0}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\r\nParameter name: masterKeyPath", ExceptionCertFixture.masterKeyPathNPK);
@@ -58,7 +54,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 ExceptionCertFixture.masterKeyPathNPK, masterKeyEncAlgo, ExceptionCertFixture.encryptedCek));
             Assert.Contains(expectedMessage, e.Message);
         }
-#endif
     }
     public class ExceptionCertFixture : IDisposable
     {
@@ -68,11 +63,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static string thumbprint;
         public static byte[] cek;
         public static byte[] encryptedCek;
-#if NETFRAMEWORK
         public static X509Certificate2 masterKeyCertificateNPK; // no private key
         public static string thumbprintNPK; // No private key
         public static string masterKeyPathNPK;
-#endif
 
         public ExceptionCertFixture()
         {
@@ -84,14 +77,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             certificatePath = string.Format("CurrentUser/My/{0}", thumbprint);
             cek = Utility.GenerateRandomBytes(32);
             encryptedCek = certStoreProvider.EncryptColumnEncryptionKey(certificatePath, "RSA_OAEP", cek);
-#if NETFRAMEWORK
             if (masterKeyCertificateNPK == null)
             {
                 masterKeyCertificateNPK = Utility.CreateCertificateWithNoPrivateKey();
             }
             thumbprintNPK = masterKeyCertificateNPK.Thumbprint;
             masterKeyPathNPK = "CurrentUser/My/" + thumbprintNPK;
-#endif
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }

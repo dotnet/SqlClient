@@ -11,15 +11,15 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlBulkCopyTruncation : IClassFixture<PlatformSpecificTestContext>
+    public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
         private SQLSetupStrategy _fixture;
 
         private readonly Dictionary<string, string> tableNames = new Dictionary<string, string>();
 
-        public SqlBulkCopyTruncation(PlatformSpecificTestContext context)
+        public SqlBulkCopyTruncation(SQLSetupStrategyCertStoreProvider context)
         {
-            _fixture = context.Fixture;
+            _fixture = context;
             tableNames = _fixture.sqlBulkTruncationTableNames;
         }
 
