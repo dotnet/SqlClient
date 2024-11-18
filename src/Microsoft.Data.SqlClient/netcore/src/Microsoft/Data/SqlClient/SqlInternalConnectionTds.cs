@@ -950,7 +950,7 @@ namespace Microsoft.Data.SqlClient
                 // distributed transaction - otherwise don't reset!
                 // Prepare the parser for the connection reset - the next time a trip
                 // to the server is made.
-                _parser.PrepareResetConnection(IsTransactionRoot && !IsNonPoolableTransactionRoot);
+                _parser.PrepareResetConnection(EnlistedTransaction != null && Pool != null);
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;

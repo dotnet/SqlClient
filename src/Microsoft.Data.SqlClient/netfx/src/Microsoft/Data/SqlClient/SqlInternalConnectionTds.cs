@@ -1077,7 +1077,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Prepare the parser for the connection reset - the next time a trip
                     // to the server is made.
-                    _parser.PrepareResetConnection(IsTransactionRoot && !IsNonPoolableTransactionRoot);
+                    _parser.PrepareResetConnection(EnlistedTransaction != null && Pool != null);
                 }
                 else if (!IsEnlistedInTransaction)
                 {
