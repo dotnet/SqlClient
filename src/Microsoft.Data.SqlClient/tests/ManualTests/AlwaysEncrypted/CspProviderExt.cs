@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAdmin))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestKeysFromCertificatesCreatedWithMultipleCryptoProviders(string connectionString)
         {

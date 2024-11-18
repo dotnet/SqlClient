@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
+        // JSON Column type
         public static readonly bool IsJsonSupported = false;
 
         // Azure Synapse EngineEditionId == 6
@@ -107,8 +107,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
                 }
-                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
-                return engineEditon == 6;
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEdition);
+                return engineEdition == 6;
             }
         }
 
@@ -466,6 +466,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             return ParseDataSource(builder.DataSource, out string hostname, out _, out _) && string.Equals("localhost", hostname, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsNotNamedInstance()
+        {
+            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
