@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
 #if NETFRAMEWORK
         [Fact]
-        public static void SqlExcpetionSerializationTest()
+        public static void SqlExceptionSerializationTest()
         {
             var formatter = new BinaryFormatter();
             SqlException e = CreateException();
