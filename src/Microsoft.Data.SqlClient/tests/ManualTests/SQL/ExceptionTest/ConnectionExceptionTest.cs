@@ -42,8 +42,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlException innerEx = Assert.IsType<SqlException>(exception.InnerException);
             Assert.Equal(20, innerEx.Class);
             Assert.StartsWith("A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible.", innerEx.Message);
-            // Since the server is not accessible driver can close the close the connection
-            // It is user responsibilty to maintain the connection.
+            // Since the server is not accessible, the driver can close the connection.
+            // It is the user's responsibility to maintain the connection.
             Assert.Equal(System.Data.ConnectionState.Closed, conn.State);
         }
 
