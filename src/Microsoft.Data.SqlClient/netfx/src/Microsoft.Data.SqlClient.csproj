@@ -391,8 +391,14 @@
     <Compile Include="$(CommonSourceROot)Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs">
       <Link>Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDBConfig.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDBConfig.netfx.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbConfigurationSection.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbConfigurationSection.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbInstanceElement.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbInstanceElement.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbInstancesCollection.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbInstancesCollection.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
