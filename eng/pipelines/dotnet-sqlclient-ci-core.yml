@@ -3,22 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-trigger:
-  branches:
-    include:
-    - internal/main
-  paths:
-    include:
-    - src
-    - eng
-    - tools
-    - .config
-    - build.proj
-    - Nuget.config
-    - '*.cmd'
-    - '*.sh'
-
-parameters: # parameters are shown up in ADO UI in a build queue time
+parameters:
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean

@@ -35,25 +35,6 @@ parameters:
 
 steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - task: UseDotNet@2
-    inputs:
-      packageType: sdk
-      version: '9.x'
-      includePreviewVersions: true
-      installationPath: 'C:\Program Files\dotnet'
-
-  - task: Powershell@2
-    displayName: 'List SDK versions'
-    inputs:
-      targetType: 'inline'
-      script: 'dotnet --list-sdks'
-
-  - task: Powershell@2
-    displayName: 'List runtime versions'
-    inputs:
-      targetType: 'inline'
-      script: 'dotnet --list-runtimes'
-
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - task: MSBuild@1
       displayName: 'Restore nugets [Win]'
