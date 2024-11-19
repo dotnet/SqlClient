@@ -1854,17 +1854,27 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
-
-#if NETFRAMEWORK
-            Debug.Assert(2 == validLocations.Length);
-#endif
-            if (isSystemOp)
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
             else
             {
-                return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                if (isSystemOp)
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocationSysErr_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
+                else
+                {
+                    return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateLocation_Unix, certificateLocation, certificatePath, validLocations[0], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+                }
             }
         }
 

@@ -495,12 +495,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
                 yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
-                yield return new object[2] { MyPathPrefix, null };
-                yield return new object[2] { @"", null };
-                // use localmachine cert path only when current user is Admin.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
+
+                // use localmachine cert path (or a location in the cert path which defaults to localmachine) only when current user is Admin.
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
+                    yield return new object[2] { @"", null };
+                    yield return new object[2] { MyPathPrefix, null };
+
+                    if (CertificateFixture.IsAdmin)
+                    {
+                        yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
+                    }
                 }
             }
         }

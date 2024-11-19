@@ -38,6 +38,7 @@ steps:
         TestResults/*.trx
         TestResults/**/*.coverage
       testRunTitle: 'Linux Tests'
+  condition: succeededOrFailed()
 
 - powershell: |
    cd TestResults
