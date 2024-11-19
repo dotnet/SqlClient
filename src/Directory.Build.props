@@ -99,7 +99,6 @@
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
-  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))" Project="$(ToolsDir)props\VersionsNet9OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
