@@ -1255,7 +1255,7 @@
                   while (reader.Read())
                   {
                       // Display all the columns. 
-                      for (int i = 0; i < reader.FieldCount; i++)
+                      for (int i = 0; i &lt; reader.FieldCount; i++)
                       {
                           Console.Write("{0}\t", reader.GetValue(i));
                       }
