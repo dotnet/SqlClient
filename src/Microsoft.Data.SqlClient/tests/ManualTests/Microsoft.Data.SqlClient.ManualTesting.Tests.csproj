@@ -72,6 +72,15 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
+    <Compile Include="Resources\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Resources\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />

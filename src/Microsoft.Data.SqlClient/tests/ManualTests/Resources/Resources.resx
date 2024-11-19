@@ -121,16 +121,4 @@
   <data name="Certificate1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Certificate1.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="Certificate2" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Certificate2.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Certificate3" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Certificate3.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Certificate4" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Certificate4.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="Certificate5" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Certificate5.pfx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
 </root>

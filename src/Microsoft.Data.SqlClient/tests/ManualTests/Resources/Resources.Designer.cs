@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Microsoft.Data.SqlClient.Tests.Resources {
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests.Resources {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.Tests.Resources {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Tests.Resources.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.ManualTesting.Tests.Resources.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -66,46 +66,6 @@ namespace Microsoft.Data.SqlClient.Tests.Resources {
         internal static byte[] Certificate1 {
             get {
                 object obj = ResourceManager.GetObject("Certificate1", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Certificate2 {
-            get {
-                object obj = ResourceManager.GetObject("Certificate2", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Certificate3 {
-            get {
-                object obj = ResourceManager.GetObject("Certificate3", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Certificate4 {
-            get {
-                object obj = ResourceManager.GetObject("Certificate4", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] Certificate5 {
-            get {
-                object obj = ResourceManager.GetObject("Certificate5", resourceCulture);
                 return ((byte[])(obj));
             }
         }

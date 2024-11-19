@@ -4035,8 +4035,14 @@
   <data name="TCE_NullCertificatePath" xml:space="preserve">
     <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
   </data>
+  <data name="TCE_NullCertificatePath_Unix" xml:space="preserve">
+    <value>Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
+  </data>
   <data name="TCE_NullCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{0}' or '{1}'.</value>
+  </data>
+  <data name="TCE_NullCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{1}&lt;certificate store&gt;{1}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{0}'.</value>
   </data>
   <data name="TCE_NullCspPath" xml:space="preserve">
     <value>Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;.</value>
@@ -4053,8 +4059,14 @@
   <data name="TCE_InvalidCertificatePath" xml:space="preserve">
     <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
   </data>
+  <data name="TCE_InvalidCertificatePath_Unix" xml:space="preserve">
+    <value>Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
+  </data>
   <data name="TCE_InvalidCertificatePathSysErr" xml:space="preserve">
     <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either '{1}' or '{2}'.</value>
+  </data>
+  <data name="TCE_InvalidCertificatePathSysErr_Unix" xml:space="preserve">
+    <value>Internal error. Invalid certificate path: '{0}'. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is '{1}'.</value>
   </data>
   <data name="TCE_InvalidCspPath" xml:space="preserve">
     <value>Invalid column master key path: '{0}'. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;.</value>
