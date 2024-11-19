@@ -363,10 +363,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                 certStore.Open(OpenFlags.ReadWrite);
-                if (!certStore.Certificates.Contains(publicKey))
+                if (certStore.Certificates.Contains(publicKey))
                 {
-                    certStore.Add(publicKey);
+                    certStore.Remove(publicKey);
                 }
+                certStore.Add(publicKey);
             }
             finally
             {
