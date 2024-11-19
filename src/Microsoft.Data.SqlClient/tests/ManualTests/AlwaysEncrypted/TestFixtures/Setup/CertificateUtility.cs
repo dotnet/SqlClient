@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     class CertificateUtility
     {
+        public const string EmbeddedCertificatePassword = @"P@zzw0rD!SqlvN3x+";
+
         private CertificateUtility()
         {
         }
@@ -196,7 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
             // The rest of the parameters may be invalid for exception handling test cases
 
-            X509Certificate2 x509 = new X509Certificate2(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+            X509Certificate2 x509 = new X509Certificate2(rsaPfx, EmbeddedCertificatePassword);
 
             Debug.Assert(x509.HasPrivateKey);
 
@@ -210,7 +212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
 
-            X509Certificate2 x509 = new X509Certificate2(rsaPfx, @"P@zzw0rD!SqlvN3x+");
+            X509Certificate2 x509 = new X509Certificate2(rsaPfx, EmbeddedCertificatePassword);
             Debug.Assert(x509.HasPrivateKey);
 
             SqlColumnEncryptionCertificateStoreProvider rsaProvider = new SqlColumnEncryptionCertificateStoreProvider();
