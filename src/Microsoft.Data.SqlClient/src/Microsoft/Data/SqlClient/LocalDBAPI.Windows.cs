@@ -135,7 +135,7 @@ namespace Microsoft.Data
                     {
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
-                            SniNativeWrapper.SniQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
+                            SniNativeWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 #if NETFRAMEWORK
@@ -146,8 +146,8 @@ namespace Microsoft.Data
                             }
                             else
                             {
-                                SniNativeWrapper.SniGetLastError(out SniError sniError);
-                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
+                                SniNativeWrapper.SNIGetLastError(out SniError sniError);
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: sniError.sniError);
                             }
                         }
                     }
@@ -327,13 +327,13 @@ namespace Microsoft.Data
             #endif
         }
         
-        private static SqlException CreateLocalDBException(string errorMessage, string instance = null, int localDbError = 0, int sniError = 0)
+        private static SqlException CreateLocalDBException(string errorMessage, string instance = null, int localDbError = 0, uint sniError = 0)
         {
             Debug.Assert((localDbError == 0) || (sniError == 0), "LocalDB error and SNI error cannot be specified simultaneously");
             Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Error message should not be null or empty");
             SqlErrorCollection collection = new SqlErrorCollection();
 
-            int errorCode = (localDbError == 0) ? sniError : localDbError;
+            int errorCode = (localDbError == 0) ? (int)sniError : localDbError;
 
             if (sniError != 0)
             {
