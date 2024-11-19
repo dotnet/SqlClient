@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Interop.Windows.Kernel32;
+
 #if NETFRAMEWORK
 
 namespace Microsoft.Data.ProviderBase
@@ -262,7 +264,7 @@ namespace Microsoft.Data.ProviderBase
             }
 
             // TODO: If you do not use GetCurrentProcessId after fixing VSDD 534795, please remove Resource* attributes from this method
-            int pid = SafeNativeMethods.GetCurrentProcessId();
+            int pid = Kernel32Safe.GetCurrentProcessId();
 
 
             // SQLBUDT #366157 -there are several characters which have special meaning

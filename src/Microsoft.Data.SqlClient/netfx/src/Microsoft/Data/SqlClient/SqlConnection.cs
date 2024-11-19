@@ -282,8 +282,6 @@ namespace Microsoft.Data.SqlClient
             return new List<string>(0);
         }
 
-        private SqlDebugContext _sdc;   // SQL Debugging support
-
         private bool _AsyncCommandInProgress;
 
         // SQLStatistics support
@@ -1520,14 +1518,12 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
+                SqlStatistics statistics = null;
+
+                TdsParser bestEffortCleanupTarget = null;
+                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    SqlStatistics statistics = null;
-
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
 #if DEBUG
                         TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -1538,72 +1534,62 @@ namespace Microsoft.Data.SqlClient
 #else
                     {
 #endif //DEBUG
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                            statistics = SqlStatistics.StartTimer(Statistics);
+                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                        statistics = SqlStatistics.StartTimer(Statistics);
 
-                            Task reconnectTask = _currentReconnectionTask;
-                            if (reconnectTask != null && !reconnectTask.IsCompleted)
+                        Task reconnectTask = _currentReconnectionTask;
+                        if (reconnectTask != null && !reconnectTask.IsCompleted)
+                        {
+                            CancellationTokenSource cts = _reconnectionCancellationSource;
+                            if (cts != null)
                             {
-                                CancellationTokenSource cts = _reconnectionCancellationSource;
-                                if (cts != null)
-                                {
-                                    cts.Cancel();
-                                }
-                                AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                                if (State != ConnectionState.Open)
-                                {// if we cancelled before the connection was opened
-                                    OnStateChange(DbConnectionInternal.StateChangeClosed);
-                                }
+                                cts.Cancel();
                             }
-                            CancelOpenAndWait();
-                            CloseInnerConnection();
-                            GC.SuppressFinalize(this);
-
-                            if (Statistics != null)
-                            {
-                                _statistics._closeTimestamp = ADP.TimerCurrent();
+                            AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                            if (State != ConnectionState.Open)
+                            {// if we cancelled before the connection was opened
+                                OnStateChange(DbConnectionInternal.StateChangeClosed);
                             }
                         }
+                        CancelOpenAndWait();
+                        CloseInnerConnection();
+                        GC.SuppressFinalize(this);
+
+                        if (Statistics != null)
+                        {
+                            _statistics._closeTimestamp = ADP.TimerCurrent();
+                        }
+                    }
 #if DEBUG
                         finally
                         {
                             tdsReliabilitySection.Stop();
                         }
 #endif //DEBUG
-                    }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        Abort(e);
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
-                    }
-                    finally
-                    {
-                        SqlStatistics.StopTimer(statistics);
-                        //dispose windows identity once connection is closed.
-                        if (_lastIdentity != null)
-                        {
-                            _lastIdentity.Dispose();
-                        }
-                    }
+                }
+                catch (System.OutOfMemoryException e)
+                {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.StackOverflowException e)
+                {
+                    Abort(e);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException e)
+                {
+                    Abort(e);
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
                 }
                 finally
                 {
-                    SqlDebugContext sdc = _sdc;
-                    _sdc = null;
-                    if (sdc != null)
+                    SqlStatistics.StopTimer(statistics);
+                    //dispose windows identity once connection is closed.
+                    if (_lastIdentity != null)
                     {
-                        sdc.Dispose();
+                        _lastIdentity.Dispose();
                     }
                 }
             }
@@ -1920,16 +1906,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
-        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
+            => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
-        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
+        public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, cancellationToken) :
+                InternalOpenAsync(overrides, cancellationToken);
+
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
@@ -1975,7 +1965,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion);
+                        completed = TryOpen(completion, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1994,7 +1984,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(() => completion.TrySetCanceled());
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -2018,13 +2008,15 @@ namespace Microsoft.Data.SqlClient
             SqlConnection _parent;
             TaskCompletionSource<DbConnectionInternal> _retry;
             TaskCompletionSource<object> _result;
+            SqlConnectionOverrides _overrides;
             CancellationTokenRegistration _registration;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
+                _overrides = overrides;
                 _registration = registration;
             }
 
@@ -2060,7 +2052,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry);
+                                result = _parent.TryOpen(_retry, _overrides);
                             }
                             if (result)
                             {
@@ -2137,9 +2129,6 @@ namespace Microsoft.Data.SqlClient
                 result = TryOpenInner(retry);
             }
 
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = connectionOptions != null && connectionOptions.ConnectRetryCount > 0;
-
             return result;
         }
 
@@ -2204,7 +2193,6 @@ namespace Microsoft.Data.SqlClient
                             tdsInnerConnection.Parser.Statistics = null;
                             _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
                         }
-                        CompleteOpen();
                     }
                 }
 #if DEBUG
@@ -2409,40 +2397,6 @@ namespace Microsoft.Data.SqlClient
         // PRIVATE METHODS
         //
 
-        // SxS: using Debugger.IsAttached
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        private void CompleteOpen()
-        {
-            Debug.Assert(ConnectionState.Open == State, "CompleteOpen not open");
-            // be sure to mark as open so SqlDebugCheck can issue Query
-
-            // check to see if we need to hook up sql-debugging if a debugger is attached
-            // We only need this check for 2000 and earlier servers.
-            if (!GetOpenConnection().Is2005OrNewer &&
-                    System.Diagnostics.Debugger.IsAttached)
-            {
-                bool debugCheck = false;
-                try
-                {
-                    new SecurityPermission(SecurityPermissionFlag.UnmanagedCode).Demand(); // MDAC 66682, 69017
-                    debugCheck = true;
-                }
-                catch (SecurityException e)
-                {
-                    ADP.TraceExceptionWithoutRethrow(e);
-                }
-
-                if (debugCheck)
-                {
-                    // if we don't have Unmanaged code permission, don't check for debugging
-                    // but let the connection be opened while under the debugger
-                    CheckSQLDebugOnConnect();
-                }
-            }
-        }
-
         internal SqlInternalConnection GetOpenConnection()
         {
             SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
@@ -2518,193 +2472,6 @@ namespace Microsoft.Data.SqlClient
             {
                 notified = false;
             }
-        }
-
-        //
-        // SQL DEBUGGING SUPPORT
-        //
-
-        // this only happens once per connection
-        // SxS: using named file mapping APIs
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        private void CheckSQLDebugOnConnect()
-        {
-            IntPtr hFileMap;
-            uint pid = (uint)SafeNativeMethods.GetCurrentProcessId();
-
-            string mapFileName;
-
-            // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.s_isPlatformNT5)
-            {
-                mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
-            }
-            else
-            {
-                mapFileName = TdsEnums.SDCI_MAPFILENAME;
-            }
-
-            mapFileName = mapFileName + pid.ToString(CultureInfo.InvariantCulture);
-
-            hFileMap = NativeMethods.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
-
-            if (ADP.s_ptrZero != hFileMap)
-            {
-                IntPtr pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
-                if (ADP.s_ptrZero != pMemMap)
-                {
-                    SqlDebugContext sdc = new SqlDebugContext();
-                    sdc.hMemMap = hFileMap;
-                    sdc.pMemMap = pMemMap;
-                    sdc.pid = pid;
-
-                    // optimization: if we only have to refresh memory-mapped data at connection open time
-                    // optimization: then call here instead of in CheckSQLDebug() which gets called
-                    // optimization: at command execution time
-                    // RefreshMemoryMappedData(sdc);
-
-                    // delaying setting out global state until after we issue this first SQLDebug command so that
-                    // we don't reentrantly call into CheckSQLDebug
-                    CheckSQLDebug(sdc);
-                    // now set our global state
-                    _sdc = sdc;
-                }
-            }
-        }
-
-        // This overload is called by the Command object when executing stored procedures.  Note that
-        // if SQLDebug has never been called, it is a noop.
-        internal void CheckSQLDebug()
-        {
-            if (_sdc != null)
-            {
-                CheckSQLDebug(_sdc);
-            }
-        }
-
-        // SxS: using GetCurrentThreadId
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
-        [SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.UnmanagedCode)] // MDAC 66682, 69017
-        private void CheckSQLDebug(SqlDebugContext sdc)
-        {
-            // check to see if debugging has been activated
-            Debug.Assert(sdc != null, "SQL Debug: invalid null debugging context!");
-
-#pragma warning disable 618
-            uint tid = (uint)AppDomain.GetCurrentThreadId();    // Sql Debugging doesn't need fiber support;
-#pragma warning restore 618
-            RefreshMemoryMappedData(sdc);
-
-            // UNDONE: do I need to remap the contents of pMemMap each time I call into here?
-            // UNDONE: current behavior is to only marshal the contents of the memory-mapped file
-            // UNDONE: at connection open time.
-
-            // If we get here, the debugger must be hooked up.
-            if (!sdc.active)
-            {
-                if (sdc.fOption/*TdsEnums.SQLDEBUG_ON*/)
-                {
-                    // turn on
-                    sdc.active = true;
-                    sdc.tid = tid;
-                    try
-                    {
-                        IssueSQLDebug(TdsEnums.SQLDEBUG_ON, sdc.machineName, sdc.pid, sdc.dbgpid, sdc.sdiDllName, sdc.data);
-                        sdc.tid = 0; // reset so that the first successful time through, we notify the server of the context switch
-                    }
-                    catch
-                    {
-                        sdc.active = false;
-                        throw;
-                    }
-                }
-            }
-
-            // be sure to pick up thread context switch, especially the first time through
-            if (sdc.active)
-            {
-                if (!sdc.fOption/*TdsEnums.SQLDEBUG_OFF*/)
-                {
-                    // turn off and free the memory
-                    sdc.Dispose();
-                    // okay if we throw out here, no state to clean up
-                    IssueSQLDebug(TdsEnums.SQLDEBUG_OFF, null, 0, 0, null, null);
-                }
-                else
-                {
-                    // notify server of context change
-                    if (sdc.tid != tid)
-                    {
-                        sdc.tid = tid;
-                        try
-                        {
-                            IssueSQLDebug(TdsEnums.SQLDEBUG_CONTEXT, null, sdc.pid, sdc.tid, null, null);
-                        }
-                        catch
-                        {
-                            sdc.tid = 0;
-                            throw;
-                        }
-                    }
-                }
-            }
-        }
-
-        private void IssueSQLDebug(uint option, string machineName, uint pid, uint id, string sdiDllName, byte[] data)
-        {
-
-            if (GetOpenConnection().Is2005OrNewer)
-            {
-                // TODO: When 2005 actually supports debugging, we need to modify this method to do the right thing(tm)
-                return;
-            }
-
-            // CONSIDER: we could cache three commands, one for each mode {on, off, context switch}
-            // CONSIDER: but debugging is not the performant case so save space instead amd rebuild each time
-            SqlCommand c = new SqlCommand(TdsEnums.SP_SDIDEBUG, this);
-            c.CommandType = CommandType.StoredProcedure;
-
-            // context param
-            SqlParameter p = new SqlParameter(null, SqlDbType.VarChar, TdsEnums.SQLDEBUG_MODE_NAMES[option].Length);
-            p.Value = TdsEnums.SQLDEBUG_MODE_NAMES[option];
-            c.Parameters.Add(p);
-
-            if (option == TdsEnums.SQLDEBUG_ON)
-            {
-                // debug dll name
-                p = new SqlParameter(null, SqlDbType.VarChar, sdiDllName.Length);
-                p.Value = sdiDllName;
-                c.Parameters.Add(p);
-                // debug machine name
-                p = new SqlParameter(null, SqlDbType.VarChar, machineName.Length);
-                p.Value = machineName;
-                c.Parameters.Add(p);
-            }
-
-            if (option != TdsEnums.SQLDEBUG_OFF)
-            {
-                // client pid
-                p = new SqlParameter(null, SqlDbType.Int);
-                p.Value = pid;
-                c.Parameters.Add(p);
-                // dbgpid or tid
-                p = new SqlParameter(null, SqlDbType.Int);
-                p.Value = id;
-                c.Parameters.Add(p);
-            }
-
-            if (option == TdsEnums.SQLDEBUG_ON)
-            {
-                // debug data
-                p = new SqlParameter(null, SqlDbType.VarBinary, data != null ? data.Length : 0);
-                p.Value = data;
-                c.Parameters.Add(p);
-            }
-
-            c.ExecuteNonQuery();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
@@ -2878,23 +2645,6 @@ namespace Microsoft.Data.SqlClient
            ).Unwrap();
         }
 
-
-        // updates our context with any changes made to the memory-mapped data by an external process
-        static private void RefreshMemoryMappedData(SqlDebugContext sdc)
-        {
-            Debug.Assert(ADP.s_ptrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
-            // copy memory mapped file contents into managed types
-            MEMMAP memMap = (MEMMAP)Marshal.PtrToStructure(sdc.pMemMap, typeof(MEMMAP));
-            sdc.dbgpid = memMap.dbgpid;
-            sdc.fOption = (memMap.fOption == 1) ? true : false;
-            // xlate ansi byte[] -> managed strings
-            Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);
-            sdc.machineName = cp.GetString(memMap.rgbMachineName, 0, memMap.rgbMachineName.Length);
-            sdc.sdiDllName = cp.GetString(memMap.rgbDllName, 0, memMap.rgbDllName.Length);
-            // just get data reference
-            sdc.data = memMap.rgbData;
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />
         public void ResetStatistics()
         {
@@ -3064,367 +2814,4 @@ namespace Microsoft.Data.SqlClient
             return retval;
         }
     } // SqlConnection
-
-    // TODO: This really belongs in it's own source file...
-    //
-    // This is a private interface for the SQL Debugger
-    // You must not change the guid for this coclass
-    // or the iid for the ISQLDebug interface
-    //
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
-    [
-    ComVisible(true),
-    ClassInterface(ClassInterfaceType.None),
-    Guid("afef65ad-4577-447a-a148-83acadd3d4b9"),
-    ]
-    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-    public sealed class SQLDebugging : ISQLDebug
-    {
-
-        // Security stuff
-        const int STANDARD_RIGHTS_REQUIRED = (0x000F0000);
-        const int DELETE = (0x00010000);
-        const int READ_CONTROL = (0x00020000);
-        const int WRITE_DAC = (0x00040000);
-        const int WRITE_OWNER = (0x00080000);
-        const int SYNCHRONIZE = (0x00100000);
-        const int FILE_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x000001FF);
-        const uint GENERIC_READ = (0x80000000);
-        const uint GENERIC_WRITE = (0x40000000);
-        const uint GENERIC_EXECUTE = (0x20000000);
-        const uint GENERIC_ALL = (0x10000000);
-
-        const int SECURITY_DESCRIPTOR_REVISION = (1);
-        const int ACL_REVISION = (2);
-
-        const int SECURITY_AUTHENTICATED_USER_RID = (0x0000000B);
-        const int SECURITY_LOCAL_SYSTEM_RID = (0x00000012);
-        const int SECURITY_BUILTIN_DOMAIN_RID = (0x00000020);
-        const int SECURITY_WORLD_RID = (0x00000000);
-        const byte SECURITY_NT_AUTHORITY = 5;
-        const int DOMAIN_GROUP_RID_ADMINS = (0x00000200);
-        const int DOMAIN_ALIAS_RID_ADMINS = (0x00000220);
-
-        const int sizeofSECURITY_ATTRIBUTES = 12; // sizeof(SECURITY_ATTRIBUTES);
-        const int sizeofSECURITY_DESCRIPTOR = 20; // sizeof(SECURITY_DESCRIPTOR);
-        const int sizeofACCESS_ALLOWED_ACE = 12; // sizeof(ACCESS_ALLOWED_ACE);
-        const int sizeofACCESS_DENIED_ACE = 12; // sizeof(ACCESS_DENIED_ACE);
-        const int sizeofSID_IDENTIFIER_AUTHORITY = 6; // sizeof(SID_IDENTIFIER_AUTHORITY)
-        const int sizeofACL = 8; // sizeof(ACL);
-
-        private IntPtr CreateSD(ref IntPtr pDacl)
-        {
-            IntPtr pSecurityDescriptor = IntPtr.Zero;
-            IntPtr pUserSid = IntPtr.Zero;
-            IntPtr pAdminSid = IntPtr.Zero;
-            IntPtr pNtAuthority = IntPtr.Zero;
-            int cbAcl = 0;
-            bool status = false;
-
-            pNtAuthority = Marshal.AllocHGlobal(sizeofSID_IDENTIFIER_AUTHORITY);
-            if (pNtAuthority == IntPtr.Zero)
-                goto cleanup;
-            Marshal.WriteInt32(pNtAuthority, 0, 0);
-            Marshal.WriteByte(pNtAuthority, 4, 0);
-            Marshal.WriteByte(pNtAuthority, 5, SECURITY_NT_AUTHORITY);
-
-            status =
-            NativeMethods.AllocateAndInitializeSid(
-            pNtAuthority,
-            (byte)1,
-            SECURITY_AUTHENTICATED_USER_RID,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            ref pUserSid);
-
-            if (!status || pUserSid == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            status =
-            NativeMethods.AllocateAndInitializeSid(
-            pNtAuthority,
-            (byte)2,
-            SECURITY_BUILTIN_DOMAIN_RID,
-            DOMAIN_ALIAS_RID_ADMINS,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            ref pAdminSid);
-
-            if (!status || pAdminSid == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            status = false;
-            pSecurityDescriptor = Marshal.AllocHGlobal(sizeofSECURITY_DESCRIPTOR);
-            if (pSecurityDescriptor == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            for (int i = 0; i < sizeofSECURITY_DESCRIPTOR; i++)
-                Marshal.WriteByte(pSecurityDescriptor, i, (byte)0);
-            cbAcl = sizeofACL
-            + (2 * (sizeofACCESS_ALLOWED_ACE))
-            + sizeofACCESS_DENIED_ACE
-            + NativeMethods.GetLengthSid(pUserSid)
-            + NativeMethods.GetLengthSid(pAdminSid);
-
-            pDacl = Marshal.AllocHGlobal(cbAcl);
-            if (pDacl == IntPtr.Zero)
-            {
-                goto cleanup;
-            }
-            // rights must be added in a certain order.  Namely, deny access first, then add access
-            if (NativeMethods.InitializeAcl(pDacl, cbAcl, ACL_REVISION))
-                if (NativeMethods.AddAccessDeniedAce(pDacl, ACL_REVISION, WRITE_DAC, pUserSid))
-                    if (NativeMethods.AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_READ, pUserSid))
-                        if (NativeMethods.AddAccessAllowedAce(pDacl, ACL_REVISION, GENERIC_ALL, pAdminSid))
-                            if (NativeMethods.InitializeSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION))
-                                if (NativeMethods.SetSecurityDescriptorDacl(pSecurityDescriptor, true, pDacl, false))
-                                {
-                                    status = true;
-                                }
-
-                            cleanup:
-            if (pNtAuthority != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(pNtAuthority);
-            }
-            if (pAdminSid != IntPtr.Zero)
-                NativeMethods.FreeSid(pAdminSid);
-            if (pUserSid != IntPtr.Zero)
-                NativeMethods.FreeSid(pUserSid);
-            if (status)
-                return pSecurityDescriptor;
-            else
-            {
-                if (pSecurityDescriptor != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(pSecurityDescriptor);
-                }
-            }
-            return IntPtr.Zero;
-        }
-
-        // SxS: using file mapping API (CreateFileMapping)
-        // TODO: review this code for SxS issues (VSDD 540765)
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        bool ISQLDebug.SQLDebug(int dwpidDebugger, int dwpidDebuggee, [MarshalAs(UnmanagedType.LPStr)] string pszMachineName,
-        [MarshalAs(UnmanagedType.LPStr)] string pszSDIDLLName, int dwOption, int cbData, byte[] rgbData)
-        {
-            bool result = false;
-            IntPtr hFileMap = IntPtr.Zero;
-            IntPtr pMemMap = IntPtr.Zero;
-            IntPtr pSecurityDescriptor = IntPtr.Zero;
-            IntPtr pSecurityAttributes = IntPtr.Zero;
-            IntPtr pDacl = IntPtr.Zero;
-
-            // validate the structure
-            if (pszMachineName == null || pszSDIDLLName == null)
-            {
-                return false;
-            }
-
-            if (pszMachineName.Length > TdsEnums.SDCI_MAX_MACHINENAME ||
-                pszSDIDLLName.Length > TdsEnums.SDCI_MAX_DLLNAME)
-            {
-                return false;
-            }
-
-            // note that these are ansi strings
-            Encoding cp = System.Text.Encoding.GetEncoding(TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE);
-            byte[] rgbMachineName = cp.GetBytes(pszMachineName);
-            byte[] rgbSDIDLLName = cp.GetBytes(pszSDIDLLName);
-
-            if (rgbData != null && cbData > TdsEnums.SDCI_MAX_DATA)
-            {
-                return false;
-            }
-
-            string mapFileName;
-
-            // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.s_isPlatformNT5)
-            {
-                mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
-            }
-            else
-            {
-                mapFileName = TdsEnums.SDCI_MAPFILENAME;
-            }
-
-            mapFileName = mapFileName + dwpidDebuggee.ToString(CultureInfo.InvariantCulture);
-
-            // Create Security Descriptor
-            pSecurityDescriptor = CreateSD(ref pDacl);
-            pSecurityAttributes = Marshal.AllocHGlobal(sizeofSECURITY_ATTRIBUTES);
-            if ((pSecurityDescriptor == IntPtr.Zero) || (pSecurityAttributes == IntPtr.Zero))
-                return false;
-
-            Marshal.WriteInt32(pSecurityAttributes, 0, sizeofSECURITY_ATTRIBUTES); // nLength = sizeof(SECURITY_ATTRIBUTES)
-            Marshal.WriteIntPtr(pSecurityAttributes, 4, pSecurityDescriptor); // lpSecurityDescriptor = pSecurityDescriptor
-            Marshal.WriteInt32(pSecurityAttributes, 8, 0); // bInheritHandle = FALSE
-            hFileMap = NativeMethods.CreateFileMappingA(
-            ADP.s_invalidPtr/*INVALID_HANDLE_VALUE*/,
-            pSecurityAttributes,
-            0x4/*PAGE_READWRITE*/,
-            0,
-            Marshal.SizeOf(typeof(MEMMAP)),
-            mapFileName);
-
-            if (IntPtr.Zero == hFileMap)
-            {
-                goto cleanup;
-            }
-
-
-            pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x6/*FILE_MAP_READ|FILE_MAP_WRITE*/, 0, 0, IntPtr.Zero);
-
-            if (IntPtr.Zero == pMemMap)
-            {
-                goto cleanup;
-            }
-
-            // copy data to memory-mapped file
-            // layout of MEMMAP structure is:
-            // uint dbgpid
-            // uint fOption
-            // byte[32] machineName
-            // byte[16] sdiDllName
-            // uint dbData
-            // byte[255] vData
-            int offset = 0;
-            Marshal.WriteInt32(pMemMap, offset, (int)dwpidDebugger);
-            offset += 4;
-            Marshal.WriteInt32(pMemMap, offset, (int)dwOption);
-            offset += 4;
-            Marshal.Copy(rgbMachineName, 0, ADP.IntPtrOffset(pMemMap, offset), rgbMachineName.Length);
-            offset += TdsEnums.SDCI_MAX_MACHINENAME;
-            Marshal.Copy(rgbSDIDLLName, 0, ADP.IntPtrOffset(pMemMap, offset), rgbSDIDLLName.Length);
-            offset += TdsEnums.SDCI_MAX_DLLNAME;
-            Marshal.WriteInt32(pMemMap, offset, (int)cbData);
-            offset += 4;
-            if (rgbData != null)
-            {
-                Marshal.Copy(rgbData, 0, ADP.IntPtrOffset(pMemMap, offset), (int)cbData);
-            }
-            NativeMethods.UnmapViewOfFile(pMemMap);
-            result = true;
-        cleanup:
-            if (result == false)
-            {
-                if (hFileMap != IntPtr.Zero)
-                    NativeMethods.CloseHandle(hFileMap);
-            }
-            if (pSecurityAttributes != IntPtr.Zero)
-                Marshal.FreeHGlobal(pSecurityAttributes);
-            if (pSecurityDescriptor != IntPtr.Zero)
-                Marshal.FreeHGlobal(pSecurityDescriptor);
-            if (pDacl != IntPtr.Zero)
-                Marshal.FreeHGlobal(pDacl);
-            return result;
-        }
-    }
-
-    // this is a private interface to com+ users
-    // do not change this guid
-    [
-    ComImport,
-    ComVisible(true),
-    Guid("6cb925bf-c3c0-45b3-9f44-5dd67c7b7fe8"),
-    InterfaceType(ComInterfaceType.InterfaceIsIUnknown),
-    BestFitMapping(false, ThrowOnUnmappableChar = true),
-    ]
-    interface ISQLDebug
-    {
-
-        [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-        bool SQLDebug(
-        int dwpidDebugger,
-        int dwpidDebuggee,
-        [MarshalAs(UnmanagedType.LPStr)] string pszMachineName,
-        [MarshalAs(UnmanagedType.LPStr)] string pszSDIDLLName,
-        int dwOption,
-        int cbData,
-        byte[] rgbData);
-    }
-
-    sealed class SqlDebugContext : IDisposable
-    {
-        // context data
-        internal uint pid = 0;
-        internal uint tid = 0;
-        internal bool active = false;
-        // memory-mapped data
-        internal IntPtr pMemMap = ADP.s_ptrZero;
-        internal IntPtr hMemMap = ADP.s_ptrZero;
-        internal uint dbgpid = 0;
-        internal bool fOption = false;
-        internal string machineName = null;
-        internal string sdiDllName = null;
-        internal byte[] data = null;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        // using CloseHandle and UnmapViewOfFile - no exposure
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // Nothing to do here
-                ;
-            }
-            if (pMemMap != IntPtr.Zero)
-            {
-                NativeMethods.UnmapViewOfFile(pMemMap);
-                pMemMap = IntPtr.Zero;
-            }
-            if (hMemMap != IntPtr.Zero)
-            {
-                NativeMethods.CloseHandle(hMemMap);
-                hMemMap = IntPtr.Zero;
-            }
-            active = false;
-        }
-
-        ~SqlDebugContext()
-        {
-            Dispose(false);
-        }
-
-    }
-
-    // native interop memory mapped structure for sdi debugging
-    [StructLayoutAttribute(LayoutKind.Sequential, Pack = 1)]
-    internal struct MEMMAP
-    {
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint dbgpid; // id of debugger
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint fOption; // 1 - start debugging, 0 - stop debugging
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        internal byte[] rgbMachineName;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
-        internal byte[] rgbDllName;
-        [MarshalAs(UnmanagedType.U4)]
-        internal uint cbData;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 255)]
-        internal byte[] rgbData;
-    }
 } // Microsoft.Data.SqlClient namespace

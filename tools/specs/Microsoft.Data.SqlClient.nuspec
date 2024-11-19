@@ -77,14 +77,17 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
 
     <!-- Localized Resource Files for NetFx -->
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\de\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\es\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\fr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\it\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ja\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ko\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pl\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pt-BR\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ru\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\tr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
 
@@ -99,14 +102,17 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
     
 	<!-- Localization files for Net 8 -->
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\fr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\it\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ja\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ko\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pl\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pt-BR\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ru\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\tr\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
     <!-- End of Localization files for Net 8 -->	

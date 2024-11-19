@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -87,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async void ConnectionTimeoutInfiniteTest()
+        public static async Task ConnectionTimeoutInfiniteTest()
         {
             // Exercise the special-case infinite connect timeout code path
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
@@ -368,7 +369,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 InitialCatalog = "DoesNotExist0982532435423",
                 Pooling = false,
-                ConnectTimeout = 15
+                ConnectTimeout = 15,
+                ConnectRetryCount = 3
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
@@ -383,7 +385,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<SqlException>(() => sqlConnection.Open());
             timer.Stop();
             duration = timer.Elapsed;
-            Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
+            Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                  //    sqlConnection.Open();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
+        public static async Task ConnectionOpenAsyncDisableRetry()
+        {
+            SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
+            {
+                InitialCatalog = DataTestUtility.GetUniqueNameForSqlServer("DoesNotExist", false),
+                Pooling = false,
+                ConnectTimeout = 15,
+                ConnectRetryCount = 3
+            };
+            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            Stopwatch timer = new();
+
+            timer.Start();
+            await Assert.ThrowsAsync<SqlException>(async () => await sqlConnection.OpenAsync(SqlConnectionOverrides.OpenWithoutRetry, CancellationToken.None));
+            timer.Stop();
+            TimeSpan duration = timer.Elapsed;
+            Assert.True(duration.Seconds < 2, $"Connection OpenAsync() without retries took longer than expected. Expected < 2 sec. Took {duration.Seconds} sec.");
+
+            timer.Restart();
+            await Assert.ThrowsAsync<SqlException>(async () => await sqlConnection.OpenAsync(CancellationToken.None));
+            timer.Stop();
+            duration = timer.Elapsed;
+            Assert.True(duration.Seconds > 5, $"Connection OpenAsync() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]

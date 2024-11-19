@@ -107,7 +107,7 @@ stages:
 # test stages configurations
   # self hosted SQL Server on Windows
       testConfigurations:
-        windows_sql_19: # configuration name
+        windows_sql_19_x64: # configuration name
           pool: ${{parameters.defaultPoolName }} # pool name
           hostedPool: false # whether the pool is hosted or not
           images: # list of images to run tests on
@@ -137,7 +137,6 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
             # extra config properties
-            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86 as well
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
             # instanceName: default: MSSQLSERVER
@@ -154,7 +153,56 @@ stages:
             # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
             # skipSqlConfiguration: # skips the SQL configuration step
 
-        windows_sql_22: 
+
+        windows_sql_19_x86: # configuration name
+          pool: ${{parameters.defaultPoolName }} # pool name
+          hostedPool: false # whether the pool is hosted or not
+          images: # list of images to run tests on
+            Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
+          TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
+          useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
+          configSqlFor: local # setup Sql Server (local | azure | enclave)
+          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AADAuthorityURL: $(AADAuthorityURL)
+            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
+            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86
+            SQLRootPath: $(SQL19RootPath)
+            enableLocalDB: true
+            # instanceName: default: MSSQLSERVER
+            # user: default: $(user)
+            # saUser: default: $(saUser)
+            # password: default: $(password)
+            # fileStreamDirectory: default: ''
+            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
+            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
+            # SQLAliasName: default: $(SQLAliasName)
+            # SQLAliasPort: default: $(SQLAliasPort)
+            # databaseName: default: Northwind
+            # localDbAppName: default: $(LocalDbAppName)
+            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
+            # skipSqlConfiguration: # skips the SQL configuration step
+
+
+        windows_sql_22_x64: 
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql22: ADO-MMS22-SQL22 
@@ -163,6 +211,39 @@ stages:
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
           useManagedSNI: ${{parameters.useManagedSNI }}
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AADAuthorityURL: $(AADAuthorityURL)
+            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
+            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            SQLRootPath: $(SQL22RootPath)
+            enableLocalDB: true
+
+
+        windows_sql_22_x86: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql22_x86: ADO-MMS22-SQL22 
+          TargetFrameworks: [net462]
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [false]
           codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
           configSqlFor: local
           operatingSystem: Windows
@@ -384,7 +465,7 @@ stages:
           pool: $(defaultHostedPoolName)
           hostedPool: true
           images:
-            MacOS12_Azure_Sql: macOS-12
+            MacOSLatest_Azure_Sql: macos-latest
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]

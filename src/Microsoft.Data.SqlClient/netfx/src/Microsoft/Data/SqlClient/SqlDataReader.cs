@@ -78,10 +78,6 @@ namespace Microsoft.Data.SqlClient
         private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
         internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
-        // context
-        // undone: we may still want to do this...it's nice to pass in an lpvoid (essentially) and just have the reader keep the state
-        // private object _context = null; // this is never looked at by the stream object.  It is used by upper layers who wish
-        // to remain stateless
 
         // metadata (no explicit table, use 'Table')
         private MultiPartTableName[] _tableNames = null;
@@ -355,7 +351,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (SqlDbType.Udt == colMetaData.type)
                         {
-                            Connection.CheckGetExtendedUDTInfo(colMetaData, true);    // SQLBUDT #370593 ensure that colMetaData.udtType is set
+                            Connection.CheckGetExtendedUDTInfo(colMetaData, true); // Ensure that colMetaData.udtType is set
 
                             typeSpecificNamePart1 = colMetaData.udt?.DatabaseName;
                             typeSpecificNamePart2 = colMetaData.udt?.SchemaName;
@@ -502,9 +498,6 @@ namespace Microsoft.Data.SqlClient
             _defaultLCID = _parser.DefaultLCID;
         }
 
-        // Fills in a schema table with meta data information.  This function should only really be called by
-        // UNDONE: need a way to refresh the table with more information as more data comes online for browse info like
-        // table names and key information
 #if !NETFRAMEWORK
         [SuppressMessage("ReflectionAnalysis", "IL2111",
                    Justification = "System.Type.TypeInitializer would not be used in dataType and providerSpecificDataType columns.")]
@@ -1195,7 +1188,7 @@ namespace Microsoft.Data.SqlClient
                         CleanupAfterAsyncInvocationInternal(stateObj);
                     }
 
-                    // SQLBUDT #284712 - Note the order here is extremely important:
+                    // Note the order here is extremely important:
                     //
                     // (1) First, we remove the reader from the reference collection
                     //     to prevent it from being forced closed by the parser if
@@ -1273,6 +1266,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         throw;
                     }
+                    // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
 
                     // do not retry here
                     result = TrySetMetaData(null, false);
@@ -1659,7 +1653,7 @@ namespace Microsoft.Data.SqlClient
                     CheckMetaDataIsReady();
                     _fieldNameLookup = new FieldNameLookup(this, _defaultLCID);
                 }
-                return _fieldNameLookup.GetOrdinal(name); // MDAC 71470
+                return _fieldNameLookup.GetOrdinal(name);
             }
             finally
             {
@@ -2346,7 +2340,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
+        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
         override public char GetChar(int i)
         {
             throw ADP.NotSupported();
@@ -2425,7 +2419,6 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception ex)
                         {
-                            // Dev11 Bug #315513: Exception type breaking change from 4.0 RTM when calling GetChars on null xml
                             // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
                             if (ADP.IsCatchableExceptionType(ex))
                             {
@@ -2506,7 +2499,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    // UNDONE - should not be catching all exceptions!!!
                     if (!ADP.IsCatchableExceptionType(e))
                     {
                         throw;
@@ -2897,7 +2889,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlString/*' />
-        // UNDONE: need non-unicode SqlString support
         virtual public SqlString GetSqlString(int i)
         {
             ReadColumn(i);
@@ -2987,8 +2978,6 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetSqlValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
         {
-            // Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
-            // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             // Convert 2008 types to string
@@ -3056,7 +3045,7 @@ namespace Microsoft.Data.SqlClient
 
                 for (int i = 0; i < copyLen; i++)
                 {
-                    values[_metaData.GetVisibleColumnIndex(i)] = GetSqlValueInternal(i);
+                    values[i] = GetSqlValueInternal(_metaData.GetVisibleColumnIndex(i));
                 }
                 return copyLen;
             }
@@ -3179,8 +3168,6 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetValueFromSqlBufferInternal(SqlBuffer data, _SqlMetaData metaData)
         {
-            // Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
-            // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
@@ -3502,10 +3489,10 @@ namespace Microsoft.Data.SqlClient
                     // If this is sequential access, then we need to wipe the internal buffer
                     if ((sequentialAccess) && (i < maximumColumn))
                     {
-                        _data[i].Clear();
+                        _data[fieldIndex].Clear();
                         if (fieldIndex > i && fieldIndex > 0)
                         {
-                            // if we jumped an index forward because of a hidden column see if the buffer before the 
+                            // if we jumped an index forward because of a hidden column see if the buffer before the
                             // current one was populated by the seek forward and clear it if it was
                             _data[fieldIndex - 1].Clear();
                         }
@@ -3597,10 +3584,6 @@ namespace Microsoft.Data.SqlClient
                             // always happens if there is a row following an altrow
                             moreResults = true;
                             return TdsOperationStatus.Done;
-
-                        // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
-                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
-                        // case TdsEnums.DONEINPROC:
                         case TdsEnums.SQLDONE:
                             Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
                             _altRowStatus = ALTROWSTATUS.Null;
@@ -3630,8 +3613,6 @@ namespace Microsoft.Data.SqlClient
                             return TdsOperationStatus.Done;
                     }
 
-                    // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults using MARS
-                    // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
                     // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                     // Instead, we will throw a closed connection exception
                     if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
@@ -3676,19 +3657,6 @@ namespace Microsoft.Data.SqlClient
                 if (_stateObj.HasPendingData)
                 {
                     // Consume error's, info's, done's on HasMoreRows, so user obtains error on Read.
-                    // Previous bug where Read() would return false with error on the wire in the case
-                    // of metadata and error immediately following.  See MDAC 78285 and 75225.
-
-                    // BUGBUG - currently in V1 the if (_parser.PendingData) does not
-                    // exist, so under certain conditions HasMoreRows can timeout.  However,
-                    // this should only occur when executing as SqlBatch and returning a reader.
-                    // Updated - SQL Bug: 20001249
-                    // Modifed while loop and added parsedDoneToken, to revert a regression from everettfs.
-                    // "Error Exceptions" are now only thown in read when a error occures in the exception, otherwise the exception will be thrown on the call to get the next result set.
-                    // resultset.
-
-                    // process any done, doneproc and doneinproc token streams and
-                    // any order, error or info token preceeding the first done, doneproc or doneinproc token stream
                     byte b;
                     TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                     if (result != TdsOperationStatus.Done)
@@ -3715,8 +3683,6 @@ namespace Microsoft.Data.SqlClient
                             ParsedDoneToken = true;
                         }
 
-                        // Dev11 Bug 316483: Stuck at SqlDataReader::TryHasMoreResults when using MARS
-                        // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=316483
                         // TryRun() will immediately return if the TdsParser is closed/broken, causing us to enter an infinite loop
                         // Instead, we will throw a closed connection exception
                         if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
@@ -4897,8 +4863,8 @@ namespace Microsoft.Data.SqlClient
 
                     if (_parser != null)
                     { // There is a valid case where parser is null
-                        // Peek, and if row token present, set _hasRows true since there is a
-                        // row in the result
+                      // Peek, and if row token present, set _hasRows true since there is a
+                      // row in the result
                         byte b;
                         TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                         if (result != TdsOperationStatus.Done)
@@ -4906,16 +4872,10 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
 
-                        // UNDONE - should we be consuming tokens here??? Maybe we should be calling HasMoreRows?
-                        // Would that have other side effects?
-
                         // simply rip the order token off the wire
                         if (b == TdsEnums.SQLORDER)
-                        {                     
+                        {
                             // same logic as SetAltMetaDataSet
-                            // Devnote: That's not the right place to process TDS
-                            // Can this result in Reentrance to Run?
-
                             result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -5153,7 +5113,7 @@ namespace Microsoft.Data.SqlClient
 
             if (context.Reader.TryNextResult(out bool more) == TdsOperationStatus.Done)
             {
-                // completed 
+                // completed
                 return more ? ADP.TrueTask : ADP.FalseTask;
             }
 
@@ -5575,7 +5535,7 @@ namespace Microsoft.Data.SqlClient
                 // If there are no more rows, or this is Sequential Access, then we are done
                 if (!hasMoreData || (reader._commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
                 {
-                    // completed 
+                    // completed
                     return hasMoreData ? ADP.TrueTask : ADP.FalseTask;
                 }
                 else
@@ -5592,7 +5552,7 @@ namespace Microsoft.Data.SqlClient
                     TdsOperationStatus result = reader.TryReadColumn(reader._metaData.Length - 1, true);
                     if (result == TdsOperationStatus.Done)
                     {
-                        // completed 
+                        // completed
                         return ADP.TrueTask;
                     }
                 }

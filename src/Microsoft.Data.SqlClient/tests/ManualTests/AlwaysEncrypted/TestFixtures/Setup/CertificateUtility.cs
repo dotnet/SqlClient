@@ -308,25 +308,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private static void ClearCache(MemoryCache cache)
         {
-            // Get the Clear method of the cache and use it if available. This is available in Microsoft.Extensions.Caching 8.0
-            MethodInfo clearMethod = cache.GetType().GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
-            if (clearMethod != null)
-            {
-                clearMethod.Invoke(cache, null);
-            }
-            else
-            {
-                // Otherwise, use the Remove function to remove all entries using all keys in the cache gathered using reflection.
-                PropertyInfo cacheEntriesCollectionDefinition = typeof(MemoryCache).GetProperty("EntriesCollection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                ICollection cacheEntriesCollection = (ICollection)cacheEntriesCollectionDefinition.GetValue(cache);
-                List<ICacheEntry> cacheCollectionValues = new List<ICacheEntry>();
-
-                foreach (object cacheItem in cacheEntriesCollection)
-                {
-                    ICacheEntry cacheItemValue = (ICacheEntry)cacheItem.GetType().GetProperty("Value").GetValue(cacheItem, null);
-                    cache.Remove(cacheItemValue.Key);
-                }
-            }
+#if NET
+            cache.Clear();
+#else
+            // Compact with a target of 100% of objects is equivalent to clearing the cache
+            cache.Compact(1);
+#endif
         }
     }
 }
