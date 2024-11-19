@@ -1872,9 +1872,9 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                    // SNI error. Replace the entire message
-                    //
-                    errorMessage = SQL.GetSNIErrorMessage((int)sniError.sniError);
+                // SNI error. Replace the entire message
+                //
+                errorMessage = SQL.GetSNIErrorMessage(sniError.sniError);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                 if (sniError.sniError == SniErrors.LocalDBErrorCode)
