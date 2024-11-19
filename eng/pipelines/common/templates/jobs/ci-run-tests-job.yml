@@ -47,6 +47,10 @@ parameters:
     type: boolean
     default: false
 
+  - name: enableX64Test
+    type: boolean
+    default: true
+
   - name: testSet
     type: string
   
@@ -205,6 +209,7 @@ jobs:
         ${{ if ne(parameters.operatingSystem, 'Windows') }}:
           OSGroup: Unix
 
+  - ${{ if eq(parameters.enableX64Test, true) }}: # run native tests
     - template: ../steps/run-all-tests-step.yml@self # run tests
       parameters:
         debug: ${{ parameters.debug }}

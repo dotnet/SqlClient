@@ -885,6 +885,8 @@ namespace Microsoft.Data.SqlClient
         public void Open(SqlConnectionOverrides overrides) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*'/>
         public override System.Threading.Tasks.Task OpenAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*'/>
+        public System.Threading.Tasks.Task OpenAsync(Microsoft.Data.SqlClient.SqlConnectionOverrides overrides, System.Threading.CancellationToken cancellationToken) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
         public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
@@ -1030,11 +1032,6 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Connect Timeout")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectTimeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
-        [System.ComponentModel.DisplayNameAttribute("Context Connection")]
-        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        [System.ObsoleteAttribute("ContextConnection has been deprecated.  SqlConnection will ignore the 'Context Connection' keyword.")]
-        public bool ContextConnection { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*'/>
         [System.ComponentModel.DisplayNameAttribute("Current Language")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

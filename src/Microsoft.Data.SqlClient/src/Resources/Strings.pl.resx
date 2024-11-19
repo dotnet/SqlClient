@@ -2883,6 +2883,9 @@
   <data name="SQL_ContextAllowsOnlyTypeSystem2005" xml:space="preserve">
     <value>Połączenie kontekstu nie obsługuje wersji systemu Type System Version=SQL Server 2000.</value>
   </data>
+  <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
+    <value>Nawiązywanie połączenia kontekstowego przy użyciu Microsoft.Data.SqlClient nie jest obsługiwane.</value>
+  </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>Połączenie kontekstu jest już używane.</value>
   </data>

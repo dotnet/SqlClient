@@ -100,53 +100,110 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Errors.cs">
-      <Link>Interop\Interop.Errors.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Common\Sni\SniErrors.cs">
+      <Link>Interop\Common\SniErrors.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.CTL_CODE.cs">
-      <Link>Interop\Kernel32\Interop.CTL_CODE.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\FileTypes.cs">
+      <Link>Interop\Windows\Kernel32\FileTypes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.DeviceIoControl.cs">
-      <Link>Interop\Kernel32\Interop.DeviceIoControl.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlCodeAccess.cs">
+      <Link>Interop\Windows\Kernel32\IoControlCodeAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.FileTypes.cs">
-      <Link>Interop\Kernel32\Interop.FileTypes.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\IoControlTransferType.cs">
+      <Link>Interop\Windows\Kernel32\IoControlTransferType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFileType_SafeHandle.cs">
-      <Link>Interop\Kernel32\Interop.GetFileType_SafeHandle.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32.cs">
+      <Link>Interop\Windows\Kernel32\Kernel32.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.GetFullPathName.cs">
-      <Link>Interop\Kernel32\Interop.GetFullPathName.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Kernel32\Kernel32Safe.netfx.cs">
+      <Link>Interop\Windows\Kernel32\Kernel32Safe.netfx.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlCodeAccess.cs">
-      <Link>Interop\Kernel32\Interop.IoControlCodeAccess.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
+      <Link>Interop\Windows\NtDll\CreateDisposition.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.IoControlTransferType.cs">
-      <Link>Interop\Kernel32\Interop.IoControlTransferType.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
+      <Link>Interop\Windows\NtDll\CreateOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.Libraries.cs">
-      <Link>Interop\Interop.Libraries.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
+      <Link>Interop\Windows\NtDll\DesiredAccess.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Kernel32\Interop.SetThreadErrorMode.cs">
-      <Link>Interop\Kernel32\Interop.SetThreadErrorMode.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
+      <Link>Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs">
-      <Link>Interop\NtDll\Interop.FILE_FULL_EA_INFORMATION.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
+      <Link>Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.IO_STATUS_BLOCK.cs">
-      <Link>Interop\NtDll\Interop.IO_STATUS_BLOCK.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\IoStatusBlock.cs">
+      <Link>Interop\Windows\NtDll\IoStatusBlock.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.NtCreateFile.cs">
-      <Link>Interop\NtDll\Interop.NtCreateFile.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
+      <Link>Interop\Windows\NtDll\NtDll.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.RtlNtStatusToDosError.cs">
-      <Link>Interop\NtDll\Interop.RtlNtStatusToDosError.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
+      <Link>Interop\Windows\NtDll\ObjectAttributes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\NtDll\Interop.SecurityQualityOfService.cs">
-      <Link>Interop\NtDll\Interop.SecurityQualityOfService.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
+      <Link>Interop\Windows\NtDll\ObjecAttributes.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Interop\Windows\Interop.UNICODE_STRING.cs">
-      <Link>Interop\Interop.UNICODE_STRING.cs</Link>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
+      <Link>Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Secur32\CredHandle.netfx.cs">
+      <Link>Interop\Windows\Secur32\CredHandle.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Secur32\ContextAttribute.netfx.cs">
+      <Link>Interop\Windows\Secur32\ContextAttribute.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Secur32\Secur32.netfx.cs">
+      <Link>Interop\Windows\Secur32\Secur32.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
+      <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\ConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ConsumerNumber.cs">
+      <Link>Interop\Windows\Sni\ConsumerNumber.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Delegates.cs">
+      <Link>Interop\Windows\Sni\Delegates.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\IoType.cs">
+      <Link>Interop\Windows\Sni\IoType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Prefix.cs">
+      <Link>Interop\Windows\Sni\Prefix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Provider.cs">
+      <Link>Interop\Windows\Sni\Provider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\QueryType.cs">
+      <Link>Interop\Windows\Sni\QueryType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniClientConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniClientConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniConsumerInfo.cs">
+      <Link>Interop\Windows\Sni\SniConsumerInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniDnsCacheInfo.cs">
+      <Link>Interop\Windows\Sni\SniDnsCacheInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniError.cs">
+      <Link>Interop\Windows\Sni\SniError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs">
+      <Link>Interop\Windows\Sni\SqlDependencyProcessDispatcherStorage.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
+      <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\SystemErrors.cs">
+      <Link>Interop\Windows\SystemErrors.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Interop\Windows\UnicodeString.cs">
+      <Link>Interop\Windows\UnicodeString.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
@@ -228,9 +285,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\TimeoutTimer.cs">
       <Link>Microsoft\Data\ProviderBase\TimeoutTimer.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\ManagedSSPIContextProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
@@ -577,6 +631,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDependency.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependency.cs</Link>
     </Compile>
@@ -748,8 +805,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\SafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperARM64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
@@ -780,7 +835,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
