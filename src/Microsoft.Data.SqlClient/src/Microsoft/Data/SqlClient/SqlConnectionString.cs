@@ -14,6 +14,7 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -326,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
             _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
@@ -628,7 +629,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = connectionOptions._contextConnection;
             _currentLanguage = connectionOptions._currentLanguage;
             _dataSource = dataSource;
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = connectionOptions._failoverPartner;
             _initialCatalog = connectionOptions._initialCatalog;
             _password = connectionOptions._password;
