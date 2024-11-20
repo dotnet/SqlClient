@@ -36,6 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = sql;
+                command.CommandTimeout = 60;
                 command.ExecuteNonQuery();
             }
         }
@@ -47,6 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             using (SqlCommand command = sqlConnection.CreateCommand())
             {
                 command.CommandText = sql;
+                command.CommandTimeout = 60;
                 command.ExecuteNonQuery();
             }
         }
