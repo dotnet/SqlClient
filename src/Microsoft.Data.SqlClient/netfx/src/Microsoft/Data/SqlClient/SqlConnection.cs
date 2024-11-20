@@ -1472,7 +1472,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
         static public void ClearAllPools()
         {
+#pragma warning disable CS0618
             (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
+#pragma warning restore CS0618
             SqlConnectionFactory.SingletonInstance.ClearAllPools();
         }
 

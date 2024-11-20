@@ -68,7 +68,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
         public override CodeAccessPermission CreatePermission(PermissionState state)
         {
+#pragma warning disable CS0618
             return new SqlClientPermission(state);
+#pragma warning restore CS0618
         }
 
         /// <summary>

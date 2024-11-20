@@ -450,6 +450,7 @@ namespace Microsoft.Data.SqlClient
         public static readonly string StructuredTypeMembers;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
+    [System.Obsolete("Code Access Security is not supported or honored by the runtime.")]
     public sealed partial class SqlClientPermission : System.Data.Common.DBDataPermission
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*'/>
@@ -467,6 +468,7 @@ namespace Microsoft.Data.SqlClient
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/SqlClientPermissionAttribute/*'/>
     [System.AttributeUsageAttribute(System.AttributeTargets.Method | System.AttributeTargets.Constructor | System.AttributeTargets.Class | System.AttributeTargets.Struct | System.AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
+    [System.Obsolete("Code Access Security is not supported or honored by the runtime.")]
     public sealed partial class SqlClientPermissionAttribute : System.Data.Common.DBDataPermissionAttribute
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/ctor/*'/>

@@ -1156,7 +1156,9 @@ namespace Microsoft.Data.SqlClient
         protected internal override PermissionSet CreatePermissionSet()
         {
             PermissionSet permissionSet = new(PermissionState.None);
-            permissionSet.AddPermission(new SqlClientPermission(this));
+#pragma warning disable CS0618
+            permissionSet.AddPermission(new SqlClientPermission(PermissionState.Unrestricted));
+#pragma warning restore CS0618
             return permissionSet;
         }
 
