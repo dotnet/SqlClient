@@ -202,7 +202,7 @@
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
     <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
-    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.cs" />
+    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.Windows.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -298,6 +298,7 @@
     <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
     <Compile Include="SQL\JsonTest\JsonTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
+    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>
