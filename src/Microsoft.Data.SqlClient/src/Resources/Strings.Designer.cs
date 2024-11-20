@@ -9485,7 +9485,18 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextConnectionIsInUse", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Connecting to the context connection using Microsoft.Data.SqlClient is not supported..
+        /// </summary>
+        internal static string SQL_ContextConnectionIsUnsupported
+        {
+            get
+            {
+                return ResourceManager.GetString("SQL_ContextConnectionIsUnsupported", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The requested operation requires a SqlClr context, which is only available when running in the Sql Server process..
         /// </summary>

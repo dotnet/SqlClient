@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -81,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             // Determine packet size based on physical connection buffer lengths.
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
             SQLDNSInfo cachedDNSInfo;
 
             SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
@@ -234,9 +235,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
+        private ConsumerInfo CreateConsumerInfo(bool async)
         {
-            SNINativeMethodWrapper.ConsumerInfo myInfo = new SNINativeMethodWrapper.ConsumerInfo();
+            ConsumerInfo myInfo = new ConsumerInfo();
 
             Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
 
@@ -266,7 +267,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             string hostNameInCertificate = "")
         {
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
@@ -1399,7 +1400,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                SNINativeMethodWrapper.SNIPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

@@ -41,9 +41,6 @@
     <Compile Include="TDSServerParser.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Interop\Windows\Interop.Libraries.cs</Link>
-    </Compile>
     <Compile Include="SSPI\SSPIContext.Windows.cs" />
     <Compile Include="SSPI\SecurityWrapper.cs" />
   </ItemGroup>

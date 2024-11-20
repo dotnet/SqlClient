@@ -8,9 +8,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 
@@ -22,34 +21,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly System.Runtime.InteropServices.Architecture s_architecture = System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture;
 
         private const int SniOpenTimeOut = -1; // infinite
-
-        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        internal delegate void SqlAsyncCallbackDelegate(IntPtr m_ConsKey, IntPtr pPacket, uint dwError);
-
-        internal delegate IntPtr SqlClientCertificateDelegate(IntPtr pCallbackContext);
-
-        internal const int ConnTerminatedError = 2;
-        internal const int InvalidParameterError = 5;
-        internal const int ProtocolNotSupportedError = 8;
-        internal const int ConnTimeoutError = 11;
-        internal const int ConnNotUsableError = 19;
-        internal const int InvalidConnStringError = 25;
-        internal const int HandshakeFailureError = 31;
-        internal const int InternalExceptionError = 35;
-        internal const int ConnOpenFailedError = 40;
-        internal const int ErrorSpnLookup = 44;
-        internal const int LocalDBErrorCode = 50;
-        internal const int MultiSubnetFailoverWithMoreThan64IPs = 47;
-        internal const int MultiSubnetFailoverWithInstanceSpecified = 48;
-        internal const int MultiSubnetFailoverWithNonTcpProtocol = 49;
-        internal const int MaxErrorValue = 50157;
-        internal const int LocalDBNoInstanceName = 51;
-        internal const int LocalDBNoInstallation = 52;
-        internal const int LocalDBInvalidConfig = 53;
-        internal const int LocalDBNoSqlUserInstanceDllPath = 54;
-        internal const int LocalDBInvalidSqlUserInstanceDllPath = 55;
-        internal const int LocalDBFailedToLoadDll = 56;
-        internal const int LocalDBBadRuntime = 57;
+        
         internal const int SniIP6AddrStringBufferLength = 48; // from SNI layer
 
         internal static int SniMaxComposedSpnLength
@@ -102,250 +74,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        unsafe internal class SqlDependencyProcessDispatcherStorage
-        {
-
-            static void* data;
-
-            static int size;
-            static volatile int thelock; // Int used for a spin-lock.
-
-            public static void* NativeGetData(out int passedSize)
-            {
-                passedSize = size;
-                return data;
-            }
-
-            internal static bool NativeSetData(void* passedData, int passedSize)
-            {
-                bool success = false;
-
-                while (0 != Interlocked.CompareExchange(ref thelock, 1, 0))
-                { // Spin until we have the lock.
-                    Thread.Sleep(50); // Sleep with short-timeout to prevent starvation.
-                }
-                Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
-
-                if (data == null)
-                {
-                    data = Marshal.AllocHGlobal(passedSize).ToPointer();
-
-                    Trace.Assert(data != null);
-
-                    System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
-
-                    Trace.Assert(0 == size); // Size should still be zero at this point.
-                    size = passedSize;
-                    success = true;
-                }
-
-                int result = Interlocked.CompareExchange(ref thelock, 0, 1);
-                Trace.Assert(1 == result); // The release of the lock should have been successful.  
-
-                return success;
-            }
-        }
-
-        internal enum SniSpecialErrors : uint
-        {
-            LocalDBErrorCode = SNINativeMethodWrapper.LocalDBErrorCode,
-
-            // multi-subnet-failover specific error codes
-            MultiSubnetFailoverWithMoreThan64IPs = SNINativeMethodWrapper.MultiSubnetFailoverWithMoreThan64IPs,
-            MultiSubnetFailoverWithInstanceSpecified = SNINativeMethodWrapper.MultiSubnetFailoverWithInstanceSpecified,
-            MultiSubnetFailoverWithNonTcpProtocol = SNINativeMethodWrapper.MultiSubnetFailoverWithNonTcpProtocol,
-
-            // max error code value
-            MaxErrorValue = SNINativeMethodWrapper.MaxErrorValue,
-        }
-
-        #region Structs\Enums
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct ConsumerInfo
-        {
-            internal int defaultBufferSize;
-            internal SqlAsyncCallbackDelegate readDelegate;
-            internal SqlAsyncCallbackDelegate writeDelegate;
-            internal IntPtr key;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct AuthProviderInfo
-        {
-            public uint flags;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool tlsFirst;
-            public object certContext;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string certId;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool certHash;
-            public object clientCertificateCallbackContext;
-            public SqlClientCertificateDelegate clientCertificateCallback;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string serverCertFileName;
-        };
-
-        internal enum ConsumerNumber
-        {
-            SNI_Consumer_SNI,
-            SNI_Consumer_SSB,
-            SNI_Consumer_PacketIsReleased,
-            SNI_Consumer_Invalid,
-        }
-
-        internal enum IOType
-        {
-            READ,
-            WRITE,
-        }
-
-        internal enum PrefixEnum
-        {
-            UNKNOWN_PREFIX,
-            SM_PREFIX,
-            TCP_PREFIX,
-            NP_PREFIX,
-            VIA_PREFIX,
-            INVALID_PREFIX,
-        }
-
-        internal enum ProviderEnum
-        {
-            HTTP_PROV,
-            NP_PROV,
-            SESSION_PROV,
-            SIGN_PROV,
-            SM_PROV,
-            SMUX_PROV,
-            SSL_PROV,
-            TCP_PROV,
-            VIA_PROV,
-            CTAIP_PROV,
-            MAX_PROVS,
-            INVALID_PROV,
-        }
-
-        internal enum QTypes
-        {
-            SNI_QUERY_CONN_INFO,
-            SNI_QUERY_CONN_BUFSIZE,
-            SNI_QUERY_CONN_KEY,
-            SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE,
-            SNI_QUERY_SERVER_ENCRYPT_POSSIBLE,
-            SNI_QUERY_CERTIFICATE,
-            SNI_QUERY_LOCALDB_HMODULE,
-            SNI_QUERY_CONN_ENCRYPT,
-            SNI_QUERY_CONN_PROVIDERNUM,
-            SNI_QUERY_CONN_CONNID,
-            SNI_QUERY_CONN_PARENTCONNID,
-            SNI_QUERY_CONN_SECPKG,
-            SNI_QUERY_CONN_NETPACKETSIZE,
-            SNI_QUERY_CONN_NODENUM,
-            SNI_QUERY_CONN_PACKETSRECD,
-            SNI_QUERY_CONN_PACKETSSENT,
-            SNI_QUERY_CONN_PEERADDR,
-            SNI_QUERY_CONN_PEERPORT,
-            SNI_QUERY_CONN_LASTREADTIME,
-            SNI_QUERY_CONN_LASTWRITETIME,
-            SNI_QUERY_CONN_CONSUMER_ID,
-            SNI_QUERY_CONN_CONNECTTIME,
-            SNI_QUERY_CONN_HTTPENDPOINT,
-            SNI_QUERY_CONN_LOCALADDR,
-            SNI_QUERY_CONN_LOCALPORT,
-            SNI_QUERY_CONN_SSLHANDSHAKESTATE,
-            SNI_QUERY_CONN_SOBUFAUTOTUNING,
-            SNI_QUERY_CONN_SECPKGNAME,
-            SNI_QUERY_CONN_SECPKGMUTUALAUTH,
-            SNI_QUERY_CONN_CONSUMERCONNID,
-            SNI_QUERY_CONN_SNIUCI,
-            SNI_QUERY_CONN_SUPPORTS_EXTENDED_PROTECTION,
-            SNI_QUERY_CONN_CHANNEL_PROVIDES_AUTHENTICATION_CONTEXT,
-            SNI_QUERY_CONN_PEERID,
-            SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC,
-            SNI_QUERY_CONN_SSL_SECCTXTHANDLE,
-        }
-
-        internal enum TransparentNetworkResolutionMode : byte
-        {
-            DisabledMode = 0,
-            SequentialMode,
-            ParallelMode
-        };
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct Sni_Consumer_Info
-        {
-            public int DefaultUserDataLength;
-            public IntPtr ConsumerKey;
-            public IntPtr fnReadComp;
-            public IntPtr fnWriteComp;
-            public IntPtr fnTrace;
-            public IntPtr fnAcceptComp;
-            public uint dwNumProts;
-            public IntPtr rgListenInfo;
-            public IntPtr NodeAffinity;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal unsafe struct SNI_CLIENT_CONSUMER_INFO
-        {
-            public Sni_Consumer_Info ConsumerInfo;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszConnectionString;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string HostNameInCertificate;
-            public PrefixEnum networkLibrary;
-            public byte* szSPN;
-            public uint cchSPN;
-            public byte* szInstanceName;
-            public uint cchInstanceName;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fOverrideLastConnectCache;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fSynchronousConnection;
-            public int timeout;
-            [MarshalAs(UnmanagedType.Bool)]
-            public bool fParallel;
-            public TransparentNetworkResolutionMode transparentNetworkResolution;
-            public int totalTimeout;
-            public bool isAzureSqlServerEndpoint;
-            public SqlConnectionIPAddressPreference ipAddressPreference;
-            public SNI_DNSCache_Info DNSCacheInfo;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct SNI_DNSCache_Info
-        {
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedFQDN;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpIPv4;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpIPv6;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            public string wszCachedTcpPort;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        internal struct SNI_Error
-        {
-            internal ProviderEnum provider;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 261)]
-            internal string errorMessage;
-            internal uint nativeError;
-            internal uint sniError;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            internal string fileName;
-            [MarshalAs(UnmanagedType.LPWStr)]
-            internal string function;
-            internal uint lineNumber;
-        }
-
-        #endregion
-
         #region DLL Imports
-        internal static uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo)
+        internal static uint SNIAddProvider(SNIHandle pConn, Provider ProvNum, [In] ref uint pInfo)
         {
             switch (s_architecture)
             {
@@ -360,7 +90,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIAddProviderWrapper(SNIHandle pConn, ProviderEnum ProvNum, [In] ref AuthProviderInfo pInfo)
+        internal static uint SNIAddProviderWrapper(SNIHandle pConn, Provider ProvNum, [In] ref AuthProviderInfo pInfo)
         {
             switch (s_architecture)
             {
@@ -405,7 +135,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SNIGetLastError(out SNI_Error pErrorStruct)
+        internal static void SNIGetLastError(out SniError pErrorStruct)
         {
             switch (s_architecture)
             {
@@ -441,7 +171,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SNIPacketReset([In] SNIHandle pConn, IOType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
+        internal static void SNIPacketReset([In] SNIHandle pConn, IoType IOType, SNIPacket pPacket, ConsumerNumber ConsNum)
         {
             switch (s_architecture)
             {
@@ -459,7 +189,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIQueryInfo(QTypes QType, ref uint pbQInfo)
+        internal static uint SNIQueryInfo(QueryType QType, ref uint pbQInfo)
         {
             switch (s_architecture)
             {
@@ -474,7 +204,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIQueryInfo(QTypes QType, ref IntPtr pbQInfo)
+        internal static uint SNIQueryInfo(QueryType QType, ref IntPtr pbQInfo)
         {
             switch (s_architecture)
             {
@@ -519,7 +249,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNIRemoveProvider(SNIHandle pConn, ProviderEnum ProvNum)
+        internal static uint SNIRemoveProvider(SNIHandle pConn, Provider ProvNum)
         {
             switch (s_architecture)
             {
@@ -549,7 +279,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static uint SNISetInfo(SNIHandle pConn, QTypes QType, [In] ref uint pbQInfo)
+        internal static uint SNISetInfo(SNIHandle pConn, QueryType QType, [In] ref uint pbQInfo)
         {
             switch (s_architecture)
             {
@@ -624,7 +354,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out Guid pbQInfo)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Guid pbQInfo)
         {
             switch (s_architecture)
             {
@@ -639,7 +369,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, [MarshalAs(UnmanagedType.Bool)] out bool pbQInfo)
         {
             switch (s_architecture)
             {
@@ -654,7 +384,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ushort portNum)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out ushort portNum)
         {
             switch (s_architecture)
             {
@@ -684,7 +414,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum)
+        private static uint SNIGetInfoWrapper([In] SNIHandle pConn, QueryType QType, out Provider provNum)
         {
             switch (s_architecture)
             {
@@ -714,7 +444,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn)
+        private static uint SNIOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn)
         {
             switch (s_architecture)
             {
@@ -730,13 +460,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static uint SNIOpenWrapper(
-            [In] ref Sni_Consumer_Info pConsumerInfo,
+            [In] ref SniConsumerInfo pConsumerInfo,
             [MarshalAs(UnmanagedType.LPWStr)] string szConnect,
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
             SqlConnectionIPAddressPreference ipPreference,
-            [In] ref SNI_DNSCache_Info pDNSCachedInfo)
+            [In] ref SniDnsCacheInfo pDNSCachedInfo)
         {
             switch (s_architecture)
             {
@@ -751,7 +481,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
+        private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IoType IOType)
         {
             switch (s_architecture)
             {
@@ -858,17 +588,17 @@ namespace Microsoft.Data.SqlClient
         #endregion
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_CONNID, out connId);
         }
 
-        internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
+        internal static uint SniGetProviderNumber(SNIHandle pConn, ref Provider provNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
 
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
-            return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
+            return SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_PEERPORT, out portNum);
         }
 
         internal static uint SniGetConnectionIPString(SNIHandle pConn, ref string connIPStr)
@@ -943,10 +673,10 @@ namespace Microsoft.Data.SqlClient
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
-            Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
+            SniConsumerInfo native_consumerInfo = new SniConsumerInfo();
             MarshalConsumerInfo(consumerInfo, ref native_consumerInfo);
 
-            SNI_DNSCache_Info native_cachedDNSInfo = new SNI_DNSCache_Info();
+            SniDnsCacheInfo native_cachedDNSInfo = new SniDnsCacheInfo();
             native_cachedDNSInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
             native_cachedDNSInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
             native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
@@ -974,14 +704,14 @@ namespace Microsoft.Data.SqlClient
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
-                SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();
+                SniClientConsumerInfo clientConsumerInfo = new SniClientConsumerInfo();
 
                 // initialize client ConsumerInfo part first
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
                 clientConsumerInfo.wszConnectionString = constring;
                 clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
-                clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
+                clientConsumerInfo.networkLibrary = Prefix.UNKNOWN_PREFIX;
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
@@ -1031,7 +761,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal static uint SNIAddProvider(SNIHandle pConn,
-                                            ProviderEnum providerEnum,
+                                            Provider providerEnum,
                                             AuthProviderInfo authInfo)
         {
             UInt32 ret;
@@ -1044,14 +774,14 @@ namespace Microsoft.Data.SqlClient
             if (ret == ERROR_SUCCESS)
             {
                 // added a provider, need to requery for sync over async support
-                ret = SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
+                ret = SNIGetInfoWrapper(pConn, QueryType.SNI_QUERY_CONN_SUPPORTS_SYNC_OVER_ASYNC, out bool _);
                 Debug.Assert(ret == ERROR_SUCCESS, "SNIGetInfo cannot fail with this QType");
             }
 
             return ret;
         }
 
-        internal static void SNIPacketAllocate(SafeHandle pConn, IOType IOType, ref IntPtr pPacket)
+        internal static void SNIPacketAllocate(SafeHandle pConn, IoType IOType, ref IntPtr pPacket)
         {
             pPacket = SNIPacketAllocateWrapper(pConn, IOType);
         }
@@ -1222,7 +952,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref Sni_Consumer_Info native_consumerInfo)
+        private static void MarshalConsumerInfo(ConsumerInfo consumerInfo, ref SniConsumerInfo native_consumerInfo)
         {
             native_consumerInfo.DefaultUserDataLength = consumerInfo.defaultBufferSize;
             native_consumerInfo.fnReadComp = consumerInfo.readDelegate != null
@@ -1233,15 +963,6 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
         }
-    }
-}
-
-namespace Microsoft.Data
-{
-    internal static partial class SafeNativeMethods
-    {
-        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true, SetLastError = true)]
-        internal static extern IntPtr GetProcAddress(IntPtr HModule, [MarshalAs(UnmanagedType.LPStr), In] string funcName);
     }
 }
 

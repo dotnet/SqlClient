@@ -4,6 +4,7 @@
 
 using System;
 using Microsoft.Data.SqlClient;
+using Interop.Windows.Sni;
 
 namespace Microsoft.Data
 {
@@ -21,15 +22,15 @@ namespace Microsoft.Data
                     {
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
-                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
+                            SNINativeMethodWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.UserInstanceDLLHandle | LocalDB - handle obtained");
                             }
                             else
                             {
-                                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
-                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
+                                SNINativeMethodWrapper.SNIGetLastError(out SniError sniError);
+                                throw CreateLocalDBException(StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError.sniError);
                             }
                         }
                     }
