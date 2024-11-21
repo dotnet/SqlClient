@@ -6,7 +6,7 @@
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
 using System;
-#if NET9_0_OR_GREATER
+#if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
 
@@ -1303,7 +1303,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*'/>
         public override System.Collections.IEnumerator GetEnumerator() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*'/>
-#if NET9_0_OR_GREATER
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public override System.Type GetFieldType(int i) { throw null; }
@@ -1326,7 +1326,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*'/>
         public override int GetOrdinal(string name) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*'/>
-#if NET9_0_OR_GREATER
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public override System.Type GetProviderSpecificFieldType(int i) { throw null; }
@@ -2289,7 +2289,7 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDouble/*'/>
         public virtual double GetDouble(int ordinal) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*'/>
-#if NET9_0_OR_GREATER
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public virtual System.Type GetFieldType(int ordinal) { throw null; }
