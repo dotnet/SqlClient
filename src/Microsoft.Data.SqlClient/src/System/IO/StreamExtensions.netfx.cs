@@ -16,7 +16,9 @@ namespace System.IO
             {
                 var read = stream.Read(buffer, offset + totalRead, count - totalRead);
                 if (read is 0)
+                {
                     throw new EndOfStreamException();
+                }
 
                 totalRead += read;
             } while (totalRead < count);

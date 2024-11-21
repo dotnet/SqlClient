@@ -6,9 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-#if NET9_0_OR_GREATER
 using System.Security.Cryptography.Pkcs;
-#endif
 using System.Threading;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -204,13 +202,9 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-#if NET9_0_OR_GREATER
                     var s = new SignedCms();
                     s.Decode(data);
                     certificateCollection.AddRange(s.Certificates);
-#else
-                    certificateCollection.Import(data);
-#endif
                 }
                 catch (CryptographicException exception)
                 {

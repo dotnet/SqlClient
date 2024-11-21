@@ -174,11 +174,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     try
                     {
-#if !NET9_0_OR_GREATER
-                        validationCertificate = new X509Certificate(validationCertFileName);
-#else
                         validationCertificate = X509CertificateLoader.LoadCertificateFromFile(validationCertFileName);
-#endif
                     }
                     catch (Exception e)
                     {
