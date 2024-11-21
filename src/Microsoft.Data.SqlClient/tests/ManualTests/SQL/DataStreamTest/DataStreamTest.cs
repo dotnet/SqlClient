@@ -1549,13 +1549,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             stream = reader.GetStream(0);
 
                             // Assert throws when not enough data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => { int _ = stream.Read(buffer, 0, buffer.Length); });
+                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
 
                             // Get the rest of the data out of the stream
                             int _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Assert throws when no data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => { int _ = stream.Read(buffer, 0, buffer.Length); });
+                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
 
                             // Argument exceptions
                             DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => { int _ = stream.Read(null, 0, 1); });
