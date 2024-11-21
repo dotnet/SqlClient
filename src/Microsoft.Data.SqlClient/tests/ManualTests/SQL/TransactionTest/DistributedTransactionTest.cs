@@ -2,14 +2,13 @@
 using System;
 using System.Transactions;
 using Xunit;
+using Microsoft.Data.SqlClient.TestUtilities;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.TransactionTest
 {
     public class DistributedTransactionTest
     {
-        private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotX86Architecture;
-
-        [ConditionalFact(nameof(s_DelegatedTransactionCondition), Timeout = 10000)]
+        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), Timeout = 10000)]
         public void Test_EnlistedTransactionPreservedWhilePooled()
         {
             RunTestSet(EnlistedTransactionPreservedWhilePooled);
@@ -24,7 +23,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.TransactionTest
             {
                 using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Required, TimeSpan.MaxValue))
                 {
-
                     SqlConnection rootConnection = new SqlConnection(ConnectionString);
                     rootConnection.Open();
                     using (SqlCommand command = rootConnection.CreateCommand())
@@ -66,13 +64,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.TransactionTest
                 transactionException = ex;
             }
 
-            // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-3000-to-3999?view=sql-server-ver16
-            // Error 3971 corresponds to "The server failed to resume the transaction."
-            Assert.IsType<SqlException>(commandException);
-            Assert.Equal(3971, ((SqlException)commandException).Number);
 
-            // Even if an application swallows the command exception, completing the transaction should indicate that it failed.
-            Assert.IsType<TransactionInDoubtException>(transactionException);
+            Assert.IsType<SqlException>(commandException);
+            if (Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((ConnectionString)).DataSource))
+            {
+                // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-3000-to-3999?view=sql-server-ver16
+                // Error 3971 corresponds to "The server failed to resume the transaction."
+                Assert.Equal(3971, ((SqlException)commandException).Number);
+            } else
+            {
+                // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-8000-to-8999?view=sql-server-ver16
+                // The distributed transaction failed
+                Assert.Equal(8525, ((SqlException)commandException).Number);
+            }
+
+            if (Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((ConnectionString)).DataSource))
+            {
+                // Even if an application swallows the command exception, completing the transaction should indicate that it failed.
+                Assert.IsType<TransactionInDoubtException>(transactionException);
+            }
+            else
+            {
+                Assert.IsType<TransactionAbortedException>(transactionException);
+            }
 
             // Verify that nothing made it into the database
             DataTable result = DataTestUtility.RunQuery(ConnectionString, $"select col2 from {TestTableName} where col1 = {InputCol1}");
@@ -110,16 +124,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.TransactionTest
             builder.Enlist = true;
             ConnectionString = builder.ConnectionString;
 
-            RunTestFormat(TestCase);
-        }
-
-        private static void RunTestFormat(Action testCase)
-        {
             TestTableName = DataTestUtility.GenerateObjectName();
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {
-                testCase();
+                TestCase();
             }
             finally
             {
