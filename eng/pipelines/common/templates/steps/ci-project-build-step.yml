@@ -34,11 +34,11 @@ parameters:
       - all
 
 steps:
-  - task: UseDotNet@2
-    inputs:
-      packageType: sdk
-      version: '9.x'
-      installationPath: $(Agent.ToolsDirectory)/dotnet
+- task: UseDotNet@2
+  inputs:
+    packageType: sdk
+    version: '9.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
