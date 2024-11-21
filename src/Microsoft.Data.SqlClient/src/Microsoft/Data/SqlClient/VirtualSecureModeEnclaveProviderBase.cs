@@ -6,9 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-#if NET9_0_OR_GREATER
-using System.Security.Cryptography.Pkcs;
-#endif
 using System.Threading;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -200,17 +197,11 @@ namespace Microsoft.Data.SqlClient
             if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
             {
                 byte[] data = MakeRequest(attestationUrl);
-                var certificateCollection = new X509Certificate2Collection();
+                X509Certificate2Collection certificateCollection;
 
                 try
                 {
-#if NET9_0_OR_GREATER
-                    var s = new SignedCms();
-                    s.Decode(data);
-                    certificateCollection.AddRange(s.Certificates);
-#else
-                    certificateCollection.Import(data);
-#endif
+                    certificateCollection = X509CertificateLoader.LoadPkcs12Collection(data, null, X509KeyStorageFlags.DefaultKeySet);
                 }
                 catch (CryptographicException exception)
                 {
