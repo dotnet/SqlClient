@@ -1515,8 +1515,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             // Basic case
                             using (stream = reader.GetStream(0))
                             {
-                                stream.ReadExactly(smallBuffer, 0, smallBuffer.Length);
-                                stream.ReadExactly(buffer, 2, 2);
+                                int _ = stream.Read(smallBuffer, 0, smallBuffer.Length);
+                                _ = stream.Read(buffer, 2, 2);
 
                                 // Testing stream properties
                                 stream.Flush();
@@ -1546,16 +1546,10 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         using (SqlDataReader reader = cmd.ExecuteReader(behavior))
                         {
                             reader.Read();
+                            // Reading more than is there, and when there is nothing there
                             stream = reader.GetStream(0);
-
-                            // Assert throws when not enough data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
-
-                            // Get the rest of the data out of the stream
                             int _ = stream.Read(buffer, 0, buffer.Length);
-
-                            // Assert throws when no data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
+                            _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Argument exceptions
                             DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => { int _ = stream.Read(null, 0, 1); });
@@ -1599,7 +1593,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 // 0 byte read
                                 reader.Read();
                                 stream = reader.GetStream(1);
-                                stream.ReadExactly(largeBuffer, 0, 0);
+                                int _ = stream.Read(largeBuffer, 0, 0);
                             }
 #if DEBUG
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))

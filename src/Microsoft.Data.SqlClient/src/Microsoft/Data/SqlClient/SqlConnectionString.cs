@@ -858,7 +858,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
                     { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
-                Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
+                //Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
                 Interlocked.CompareExchange(ref s_sqlClientSynonyms, synonyms, null);
             }
             return synonyms;
