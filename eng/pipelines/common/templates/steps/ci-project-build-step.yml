@@ -35,9 +35,9 @@ parameters:
 
 steps:
 - task: CmdLine@2
+  displayName: 'Add nuget.org as a package source temporarily'
   inputs:
     script: 'dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org --configfile $(build.sourcesDirectory)/NuGet.config'
-    displayName: 'Add nuget.org as a package source temporarily'
 
 - task: UseDotNet@2
   inputs:
@@ -46,9 +46,10 @@ steps:
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: CmdLine@2
+  enabled: false
+  displayName: 'Disable nuget.org as a package source'
   inputs:
     script: 'dotnet nuget disable source nuget.org --configfile $(build.sourcesDirectory)/NuGet.config'
-    displayName: 'Disable nuget.org as a package source'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
