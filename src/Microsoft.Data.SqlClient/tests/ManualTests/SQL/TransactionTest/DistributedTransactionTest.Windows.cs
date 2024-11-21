@@ -13,7 +13,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class DistributedTransactionTest
+    public class DistributedTransactionTestWindows
     {
         private static bool s_DelegatedTransactionCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer() && DataTestUtility.IsNotX86Architecture;
 
