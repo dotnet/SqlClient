@@ -38,9 +38,9 @@ steps:
   displayName: 'Add nuget.org as a package source temporarily'
   inputs:
     script: |
-    dotnet nuget remove source sqlclient --configfile $(build.sourcesDirectory)/NuGet.config
-    dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org --configfile $(build.sourcesDirectory)/NuGet.config
-    dotnet nuget add source https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v3/index.json" -n sqlclient --configfile $(build.sourcesDirectory)/NuGet.config
+      dotnet nuget remove source sqlclient --configfile $(build.sourcesDirectory)/NuGet.config
+      dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org --configfile $(build.sourcesDirectory)/NuGet.config
+      dotnet nuget add source https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v3/index.json" -n sqlclient --configfile $(build.sourcesDirectory)/NuGet.config
 
 - task: UseDotNet@2
   displayName: 'Use .NET 9.x sdk'
