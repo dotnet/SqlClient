@@ -34,6 +34,11 @@ parameters:
       - all
 
 steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: sdk
+      version: '9.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - task: MSBuild@1
@@ -78,12 +83,6 @@ steps:
         msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - task: UseDotNet@2
-    inputs:
-      packageType: sdk
-      version: '9.x'
-      includePreviewVersions: true
-
   - task: Powershell@2
     displayName: 'List SDK versions'
     inputs:
