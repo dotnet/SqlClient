@@ -1540,7 +1540,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
 
                             // Once Stream is closed
-                            DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
+                            DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => { int _ = stream.Read(buffer, 0, buffer.Length); });
                         }
 
                         using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1549,30 +1549,30 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             stream = reader.GetStream(0);
 
                             // Assert throws when not enough data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
+                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => { int _ = stream.Read(buffer, 0, buffer.Length); });
 
                             // Get the rest of the data out of the stream
                             int _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Assert throws when no data in stream
-                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => stream.ReadExactly(buffer, 0, buffer.Length));
+                            DataTestUtility.AssertThrowsWrapper<EndOfStreamException>(() => { int _ = stream.Read(buffer, 0, buffer.Length); });
 
                             // Argument exceptions
-                            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => stream.ReadExactly(null, 0, 1));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.ReadExactly(buffer, -1, 2));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.ReadExactly(buffer, 2, -1));
+                            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => { int _ = stream.Read(null, 0, 1); });
+                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { int _ = stream.Read(buffer, -1, 2); });
+                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { int _ = stream.Read(buffer, 2, -1); });
 
                             // Prior to net6 comment:ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
-                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => stream.ReadExactly(buffer, buffer.Length, buffer.Length));
+                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => { int _ = stream.Read(buffer, buffer.Length, buffer.Length); });
                             Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
                                       "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
-                            ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+                            ex = Assert.ThrowsAny<ArgumentException>(() => { int _ = stream.Read(buffer, int.MaxValue, int.MaxValue); });
                             Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
                                       "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
                         }
 
                         // Once Reader is closed
-                        action = (() => stream.ReadExactly(buffer, 0, buffer.Length));
+                        action = (() => { int _ = stream.Read(buffer, 0, buffer.Length); });
                         SeqAccessFailureWrapper<ObjectDisposedException>(action, behavior);
                     }
 
@@ -1585,7 +1585,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             stream = reader.GetStream(0);
                             reader.GetInt32(1);
 
-                            action = (() => stream.ReadExactly(buffer, 0, buffer.Length));
+                            action = (() => { int _ = stream.Read(buffer, 0, buffer.Length); });
                             SeqAccessFailureWrapper<ObjectDisposedException>(action, behavior);
                         }
                     }
@@ -1612,7 +1612,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 {
                                     // Read during async
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length);
-                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => stream.ReadExactly(largeBuffer, 0, largeBuffer.Length));
+                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => { int _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
                                 }
                                 t.Wait();
