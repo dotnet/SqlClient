@@ -10,7 +10,7 @@ parameters:
 
   - name: imageOverride
     type: string
-    default: ADO-MMS22-SQL19
+    default: ADO-MMS22-SQL19-Net9.0
 
   - name: artifactName
     type: string
