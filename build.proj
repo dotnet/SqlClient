@@ -9,7 +9,6 @@
     <!-- SourceLink variable-->
     <DisableSourceLink>false</DisableSourceLink>
 
-    <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->

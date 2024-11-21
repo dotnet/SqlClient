@@ -49,6 +49,13 @@ steps:
     version: '9.x'
     installationPath: $(Agent.ToolsDirectory)/dotnet
 
+- task: UseDotNet@2
+  displayName: 'Install .NET 8.x runtime'
+  inputs:
+    packageType: runtime
+    version: '8.x'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
+
 - task: CmdLine@2
   enabled: false
   displayName: 'Disable nuget.org as a package source'
