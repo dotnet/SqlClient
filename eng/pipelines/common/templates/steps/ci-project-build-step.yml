@@ -39,6 +39,7 @@ steps:
       packageType: sdk
       version: '9.x'
       installationPath: $(Agent.ToolsDirectory)/dotnet
+
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - task: MSBuild@1
