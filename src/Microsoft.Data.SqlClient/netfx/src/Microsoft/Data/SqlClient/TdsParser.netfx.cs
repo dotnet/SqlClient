@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System;
 using System.Net;
 using System.Threading;
+using Interop.Windows.Sni;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -135,14 +136,14 @@ namespace Microsoft.Data.SqlClient
             string IPStringFromSNI = string.Empty;
             IPAddress IPFromSNI;
             isTcpProtocol = false;
-            SNINativeMethodWrapper.ProviderEnum providerNumber = SNINativeMethodWrapper.ProviderEnum.INVALID_PROV;
+            Provider providerNumber = Provider.INVALID_PROV;
 
             if (string.IsNullOrEmpty(userProtocol))
             {
 
                 result = SNINativeMethodWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
-                isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
+                isTcpProtocol = (providerNumber == Provider.TCP_PROV);
             }
             else if (userProtocol == TdsEnums.TCP)
             {
