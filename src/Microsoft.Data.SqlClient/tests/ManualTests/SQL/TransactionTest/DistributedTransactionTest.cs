@@ -4,7 +4,7 @@ using System.Transactions;
 using Xunit;
 using Microsoft.Data.SqlClient.TestUtilities;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.TransactionTest
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class DistributedTransactionTest
     {
