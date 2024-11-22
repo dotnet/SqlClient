@@ -60,7 +60,7 @@
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
     <MicrosoftNETTestSdkVersion>17.8.0</MicrosoftNETTestSdkVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftSqlServerSqlManagementObjectsVersion>172.52.0</MicrosoftSqlServerSqlManagementObjectsVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>

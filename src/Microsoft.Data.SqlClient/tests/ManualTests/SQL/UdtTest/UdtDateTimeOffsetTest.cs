@@ -6,6 +6,8 @@ using System;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -31,9 +33,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private readonly string _connectionString = null;
         private readonly string _udtTableType = DataTestUtility.GetUniqueNameForSqlServer("DataTimeOffsetTableType");
+        private readonly ITestOutputHelper _testOutputHelper;
 
-        public UdtDateTimeOffsetTest()
+        public UdtDateTimeOffsetTest(ITestOutputHelper testOutputHelper)
         {
+            _testOutputHelper = testOutputHelper;
             _connectionString = DataTestUtility.TCPConnectionString;
         }
 
@@ -74,26 +78,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void DateTimeOffsetAllScalesTestShouldSucceed()
         {
-            string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType");
-
             using SqlConnection connection = new(_connectionString);
             connection.Open();
 
-            try
+            // Use different scale for each test: 0 to 7
+            int fromScale = 0;
+            int toScale = 7;
+
+            for (int scale = fromScale; scale <= toScale; scale++)
             {
-                // Use different scale for each test: 0 to 7
-                int fromScale = 0;
-                int toScale = 7;
+                string tvpTypeName = DataTestUtility.GetUniqueNameForSqlServer("tvpType"); // Need a unique name per scale, else we get errors. See https://github.com/dotnet/SqlClient/issues/3011
 
-                for (int scale = fromScale; scale <= toScale; scale++)
+                DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
+
+                // Add sub-second offset corresponding to the scale being tested
+                TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
+                dateTimeOffset = dateTimeOffset.Add(subSeconds);
+
+                DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+
+                try
                 {
-                    DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);
-
-                    // Add sub-second offset corresponding to the scale being tested
-                    TimeSpan subSeconds = TimeSpan.FromTicks((long)(TimeSpan.TicksPerSecond / Math.Pow(10, scale)));
-                    dateTimeOffset = dateTimeOffset.Add(subSeconds);
-
-                    DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
                     SetupDateTimeOffsetTableType(connection, tvpTypeName, scale);
 
                     var param = new SqlParameter
@@ -109,14 +114,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.CommandText = "SELECT * FROM @params";
                         cmd.Parameters.Add(param);
-                        var result = cmd.ExecuteScalar();
-                        Assert.Equal(dateTimeOffset, result);
+
+                        object result = null;
+                        try
+                        {
+                            result = cmd.ExecuteScalar();
+                            Assert.Equal(dateTimeOffset, result);
+                        }
+                        catch (Exception)
+                        {
+                            _testOutputHelper.WriteLine($"{DateTime.UtcNow:O}: Failed for scale {scale} DateTimeOffset: {dateTimeOffset} Result: {result ?? "No result"}");
+                            throw;
+                        }
                     }
                 }
-            }
-            finally
-            {
-                DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+                finally
+                {
+                    DataTestUtility.DropUserDefinedType(connection, tvpTypeName);
+                }
             }
         }
 
