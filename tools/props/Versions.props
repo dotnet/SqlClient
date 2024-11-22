@@ -27,21 +27,22 @@
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
+    <MicrosoftExtensionsCachingMemoryVersion>9.0.0</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
     <SystemSecurityCryptographyPkcsVersion>9.0.0</SystemSecurityCryptographyPkcsVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
+    <SystemConfigurationConfigurationManagerVersion>9.0.0</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
+    <MicrosoftDotNetRemoteExecutorVersion>10.0.0-beta.24564.1</MicrosoftDotNetRemoteExecutorVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
