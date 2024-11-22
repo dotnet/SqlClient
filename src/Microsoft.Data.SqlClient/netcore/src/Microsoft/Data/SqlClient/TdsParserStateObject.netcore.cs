@@ -298,8 +298,6 @@ namespace Microsoft.Data.SqlClient
         // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
         private void ReadSniError(TdsParserStateObject stateObj, uint error)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSyncError");  // you need to setup for a thread abort somewhere before you call this method
-
             if (TdsEnums.SNI_WAIT_TIMEOUT == error)
             {
                 Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
@@ -753,8 +751,6 @@ namespace Microsoft.Data.SqlClient
         //
         internal void WriteSecureString(SecureString secureString)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to WriteSecureString");  // you need to setup for a thread abort somewhere before you call this method
-
             Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
 
             int index = _securePasswords[0] != null ? 1 : 0;
@@ -829,8 +825,6 @@ namespace Microsoft.Data.SqlClient
         // and then the buffer is re-initialized in flush() and then the byte is put in the buffer.
         internal void WriteByte(byte b)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to WriteByte");  // you need to setup for a thread abort somewhere before you call this method
-
             Debug.Assert(_outBytesUsed <= _outBuff.Length, "ERROR - TDSParser: _outBytesUsed > _outBuff.Length");
 
             // check to make sure we haven't used the full amount of space available in the buffer, if so, flush it
@@ -866,8 +860,6 @@ namespace Microsoft.Data.SqlClient
             }
             try
             {
-                TdsParser.ReliabilitySection.Assert("unreliable call to WriteByteArray");  // you need to setup for a thread abort somewhere before you call this method
-
                 bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
                 Debug.Assert(async || _asyncWriteCount == 0);
                 // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?

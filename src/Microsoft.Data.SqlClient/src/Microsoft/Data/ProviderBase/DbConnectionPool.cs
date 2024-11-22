@@ -1158,29 +1158,14 @@ namespace Microsoft.Data.ProviderBase
 #endif
                         try
                         {
-#if DEBUG
-                            Microsoft.Data.SqlClient.TdsParser.ReliabilitySection tdsReliabilitySection = new Microsoft.Data.SqlClient.TdsParser.ReliabilitySection();
-
-#if NETFRAMEWORK
-                            RuntimeHelpers.PrepareConstrainedRegions();
-#endif
-                            try
-                            {
-                                tdsReliabilitySection.Start();
-#else
-                            {
-#endif //DEBUG
-                                bool allowCreate = true;
-                                bool onlyOneCheckConnection = false;
-                                ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
-                                timeout = !TryGetConnection(next.Owner, delay, allowCreate, onlyOneCheckConnection, next.UserOptions, out connection);
-                            }
-#if DEBUG
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
-#endif //DEBUG
+                            ADP.SetCurrentTransaction(next.Completion.Task.AsyncState as Transaction);
+                            timeout = !TryGetConnection(
+                                next.Owner,
+                                delay,
+                                allowCreate: true,
+                                onlyOneCheckConnection: false,
+                                next.UserOptions,
+                                out connection);
                         }
                         catch (System.OutOfMemoryException)
                         {
