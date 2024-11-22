@@ -12,7 +12,6 @@
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
-    <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->

@@ -90,24 +90,6 @@ steps:
         msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - task: UseDotNet@2
-    inputs:
-      packageType: sdk
-      version: '9.x'
-      includePreviewVersions: true
-
-  - task: Powershell@2
-    displayName: 'List SDK versions'
-    inputs:
-      targetType: 'inline'
-      script: 'dotnet --list-sdks'
-
-  - task: Powershell@2
-    displayName: 'List runtime versions'
-    inputs:
-      targetType: 'inline'
-      script: 'dotnet --list-runtimes'
-
   - task: DotNetCoreCLI@2
     displayName: 'Build Driver [non-Win]'
     condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
