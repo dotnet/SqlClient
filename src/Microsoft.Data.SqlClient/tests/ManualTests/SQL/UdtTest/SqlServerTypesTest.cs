@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Globalization;
 using System.IO;
@@ -262,9 +261,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 command.CommandText = "select hierarchyid::Parse('/1/1/3/') as col0, geometry::Parse('LINESTRING (100 100, 20 180, 180 180)') as col1, geography::Parse('LINESTRING(-122.360 47.656, -122.343 47.656)') as col2";
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SchemaOnly))
                 {
-                    ReadOnlyCollection<DbColumn> columns = reader.GetColumnSchema();
+                    ReadOnlyCollection<System.Data.Common.DbColumn> columns = reader.GetColumnSchema();
 
-                    DbColumn column = null;
+                    System.Data.Common.DbColumn column = null;
 
                     // Validate Microsoft.SqlServer.Types.SqlHierarchyId, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91
                     column = columns[0];
