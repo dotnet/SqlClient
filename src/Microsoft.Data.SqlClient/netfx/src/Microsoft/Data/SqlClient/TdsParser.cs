@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
         /// Verify client encryption possibility.
         /// </summary>
         private bool ClientOSEncryptionSupport => SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
-        
+
         // Default state object for parser
         internal TdsParserStateObject _physicalStateObj = null; // Default stateObj and connection for Dbnetlib and non-MARS SNI.
 
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
         private byte[] _tempGuidBytes;
-        
+
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
         private static readonly byte[] s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
@@ -1812,8 +1812,6 @@ namespace Microsoft.Data.SqlClient
         //
         internal void WriteShort(int v, TdsParserStateObject stateObj)
         {
-            ReliabilitySection.Assert("unreliable call to WriteShort");  // you need to setup for a thread abort somewhere before you call this method
-
             if ((stateObj._outBytesUsed + 2) > stateObj._outBuff.Length)
             {
                 // if all of the short doesn't fit into the buffer
@@ -1872,8 +1870,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteInt(int v, TdsParserStateObject stateObj)
         {
-            ReliabilitySection.Assert("unreliable call to WriteInt");  // you need to setup for a thread abort somewhere before you call this method
-
             if ((stateObj._outBytesUsed + 4) > stateObj._outBuff.Length)
             {
                 // if all of the int doesn't fit into the buffer
@@ -1942,8 +1938,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void WriteLong(long v, TdsParserStateObject stateObj)
         {
-            ReliabilitySection.Assert("unreliable call to WriteLong");  // you need to setup for a thread abort somewhere before you call this method
-
             if ((stateObj._outBytesUsed + 8) > stateObj._outBuff.Length)
             {
                 // if all of the long doesn't fit into the buffer
@@ -1989,7 +1983,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void WritePartialLong(long v, int length, TdsParserStateObject stateObj)
         {
-            ReliabilitySection.Assert("unreliable call to WritePartialLong");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(length <= 8, "Length specified is longer than the size of a long");
             Debug.Assert(length >= 0, "Length should not be negative");
 
@@ -2107,7 +2100,6 @@ namespace Microsoft.Data.SqlClient
         // Main parse loop for the top-level tds tokens, calls back into the I*Handler interfaces
         internal TdsOperationStatus TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, out bool dataReady)
         {
-            ReliabilitySection.Assert("unreliable call to Run");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert((SniContext.Undefined != stateObj.SniContext) &&       // SniContext must not be Undefined
                 ((stateObj._attentionSent) || ((SniContext.Snix_Execute != stateObj.SniContext) && (SniContext.Snix_SendRows != stateObj.SniContext))),  // SniContext should not be Execute or SendRows unless attention was sent (and, therefore, we are looking for an ACK)
                         $"Unexpected SniContext on call to TryRun; SniContext={stateObj.SniContext}");
@@ -4918,89 +4910,72 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    try
+                    SqlDataReader.SharedState sharedState = stateObj._readerState;
+                    if (sharedState != null && sharedState._dataReady)
                     {
-                        SqlDataReader.SharedState sharedState = stateObj._readerState;
-                        if (sharedState != null && sharedState._dataReady)
+                        var metadata = stateObj._cleanupMetaData;
+                        if (stateObj._partialHeaderBytesRead > 0)
                         {
-                            var metadata = stateObj._cleanupMetaData;
-                            if (stateObj._partialHeaderBytesRead > 0)
+                            TdsOperationStatus result = stateObj.TryProcessHeader();
+                            if (result != TdsOperationStatus.Done)
                             {
-                                TdsOperationStatus result = stateObj.TryProcessHeader();
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    throw SQL.SynchronousCallMayNotPend();
-                                }
+                                throw SQL.SynchronousCallMayNotPend();
                             }
-                            if (0 == sharedState._nextColumnHeaderToRead)
+                        }
+                        if (0 == sharedState._nextColumnHeaderToRead)
+                        {
+                            // i. user called read but didn't fetch anything
+                            TdsOperationStatus result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                // i. user called read but didn't fetch anything
-                                TdsOperationStatus result = stateObj.Parser.TrySkipRow(stateObj._cleanupMetaData, stateObj);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    throw SQL.SynchronousCallMayNotPend();
-                                }
+                                throw SQL.SynchronousCallMayNotPend();
                             }
-                            else
+                        }
+                        else
+                        {
+                            // iia.  if we still have bytes left from a partially read column, skip
+                            if (sharedState._nextColumnDataToRead < sharedState._nextColumnHeaderToRead)
                             {
-                                // iia.  if we still have bytes left from a partially read column, skip
-                                if (sharedState._nextColumnDataToRead < sharedState._nextColumnHeaderToRead)
+                                if ((sharedState._nextColumnHeaderToRead > 0) && (metadata[sharedState._nextColumnHeaderToRead - 1].metaType.IsPlp))
                                 {
-                                    if ((sharedState._nextColumnHeaderToRead > 0) && (metadata[sharedState._nextColumnHeaderToRead - 1].metaType.IsPlp))
+                                    if (stateObj._longlen != 0)
                                     {
-                                        if (stateObj._longlen != 0)
-                                        {
-                                            TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
-                                            if (result != TdsOperationStatus.Done)
-                                            {
-                                                throw SQL.SynchronousCallMayNotPend();
-                                            }
-                                        }
-                                    }
-
-                                    else if (0 < sharedState._columnDataBytesRemaining)
-                                    {
-                                        TdsOperationStatus result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                        TdsOperationStatus result = TrySkipPlpValue(UInt64.MaxValue, stateObj, out _);
                                         if (result != TdsOperationStatus.Done)
                                         {
                                             throw SQL.SynchronousCallMayNotPend();
                                         }
                                     }
-
                                 }
 
-
-                                // Read the remaining values off the wire for this row
-                                if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                                else if (0 < sharedState._columnDataBytesRemaining)
                                 {
-                                    throw SQL.SynchronousCallMayNotPend();
+                                    TdsOperationStatus result = stateObj.TrySkipLongBytes(sharedState._columnDataBytesRemaining);
+                                    if (result != TdsOperationStatus.Done)
+                                    {
+                                        throw SQL.SynchronousCallMayNotPend();
+                                    }
                                 }
+
+                            }
+
+
+                            // Read the remaining values off the wire for this row
+                            if (stateObj.Parser.TrySkipRow(metadata, sharedState._nextColumnHeaderToRead, stateObj) != TdsOperationStatus.Done)
+                            {
+                                throw SQL.SynchronousCallMayNotPend();
                             }
                         }
-                        Run(RunBehavior.Clean, null, null, null, stateObj);
                     }
-                    catch
-                    {
-                        _connHandler.DoomThisConnection();
-                        throw;
-                    }
+                    Run(RunBehavior.Clean, null, null, null, stateObj);
                 }
-#if DEBUG
-                finally
+                catch
                 {
-                    tdsReliabilitySection.Stop();
+                    _connHandler.DoomThisConnection();
+                    throw;
                 }
-#endif //DEBUG
             }
             catch (System.OutOfMemoryException)
             {
@@ -10563,24 +10538,7 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    FailureCleanup(stateObj, exc);
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                FailureCleanup(stateObj, exc);
             }
             catch (System.OutOfMemoryException)
             {
@@ -10610,24 +10568,7 @@ namespace Microsoft.Data.SqlClient
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
-                            tdsReliabilitySection.Start();
-#else
-                        {
-#endif //DEBUG
-                            FailureCleanup(stateObj, tsk.Exception);
-                        }
-#if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
+                        FailureCleanup(stateObj, tsk.Exception);
                     }
                     catch (System.OutOfMemoryException e)
                     {
@@ -12335,31 +12276,14 @@ namespace Microsoft.Data.SqlClient
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    Task task = null;
+                    if (count > 0)
                     {
-                        tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                        Task task = null;
-                        if (count > 0)
-                        {
-                            _parser.WriteInt(count, _stateObj); // write length of chunk
-                            task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
-                        }
-                        
-                        return task ?? Task.CompletedTask;
+                        _parser.WriteInt(count, _stateObj); // write length of chunk
+                        task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
                     }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    
+                    return task ?? Task.CompletedTask;
                 }
                 catch (System.OutOfMemoryException)
                 {
