@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void RunAllTestsForSingleServer_TCP()
         {
             RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
@@ -177,7 +178,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             ReadTextReader(connectionString);
             StreamingBlobDataTypes(connectionString);
             OutOfOrderGetChars(connectionString);
-            TestXEventsStreaming(connectionString);
+
+            // Azure Database does not support Server scoped XEvents
+            if (!Utils.IsAzureSqlServer(connectionString))
+            {
+                TestXEventsStreaming(connectionString);
+            }
 
             // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
             if (!usingNamePipes)
@@ -186,6 +192,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 {
                     TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
                 }
+
                 NonFatalTimeoutDuringRead(connectionString);
             }
         }
