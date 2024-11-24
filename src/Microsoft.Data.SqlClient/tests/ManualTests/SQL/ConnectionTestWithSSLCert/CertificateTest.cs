@@ -141,11 +141,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
 
-            // Ipv6 however causes name mismatch error
-            // In net6 Manged SNI does not check for SAN. Therefor Application using Net6 have to use FQDN as HNIC
-            // According to above no other hostname in certificate than FQDN will work in net6 which is same as SubjectName in case of RemoteCertificateNameMismatch
-            // Net7.0 the new API added by dotnet runtime will check SANS and then SubjectName
-
             builder.DataSource = IPV6 + SlashInstanceName;
             builder.HostNameInCertificate = Dns.GetHostEntry(Environment.MachineName).HostName;
             builder.Encrypt = SqlConnectionEncryptOption.Mandatory;
