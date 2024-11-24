@@ -149,7 +149,8 @@ catch [Exception]
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     // Pass the Base64-encoded command to remove the need to escape quote marks
-                    Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand))
+                    Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
+                    Verb = "runas"
                 }
             })
             {
