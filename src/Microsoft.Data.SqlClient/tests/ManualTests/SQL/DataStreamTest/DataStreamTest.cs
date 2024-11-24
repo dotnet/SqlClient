@@ -180,7 +180,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             OutOfOrderGetChars(connectionString);
 
             // Azure Database does not support Server scoped XEvents
-            if (!Utils.IsAzureSqlServer(connectionString))
+            if (!Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource))
             {
                 TestXEventsStreaming(connectionString);
             }
