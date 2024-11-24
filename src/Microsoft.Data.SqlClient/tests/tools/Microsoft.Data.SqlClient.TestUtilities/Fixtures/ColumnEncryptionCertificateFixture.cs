@@ -14,6 +14,8 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
         public X509Certificate2 SecondaryColumnEncryptionCertificate { get; }
 
+        public X509Certificate2 CertificateWithoutPrivateKey { get; }
+
         private readonly X509Certificate2 _currentUserCertificate;
         private readonly X509Certificate2 _localMachineCertificate;
 
@@ -22,6 +24,13 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             PrimaryColumnEncryptionCertificate = CreateCertificate(nameof(PrimaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
             SecondaryColumnEncryptionCertificate = CreateCertificate(nameof(SecondaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
             _currentUserCertificate = CreateCertificate(nameof(_currentUserCertificate), Array.Empty<string>(), Array.Empty<string>());
+            using (X509Certificate2 createdCertificate = CreateCertificate(nameof(CertificateWithoutPrivateKey), Array.Empty<string>(), Array.Empty<string>()))
+            {
+                // This will strip the private key away from the created certificate
+                CertificateWithoutPrivateKey = new X509Certificate2(createdCertificate.Export(X509ContentType.Cert));
+
+                AddToStore(CertificateWithoutPrivateKey, StoreLocation.CurrentUser, StoreName.My);
+            }
 
             AddToStore(PrimaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);
             AddToStore(SecondaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);

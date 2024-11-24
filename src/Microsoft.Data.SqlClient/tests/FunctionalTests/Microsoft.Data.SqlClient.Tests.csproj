@@ -12,7 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
-    <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />

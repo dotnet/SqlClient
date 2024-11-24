@@ -101,6 +101,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public SqlColumnEncryptionCertificateStoreProviderWindowsShould(ColumnEncryptionCertificateFixture certFixture)
         {
             _certFixture = certFixture;
+
+            // Disable the cache to avoid false failures.
+            SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
         }
 
         [Theory]
@@ -121,7 +124,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
             Exception ex = Assert.Throws(exceptionType, () => provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(masterKeyPath), encryptionAlgorithm, bytes));
-            Assert.Matches(errorMsg, ex.Message);
+            Assert.Matches(ReplaceKeyTokens(errorMsg), ex.Message);
         }
 
         [Theory]
@@ -468,7 +471,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         private string ReplaceKeyTokens(string keyPath)
         {
             return keyPath?.Replace("{primary_thumbprint}", _certFixture.PrimaryColumnEncryptionCertificate.Thumbprint)
-                ?.Replace("{secondary_thumbprint}", _certFixture.SecondaryColumnEncryptionCertificate.Thumbprint);
+                ?.Replace("{secondary_thumbprint}", _certFixture.SecondaryColumnEncryptionCertificate.Thumbprint)
+                ?.Replace("{npk_thumbprint}", _certFixture.CertificateWithoutPrivateKey.Thumbprint);
         }
 
         public class AeadEncryptionParameters : DataAttribute
@@ -544,12 +548,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCertificatePath = @"Internal error. Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateLocation = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Internal error. Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateSignature = @"Internal error. Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
             private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
@@ -563,6 +568,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidAlgorithmVersion, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256) };
@@ -583,6 +590,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCertificatePath = @"Invalid certificate path: 'CurrentUser/My/Thumbprint/extra'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateLocation = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateSignature = @"Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
@@ -597,6 +606,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
             }
         }
