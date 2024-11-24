@@ -13,8 +13,7 @@ using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.Utility;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    [Collection(nameof(SqlColumnEncryptionExceptionAlgorithmErrorCollection))]
-    public class ExceptionsAlgorithmErrors
+    public class ExceptionsAlgorithmErrors : IClassFixture<ColumnEncryptionCertificateFixture>
     {
         // Reflection
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
@@ -258,11 +257,5 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 ClearSqlConnectionGlobalProviders();
             }
         }
-    }
-
-    [CollectionDefinition(nameof(SqlColumnEncryptionExceptionAlgorithmErrorCollection))]
-    public class SqlColumnEncryptionExceptionAlgorithmErrorCollection
-        : ICollectionFixture<ColumnEncryptionCertificateFixture>
-    {
     }
 }

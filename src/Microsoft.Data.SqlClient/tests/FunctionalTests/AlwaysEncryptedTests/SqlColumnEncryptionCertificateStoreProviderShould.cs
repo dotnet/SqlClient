@@ -17,8 +17,7 @@ using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.TestFixtures;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    [Collection(nameof(SqlColumnEncryptionCertificateStoreProviderCollection))]
-    public class SqlColumnEncryptionCertificateStoreProviderWindowsShould
+    public class SqlColumnEncryptionCertificateStoreProviderWindowsShould : IClassFixture<ColumnEncryptionCertificateFixture>
     {
         private const string PRIMARY_CERTIFICATE_PATH = "CurrentUser/My/{primary_thumbprint}";
         private const string SECONDARY_CERTIFICATE_PATH = "CurrentUser/My/{secondary_thumbprint}";
@@ -652,11 +651,5 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Throws<PlatformNotSupportedException>(() => provider.SignColumnMasterKeyMetadata("", false));
             Assert.Throws<PlatformNotSupportedException>(() => provider.VerifyColumnMasterKeyMetadata("", false, new byte[] { }));
         }
-    }
-
-    [CollectionDefinition(nameof(SqlColumnEncryptionCertificateStoreProviderCollection))]
-    public class SqlColumnEncryptionCertificateStoreProviderCollection
-        : ICollectionFixture<ColumnEncryptionCertificateFixture>
-    {
     }
 }
