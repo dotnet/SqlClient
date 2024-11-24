@@ -31,7 +31,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("5540")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RunAllTestsForSingleServer_TCP()
         {
@@ -2074,7 +2073,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                             // Close will now observe the stored timeout error
                             string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
-                            DataTestUtility.AssertThrowsWrapper<SqlException>(reader.Dispose, errorMessage);
+                            DataTestUtility.AssertThrowsWrapper<SqlException>(reader.Close, errorMessage);
                         }
                     }
                 }
