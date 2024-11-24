@@ -204,55 +204,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         /// <summary>
-        /// Gets the certificate.
-        /// </summary>
-        /// <param name="certificateName"></param>
-        /// <param name="certificateStoreLocation"></param>
-        /// <returns></returns>
-        internal static X509Certificate2 GetCertificate(string certificateName, StoreLocation certificateStoreLocation)
-        {
-            Assert.True(!string.IsNullOrWhiteSpace(certificateName));
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, certificateStoreLocation);
-                certStore.Open(OpenFlags.ReadOnly);
-                X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
-                Assert.True(certCollection != null && certCollection.Count > 0);
-
-                return certCollection[0];
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Removes a certificate from the local certificate store (useful for test cleanup).
-        /// </summary>
-        internal static void RemoveCertificate(X509Certificate2 certificate)
-        {
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                certStore.Open(OpenFlags.ReadWrite);
-                certStore.Remove(certificate);
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-        }
-
-        /// <summary>
         /// Encrypt Data using AED
         /// </summary>
         /// <param name="plainTextData"></param>

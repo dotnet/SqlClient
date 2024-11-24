@@ -31,23 +31,29 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
         private readonly List<CertificateStoreContext> _certificateStoreModifications = new List<CertificateStoreContext>();
 
-        protected static X509Certificate CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses)
+        protected static X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses)
         {
             // This will always generate a certificate with:
             // * Start date: 24hrs ago
             // * End date: 24hrs in the future
             // * Subject: {subjectName}
             // * Subject alternative names: {dnsNames}, {ipAddresses}
-            // * Public key: 4096-bit RSA
+            // * Public key: 2048-bit RSA
             // * Hash algorithm: SHA256
             // * Key usage: digital signature, key encipherment
             // * Enhanced key usage: server authentication, client authentication
             DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddDays(-1);
             DateTimeOffset notAfter = DateTimeOffset.UtcNow.AddDays(1);
+            byte[] passwordBytes = new byte[32];
+            string password = null;
+            Random rnd = new Random();
+
+            rnd.NextBytes(passwordBytes);
+            password = Convert.ToBase64String(passwordBytes);
 #if NET
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
-            RSA rsaKey = RSA.Create(4096);
+            RSA rsaKey = RSA.Create(2048);
             bool hasSans = false;
 
             subjectBuilder.AddCommonName(subjectName);
@@ -73,7 +79,13 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
                 request.CertificateExtensions.Add(sanBuilder.Build());
             }
 
-            return request.CreateSelfSigned(notBefore, notAfter);
+            // Generate an ephemeral certificate, then export it and return it as a new certificate with the correct key storage flags set.
+            // This is to ensure that it's imported into the certificate stores with its private key.
+            using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
+            {
+                return new X509Certificate2(ephemeral.Export(X509ContentType.Pkcs12, password), password,
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            }
 #else
             // The CertificateRequest API is available in .NET Core, but was only added to .NET Framework 4.7.2; it thus can't be used in the test projects.
             // Instead, fall back to running a PowerShell script which calls New-SelfSignedCertificate. This cmdlet also adds the certificate to a specific,
@@ -87,7 +99,7 @@ $sAN = @({3})
 
 try
 {{
-    $x509 = New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 4096 -KeyAlgorithm RSA `
+    $x509 = New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
         -CertStoreLocation ""Cert:\CurrentUser\My"" -NotBefore $notBefore -NotAfter $notAfter `
         -KeyExportPolicy Exportable -HashAlgorithm SHA256
 
@@ -111,9 +123,6 @@ catch [Exception]
             string sanString = string.Empty;
             bool hasSans = false;
             string formattedCommand = null;
-            byte[] passwordBytes = new byte[32];
-            string password = null;
-            Random rnd = new Random();
             string commandOutput = null;
 
             foreach (string dnsName in dnsNames)
@@ -129,8 +138,6 @@ catch [Exception]
 
             sanString = hasSans ? "\"2.5.29.17={text}" + sanString.Substring(0, sanString.Length - 1) + "\"" : string.Empty;
 
-            rnd.NextBytes(passwordBytes);
-            password = Convert.ToBase64String(passwordBytes);
             formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password);
 
             using (Process psProcess = new Process()
