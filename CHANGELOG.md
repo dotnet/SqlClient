@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+# Release Notes
+
+## [Preview Release 6.0.0-preview3.24304.8] - 2024-11-25
+
+This update brings the below changes over the previous release:
+
+### Added
+- Nuget package auditing via nuget.org audit source [#3024](https://github.com/dotnet/SqlClient/pull/3024)
+- Added support for .NET 9 [#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Added dependency on System.Security.Cryptography.Pkcs:9.0.0 to address [SYSLIB0057](https://learn.microsoft.com/en-us/dotnet/fundamentals/syslib-diagnostics/syslib0057)[#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Added dependency on Microsoft.Bcl.Cryptography:9.0.0 [#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Added missing SqlCommand_BeginExecuteReader sample [#3009](https://github.com/dotnet/SqlClient/pull/3009)
+- Added support for SqlConnectionOverrides for OpenAsync() API [#2433](https://github.com/dotnet/SqlClient/pull/2433)
+- Added localization support for Czech, Polish, and Turkish [#2987](https://github.com/dotnet/SqlClient/pull/2987)
+
+### Fixed
+- Reverted default value of UseMinimumLoginTimeout context switch to 'true' [#2419](https://github.com/dotnet/SqlClient/pull/2419)
+- Added missing DynamicallyAccessedMembers attributes in netcore ref project [#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Synced ref project references with runtime projects [#2878](https://github.com/dotnet/SqlClient/pull/2878)
+- Finished port of [#521](https://github.com/dotnet/SqlClient/pull/521) to netfx [#2964](https://github.com/dotnet/SqlClient/pull/2964)
+
+### Changed
+- Updated Microsoft.Extensions.Caching.Memory to 9.0.0 for all frameworks [#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Updated System.Configuration.ConfigurationManager to 9.0.0 [#2946](https://github.com/dotnet/SqlClient/pull/2946)
+- Removed SQL 2000 client-side debugging support for netfx [#2981](https://github.com/dotnet/SqlClient/pull/2981), [#2940](https://github.com/dotnet/SqlClient/pull/2940)
+- Updated docs to use absolute links [#2949](https://github.com/dotnet/SqlClient/pull/2949)
+- Removed System.Text.Json dependency from net core [#2930](https://github.com/dotnet/SqlClient/pull/2930)
+- Dropped support for .NET 6 [#2927](https://github.com/dotnet/SqlClient/pull/2927)
+
 ## [Preview Release 6.0.0-preview2.24304.8] - 2024-10-30
 
 This update brings the below changes over the previous release:
