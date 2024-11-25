@@ -24,11 +24,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true));
+                DataTestUtility.AssertThrowsWrapper<PlatformNotSupportedException>(() => RunAllTestsForSingleServer(DataTestUtility.NPConnectionString));
             }
             else
             {
-                RunAllTestsForSingleServer(DataTestUtility.NPConnectionString, true);
+                RunAllTestsForSingleServer(DataTestUtility.NPConnectionString);
             }
         }
 
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
         }
-
+        
         // Synapse: The statement failed. Column 'foo' has a data type that cannot participate in a columnstore index.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task AsyncMultiPacketStreamRead()
@@ -119,7 +119,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Fail($"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
                 }
             }
+        }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
+        public static void XEventsStreamingTest(string connectionString)
+        {
+            TestXEventsStreaming(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingNativeSNI), nameof(DataTestUtility.IsNotNamedInstance))]
+        [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
+        public static void TestTimeoutDuringReadAsyncWithClosedReaderTest(string connectionString)
+        {
+            TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotNamedInstance))]
+        [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
+        public static void NonFatalTimeoutDuringReadTest(string connectionString)
+        {
+            NonFatalTimeoutDuringRead(connectionString);
+        }
+        
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3035", typeof(DataStreamTest), nameof(IsArm))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
+        public static void XmlReaderTest(string connectionString)
+        {
+            ExecuteXmlReaderTest(connectionString);
         }
 
         private static byte[] CreateBinaryTable(SqlConnection connection, string tableName, int packetSize)
@@ -152,7 +180,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             return data;
         }
 
-        private static void RunAllTestsForSingleServer(string connectionString, bool usingNamePipes = false)
+        private static void RunAllTestsForSingleServer(string connectionString)
         {
             RowBuffer(connectionString);
             InvalidRead(connectionString);
@@ -165,7 +193,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             TimestampRead(connectionString);
             OrphanReader(connectionString);
             BufferSize(connectionString);
-            ExecuteXmlReaderTest(connectionString);
             SequentialAccess(connectionString);
             HasRowsTest(connectionString);
             CloseConnection(connectionString);
@@ -178,25 +205,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             ReadTextReader(connectionString);
             StreamingBlobDataTypes(connectionString);
             OutOfOrderGetChars(connectionString);
-
-            // Azure Database does not support Server scoped XEvents and the timeout tests use the ProxyServer which also does not work on Azure and on named instances
-            if (IsAzureSqlServer(connectionString) || IsNamedInstance(connectionString))
-            {
-                return;
-            }
-
-            TestXEventsStreaming(connectionString);
-
-            // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
-            if (!usingNamePipes)
-            {
-                if (DataTestUtility.IsUsingNativeSNI())
-                {
-                    TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
-                }
-
-                NonFatalTimeoutDuringRead(connectionString);
-            }
         }
 
         private static void MultipleResults(string connectionString)
@@ -265,15 +273,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             }
         }
 
-        private static bool IsAzureSqlServer(string connectionString)
-        {
-            return Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource);
-        }
+        private static bool IsAzureSqlServer(string connectionString) => Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource);
 
-        private static bool IsNamedInstance(string connectionString)
-        {
-            return new SqlConnectionStringBuilder(connectionString).DataSource.Contains(@"\");
-        }
+        private static bool IsNamedInstance(string connectionString) => new SqlConnectionStringBuilder(connectionString).DataSource.Contains(@"\");
+
+        private static bool IsArm => RuntimeInformation.ProcessArchitecture == Architecture.Arm || RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
         
         private static void InvalidRead(string connectionString)
         {
