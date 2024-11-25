@@ -1577,7 +1577,7 @@ namespace Microsoft.Data.SqlClient
                     if (TdsParserStateObjectFactory.UseManagedSNI)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
-                        string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                        string sniLookupMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
                         errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
                                         ? sniLookupMessage
                                         : (sniLookupMessage + ": " + errorMessage);
@@ -1585,7 +1585,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // SNI error. Replace the entire message.
-                        errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                        errorMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
 
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
