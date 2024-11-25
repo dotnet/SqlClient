@@ -179,11 +179,13 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             StreamingBlobDataTypes(connectionString);
             OutOfOrderGetChars(connectionString);
 
-            // Azure Database does not support Server scoped XEvents
-            if (!Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource))
+            // Azure Database does not support Server scoped XEvents and the timeout tests use the ProxyServer which also does not work
+            if (IsAzureSqlServer(connectionString))
             {
-                TestXEventsStreaming(connectionString);
+                return;
             }
+
+            TestXEventsStreaming(connectionString);
 
             // These tests fail with named pipes, since they try to do DNS lookups on named pipe paths.
             if (!usingNamePipes)
@@ -263,6 +265,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             }
         }
 
+        private static bool IsAzureSqlServer(string connectionString)
+        {
+            return Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource);
+        }
+        
         private static void InvalidRead(string connectionString)
         {
             using (SqlConnection c = new SqlConnection(connectionString))
