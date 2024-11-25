@@ -128,14 +128,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestXEventsStreaming(connectionString);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingNativeSNI), nameof(DataTestUtility.IsNotNamedInstance))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUsingNativeSNI), nameof(DataTestUtility.IsNotNamedInstance), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
         public static void TestTimeoutDuringReadAsyncWithClosedReaderTest(string connectionString)
         {
             TimeoutDuringReadAsyncWithClosedReaderTest(connectionString);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotNamedInstance))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotNamedInstance), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
         public static void NonFatalTimeoutDuringReadTest(string connectionString)
         {
