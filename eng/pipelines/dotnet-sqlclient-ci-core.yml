@@ -22,7 +22,7 @@ parameters:
 - name: netcoreVersionTestUtils
   displayName: 'Netcore Version for Test Utilities'
   type: object
-  default: net8.0
+  default: net9.0
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
