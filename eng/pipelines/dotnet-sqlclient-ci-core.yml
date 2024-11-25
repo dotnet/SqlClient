@@ -3,7 +3,7 @@
 # The .NET Foundation licenses this file to you under the MIT license.          #
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
-parameters: # parameters are shown up in ADO UI in a build queue time
+parameters:
 - name: 'debug'
   displayName: 'Enable debug output'
   type: boolean
@@ -12,17 +12,17 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net8.0]
+  default: [net462, net8.0, net9.0]
 
 - name: targetFrameworksLinux
   displayName: 'Target Frameworks on Non-Windows'
   type: object
-  default: [net8.0]
+  default: [net8.0, net9.0]
 
 - name: netcoreVersionTestUtils
   displayName: 'Netcore Version for Test Utilities'
   type: object
-  default: net8.0
+  default: net9.0
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'
