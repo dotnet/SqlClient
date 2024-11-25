@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     try
                     {
-                        validationCertificate = new X509Certificate(validationCertFileName);
+                        validationCertificate = X509CertificateLoader.LoadCertificateFromFile(validationCertFileName);
                     }
                     catch (Exception e)
                     {

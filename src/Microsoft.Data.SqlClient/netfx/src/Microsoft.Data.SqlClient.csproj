@@ -799,6 +799,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
       <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
+      <Link>System\IO\StreamExtensions.netfx.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
@@ -896,6 +899,8 @@
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

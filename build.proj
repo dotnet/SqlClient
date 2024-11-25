@@ -19,7 +19,7 @@
     <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
-    <TF Condition="$(TF) == ''">net8.0</TF> <!-- Default Target Framework -->
+    <TF Condition="$(TF) == ''">net9.0</TF> <!-- Default Target Framework -->
     <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETFramework'">netfx</TFGroup>
     <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
     <TargetGroup Condition="'$(TFGroup)' == 'netfx'" >netfx</TargetGroup>

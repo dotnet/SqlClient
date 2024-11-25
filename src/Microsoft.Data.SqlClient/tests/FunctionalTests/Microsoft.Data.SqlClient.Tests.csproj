@@ -32,6 +32,7 @@
     <Compile Include="SqlBufferTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
     <Compile Include="SqlCommandSetTest.cs" />
+    <Compile Include="LocalAppContextSwitchesTests.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
@@ -95,6 +96,8 @@
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
