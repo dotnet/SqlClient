@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             // This is to ensure that it's imported into the certificate stores with its private key.
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
-                return new X509Certificate2(ephemeral.Export(X509ContentType.Pkcs12, password), password,
+                return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pkcs12, password), password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             }
 #else
