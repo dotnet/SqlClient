@@ -121,7 +121,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
             using TestTdsServer server = TestTdsServer.StartTestServer(enableFedAuth: false, enableLog: false, connectionTimeout: 15,
-                methodName: "", new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                methodName: "",
+                X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
                 encryptionType: connectionTestParameters.TdsEncryptionType);
 
             builder = new(server.ConnectionString)
