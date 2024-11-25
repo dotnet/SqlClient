@@ -263,7 +263,6 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
-    <Reference Include="System.ServiceProcess" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
