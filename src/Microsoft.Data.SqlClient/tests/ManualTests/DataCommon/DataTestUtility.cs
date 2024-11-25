@@ -234,6 +234,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static IEnumerable<object[]> GetConnectionStringsWithEnclaveMemberData()
+        {
+            return GetConnectionStrings(true).Select(x => new object[] { x });
+        }
+
+        public static IEnumerable<object[]> GetConnectionStringsWithoutEnclaveMemberData()
+        {
+            return GetConnectionStrings(false).Select(x => new object[] { x });
+        }
+
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
 
         public static IEnumerable<string> GetConnectionStrings(bool withEnclave)
