@@ -78,7 +78,7 @@ steps:
             
         Write-Host "Artifacts fetched for testing"
         Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
+      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
   - ${{ if eq(parameters.product, 'AKV') }}:
     - powershell: |
@@ -95,7 +95,7 @@ steps:
             
         Write-Host "Artifacts fetched for testing"
         Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
+      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
 - powershell: |
     $software = '${{parameters.softwareFolder}}'
