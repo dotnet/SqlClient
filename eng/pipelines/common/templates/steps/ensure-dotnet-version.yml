@@ -20,6 +20,20 @@ steps:
     Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
     Write-Host "##vso[task.prependpath]${NEW_DOTNET_ROOT}"
     Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+  ${{ if eq(parameters.sdk, true) }}:
+    displayName: "Install .NET ${{parameters.version}} SDK"
+  ${{ else }}:
+    displayName: "Install .NET ${{parameters.version}}"
+- task:
+  name: UseDotNet@2
+  inputs:
+    ${{ if eq(parameters.sdk, true) }}:
+      packageType: sdk
+    ${{ else }}:
+      packageType: runtime
+    version: '${{parameters.version}}'
+  condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
     displayName: "Install .NET ${{parameters.version}} SDK"
   ${{ else }}:
