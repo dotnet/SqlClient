@@ -23,6 +23,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -9790,11 +9791,13 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbType.Udt)
                 {
+					byte[] udtVal = null;
+                    Format format = Format.Native;
+                    
                     Debug.Assert(_is2005, "Invalid DataType UDT for non-2005 or later server!");
 
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
-                    byte[] udtVal = null;
-                    SqlServer.Server.Format format = SqlServer.Server.Format.Native;
+                    
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {

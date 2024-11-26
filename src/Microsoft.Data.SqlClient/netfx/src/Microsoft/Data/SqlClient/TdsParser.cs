@@ -9956,8 +9956,7 @@ namespace Microsoft.Data.SqlClient
                                 if (
                                     !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
-                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
-                                )
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
                                 {
                                     throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
                                 }
@@ -10369,6 +10368,12 @@ namespace Microsoft.Data.SqlClient
 
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
 
+
+                    if (string.IsNullOrEmpty(param.UdtTypeName))
+                    {
+                        throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
+
                     if (!isNull)
                     {
                         // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
@@ -10414,15 +10419,15 @@ namespace Microsoft.Data.SqlClient
                     string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
                     if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
                     {
-                        throw ADP.ArgumentOutOfRange("names");
+                        throw ADP.ArgumentOutOfRange(nameof(names));
                     }
                     if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
                     {
-                        throw ADP.ArgumentOutOfRange("names");
+                        throw ADP.ArgumentOutOfRange(nameof(names));
                     }
                     if (TdsEnums.MAX_SERVERNAME < names[2].Length)
                     {
-                        throw ADP.ArgumentOutOfRange("names");
+                        throw ADP.ArgumentOutOfRange(nameof(names));
                     }
 
                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
