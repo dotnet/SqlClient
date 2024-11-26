@@ -14,7 +14,7 @@ parameters:
 # Borrowed from: https://github.com/microsoft/PowerToys/blob/main/.pipelines/v2/templates/steps-ensure-dotnet-version.yml
 steps:
 - pwsh: |-
-    curl.exe -J -L -O "https://dot.net/v1/dotnet-install.ps1"
+    Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
     & ./dotnet-install.ps1 -Channel "${{parameters.version}}" -InstallDir $NEW_DOTNET_ROOT
     Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
