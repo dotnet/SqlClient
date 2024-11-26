@@ -26,43 +26,10 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    internal struct SNIErrorDetails
-    {
-        public string errorMessage;
-        public uint nativeError;
-        public uint sniErrorNumber;
-        public int provider;
-        public uint lineNumber;
-        public string function;
-        public Exception exception;
-    }
-
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
-        internal struct ReliabilitySection
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void Assert(string message)
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Start()
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Stop()
-            {
-            }
-        }
-
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
@@ -1958,8 +1925,6 @@ namespace Microsoft.Data.SqlClient
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
-
-
 
         internal bool Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
@@ -12539,7 +12504,9 @@ namespace Microsoft.Data.SqlClient
                     if (type.FixedLength == 4)
                     {
                         if (0 > dt.days || dt.days > UInt16.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
+                        }
 
                         if (stateObj._bIntBytes == null)
                         {

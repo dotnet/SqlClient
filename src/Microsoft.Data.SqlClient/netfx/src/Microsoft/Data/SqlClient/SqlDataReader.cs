@@ -1450,8 +1450,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*' />
 #if !NETFRAMEWORK
-        [SuppressMessage("ReflectionAnalysis", "IL2093:MismatchOnMethodReturnValueBetweenOverrides",
-                   Justification = "Annotations for DbDataReader was not shipped in net6.0")]
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
         override public Type GetFieldType(int i)

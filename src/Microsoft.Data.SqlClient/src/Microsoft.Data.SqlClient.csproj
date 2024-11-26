@@ -1,6 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net462</TargetFrameworks>
+		<TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
@@ -10,7 +10,8 @@
 	<ItemGroup>
 	  <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
 	  <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
-    <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" Condition="'$(TargetFramework)' == 'net462'" />
+      <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" Condition="'$(TargetFramework)' == 'net462'" />
+	  <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+	  <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
 	</ItemGroup>
-
 </Project>

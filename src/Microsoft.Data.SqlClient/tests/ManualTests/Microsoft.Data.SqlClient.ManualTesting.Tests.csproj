@@ -8,8 +8,6 @@
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
-    <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
@@ -263,8 +261,10 @@
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\Batch\BatchTests.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
@@ -280,6 +280,7 @@
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
+    <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="Json\SqlJsonTest.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
@@ -354,7 +355,9 @@
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
