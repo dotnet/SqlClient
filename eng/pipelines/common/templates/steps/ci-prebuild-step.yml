@@ -20,12 +20,12 @@ parameters:
       - Package
 
 steps:
-  - template: ./ensure-dotnet-version.yml
+  - template: ensure-dotnet-version.yml
     parameters:
       sdk: true
       version: '9.0'
 
-  - template: ./ensure-dotnet-version.yml
+  - template: ensure-dotnet-version.yml
     parameters:
       sdk: false
       version: '8.0'
