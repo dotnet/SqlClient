@@ -9710,9 +9710,9 @@ namespace Microsoft.Data.SqlClient
                                     if (releaseConnectionLock)
                                     {
                                         task.ContinueWith(
-                                            static (Task _, object state) => ((TdsParser)state)._connHandler._parserLock.Release(),
-                                            state: this,
-                                            scheduler: TaskScheduler.Default
+                                            static (Task _, object state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
+                                            state: _connHandler,
+                                            TaskScheduler.Default
                                         );
                                         releaseConnectionLock = false;
                                     }
