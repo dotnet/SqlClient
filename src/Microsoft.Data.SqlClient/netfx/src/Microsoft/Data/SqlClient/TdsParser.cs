@@ -9691,15 +9691,19 @@ namespace Microsoft.Data.SqlClient
                                         task = completion.Task;
                                     }
 
-                                    AsyncHelper.ContinueTaskWithState(writeParamTask, completion, this,
-                                        (object state) =>
-                                        {
-                                            TdsParser tdsParser = (TdsParser)state;
-                                            TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
-                                                                  startRpc: ii, startParam: i + 1);
-                                        },
-                                        onFailure: (Exception exc, object state) => ((TdsParser)state).TdsExecuteRPC_OnFailure(exc, stateObj),
-                                        connectionToDoom: _connHandler
+                                    TDSExecuteRPCParameterSetupWriteCompletion(
+                                        cmd,
+                                        rpcArray,
+                                        timeout,
+                                        inSchema,
+                                        notificationRequest,
+                                        stateObj,
+                                        isCommandProc,
+                                        sync,
+                                        completion,
+                                        ii,
+                                        i + 1,
+                                        writeParamTask
                                     );
 
                                     // Take care of releasing the locks
@@ -10245,6 +10249,29 @@ namespace Microsoft.Data.SqlClient
             }
 
             return writeParamTask;
+        }
+
+        // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
+        private void TDSExecuteRPCParameterSetupWriteCompletion(SqlCommand cmd, IList<_SqlRPC> rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync, TaskCompletionSource<object> completion, int startRpc, int startParam, Task writeParamTask)
+        {
+            AsyncHelper.ContinueTask(
+                writeParamTask,
+                completion,
+                () => TdsExecuteRPC(
+                    cmd,
+                    rpcArray,
+                    timeout,
+                    inSchema,
+                    notificationRequest,
+                    stateObj,
+                    isCommandProc,
+                    sync,
+                    completion,
+                    startRpc,
+                    startParam
+                ),
+                onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj)
+            );
         }
 
         // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
