@@ -33,6 +33,7 @@ parameters:
       - AKV
       - all
 
+steps:
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - task: MSBuild@1
