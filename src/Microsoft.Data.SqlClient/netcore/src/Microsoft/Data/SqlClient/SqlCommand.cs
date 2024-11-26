@@ -1185,10 +1185,10 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
-        private Task InternalExecuteNonQueryWithRetry(bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry, [CallerMemberName] string methodName = "")
+        private Task InternalExecuteNonQueryWithRetry(int timeout, out bool usedCache, bool asyncWrite, bool inRetry, [CallerMemberName] string methodName = "")
         {
             bool innerUsedCache = false;
-            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe, timeout, out innerUsedCache, asyncWrite, inRetry, methodName));
+            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, timeout, out innerUsedCache, asyncWrite, inRetry, methodName));
             usedCache = innerUsedCache;
             return result;
         }
@@ -1214,11 +1214,11 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                        InternalExecuteNonQuery(completion: null, timeout: CommandTimeout, out _);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1283,7 +1283,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    Task execNQ = InternalExecuteNonQuery(localCompletion, false, timeout, out usedCache, asyncWrite, inRetry: inRetry, methodName: nameof(BeginExecuteNonQuery));
+                    Task execNQ = InternalExecuteNonQuery(localCompletion, timeout, out usedCache, asyncWrite, inRetry: inRetry, methodName: nameof(BeginExecuteNonQuery));
 
                     if (execNQ != null)
                     {
@@ -1647,7 +1647,7 @@ namespace Microsoft.Data.SqlClient
             return _rowsAffected;
         }
 
-        private Task InternalExecuteNonQuery(TaskCompletionSource<object> completion, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite = false, bool inRetry = false, [CallerMemberName] string methodName = "")
+        private Task InternalExecuteNonQuery(TaskCompletionSource<object> completion, int timeout, out bool usedCache, bool asyncWrite = false, bool inRetry = false, [CallerMemberName] string methodName = "")
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
                                                         _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
@@ -1672,8 +1672,6 @@ namespace Microsoft.Data.SqlClient
             // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
             if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
             {
-                Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
-
                 if (statistics != null)
                 {
                     if (!IsDirty && IsPrepared)
@@ -1695,7 +1693,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // otherwise, use a full-fledged execute that can handle params and stored procs
-                Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, inRetry {3}", ObjectID, methodName, isAsync, inRetry);
 
                 SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, completion, timeout, out task, out usedCache, asyncWrite, inRetry, methodName);
