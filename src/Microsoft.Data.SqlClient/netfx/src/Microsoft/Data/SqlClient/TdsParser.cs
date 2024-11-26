@@ -9637,8 +9637,7 @@ namespace Microsoft.Data.SqlClient
                                 if (
                                     !(cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                                     ||
-                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled))
-                                )
+                                    (cmd.ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && cmd.Connection.IsColumnEncryptionSettingEnabled)))
                                 {
                                     throw SQL.ParamInvalidForceColumnEncryptionSetting(param.ParameterName, rpcext.GetCommandTextOrRpcName());
                                 }
@@ -10045,6 +10044,11 @@ namespace Microsoft.Data.SqlClient
                     byte[] udtVal = null;
                     Format format = Format.Native;
 
+                    if (string.IsNullOrEmpty(param.UdtTypeName))
+                    {
+                        throw SQL.MustSetUdtTypeNameForUdtParams();
+                    }
+
                     if (!isNull)
                     {
                         // When writing UDT parameter values to the TDS stream, allow sending byte[] or SqlBytes
@@ -10117,8 +10121,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteUnsignedLong(TdsEnums.SQL_PLP_NULL, stateObj); // PLP Null.
                     }
-                    continue; // End of UDT - continue to next parameter.
-                              // UNDONE - need to re-org not to continue at a later point in time.
+                    return null; // End of UDT - continue to next parameter.
+                                 // UNDONE - need to re-org not to continue at a later point in time.
                 }
                 else if (mt.IsPlp)
                 {
