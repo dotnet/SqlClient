@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_useMinimumLoginTimeout == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
+                    if (!AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) || returnedValue)
                     {
                         s_useMinimumLoginTimeout = Tristate.True;
                     }

@@ -27,6 +27,7 @@ parameters:
     default:
     - net462
     - net8.0
+    - net9.0
 
   - name: product
     default: MDS
