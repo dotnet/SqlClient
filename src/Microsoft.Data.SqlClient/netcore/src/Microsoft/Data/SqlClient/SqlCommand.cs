@@ -1670,7 +1670,7 @@ namespace Microsoft.Data.SqlClient
 
             // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
             // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (CommandType.Text == CommandType) && (0 == GetParameterCount(_parameters)))
+            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
             {
                 Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
 
