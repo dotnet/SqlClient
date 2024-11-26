@@ -42,18 +42,6 @@ namespace Microsoft.Data.SqlClient
 
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-        static Task completedTask;
-        static Task CompletedTask
-        {
-            get
-            {
-                if (completedTask == null)
-                {
-                    completedTask = Task.FromResult<object>(null);
-                }
-                return completedTask;
-            }
-        }
 
         internal int ObjectID
         {
@@ -171,32 +159,18 @@ namespace Microsoft.Data.SqlClient
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
         private byte[] _tempGuidBytes;
-
-        // NOTE: You must take the internal connection's _parserLock before modifying this
-        internal bool _asyncWrite = false;
-
-        // TCE supported flag, used to determine if new TDS fields are present. This is
-        // useful when talking to downlevel/uplevel server.
-        private bool _serverSupportsColumnEncryption = false;
-
+        
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
         private static readonly byte[] s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+        
+        // NOTE: You must take the internal connection's _parserLock before modifying this
+        internal bool _asyncWrite = false;
 
         /// <summary>
         /// Get or set if column encryption is supported by the server.
         /// </summary>
-        internal bool IsColumnEncryptionSupported
-        {
-            get
-            {
-                return _serverSupportsColumnEncryption;
-            }
-            set
-            {
-                _serverSupportsColumnEncryption = value;
-            }
-        }
+        internal bool IsColumnEncryptionSupported { get; set; } = false;
 
         /// <summary>
         /// TCE version supported by the server
@@ -219,13 +193,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get if data classification is enabled by the server.
         /// </summary>
-        internal bool IsDataClassificationEnabled
-        {
-            get
-            {
-                return (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
-            }
-        }
+        internal bool IsDataClassificationEnabled =>
+                (DataClassificationVersion != TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED);
 
         /// <summary>
         /// Get or set data classification version.  A value of 0 means that sensitivity classification is not enabled.
@@ -4153,8 +4122,7 @@ namespace Microsoft.Data.SqlClient
 
             // read how many FedAuthInfo options there are
             uint optionsCount;
-            TdsOperationStatus result = stateObj.TryReadUInt32(out optionsCount);
-            if (result != TdsOperationStatus.Done)
+            if (stateObj.TryReadUInt32(out optionsCount) != TdsOperationStatus.Done)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessFedAuthInfo|ERR> Failed to read CountOfInfoIDs in FEDAUTHINFO token stream.");
                 throw SQL.ParsingError(ParsingErrorState.FedAuthInfoFailedToReadCountOfInfoIds);
@@ -4477,7 +4445,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Check if the column is encrypted.
-            if (_serverSupportsColumnEncryption)
+            if (IsColumnEncryptionSupported)
             {
                 rec.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
@@ -4661,7 +4629,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // For encrypted parameters, read the unencrypted type and encryption information.
-            if (_serverSupportsColumnEncryption && rec.isEncrypted)
+            if (IsColumnEncryptionSupported && rec.isEncrypted)
             {
                 result = TryProcessTceCryptoMetadata(stateObj, rec, cipherTable: null, columnEncryptionSetting: columnEncryptionSetting, isReturnValue: true);
                 if (result != TdsOperationStatus.Done)
@@ -5380,7 +5348,7 @@ namespace Microsoft.Data.SqlClient
 
             // Read the cipher info table first
             SqlTceCipherInfoTable cipherTable = null;
-            if (_serverSupportsColumnEncryption)
+            if (IsColumnEncryptionSupported)
             {
                 TdsOperationStatus result = TryProcessCipherInfoTable(stateObj, out cipherTable);
                 if (result != TdsOperationStatus.Done)
@@ -5657,7 +5625,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
-            if (fColMD && _serverSupportsColumnEncryption)
+            if (fColMD && IsColumnEncryptionSupported)
             {
                 col.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
             }
@@ -5704,7 +5672,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Read the TCE column cryptoinfo
-            if (fColMD && _serverSupportsColumnEncryption && col.isEncrypted)
+            if (fColMD && IsColumnEncryptionSupported && col.isEncrypted)
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
@@ -6547,19 +6515,35 @@ namespace Microsoft.Data.SqlClient
                         if (isPlp)
                         {
                             char[] cc = null;
+                            bool buffIsRented = false;
+                            result = TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length, supportRentedBuff: true, rentedBuff: ref buffIsRented);
+                            
+                            if (result == TdsOperationStatus.Done)
+                            {
+                                if (length > 0)
+                                {
+                                    s = new string(cc, 0, length);
+                                }
+                                else
+                                {
+                                    s = string.Empty;
+                                }
+                            }
 
-                            result = TryReadPlpUnicodeChars(ref cc, 0, length >> 1, stateObj, out length);
+                            if (buffIsRented)
+                            {
+                                // do not use clearArray:true on the rented array because it can be massively larger
+                                // than the space we've used and we would incur performance clearing memory that
+                                // we haven't used and can't leak out information.
+                                // clear only the length that we know we have used.
+                                cc.AsSpan(0, length).Clear();
+                                ArrayPool<char>.Shared.Return(cc, clearArray: false);
+                                cc = null;
+                            }
+
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
-                            }
-                            if (length > 0)
-                            {
-                                s = new string(cc, 0, length);
-                            }
-                            else
-                            {
-                                s = "";
                             }
                         }
                         else
@@ -10285,15 +10269,15 @@ namespace Microsoft.Data.SqlClient
                                     string[] names = SqlParameter.ParseTypeName(param.UdtTypeName, isUdtTypeName: true);
                                     if (!string.IsNullOrEmpty(names[0]) && TdsEnums.MAX_SERVERNAME < names[0].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
                                     if (!string.IsNullOrEmpty(names[1]) && TdsEnums.MAX_SERVERNAME < names[names.Length - 2].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
                                     if (TdsEnums.MAX_SERVERNAME < names[2].Length)
                                     {
-                                        throw ADP.ArgumentOutOfRange("names");
+                                        throw ADP.ArgumentOutOfRange(nameof(names));
                                     }
 
                                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
@@ -10348,7 +10332,9 @@ namespace Microsoft.Data.SqlClient
                                         stateObj.WriteByte(TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION);
                                 }
                                 else
+                                {
                                     stateObj.WriteByte(precision);
+                                }
 
                                 stateObj.WriteByte(scale);
                             }
@@ -10734,7 +10720,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static readonly IEnumerable<Server.SqlDataRecord> __tvpEmptyValue = new List<Server.SqlDataRecord>().AsReadOnly();
         private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //
@@ -10761,7 +10746,7 @@ namespace Microsoft.Data.SqlClient
                 // Value for TVP default is empty list, not NULL
                 if (SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued)
                 {
-                    value = __tvpEmptyValue;
+                    value = Array.Empty<Server.SqlDataRecord>();
                     typeCode = ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
                 }
                 else
@@ -11165,7 +11150,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection, SqlCommand command = null)
         {
-            if (_serverSupportsColumnEncryption && ShouldEncryptValuesForBulkCopy())
+            if (IsColumnEncryptionSupported && ShouldEncryptValuesForBulkCopy())
             {
                 for (int col = 0; col < metadataCollection.Length; col++)
                 {
@@ -11213,7 +11198,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void WriteCekTable(_SqlMetaDataSet metadataCollection, TdsParserStateObject stateObj)
         {
-            if (!_serverSupportsColumnEncryption)
+            if (!IsColumnEncryptionSupported)
             {
                 return;
             }
@@ -11283,7 +11268,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal void WriteCryptoMetadata(_SqlMetaData md, TdsParserStateObject stateObj)
         {
-            if (!_serverSupportsColumnEncryption || // TCE Feature supported
+            if (!IsColumnEncryptionSupported || // TCE Feature supported
                 !md.isEncrypted || // Column is not encrypted
                 !ShouldEncryptValuesForBulkCopy())
             { // TCE disabled on connection string
@@ -11350,7 +11335,7 @@ namespace Microsoft.Data.SqlClient
                     flags |= (ushort)(md.IsIdentity ? (ushort)TdsEnums.Identity : (ushort)0);
 
                     // Write the next byte of flags
-                    if (_serverSupportsColumnEncryption)
+                    if (IsColumnEncryptionSupported)
                     { // TCE Supported
                         if (ShouldEncryptValuesForBulkCopy())
                         { // TCE enabled on connection options
@@ -11440,7 +11425,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal object EncryptColumnValue(object value, SqlMetaDataPriv metadata, string column, TdsParserStateObject stateObj, bool isDataFeed, bool isSqlType)
         {
-            Debug.Assert(_serverSupportsColumnEncryption, "Server doesn't support encryption, yet we received encryption metadata");
+            Debug.Assert(IsColumnEncryptionSupported, "Server doesn't support encryption, yet we received encryption metadata");
             Debug.Assert(ShouldEncryptValuesForBulkCopy(), "Encryption attempted when not requested");
 
             if (isDataFeed)
@@ -11785,25 +11770,25 @@ namespace Microsoft.Data.SqlClient
 
                 if (callbackId == null)
                 {
-                    throw ADP.ArgumentNull("CallbackId");
+                    throw ADP.ArgumentNull(nameof(callbackId));
                 }
                 else if (ushort.MaxValue < callbackId.Length)
                 {
-                    throw ADP.ArgumentOutOfRange("CallbackId");
+                    throw ADP.ArgumentOutOfRange(nameof(callbackId));
                 }
 
                 if (service == null)
                 {
-                    throw ADP.ArgumentNull("Service");
+                    throw ADP.ArgumentNull(nameof(service));
                 }
                 else if (ushort.MaxValue < service.Length)
                 {
-                    throw ADP.ArgumentOutOfRange("Service");
+                    throw ADP.ArgumentOutOfRange(nameof(service));
                 }
 
                 if (-1 > timeout)
                 {
-                    throw ADP.ArgumentOutOfRange("Timeout");
+                    throw ADP.ArgumentOutOfRange(nameof(timeout));
                 }
 
                 // Header Length (uint) (included in size) (already written to output buffer)
@@ -12384,14 +12369,8 @@ namespace Microsoft.Data.SqlClient
                             _parser.WriteInt(count, _stateObj); // write length of chunk
                             task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
                         }
-                        if (task == null)
-                        {
-                            return CompletedTask;
-                        }
-                        else
-                        {
-                            return task;
-                        }
+                        
+                        return task ?? Task.CompletedTask;
                     }
 #if DEBUG
                     finally
@@ -12518,7 +12497,7 @@ namespace Microsoft.Data.SqlClient
                     return _next.WriteAsync(value);
                 }
 
-                return CompletedTask;
+                return Task.CompletedTask;
             }
 
             public override Task WriteAsync(char[] buffer, int index, int count)
@@ -12533,7 +12512,7 @@ namespace Microsoft.Data.SqlClient
                     return _next.WriteAsync(buffer, index, count);
                 }
 
-                return CompletedTask;
+                return Task.CompletedTask;
             }
 
             public override Task WriteAsync(string value)
@@ -12627,119 +12606,127 @@ namespace Microsoft.Data.SqlClient
         private async Task WriteTextFeed(TextDataFeed feed, Encoding encoding, bool needBom, TdsParserStateObject stateObj, int size, bool useReadBlock)
         {
             Debug.Assert(encoding == null || !needBom);
-            char[] inBuff = new char[constTextBufferSize];
+            char[] inBuff = ArrayPool<char>.Shared.Rent(constTextBufferSize);
 
             encoding = encoding ?? new UnicodeEncoding(false, false);
-            ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size);
-
-            if (needBom)
+            
+            using (ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, null), encoding), size))
             {
-                if (_asyncWrite)
+                if (needBom)
                 {
-                    await writer.WriteAsync((char)TdsEnums.XMLUNICODEBOM).ConfigureAwait(false);
-                }
-                else
-                {
-                    writer.Write((char)TdsEnums.XMLUNICODEBOM);
-                }
-            }
-
-            int nWritten = 0;
-            do
-            {
-                int nRead = 0;
-
-                if (_asyncWrite)
-                {
-                    if (useReadBlock)
+                    if (_asyncWrite)
                     {
-                        nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        await writer.WriteAsync((char)TdsEnums.XMLUNICODEBOM).ConfigureAwait(false);
                     }
                     else
                     {
-                        nRead = await feed._source.ReadAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        writer.Write((char)TdsEnums.XMLUNICODEBOM);
                     }
                 }
-                else
+
+                int nWritten = 0;
+                do
                 {
-                    if (useReadBlock)
+                    int nRead = 0;
+
+                    if (_asyncWrite)
                     {
-                        nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        if (useReadBlock)
+                        {
+                            nRead = await feed._source.ReadBlockAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            nRead = await feed._source.ReadAsync(inBuff, 0, constTextBufferSize).ConfigureAwait(false);
+                        }
                     }
                     else
                     {
-                        nRead = feed._source.Read(inBuff, 0, constTextBufferSize);
+                        if (useReadBlock)
+                        {
+                            nRead = feed._source.ReadBlock(inBuff, 0, constTextBufferSize);
+                        }
+                        else
+                        {
+                            nRead = feed._source.Read(inBuff, 0, constTextBufferSize);
+                        }
                     }
-                }
 
-                if (nRead == 0)
-                {
-                    break;
-                }
+                    if (nRead == 0)
+                    {
+                        break;
+                    }
+
+                    if (_asyncWrite)
+                    {
+                        await writer.WriteAsync(inBuff, 0, nRead).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        writer.Write(inBuff, 0, nRead);
+                    }
+
+                    nWritten += nRead;
+                } while (!writer.IsComplete);
 
                 if (_asyncWrite)
                 {
-                    await writer.WriteAsync(inBuff, 0, nRead).ConfigureAwait(false);
+                    await writer.FlushAsync().ConfigureAwait(false);
                 }
                 else
                 {
-                    writer.Write(inBuff, 0, nRead);
+                    writer.Flush();
                 }
-
-                nWritten += nRead;
-            } while (!writer.IsComplete);
-
-            if (_asyncWrite)
-            {
-                await writer.FlushAsync().ConfigureAwait(false);
             }
-            else
-            {
-                writer.Flush();
-            }
+            ArrayPool<char>.Shared.Return(inBuff, clearArray: true);
         }
 
         private async Task WriteStreamFeed(StreamDataFeed feed, TdsParserStateObject stateObj, int len)
         {
-            TdsOutputStream output = new TdsOutputStream(this, stateObj, null);
-            byte[] buff = new byte[constBinBufferSize];
-            int nWritten = 0;
-            do
+            byte[] buff = ArrayPool<byte>.Shared.Rent(constBinBufferSize);
+
+            using (TdsOutputStream output = new TdsOutputStream(this, stateObj, null))
             {
-                int nRead = 0;
-                int readSize = constBinBufferSize;
-                if (len > 0 && nWritten + readSize > len)
+                int nWritten = 0;
+                do
                 {
-                    readSize = len - nWritten;
-                }
+                    int nRead = 0;
+                    int readSize = constBinBufferSize;
+                    if (len > 0 && nWritten + readSize > len)
+                    {
+                        readSize = len - nWritten;
+                    }
 
-                Debug.Assert(readSize >= 0);
+                    Debug.Assert(readSize >= 0);
 
-                if (_asyncWrite)
-                {
-                    nRead = await feed._source.ReadAsync(buff, 0, readSize).ConfigureAwait(false);
-                }
-                else
-                {
-                    nRead = feed._source.Read(buff, 0, readSize);
-                }
+                    if (_asyncWrite)
+                    {
+                        nRead = await feed._source.ReadAsync(buff, 0, readSize).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        nRead = feed._source.Read(buff, 0, readSize);
+                    }
 
-                if (nRead == 0)
-                {
-                    return;
-                }
+                    if (nRead == 0)
+                    {
+                        return;
+                    }
 
-                if (_asyncWrite)
-                {
-                    await output.WriteAsync(buff, 0, nRead).ConfigureAwait(false);
-                }
-                else
-                {
-                    output.Write(buff, 0, nRead);
-                }
+                    if (_asyncWrite)
+                    {
+                        await output.WriteAsync(buff, 0, nRead).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        output.Write(buff, 0, nRead);
+                    }
 
-                nWritten += nRead;
-            } while (len <= 0 || nWritten < len);
+                    nWritten += nRead;
+                } while (len <= 0 || nWritten < len);
+            }
+
+            ArrayPool<byte>.Shared.Return(buff, clearArray: true);
         }
 
         private Task NullIfCompletedWriteTask(Task task)
@@ -13514,8 +13501,9 @@ namespace Microsoft.Data.SqlClient
         internal int ReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj)
         {
             int charsRead;
+            bool rentedBuff = false;
             Debug.Assert(stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            TdsOperationStatus result = TryReadPlpUnicodeChars(ref buff, offst, len, stateObj, out charsRead);
+            TdsOperationStatus result = TryReadPlpUnicodeChars(ref buff, offst, len, stateObj, out charsRead, supportRentedBuff: false, ref rentedBuff);
             if (result != TdsOperationStatus.Done)
             {
                 throw SQL.SynchronousCallMayNotPend();
@@ -13527,13 +13515,19 @@ namespace Microsoft.Data.SqlClient
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
-        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead)
+        internal TdsOperationStatus TryReadPlpUnicodeChars(
+            ref char[] buff,
+            int offst,
+            int len,
+            TdsParserStateObject stateObj,
+            out int totalCharsRead,
+            bool supportRentedBuff,
+            ref bool rentedBuff)
         {
             int charsRead = 0;
             int charsLeft = 0;
             char[] newbuf;
-            TdsOperationStatus result;
-
+            
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
@@ -13541,18 +13535,29 @@ namespace Microsoft.Data.SqlClient
                 return TdsOperationStatus.Done;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL),
-                    "Out of sync plp read request");
+            Debug.Assert((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
 
-            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            // If total length is known up front, the length isn't specified as unknown 
+            // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
+            // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
+            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && len < (int.MaxValue >> 1))
             {
-                buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                if (supportRentedBuff && len < 1073741824) // 1 Gib
+                {
+                    buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
+                    rentedBuff = true;
+                }
+                else
+                {
+                    buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
+                    rentedBuff = false;
+                }
             }
 
+            TdsOperationStatus result;
             if (stateObj._longlenleft == 0)
             {
                 result = stateObj.TryReadPlpLength(false, out _);
@@ -13574,11 +13579,26 @@ namespace Microsoft.Data.SqlClient
                 charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
                 if ((buff == null) || (buff.Length < (offst + charsRead)))
                 {
-                    // Grow the array
-                    newbuf = new char[offst + charsRead];
+                    bool returnRentedBufferAfterCopy = rentedBuff;
+                    if (supportRentedBuff && (offst + charsRead) < 1073741824) // 1 Gib
+                    {
+                        newbuf = ArrayPool<char>.Shared.Rent(offst + charsRead);
+                        rentedBuff = true;
+                    }
+                    else
+                    {
+                        newbuf = new char[offst + charsRead];
+                        rentedBuff = false;
+                    }
+
                     if (buff != null)
                     {
                         Buffer.BlockCopy(buff, 0, newbuf, 0, offst * 2);
+                        if (returnRentedBufferAfterCopy)
+                        {
+                            buff.AsSpan(0, offst).Clear();
+                            ArrayPool<char>.Shared.Return(buff, clearArray: false);
+                        }
                     }
                     buff = newbuf;
                 }

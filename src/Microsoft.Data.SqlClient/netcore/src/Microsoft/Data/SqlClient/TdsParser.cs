@@ -6002,7 +6002,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    s = "";
+                                    s = string.Empty;
                                 }
                             }
 
@@ -12869,7 +12869,14 @@ namespace Microsoft.Data.SqlClient
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
-        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead, bool supportRentedBuff, ref bool rentedBuff)
+        internal TdsOperationStatus TryReadPlpUnicodeChars(
+            ref char[] buff,
+            int offst,
+            int len,
+            TdsParserStateObject stateObj,
+            out int totalCharsRead,
+            bool supportRentedBuff,
+            ref bool rentedBuff)
         {
             int charsRead = 0;
             int charsLeft = 0;
@@ -12882,7 +12889,7 @@ namespace Microsoft.Data.SqlClient
                 return TdsOperationStatus.Done;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL), "Out of sync plp read request");
+            Debug.Assert((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
