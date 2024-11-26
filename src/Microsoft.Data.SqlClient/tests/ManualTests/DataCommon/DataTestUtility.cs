@@ -180,7 +180,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AliasName = c.AliasName;
             IsJsonSupported = c.IsJsonSupported;
 
+#if NETFRAMEWORK
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
+#endif
 
             if (TracingEnabled)
             {
@@ -359,7 +361,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                 System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
 #endif
                 return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
@@ -472,7 +474,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsTargetReadyForAeWithKeyStore()
         {
             return DataTestUtility.AreConnStringSetupForAE()
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
                 // AE tests on Windows will use the Cert Store. On non-Windows, they require AKV.
                 && (OperatingSystem.IsWindows() || DataTestUtility.IsAKVSetupAvailable())
 #endif
@@ -495,7 +497,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() =>
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
             IsNotUsingManagedSNIOnWindows();
 #else 
             true;

@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     /// <summary>
     /// System.IO.FileAccess looks up these values when creating handles

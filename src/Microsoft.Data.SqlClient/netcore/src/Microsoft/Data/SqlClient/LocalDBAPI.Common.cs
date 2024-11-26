@@ -93,28 +93,29 @@ namespace Microsoft.Data
         }
 
 
-        private static SqlException CreateLocalDBException(string errorMessage, string instance = null, int localDbError = 0, int sniError = 0)
+        private static SqlException CreateLocalDBException(string errorMessage, uint sniError = 0)
         {
-            Debug.Assert((localDbError == 0) || (sniError == 0), "LocalDB error and SNI error cannot be specified simultaneously");
             Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Error message should not be null or empty");
-            SqlErrorCollection collection = new SqlErrorCollection();
-
-            int errorCode = (localDbError == 0) ? sniError : localDbError;
 
             if (sniError != 0)
             {
                 string sniErrorMessage = SQL.GetSNIErrorMessage(sniError);
-                errorMessage = string.Format("{0} (error: {1} - {2})",
-                         errorMessage, sniError, sniErrorMessage);
+                errorMessage = $"{errorMessage} (error: {sniError} - {sniErrorMessage})";
             }
 
-            collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, errorMessage, null, 0));
+            SqlErrorCollection collection = new SqlErrorCollection
+            {
+                new SqlError(
+                    infoNumber: (int)sniError,
+                    errorState: 0,
+                    errorClass: TdsEnums.FATAL_ERROR_CLASS,
+                    server: null,
+                    errorMessage,
+                    procedure: null,
+                    lineNumber: 0)
+            };
 
-            if (localDbError != 0)
-                collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, GetLocalDBMessage(localDbError), null, 0));
-
-            SqlException exc = SqlException.CreateException(collection, null);
-
+            SqlException exc = SqlException.CreateException(collection, serverVersion: null);
             exc._doNotReconnect = true;
 
             return exc;

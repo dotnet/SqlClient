@@ -78,7 +78,7 @@
       </summary>
       <remarks>
         <para>
-          You must ensure the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> method is called when you are through using the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> before using the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> for any other purpose. The <b>Close</b> method may either be called directly or through the <see cref="M:System.IDisposable.Dispose"/> method, disposing directly or in the context of <see href="/dotnet/csharp/language-reference/language-specification/statements#the-using-statement">
+          You must ensure the <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> method is called when you are through using the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> before using the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> for any other purpose. The <b>Close</b> method may either be called directly or through the <see cref="M:System.IDisposable.Dispose"/> method, disposing directly or in the context of <see href="https://learn.microsoft.com/dotnet/csharp/language-reference/language-specification/statements#the-using-statement">
             the using statement
           </see> block.
         </para>
@@ -86,7 +86,7 @@
           The <b>Close</b> method populates the values for output parameters, return values and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> are not important to your application, the time to close may be shortened by calling the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.Cancel" /> method of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object before the <b>Close</b> method is called.
         </para>
         <note type="caution">
-          Do not call <b>Close</b> or <see cref="M:System.IDisposable.Dispose" /> on a Connection, a DataReader, or any other managed object in the finalizer method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a finalizer method in your class definition. For more information, see <see href="/dotnet/standard/garbage-collection/">Garbage Collection</see>.
+          Do not call <b>Close</b> or <see cref="M:System.IDisposable.Dispose" /> on a Connection, a DataReader, or any other managed object in the finalizer method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a finalizer method in your class definition. For more information, see <see href="https://learn.microsoft.com/dotnet/standard/garbage-collection/">Garbage Collection</see>.
         </note>
       </remarks>
       <example>
@@ -509,7 +509,7 @@
           <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -583,7 +583,7 @@
           <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -895,7 +895,7 @@
                 The maximum possible length of a value in the column. For columns that use a fixed-length data type, this is the size of the data type. For <c>nvarchar(MAX)</c>, <c>varchar(MAX)</c>, and <c>varbinary(MAX)</c> columns stored in a SQL Server database, the maximum size is 2GB. If these columns are stored and accessed as files, the limit on maximum size is imposed by the file system. This value changes when using the <c>Type System Version</c> keyword in the connection string.
               </para>
               <para>
-                For new types they are represented as downlevel types. The MAX data types return the normal 4k for <c>nvarchar</c> and 8000 for <c>varchar</c>. For more information, see the <see href="/sql/t-sql/language-reference">Transact-SQL reference</see>.
+                For new types they are represented as downlevel types. The MAX data types return the normal 4k for <c>nvarchar</c> and 8000 for <c>varchar</c>. For more information, see the <see href="https://learn.microsoft.com/sql/t-sql/language-reference">Transact-SQL reference</see>.
               </para>
             </description>
           </item>
@@ -1377,7 +1377,7 @@
           <item>WriteTimeout</item>
         </list>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -1444,7 +1444,7 @@
           Null values will be returned as an empty (zero bytes) <see cref="T:System.IO.TextReader" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars(System.Int32,System.Int64,System.Char[],System.Int32,System.Int32)" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader(System.Int32)" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -1585,7 +1585,7 @@
           The <see cref="T:System.Xml.XmlReader" /> object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader" /> does not support asynchronous operations. If you require asynchronous operations on an <see cref="T:System.Xml.XmlReader" />, cast the XML column to an NVARCHAR(MAX) on the server and use <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetTextReader(System.Int32)" /> with <see cref="M:System.Xml.XmlReader.Create(System.IO.TextReader)" />. <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.Xml.XmlReader" /> are thrown as <see cref="T:System.Xml.XmlException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetChars(System.Int32,System.Int64,System.Char[],System.Int32,System.Int32)" /> will raise an <see cref="T:System.InvalidOperationException" /> exception when used on an object returned by <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetXmlReader(System.Int32)" /> when <see cref="F:System.Data.CommandBehavior.SequentialAccess" /> is in effect.
         </para>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
@@ -1700,7 +1700,7 @@
       </summary>
       <returns><see langword="true" /> if the specified column value is equivalent to <see langword="DBNull" /> otherwise <see langword="false" />.</returns>
       <remarks>
-        For more information, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
@@ -1781,7 +1781,7 @@
         A task representing the asynchronous operation.
       </returns>
       <remarks>
-        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+        For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         Calling <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResultAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
@@ -1875,7 +1875,7 @@
           If the <c>behavior</c> parameter of <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> is set to <c>Default</c>, <b>ReadAsync</b> reads the entire row before returning the Task.
         </para>
         <para>
-          For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
+          For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
         </para>
         <note type="note">
           When reading large data (binary/text), it is recommended to use <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> for optimal performance.

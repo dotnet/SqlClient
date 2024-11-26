@@ -9,13 +9,13 @@ using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using System.Collections.Generic;
 using static System.Net.Mime.MediaTypeNames;
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
 using System.Runtime.Versioning;
 #endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-#if NET6_0_OR_GREATER
+#if !NETFRAMEWORK
     [SupportedOSPlatform("windows")]
 #endif
     [PlatformSpecific(TestPlatforms.Windows)]

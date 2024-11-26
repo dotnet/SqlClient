@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     /// <summary>
     /// <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff557749.aspx">OBJECT_ATTRIBUTES</a> structure.

@@ -7,7 +7,7 @@
       <remarks>
         SQL Server makes it possible for applications to determine the existence of its instances within the current network. The <see cref="T:Microsoft.Data.Sql.SqlDataSourceEnumerator" /> class exposes this information to the application developer, providing a <see cref="T:System.Data.DataTable" /> containing information about all the available servers. This returned table contains a list of server instances that matches the list provided when a user attempts to create a new connection, and on the <c>Connection Properties</c> dialog box, expands the drop-down list containing all the available servers.
       </remarks>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </SqlDataSourceEnumerator>
@@ -98,7 +98,7 @@
           } 
         </code>
       </example>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </GetDataSources>
@@ -179,7 +179,7 @@
           } 
         </code>
       </example>
-      <seealso href="/dotnet/framework/data/adonet/sql/enumerating-instances-of-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/enumerate-instances-sql-server">
         Enumerating Instances of SQL Server
       </seealso>
     </Instance>

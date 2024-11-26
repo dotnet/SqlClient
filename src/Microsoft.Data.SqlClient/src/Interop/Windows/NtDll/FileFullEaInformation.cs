@@ -4,7 +4,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace Interop_TEMP.Windows.NtDll
+namespace Interop.Windows.NtDll
 {
     /// <summary>
     /// <a href="https://docs.microsoft.com/en-us/windows-hardware/drivers/ddi/content/wdm/ns-wdm-_file_full_ea_information">FILE_FULL_EA_INFORMATION</a> structure.

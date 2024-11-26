@@ -5501,9 +5501,6 @@ namespace Microsoft.Data.SqlClient
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
 
-                    // turn debugging on
-                    _activeConnection.CheckSQLDebug();
-
                     // execute sp
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
                     writeTask = _stateObj.Parser.TdsExecuteRPC(this, _rpcArrayOf1, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
