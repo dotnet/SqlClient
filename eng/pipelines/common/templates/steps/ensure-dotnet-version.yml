@@ -13,7 +13,7 @@ parameters:
 # Herein we replicate 90% of the meaningful logic in that task.
 # Borrowed from: https://github.com/microsoft/PowerToys/blob/main/.pipelines/v2/templates/steps-ensure-dotnet-version.yml
 steps:
-- pwsh: |-
+- powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
     & ./dotnet-install.ps1 -Channel "${{parameters.version}}" -InstallDir $NEW_DOTNET_ROOT
