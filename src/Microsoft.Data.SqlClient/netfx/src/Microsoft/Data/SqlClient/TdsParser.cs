@@ -9751,10 +9751,9 @@ namespace Microsoft.Data.SqlClient
                             task = completion.Task;
                         }
 
-                        bool taskReleaseConnectionLock = releaseConnectionLock;
-                        execFlushTask.ContinueWith(tsk => ExecuteFlushTaskCallback(tsk, stateObj, completion, taskReleaseConnectionLock), TaskScheduler.Default);
+                        TDSExecuteRPCParameterSetupFlushCompletion(stateObj, completion, execFlushTask, releaseConnectionLock);
 
-                        // ExecuteFlushTaskCallback will take care of the locks for us
+                        // TDSExecuteRPCParameterSetupFlushCompletion calling ExecuteFlushTaskCallback will take care of the locks for us
                         releaseConnectionLock = false;
 
                         return task;
@@ -10246,6 +10245,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             return writeParamTask;
+        }
+
+        // This is in its own method to avoid always allocating the lambda in TDSExecuteRPCParameter
+        private void TDSExecuteRPCParameterSetupFlushCompletion(TdsParserStateObject stateObj, TaskCompletionSource<object> completion, Task execFlushTask, bool taskReleaseConnectionLock)
+        {
+            execFlushTask.ContinueWith(tsk => ExecuteFlushTaskCallback(tsk, stateObj, completion, taskReleaseConnectionLock), TaskScheduler.Default);
         }
 
         private void WriteEnclaveInfo(TdsParserStateObject stateObj, byte[] enclavePackage)
