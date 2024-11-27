@@ -5,30 +5,52 @@ parameters:
 - name: sdk
   type: boolean
   default: false
+- name: windowsArchitecture # This is only used on Windows
+  type: string
+  default: '<auto>'
+  values:
+    - '<auto>'
+    - 'x86'
+    - 'x64'
+    - 'arm'
+    - 'arm64'
+- name: installDir
+  type: string
+  default: '$(Agent.ToolsDirectory)\dotnet'
+- name: usePreview
+  type: boolean
+  default: false
 
 # Reason for not using UseDotNet task:
 # "[BUG]: UseDotNet task installs x86 build on Windows arm64"
 # https://github.com/microsoft/azure-pipelines-tasks/issues/20300
 #
-# Herein we replicate 90% of the meaningful logic in that task.
 # Borrowed from: https://github.com/microsoft/PowerToys/blob/main/.pipelines/v2/templates/steps-ensure-dotnet-version.yml
 steps:
+${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
-    $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
+    $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
     $useSdk = [bool]"${{parameters.sdk}}"
     if (!$useSdk) {
       $runtime = "dotnet"
     }
-    & ./dotnet-install.ps1 -Channel "${{parameters.version}}.0" -Quality GA -InstallDir $NEW_DOTNET_ROOT -Runtime $runtime
+    
+    $quality = "GA"
+    $usePreview = [bool]"${{parameters.usePreview}}"
+    if ($usePreview) {
+      $quality = "preview"
+    }
+
+    & ./dotnet-install.ps1 -Channel "${{parameters.version}}.0" -Quality $quality -InstallDir $NEW_DOTNET_ROOT -Runtime $runtime -Architecture ${{parameters.windowsArchitecture}}
     Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
     Write-Host "##vso[task.prependpath]${NEW_DOTNET_ROOT}"
     Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
-  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
     displayName: "Install .NET ${{parameters.version}} SDK"
   ${{ else }}:
     displayName: "Install .NET ${{parameters.version}}"
+${{ else }}:
 - task: UseDotNet@2
   inputs:
     ${{ if eq(parameters.sdk, true) }}:
@@ -36,7 +58,8 @@ steps:
     ${{ else }}:
       packageType: runtime
     version: '${{parameters.version}}.x'
-  condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+    installationPath: '${{parameters.installDir}}'
+    invludePreviewVersions: ${{parameters.usePreview}}
   ${{ if eq(parameters.sdk, true) }}:
     displayName: "Install .NET ${{parameters.version}} SDK"
   ${{ else }}:
