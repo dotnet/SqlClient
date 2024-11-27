@@ -31,7 +31,7 @@ steps:
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
 
-    if (${{parameters.installDir}} -eq '') {
+    if ('${{parameters.installDir}}' -eq '') {
       $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
     } else {
       $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
