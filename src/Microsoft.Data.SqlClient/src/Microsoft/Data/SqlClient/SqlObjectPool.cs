@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics;
 using System.Threading;
 
@@ -12,12 +13,27 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlObjectPool<T> where T : class
     {
         private readonly ObjectWrapper[] _items;
+        private readonly Action<T> _onReturned;
+        private readonly Func<T> _onCreate;
+
         private T _firstItem;
 
-        public SqlObjectPool(int maximumRetained)
+        public SqlObjectPool(int maximumRetained, Func<T> onCreate = null, Action<T> onReturned = null)
         {
             // -1 due to _firstItem
             _items = new ObjectWrapper[maximumRetained - 1];
+            _onReturned = onReturned;
+            _onCreate = onCreate;
+        }
+
+        public T Rent()
+        {
+            if (TryGet(out var item))
+            {
+                return item;
+            }
+
+            return _onCreate?.Invoke() ?? throw new InvalidOperationException("Can only rent from a pool if an onCreate delegate is available");
         }
 
         public bool TryGet(out T item)
@@ -48,6 +64,8 @@ namespace Microsoft.Data.SqlClient
 
         public void Return(T item)
         {
+            _onReturned?.Invoke(item);
+
             if (_firstItem != null || Interlocked.CompareExchange(ref _firstItem, item, null) != null)
             {
                 var items = _items;
