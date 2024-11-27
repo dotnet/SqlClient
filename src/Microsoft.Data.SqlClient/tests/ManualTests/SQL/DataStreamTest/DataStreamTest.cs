@@ -142,7 +142,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             NonFatalTimeoutDuringRead(connectionString);
         }
         
-        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3035", typeof(DataStreamTest), nameof(IsArm))]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(DataTestUtility.GetConnectionStringsWithEnclaveMemberData), MemberType = typeof(DataTestUtility))]
         public static void XmlReaderTest(string connectionString)
@@ -273,12 +272,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             }
         }
 
-        private static bool IsAzureSqlServer(string connectionString) => Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(connectionString).DataSource);
-
-        private static bool IsNamedInstance(string connectionString) => new SqlConnectionStringBuilder(connectionString).DataSource.Contains(@"\");
-
-        private static bool IsArm => RuntimeInformation.ProcessArchitecture == Architecture.Arm || RuntimeInformation.ProcessArchitecture == Architecture.Arm64;
-        
         private static void InvalidRead(string connectionString)
         {
             using (SqlConnection c = new SqlConnection(connectionString))
