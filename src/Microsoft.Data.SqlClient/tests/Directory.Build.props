@@ -14,7 +14,7 @@
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
   </PropertyGroup>
   
-    <!-- Audit Settings -->
+  <!-- Audit Settings -->
   <PropertyGroup>
     <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
