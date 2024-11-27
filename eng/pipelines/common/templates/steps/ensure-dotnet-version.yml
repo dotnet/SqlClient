@@ -16,7 +16,7 @@ steps:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
-    $useSdk = [bool]${{parameters.sdk}}
+    $useSdk = [bool]"${{parameters.sdk}}"
     if (!$useSdk) {
       $runtime = "dotnet"
     }
