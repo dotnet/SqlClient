@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             RunAllTestsForSingleServer(DataTestUtility.TCPConnectionString);
         }
-        
+
         // Synapse: The statement failed. Column 'foo' has a data type that cannot participate in a columnstore index.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task AsyncMultiPacketStreamRead()
