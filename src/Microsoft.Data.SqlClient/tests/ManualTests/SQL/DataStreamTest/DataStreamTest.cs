@@ -701,7 +701,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand("select employeeId, lastname, firstname from employees for xml auto", conn))
+                using (SqlCommand cmd = new SqlCommand("select employeeId, lastname, firstname from employees order by employeeId asc for xml auto", conn))
                 {
                     XmlReader xr;
                     using (xr = cmd.ExecuteXmlReader())
@@ -730,7 +730,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     }
 
                     // use a big result to fill up the pipe and do a partial read
-                    cmd.CommandText = "select * from orders for xml auto";
+                    cmd.CommandText = "select * from orders order by orderid asc for xml auto";
                     string errorMessage;
                     using (xr = cmd.ExecuteXmlReader())
                     {
@@ -774,9 +774,9 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
                     // multiple results
                     cmd.CommandText =
-                        "select orderid from orders where orderid < 10253 for xml auto;" +
-                        "select customerid from customers where customerid < 'ANTON' for xml auto;" +
-                        "select employeeId from employees where employeeid < 3 for xml auto;";
+                        "select orderid from orders where orderid < 10253 order by orderid asc for xml auto;" +
+                        "select customerid from customers where customerid < 'ANTON' order by customerid asc for xml auto;" +
+                        "select employeeId from employees where employeeid < 3 order by employeeid asc for xml auto;";
                     using (xr = cmd.ExecuteXmlReader())
                     {
                         string[] expectedResults =
@@ -915,7 +915,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                     }
                 }
 
-                using (SqlCommand cmd = new SqlCommand("select * from employees", conn))
+                using (SqlCommand cmd = new SqlCommand("select * from employees order by EmployeeID", conn))
                 {
                     // test sequential access with partial reads
                     using (reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
