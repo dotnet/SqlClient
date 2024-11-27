@@ -16,7 +16,7 @@ parameters:
     - 'arm64'
 - name: installDir
   type: string
-  default: '$(Agent.ToolsDirectory)\dotnet'
+  default: ''
 - name: usePreview
   type: boolean
   default: false
@@ -30,6 +30,12 @@ steps:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
+
+    if (${{parameters.installDir}} -eq '') {
+      $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
+    } else {
+      $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
+    }
     
     if (!$${{parameters.sdk}}) {
       $runtime = "dotnet"
@@ -56,7 +62,8 @@ steps:
     ${{ else }}:
       packageType: runtime
     version: '${{parameters.version}}.x'
-    installationPath: '${{parameters.installDir}}'
+    ${{ if ne(parameters.installDir, '') }}:
+      installationPath: '${{parameters.installDir}}'
     includePreviewVersions: ${{parameters.usePreview}}
   condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
