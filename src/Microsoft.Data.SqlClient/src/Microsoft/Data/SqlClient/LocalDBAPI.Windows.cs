@@ -184,7 +184,10 @@ namespace Microsoft.Data
                             // validate section type
                             LocalDBConfigurationSection configSection = section as LocalDBConfigurationSection;
                             if (configSection == null)
+                            {
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_BadConfigSectionType"));
+                            }
+                                
                             foreach (LocalDBInstanceElement confElement in configSection.LocalDbInstances)
                             {
                                 Debug.Assert(confElement.Name != null && confElement.Version != null, "Both name and version should not be null");
@@ -201,22 +204,32 @@ namespace Microsoft.Data
                 finally
                 {
                     if (lockTaken)
+                    {
                         Monitor.Exit(s_configLock);
+                    }
                 }
             }
 
             InstanceInfo instanceInfo = null;
 
             if (!s_configurableInstances.TryGetValue(instance, out instanceInfo))
-                return; // instance name was not in the config
+            {
+                // instance name was not in the config
+                return; 
+            }
 
             if (instanceInfo.created)
-                return; // instance has already been created
+            {
+                // instance has already been created
+                return;
+            }
 
             Debug.Assert(!instance.Contains("\0"), "Instance name should contain embedded nulls");
 
             if (instanceInfo.version.Contains("\0"))
+            {
                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_InvalidVersion"), instance: instance);
+            }
 
             // LocalDBCreateInstance is thread- and cross-process safe method, it is OK to call from two threads simultaneously
             int hr = LocalDBCreateInstance(instanceInfo.version, instance, flags: 0);
@@ -297,7 +310,9 @@ namespace Microsoft.Data
                 int hResult = LocalDBFormatMessage(hrLocalDB: hrCode, dwFlags: const_LOCALDB_TRUNCATE_ERR_MESSAGE, dwLanguageId: (uint)CultureInfo.CurrentCulture.LCID,
                     buffer: buffer, buflen: ref len);
                 if (hResult >= 0)
+                {
                     return buffer.ToString();
+                }
                 else
                 {
                     // Message is not available for current culture, try default
@@ -306,9 +321,13 @@ namespace Microsoft.Data
                     hResult = LocalDBFormatMessage(hrLocalDB: hrCode, dwFlags: const_LOCALDB_TRUNCATE_ERR_MESSAGE, dwLanguageId: 0 /* thread locale with fallback to English */,
                         buffer: buffer, buflen: ref len);
                     if (hResult >= 0)
+                    {
                         return buffer.ToString();
+                    }
                     else
+                    {
                         return string.Format(CultureInfo.CurrentCulture, "{0} (0x{1:X}).", Strings.LocalDB_UnobtainableMessage, hResult);
+                    }
                 }
             }
             catch (SqlException exc)
@@ -344,7 +363,9 @@ namespace Microsoft.Data
             collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, errorMessage, null, 0));
 
             if (localDbError != 0)
-                collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, GetLocalDBMessage(localDbError), null, 0));
+            {
+                collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, GetLocalDBMessage(localDbError), null, 0));   
+            }
 
             SqlException exc = SqlException.CreateException(collection, null);
 
