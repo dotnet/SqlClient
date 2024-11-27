@@ -223,7 +223,7 @@ jobs:
       - template: ../steps/ensure-dotnet-version.yml
         parameters:
           sdk: false
-          version: split(replace(${{ parameters.targetFramework }}, 'net', ''), '.')[0]
+          version: ${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}
           windowsArchitecture: x86
 
     - template: ../steps/run-all-tests-step.yml@self
