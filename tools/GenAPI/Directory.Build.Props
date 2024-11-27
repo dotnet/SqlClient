@@ -5,4 +5,7 @@
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\src\Directory.Build.props" />
 
+  <PropertyGroup>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
 </Project>
