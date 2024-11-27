@@ -73,7 +73,7 @@ namespace Microsoft.Data
                     {
                         if (s_localDBCreateInstance == null)
                         {
-                            IntPtr functionAddr = LoadProcAddress();
+                            IntPtr functionAddr = LoadProcAddress("LocalDBCreateInstance");
                             if (functionAddr == IntPtr.Zero)
                             {
                                 int hResult = Marshal.GetLastWin32Error();
@@ -104,7 +104,7 @@ namespace Microsoft.Data
                     {
                         if (s_localDBFormatMessage == null)
                         {
-                            IntPtr functionAddr = LoadProcAddress();
+                            IntPtr functionAddr = LoadProcAddress("LocalDBFormatMessage");
                             if (functionAddr == IntPtr.Zero)
                             {
                                 // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossible to get this error.
@@ -374,11 +374,11 @@ namespace Microsoft.Data
             return exc;
         }
         
-        private static IntPtr LoadProcAddress() =>
+        private static IntPtr LoadProcAddress(string funcName) =>
             #if NETFRAMEWORK
-            Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+            Kernel32Safe.GetProcAddress(UserInstanceDLLHandle, funcName);
             #else
-            Kernel32.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+            Kernel32.GetProcAddress(UserInstanceDLLHandle, funcName);
             #endif
 
         #if NETFRAMEWORK
