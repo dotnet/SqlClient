@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrEmpty(userProtocol))
             {
 
-                result = SNINativeMethodWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
+                result = SniNativeWrapper.SniGetProviderNumber(_physicalStateObj.Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
                 isTcpProtocol = (providerNumber == Provider.TCP_PROV);
             }
@@ -153,11 +153,11 @@ namespace Microsoft.Data.SqlClient
             // serverInfo.UserProtocol could be empty
             if (isTcpProtocol)
             {
-                result = SNINativeMethodWrapper.SniGetConnectionPort(_physicalStateObj.Handle, ref portFromSNI);
+                result = SniNativeWrapper.SniGetConnectionPort(_physicalStateObj.Handle, ref portFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
 
 
-                result = SNINativeMethodWrapper.SniGetConnectionIPString(_physicalStateObj.Handle, ref IPStringFromSNI);
+                result = SniNativeWrapper.SniGetConnectionIPString(_physicalStateObj.Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 
                 _connHandler.pendingSQLDNSObject = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());

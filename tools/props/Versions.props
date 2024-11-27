@@ -32,11 +32,12 @@
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
+    <MicrosoftBclCryptographyVersion>9.0.0</MicrosoftBclCryptographyVersion>
     <MicrosoftExtensionsCachingMemoryVersion>9.0.0</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemSecurityCryptographyPkcsVersion>9.0.0</SystemSecurityCryptographyPkcsVersion>
-    <MicrosoftBclCryptographyVersion>9.0.0</MicrosoftBclCryptographyVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>

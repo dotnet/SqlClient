@@ -436,14 +436,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
                     byte[] srvSPN = Encoding.Unicode.GetBytes(serverInfo.ServerSPN);
-                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "The provided SPN length exceeded the buffer size.");
+                    Trace.Assert(srvSPN.Length <= SniNativeWrapper.SniMaxComposedSpnLength, "The provided SPN length exceeded the buffer size.");
                     _sniSpnBuffer = srvSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
                 }
                 else
                 {
                     // now allocate proper length of buffer
-                    _sniSpnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                    _sniSpnBuffer = new byte[SniNativeWrapper.SniMaxComposedSpnLength];
                 }
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
             }
@@ -576,7 +576,7 @@ namespace Microsoft.Data.SqlClient
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.InitializeConnection);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
 
-            uint result = SNINativeMethodWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
+            uint result = SniNativeWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
             // for DNS Caching phase 1
@@ -648,7 +648,7 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                uint retCode = SNINativeMethodWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
+                uint retCode = SniNativeWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
@@ -700,7 +700,7 @@ namespace Microsoft.Data.SqlClient
             uint error = 0;
 
             // Remove SSL (Encryption) SNI provider since we only wanted to encrypt login.
-            error = SNINativeMethodWrapper.SNIRemoveProvider(_physicalStateObj.Handle, Provider.SSL_PROV);
+            error = SniNativeWrapper.SNIRemoveProvider(_physicalStateObj.Handle, Provider.SSL_PROV);
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -727,7 +727,7 @@ namespace Microsoft.Data.SqlClient
                 uint info = 0;
 
                 // Add SMUX (MARS) SNI provider.
-                error = SNINativeMethodWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, Provider.SMUX_PROV, ref info);
+                error = SniNativeWrapper.SNIAddProvider(_pMarsPhysicalConObj.Handle, Provider.SMUX_PROV, ref info);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -748,12 +748,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     _pMarsPhysicalConObj.IncrementPendingCallbacks();
 
-                    error = SNINativeMethodWrapper.SNIReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
+                    error = SniNativeWrapper.SNIReadAsync(_pMarsPhysicalConObj.Handle, ref temp);
 
                     if (temp != IntPtr.Zero)
                     {
                         // Be sure to release packet, otherwise it will be leaked by native.
-                        SNINativeMethodWrapper.SNIPacketRelease(temp);
+                        SniNativeWrapper.SNIPacketRelease(temp);
                     }
                 }
                 Debug.Assert(IntPtr.Zero == temp, "unexpected syncReadPacket without corresponding SNIPacketRelease");
@@ -1026,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
-            error = SNINativeMethodWrapper.SNIAddProvider(_physicalStateObj.Handle, Provider.SSL_PROV, authInfo);
+            error = SniNativeWrapper.SNIAddProvider(_physicalStateObj.Handle, Provider.SSL_PROV, authInfo);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -1038,7 +1038,7 @@ namespace Microsoft.Data.SqlClient
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
-            error = SNINativeMethodWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
+            error = SniNativeWrapper.SNIWaitForSSLHandshakeToComplete(_physicalStateObj.Handle, _physicalStateObj.GetTimeoutRemaining(), out uint protocolVersion);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -1592,7 +1592,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
             SniError sniError = new SniError();
-            SNINativeMethodWrapper.SNIGetLastError(out sniError);
+            SniNativeWrapper.SNIGetLastError(out sniError);
 
             if (sniError.sniError != 0)
             {
@@ -2915,7 +2915,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
-                            uint bufferSizeResult = SNINativeMethodWrapper.SNISetInfo(_physicalStateObj.Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+                            uint bufferSizeResult = SniNativeWrapper.SNISetInfo(_physicalStateObj.Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }

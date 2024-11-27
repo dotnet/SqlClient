@@ -731,6 +731,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\IoType.cs">
       <Link>Interop\Windows\Sni\IoType.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ISniNativeMethods.cs">
+      <Link>Interop\Windows\Sni\ISniNativeMethods.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Prefix.cs">
       <Link>Interop\Windows\Sni\Prefix.cs</Link>
     </Compile>
@@ -751,6 +754,12 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniError.cs">
       <Link>Interop\Windows\Sni\SniError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeMethods.netcore.cs">
+      <Link>Interop\Windows\Sni\SniNativeMethods.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeWrapper.cs">
+      <Link>Interop\Windows\Sni\SniNativeWrapper.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
@@ -788,8 +797,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-    
-    <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
@@ -808,8 +816,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
-    
-    <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
+
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />

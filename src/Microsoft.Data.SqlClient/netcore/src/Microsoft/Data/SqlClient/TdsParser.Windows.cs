@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SNINativeMethodWrapper.SNIGetLastError(out SniError sniError);
+                SniNativeWrapper.SNIGetLastError(out SniError sniError);
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;
