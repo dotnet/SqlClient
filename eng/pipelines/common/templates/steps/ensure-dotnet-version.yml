@@ -16,7 +16,11 @@ steps:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
-    & ./dotnet-install.ps1 -Channel "${{parameters.version}}.0" -Quality GA -InstallDir $NEW_DOTNET_ROOT ${{ if eq(parameters.sdk, false) }}: -Runtime dotnet ${{ endif }}
+    $useSdk = [bool]${{parameters.sdk}}
+    if (!$useSdk) {
+      $runtime = "dotnet"
+    }
+    & ./dotnet-install.ps1 -Channel "${{parameters.version}}.0" -Quality GA -InstallDir $NEW_DOTNET_ROOT -Runtime $runtime
     Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
     Write-Host "##vso[task.prependpath]${NEW_DOTNET_ROOT}"
     Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
