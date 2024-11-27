@@ -27,7 +27,6 @@ parameters:
 #
 # Borrowed from: https://github.com/microsoft/PowerToys/blob/main/.pipelines/v2/templates/steps-ensure-dotnet-version.yml
 steps:
-${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
@@ -46,11 +45,11 @@ ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
     Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
     Write-Host "##vso[task.prependpath]${NEW_DOTNET_ROOT}"
     Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
-    displayName: "Install .NET ${{parameters.version}} SDK"
+    displayName: "Install .NET ${{parameters.version}} SDK (Windows)"
   ${{ else }}:
-    displayName: "Install .NET ${{parameters.version}}"
-${{ else }}:
+    displayName: "Install .NET ${{parameters.version}} (Windows)"
 - task: UseDotNet@2
   inputs:
     ${{ if eq(parameters.sdk, true) }}:
@@ -59,8 +58,9 @@ ${{ else }}:
       packageType: runtime
     version: '${{parameters.version}}.x'
     installationPath: '${{parameters.installDir}}'
-    invludePreviewVersions: ${{parameters.usePreview}}
+    includePreviewVersions: ${{parameters.usePreview}}
+  condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
-    displayName: "Install .NET ${{parameters.version}} SDK"
+    displayName: "Install .NET ${{parameters.version}} SDK (Other OS)"
   ${{ else }}:
-    displayName: "Install .NET ${{parameters.version}}"
+    displayName: "Install .NET ${{parameters.version}} (Other OS)"
