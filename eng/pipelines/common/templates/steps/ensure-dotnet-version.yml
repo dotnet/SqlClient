@@ -1,6 +1,6 @@
 parameters:
 - name: version
-  type: string
+  type: number
   default: "9"
 - name: sdk
   type: boolean
