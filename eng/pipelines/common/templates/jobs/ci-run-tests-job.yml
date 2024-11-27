@@ -233,12 +233,12 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}: # run x86 tests
-    - template: ../steps/ensure-dotnet-version.yml
-      parameters:
-        sdk: false
-        version: split(replace(${{ parameters.targetFramework }}, 'net', ''), '.')[0]
-        windowsArchitecture: x86
-      condition: and(ne(variables['dotnetx86RootPath'], ''), not(startsWith(parameters.targetFramework, 'net4')))
+    - ${{ if and(ne(variables['dotnetx86RootPath'], ''), not(startsWith(parameters.targetFramework, 'net4'))) }}:
+      - template: ../steps/ensure-dotnet-version.yml
+        parameters:
+          sdk: false
+          version: split(replace(${{ parameters.targetFramework }}, 'net', ''), '.')[0]
+          windowsArchitecture: x86
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
