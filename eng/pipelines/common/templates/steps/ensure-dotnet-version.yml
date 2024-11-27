@@ -30,14 +30,13 @@ steps:
 - powershell: |-
     Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
     $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
-    $useSdk = [bool]"${{parameters.sdk}}"
-    if (!$useSdk) {
+    
+    if (!$${{parameters.sdk}}) {
       $runtime = "dotnet"
     }
     
     $quality = "GA"
-    $usePreview = [bool]"${{parameters.usePreview}}"
-    if ($usePreview) {
+    if ($${{parameters.usePreview}}) {
       $quality = "preview"
     }
 
