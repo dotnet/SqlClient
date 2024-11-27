@@ -1,3 +1,8 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
 parameters:
 - name: version
   type: number
@@ -52,9 +57,9 @@ steps:
     Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
   condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
-    displayName: "Install .NET ${{parameters.version}} SDK (Windows)"
+    displayName: "Install .NET ${{parameters.version}} SDK (Win)"
   ${{ else }}:
-    displayName: "Install .NET ${{parameters.version}} (Windows)"
+    displayName: "Install .NET ${{parameters.version}} (Win)"
 - task: UseDotNet@2
   inputs:
     ${{ if eq(parameters.sdk, true) }}:
@@ -67,6 +72,6 @@ steps:
     includePreviewVersions: ${{parameters.usePreview}}
   condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
   ${{ if eq(parameters.sdk, true) }}:
-    displayName: "Install .NET ${{parameters.version}} SDK (Other OS)"
+    displayName: "Install .NET ${{parameters.version}} SDK (non-Win)"
   ${{ else }}:
-    displayName: "Install .NET ${{parameters.version}} (Other OS)"
+    displayName: "Install .NET ${{parameters.version}} (non-Win)"
