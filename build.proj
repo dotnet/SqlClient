@@ -59,6 +59,7 @@
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <FunctionalTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
