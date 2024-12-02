@@ -5640,7 +5640,6 @@ namespace Microsoft.Data.SqlClient
             {
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    RuntimeHelpers.PrepareConstrainedRegions();
                     bool internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false) == TdsOperationStatus.Done;
 
                     if (internalReadSuccess)
