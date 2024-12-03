@@ -361,10 +361,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             get
             {
-#if !NETFRAMEWORK
-                System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
-#endif
-                return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+                return !RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+                       || new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             }
         }
 
