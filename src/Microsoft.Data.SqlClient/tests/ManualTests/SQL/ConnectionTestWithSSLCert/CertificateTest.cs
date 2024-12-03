@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
@@ -90,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
-        private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
+        private static bool IsAdminOnWindows() => DataTestUtility.IsAdminOnWindows;
 
         [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
@@ -166,9 +167,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("31754")]
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         public void RemoteCertificateNameMismatchErrorTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
@@ -179,11 +178,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the pre-login handshake. (provider: TCP Provider, error: 35 - An internal exception was caught)", exception.Message);
             Assert.Equal(20, exception.Class);
-            Assert.IsType<AuthenticationException>(exception.InnerException);
-            Assert.StartsWith("Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.", exception.InnerException.Message);
-            Console.WriteLine(exception.Message);
+
+            if (DataTestUtility.IsUsingNativeSNI())
+            {
+                Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the login process. (provider: SSL Provider, error: 0 - The certificate's CN name does not match the passed value.)", exception.Message);
+                Assert.IsType<System.ComponentModel.Win32Exception>(exception.InnerException);
+                Assert.StartsWith("The certificate's CN name does not match the passed value", exception.InnerException.Message);
+            }
+            else
+            {
+                Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the pre-login handshake. (provider: TCP Provider, error: 35 - An internal exception was caught)", exception.Message);
+                Assert.IsType<AuthenticationException>(exception.InnerException);
+                Assert.StartsWith("Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.", exception.InnerException.Message);
+            }
         }
 
         private static void CreateValidCertificate(string script)
