@@ -222,7 +222,8 @@ steps:
                 Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
 
                 # Grant read access to Private Key for SQL Service Account
-                icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
+                # icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
+                icacls $machineKeyPath /grant "NT AUTHORITY\LOCAL SERVICE:R"
             }
         }
     }
