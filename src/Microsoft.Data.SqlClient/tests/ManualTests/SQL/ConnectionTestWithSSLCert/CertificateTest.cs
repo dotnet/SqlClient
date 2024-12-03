@@ -16,6 +16,7 @@ using System.ServiceProcess;
 using System.Text;
 using Microsoft.Win32;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -39,6 +40,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
         private static string SlashInstanceName = "";
 
+        private readonly ITestOutputHelper _testOutputHelper;
+
         private static string ForceEncryptionRegistryPath
         {
             get
@@ -60,8 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
         #endregion
 
-        public CertificateTest()
+        public CertificateTest(ITestOutputHelper testOutputHelper)
         {
+            _testOutputHelper = testOutputHelper;
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
             if (!LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase))
@@ -178,6 +182,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
+            
+            _testOutputHelper.WriteLine("Actual exception:");
+            _testOutputHelper.WriteLine(exception.ToString());
+
+            _testOutputHelper.WriteLine("Actual inner exception:");
+            _testOutputHelper.WriteLine(exception.InnerException?.ToString() ?? "None");
             Assert.Equal(20, exception.Class);
 
             if (DataTestUtility.IsUsingNativeSNI())
