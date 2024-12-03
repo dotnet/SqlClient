@@ -227,6 +227,18 @@ steps:
             }
         }
     }
+
+    $serviceName = "${{parameters.instanceName }}"
+    $InstancePrefix = 'MSSQL$'
+    
+    if ( "${{parameters.instanceName }}" -ne "MSSQLSERVER" )
+    {
+        $serviceName = $InstancePrefix+"${{parameters.instanceName }}"
+    }
+
+    # Get the account running the SQL Server service
+    $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='$serviceName'"
+    Write-Output "SQL Server is running under: $($service.StartName)"
   displayName: 'Add SQL Certificate [Win]'
   condition: ${{parameters.condition }}
 
