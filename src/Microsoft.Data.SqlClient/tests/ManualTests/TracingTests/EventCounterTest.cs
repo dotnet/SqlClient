@@ -146,6 +146,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventCounter_ReclaimedConnectionsCounter_Functional()
         {
