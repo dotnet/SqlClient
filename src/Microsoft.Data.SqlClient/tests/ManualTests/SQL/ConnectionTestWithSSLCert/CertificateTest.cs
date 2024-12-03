@@ -91,7 +91,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
-        private static bool IsAdminOnWindows() => DataTestUtility.IsAdminOnWindows;
 
         [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
