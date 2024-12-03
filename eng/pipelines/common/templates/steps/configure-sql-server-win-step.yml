@@ -222,23 +222,14 @@ steps:
                 Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
 
                 # Grant read access to Private Key for SQL Service Account
-                # icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
-                icacls $machineKeyPath /grant "NT AUTHORITY\LOCAL SERVICE:R"
+                if ($($_.Name) -eq "MSSQLSERVER") {
+                    icacls $machineKeyPath /grant "NT Service\MSSQLSERVER:R"
+                } else {
+                    icacls $machineKeyPath /grant "NT Service\MSSQL`$$($_.Name):R"
+                }
             }
         }
     }
-
-    $serviceName = "${{parameters.instanceName }}"
-    $InstancePrefix = 'MSSQL$'
-    
-    if ( "${{parameters.instanceName }}" -ne "MSSQLSERVER" )
-    {
-        $serviceName = $InstancePrefix+"${{parameters.instanceName }}"
-    }
-
-    # Get the account running the SQL Server service
-    $service = Get-CimInstance -ClassName Win32_Service -Filter "Name='$serviceName'"
-    Write-Output "SQL Server is running under: $($service.StartName)"
   displayName: 'Add SQL Certificate [Win]'
   condition: ${{parameters.condition }}
 
