@@ -173,6 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = GetLocalIpAddress(),
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
+                TrustServerCertificate = false,
                 HostNameInCertificate = "BadHostName"
             };
             using SqlConnection connection = new(builder.ConnectionString);
