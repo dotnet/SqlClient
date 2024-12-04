@@ -183,7 +183,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(20, exception.Class);
             Assert.IsType<AuthenticationException>(exception.InnerException);
             Assert.StartsWith("Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.", exception.InnerException.Message);
-            Console.WriteLine(exception.Message);
         }
 
         private static void CreateValidCertificate(string script)
