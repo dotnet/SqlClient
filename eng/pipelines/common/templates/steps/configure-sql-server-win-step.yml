@@ -237,19 +237,7 @@ steps:
 - powershell: |
     # You need to restart SQL Server for the change to persist
     # -Force takes care of any dependent services, like SQL Agent.
-    # Note: if the instance is named, replace MSSQLSERVER with MSSQL$ followed by
-    # the name of the instance (e.g. MSSQL$MYINSTANCE)
-    
-    $serviceName = "${{parameters.instanceName }}"
-    $InstancePrefix = 'MSSQL$'
-    
-    if ( "${{parameters.instanceName }}" -ne "MSSQLSERVER" )
-    {
-        $serviceName = $InstancePrefix+"${{parameters.instanceName }}"
-    }
-    
-    Restart-Service -Name "$serviceName" -Force
-  
+    Get-Service MSSQL* | Restart-Service -Force
   displayName: 'Restart SQL Server [Win]'
   condition: ${{parameters.condition }}
 
