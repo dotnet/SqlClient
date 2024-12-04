@@ -76,7 +76,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
         private Task CustomDeviceFlowCallback(DeviceCodeResult result)
         {
-            Console.WriteLine(result.Message);
             return Task.FromResult(0);
         }
     }
