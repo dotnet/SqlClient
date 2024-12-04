@@ -219,6 +219,7 @@ steps:
     foreach ($instance in $instances){
         $instance | ForEach-Object {
         $_.PSObject.Properties | Where-Object { $_.Name -notmatch '^PS.*' } | ForEach-Object {
+                Write-Output "Configuring instance $($_.Name) (Value: $($_.Value))"
                 Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$($_.Value)\MSSQLServer\SuperSocketNetLib" -Name Certificate -Value $certificate.Thumbprint.ToLower()
 
                 # Grant read access to Private Key for SQL Service Account
