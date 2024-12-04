@@ -248,6 +248,7 @@ steps:
     }
     
     Restart-Service -Name "$serviceName" -Force
+    Restart-Service -Name MSSQLSERVER* -Force
   
   displayName: 'Restart SQL Server [Win]'
   condition: ${{parameters.condition }}
