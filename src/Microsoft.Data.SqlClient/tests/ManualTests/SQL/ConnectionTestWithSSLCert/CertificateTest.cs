@@ -171,6 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
+        [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
