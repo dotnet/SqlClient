@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class DistributedTransactionTest
     {
-        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), Timeout = 10000)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), Timeout = 10000)]
         public void Test_EnlistedTransactionPreservedWhilePooled()
         {
             RunTestSet(EnlistedTransactionPreservedWhilePooled);
