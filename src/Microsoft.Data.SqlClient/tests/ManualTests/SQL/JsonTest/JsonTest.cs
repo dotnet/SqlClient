@@ -10,6 +10,8 @@ using System.Data.SqlTypes;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -332,6 +334,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             command.CommandText = tableRead;
             var reader = command.ExecuteReader();
             ValidateNullJson(reader);
+
+            reader.Close();
+            DataTestUtility.DropTable(connection, tableName);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestJsonAPIs()
+        {
+            string tableName = "jsonTest";
+
+            string tableInsert = "INSERT INTO " + tableName + " VALUES (@jsonData)";
+            string tableRead = "SELECT * FROM " + tableName;
+
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
+
+            //Create Table
+            DataTestUtility.CreateTable(connection, tableName, "(Data json)");
+
+            //Insert Null value
+            command.CommandText = tableInsert;
+            var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
+            parameter.Value = jsonDataString;
+            command.Parameters.Add(parameter);
+            command.ExecuteNonQuery();
+
+            //Query the table
+            command.CommandText = tableRead;
+            var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                string data = reader.GetFieldValue<string>(0);
+                Assert.Equal(jsonDataString, data);
+                JsonDocument jsonDocument = reader.GetFieldValue<JsonDocument>(0);
+                Assert.Equal(jsonDataString, jsonDocument.RootElement.ToString());
+                Assert.Equal("json", reader.GetDataTypeName(0));
+                Assert.Equal("System.String", reader.GetFieldType(0).ToString());
+            }
+            
 
             reader.Close();
             DataTestUtility.DropTable(connection, tableName);
