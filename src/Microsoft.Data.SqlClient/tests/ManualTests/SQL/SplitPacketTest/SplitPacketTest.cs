@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _baseConnString = builder.ConnectionString;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void OneByteSplitTest()
         {
             _splitPacketSize = 1;
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(true);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void AlmostFullHeaderTest()
         {
             _splitPacketSize = 7;
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(true);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void FullHeaderTest()
         {
             _splitPacketSize = 8;
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(true);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void HeaderPlusOneTest()
         {
             _splitPacketSize = 9;
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(true);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void MARSSplitTest()
         {
             _splitPacketSize = 1;
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(true);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
         public void MARSReplicateTest()
         {
             _splitPacketSize = 1;
