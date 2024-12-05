@@ -462,7 +462,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
-            byte[] nativeStorage = SNINativeMethodWrapper.GetData();
+            byte[] nativeStorage = SniNativeWrapper.GetData();
 
             if (nativeStorage == null)
             {
@@ -472,7 +472,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 
 #endif // DEBUG
-                _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
+                _AppDomain masterDomain = SniNativeWrapper.GetDefaultAppDomain();
 
                 if (masterDomain != null)
                 {
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
                                 SqlClientObjRef objRef = new(s_processDispatcher);
                                 DataContractSerializer serializer = new(objRef.GetType());
                                 GetSerializedObject(objRef, serializer, stream);
-                                SNINativeMethodWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
+                                SniNativeWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
                             }
                         }
                         else

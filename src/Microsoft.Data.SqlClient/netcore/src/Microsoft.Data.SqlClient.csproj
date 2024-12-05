@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(OSGroup)' == 'AnyOS'">Microsoft.Data.SqlClient is not supported on this platform.</GeneratePlatformNotSupportedAssemblyMessage>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -659,7 +659,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParser.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
@@ -731,6 +731,9 @@
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\IoType.cs">
       <Link>Interop\Windows\Sni\IoType.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\ISniNativeMethods.cs">
+      <Link>Interop\Windows\Sni\ISniNativeMethods.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\Prefix.cs">
       <Link>Interop\Windows\Sni\Prefix.cs</Link>
     </Compile>
@@ -751,6 +754,12 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniError.cs">
       <Link>Interop\Windows\Sni\SniError.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeMethods.netcore.cs">
+      <Link>Interop\Windows\Sni\SniNativeMethods.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\SniNativeWrapper.cs">
+      <Link>Interop\Windows\Sni\SniNativeWrapper.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\TransparentNetworkResolutionMode.cs">
       <Link>Interop\Windows\Sni\TransparentNetworkResolutionMode.cs</Link>
@@ -788,8 +797,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-    
-    <Compile Include="Interop\SNINativeMethodWrapper.Windows.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
@@ -808,8 +816,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
-    
-    <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
+
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
@@ -861,6 +868,8 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

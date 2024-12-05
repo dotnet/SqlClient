@@ -17,7 +17,7 @@
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,7 +34,7 @@
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <Otherwise>
       <PropertyGroup>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">net8.0</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">net8.0;net9.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net462</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>

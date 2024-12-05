@@ -113,6 +113,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 return;
             }
 
+            // The SSL certificate is required for the server to handle transport encryption
+            if (certificate == null)
+            {
+                throw new AuthenticationException("Server is unable to authenticate transport encryption without a valid SSL certificate.");
+            }
+
             Log("Enabling server transport encryption...");
 
             // Wrap TDS stream with auto TDS stream

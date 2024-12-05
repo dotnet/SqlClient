@@ -26,43 +26,10 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-
-    internal struct SNIErrorDetails
-    {
-        public string errorMessage;
-        public uint nativeError;
-        public uint sniErrorNumber;
-        public int provider;
-        public uint lineNumber;
-        public string function;
-        public Exception exception;
-    }
-
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
-        internal struct ReliabilitySection
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void Assert(string message)
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Start()
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Stop()
-            {
-            }
-        }
-
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
@@ -1577,7 +1544,7 @@ namespace Microsoft.Data.SqlClient
                     if (TdsParserStateObjectFactory.UseManagedSNI)
                     {
                         // SNI error. Append additional error message info if available and hasn't been included.
-                        string sniLookupMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                        string sniLookupMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
                         errorMessage = (string.IsNullOrEmpty(errorMessage) || errorMessage.Contains(sniLookupMessage))
                                         ? sniLookupMessage
                                         : (sniLookupMessage + ": " + errorMessage);
@@ -1585,7 +1552,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // SNI error. Replace the entire message.
-                        errorMessage = SQL.GetSNIErrorMessage((int)details.sniErrorNumber);
+                        errorMessage = SQL.GetSNIErrorMessage(details.sniErrorNumber);
 
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
@@ -1958,8 +1925,6 @@ namespace Microsoft.Data.SqlClient
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
-
-
 
         internal bool Run(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
@@ -6037,7 +6002,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    s = "";
+                                    s = string.Empty;
                                 }
                             }
 
@@ -12539,7 +12504,9 @@ namespace Microsoft.Data.SqlClient
                     if (type.FixedLength == 4)
                     {
                         if (0 > dt.days || dt.days > UInt16.MaxValue)
+                        {
                             throw SQL.SmallDateTimeOverflow(MetaType.ToDateTime(dt.days, dt.time, 4).ToString(CultureInfo.InvariantCulture));
+                        }
 
                         if (stateObj._bIntBytes == null)
                         {
@@ -12902,7 +12869,14 @@ namespace Microsoft.Data.SqlClient
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
-        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead, bool supportRentedBuff, ref bool rentedBuff)
+        internal TdsOperationStatus TryReadPlpUnicodeChars(
+            ref char[] buff,
+            int offst,
+            int len,
+            TdsParserStateObject stateObj,
+            out int totalCharsRead,
+            bool supportRentedBuff,
+            ref bool rentedBuff)
         {
             int charsRead = 0;
             int charsLeft = 0;
@@ -12915,7 +12889,7 @@ namespace Microsoft.Data.SqlClient
                 return TdsOperationStatus.Done;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL), "Out of sync plp read request");
+            Debug.Assert((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
