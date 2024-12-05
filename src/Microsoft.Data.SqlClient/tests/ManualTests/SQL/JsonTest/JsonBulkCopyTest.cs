@@ -23,14 +23,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             _output = output;
         }
 
-        private void PopulateData(int noOfRecords)
+        private void PopulateData(int noOfRecords, int rows)
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 DataTestUtility.CreateTable(connection, "jsonTab", "(data json)");
                 DataTestUtility.CreateTable(connection, "jsonTabCopy", "(data json)");
-                GenerateJsonFile(50000, _jsonFile);
-                StreamJsonFileToServer(connection);
+                GenerateJsonFile(noOfRecords, _jsonFile);
+                while (rows-- > 0)
+                {
+                    StreamJsonFileToServer(connection);
+                }
             }
         }
 
@@ -70,21 +73,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             }
         }
 
-        private void PrintJsonDataToFile(SqlConnection connection)
+        private void PrintJsonDataToFileAndCompare(SqlConnection connection)
         {
             DeleteFile(_outputFile);
             using (SqlCommand command = new SqlCommand("SELECT [data] FROM [jsonTabCopy]", connection))
             {
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
                 {
-                    using (StreamWriter sw = new StreamWriter(_outputFile))
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            char[] buffer = new char[4096];
-                            int charsRead = 0;
+                        char[] buffer = new char[4096];
+                        int charsRead = 0;
 
-                            using (TextReader data = reader.GetTextReader(0))
+                        using (TextReader data = reader.GetTextReader(0))
+                        {
+                            using (StreamWriter sw = new StreamWriter(_outputFile))
                             {
                                 do
                                 {
@@ -93,8 +96,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
                                 } while (charsRead > 0);
                             }
-                            _output.WriteLine("Output written to " + _outputFile);
                         }
+                        CompareJsonFiles();
                     }
                 }
             }
@@ -107,14 +110,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             {
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess))
                 {
-                    using (StreamWriter sw = new StreamWriter(_outputFile))
+                    while (await reader.ReadAsync())
                     {
-                        while (await reader.ReadAsync())
-                        {
-                            char[] buffer = new char[4096];
-                            int charsRead = 0;
+                        char[] buffer = new char[4096];
+                        int charsRead = 0;
 
-                            using (TextReader data = reader.GetTextReader(0))
+                        using (TextReader data = reader.GetTextReader(0))
+                        {
+                            using (StreamWriter sw = new StreamWriter(_outputFile))
                             {
                                 do
                                 {
@@ -123,8 +126,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
                                 } while (charsRead > 0);
                             }
-                            _output.WriteLine("Output written to file " + _outputFile);
                         }
+                        CompareJsonFiles();
+                        DeleteFile(_outputFile);
                     }
                 }
             }
@@ -162,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
             }
         }
 
-        private void BulkCopyData(CommandBehavior cb, bool enableStraming)
+        private void BulkCopyData(CommandBehavior cb, bool enableStraming, int expectedTransferCount)
         {
             using (SqlConnection sourceConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -195,11 +199,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                     long countEnd = System.Convert.ToInt32(commandRowCount.ExecuteScalar());
                     _output.WriteLine("Ending row count = {0}", countEnd);
                     _output.WriteLine("{0} rows were added.", countEnd - countStart);
+                    Assert.Equal(expectedTransferCount, countEnd - countStart);
                 }
             }
         }
 
-        private async Task BulkCopyDataAsync(CommandBehavior cb, bool enableStraming)
+        private async Task BulkCopyDataAsync(CommandBehavior cb, bool enableStraming, int expectedTransferCount)
         {
             using (SqlConnection sourceConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -232,43 +237,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                     long countEnd = System.Convert.ToInt32(await commandRowCount.ExecuteScalarAsync());
                     _output.WriteLine("Ending row count = {0}", countEnd);
                     _output.WriteLine("{0} rows were added.", countEnd - countStart);
+                    Assert.Equal(expectedTransferCount, countEnd - countStart);
                 }
             }
         }
 
+        [Theory]
         [InlineData(CommandBehavior.Default, false)]
         [InlineData(CommandBehavior.Default, true)]
         [InlineData(CommandBehavior.SequentialAccess, false)]
         [InlineData(CommandBehavior.SequentialAccess, true)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming)
         {
-            PopulateData(10000);
+            int jsonArrayElements = 300;
+            int rows = 100;
+            PopulateData(jsonArrayElements, rows);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                BulkCopyData(cb, enableStraming);
+                BulkCopyData(cb, enableStraming, rows);
                 connection.Open();
-                PrintJsonDataToFile(connection);
-                CompareJsonFiles();
+                PrintJsonDataToFileAndCompare(connection);
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }
         }
 
+        [Theory]
         [InlineData(CommandBehavior.Default, false)]
         [InlineData(CommandBehavior.Default, true)]
         [InlineData(CommandBehavior.SequentialAccess, false)]
         [InlineData(CommandBehavior.SequentialAccess, true)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming)
         {
-            PopulateData(10000);
+            int jsonArrayElements = 10;
+            int rows = 10000;
+            PopulateData(jsonArrayElements, rows);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                await BulkCopyDataAsync(cb, enableStraming);
+                await BulkCopyDataAsync(cb, enableStraming, rows);
                 await connection.OpenAsync();
                 await PrintJsonDataToFileAsync(connection);
-                CompareJsonFiles();
                 DeleteFile(_jsonFile);
                 DeleteFile(_outputFile);
             }
