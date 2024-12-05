@@ -452,7 +452,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotAzureServer()
         {
-            return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((TCPConnectionString)).DataSource);
+            return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
+        }
+
+        public static bool IsLocalHost()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+            return ParseDataSource(builder.DataSource, out string hostname, out _, out _) && string.Equals("localhost", hostname, StringComparison.OrdinalIgnoreCase);
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.
