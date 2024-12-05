@@ -9,12 +9,14 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Text;
 using Microsoft.Win32;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -38,6 +40,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // SlashInstance is used to override IPV4 and IPV6 defined about so it includes an instance name
         private static string SlashInstanceName = "";
 
+        private readonly ITestOutputHelper _testOutputHelper;
+
         private static string ForceEncryptionRegistryPath
         {
             get
@@ -59,8 +63,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
         #endregion
 
-        public CertificateTest()
+        public CertificateTest(ITestOutputHelper testOutputHelper)
         {
+            _testOutputHelper = testOutputHelper;
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             Assert.True(DataTestUtility.ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
             if (!LocalHost.Equals(hostname, StringComparison.OrdinalIgnoreCase))
@@ -166,8 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("31754")]
-        [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(UseManagedSNIOnWindows))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
         {
@@ -175,15 +179,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = GetLocalIpAddress(),
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
+                TrustServerCertificate = false,
                 HostNameInCertificate = "BadHostName"
             };
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException exception = Assert.Throws<SqlException>(() => connection.Open());
-            Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the pre-login handshake. (provider: TCP Provider, error: 35 - An internal exception was caught)", exception.Message);
+            
+            _testOutputHelper.WriteLine("Actual exception:");
+            _testOutputHelper.WriteLine(exception.ToString());
+
+            _testOutputHelper.WriteLine("Actual inner exception:");
+            _testOutputHelper.WriteLine(exception.InnerException?.ToString() ?? "None");
             Assert.Equal(20, exception.Class);
+            Assert.StartsWith("A connection was successfully established with the server, but then an error occurred during the pre-login handshake. (provider: TCP Provider, error: 35 - An internal exception was caught)", exception.Message);
             Assert.IsType<AuthenticationException>(exception.InnerException);
             Assert.StartsWith("Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.", exception.InnerException.Message);
-            Console.WriteLine(exception.Message);
         }
 
         private static void CreateValidCertificate(string script)
