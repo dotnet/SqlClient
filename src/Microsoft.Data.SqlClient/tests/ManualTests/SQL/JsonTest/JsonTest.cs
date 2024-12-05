@@ -378,5 +378,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             reader.Close();
             DataTestUtility.DropTable(connection, tableName);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestJsonWithMARS()
+        {
+            string tableName = "jsonTest";
+
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString+ "MultipleActiveResultSets=True;");
+            connection.Open();
+
+            //Create Table
+            DataTestUtility.CreateTable(connection, tableName+"1", "(Data json)");
+            DataTestUtility.CreateTable(connection, tableName+"2", "(Id int, Data json)");
+
+            //Insert Data
+            string table1Insert = "INSERT INTO " + tableName + "1" + " VALUES (\'" + jsonDataString + "\')";
+            string table2Insert = "INSERT INTO " + tableName + "2" + " VALUES (1,\'" + jsonDataString + "\')";
+            SqlCommand command = connection.CreateCommand();
+            command.CommandText = table1Insert;
+            command.ExecuteNonQuery();
+            command.CommandText = table2Insert;
+            command.ExecuteNonQuery();
+
+            //Read Data
+            SqlCommand command1 = new SqlCommand("select * from " + tableName + "1", connection);
+            SqlCommand command2 = new SqlCommand("select * from " + tableName + "2", connection);
+
+            using (SqlDataReader reader1 = command1.ExecuteReader())
+            {
+                while (reader1.Read())
+                {
+                    Assert.Equal(jsonDataString, reader1["data"]);
+                }
+
+                using (SqlDataReader reader2 = command2.ExecuteReader())
+                {
+                    while (reader2.Read())
+                    {
+                        Assert.Equal(1, reader2["Id"]);
+                        Assert.Equal(jsonDataString, reader2["data"]);
+                    }
+                }
+            }
+            DataTestUtility.DropTable(connection, tableName);
+        }
     }
 }
