@@ -22,9 +22,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public SplitPacketTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            GetTcpInfoFromDataSource(builder.DataSource, out string actualHost, out int actualPort);
+            DataSourceBuilder dataSourceBuilder = new DataSourceBuilder(builder.DataSource);
 
-            Task.Factory.StartNew(() => { SetupProxy(actualHost, actualPort, _cts.Token); });
+            Task.Factory.StartNew(() => { SetupProxy(dataSourceBuilder.ServerName, dataSourceBuilder.Port ?? 1433, _cts.Token); });
 
             for (int i = 0; i < 10 && _port == -1; i++)
             {
@@ -159,25 +159,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void GetTcpInfoFromDataSource(string dataSource, out string hostName, out int port)
-        {
-            string[] dataSourceParts = dataSource.Split(',');
-            if (dataSourceParts.Length == 1)
-            {
-                hostName = dataSourceParts[0].Replace("tcp:", "");
-                port = 1433;
-            }
-            else if (dataSourceParts.Length == 2)
-            {
-                hostName = dataSourceParts[0].Replace("tcp:", "");
-                port = int.Parse(dataSourceParts[1]);
-            }
-            else
-            {
-                throw new InvalidOperationException("TCP Connection String not in correct format!");
-            }
-        }
-
         public void Dispose()
         {
             Dispose(true);
@@ -190,6 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 _cts.Cancel();
                 _cts.Dispose();
+                _listener?.Server.Dispose();
 #if NETFRAMEWORK
                 _listener?.Stop();
 #else
