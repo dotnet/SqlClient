@@ -190,7 +190,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 _cts.Cancel();
                 _cts.Dispose();
+#if NETFRAMEWORK
                 _listener?.Stop();
+#else
+                _listener?.Dispose();
+#endif
             }
         }
     }
