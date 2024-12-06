@@ -7,9 +7,10 @@ General contribution guidance is included in this document. Additional guidance 
 
 ## Up for Grabs
 
-The team marks the most straightforward issues as "up for grabs". This set of issues is the place to start if you are interested in contributing but new to the codebase.
+The team marks the most straightforward issues as "up for grabs" and issues that are well suited to get you started as "Good first issue". This set of issues is the place to start if you are interested in contributing but new to the codebase.
 
 - [dotnet/sqlclient - :raised_hands: Up-for-Grabs](https://github.com/dotnet/sqlclient/labels/%3Araised_hands%3A%20Up-for-Grabs)
+- [dotnet/sqlclient - :sparkles: Good first issue](https://github.com/dotnet/sqlclient/labels/%3Asprakles%3A%20Good%20first%20issue)
 
 ## Contribution "Bar"
 
