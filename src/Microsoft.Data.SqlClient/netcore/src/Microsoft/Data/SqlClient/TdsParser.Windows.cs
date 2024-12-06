@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClient
@@ -74,7 +75,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
+                SniNativeWrapper.SNIGetLastError(out SniError sniError);
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;

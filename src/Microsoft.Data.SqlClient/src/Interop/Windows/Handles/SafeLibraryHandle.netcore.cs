@@ -6,7 +6,7 @@ using Microsoft.Win32.SafeHandles;
 
 #if NET
 
-namespace Interop_TEMP.Windows.Handles
+namespace Interop.Windows.Handles
 {
     sealed internal class SafeLibraryHandle : SafeHandleZeroOrMinusOneIsInvalid
     {

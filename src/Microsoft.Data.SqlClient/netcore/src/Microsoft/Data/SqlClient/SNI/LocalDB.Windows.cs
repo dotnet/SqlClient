@@ -5,8 +5,8 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using Interop_TEMP.Windows.Handles;
-using Interop_TEMP.Windows.Kernel32;
+using Interop.Windows.Handles;
+using Interop.Windows.Kernel32;
 using Microsoft.Win32;
 
 

@@ -43,11 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 args.FedAuthRequiredPreLoginOption = SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
             }
 
-            if (encryptionCertificate != null)
-            {
-                args.EncryptionCertificate = encryptionCertificate;
-            }
-
+            args.EncryptionCertificate = encryptionCertificate;
             args.Encryption = encryptionType;
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);

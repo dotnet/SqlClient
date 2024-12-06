@@ -10,7 +10,7 @@
           The <b>SqlNotificationSource</b> enumeration is referenced by an instance of the <see cref="T:Microsoft.Data.SqlClient.SqlNotificationEventArgs" /> class.
         </para>
         <para>
-          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
+          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="https://learn.microsoft.com/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
         </para>
       </remarks>
     </SqlNotificationSource>

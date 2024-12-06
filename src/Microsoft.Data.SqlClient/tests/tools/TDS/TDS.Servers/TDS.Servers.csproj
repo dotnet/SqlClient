@@ -26,9 +26,6 @@
     <Compile Include="TDSServerArguments.cs" />
     <Compile Include="TransientFaultTDSServer.cs" />
     <Compile Include="TransientFaultTDSServerArguments.cs" />
-    <None Include="TdsServerCertificate.pfx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj">

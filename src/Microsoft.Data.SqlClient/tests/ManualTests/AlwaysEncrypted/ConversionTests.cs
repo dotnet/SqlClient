@@ -70,7 +70,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                var connectionString = new SqlConnectionStringBuilder(connectionStr);
+                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
+
+                using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
                 {
                     sqlConnection.Open();
                     _databaseObjects.ForEach(o => o.Create(sqlConnection));
