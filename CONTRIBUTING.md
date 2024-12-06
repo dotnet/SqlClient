@@ -9,7 +9,7 @@ General contribution guidance is included in this document. Additional guidance 
 
 The team marks the most straightforward issues as "up for grabs". This set of issues is the place to start if you are interested in contributing but new to the codebase.
 
-- [dotnet/sqlclient - ":raised_hands: Up-for-Grabs"](https://github.com/dotnet/sqlclient/labels/%3Araised_hands%3A%20Up-for-Grabs)
+- [dotnet/sqlclient - :raised_hands: Up-for-Grabs](https://github.com/dotnet/sqlclient/labels/%3Araised_hands%3A%20Up-for-Grabs)
 
 ## Contribution "Bar"
 
