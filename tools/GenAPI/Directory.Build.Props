@@ -4,6 +4,7 @@
 
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\src\Directory.Build.props" />
+  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))" Project="$(ToolsDir)props\VersionsNet9OrLater.props" />
 
   <!-- Audit Settings -->
   <PropertyGroup>
