@@ -6,4 +6,4 @@
 
 ## Binary License
 
-- **Microsoft.Data.SqlClient** binary distributions (nuget packages) are licensed as MIT (identical to the [Microsoft.Data.SqlClient source license](https://github.com/dotnet/sqlclient/blob/master/LICENSE)).
+- **Microsoft.Data.SqlClient** binary distributions (NuGet packages) are licensed as MIT (identical to the [Microsoft.Data.SqlClient source license](LICENSE)).
