@@ -14,7 +14,7 @@ The team marks the most straightforward issues as "up for grabs" and issues that
 
 ## Contribution "Bar"
 
-Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](https://github.com/dotnet/sqlclient/blob/main/roadmap.md).
+Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](roadmap.md).
 
 Contributions must also satisfy the other published guidelines defined in this document.
 

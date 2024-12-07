@@ -17,7 +17,7 @@ We use and recommend the following workflow:
     - Name the branch so that it clearly communicates your intentions, such as issue-123 or githubhandle-issue.
     - Branches are useful since they isolate your changes from incoming changes from upstream. They also enable you to create multiple PRs from the same fork.
 4. Make and commit your changes.
-    - Please follow our guidance [here](contributing.md#dos-and-donts).
+    - Please follow our guidance [here](CONTRIBUTING.md#dos-and-donts).
 5. Add new tests corresponding to your change, if nor present and applicable.
 6. Build the repository with your changes.
     - Make sure that the builds are clean.

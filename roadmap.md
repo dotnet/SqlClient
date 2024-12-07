@@ -4,7 +4,7 @@ The Microsoft.Data.SqlClient roadmap communicates project priorities for evolvin
 
 ## Released Versions
 
-- [Release Notes](https://github.com/dotnet/sqlclient/blob/main/release-notes/README.md) - For detailed release notes summarizing of all changes/features released.
+- [Release Notes](release-notes/README.md) - For detailed release notes summarizing of all changes/features released.
 - [GitHub Releases](https://github.com/dotnet/sqlclient/releases) - For downloading NuGet Packages and identifying driver releases with changelog notes.
 
 ## Upcoming Ship Dates
