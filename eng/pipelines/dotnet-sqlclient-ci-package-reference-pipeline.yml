@@ -5,37 +5,6 @@
 #################################################################################
 
 name: $(DayOfYear)$(Rev:rr)
-trigger:
-  batch: true
-  branches:
-    include:
-    - main
-    - internal/main
-  paths:
-    include:
-    - src\Microsoft.Data.SqlClient\netcore\ref
-    - src\Microsoft.Data.SqlClient\netfx\ref
-    - src\Microsoft.Data.SqlClient\ref
-    - eng
-    - tools
-    - .config
-    - Nuget.config
-
-schedules:
-- cron: '0 4 * * Fri'
-  displayName: Weekly Thursday 9:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - internal/main
-  always: true
-
-- cron: '0 0 * * Mon-Fri'
-  displayName: Daily build 5:00 PM (UTC - 7) Build
-  branches:
-    include:
-    - main
-  always: true
-
 parameters: # parameters are shown up in ADO UI in a build queue time
 - name: 'debug'
   displayName: 'Enable debug output'
