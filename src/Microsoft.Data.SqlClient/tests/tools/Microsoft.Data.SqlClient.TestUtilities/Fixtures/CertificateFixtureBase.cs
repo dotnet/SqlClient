@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
-#if NET
+#if NET9_0_OR_GREATER
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = RSA.Create(2048);
