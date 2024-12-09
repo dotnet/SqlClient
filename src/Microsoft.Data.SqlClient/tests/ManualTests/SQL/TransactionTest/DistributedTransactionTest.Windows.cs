@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (TransactionScope txScope = new TransactionScope(TransactionScopeOption.Required, TimeSpan.MaxValue))
                 {
+                    // Leave first connection open so that the transaction is promoted
                     SqlConnection rootConnection = new SqlConnection(ConnectionString);
                     rootConnection.Open();
                     using (SqlCommand command = rootConnection.CreateCommand())
@@ -71,17 +72,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command.CommandText = $"INSERT INTO {TestTableName} VALUES ({InputCol1}, '{InputCol2}')";
                         command.ExecuteNonQuery();
                     }
-                    // Leave first connection open so that the transaction is promoted
 
-                    SqlConnection enlistedConnection = new SqlConnection(ConnectionString);
                     // Closing and reopening cycles the connection through the pool.
                     // We want to verify that the transaction state is preserved through this cycle.
+                    SqlConnection enlistedConnection = new SqlConnection(ConnectionString);
                     enlistedConnection.Open();
                     enlistedConnection.Close();
                     enlistedConnection.Open();
 
                     // Forcibly kill the root connection to mimic gateway's behavior when using the proxy connection policy
                     // https://techcommunity.microsoft.com/blog/azuredbsupport/azure-sql-database-idle-sessions-are-killed-after-about-30-minutes-when-proxy-co/3268601
+                    // Can also represent a general server-side, process failure
                     KillProcess(rootConnection.ServerProcessId);
 
 
@@ -117,9 +118,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             else
             {
                 Assert.IsType<TransactionAbortedException>(transactionException);
+
+#if NETFRAMEWORK
                 // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-8000-to-8999?view=sql-server-ver16
                 // The distributed transaction failed
+                Assert.Equal(8525, ((SqlException)commandException).Number);
+#else
                 Assert.IsType<InvalidOperationException>(commandException);
+#endif
             }
 
             // Verify that nothing made it into the database
