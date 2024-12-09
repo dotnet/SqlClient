@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient
         public HealthReport(byte[] payload)
         {
             Size = payload.Length;
-#if NET9_0_OR_GREATER
+#if NET9_0
             Certificate = X509CertificateLoader.LoadCertificate(payload);
 #else
             Certificate = new X509Certificate2(payload);
