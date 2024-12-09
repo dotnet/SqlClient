@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -27,7 +28,7 @@ using Microsoft.Data.SqlTypes;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
-    public class SqlDataReader : DbDataReader, IDataReader
+    public class SqlDataReader : DbDataReader, IDataReader, IDbColumnSchemaGenerator
     {
         private enum ALTROWSTATUS
         {
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient
         private CommandBehavior _commandBehavior;
 
         private static int s_objectTypeCount; // EventSource Counter
+        private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
         internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
 
@@ -6360,5 +6362,73 @@ namespace Microsoft.Data.SqlClient
             _stateObj._asyncReadWithoutSnapshot = true;
         }
 
-    }// SqlDataReader
-}// namespace
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetColumnSchema/*' />
+        public ReadOnlyCollection<DbColumn> GetColumnSchema()
+        {
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                if (_metaData == null || _metaData.dbColumnSchema == null)
+                {
+                    if (this.MetaData != null)
+                    {
+
+                        _metaData.dbColumnSchema = BuildColumnSchema();
+                        Debug.Assert(_metaData.dbColumnSchema != null, "No schema information yet!");
+                        // filter table?
+                    }
+                }
+                if (_metaData != null)
+                {
+                    return _metaData.dbColumnSchema;
+                }
+                return s_emptySchema;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
+
+        private ReadOnlyCollection<DbColumn> BuildColumnSchema()
+        {
+            _SqlMetaDataSet md = MetaData;
+            DbColumn[] columnSchema = new DbColumn[md.Length];
+            for (int i = 0; i < md.Length; i++)
+            {
+                _SqlMetaData col = md[i];
+                SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
+
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                {
+                    dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
+                }
+                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
+                {
+                    dbColumn.SqlNumericScale = col.scale;
+                }
+                else
+                {
+                    dbColumn.SqlNumericScale = col.metaType.Scale;
+                }
+
+                if (_browseModeInfoConsumed)
+                {
+                    dbColumn.SqlIsAliased = col.IsDifferentName;
+                    dbColumn.SqlIsKey = col.IsKey;
+                    dbColumn.SqlIsHidden = col.IsHidden;
+                    dbColumn.SqlIsExpression = col.IsExpression;
+                }
+
+                dbColumn.SqlDataType = GetFieldTypeInternal(col);
+
+                dbColumn.SqlDataTypeName = GetDataTypeNameInternal(col);
+
+                columnSchema[i] = dbColumn;
+            }
+
+            return new ReadOnlyCollection<DbColumn>(columnSchema);
+        }
+    }
+}
