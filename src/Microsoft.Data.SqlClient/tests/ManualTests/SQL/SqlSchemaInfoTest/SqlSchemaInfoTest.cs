@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -46,6 +47,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(metaDataSourceInfo != null && metaDataSourceInfo.Rows.Count > 0);
 
                 DataTable metaDataTypes = conn.GetSchema(DbMetaDataCollectionNames.DataTypes);
+                Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
+
+                var tinyintRow = metaDataTypes.Rows.OfType<DataRow>().Where(p => (string)p["TypeName"] == "tinyint");
+                foreach (var row in tinyintRow)
+                {
+                    Assert.True((String)row["TypeName"] == "tinyint" && (String)row["DataType"] == "System.Byte" && (bool)row["IsUnsigned"]);
+                }
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public static async Task TestGetSchemaAsync(bool openTransaction)
+        {
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await conn.OpenAsync();
+                DataTable dataBases;
+
+                if (openTransaction)
+                {
+                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    {
+                        dataBases = await conn.GetSchemaAsync("DATABASES");
+                    }
+                }
+                else
+                {
+                    dataBases = await conn.GetSchemaAsync("DATABASES");
+                }
+
+                Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
+
+                DataTable metaDataCollections = await conn.GetSchemaAsync(DbMetaDataCollectionNames.MetaDataCollections);
+                Assert.True(metaDataCollections != null && metaDataCollections.Rows.Count > 0);
+
+                DataTable metaDataSourceInfo = await conn.GetSchemaAsync(DbMetaDataCollectionNames.DataSourceInformation);
+                Assert.True(metaDataSourceInfo != null && metaDataSourceInfo.Rows.Count > 0);
+
+                DataTable metaDataTypes = await conn.GetSchemaAsync(DbMetaDataCollectionNames.DataTypes);
                 Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
 
                 var tinyintRow = metaDataTypes.Rows.OfType<DataRow>().Where(p => (string)p["TypeName"] == "tinyint");
