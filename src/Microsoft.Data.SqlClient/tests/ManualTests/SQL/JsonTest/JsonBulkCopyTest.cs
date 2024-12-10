@@ -15,10 +15,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
     {
         public IEnumerator<object[]> GetEnumerator()
         {
-            yield return new object[] { CommandBehavior.Default, false };
-            yield return new object[] { CommandBehavior.Default, true };
-            yield return new object[] { CommandBehavior.SequentialAccess, false };
-            yield return new object[] { CommandBehavior.SequentialAccess, true };
+            yield return new object[] { CommandBehavior.Default, false, 300, 100 };
+            yield return new object[] { CommandBehavior.Default, true, 300, 100 };
+            yield return new object[] { CommandBehavior.SequentialAccess, false, 300, 100 };
+            yield return new object[] { CommandBehavior.SequentialAccess, true, 300, 100 };
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
@@ -30,8 +30,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         private static readonly string _outputFile = DataTestUtility.GenerateRandomCharacters("serverResults");
         private static readonly string _sourceTableName = DataTestUtility.GenerateObjectName();
         private static readonly string _destinationTableName = DataTestUtility.GenerateObjectName();
-        private static readonly int _jsonArrayElements = 300;
-        private static readonly int _rows = 100;
         
         public JsonBulkCopyTest(ITestOutputHelper output)
         {
@@ -273,12 +271,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         [ClassData(typeof(JsonBulkCopyTestData))]
-        public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming)
+        public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
-            PopulateData(_jsonArrayElements, _rows);
+            PopulateData(jsonArrayElements, rows);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                BulkCopyData(cb, enableStraming, _rows);
+                BulkCopyData(cb, enableStraming, rows);
                 connection.Open();
                 PrintJsonDataToFileAndCompare(connection);
                 DeleteFile(_generatedJsonFile);
@@ -288,12 +286,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
         [ClassData(typeof(JsonBulkCopyTestData))]
-        public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming)
+        public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
-            PopulateData(_jsonArrayElements, _rows);
+            PopulateData(jsonArrayElements, rows);
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                await BulkCopyDataAsync(cb, enableStraming, _rows);
+                await BulkCopyDataAsync(cb, enableStraming, rows);
                 await connection.OpenAsync();
                 await PrintJsonDataToFileAndCompareAsync(connection);
                 DeleteFile(_generatedJsonFile);
