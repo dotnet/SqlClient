@@ -4,25 +4,14 @@ The Microsoft.Data.SqlClient roadmap communicates project priorities for evolvin
 
 ## Released Versions
 
-- [Release Notes](https://github.com/dotnet/sqlclient/blob/master/release-notes/README.md) - For detailed release notes summarizing of all changes/features released.
+- [Release Notes](release-notes/README.md) - For detailed release notes summarizing of all changes/features released.
 - [GitHub Releases](https://github.com/dotnet/sqlclient/releases) - For downloading NuGet Packages and identifying driver releases with changelog notes.
 
 ## Upcoming Ship Dates
 
-| Milestone                 | Release Date | Project Board |
-|---------------------------|--------------|---------------|
-| Microsoft.Data.SqlClient v1.1 (servicing) | As needed (see also [1.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/1.1)) | Closed |
-| Microsoft.Data.SqlClient v2.1 (servicing) | As needed (see also [2.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/2.1)) | Closed |
-| Microsoft.Data.SqlClient v3.0 (servicing) | As needed (see also [3.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/3.0)) | Closed |
-| Microsoft.Data.SqlClient v4.0 (servicing) | As needed (see also [4.0 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/4.0)) | Closed |
-| Microsoft.Data.SqlClient v4.1 (servicing) | As needed (see also [4.1 releases](https://github.com/dotnet/sqlclient/blob/master/release-notes/4.1)) | Closed |
-| Microsoft.Data.SqlClient v5.0 | GA (General Availability) estimated for May 2022 | [SqlClient 5.0.0](https://github.com/dotnet/SqlClient/projects/9)
-
-> Note: Dates are calendar year (as opposed to fiscal year).
+For upcoming release dates, see [SqlClient milestones](https://github.com/dotnet/SqlClient/milestones).
 
 [SqlClient Projects](https://github.com/dotnet/SqlClient/projects) are used by our development team to define roadmap of prioritized work. SqlClient Boards contain issues, pull requests, and other features, development activities that are categorized as cards. Our goal is to be transparent over priorities, work in progress and deliverables.
-
-Milestone information is also available for GitHub Issues and Pull Requests [dotnet/sqlclient milestones](https://github.com/dotnet/sqlclient/milestones).
 
 ## Feedback
 
