@@ -1,9 +1,9 @@
 ---
 name: Feature request
 about: Suggest an idea for this project
-title: ''
-labels: 'Triage Needed'
-assignees: ''
+title: ""
+labels: [":new: Triage Needed", ":bulb: Enhancement"]
+assignees: []
 
 ---
 
