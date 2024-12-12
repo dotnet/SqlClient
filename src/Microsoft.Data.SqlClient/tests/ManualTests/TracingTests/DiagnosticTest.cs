@@ -430,7 +430,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         sqlConnection.Open();
                     }
-                }, true);
+                });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
