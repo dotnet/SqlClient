@@ -252,7 +252,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
-        [ActiveIssue("25421", TargetFrameworkMonikers.NetFramework)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
         {
