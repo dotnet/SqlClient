@@ -2884,7 +2884,7 @@
     <value>此內容連接不支援 Type System Version=SQL Server 2000。</value>
   </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
-    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+    <value>不支援使用 Microsoft.Data.SqlClient 連線至內容連線。</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>此內容連接已在使用中。</value>

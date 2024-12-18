@@ -168,7 +168,11 @@ namespace Microsoft.Data.SqlClient
         public HealthReport(byte[] payload)
         {
             Size = payload.Length;
+#if NET9_0
+            Certificate = X509CertificateLoader.LoadCertificate(payload);
+#else
             Certificate = new X509Certificate2(payload);
+#endif
         }
 
         public int GetSizeInPayload()
@@ -455,7 +459,7 @@ namespace Microsoft.Data.SqlClient
         ENCLAVE_FLAG_DYNAMIC_DEBUG_ACTIVE = 0x00000004
     }
 
-    #endregion
+#endregion
 
     internal static class EnclaveHelpers
     {

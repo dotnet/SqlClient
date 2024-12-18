@@ -7,7 +7,7 @@
       <remarks>
         This class provides low-level access to the query notification services exposed by SQL Server 2005. For most applications the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> class provides a simpler way of using query notifications. However, if you need fine control over when notifications occur, or you need to customize the message data returned as part of a notification, the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class is the one to use.
       </remarks>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </SqlNotificationRequest>
@@ -18,7 +18,7 @@
       <remarks>
         If the parameterless constructor is used to create a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object, that instance must have its <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" /> and <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" /> properties initialized before assigning the object to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object's <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property. The default values used by the constructor are <see langword="null" /> (<c>Nothing</c> in Visual Basic) for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.UserData" />, an empty string for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Options" />, and zero for the <see cref="P:Microsoft.Data.Sql.SqlNotificationRequest.Timeout" />.
       </remarks>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </ctor1>
@@ -44,7 +44,7 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         The <paramref name="options" /> or <paramref name="userData" /> parameter is longer than <see cref="F:System.UInt16.MaxValue" /> or the value in the <paramref name="timeout" /> parameter is less than zero.
       </exception>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </ctor2>
@@ -78,7 +78,7 @@
       <exception cref="T:System.ArgumentException">
         The value is longer than <see cref="F:System.UInt16.MaxValue" />.
       </exception>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </Options>
@@ -95,7 +95,7 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         The value is less than zero.
       </exception>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </Timeout>
@@ -112,7 +112,7 @@
       <exception cref="T:System.ArgumentException">
         The value is longer than <see cref="F:System.UInt16.MaxValue" />.
       </exception>
-      <seealso href="/sql/connect/ado-net/sql/query-notifications-sql-server">
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">
         Using Query Notifications
       </seealso>
     </UserData>

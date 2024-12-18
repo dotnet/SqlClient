@@ -65,6 +65,7 @@ stages:
                     ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                       ${{ if eq(x86TF, targetFramework) }}:
                         enableX86Test: true
+                        enableX64Test: false
             - ${{ else }}: # .NET
               - ${{ each useManagedSNI in config.value.useManagedSNI }}:
                 - template: ../jobs/ci-run-tests-job.yml@self
@@ -93,6 +94,7 @@ stages:
                       ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
                         ${{ if eq(x86TF, targetFramework) }}:
                           enableX86Test: true
+                          enableX64Test: false
 
 - ${{ if ne(length(parameters.postTestJobs), 0) }}:
   - stage: Post_Test

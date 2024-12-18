@@ -2884,7 +2884,7 @@
     <value>Контекстное подключение не поддерживает Type System Version=SQL Server 2000.</value>
   </data>
   <data name="SQL_ContextConnectionIsUnsupported" xml:space="preserve">
-    <value>Connecting to the context connection using Microsoft.Data.SqlClient is not supported.</value>
+    <value>Подключение к контексту с помощью Microsoft.Data.SqlClient не поддерживается.</value>
   </data>
   <data name="SQL_ContextConnectionIsInUse" xml:space="preserve">
     <value>Контекстное подключение уже используется.</value>

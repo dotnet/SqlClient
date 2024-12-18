@@ -9,13 +9,13 @@
           <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> is ideal for caching scenarios, where your ASP.NET application or middle-tier service needs to keep certain information cached in memory. <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> allows you to receive notifications when the original data in the database changes so that the cache can be refreshed.
         </para>
         <para>
-          To set up a dependency, you need to associate a <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object to one or more <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> objects. To receive notifications, you need to subscribe to the <see cref="E:Microsoft.Data.SqlClient.SqlDependency.OnChange" /> event. For more information about the requirements for creating queries for notifications, see <see href="/sql/relational-databases/native-client/features/working-with-query-notifications">Working with Query Notifications</see>.
+          To set up a dependency, you need to associate a <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object to one or more <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> objects. To receive notifications, you need to subscribe to the <see cref="E:Microsoft.Data.SqlClient.SqlDependency.OnChange" /> event. For more information about the requirements for creating queries for notifications, see <see href="https://learn.microsoft.com/sql/relational-databases/native-client/features/working-with-query-notifications">Working with Query Notifications</see>.
         </para>
         <note type="note">
-          <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> was designed to be used in ASP.NET or middle-tier services where there is a relatively small number of servers having dependencies active against the database. It was not designed for use in client applications, where hundreds or thousands of client computers would have <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> objects set up for a single database server. If you are developing an application where you need reliable sub-second notifications when data changes, review the sections <see href="https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#planning-an-efficient-query-notifications-strategy">Planning an Effective Query Notifications Strategy</see> and <see href="https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#alternatives-to-query-notifications">Alternatives to Query Notifications</see> in the <see href="https://docs.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v%3dsql.105)">article</see>
+          <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> was designed to be used in ASP.NET or middle-tier services where there is a relatively small number of servers having dependencies active against the database. It was not designed for use in client applications, where hundreds or thousands of client computers would have <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> objects set up for a single database server. If you are developing an application where you need reliable sub-second notifications when data changes, review the sections <see href="https://learn.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#planning-an-efficient-query-notifications-strategy">Planning an Effective Query Notifications Strategy</see> and <see href="https://learn.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)#alternatives-to-query-notifications">Alternatives to Query Notifications</see> in the <see href="https://learn.microsoft.com/previous-versions/sql/sql-server-2008-r2/ms187528(v=sql.105)">article</see>
         </note>
         <para>
-          For more information, see <see href="/sql/connect/ado-net/sql/query-notifications-sql-server">Query Notifications in SQL Server</see> and <see href="https://docs.microsoft.com/previous-versions/sql/sql-server-2005/ms171065(v%3dsql.90)">Building Notification Solutions</see>.
+          For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/query-notifications-sql-server">Query Notifications in SQL Server</see> and <see href="https://learn.microsoft.com/previous-versions/sql/sql-server-2005/ms171065(v=sql.90)">Building Notification Solutions</see>.
         </para>
         <note type="note">
           The <see cref="E:Microsoft.Data.SqlClient.SqlDependency.OnChange" /> event may be generated on a different thread from the thread that initiated command execution.
@@ -34,7 +34,7 @@
           The constructor initializes the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object using the default Service Broker service name and time-out. At some point after construction, you must use the <see cref="M:Microsoft.Data.SqlClient.SqlDependency.AddCommandDependency(Microsoft.Data.SqlClient.SqlCommand)" /> method to associate one or more commands to this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> object.
         </para>
         <para>
-          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
+          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="https://learn.microsoft.com/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
         </para>
       </remarks>
     </ctor2>
@@ -50,7 +50,7 @@
           Internally, this constructor creates an instance of the <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> class, and binds it to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
         <para>
-          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
+          Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="https://learn.microsoft.com/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
         </para>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
@@ -74,7 +74,7 @@
         Creates a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> class, associates it with the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> parameter, and specifies notification options and a time-out value.
       </summary>
       <remarks>
-        Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
+        Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="https://learn.microsoft.com/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         The <paramref name="command" /> parameter is NULL.
@@ -101,7 +101,7 @@
         Associates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object with this <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> instance.
       </summary>
       <remarks>
-        Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
+        Query notifications are supported only for SELECT statements that meet a list of specific requirements. For more information, see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/sql-server-service-broker">SQL Server Service Broker</see> and <see href="https://learn.microsoft.com/sql/connect/oledb/features/working-with-query-notifications">Working with Query Notifications</see>.
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         The <paramref name="command" /> parameter is null.

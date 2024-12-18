@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
     using PacketHandle = IntPtr;
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 #endif
-
+    
     sealed internal class LastIOTimer
     {
         internal long _value;

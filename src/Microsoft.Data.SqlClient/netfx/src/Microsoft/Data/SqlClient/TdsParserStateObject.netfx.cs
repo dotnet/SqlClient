@@ -11,6 +11,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -81,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             // Determine packet size based on physical connection buffer lengths.
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
             SQLDNSInfo cachedDNSInfo;
 
             SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
@@ -234,9 +235,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
+        private ConsumerInfo CreateConsumerInfo(bool async)
         {
-            SNINativeMethodWrapper.ConsumerInfo myInfo = new SNINativeMethodWrapper.ConsumerInfo();
+            ConsumerInfo myInfo = new ConsumerInfo();
 
             Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
 
@@ -266,7 +267,7 @@ namespace Microsoft.Data.SqlClient
             string cachedFQDN,
             string hostNameInCertificate = "")
         {
-            SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             // serverName : serverInfo.ExtendedServerName
             // may not use this serverName as key
@@ -284,20 +285,20 @@ namespace Microsoft.Data.SqlClient
         {
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
             PacketHandle readPacket = default;
-            error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
+            error = SniNativeWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
             return readPacket;
         }
 
         internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             PacketHandle readPacket = default;
-            error = SNINativeMethodWrapper.SNIReadAsync(handle.NativeHandle, ref readPacket);
+            error = SniNativeWrapper.SNIReadAsync(handle.NativeHandle, ref readPacket);
             return readPacket;
         }
 
-        internal uint CheckConnection() => SNINativeMethodWrapper.SNICheckConnection(Handle);
+        internal uint CheckConnection() => SniNativeWrapper.SNICheckConnection(Handle);
 
-        internal void ReleasePacket(PacketHandle syncReadPacket) => SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
+        internal void ReleasePacket(PacketHandle syncReadPacket) => SniNativeWrapper.SNIPacketRelease(syncReadPacket);
         
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
@@ -415,7 +416,7 @@ namespace Microsoft.Data.SqlClient
                 SNIHandle handle = Handle;
                 if (handle != null)
                 {
-                    error = SNINativeMethodWrapper.SNICheckConnection(handle);
+                    error = SniNativeWrapper.SNICheckConnection(handle);
                 }
             }
             finally
@@ -1125,7 +1126,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                sniError = SNINativeMethodWrapper.SNIWritePacket(handle, packet, sync);
+                sniError = SniNativeWrapper.SNIWritePacket(handle, packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -1237,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
                 SNIPacket attnPacket = new SNIPacket(Handle);
                 _sniAsyncAttnPacket = attnPacket;
 
-                SNINativeMethodWrapper.SNIPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
+                SniNativeWrapper.SNIPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -1301,7 +1302,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Prepare packet, and write to packet.
             SNIPacket packet = GetResetWritePacket();
-            SNINativeMethodWrapper.SNIPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
+            SniNativeWrapper.SNIPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
@@ -1356,7 +1357,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SNINativeMethodWrapper.SNIPacketReset(Handle, SNINativeMethodWrapper.IOType.WRITE, _sniPacket, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                SniNativeWrapper.SNIPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

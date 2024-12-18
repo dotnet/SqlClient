@@ -2,7 +2,7 @@
   <members name="SqlParameter">
     <SqlParameter>
       <summary>
-        Represents a parameter to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and optionally its mapping to <see cref="T:System.Data.DataSet" /> columns. This class cannot be inherited. For more information on parameters, see <see href="/sql/connect/ado-net/configure-parameters">Configuring parameters</see>
+        Represents a parameter to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and optionally its mapping to <see cref="T:System.Data.DataSet" /> columns. This class cannot be inherited. For more information on parameters, see <see href="https://learn.microsoft.com/sql/connect/ado-net/configure-parameters">Configuring parameters</see>
       </summary>
       <remarks>
         <para>
@@ -12,7 +12,7 @@
           Nameless, also called ordinal, parameters are not supported by the .NET Framework Data Provider for SQL Server.
         </note>
         <para>
-          For more information, along with additional sample code demonstrating how to use parameters, see <see href="/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
+          For more information, along with additional sample code demonstrating how to use parameters, see <see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
         </para>
       </remarks>
       <example>
@@ -20,7 +20,7 @@
           The following example creates multiple instances of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> through the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" /> collection within the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />. These parameters are used to select data from the data source and put the data in the <see cref="T:System.Data.DataSet" />.
         </para>
         <para>
-          This example assumes that a <see cref="T:System.Data.DataSet" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have already been created by using the appropriate schema, commands, and connection. For more information and additional examples on using parameters, see <see href="/sql/connect/ado-net/retrieving-modifying-data">Retrieving and Modifying Data in ADO.NET</see> and <see href="/sql/connect/ado-net/configure-parameters">Configuring parameters</see>.
+          This example assumes that a <see cref="T:System.Data.DataSet" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have already been created by using the appropriate schema, commands, and connection. For more information and additional examples on using parameters, see <see href="https://learn.microsoft.com/sql/connect/ado-net/retrieving-modifying-data">Retrieving and Modifying Data in ADO.NET</see> and <see href="https://learn.microsoft.com/sql/connect/ado-net/configure-parameters">Configuring parameters</see>.
         </para>
         <!-- SqlParameterCollection_Add6 -->
         <code language="c#">
@@ -427,7 +427,7 @@
           The <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> changes the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> to a supporting <see cref="T:System.Data.SqlDbType" />.
         </para>
         <para>
-          For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
+          For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
         </para>
       </remarks>
       <example>
@@ -483,9 +483,9 @@
           The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <list type="bullet">
-          <item><see href="/sql/connect/ado-net/commands-parameters">Commands and Parameters</see></item>
-          <item><see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see></item>
-          <item><see href="/sql/connect/ado-net/sql/">SQL Server and ADO.NET</see></item>
+          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see></item>
+          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see></item>
+          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/sql/">SQL Server and ADO.NET</see></item>
         </list>
       </example>
       <exception cref="T:System.ArgumentException">
@@ -494,7 +494,7 @@
     </Direction>
     <ForceColumnEncryption>
       <summary>
-        Enforces encryption of a parameter when using <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>. If SQL Server informs the driver that the parameter does not need to be encrypted, the query using the parameter will fail. This property provides additional protection against security attacks that involve a compromised SQL Server providing incorrect encryption metadata to the client, which may lead to data disclosure.
+        Enforces encryption of a parameter when using <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>. If SQL Server informs the driver that the parameter does not need to be encrypted, the query using the parameter will fail. This property provides additional protection against security attacks that involve a compromised SQL Server providing incorrect encryption metadata to the client, which may lead to data disclosure.
       </summary>
       <value>
         <see langword="true" /> if the parameter has a force column encryption; otherwise, <see langword="false" />.
@@ -742,7 +742,7 @@
           For fixed length data types, the value of <b>Size</b> is ignored. It can be retrieved for informational purposes, and returns the maximum amount of bytes the provider uses when transmitting the value of the parameter to the server.
         </para>
         <para>
-          For information about streaming, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For information about streaming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <example>
@@ -774,7 +774,7 @@
           When <b>SourceColumn</b> is set to anything other than an empty string, the value of the parameter is retrieved from the column with the <b>SourceColumn</b> name. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> is set to <see cref="F:System.Data.ParameterDirection.Input" />, the value is taken from the <see cref="T:System.Data.DataSet" />. If <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> is set to <see cref="F:System.Data.ParameterDirection.Output" />, the value is taken from the data source. A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Direction" /> of <see cref="F:System.Data.ParameterDirection.InputOutput" /> is a combination of both.
         </para>
         <para>
-          For more information about how to use the <b>SourceColumn</b> property, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see> and <see href="/sql/connect/ado-net/update-data-sources-with-dataadapters">Updating Data Sources with DataAdapters</see>.
+          For more information about how to use the <b>SourceColumn</b> property, see <see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see> and <see href="https://learn.microsoft.com/sql/connect/ado-net/update-data-sources-with-dataadapters">Updating Data Sources with DataAdapters</see>.
         </para>
       </remarks>
       <example>
@@ -853,10 +853,10 @@
           The <b>SqlDbType</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> are linked. Therefore, setting the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.DbType" /> changes the <b>SqlDbType</b> to a supporting <see cref="T:System.Data.SqlDbType" />.
         </para>
         <para>
-          For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
+          For a list of the supported data types, see the appropriate <see cref="T:System.Data.SqlDbType" /> member. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see>.
         </para>
         <para>
-          For information about streaming, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For information about streaming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
     </SqlDbType>
@@ -887,7 +887,7 @@
           Use the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property to return parameter values as common language runtime (CLR) types.
         </para>
         <para>
-          For information about streaming, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For information about streaming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
     </SqlValue>
@@ -926,7 +926,7 @@
         A <see cref="T:System.String" /> that represents the fully qualified name of a user-defined type in the database.
       </value>
       <remarks>
-        For a sample demonstrating <b>UdtTypeName</b>, see <see href="https://msdn.microsoft.com/library/ms131080.aspx">Retrieving UDT Data</see>.
+        For a sample demonstrating <b>UdtTypeName</b>, see <see href="https://learn.microsoft.com/sql/relational-databases/clr-integration-database-objects-user-defined-types/accessing-user-defined-types-retrieving-udt-data">Retrieving UDT Data</see>.
       </remarks>
     </UdtTypeName>
     <Value>
@@ -956,7 +956,7 @@
           The <b>Value</b> property is overwritten by <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />.
         </para>
         <para>
-          For information about streaming, see <see href="/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
+          For information about streaming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
         </para>
       </remarks>
       <example>

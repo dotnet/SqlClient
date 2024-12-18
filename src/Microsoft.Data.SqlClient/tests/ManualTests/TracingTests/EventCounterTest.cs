@@ -152,6 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // clean pools and pool groups
             ClearConnectionPools();
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1 };
+            stringBuilder.ConnectTimeout = Math.Max(stringBuilder.ConnectTimeout, 30);
 
             long rc = SqlClientEventSourceProps.ReclaimedConnections;
 
