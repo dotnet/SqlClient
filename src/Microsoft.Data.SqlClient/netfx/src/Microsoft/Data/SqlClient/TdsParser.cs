@@ -3970,6 +3970,8 @@ namespace Microsoft.Data.SqlClient
             _is2008 |= _is2012;
             _is2005 |= _is2008;
 
+            a.isVersion8 = _is2005;
+
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
             result = stateObj.TryReadByte(out len);
