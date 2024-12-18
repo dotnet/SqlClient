@@ -3252,13 +3252,13 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-                long longCount;
-                result = stateObj.TryReadInt64(out longCount);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-                count = (int)longCount;
+            long longCount;
+            result = stateObj.TryReadInt64(out longCount);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            count = (int)longCount;
 
             // We get a done token with the attention bit set
             if (TdsEnums.DONE_ATTN == (status & TdsEnums.DONE_ATTN))
@@ -4294,11 +4294,11 @@ namespace Microsoft.Data.SqlClient
             uint userType;
 
             // read user type - 4 bytes 2005, 2 backwards
-                result = stateObj.TryReadUInt32(out userType);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
+            result = stateObj.TryReadUInt32(out userType);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
 
             // Read off the flags.
             // The first byte is ignored since it doesn't contain any interesting information.
@@ -5269,88 +5269,88 @@ namespace Microsoft.Data.SqlClient
 
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
             col.type = col.metaType.SqlDbType;
-                col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
+            col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
 
-                if (TdsEnums.SQLUDT == tdsType)
+            if (TdsEnums.SQLUDT == tdsType)
+            {
+                result = TryProcessUDTMetaData((SqlMetaDataPriv)col, stateObj);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = TryProcessUDTMetaData((SqlMetaDataPriv)col, stateObj);
+                    return result;
+                }
+            }
+
+            if (col.length == TdsEnums.SQL_USHORTVARMAXLEN)
+            {
+                Debug.Assert(tdsType == TdsEnums.SQLXMLTYPE ||
+                             tdsType == TdsEnums.SQLBIGVARCHAR ||
+                             tdsType == TdsEnums.SQLBIGVARBINARY ||
+                             tdsType == TdsEnums.SQLNVARCHAR ||
+                             tdsType == TdsEnums.SQLUDT,
+                             "Invalid streaming datatype");
+                col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
+                Debug.Assert(col.metaType.IsLong, "Max datatype not IsLong");
+                col.length = Int32.MaxValue;
+                if (tdsType == TdsEnums.SQLXMLTYPE)
+                {
+                    byte schemapresent;
+                    result = stateObj.TryReadByte(out schemapresent);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
                     }
-                }
 
-                if (col.length == TdsEnums.SQL_USHORTVARMAXLEN)
-                {
-                    Debug.Assert(tdsType == TdsEnums.SQLXMLTYPE ||
-                                 tdsType == TdsEnums.SQLBIGVARCHAR ||
-                                 tdsType == TdsEnums.SQLBIGVARBINARY ||
-                                 tdsType == TdsEnums.SQLNVARCHAR ||
-                                 tdsType == TdsEnums.SQLUDT,
-                                 "Invalid streaming datatype");
-                    col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
-                    Debug.Assert(col.metaType.IsLong, "Max datatype not IsLong");
-                    col.length = Int32.MaxValue;
-                    if (tdsType == TdsEnums.SQLXMLTYPE)
+                    if ((schemapresent & 1) != 0)
                     {
-                        byte schemapresent;
-                        result = stateObj.TryReadByte(out schemapresent);
+                        result = stateObj.TryReadByte(out byteLen);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
                         }
-
-                        if ((schemapresent & 1) != 0)
+                        if (col.xmlSchemaCollection is null)
                         {
-                            result = stateObj.TryReadByte(out byteLen);
+                            col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                        }
+                        if (byteLen != 0)
+                        {
+                            result = stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.Database);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
-                            if (col.xmlSchemaCollection is null)
-                            {
-                                col.xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
-                            }
-                            if (byteLen != 0)
-                            {
-                                result = stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.Database);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                            }
+                        }
 
-                            result = stateObj.TryReadByte(out byteLen);
+                        result = stateObj.TryReadByte(out byteLen);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        if (byteLen != 0)
+                        {
+                            result = stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.OwningSchema);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
-                            if (byteLen != 0)
-                            {
-                                result = stateObj.TryReadString(byteLen, out col.xmlSchemaCollection.OwningSchema);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                            }
+                        }
 
-                            short shortLen;
-                            result = stateObj.TryReadInt16(out shortLen);
+                        short shortLen;
+                        result = stateObj.TryReadInt16(out shortLen);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        if (byteLen != 0)
+                        {
+                            result = stateObj.TryReadString(shortLen, out col.xmlSchemaCollection.Name);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
-                            }
-                            if (byteLen != 0)
-                            {
-                                result = stateObj.TryReadString(shortLen, out col.xmlSchemaCollection.Name);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
                             }
                         }
                     }
                 }
+            }
 
             if (col.type == SqlDbType.Decimal)
             {
@@ -5479,13 +5479,13 @@ namespace Microsoft.Data.SqlClient
             // Read tablename if present
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
-                    int unusedLen = 0xFFFF;      //We ignore this value
-                    result = TryProcessOneTable(stateObj, ref unusedLen, out col.multiPartTableName);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
+                int unusedLen = 0xFFFF;      //We ignore this value
+                result = TryProcessOneTable(stateObj, ref unusedLen, out col.multiPartTableName);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
                 }
+            }
 
             // Read the TCE column cryptoinfo
             if (fColMD && IsColumnEncryptionSupported && col.isEncrypted)
@@ -5679,85 +5679,85 @@ namespace Microsoft.Data.SqlClient
 
             multiPartTableName = default(MultiPartTableName);
 
-                mpt = new MultiPartTableName();
-                byte nParts;
+            mpt = new MultiPartTableName();
+            byte nParts;
 
-                // Find out how many parts in the TDS stream
-                TdsOperationStatus result = stateObj.TryReadByte(out nParts);
+            // Find out how many parts in the TDS stream
+            TdsOperationStatus result = stateObj.TryReadByte(out nParts);
+            if (result != TdsOperationStatus.Done)
+            {
+                return result;
+            }
+            length--;
+            if (nParts == 4)
+            {
+                result = stateObj.TryReadUInt16(out tableLen);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
                 }
-                length--;
-                if (nParts == 4)
+                length -= 2;
+                result = stateObj.TryReadString(tableLen, out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = stateObj.TryReadUInt16(out tableLen);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    length -= 2;
-                    result = stateObj.TryReadString(tableLen, out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    mpt.ServerName = value;
-                    nParts--;
-                    length -= (tableLen * 2); // wide bytes
+                    return result;
                 }
-                if (nParts == 3)
+                mpt.ServerName = value;
+                nParts--;
+                length -= (tableLen * 2); // wide bytes
+            }
+            if (nParts == 3)
+            {
+                result = stateObj.TryReadUInt16(out tableLen);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = stateObj.TryReadUInt16(out tableLen);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    length -= 2;
-                    result = stateObj.TryReadString(tableLen, out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    mpt.CatalogName = value;
-                    length -= (tableLen * 2); // wide bytes
-                    nParts--;
+                    return result;
                 }
-                if (nParts == 2)
+                length -= 2;
+                result = stateObj.TryReadString(tableLen, out value);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = stateObj.TryReadUInt16(out tableLen);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    length -= 2;
-                    result = stateObj.TryReadString(tableLen, out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    mpt.SchemaName = value;
-                    length -= (tableLen * 2); // wide bytes
-                    nParts--;
+                    return result;
                 }
-                if (nParts == 1)
+                mpt.CatalogName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            if (nParts == 2)
+            {
+                result = stateObj.TryReadUInt16(out tableLen);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = stateObj.TryReadUInt16(out tableLen);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    length -= 2;
-                    result = stateObj.TryReadString(tableLen, out value);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    mpt.TableName = value;
-                    length -= (tableLen * 2); // wide bytes
-                    nParts--;
+                    return result;
                 }
-                Debug.Assert(nParts == 0, "ProcessTableName:Unidentified parts in the table name token stream!");
+                length -= 2;
+                result = stateObj.TryReadString(tableLen, out value);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+                mpt.SchemaName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            if (nParts == 1)
+            {
+                result = stateObj.TryReadUInt16(out tableLen);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+                length -= 2;
+                result = stateObj.TryReadString(tableLen, out value);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+                mpt.TableName = value;
+                length -= (tableLen * 2); // wide bytes
+                nParts--;
+            }
+            Debug.Assert(nParts == 0, "ProcessTableName:Unidentified parts in the table name token stream!");
 
             multiPartTableName = mpt;
             return TdsOperationStatus.Done;
