@@ -535,7 +535,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+            return SniNativeWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private void ChangeNetworkPacketTimeout(int dueTime, int period)
