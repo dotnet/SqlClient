@@ -5170,7 +5170,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && ((tdsType != TdsEnums.SQLJSON)))
+            if (col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE) && (tdsType != TdsEnums.SQLJSON))
             {
                 result = TryProcessCollation(stateObj, out col.collation);
                 if (result != TdsOperationStatus.Done)
@@ -9424,8 +9424,7 @@ namespace Microsoft.Data.SqlClient
                                 continue;
                             }
 
-                            if ((!_is2005 && !mt.Is80Supported) ||
-                                (!_is2008 && !mt.Is90Supported))
+                            if (!_is2008 && !mt.Is90Supported)
                             {
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
@@ -9790,8 +9789,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbType.Udt)
                 {
-                    Debug.Assert(_is2005, "Invalid DataType UDT for non-2005 or later server!");
-
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
                     SqlServer.Server.Format format = SqlServer.Server.Format.Native;
@@ -9884,7 +9881,7 @@ namespace Microsoft.Data.SqlClient
                 else if ((!mt.IsVarTime) && (mt.SqlDbType != SqlDbType.Date))
                 {   // Time, Date, DateTime2, DateTimeoffset do not have the size written out
                     maxsize = (size > actualSize) ? size : actualSize;
-                    if (maxsize == 0 && _is2005)
+                    if (maxsize == 0)
                     {
                         // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
                         if (mt.IsNCharType)
@@ -11217,8 +11214,6 @@ namespace Microsoft.Data.SqlClient
         // Write query notificaiton header data, not including the notificaiton header length
         private void WriteQueryNotificationHeaderData(SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj)
         {
-            Debug.Assert(_is2005, "WriteQueryNotificationHeaderData called on a non-2005 server");
-
             // We may need to update the notification header length if the header is changed in the future
 
             Debug.Assert(notificationRequest != null, "notificationRequest is null");
@@ -13277,16 +13272,15 @@ namespace Microsoft.Data.SqlClient
                                        + "         _connHandler = {14}\n\t"
                                        + "         _fMARS = {15}\n\t"
                                        + "         _sessionPool = {16}\n\t"
-                                       + "         _is2005 = {17}\n\t"
-                                       + "         _sniSpnBuffer = {18}\n\t"
-                                       + "         _errors = {19}\n\t"
-                                       + "         _warnings = {20}\n\t"
-                                       + "         _attentionErrors = {21}\n\t"
-                                       + "         _attentionWarnings = {22}\n\t"
-                                       + "         _statistics = {23}\n\t"
-                                       + "         _statisticsIsInTransaction = {24}\n\t"
-                                       + "         _fPreserveTransaction = {25}"
-                                       + "         _fParallel = {26}"
+                                       + "         _sniSpnBuffer = {17}\n\t"
+                                       + "         _errors = {18}\n\t"
+                                       + "         _warnings = {19}\n\t"
+                                       + "         _attentionErrors = {20}\n\t"
+                                       + "         _attentionWarnings = {21}\n\t"
+                                       + "         _statistics = {22}\n\t"
+                                       + "         _statisticsIsInTransaction = {23}\n\t"
+                                       + "         _fPreserveTransaction = {24}"
+                                       + "         _fParallel = {25}"
                                        ;
         internal string TraceString()
         {
@@ -13309,7 +13303,6 @@ namespace Microsoft.Data.SqlClient
                            _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                            _fMARS ? bool.TrueString : bool.FalseString,
                            _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                           _is2005 ? bool.TrueString : bool.FalseString,
                            _sniSpnBuffer == null ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
