@@ -991,7 +991,7 @@ namespace Microsoft.Data.SqlClient
                 _messageStatus = Packet.GetStatusFromHeader(header);
                 _inBytesPacket = Packet.GetDataLengthFromHeader(header);
                 _spid = Packet.GetSpidFromHeader(header);
-#if NET6_0_OR_GREATER
+#if NET
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
 #endif
                 _inBytesUsed += _inputHeaderLen;
