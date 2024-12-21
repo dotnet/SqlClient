@@ -277,6 +277,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Throws<InvalidCastException>(() => record.SetValue(1, "2"));
         }
+
         [Fact]
         public void GetName_ReturnsNameOfColumn()
         {
