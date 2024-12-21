@@ -333,6 +333,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(1, record.GetOrdinal("col2"));
         }
+
         [Fact]
         public void GetOrdinal_ReturnsIndexOfColumn_CaseInsensitive()
         {
