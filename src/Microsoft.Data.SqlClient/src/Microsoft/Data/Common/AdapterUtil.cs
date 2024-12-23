@@ -750,16 +750,20 @@ namespace Microsoft.Data.Common
 
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string FABRIC_DATAWAREHOUSE = ".datawarehouse.fabric.microsoft.com";
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+            return IsEndpoint(dataSource, ONDEMAND_PREFIX) 
+                || dataSource.Contains(AZURE_SYNAPSE)
+                || dataSource.Contains(FABRIC_DATAWAREHOUSE);
         }
 
         internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
+                                                                        StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint),
+                                                                        ".database.fabric.microsoft.com"};
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
