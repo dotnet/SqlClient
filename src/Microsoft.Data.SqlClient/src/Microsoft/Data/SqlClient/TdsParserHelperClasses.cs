@@ -305,9 +305,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
-#if !NETFRAMEWORK
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
-#endif
 
         private int _hiddenColumnCount;
         private int[] _visibleColumnMap;
@@ -327,11 +325,9 @@ namespace Microsoft.Data.SqlClient
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-#if !NETFRAMEWORK
             dbColumnSchema = original.dbColumnSchema;
-#else
             schemaTable = original.schemaTable;
-#endif
+
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
