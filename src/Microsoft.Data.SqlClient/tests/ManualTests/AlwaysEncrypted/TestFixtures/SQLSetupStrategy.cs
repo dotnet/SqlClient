@@ -9,15 +9,15 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.TestFixtures.Setup;
+using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SQLSetupStrategy : IDisposable
+    public class SQLSetupStrategy : ColumnMasterKeyCertificateFixture
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        protected static X509Certificate2 certificate;
-        public string keyPath { get; internal set; }
+        public string ColumnMasterKeyPath { get; protected set; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
@@ -59,15 +59,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Dictionary<string, string> sqlBulkTruncationTableNames = new Dictionary<string, string>();
 
         public SQLSetupStrategy()
+            : base()
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
-            keyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", certificate.Thumbprint);
+            ColumnMasterKeyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", ColumnMasterKeyCertificate.Thumbprint);
         }
 
-        protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
+        protected SQLSetupStrategy(string customKeyPath)
+            : base()
+        {
+            ColumnMasterKeyPath = customKeyPath;
+        }
 
         internal virtual void SetupDatabase()
         {
@@ -259,13 +260,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected string GenerateUniqueName(string baseName) => string.Concat("AE-", baseName, "-", Guid.NewGuid().ToString());
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             databaseObjects.Reverse();
             foreach (string value in DataTestUtility.AEConnStringsSetup)
@@ -276,6 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
+            base.Dispose(disposing);
         }
     }
 

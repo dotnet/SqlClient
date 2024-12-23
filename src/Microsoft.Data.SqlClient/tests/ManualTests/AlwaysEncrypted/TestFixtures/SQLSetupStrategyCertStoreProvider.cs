@@ -20,12 +20,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SetupDatabase();
         }
 
-        protected SQLSetupStrategyCertStoreProvider(string customKeyPath) => keyPath = customKeyPath;
+        protected SQLSetupStrategyCertStoreProvider(string customKeyPath) : base(customKeyPath)
+        { }
 
         internal override void SetupDatabase()
         {
-            CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
-            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, false);
+            CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), ColumnMasterKeyCertificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), ColumnMasterKeyCertificate.Thumbprint, CertStoreProvider, false);
             databaseObjects.Add(CspColumnMasterKey);
             databaseObjects.Add(DummyMasterKey);
 

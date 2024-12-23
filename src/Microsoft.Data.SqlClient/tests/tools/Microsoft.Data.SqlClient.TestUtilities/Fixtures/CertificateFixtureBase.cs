@@ -99,7 +99,7 @@ $sAN = @({3})
 
 try
 {{
-    $x509 = New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
+    $x509 = PKI\New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
         -CertStoreLocation ""Cert:\CurrentUser\My"" -NotBefore $notBefore -NotAfter $notAfter `
         -KeyExportPolicy Exportable -HashAlgorithm SHA256
 
@@ -198,7 +198,13 @@ catch [Exception]
             storeContext.Certificates.Add(cert);
         }
 
-        public virtual void Dispose()
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             foreach (CertificateStoreContext storeContext in _certificateStoreModifications)
             {

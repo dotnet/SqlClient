@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         internal override void SetupDatabase()
         {
-            ColumnMasterKey columnMasterKey = new CspProviderColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, keyPath);
+            ColumnMasterKey columnMasterKey = new CspProviderColumnMasterKey(GenerateUniqueName("CspExt"), SqlColumnEncryptionCspProvider.ProviderName, ColumnMasterKeyPath);
             databaseObjects.Add(columnMasterKey);
 
             List<ColumnEncryptionKey> columnEncryptionKeys = CreateColumnEncryptionKeys(columnMasterKey, 2, keyStoreProvider);

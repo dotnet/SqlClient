@@ -7,14 +7,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class TestTrustedMasterKeyPaths : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        private SQLSetupStrategyCertStoreProvider fixture;
+        private readonly string dummyThumbprint;
         private readonly string tableName;
         private readonly string columnMasterKeyPath;
 
         public TestTrustedMasterKeyPaths(SQLSetupStrategyCertStoreProvider fixture)
         {
-            columnMasterKeyPath = string.Format(@"{0}/{1}/{2}", StoreLocation.CurrentUser.ToString(), @"my", CertificateUtility.CreateCertificate().Thumbprint);
-            this.fixture = fixture;
+            dummyThumbprint = new string('F', fixture.ColumnMasterKeyCertificate.Thumbprint.Length);
+            columnMasterKeyPath = fixture.ColumnMasterKeyPath;
             tableName = fixture.TrustedMasterKeyPathsTestTable.Name;
         }
 
@@ -152,8 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Add some random key paths
             foreach (char c in new char[] { 'A', 'B' })
             {
-                string tempThumbprint = new string('F', CertificateUtility.CreateCertificate().Thumbprint.Length);
-                string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), tempThumbprint);
+                string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint);
                 server1TrustedKeyPaths.Add(invalidKeyPath);
             }
 
@@ -277,8 +276,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Prepare dictionary with invalid key path
             List<string> invalidKeyPathList = new List<string>();
-            string tempThumbprint = new string('F', CertificateUtility.CreateCertificate().Thumbprint.Length);
-            string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), tempThumbprint);
+            string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint);
             invalidKeyPathList.Add(invalidKeyPath);
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, invalidKeyPathList);
 

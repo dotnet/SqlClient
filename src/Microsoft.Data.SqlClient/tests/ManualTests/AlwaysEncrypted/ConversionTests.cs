@@ -14,11 +14,12 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public sealed class ConversionTests : IDisposable
+    public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -29,7 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private static X509Certificate2 certificate;
+        private X509Certificate2 certificate;
         private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -54,12 +55,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             public bool UseMax { get; set; }
         }
 
-        public ConversionTests()
+        public ConversionTests(ColumnMasterKeyCertificateFixture fixture)
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
+            certificate = fixture.ColumnMasterKeyCertificate;
             columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
             _databaseObjects.Add(columnMasterKey);
 

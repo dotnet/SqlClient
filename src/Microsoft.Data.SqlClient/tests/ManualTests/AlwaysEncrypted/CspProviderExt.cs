@@ -188,7 +188,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
                                                                 sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                    Console.WriteLine(@"Exception: {0}");
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
                     using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
