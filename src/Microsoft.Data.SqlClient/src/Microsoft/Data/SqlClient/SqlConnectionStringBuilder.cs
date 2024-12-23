@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient
         private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
         private string _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
 #else
-        internal const int DeprecatedKeywordsCount = 5;
+        internal const int DeprecatedKeywordsCount = 2;
 #endif
         #endregion //Fields
 
