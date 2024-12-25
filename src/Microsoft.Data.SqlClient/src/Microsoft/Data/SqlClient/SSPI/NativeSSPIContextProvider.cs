@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
                         // use local for ref param to defer setting s_maxSSPILength until we know the call succeeded.
                         uint maxLength = 0;
 
-                        if (0 != SniNativeWrapper.SNISecInitPackage(ref maxLength))
+                        if (0 != SniNativeWrapper.SniSecInitPackage(ref maxLength))
                             SSPIError(SQLMessage.SSPIInitializeError(), TdsEnums.INIT_SSPI_PACKAGE);
 
                         s_maxSSPILength = maxLength;
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_physicalStateObj.SessionHandle.Type == SessionHandle.NativeHandleType);
             SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 #endif
-            if (0 != SniNativeWrapper.SNISecGenClientContext(handle, receivedBuff.Span, sendBuff, ref sendLength, _sniSpnBuffer[0]))
+            if (0 != SniNativeWrapper.SniSecGenClientContext(handle, receivedBuff.Span, sendBuff, ref sendLength, _sniSpnBuffer[0]))
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
             }
