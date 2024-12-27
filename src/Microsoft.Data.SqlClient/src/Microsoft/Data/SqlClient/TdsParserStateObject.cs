@@ -2574,10 +2574,14 @@ namespace Microsoft.Data.SqlClient
             return isAlive;
         }
 
-        
-
-        // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
-        internal string DumpBuffer() {
+        /// <summary>
+        /// Creates a human-readable message containing the <c>_inBytesRead</c>, <c>_inBytesUsed</c> counters
+        /// and the used and unused portions of the <c>_inBuff</c> array to help diagnosing problems with
+        /// packet parsing.
+        /// </summary>
+        /// <returns></returns>
+        internal string DumpBuffer() 
+        {
             StringBuilder buffer = new StringBuilder(128);
             buffer.AppendLine("dumping buffer");
             buffer.AppendFormat("_inBytesRead = {0}", _inBytesRead).AppendLine();
@@ -2585,7 +2589,8 @@ namespace Microsoft.Data.SqlClient
             int cc = 0; // character counter
             int i;
             buffer.AppendLine("used buffer:");
-            for (i=0; i< _inBytesUsed; i++) {
+            for (i=0; i< _inBytesUsed; i++) 
+            {
                 if (cc==16) {
                     buffer.AppendLine();
                     cc = 0;
@@ -2593,27 +2598,30 @@ namespace Microsoft.Data.SqlClient
                 buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
-            if (cc>0) {
+            if (cc>0) 
+            {
                 buffer.AppendLine();
             }
 
             cc = 0;
             buffer.AppendLine("unused buffer:");
-            for (i=_inBytesUsed; i<_inBytesRead; i++) {
-                if (cc==16) {
+            for (i=_inBytesUsed; i<_inBytesRead; i++) 
+            {
+                if (cc==16) 
+                {
                     buffer.AppendLine();
                     cc = 0;
                 }
                 buffer.AppendFormat("{0,-2:X2} ", _inBuff[i]);
                 cc++;
             }
-            if (cc>0) {
+            if (cc>0) 
+            {
                 buffer.AppendLine();
             }
             return buffer.ToString();
         }
         
-
         internal void SetSnapshot()
         {
             StateSnapshot snapshot = _snapshot;
