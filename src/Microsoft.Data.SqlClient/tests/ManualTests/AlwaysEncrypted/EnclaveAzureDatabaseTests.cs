@@ -14,7 +14,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     // This test class is for internal use only
-    public sealed class EnclaveAzureDatabaseTests : IDisposable
+    public sealed class EnclaveAzureDatabaseTests : IDisposable, IClassFixture<AzureKeyVaultKeyFixture>
     {
         private ColumnMasterKey akvColumnMasterKey;
         private ColumnEncryptionKey akvColumnEncryptionKey;
@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private List<DbObject> databaseObjects = new List<DbObject>();
         private List<string> connStrings = new List<string>();
 
-        public EnclaveAzureDatabaseTests()
+        public EnclaveAzureDatabaseTests(AzureKeyVaultKeyFixture keyVaultKeyFixture)
         {
             if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
                 }
 
-                akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);
+                akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: keyVaultKeyFixture.GeneratedKeyUri, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);
                 databaseObjects.Add(akvColumnMasterKey);
 
                 akvColumnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("AKVCEK"),

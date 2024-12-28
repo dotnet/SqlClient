@@ -16,6 +16,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class SqlClientCustomTokenCredential : TokenCredential
     {
         private const string DEFAULT_PREFIX = "/.default";
+        private const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+
+        private static string AKVUrl = (new Uri(DataTestUtility.AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
 
         string _authority = "";
         string _resource = "";
@@ -31,11 +34,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Added to reduce HttpClient calls.
             // For multi-user support, a better design can be implemented as needed.
-            if (_akvUrl != DataTestUtility.AKVUrl)
+            if (_akvUrl != AKVUrl)
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    HttpResponseMessage response = await httpClient.GetAsync(DataTestUtility.AKVUrl);
+                    HttpResponseMessage response = await httpClient.GetAsync(AKVUrl);
                     string challenge = response?.Headers.WwwAuthenticate.FirstOrDefault()?.ToString();
                     string trimmedChallenge = ValidateChallenge(challenge);
                     string[] pairs = trimmedChallenge.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
@@ -67,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
                 // Since this is a test, we only create single-instance temp cache
-                _akvUrl = DataTestUtility.AKVUrl;
+                _akvUrl = AKVUrl;
             }
 
             AccessToken accessToken = await AzureActiveDirectoryAuthenticationCallback(_authority, _resource);
