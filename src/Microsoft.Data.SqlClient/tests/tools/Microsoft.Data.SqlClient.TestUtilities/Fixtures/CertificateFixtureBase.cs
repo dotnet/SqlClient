@@ -101,7 +101,7 @@ try
 {{
     $x509 = PKI\New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
         -CertStoreLocation ""Cert:\CurrentUser\My"" -NotBefore $notBefore -NotAfter $notAfter `
-        -KeyExportPolicy Exportable -HashAlgorithm SHA256
+        -KeyExportPolicy Exportable -HashAlgorithm SHA256 -Provider ""Microsoft Enhanced RSA and AES Cryptographic Provider"" -KeySpec KeyExchange
 
     if ($x509 -eq $null)
     {{ throw ""Certificate was null!"" }}
@@ -166,7 +166,7 @@ catch [Exception]
                 // Process completed successfully if it had an exit code of zero, the command output will be the base64-encoded certificate
                 if (psProcess.ExitCode == 0)
                 {
-                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password);
+                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password, X509KeyStorageFlags.Exportable);
                 }
                 else
                 {
