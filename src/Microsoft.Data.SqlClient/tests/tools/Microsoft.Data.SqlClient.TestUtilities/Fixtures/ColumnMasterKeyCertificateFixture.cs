@@ -12,10 +12,18 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
         public X509Certificate2 ColumnMasterKeyCertificate { get; }
 
         public ColumnMasterKeyCertificateFixture()
+            : this(true)
         {
-            ColumnMasterKeyCertificate = CreateCertificate(nameof(ColumnMasterKeyCertificate), Array.Empty<string>(), Array.Empty<string>());
+        }
 
-            AddToStore(ColumnMasterKeyCertificate, StoreLocation.CurrentUser, StoreName.My);
+        protected ColumnMasterKeyCertificateFixture(bool createCertificate)
+        {
+            if (createCertificate)
+            {
+                ColumnMasterKeyCertificate = CreateCertificate(nameof(ColumnMasterKeyCertificate), Array.Empty<string>(), Array.Empty<string>());
+
+                AddToStore(ColumnMasterKeyCertificate, StoreLocation.CurrentUser, StoreName.My);
+            }
         }
     }
 }

@@ -59,13 +59,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Dictionary<string, string> sqlBulkTruncationTableNames = new Dictionary<string, string>();
 
         public SQLSetupStrategy()
-            : base()
+            : base(true)
         {
             ColumnMasterKeyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", ColumnMasterKeyCertificate.Thumbprint);
         }
 
         protected SQLSetupStrategy(string customKeyPath)
-            : base()
+            : base(false)
         {
             ColumnMasterKeyPath = customKeyPath;
         }
@@ -90,6 +90,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // Insert data for TrustedMasterKeyPaths tests.
+                InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
+            }
+        }
+
+        protected void InsertSampleData(string tableName)
+        {
+            foreach(string value in DataTestUtility.AEConnStringsSetup)
+            {
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(value)
                 {
                     ConnectTimeout = 10000
@@ -98,7 +106,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
                 {
                     sqlConn.Open();
-                    DatabaseHelper.InsertCustomerData(sqlConn, null, TrustedMasterKeyPathsTestTable.Name, customer);
+
+                    Table.DeleteData(tableName, sqlConn);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
                 }
             }
         }
@@ -147,9 +157,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
 
-            // columnEncryptionKeys[2] is encrypted with DummyCMK. use this encrypted column to test custom key store providers
-            CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
-            tables.Add(CustomKeyStoreProviderTestTable);
+            if (columnEncryptionKeys.Count > 2)
+            {
+                // columnEncryptionKeys[2] is encrypted with DummyCMK. use this encrypted column to test custom key store providers
+                CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
+                tables.Add(CustomKeyStoreProviderTestTable);
+            }
 
             TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharMaxSource);
