@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// If the packet data has enough bytes available to determine the length amount of data that should be present
+        /// If the packet data has enough bytes available to determine the amount of data that should be present
         /// in the packet then this property will be set to the count of data bytes in the packet, <br />
         /// otherwise this will be -1
         /// </summary>

@@ -2705,30 +2705,6 @@ namespace Microsoft.Data.SqlClient
                         _data = data;
                     }
 
-                    //[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-                    //public PacketData[] Items
-                    //{
-                    //    get
-                    //    {
-                    //        PacketData[] items = Array.Empty<PacketData>();
-                    //        if (_data != null)
-                    //        {
-                    //            int count = 0;
-                    //            for (PacketData current = _data; current != null; current = current?.NextPacket)
-                    //            {
-                    //                count++;
-                    //            }
-                    //            items = new PacketData[count];
-                    //            int index = 0;
-                    //            for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
-                    //            {
-                    //                items[index] = current;
-                    //            }
-                    //        }
-                    //        return items;
-                    //    }
-                    //}
-
                     public string Type {
 
                         get
@@ -2893,26 +2869,6 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
-                //public override string ToString()
-                //{
-                //    string byteString = null;
-                //    if (Buffer != null && Buffer.Length >= 12)
-                //    {
-                //        ReadOnlySpan<byte> bytes = Buffer.AsSpan(0, 12);
-                //        StringBuilder buffer = new StringBuilder(12 * 3 + 10);
-                //        buffer.Append('{');
-                //        for (int index = 0; index < bytes.Length; index++)
-                //        {
-                //            buffer.AppendFormat("{0:X2}", bytes[index]);
-                //            buffer.Append(", ");
-                //        }
-                //        buffer.Append("...");
-                //        buffer.Append('}');
-                //        byteString = buffer.ToString();
-                //    }
-                //    return $"{InternalPacketId}: [{Read}] {byteString} {(NextPacket != null ? @"->" : string.Empty)}";
-                //}
             }
 #endif
 
@@ -2925,8 +2881,8 @@ namespace Microsoft.Data.SqlClient
                 private _SqlMetaDataSet _cleanupMetaData;
                 internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
-                public ulong _longLen;
-                public ulong _longLenLeft;
+                private ulong _longLen;
+                private ulong _longLenLeft;
 
                 internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
                 {
