@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             private static List<ConnectionWorker> s_workerList = new();
             private ManualResetEventSlim _doneEvent = new(false);
             private double _timeElapsed;
-            private Thread _thread;
+            private Task _task;
             private string _connectionString;
             private int _numOfTry;
 
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 s_workerList.Add(this);
                 _connectionString = connectionString;
                 _numOfTry = numOfTry;
-                _thread = new Thread(new ThreadStart(SqlConnectionOpen));
+                _task = new Task(SqlConnectionOpen, TaskCreationOptions.LongRunning);
             }
 
             public static List<ConnectionWorker> WorkerList => s_workerList;
@@ -191,7 +191,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 foreach (ConnectionWorker w in s_workerList)
                 {
-                    w._thread.Start();
+                    w._task.Start();
                 }
             }
 
