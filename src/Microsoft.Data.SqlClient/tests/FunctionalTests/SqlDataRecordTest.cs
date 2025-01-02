@@ -962,6 +962,7 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
     }
+
     [SqlServer.Server.SqlUserDefinedType(SqlServer.Server.Format.UserDefined)]
     public class TestUdt {}
 }
