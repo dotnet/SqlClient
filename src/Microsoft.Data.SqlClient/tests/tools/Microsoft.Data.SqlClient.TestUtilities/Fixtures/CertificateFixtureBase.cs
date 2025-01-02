@@ -13,6 +13,8 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
     public abstract class CertificateFixtureBase : IDisposable
     {
+        private const string CspProviderName = "Microsoft Enhanced RSA and AES Cryptographic Provider";
+
         private sealed class CertificateStoreContext
         {
             public List<X509Certificate2> Certificates { get; }
@@ -31,7 +33,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
         private readonly List<CertificateStoreContext> _certificateStoreModifications = new List<CertificateStoreContext>();
 
-        protected static X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses)
+        protected X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false)
         {
             // This will always generate a certificate with:
             // * Start date: 24hrs ago
@@ -53,7 +55,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 #if NET9_0
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
-            RSA rsaKey = RSA.Create(2048);
+            RSA rsaKey = CreateRSA(forceCsp);
             bool hasSans = false;
 
             subjectBuilder.AddCommonName(subjectName);
@@ -84,7 +86,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
                 return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pkcs12, password), password,
-                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable, new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults) { PreserveStorageProvider = true, PreserveKeyName = true });
             }
 #else
             // The CertificateRequest API is available in .NET Core, but was only added to .NET Framework 4.7.2; it thus can't be used in the test projects.
@@ -99,9 +101,9 @@ $sAN = @({3})
 
 try
 {{
-    $x509 = New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
+    $x509 = PKI\New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
         -CertStoreLocation ""Cert:\CurrentUser\My"" -NotBefore $notBefore -NotAfter $notAfter `
-        -KeyExportPolicy Exportable -HashAlgorithm SHA256
+        -KeyExportPolicy Exportable -HashAlgorithm SHA256 -Provider ""{5}"" -KeySpec KeyExchange
 
     if ($x509 -eq $null)
     {{ throw ""Certificate was null!"" }}
@@ -138,7 +140,7 @@ catch [Exception]
 
             sanString = hasSans ? "\"2.5.29.17={text}" + sanString.Substring(0, sanString.Length - 1) + "\"" : string.Empty;
 
-            formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password);
+            formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password, CspProviderName);
 
             using (Process psProcess = new Process()
             {
@@ -166,7 +168,7 @@ catch [Exception]
                 // Process completed successfully if it had an exit code of zero, the command output will be the base64-encoded certificate
                 if (psProcess.ExitCode == 0)
                 {
-                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password);
+                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password, X509KeyStorageFlags.Exportable);
                 }
                 else
                 {
@@ -175,6 +177,18 @@ catch [Exception]
             }
 #endif
         }
+
+#if NET
+        private static RSA CreateRSA(bool forceCsp)
+        {
+            const int KeySize = 2048;
+            const int CspProviderType = 24;
+
+            return forceCsp && OperatingSystem.IsWindows()
+                ? new RSACryptoServiceProvider(KeySize, new CspParameters(CspProviderType, CspProviderName, Guid.NewGuid().ToString()))
+                : RSA.Create(KeySize);
+        }
+#endif
 
         protected void AddToStore(X509Certificate2 cert, StoreLocation storeLocation, StoreName storeName)
         {
@@ -198,7 +212,13 @@ catch [Exception]
             storeContext.Certificates.Add(cert);
         }
 
-        public virtual void Dispose()
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             foreach (CertificateStoreContext storeContext in _certificateStoreModifications)
             {
