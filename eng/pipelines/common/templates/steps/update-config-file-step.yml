@@ -130,7 +130,12 @@ steps:
     $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
     foreach ($p in $jdata)
     {
-        $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
+        try {
+            $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
+        }
+        catch {
+            "Couldn't load TCPConnectionString"
+        }
 
         $p.NPConnectionString="${{parameters.NPConnectionString }}"
 
