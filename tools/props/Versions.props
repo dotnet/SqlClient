@@ -28,6 +28,7 @@
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
     <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
+    <SystemDataCommonVersion>4.3.0</SystemDataCommonVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
