@@ -130,61 +130,266 @@ steps:
     $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
     foreach ($p in $jdata)
     {
-        try {
+        try
+        {
             $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
         }
-        catch {
+        catch
+        {
             "Couldn't load TCPConnectionString"
         }
 
-        $p.NPConnectionString="${{parameters.NPConnectionString }}"
+        try
+        {
+            $p.NPConnectionString="${{parameters.NPConnectionString }}"
+        }
+        catch
+        {
+            "Couldn't load NPConnectionString"
+        }
 
-        $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
+        try
+        {
+            $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
+        }
+        catch
+        {
+            "Couldn't load AADAuthorityURL"
+        }
 
-        $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
+        try
+        {
+            $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
+        }
+        catch
+        {
+            "Couldn't load AADPasswordConnectionString"
+        }
 
-        $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
+        try
+        {
+            $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
+        }
+        catch
+        {
+            "Couldn't load AADServicePrincipalId"
+        }
 
-        $p.AADServicePrincipalSecret="${{parameters.AADServicePrincipalSecret }}"
+        try
+        {
+            $p.AADServicePrincipalSecret="${{parameters.AADServicePrincipalSecret }}"
+        }
+        catch
+        {
+            "Couldn't load AADServicePrincipalSecret"
+        }
 
-        $p.AzureKeyVaultUrl="${{parameters.AzureKeyVaultUrl }}"
+        try
+        {
+            $p.AzureKeyVaultUrl="${{parameters.AzureKeyVaultUrl }}"
+        }
+        catch
+        {
+            "Couldn't load AzureKeyVaultUrl"
+        }
 
-        $p.AzureKeyVaultTenantId="${{parameters.AzureKeyVaultTenantId }}"
+        try
+        {
+            $p.AzureKeyVaultTenantId="${{parameters.AzureKeyVaultTenantId }}"
+        }
+        catch
+        {
+            "Couldn't load AzureKeyVaultTenantId"
+        }
 
-        $p.UserManagedIdentityClientId="${{parameters.UserManagedIdentityClientId }}"
+        try
+        {
+            $p.UserManagedIdentityClientId="${{parameters.UserManagedIdentityClientId }}"
+        }
+        catch
+        {
+            "Couldn't load UserManagedIdentityClientId"
+        }
 
-        $p.FileStreamDirectory="${{parameters.FileStreamDirectory }}"
+        try
+        {
+            $p.FileStreamDirectory="${{parameters.FileStreamDirectory }}"
+        }
+        catch
+        {
+            "Couldn't load FileStreamDirectory"
+        }
 
-        $p.LocalDbSharedInstanceName="${{parameters.LocalDbSharedInstanceName }}"
+        try
+        {
+            $p.LocalDbSharedInstanceName="${{parameters.LocalDbSharedInstanceName }}"
+        }
+        catch
+        {
+            "Couldn't load LocalDbSharedInstanceName"
+        }
 
-        $p.AliasName="${{parameters.AliasName }}"
+        try
+        {
+            $p.AliasName="${{parameters.AliasName }}"
+        }
+        catch
+        {
+            "Couldn't load AliasName"
+        }
 
-        $p.EnclaveAzureDatabaseConnString="${{parameters.EnclaveAzureDatabaseConnString }}"
+        try
+        {
+            $p.EnclaveAzureDatabaseConnString="${{parameters.EnclaveAzureDatabaseConnString }}"
+        }
+        catch
+        {
+            "Couldn't load EnclaveAzureDatabaseConnString"
+        }
 
-        $p.DNSCachingServerTR="${{parameters.DNSCachingServerTR }}"
+        try
+        {
+            $p.DNSCachingServerTR="${{parameters.DNSCachingServerTR }}"
+        }
+        catch
+        {
+            "Couldn't load DNSCachingServerTR"
+        }
 
-        $p.DNSCachingServerCR="${{parameters.DNSCachingServerCR }}"
+        try
+        {
+            $p.DNSCachingServerCR="${{parameters.DNSCachingServerCR }}"
+        }
+        catch
+        {
+            "Couldn't load DNSCachingServerCR"
+        }
 
-        $p.DNSCachingConnString="${{parameters.DNSCachingConnString }}"
+        try
+        {
+            $p.DNSCachingConnString="${{parameters.DNSCachingConnString }}"
+        }
+        catch
+        {
+            "Couldn't load DNSCachingConnString"
+        }
 
-        $p.SupportsFileStream="${{parameters.SupportsFileStream }}"
+        try
+        {
+            $p.SupportsFileStream="${{parameters.SupportsFileStream }}"
+        }
+        catch
+        {
+            "Couldn't load SupportsFileStream"
+        }
 
-        $p.LocalDbAppName="${{parameters.LocalDbAppName }}"
+        try
+        {
+            $p.LocalDbAppName="${{parameters.LocalDbAppName }}"
+        }
+        catch
+        {
+            "Couldn't load LocalDbAppName"
+        }
 
-        $p.TCPConnectionStringAASSGX="${{parameters.TCPConnectionStringAASSGX }}"
+        try
+        {
+            $p.TCPConnectionStringAASSGX="${{parameters.TCPConnectionStringAASSGX }}"
+        }
+        catch
+        {
+            "Couldn't load TCPConnectionStringAASSGX"
+        }
 
-        $p.TCPConnectionStringNoneVBS="${{parameters.TCPConnectionStringNoneVBS }}"
+        try
+        {
+            $p.TCPConnectionStringNoneVBS="${{parameters.TCPConnectionStringNoneVBS }}"
+        }
+        catch
+        {
+            "Couldn't load TCPConnectionStringNoneVBS"
+        }
 
-        $p.TCPConnectionStringHGSVBS="${{parameters.TCPConnectionStringHGSVBS }}"
+        try
+        {
+            $p.TCPConnectionStringHGSVBS="${{parameters.TCPConnectionStringHGSVBS }}"
+        }
+        catch
+        {
+            "Couldn't load TCPConnectionStringHGSVBS"
+        }
 
-        $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
-        $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
-        $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
-        $p.IsAzureSynapse=[System.Convert]::ToBoolean("${{parameters.IsAzureSynapse }}")
-        $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
-        $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
-        $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")
-        $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
+        try
+        {
+            $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
+        }
+        catch
+        {
+            "Couldn't load UseManagedSNIOnWindows"
+        }
+
+        try
+        {
+            $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
+        }
+        catch
+        {
+            "Couldn't load SupportsIntegratedSecurity"
+        }
+
+        try
+        {
+            $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
+        }
+        catch
+        {
+            "Couldn't load ManagedIdentitySupported"
+        }
+
+        try
+        {
+            $p.IsAzureSynapse=[System.Convert]::ToBoolean("${{parameters.IsAzureSynapse }}")
+        }
+        catch
+        {
+            "Couldn't load IsAzureSynapse"
+        }
+
+        try
+        {
+            $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
+        }
+        catch
+        {
+            "Couldn't load IsDNSCachingSupportedTR"
+        }
+
+        try
+        {
+            $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
+        }
+        catch
+        {
+            "Couldn't load IsDNSCachingSupportedCR"
+        }
+
+        try
+        {
+            $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")
+        }
+        catch
+        {
+            "Couldn't load TracingEnabled"
+        }
+
+        try
+        {
+            $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
+        }
+        catch
+        {
+            "Couldn't load EnclaveEnabled"
+        }
     }
     $jdata | ConvertTo-Json | Set-Content "config.json"
   workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
