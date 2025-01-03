@@ -112,14 +112,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {
-        private enum TableNameComponents
-        {
-            Server = 0,
-            Catalog,
-            Owner,
-            TableName,
-        }
-
         private enum ValueSourceType
         {
             Unspecified = 0,
@@ -160,10 +152,6 @@ namespace Microsoft.Data.SqlClient
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
-
-        private const int TranCountResultId = 0;
-        private const int TranCountRowId = 0;
-        private const int TranCountValueId = 0;
 
         private const int MetaDataResultId = 1;
 
@@ -439,66 +427,60 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
-            if (_connection.Is2000)
+
+            // If its a temp DB then try to connect
+
+            string TableCollationsStoredProc;
+            if (_connection.Is2008OrNewer)
             {
-                // If its a temp DB then try to connect
+                TableCollationsStoredProc = "sp_tablecollations_100";
+            }
+            else
+            {
+                TableCollationsStoredProc = "sp_tablecollations_90";
+            }
 
-                string TableCollationsStoredProc;
-                if (_connection.Is2008OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_100";
-                }
-                else if (_connection.Is2005OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_90";
-                }
-                else
-                {
-                    TableCollationsStoredProc = "sp_tablecollations";
-                }
+            string TableName = parts[MultipartIdentifier.TableIndex];
+            bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
+            if (!ADP.IsEmpty(TableName))
+            {
+                // Escape table name to be put inside TSQL literal block (within N'').
+                TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
+                // VSDD 581951 - escape the table name
+                TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
+            }
 
-                string TableName = parts[MultipartIdentifier.TableIndex];
-                bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
-                if (!ADP.IsEmpty(TableName))
-                {
-                    // Escape table name to be put inside TSQL literal block (within N'').
-                    TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
-                    // VSDD 581951 - escape the table name
-                    TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
-                }
+            string SchemaName = parts[MultipartIdentifier.SchemaIndex];
+            if (!ADP.IsEmpty(SchemaName))
+            {
+                // Escape schema name to be put inside TSQL literal block (within N'').
+                SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
+                // VSDD 581951 - escape the schema name
+                SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+            }
 
-                string SchemaName = parts[MultipartIdentifier.SchemaIndex];
-                if (!ADP.IsEmpty(SchemaName))
+            string CatalogName = parts[MultipartIdentifier.CatalogIndex];
+            if (isTempTable && ADP.IsEmpty(CatalogName))
+            {
+                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
+            }
+            else
+            {
+                // VSDD 581951 - escape the catalog name
+                if (!ADP.IsEmpty(CatalogName))
                 {
-                    // Escape schema name to be put inside TSQL literal block (within N'').
-                    SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
-                    // VSDD 581951 - escape the schema name
-                    SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+                    CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                 }
-
-                string CatalogName = parts[MultipartIdentifier.CatalogIndex];
-                if (isTempTable && ADP.IsEmpty(CatalogName))
-                {
-                    TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
-                else
-                {
-                    // VSDD 581951 - escape the catalog name
-                    if (!ADP.IsEmpty(CatalogName))
-                    {
-                        CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
-                    }
-                    TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
-                        CatalogName,
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
+                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
+                    CatalogName,
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
             }
             return TDSCommand;
         }
@@ -549,7 +531,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
+            if (0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
             }
@@ -562,15 +544,7 @@ namespace Microsoft.Data.SqlClient
 
             bool isInTransaction;
 
-            if (_parser.Is2005OrNewer)
-            {
-                isInTransaction = _connection.HasLocalTransaction;
-            }
-            else
-            {
-                isInTransaction = (bool)(0 < (SqlInt32)(internalResults[TranCountResultId][TranCountRowId][TranCountValueId]));
-            }
-
+            isInTransaction = _connection.HasLocalTransaction;
             // Throw if there is a transaction but no flag is set
             if (isInTransaction &&
                 _externalTransaction == null &&
@@ -693,50 +667,45 @@ namespace Microsoft.Data.SqlClient
                                 }
                         }
 
-                        if (_connection.Is2000)
+                        // Get collation for column i
+                        Result rowset = internalResults[CollationResultId];
+                        object rowvalue = rowset[i][CollationId];
+
+                        bool shouldSendCollation;
+                        switch (metadata.type)
                         {
-                            // 2000 or above!
-                            // get collation for column i
+                            case SqlDbType.Char:
+                            case SqlDbType.NChar:
+                            case SqlDbType.VarChar:
+                            case SqlDbType.NVarChar:
+                            case SqlDbType.Text:
+                            case SqlDbType.NText:
+                                shouldSendCollation = true;
+                                break;
 
-                            Result rowset = internalResults[CollationResultId];
-                            object rowvalue = rowset[i][CollationId];
+                            default:
+                                shouldSendCollation = false;
+                                break;
+                        }
 
-                            bool shouldSendCollation;
-                            switch (metadata.type)
+                        if (rowvalue != null && shouldSendCollation)
+                        {
+                            Debug.Assert(rowvalue is SqlString);
+                            SqlString collation_name = (SqlString)rowvalue;
+
+                            if (!collation_name.IsNull)
                             {
-                                case SqlDbType.Char:
-                                case SqlDbType.NChar:
-                                case SqlDbType.VarChar:
-                                case SqlDbType.NVarChar:
-                                case SqlDbType.Text:
-                                case SqlDbType.NText:
-                                    shouldSendCollation = true;
-                                    break;
-
-                                default:
-                                    shouldSendCollation = false;
-                                    break;
-                            }
-
-                            if (rowvalue != null && shouldSendCollation)
-                            {
-                                Debug.Assert(rowvalue is SqlString);
-                                SqlString collation_name = (SqlString)rowvalue;
-
-                                if (!collation_name.IsNull)
+                                updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
+                                // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
+                                if (_sqlDataReaderRowSource != null && metadata.collation != null)
                                 {
-                                    updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
-                                    // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
-                                    if (_sqlDataReaderRowSource != null && metadata.collation != null)
+                                    // On SqlDataReader we can verify the sourcecolumn collation!
+                                    int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
+                                    int destinationLcid = metadata.collation.LCID;
+                                    int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
+                                    if (sourceLcid != destinationLcid)
                                     {
-                                        // On SqlDataReader we can verify the sourcecolumn collation!
-                                        int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
-                                        int destinationLcid = metadata.collation.LCID;
-                                        int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
-                                        if (sourceLcid != destinationLcid)
-                                        {
-                                            throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
-                                        }
+                                        throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
                                     }
                                 }
                             }

@@ -127,8 +127,6 @@ namespace Microsoft.Data.SqlClient
         internal uint tdsVersion;
 #if NETFRAMEWORK
         internal string programName;
-
-        internal bool isVersion8;
 #endif
     }
 

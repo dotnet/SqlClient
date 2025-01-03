@@ -2248,30 +2248,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2000
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenConnection().Is2000;
-            }
-        }
-
-        internal bool Is2005OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenConnection().Is2005OrNewer;
-            }
-        }
-
         internal bool Is2008OrNewer
         {
             get
@@ -2588,12 +2564,15 @@ namespace Microsoft.Data.SqlClient
             // Normally we would simply create a regular connectoin and open it but there is no other way to pass the
             // new password down to the constructor. Also it would have an unwanted impact on the connection pool
             //
-            using (SqlInternalConnectionTds con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null))
+            SqlInternalConnectionTds con = null;
+            try
             {
-                if (!con.Is2005OrNewer)
-                {
-                    throw SQL.ChangePasswordRequires2005();
-                }
+                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null);
+            }
+            finally
+            {
+                if (con != null)
+                    con.Dispose();
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 

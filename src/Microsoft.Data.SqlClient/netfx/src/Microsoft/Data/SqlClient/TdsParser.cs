@@ -270,8 +270,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2005OrNewer => true;
-
         internal bool Is2008OrNewer
         {
             get
@@ -3969,8 +3967,6 @@ namespace Microsoft.Data.SqlClient
             _is2012 |= _is2022;
             _is2008 |= _is2012;
             _is2005 |= _is2008;
-
-            a.isVersion8 = _is2005;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
