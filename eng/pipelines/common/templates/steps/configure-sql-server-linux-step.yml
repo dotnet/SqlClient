@@ -19,7 +19,7 @@ steps:
     
     # Password for the SA user (required)
     MSSQL_SA_PW=${{parameters.password }}
-    if [ "$MSSQL_SA_PW" = "generated_placeholder" ]; then
+    if [ "$MSSQL_SA_PW" = "generated_placeholder" ] || [ "$MSSQL_SA_PW" = "$(password)" ]; then
       exit 0
     fi
     
