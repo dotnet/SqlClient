@@ -100,7 +100,16 @@ steps:
   retryCountOnTaskFailure: 2
 
 - powershell: |
-    $password = "${{parameters.password }}"
+    $password = "generated_placeholder"
+    try
+    {
+        $password = "${{parameters.password }}"
+    }
+    catch
+    {
+        "Failed to retrieve password parameter. Pipeline may not have access to secret variable. Defaulting to generated password."
+    }
+
     if ( "generated_placeholder" -eq $password )
     {
         $password = [guid]::NewGuid().ToString()
