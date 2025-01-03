@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -17,14 +18,12 @@ namespace Microsoft.Data.SqlClient
     {
         public const int UnknownDataLength = -1;
 
-        private bool _disposed;
         private int _dataLength;
         private int _totalLength;
         private byte[] _buffer;
 
         public Packet()
         {
-            _disposed = false;
             _dataLength = UnknownDataLength;
         }
 
@@ -127,23 +126,15 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         public ReadOnlySpan<byte> GetHeaderSpan() => _buffer.AsSpan(0, TdsEnums.HEADER_LEN);
 
-        public void Dispose()
-        {
-            _disposed = true;
-        }
-
-        public void CheckDisposed()
-        {
-            if (_disposed)
-            {
-                ThrowDisposed();
-            }
-        }
+        [Conditional("DEBUG")]
+        internal void CheckDisposed() => CheckDisposedImpl();
 
         [Conditional("DEBUG")]
         internal void SetCreatedBy(int creator) => SetCreatedByImpl(creator);
 
         partial void SetCreatedByImpl(int creator);
+
+        partial void CheckDisposedImpl();
 
         public static void ThrowDisposed()
         {
@@ -174,10 +165,25 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class Packet
     {
         private int _createdBy;
+        private bool _disposed;
 
         public int CreatedBy => _createdBy;
 
+        [Conditional("DEBUG")]
+        public void Dispose()
+        {
+            _disposed = true;
+        }
+
         partial void SetCreatedByImpl(int creator) => _createdBy = creator;
+
+        partial void CheckDisposedImpl()
+        {
+            if (_disposed)
+            {
+                ThrowDisposed();
+            }
+        }
     }
 #endif 
 }

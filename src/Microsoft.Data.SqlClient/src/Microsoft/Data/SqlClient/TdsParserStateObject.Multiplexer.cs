@@ -189,10 +189,12 @@ namespace Microsoft.Data.SqlClient
         {
             Packet partialPacket = _partialPacket;
             _partialPacket = null;
+#if DEBUG
             if (partialPacket != null)
             {
                 partialPacket.Dispose();
             }
+#endif 
         }
 
         // this check is used in two places that must be identical so it is
