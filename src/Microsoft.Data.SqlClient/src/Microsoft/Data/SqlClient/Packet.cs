@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// A byte array containing <see cref="CurrentLength"/> bytes of data or 
+        /// A byte array containing <see cref="CurrentLength"/> bytes of data
         /// </summary>
         public byte[] Buffer
         {
