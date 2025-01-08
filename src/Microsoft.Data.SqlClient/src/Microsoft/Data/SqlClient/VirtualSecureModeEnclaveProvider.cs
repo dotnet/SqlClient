@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Makes a web request to the provided url and returns the response as a byte[]
-        protected override List<byte> MakeRequest(string url)
+        protected override byte[] MakeRequest(string url)
         {
             Exception exception = null;
 
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
 
                     using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
-                        return JsonSerializer.Deserialize<List<byte>>(stream);
+                        return JsonSerializer.Deserialize<List<byte>>(stream)?.ToArray();
                     }
                 }
                 catch (Exception e)

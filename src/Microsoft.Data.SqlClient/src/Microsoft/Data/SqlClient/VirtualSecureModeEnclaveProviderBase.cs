@@ -184,8 +184,8 @@ namespace Microsoft.Data.SqlClient
             VerifyEnclaveReportSignature(enclaveReportPackage, healthReport.Certificate);
         }
 
-        // Makes a web request to the provided url and returns the response as a List<byte>
-        protected abstract List<byte> MakeRequest(string url);
+        // Makes a web request to the provided url and returns the response as a byte[]
+        protected abstract byte[] MakeRequest(string url);
 
         // Gets the root signing certificate for the provided attestation service.
         // If the certificate does not exist in the cache, this will make a call to the
@@ -198,18 +198,13 @@ namespace Microsoft.Data.SqlClient
             X509Certificate2Collection signingCertificates = rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
             if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
             {
-                List<byte> data = MakeRequest(attestationUrl);
+                byte[] data = MakeRequest(attestationUrl);
                 var certificateCollection = new X509Certificate2Collection();
 
                 try
                 {
                     SignedCms s = new SignedCms();
-#if NET
-                    Span<byte> dataSpan = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(data);
-                    s.Decode(dataSpan);
-#else
-                    s.Decode(data.ToArray());
-#endif
+                    s.Decode(data);
                     certificateCollection.AddRange(s.Certificates);
                 }
                 catch (CryptographicException exception)
@@ -269,10 +264,10 @@ namespace Microsoft.Data.SqlClient
             // An Always Encrypted-enabled driver doesn't verify an expiration date or a certificate authority chain.
             // A certificate is simply used as a key pair consisting of a public and private key. This is by design.
 
-#pragma warning disable IA5352
+            #pragma warning disable IA5352
             // CodeQL [SM00395] By design. Always Encrypted certificates should not be checked.
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-#pragma warning restore IA5352
+            #pragma warning restore IA5352
 
             if (!chain.Build(healthReportCert))
             {
@@ -430,6 +425,6 @@ namespace Microsoft.Data.SqlClient
                 return KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
             }
         }
-#endregion
+        #endregion
     }
 }
