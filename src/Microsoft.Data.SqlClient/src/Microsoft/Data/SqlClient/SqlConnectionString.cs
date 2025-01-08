@@ -772,55 +772,51 @@ namespace Microsoft.Data.SqlClient
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#if NET
-                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount;
-#endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
-                    { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
+                    { KEY.AttestationProtocol, KEY.AttestationProtocol},
+                    { KEY.Authentication, KEY.Authentication },
+                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
                     { KEY.Command_Timeout, KEY.Command_Timeout },
+                    { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
+                    { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Connect_Timeout, KEY.Connect_Timeout },
-                    { KEY.Connection_Reset, KEY.Connection_Reset },
                     { KEY.Context_Connection, KEY.Context_Connection },
                     { KEY.Current_Language, KEY.Current_Language },
                     { KEY.Data_Source, KEY.Data_Source },
+                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
                     { KEY.Encrypt, KEY.Encrypt },
                     { KEY.Enlist, KEY.Enlist },
                     { KEY.FailoverPartner, KEY.FailoverPartner },
+                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
                     { KEY.HostNameInCertificate, KEY.HostNameInCertificate },
                     { KEY.ServerCertificate, KEY.ServerCertificate},
                     { KEY.Initial_Catalog, KEY.Initial_Catalog },
                     { KEY.Integrated_Security, KEY.Integrated_Security },
+                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
                     { KEY.Load_Balance_Timeout, KEY.Load_Balance_Timeout },
                     { KEY.MARS, KEY.MARS },
                     { KEY.Max_Pool_Size, KEY.Max_Pool_Size },
                     { KEY.Min_Pool_Size, KEY.Min_Pool_Size },
                     { KEY.MultiSubnetFailover, KEY.MultiSubnetFailover },
-                    { KEY.Network_Library, KEY.Network_Library },
                     { KEY.Packet_Size, KEY.Packet_Size },
                     { KEY.Password, KEY.Password },
                     { KEY.Persist_Security_Info, KEY.Persist_Security_Info },
                     { KEY.Pooling, KEY.Pooling },
+                    { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod },
                     { KEY.Replication, KEY.Replication },
+                    { KEY.Server_SPN, KEY.Server_SPN },
                     { KEY.TrustServerCertificate, KEY.TrustServerCertificate },
                     { KEY.TransactionBinding, KEY.TransactionBinding },
                     { KEY.Type_System_Version, KEY.Type_System_Version },
-                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
-                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
-                    { KEY.AttestationProtocol, KEY.AttestationProtocol},
                     { KEY.User_ID, KEY.User_ID },
                     { KEY.User_Instance, KEY.User_Instance },
                     { KEY.Workstation_Id, KEY.Workstation_Id },
-                    { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
-                    { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
-                    { KEY.Authentication, KEY.Authentication },
-                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
-                    { KEY.Server_SPN, KEY.Server_SPN },
-                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
 
+                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference },
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
@@ -841,24 +837,25 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.SERVER, KEY.Data_Source },
                     { SYNONYM.DATABASE, KEY.Initial_Catalog },
                     { SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security },
+                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.Connection_Lifetime, KEY.Load_Balance_Timeout },
-                    { SYNONYM.NET, KEY.Network_Library },
-                    { SYNONYM.NETWORK, KEY.Network_Library },
                     { SYNONYM.Pwd, KEY.Password },
                     { SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info },
-                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
                     { SYNONYM.ServerSPN, KEY.Server_SPN },
                     { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
+                    { KEY.Connection_Reset, KEY.Connection_Reset },
+                    { KEY.Network_Library, KEY.Network_Library },
                     { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
+                    { SYNONYM.NET, KEY.Network_Library },
+                    { SYNONYM.NETWORK, KEY.Network_Library },
                     { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
 #endif // NETFRAMEWORK
-                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
-                Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
+                Debug.Assert(synonyms.Count == count, $"incorrect initial ParseSynonyms size {count} v/s {synonyms.Count}");
                 Interlocked.CompareExchange(ref s_sqlClientSynonyms, synonyms, null);
             }
             return synonyms;
@@ -1158,12 +1155,6 @@ namespace Microsoft.Data.SqlClient
             PermissionSet permissionSet = new(PermissionState.None);
             permissionSet.AddPermission(new SqlClientPermission(this));
             return permissionSet;
-        }
-
-        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
-        {
-            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
-            return ConvertValueToSqlConnectionEncrypt();
         }
 
         private readonly bool _connectionReset;
