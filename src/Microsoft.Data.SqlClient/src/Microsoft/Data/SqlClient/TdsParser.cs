@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj._messageStatus = 0;
         }// tdsLogin
 
-
+        // Returns the OS information in the format: {OS Name} {OS Version}
         private static string GetOSInfo()
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
