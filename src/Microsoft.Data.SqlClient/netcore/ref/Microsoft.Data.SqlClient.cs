@@ -5,14 +5,6 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-
-#if NET
-using System.Diagnostics.CodeAnalysis;
-#endif
-
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
@@ -1308,7 +1300,7 @@ namespace Microsoft.Data.SqlClient
         public override System.Collections.IEnumerator GetEnumerator() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*'/>
 #if NET
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+        [return: System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public override System.Type GetFieldType(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*'/>
@@ -1331,7 +1323,7 @@ namespace Microsoft.Data.SqlClient
         public override int GetOrdinal(string name) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*'/>
 #if NET
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+        [return: System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public override System.Type GetProviderSpecificFieldType(int i) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*'/>
@@ -1955,7 +1947,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteCommandBefore";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -1968,12 +1960,12 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public SqlCommand Command => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
-        /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/SqlClientCommandAfter/*'/>
     public sealed class SqlClientCommandAfter : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -1981,7 +1973,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteCommandAfter";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -1996,12 +1988,12 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         public System.Collections.IDictionary Statistics => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
-        /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/SqlClientCommandError/*'/>
     public sealed class SqlClientCommandError : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2009,7 +2001,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandError"]/SqlClientCommandError/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteCommandError";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2025,11 +2017,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/SqlClientConnectionOpenBefore/*'/>
     public sealed class SqlClientConnectionOpenBefore : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2037,7 +2029,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenBefore";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2049,11 +2041,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/SqlClientConnectionOpenAfter/*'/>
     public sealed class SqlClientConnectionOpenAfter : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2061,7 +2053,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenAfter";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2077,11 +2069,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/SqlClientConnectionOpenError/*'/>
     public sealed class SqlClientConnectionOpenError : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2089,7 +2081,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenError";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2105,11 +2097,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/SqlClientConnectionCloseBefore/*'/>
     public sealed class SqlClientConnectionCloseBefore : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2117,7 +2109,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]//*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2131,11 +2123,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/SqlClientConnectionCloseAfter/*'/>
     public sealed class SqlClientConnectionCloseAfter : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2143,7 +2135,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseAfter";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2157,11 +2149,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/SqlClientConnectionCloseError/*'/>
     public sealed class SqlClientConnectionCloseError : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2169,7 +2161,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2185,11 +2177,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/SqlClientTransactionCommitBefore/*'/>
     public sealed class SqlClientTransactionCommitBefore : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2197,7 +2189,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitBefore";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2211,11 +2203,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/SqlClientTransactionCommitAfter/*'/>
     public sealed class SqlClientTransactionCommitAfter : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2223,7 +2215,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitAfter";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2237,11 +2229,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/SqlClientTransactionCommitError/*'/>
     public sealed class SqlClientTransactionCommitError : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2249,7 +2241,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitError";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2265,11 +2257,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/SqlClientTransactionRollbackBefore/*'/>
     public sealed class SqlClientTransactionRollbackBefore : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2277,7 +2269,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackBefore"]/SqlClientTransactionRollbackBefore/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackBefore";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2293,11 +2285,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/SqlClientTransactionRollbackAfter/*'/>
     public sealed class SqlClientTransactionRollbackAfter : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2305,7 +2297,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackAfter";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2321,11 +2313,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/SqlClientTransactionRollbackError/*'/>
     public sealed class SqlClientTransactionRollbackError : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
@@ -2333,7 +2325,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackError";
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
-        public Guid OperationId => throw null;
+        public System.Guid OperationId => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Operation/*'/>
         public string Operation => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Timestamp/*'/>
@@ -2351,11 +2343,11 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Count/*'/>
         public int Count => throw null;
         /// <inheritdoc/>>/// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/Item1/*'/>
-        public KeyValuePair<string, object> this[int index] => throw null;
+        public System.Collections.Generic.KeyValuePair<string, object> this[int index] => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/GetEnumerator/*'/>
-        public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => throw null;
+        public System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string, object>> GetEnumerator() => throw null;
     }
 }
 namespace Microsoft.Data.SqlClient.Server
@@ -2395,7 +2387,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual double GetDouble(int ordinal) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*'/>
 #if NET
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
+        [return: System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties)]
 #endif
         public virtual System.Type GetFieldType(int ordinal) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFloat/*'/>
