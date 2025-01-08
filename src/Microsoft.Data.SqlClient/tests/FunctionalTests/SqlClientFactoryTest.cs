@@ -31,7 +31,9 @@ namespace Microsoft.Data.SqlClient.Tests
         };
 
         [Theory]
-        [MemberData(nameof(FactoryMethodTestData))]
+        [MemberData(
+            nameof(FactoryMethodTestData),
+            DisableDiscoveryEnumeration = true)]
         public void FactoryMethodTest(Func<object> factory, Type expectedType, bool singleton)
         {
             object value1 = factory();

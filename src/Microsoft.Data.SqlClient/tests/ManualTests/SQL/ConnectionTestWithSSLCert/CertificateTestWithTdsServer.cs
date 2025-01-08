@@ -92,7 +92,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
+        [MemberData(
+            nameof(ConnectionTestParametersData.GetConnectionTestParameters),
+            MemberType = typeof(ConnectionTestParametersData),
+            DisableDiscoveryEnumeration = true)]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void BeginWindowsConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
@@ -105,7 +108,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
+        [MemberData(
+            nameof(ConnectionTestParametersData.GetConnectionTestParameters),
+            MemberType = typeof(ConnectionTestParametersData),
+            DisableDiscoveryEnumeration = true)]
         [PlatformSpecific(TestPlatforms.Linux)]
         public void BeginLinuxConnectionTest(ConnectionTestParameters connectionTestParameters)
         {

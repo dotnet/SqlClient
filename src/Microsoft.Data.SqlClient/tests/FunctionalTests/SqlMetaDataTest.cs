@@ -15,7 +15,9 @@ namespace Microsoft.Data.SqlClient.Tests
     public class SqlMetaDataTest
     {
         [Theory]
-        [MemberData(nameof(SqlMetaDataAdjustValues))]
+        [MemberData(
+            nameof(SqlMetaDataAdjustValues),
+            DisableDiscoveryEnumeration = true)]
         [MemberData(nameof(SqlMetaDataDateTimeValues))]
         public void Adjust(SqlDbType dbType, object expected)
         {
@@ -37,7 +39,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataMaxLengthTrimValues))]
+        [MemberData(
+            nameof(SqlMetaDataMaxLengthTrimValues),
+            DisableDiscoveryEnumeration = true)]
         public void AdjustWithGreaterThanMaxLengthValues(SqlDbType dbType, object value)
         {
             int maxLength = 4;
@@ -59,7 +63,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataInvalidValues))]
+        [MemberData(
+            nameof(SqlMetaDataInvalidValues),
+            DisableDiscoveryEnumeration = true)]
         public void AdjustWithInvalidType_Throws(SqlDbType dbType, object expected)
         {
             SqlMetaData metaData = new SqlMetaData(
@@ -577,7 +583,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataInferredValues))]
+        [MemberData(
+            nameof(SqlMetaDataInferredValues),
+            DisableDiscoveryEnumeration = true)]
         public void InferFromValue(SqlDbType expectedDbType, object value)
         {
             SqlMetaData metaData = SqlMetaData.InferFromValue(value, "col1");
