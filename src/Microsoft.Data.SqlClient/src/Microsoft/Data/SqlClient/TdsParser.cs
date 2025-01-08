@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient
             // Construct client interface name in format: Microsoft SqlClient - {OS}, {Platform} - {architecture}
             // e.g. "Microsoft SqlClient - Microsoft Windows 10.0.26100, .NET 8.0.11 - X64"
             string clientInterfaceName = new StringBuilder(TdsEnums.SQL_PROVIDER_NAME)
-                .Append(" - ").Append(RuntimeInformation.OSDescription ?? TdsEnums.UNKNOWN)
+                .Append(" - ").Append(GetOSInfo())
                 .Append(", ").Append(RuntimeInformation.FrameworkDescription ?? TdsEnums.UNKNOWN)
                 .Append(" - ").Append(RuntimeInformation.ProcessArchitecture)
                 .ToString();
@@ -220,5 +220,24 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.HasPendingData = true;
             _physicalStateObj._messageStatus = 0;
         }// tdsLogin
+
+
+        private static string GetOSInfo()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return $"Windows {Environment.OSVersion.Version}";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return $"macOS {Environment.OSVersion.Version}";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return $"Linux {Environment.OSVersion.Version}";
+            }
+
+            return TdsEnums.UNKNOWN;
+        }
     }
 }
