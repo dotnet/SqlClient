@@ -239,6 +239,14 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 session.IsJsonSupportEnabled = true;
                                 break;
                             }
+
+                        case TDSFeatureID.VectorSupport:
+                            {
+                                // Enable Vector Support
+                                session.IsVectorSupportEnabled = true;
+                                break;
+                            }
+
                         default:
                             {
                                 // Do nothing
@@ -574,6 +582,32 @@ namespace Microsoft.SqlServer.TDS.Servers
                 {
                     // Update the existing token
                     featureExtAckToken.Options.Add(jsonSupportOption);
+                }
+            }
+
+            // Check if Vector is supported
+            if (session.IsVectorSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = (byte)1;
+
+                // Create Json support as a generic feature extension option
+                TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(vectorSupportOption);
                 }
             }
 
