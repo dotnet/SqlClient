@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [Stable release 6.0.0] - 2024-12-09
+
+_No changes since the last preview release_
+
 ## [Preview Release 6.0.0-preview3.24332.3] - 2024-11-27
 
 This update brings the below changes over the previous release:
