@@ -375,6 +375,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (SqlDataReader reader = command.ExecuteReader(behavior))
                 {
+                    // TODO: Shouldn't the test fail if Read() returns false?
                     if (reader.Read())
                     {
                         Assert.True(reader.IsDBNull(0));
@@ -502,6 +503,63 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(expectedXml, returnedXml, StringComparer.Ordinal);
         }
 #endif
+
+#nullable enable
+        // Test that calling IsDBNullAsync() doesn't prevent
+        // GetFieldValueAsync() from successfully reading the column value.
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("FOO", false, false)]
+        [InlineData("FOO", false, true)]
+        [InlineData(null, true, false)]
+        [InlineData(null, true, true)]
+        public static async Task
+        IsDBNullAsync_GetFieldValueAsync_Compatibility(
+            string? value,
+            bool expectNull,
+            bool checkNull)
+        {
+            using SqlConnection connection =
+                new (DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand command = new(
+                "select 'foo', 7, convert(varbinary, " +
+                (value is null ? "null" : $"'{value}'") + ")",
+                connection);
+            
+            using SqlDataReader reader =
+                await command.ExecuteReaderAsync(
+                    CommandBehavior.SequentialAccess);
+
+            while (await reader.ReadAsync())
+            {
+                Assert.Equal("foo", reader.GetString(0));
+                Assert.Equal(7, reader.GetInt32(1));
+
+                // Check if the 2nd column is null, if desired.
+                if (checkNull)
+                {
+                    Assert.Equal(expectNull, await reader.IsDBNullAsync(2));
+                }
+
+                // Read the value of the 2nd column.
+                using MemoryStream buffer = new();
+                using (
+                    Stream stream = await reader.GetFieldValueAsync<Stream>(2))
+                {
+                    await stream.CopyToAsync(buffer);
+                    Assert.Equal(
+                        // Trying to read a null column via Stream yields an
+                        // empty stream, thus an empty string.
+                        expectNull ? "" : value,
+                        Encoding.UTF8.GetString(buffer.ToArray()));
+                }
+            }
+        }
+#nullable disable
 
         private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, CommandBehavior behavior, bool isExecuteAsync)
             => isExecuteAsync ? await command.ExecuteReaderAsync(behavior) : command.ExecuteReader(behavior);
