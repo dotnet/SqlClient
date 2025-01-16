@@ -12,9 +12,6 @@
     <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
-    <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
-     We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
-    <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
@@ -56,7 +53,8 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>
     <ErrorReport>None</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <!-- This code analysis ruleset only exists with the .NET Framework toolset. -->
+    <CodeAnalysisRuleSet Condition="$(MSBuildRuntimeType) == 'Full'">MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <BuildProjectReferences>True</BuildProjectReferences>
     <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
     <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>
@@ -700,7 +698,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetaDataFactory.cs">
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetadataFactory.cs">
       <Link>Microsoft\Data\SqlClient\SqlMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
@@ -827,7 +825,7 @@
   <ItemGroup>
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
+    <Compile Include="Microsoft\Data\Common\DBConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
@@ -893,17 +891,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="mscoree">
-      <Guid>{5477469E-83B1-11D2-8B49-00A0C9B7C9C4}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>4</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
@@ -919,6 +906,25 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
   </ItemGroup>
+
+  <!--
+    Build runtimes other than .NET Framework require the .NET Framework
+    reference assemblies.
+    
+    MSBuildRuntimeType 'Full' means the build is running via .NET Framework
+    tooling, and the reference assemblies are already available.
+
+    Any other value means we need to explicitly add the reference assemblies.
+  -->
+  <ItemGroup Condition="$(MSBuildRuntimeType) != 'Full'">
+    <PackageReference
+      Include="Microsoft.NETFramework.ReferenceAssemblies"
+      Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateAssemblyRef.targets" />

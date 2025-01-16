@@ -42,4 +42,22 @@
     <PackageReference Include="Azure.Security.KeyVault.Keys" Version="$(AzureSecurityKeyVaultKeysVersion)" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
   </ItemGroup>
+
+  <!--
+    Build runtimes other than .NET Framework require the .NET Framework
+    reference assemblies.
+    
+    MSBuildRuntimeType 'Full' means the build is running via .NET Framework
+    tooling, and the reference assemblies are already available.
+
+    Any other value means we need to explicitly add the reference assemblies.
+  -->
+  <ItemGroup Condition="$(MSBuildRuntimeType) != 'Full'">
+    <PackageReference
+      Include="Microsoft.NETFramework.ReferenceAssemblies"
+      Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

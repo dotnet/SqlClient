@@ -10,13 +10,26 @@
     <DisableSourceLink>false</DisableSourceLink>
 
     <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
+    
+    <!-- By default we build in Debug for AnyCPU. -->
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
     <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
+    
+    <!--
+      Flag that controls whether or not we generate Nuget packages.
+      
+      By default, we only do this on Windows, due to the use of PowerShell and
+      Windows tooling within the Nuget targets.
+    -->
+    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND $(OS.StartsWith('Win'))">true</GenerateNuget>
+    
     <!-- Flag to control if Windows drivers should be built or not -->
     <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
     <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
+    
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
     <TF Condition="$(TF) == ''">net9.0</TF> <!-- Default Target Framework -->
@@ -24,12 +37,9 @@
     <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
     <TargetGroup Condition="'$(TFGroup)' == 'netfx'" >netfx</TargetGroup>
     <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
-    <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
-    <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
     <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
-    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
+    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
     <!-- 
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
@@ -52,7 +62,7 @@
   <!-- Populate all managed projects -->
   <ItemGroup>
     <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />    
-    <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
@@ -82,7 +92,7 @@
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
   <Target Name="RestoreSqlServerLib">
@@ -98,23 +108,23 @@
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
-  <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RestoreNetFx">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore"  />
   </Target>
 
-  <Target Name="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RestoreTestsNetFx">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
     <PropertyGroup>
-      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
+      <DotnetBuildCmd>dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
     </PropertyGroup>
     <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
   </Target>
 
@@ -137,7 +147,7 @@
 
   <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
@@ -159,7 +169,7 @@
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
-  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx">
     <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
 
@@ -168,7 +178,7 @@
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
-  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx">
     <Message Text=">>> Building ManualTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
 
@@ -194,14 +204,26 @@
   </Target>
 
   <Target Name="Clean">
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","artifacts", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
-    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","artifacts", SearchOption.AllDirectories))'>
+      <Output TaskParameter="RemovedDirectories" ItemName="Clean_RemovedDirs" />
+    </RemoveDir>
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))'>
+      <Output TaskParameter="RemovedDirectories" ItemName="Clean_RemovedDirs" />
+    </RemoveDir>
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))'>
+      <Output TaskParameter="RemovedDirectories" ItemName="Clean_RemovedDirs" />
+    </RemoveDir>
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))'>
+      <Output TaskParameter="RemovedDirectories" ItemName="Clean_RemovedDirs" />
+    </RemoveDir>
+    <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))'>
+      <Output TaskParameter="RemovedDirectories" ItemName="Clean_RemovedDirs" />
+    </RemoveDir>
+
+    <Message Text="Removed directories: @(Clean_RemovedDirs)" />
   </Target>
 
-  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildAKVNetFx">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties);$(NugetPackProperties);" Condition="!$(ReferenceType.Contains('Package'))"/>
@@ -224,7 +246,7 @@
   <Target Name="BuildAKVNetCoreAllOS">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
