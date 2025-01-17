@@ -127,6 +127,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #else
                 new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
 #endif
+                encryptionProtocols: connectionTestParameters.EncryptionProtocols,
                 encryptionType: connectionTestParameters.TdsEncryptionType);
 
             builder = new(server.ConnectionString)
