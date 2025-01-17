@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient
 
                         int remainderLength = partialPacket.CurrentLength - partialPacket.RequiredLength;
 
-                        partialPacket.CurrentLength -= remainderLength;
+                        partialPacket.CurrentLength = partialPacket.CurrentLength;
 
                         remainderPacket = new Packet
                         {
