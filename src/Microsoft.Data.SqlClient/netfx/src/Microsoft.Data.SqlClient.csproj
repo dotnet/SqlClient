@@ -97,8 +97,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Runtime.Caching" />
-    <Reference Include="System.Transactions" />
     <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Transactions" />
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
@@ -730,29 +730,17 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Text.Encodings.Web">
-      <Version>$(SystemTextEncodingsWebVersion)</Version>
-    </PackageReference>
+    <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Azure.Identity">
-      <Version>$(AzureIdentityVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Identity.Client">
-      <Version>$(MicrosoftIdentityClientVersion)</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect">
-      <version>$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)</version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens">
-      <version>$(MicrosoftIdentityModelJsonWebTokensVersion)</version>
-    </PackageReference>
-    <PackageReference Include="System.Buffers">
-      <Version>$(SystemBuffersVersion)</Version>
-    </PackageReference>
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
+    <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\src\tools\targets\GenerateResourceStringsSource.targets" />
