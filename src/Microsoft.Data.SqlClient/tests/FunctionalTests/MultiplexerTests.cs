@@ -17,6 +17,20 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class MultiplexerTests
     {
+        public static bool IsUsingCompatibilityProcessSni
+        {
+            get
+            {
+                if (AppContext.TryGetSwitch(@"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni", out bool foundValue))
+                {
+                    return foundValue;
+                }
+                return false;
+            }
+        }
+
+        public static bool IsUsingModernProcessSni => !IsUsingCompatibilityProcessSni;
+
         [ExcludeFromCodeCoverage]
         public static IEnumerable<object[]> IsAsync()
         {
@@ -26,8 +40,8 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [ExcludeFromCodeCoverage]
         public static IEnumerable<object[]> OnlyAsync() { yield return new object[] { true }; }
-
-        [Theory, MemberData(nameof(IsAsync))]
+        
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void PassThroughSinglePacket(bool isAsync)
         {
             int dataSize = 20;
@@ -42,7 +56,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void PassThroughMultiplePacket(bool isAsync)
         {
             int dataSize = 40;
@@ -56,7 +70,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void PassThroughMultiplePacketWithShortEnd(bool isAsync)
         {
             int dataSize = 40;
@@ -70,7 +84,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void ReconstructSinglePacket(bool isAsync)
         {
             int dataSize = 4;
@@ -85,7 +99,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void Reconstruct2Packets_Part_PartFull(bool isAsync)
         {
             int dataSize = 4;
@@ -104,7 +118,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void Reconstruct2Packets_Full_FullPart_Part(bool isAsync)
         {
             int dataSize = 30;
@@ -123,7 +137,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void ReconstructMultiplePacketSequence(bool isAsync)
         {
             int dataSize = 40;
@@ -143,7 +157,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void ReconstructMultiplePacketSequenceWithShortEnd(bool isAsync)
         {
             int dataSize = 40;
@@ -162,7 +176,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Theory, MemberData(nameof(IsAsync))]
+        [ConditionalTheory(nameof(IsUsingModernProcessSni)), MemberData(nameof(IsAsync))]
         public static void Reconstruct3Packets_PartPartPart(bool isAsync)
         {
             int dataSize = 62;
@@ -178,7 +192,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Fact]
+        [ConditionalFact(nameof(IsUsingModernProcessSni))]
         public static void TrailingPartialPacketInSnapshotNotDuplicated()
         {
             int dataSize = 120;
@@ -197,7 +211,7 @@ namespace Microsoft.Data.SqlClient.Tests
             ComparePacketLists(dataSize, expected, output);
         }
 
-        [Fact]
+        [ConditionalFact(nameof(IsUsingModernProcessSni))]
         public static void BetweenAsyncAttentionPacket()
         {
             int dataSize = 120;
@@ -222,7 +236,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
         }
 
-        [Fact]
+        [ConditionalFact(nameof(IsUsingModernProcessSni))]
         public static void MultipleFullPacketsInRemainderAreSplitCorrectly()
         {
             int dataSize = 800 - TdsEnums.HEADER_LEN;

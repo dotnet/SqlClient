@@ -17,6 +17,12 @@ namespace Microsoft.Data.SqlClient
 
         public void ProcessSniPacket(PacketHandle packet, uint error)
         {
+            if (LocalAppContextSwitches.UseCompatibilityProcessSni)
+            {
+                ProcessSniPacketCompat(packet, error);
+                return;
+            }
+
             if (error != 0)
             {
                 if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
@@ -487,6 +493,67 @@ namespace Microsoft.Data.SqlClient
             }
 
             return containsFullPacket;
+        }
+
+
+        public void ProcessSniPacketCompat(PacketHandle packet, uint error)
+        {
+            if (error != 0)
+            {
+                if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
+                {
+                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
+                    // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
+                    return;
+                }
+
+                AddError(_parser.ProcessSNIError(this));
+                AssertValidState();
+            }
+            else
+            {
+                uint dataSize = 0;
+
+                uint getDataError =
+#if NETFRAMEWORK
+                    SniNativeWrapper.
+#endif
+                        SNIPacketGetData(packet, _inBuff, ref dataSize);
+
+                if (getDataError == TdsEnums.SNI_SUCCESS)
+                {
+                    if (_inBuff.Length < dataSize)
+                    {
+                        Debug.Assert(true, "Unexpected dataSize on Read");
+                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
+                    }
+
+                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                    _inBytesRead = (int)dataSize;
+                    _inBytesUsed = 0;
+
+                    if (_snapshot != null)
+                    {
+                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
+                        if (_snapshotStatus != SnapshotStatus.NotActive)
+                        {
+                            _snapshot.MoveNext();
+#if DEBUG
+                            _snapshot.AssertCurrent();
+#endif
+                        }
+                    }
+
+                    SniReadStatisticsAndTracing();
+                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer: {1}, In Bytes Read: {2}", ObjectID, _inBuff, _inBytesRead);
+
+                    AssertValidState();
+                }
+                else
+                {
+                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
+                }
+            }
         }
     }
 }
