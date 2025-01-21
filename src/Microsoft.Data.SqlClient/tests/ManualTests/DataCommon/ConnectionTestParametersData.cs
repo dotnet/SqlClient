@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                 new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, SslProtocols.Tls | SslProtocols.Tls11, true),
                 new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, SslProtocols.Tls | SslProtocols.Tls11, true),
 #if NET
-#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
+#pragma warning restore SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
 #pragma warning restore CA5397 // Do not use deprecated SslProtocols values
 #pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
