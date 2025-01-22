@@ -34,7 +34,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 new SqlMetaData("col11", SqlDbType.Real),
                 new SqlMetaData("col12", SqlDbType.Decimal),
                 new SqlMetaData("col13", SqlDbType.Money),
-                new SqlMetaData("col14", SqlDbType.Variant)
+                new SqlMetaData("col14", SqlDbType.Variant),
+#if NET
+                new SqlMetaData("col15", SqlDbType.Date),
+                new SqlMetaData("col16", SqlDbType.Time),
+#endif
             };
 
             SqlDataRecord record = new SqlDataRecord(metaData);
@@ -115,7 +119,13 @@ namespace Microsoft.Data.SqlClient.Tests
 
             record.SetSqlMoney(12, SqlMoney.MaxValue);
             Assert.Equal(SqlMoney.MaxValue, record.GetSqlMoney(12));
+#if NET
+            record.SetValue(14, new DateOnly(2025, 11,28));
+            Assert.Equal(new DateOnly(2025, 11, 28), record.GetValue(14));
 
+            record.SetValue(15, new TimeOnly(1, 57, 58));
+            Assert.Equal(new TimeOnly(1, 57, 58), record.GetValue(15));
+#endif
 
             // Try adding different values to SqlVariant type
             for (int i = 0; i < record.FieldCount - 1; ++i)
