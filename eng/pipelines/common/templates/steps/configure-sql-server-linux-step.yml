@@ -7,7 +7,7 @@ parameters:
   - name: password
     type: string
     default: $(password)
-  
+
   - name: condition
     type: string
     default: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
@@ -18,11 +18,9 @@ steps:
     sudo systemctl stop mssql-server
     
     # Password for the SA user (required)
+
     MSSQL_SA_PW=${{parameters.password }}
-    if [ "$MSSQL_SA_PW" = "generated_placeholder" ]; then
-      exit 0
-    fi
-    
+
     # Product ID of the version of SQL server you're installing
     # Must be evaluation, developer, express, web, standard, enterprise, or your 25 digit product key
     MSSQL_PID='enterprise'
