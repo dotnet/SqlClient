@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [Stable release 6.0.1] - 2025-01-23
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed reference assembly definitions for SqlClientDiagnostic APIs [#3097](https://github.com/dotnet/SqlClient/pull/3097)
+- Fixed issue with down-level SSL/TLS version warnings [#3126](https://github.com/dotnet/SqlClient/pull/3126)
+
+### Changed
+
+- Dependency changes
+  - Updated SNI dependency `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` to `6.0.2` [#3116](https://github.com/dotnet/SqlClient/pull/3116) [#3117](https://github.com/dotnet/SqlClient/pull/3117)
+
 ## [Stable release 6.0.0] - 2024-12-09
 
 _No changes since the last preview release_
@@ -14,7 +28,7 @@ _No changes since the last preview release_
 
 This update brings the below changes over the previous release:
 
-## Breaking Changes
+### Breaking Changes
 - Dropped support for .NET 6 [#2927](https://github.com/dotnet/SqlClient/pull/2927)
 - Removed SQL 2000 client-side debugging support for .NET Framework [#2981](https://github.com/dotnet/SqlClient/pull/2981), [#2940](https://github.com/dotnet/SqlClient/pull/2940)
 
