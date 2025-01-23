@@ -292,6 +292,9 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
+            # Note: Using the isFork variable to determine if secrets are available is not ideal since
+            # it's an indirect association. But everything else (referencing secret variables various
+            # ways to detect if they were present) won't run consistently across forks and non-forks.
             ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
               AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalId: $(AADServicePrincipalId)
