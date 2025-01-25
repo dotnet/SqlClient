@@ -282,6 +282,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{
 		..\eng\pipelines\libraries\variables.yml = ..\eng\pipelines\libraries\variables.yml
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{1C796A8E-3529-481B-9D4F-88C67D03DCA2}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\variables\akv-variables.yml = ..\eng\pipelines\variables\akv-variables.yml
+		..\eng\pipelines\variables\common-variables.yml = ..\eng\pipelines\variables\common-variables.yml
+		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -594,6 +601,7 @@ Global
 		{01FA4774-E594-4A2D-B839-EA7A56D09A8B} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
 		{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
 		{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{1C796A8E-3529-481B-9D4F-88C67D03DCA2} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
