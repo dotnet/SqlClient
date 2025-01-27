@@ -89,7 +89,7 @@ This update brings the below changes over the previous release:
 - Fixed clone of `SqlConnection` to include `AccessTokenCallback`. [#2525](https://github.com/dotnet/SqlClient/pull/2525)
 - Fixed issue with `DateTimeOffset` in table-valued parameters, which was introduced in 5.2. [#2453](https://github.com/dotnet/SqlClient/pull/2453)
 - Fixed `ArgumentNullException` on `SqlDataRecord.GetValue` when using user-defined data type on .NET. [#2448](https://github.com/dotnet/SqlClient/pull/2448)
-- Fixed `SqlBuffer` and `SqlGuild` when it's null. [#2310](https://github.com/dotnet/SqlClient/pull/2310)
+- Fixed `SqlBuffer` and `SqlGuid` when it's null. [#2310](https://github.com/dotnet/SqlClient/pull/2310)
 - Fixed `SqlBulkCopy.WriteToServer` state in a consecutive calls. [#2375](https://github.com/dotnet/SqlClient/pull/2375)
 - Fixed null reference exception with `SqlConnection.FireInfoMessageEventOnUserErrors` after introducing the batch command. [#2399](https://github.com/dotnet/SqlClient/pull/2399)
 
