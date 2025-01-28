@@ -91,7 +91,7 @@ This update brings the below changes over the previous release:
 ### Added
 
 - Added `TokenCredential` object to take advantage of token caching in `ActiveDirectoryAuthenticationProvider`. [#2380](https://github.com/dotnet/SqlClient/pull/2380)
-- Added `DateOnly` and `TimeOnly` support to `DataTable` as a structured parameter. [#2258](https://github.com/dotnet/SqlClient/pull/2258)
+- Added support for using `DateOnly` and `TimeOnly` in `DataTable` structured parameters and `SqlDataRecord`. [#2258](https://github.com/dotnet/SqlClient/pull/2258)
 - Added `Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic` type in .NET. [#2226](https://github.com/dotnet/SqlClient/pull/2226)
 - Added scope trace for `GenerateSspiClientContext`. [#2497](https://github.com/dotnet/SqlClient/pull/2497), [#2725](https://github.com/dotnet/SqlClient/pull/2725)
 
