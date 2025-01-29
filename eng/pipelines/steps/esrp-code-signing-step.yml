@@ -1,0 +1,63 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+    - name: artifactType
+      type: string
+      values:
+          - dll
+          - pkg
+
+variables:
+    - template: '../variables/signing-variables.yml'
+
+    - ${{ if eq(parameters.artifactType, 'dll') }}:
+          - name: displayName
+            value: 'Code'
+          - name: folderPath
+            value: '$(REPO_ROOT)'
+          - name: inlineSignParams
+            value: '${{ variables.InlineDllSignParams }}'
+          - name: pattern
+            value: '*.dll'
+
+    - ${{ if eq(parameters.artifactType, 'pkg') }}:
+          - name: displayName
+            value: 'NuGet Package'
+          - name: folderPath
+            value: '$(ARTIFACT_PATH)'
+          - name: inlineSignParams
+            value: '${{ variables.InlinePkgSignParams }}'
+          - name: pattern
+            value: '*.*nupkg'
+
+steps:
+    - task: EsrpMalwareScanning@5
+      displayName: 'ESRP Malware Scanning ${{ variables.displayName }}'
+      inputs:
+          AppRegistrationClientId: '${{ variables.AppRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ variables.AppRegistrationTenantId }}'
+          CleanupTempStorage: 1
+          ConnectedServiceName: '${{ variables.ConnectedServiceName }}'
+          AuthAKVName: '${{ variables.AuthAkvName }}'
+          AuthCertName: '${{ variables.AuthCertName }}'
+          FolderPath: '${{ variables.folderPath }}'
+          Pattern: '${{ variables.pattern }}'
+          VerboseLogin: 1
+
+    - task: EsrpCodeSigning@5
+      displayName: 'ESRP Signing ${{ variables.displayName }}'
+      inputs:
+          AppRegistrationClientId: '${{ variables.AppRegistrationClientId }}'
+          AppRegistrationTenantId: '${{ variables.AppRegistrationTenantId }}'
+          AuthAKVName: '${{ variables.AuthAkvName }}'
+          AuthCertName: '${{ variables.AuthCertName }}'
+          AuthSignCertName: '${{ variables.AuthSignCertName }}'
+          ConnectedServiceName: '${{ variables.ConnectedServiceName }}'
+          FolderPath: '${{ variables.folderPath }}'
+          Pattern: '${{ variables.pattern }}'
+          signConfigType: 'inlineSignParams'
+          inlineOperation: '${{ variables.inlineSignParam }}'

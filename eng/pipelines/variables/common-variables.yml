@@ -6,23 +6,19 @@
 
 variables:
     - group: 'Common Variables [v2]'
+      # appRegistrationClientId
+      # appRegistrationTenantId
 
-    - name: Configuration
-      value: Release
-    - name: CommitHead
-      value: '' # the value will be extracted from the repo's head
-    - name: REPOROOT
-      value: $(Build.SourcesDirectory)
-    - name: softwareFolder
-      value: $(REPOROOT)/software
-    - name: symbolsFolder
-      value: $(REPOROOT)/symbols
-    - name: artifactDirectory
-      value: '$(REPOROOT)/packages'
-
-    # @TODO: Move to common variables group
-    - name: appRegistrationClientId
-      value: 'a0d18a38-fde1-4ba7-92e1-15be16cb6a8e'
-    # @TODO: Move to common variables group
-    - name: appRegistrationTenantId
-      value: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+    # Well-known paths
+    - name: REPO_ROOT
+      value: '$(Build.SourcesDirectory)'
+      readonly: true
+    - name: ARTIFACT_PATH
+      value: '$(repoRoot)/packages'
+      readonly: true
+    - name: SOFTWARE_PATH
+      value: '$(repoRoot)/software'
+      readonly: true
+    - name: SYMBOLS_PATH
+      value: '$(repoRoot)/symbols'
+      readonly: true
