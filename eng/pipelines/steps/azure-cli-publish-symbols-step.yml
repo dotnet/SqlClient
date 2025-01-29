@@ -1,0 +1,107 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+    - name: azureSubscription
+      type: string
+
+    - name: projectName
+      type: string
+
+    - name: publishToInternal
+      type: boolean
+
+    - name: publishToPublic
+      type: boolean
+
+    - name: symbolServer
+      type: string
+
+    - name: symbolTokenUri
+      type: string
+
+    - name: symbolsArtifactName
+      type: string
+
+steps:
+    - task: AzureCLI@2
+      displayName: 'Publish Symbols'
+      inputs:
+          azureSubscription: '${{ variables.AzureSubscription }}'
+          scriptLocation: inlineScript
+          scriptType: ps
+          inlineScript: |
+            # Propagate parameters to PS variables ################################################
+            $artifactName = ${{ parameters.artifactName }}
+            echo "artifactName= $artifactName"
+            
+            $publishToInternalServer = "${{ parameters.publishToInternal }}".ToLower()
+            echo "publishToInternalServer= $publishToInternalServer"
+              
+            $projectName = "${{ parameters.ProjectName }}"
+            echo "projectName= $projectName" 
+              
+            $publishToPublicServer = "${{ parameters.publishToPublic }}".ToLower()
+            echo "publishToPublicServer= $publishToPublicServer"
+              
+            $symbolServer = "${{ parameters.symbolServer }}"
+            echo "symbolServer= $symbolServer"
+            
+            $symbolTokenUri = "${{ parameters.symbolTokenUri }}"
+            echo "symbolTokenUri= $symbolTokenUri"
+        
+            # Publish symbols #####################################################################      
+            # 1) Get the access token for the symbol publishing service
+            echo ">  1.Acquiring symbol publishing token..."
+            $symbolPublishingToken = az account get-access-token --resource $tokenUri --query accessToken -o tsv
+            echo ">  1.Symbol publishing token acquired."
+            
+            # 2) Register the request name
+            echo ">  2.Registering request name..."
+            $requestNameRegistrationBody = "{'requestName': '$artifactName'}"
+            Invoke-RestMethod `
+              -Method POST `
+              -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests" `
+              -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+              -ContentType "application/json" `
+              -Body $requestNameRegistrationBody
+            echo ">  2.Request name registered successfully."
+            
+            # 3) Publish the symbols
+            echo ">  3.Submitting request to publish symbols...
+            $publishSymbolsBody = "{'publishToInternalServer': $publishToInternalServer, 'publishToPublicServer': $publishToPublicServer}"
+            Invoke-RestMethod `
+              -Method POST `
+              -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$artifactName" `
+              -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+              -ContentType "application/json" `
+              -Body $publishSymbolsBody
+            echo ">  3.Request to publish symbols submitted successfully."
+    
+            # The following REST calls are used to check publishing status.
+            echo ">  4.Checking the status of the request ..."
+            Invoke-RestMethod `
+              -Method GET `
+              -Uri "https://$symbolServer.trafficmanager.net/projects/$projectName/requests/$requestName" `
+              -Headers @{ Authorization = "Bearer $symbolPublishingToken" } `
+              -ContentType "application/json"
+            
+            echo "Use below tables to interpret the values of xxxServerStatus and xxxServerResult fields from the response."
+            
+            echo "PublishingStatus"
+            echo "-----------------"
+            echo "0	NotRequested; The request has not been requested to publish."
+            echo "1	Submitted; The request is submitted to be published"
+            echo "2	Processing; The request is still being processed"
+            echo "3	Completed; The request has been completed processing. It can be failed or successful. Check PublishingResult to get more details"
+            
+            echo "PublishingResult"
+            echo "-----------------"
+            echo "0	Pending; The request has not completed or has not been requested."
+            echo "1	Succeeded; The request has published successfully"
+            echo "2	Failed; The request has failed to publish"
+            echo "3	Cancelled; The request was cancelled"
+
