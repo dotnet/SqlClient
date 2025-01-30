@@ -51,6 +51,15 @@ namespace Microsoft.Data.SqlClient.Tests
             _nameProperty = nameProperty;
             _output.WriteLine($"Name property: {_nameProperty}");
 
+            // Find the Build() function.
+            var buildFunction =
+                clientInterfaceType.GetMethod(
+                    "Build",
+                    BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(buildFunction);
+            _buildFunction = buildFunction;
+            _output.WriteLine($"Build function: {_buildFunction}");
+
             // Find the Clean() function.
             var cleanFunction =
                 clientInterfaceType.GetMethod(
@@ -59,12 +68,29 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(cleanFunction);
             _cleanFunction = cleanFunction;
             _output.WriteLine($"Clean function: {_cleanFunction}");
+
+            // Find the Trunc() function.
+            var truncFunction =
+                clientInterfaceType.GetMethod(
+                    "Trunc",
+                    BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(truncFunction);
+            _truncFunction = truncFunction;
+            _output.WriteLine($"Trunc function: {_truncFunction}");
         }
 
         // ====================================================================
         // Tests
 
         // Test the Name property.
+        //
+        // This test assumes that values returned by the runtime used to
+        // construct the Name property will all fit within the
+        // TdsEnums.MAXLEN_CLIENTINTERFACE_NAME max length (currently 128).
+        //
+        // If this test fails, then either the max length has changed or the
+        // runtime values have changed in a meaningful way.
+        //
         [Fact]
         public void Name()
         {
@@ -81,11 +107,11 @@ namespace Microsoft.Data.SqlClient.Tests
             //
             // The format should be:
             //
-            // Microsoft SqlClient|{OS Name}|{Arch}|{OS Info}|{Framework Info}
+            // MS-MDS|{OS Name}|{Arch}|{OS Info}|{Framework Info}
             //
             var parts = name.Split('|');
             Assert.Equal(5, parts.Length);
-            Assert.Equal("Microsoft SqlClient", parts[0]);
+            Assert.Equal("MS-MDS", parts[0]);
             
             // Check the OS name against the guaranteed values.
             var osName = parts[1];
@@ -117,6 +143,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(parts[2] == "Unknown" || parts[2].Length > 0);
             Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);
             Assert.True(parts[4] == "Unknown" || parts[4].Length > 0);
+        }
+
+        // Test the Build() function.
+        [Fact]
+        public void Build()
+        {
         }
 
         // Test the Clean() function.
@@ -161,16 +193,80 @@ namespace Microsoft.Data.SqlClient.Tests
             }
         }
 
+        // Test the Trunc() function.
+        [Fact]
+        public void Trunc()
+        {
+            // Max length of 0.
+            Assert.Equal("", DoTrunc("", 0));
+            Assert.Equal("", DoTrunc(" ", 0));
+            Assert.Equal("", DoTrunc("A", 0));
+            Assert.Equal("", DoTrunc("ABCDE FGHIJ", 0));
+            
+            // Max length of 1.
+            Assert.Equal("", DoTrunc("", 1));
+            Assert.Equal(" ", DoTrunc(" ", 1));
+            Assert.Equal("A", DoTrunc("A", 1));
+            Assert.Equal("A", DoTrunc("ABCDE FGHIJ", 1));
+            
+            // Max length of 5.
+            Assert.Equal("", DoTrunc("", 5));
+            Assert.Equal(" ", DoTrunc(" ", 5));
+            Assert.Equal("A", DoTrunc("A", 5));
+            Assert.Equal("ABCDE", DoTrunc("ABCDE FGHIJ", 5));
+            
+            // Max length of 100.
+            Assert.Equal("", DoTrunc("", 100));
+            Assert.Equal(" ", DoTrunc(" ", 100));
+            Assert.Equal("A", DoTrunc("A", 100));
+            Assert.Equal("ABCDE", DoTrunc("ABCDE FGHIJ", 100));
+        }
+
         // ====================================================================
         // Private Helpers
+        
+        // Convenience helper to call the Build() function.
+        private string DoBuild(
+            ushort maxLen,
+            string driverName,
+            string osType,
+            Architecture arch,
+            string osDesc,
+            string frameworkDesc)
+        {
+            var result =
+                _buildFunction.Invoke(
+                    null,
+                    new object[]
+                    {
+                        maxLen,
+                        driverName,
+                        osType,
+                        arch,
+                        osDesc,
+                        frameworkDesc
+                    }) as string;
+            Assert.NotNull(result);
+            return result;
+        }
         
         // Convenience helper to call the Clean() function.
         private string DoClean(string? value)
         {
-            var cleaned =
+            var result =
                 _cleanFunction.Invoke(null, new object?[] { value }) as string;
-            Assert.NotNull(cleaned);
-            return cleaned;
+            Assert.NotNull(result);
+            return result;
+        }
+        
+        // Convenience helper to call the Trunc() function.
+        private string DoTrunc(string value, ushort maxLen)
+        {
+            var result =
+                _truncFunction.Invoke(
+                    null, new object?[] { value, maxLen }) as string;
+            Assert.NotNull(result);
+            return result;
         }
 
         // ====================================================================
@@ -182,7 +278,13 @@ namespace Microsoft.Data.SqlClient.Tests
         // The ClientInterface.Name property.
         private readonly PropertyInfo _nameProperty;
         
+        // The ClientInterface.Build() function.
+        private readonly MethodInfo _buildFunction;
+        
         // The ClientInterface.Clean() function.
         private readonly MethodInfo _cleanFunction;
+        
+        // The ClientInterface.Trunc() function.
+        private readonly MethodInfo _truncFunction;
     }
 }

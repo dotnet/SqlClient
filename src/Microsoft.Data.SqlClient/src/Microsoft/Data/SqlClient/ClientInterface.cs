@@ -34,26 +34,32 @@ namespace Microsoft.Data.SqlClient
         // The {Arch} will be the process architecture, either the bare metal
         // hardware architecture or the virtualized architecture.  See
         // System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture
-        // for possible values.  This value will never be longer than 15
+        // for possible values.  This value will never be longer than 11
         // characters.
         //
         // The {OS Info} will be sourced from the the
         // System.Runtime.InteropServices.RuntimeInformation.OSDescription
-        // value, or "Unknown" if that value is empty or all whitespace.  This
-        // field participates in truncation if the entire Name is too long, and
-        // may be as short as 42 characters.
+        // value, or "Unknown" if that value is empty or all whitespace.
         //
         // The {Framework Info} will be sourced from the
         // System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
-        // value, or "Unknown" if that value is empty or all whitespace.  This
-        // field participates in truncation if the entire Name is too long, and
-        // may be as short as 42 characters.
+        // value, or "Unknown" if that value is empty or all whitespace.
         //
         // This adheres to the TDS v37.0 spec, which specifies that the client
         // interface name has a maximum length as noted above.  If the fully
         // formed Name length is beyond that limit, it will be truncated to the
-        // maximum by reducing the length of the {OS Info} and {Framework Info}
-        // fields as evenly as possible.
+        // maximum with no regard for preserving certain fields or pipe ('|')
+        // delimiters.
+        //
+        // The maximum length is expected to be sufficient to accommodate the
+        // driver name, {OS Name}, and {Arch} fields, but those fields will
+        // be truncated as described above if necessary.
+        //
+        // The {OS Info} and {Framework Info} fields will share any remaining
+        // space as evenly as possible, being truncated equally if both are
+        // longer than half of the remaining space.  If one of these fields is
+        // shorter than half of the remaining space, the other field will
+        // consume as much remaining space as possible.
         //
         // Any characters that are not one of the following are replaced with 
         // underscore ('_'):
@@ -77,12 +83,11 @@ namespace Microsoft.Data.SqlClient
 
         // Static construction builds the client interface name.
         //
-        // We make a best effort to avoid allowing known exceptions to escape.
+        // All known exceptions are consumed.
         //
         static ClientInterface()
         {
-            // The max length must not be negative, or our assumptions below
-            // won't hold.
+            // The max length must not be negative.
             //
             // C# doesn't have compile-time type traits, so we can't confirm
             // that MAXLEN_CLIENTINTERFACE is unsigned.  Instead, we capture
@@ -90,6 +95,63 @@ namespace Microsoft.Data.SqlClient
             // permitted operation.
             //
             ushort maxLen = TdsEnums.MAXLEN_CLIENTINTERFACE;
+
+            // Determine the OS type.
+            //
+            // RuntimeInformation doesn't have an enumeration for OS type, which
+            // makes it impossible to inject that value for testing.  We define
+            // our own enum and choose the correct value here.
+            //
+            string osType = Unknown;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                osType = "Windows";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                osType = "Linux";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                osType = "MacOS";
+            }
+// The FreeBSD platform doesn't exist in .NET Framework at all.
+#if NET
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
+            {
+                osType = "FreeBSD";
+            }
+#endif // NET
+
+            // Build it!
+            _name = Build(
+                maxLen,
+                DriverName,
+                osType,
+                RuntimeInformation.ProcessArchitecture,
+                RuntimeInformation.OSDescription,
+                RuntimeInformation.FrameworkDescription);
+        }
+
+        // Build the client interface name and return it.
+        //
+        // The length of the returned value will never be longer than maxLen.
+        //
+        // All known exceptions are consumed.
+        //
+        public static string Build(
+            ushort maxLen,
+            string driverName,
+            string osType,
+            Architecture arch,
+            string osDesc,
+            string frameworkDesc)
+        {
+            string result;
+
+            // Clean and truncate the driver name, max length 10.  We will need
+            // it for error handling.
+            driverName = Trunc(Clean(driverName), 10);
 
             try
             {
@@ -102,155 +164,135 @@ namespace Microsoft.Data.SqlClient
                 //
                 StringBuilder name = new StringBuilder(maxLen);
 
-                // Start with the well-known name prefix of this driver.
-                name.Append(DriverName);
+                // Start with the (clean) driver name.
+                name.Append(driverName);
                 name.Append('|');
 
-                // Add the OS name, in order of likelihood.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    name.Append("Windows");
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-                {
-                    name.Append("Linux");
-                }
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                {
-                    name.Append("MacOS");
-                }
-// The FreeBSD platform doesn't exist in .NET Framework at all.
-#if NET
-                else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-                {
-                    name.Append("FreeBSD");
-                }
-#endif // NET
-                else
-                {
-                    name.Append(Unknown);
-                }
-
+                // Add the OS name, max length 7.
+                name.Append(Trunc(Clean(osType), 7));
                 name.Append('|');
 
                 // Add the architecture.
                 //
-                // We don't expect the architecture to be very long; 15
+                // We don't expect the architecture to be very long; 11
                 // characters max should be plenty.
                 //
-                var arch =
-                    Clean(RuntimeInformation.ProcessArchitecture.ToString());
-                if (arch.Length > 15)
-                {
-                    arch = arch.Substring(0, 15);
-                }
-                name.Append(arch);
+                name.Append(Trunc(Clean(arch.ToString()), 11));
                 name.Append('|');
 
-                // We should have appended no more 44 characters here:
+                // We should have appended at most 31 characters so far:
                 //
-                //  - DriverName "Microsoft SqlClient" (19)
-                //  - OS Name "Windows" (max 7)
-                //  - Arch (max 15)
-                //  - 3 pipe characters
+                //  10 (driver name)
+                //   1 (pipe)
+                //   7 (OS name)
+                //   1 (pipe)
+                //  11 (architecture)
+                //   1 (pipe)
                 //
-                Debug.Assert(name.Length <= 44);
+                Debug.Assert(name.Length <= 31);
 
                 // Obtain cleaned versions of OS and framework descriptions.
-                var osDesc = Clean(RuntimeInformation.OSDescription);
-                var frameworkDesc =
-                    Clean(RuntimeInformation.FrameworkDescription);
+                osDesc = Clean(osDesc);
+                frameworkDesc = Clean(frameworkDesc);
 
                 // How many more characters can we append?
-                Debug.Assert(name.Length <= maxLen);
-                ushort remaining =
-                    (ushort)
-                    ((name.Length > maxLen ? 0 : maxLen - name.Length)
-                     // Subtract 1 to accommodate the pipe character between
-                     // the OS and framework descriptions.
-                     - 1);
-
-                // Can we fit both descriptions as-is?
-                if (osDesc.Length + frameworkDesc.Length > remaining)
+                ushort remaining = 0;
+                if (name.Length < maxLen)
                 {
-                    // No, so we will have to truncate something.
-                    //
-                    // We want to keep the descriptions as balanced as possible,
-                    // so we'll truncate them to no shorter than half of the
-                    // remaining space each.
-                    //
-                    // If remaining is odd, we'll give the extra character to
-                    // the OS description if we need to truncate both.
-                    //
-                    ushort half = (ushort)(remaining / 2);
-                    
-                    // Do we need to truncate the OS description?
-                    if (osDesc.Length <= half)
-                    {
-                        // No, so truncate the framework description as little
-                        // as possible.
-                        frameworkDesc =
-                            frameworkDesc.Substring(
-                                0,
-                                remaining - osDesc.Length);
-                    }
-                    // Do we need to truncate the framework description?
-                    else if (frameworkDesc.Length <= half)
-                    {
-                        // No, so truncate the OS description as little as
-                        // possible.
-                        osDesc =
-                            osDesc.Substring(
-                                0,
-                                remaining - frameworkDesc.Length);
-                    }
-                    // Otherwise, we need to truncate them both.
-                    else
-                    {
-                        frameworkDesc = frameworkDesc.Substring(0, half);
-
-                        // Give the extra character to the OS description if
-                        // remaining was odd.
-                        if (remaining % 2 != 0)
-                        {
-                            half++;
-                        }
-                        osDesc = osDesc.Substring(0, half);
-                    }
-
-                    Debug.Assert(
-                        osDesc.Length + frameworkDesc.Length <= remaining);
+                    remaining = (ushort)(maxLen - name.Length);
                 }
 
-                // Append them.
-                name.Append(osDesc);
-                name.Append('|');
-                name.Append(frameworkDesc);
+                // Do we have any remaining space?
+                if (remaining > 0)
+                {
+                    // Will both descriptions together be too long?
+                    if (osDesc.Length + frameworkDesc.Length > remaining)
+                    {
+                        // Yes, so we will have to truncate something.
+                        //
+                        // We want to keep the descriptions as balanced as
+                        // possible, so we'll truncate them to no shorter than
+                        // half of the remaining space each.
+                        //
+                        ushort osHalf = (ushort)(remaining / 2);
+                        ushort frameworkHalf = osHalf;
 
-                // Remember the final name.
-                _name = name.ToString();
+                        // If remaining is odd, we'll give the extra character
+                        // to the OS description.
+                        if (remaining % 2 != 0)
+                        {
+                            osHalf++;
+                        }
+                        
+                        Debug.Assert(osHalf + frameworkHalf == remaining);
+                        
+                        // Will the OS description fit as-is?
+                        if (osDesc.Length <= osHalf)
+                        {
+                            // Yes, so the framework description must be too
+                            // long.  Truncate it as little as possible.
+                            frameworkDesc =
+                                frameworkDesc.Substring(
+                                    0,
+                                    remaining - osDesc.Length);
+                        }
+                        // Will the framework description fit as-is?
+                        else if (frameworkDesc.Length <= frameworkHalf)
+                        {
+                            // Yes, so the OS description must be too long.
+                            // Truncate it as little as possible.
+                            osDesc =
+                                osDesc.Substring(
+                                    0,
+                                    remaining - frameworkDesc.Length);
+                        }
+                        // Otherwise, we need to truncate them both.
+                        else
+                        {
+                            osDesc = osDesc.Substring(0, osHalf);
+                            frameworkDesc =
+                                frameworkDesc.Substring(0, frameworkHalf);
+                        }
 
-                Debug.Assert(_name.Length <= maxLen);
+                        Debug.Assert(
+                            osDesc.Length + frameworkDesc.Length <= remaining);
+                    }
+
+                    // Append them now that they've been truncated if necessary.
+                    name.Append(osDesc);
+                    // Note that we didn't specifically accommodate this pipe
+                    // character in our remaining space calculations.  It may
+                    // cause us to exceed the max length, but we perform a
+                    // last-resort truncation below anyway.
+                    name.Append('|');
+                    name.Append(frameworkDesc);
+                }
+
+                // Remember the name we've built up.
+                result = name.ToString();
             }
             catch (ArgumentOutOfRangeException)
             {
                 // StringBuilder failed in an unexpected way, so use our
                 // fallback value.
-                _name = $"{DriverName}|{Unknown}|{Unknown}|{Unknown}|{Unknown}";
+                result =
+                    $"{driverName}|{Unknown}|{Unknown}|{Unknown}|{Unknown}";
             }
 
-            // Truncate to our max length.
+            // Truncate to our max length if necessary.
             //
-            // This is a paranoia step, as we've already been careful to ensure
-            // that we don't exceed the max length.
+            // There are cases above where the max length may have been
+            // exceeded, and rather than deal with them individually, we rely
+            // on this final truncation check for simplicity.
             //
-            if (_name.Length > maxLen)
+            if (result.Length > maxLen)
             {
                 // We know this won't throw ArgumentOutOfRangeException because
-                // we've already confirmed that Length is greater than the
-                // maximum.
-                _name = _name.Substring(0, maxLen);
+                // we've already confirmed that Length is greater than maxLen.
+                result = result.Substring(0, maxLen);
             }
+
+            return result;
         }
 
         // Clean the given value of any disallowed characters, replacing them
@@ -321,6 +363,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Truncate the given value to the given max length, and return the
+        // result.
+        public static string Trunc(string value, ushort maxLength)
+        {
+            if (value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            // We know this won't throw ArgumentOutOfRangeException because
+            // we've already confirmed that Length is greater than maxLength.
+            return value.Substring(0, maxLength);
+        }
+
         // ====================================================================
         // Private Fields
 
@@ -328,7 +384,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly string _name;
 
         // Our well-known .NET driver name.
-        private const string DriverName = "Microsoft SqlClient";
+        private const string DriverName = "MS-MDS";
 
         // A fallback value for parts of the client interface name that are
         // unknown, invalid, or when errors occur.
