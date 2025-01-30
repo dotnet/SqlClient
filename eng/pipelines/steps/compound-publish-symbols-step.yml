@@ -7,24 +7,26 @@
 # For more details, see https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
 
 parameters:
-    - name: buildConfiguration
-      type: string
-
-    - name: buildVersion
-      type: string
-
     - name: referenceType
       type: string
       values:
           - project
           - package
 
-variables:
-    - template: '../variables/symbol-publishing-variables.yml'
+    - name: searchPattern
+      type: string
 
     - name: symbolsArtifactName
       type: string
-      value: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.buildVersion }}_$(System.TimelineId)'
+
+    - name: symbolsProduct
+      type: string
+
+    - name: symbolsVersion
+      type: string
+
+variables:
+    - template: '../variables/symbol-publishing-variables.yml'
 
     - # Allegedly needed for downstream tasks
       name: ArtifactServices.Symbol.AccountName
@@ -36,17 +38,15 @@ steps:
       displayName: 'Upload symbols to ${{ variables.SymbolAccount }} org'
       inputs:
           IndexSources: false
-          Pat: $(System.AccessToken) # @TODO: Where does this come from??
-          SearchPattern: |
-              Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
-              AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb
+          Pat: '$(System.AccessToken)'
+          SearchPattern: '${{ parameters.searchPattern }}'
           SymbolExpirationInDays: 1825 # 5 years
-          SymbolServerType: TeamServices
-          SymbolsArtifactName: ${{ variables.symbolsArtifactName }}
+          SymbolServerType: 'TeamServices'
+          SymbolsArtifactName: '${{ parameters.symbolsArtifactName }}'
           SymbolsFolder: '$(ARTIFACT_PATH)/${{ parameters.referenceType }}/bin'
           SymbolsMaximumWaitTime: 60
-          SymbolsProduct: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
-          SymbolsVersion: ${{ parameters.buildVersion }}
+          SymbolsProduct: '${{ parameters.symbolsProduct }}'
+          SymbolsVersion: '${{ parameters.symbolsVersion }}'
 
     - template: './azure-cli-publish-symbols-step.yml@self'
       parameters:
@@ -56,6 +56,6 @@ steps:
           publishToPublic: true
           symbolServer: "${{ variables.SymbolServer }}"
           symbolTokenUri: "${{ variables.SymbolTokenUri }}"
-          symbolsArtifactName: "${{ variables.SymbolsArtifactName }}"
+          symbolsArtifactName: "${{ parameters.SymbolsArtifactName }}"
 
 
