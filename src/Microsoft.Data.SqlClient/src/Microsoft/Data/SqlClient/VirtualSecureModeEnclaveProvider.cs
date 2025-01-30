@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient
@@ -72,8 +72,7 @@ namespace Microsoft.Data.SqlClient
 
                     using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
-                        var deserializer = new DataContractJsonSerializer(typeof(byte[]));
-                        return (byte[])deserializer.ReadObject(stream);
+                        return JsonSerializer.Deserialize<List<byte>>(stream)?.ToArray();
                     }
                 }
                 catch (Exception e)
