@@ -13,6 +13,8 @@ namespace Microsoft.Data.SqlClient
     //
     internal static class ClientInterface
     {
+        #region Properties
+        
         // ====================================================================
         // Properties
 
@@ -77,6 +79,10 @@ namespace Microsoft.Data.SqlClient
         // exceptions, for example process-fatal memory allocation errors.
         // 
         public static string Name => _name;
+
+        #endregion Properties
+
+        #region Helpers
 
         // ====================================================================
         // Helpers
@@ -149,8 +155,8 @@ namespace Microsoft.Data.SqlClient
         {
             string result;
 
-            // Clean and truncate the driver name, max length 10.  We will need
-            // it for error handling.
+            // Clean and truncate the driver name, max length 10 (arbitrarily
+            // chosen - should be plenty).  We will need it for error handling.
             driverName = Trunc(Clean(driverName), 10);
 
             try
@@ -168,15 +174,13 @@ namespace Microsoft.Data.SqlClient
                 name.Append(driverName);
                 name.Append('|');
 
-                // Add the OS name, max length 7.
+                // Add the OS name, max length 7 (because that's the current
+                // length of the longest value- see the constructor above).
                 name.Append(Trunc(Clean(osType), 7));
                 name.Append('|');
 
-                // Add the architecture.
-                //
-                // We don't expect the architecture to be very long; 11
-                // characters max should be plenty.
-                //
+                // Add the architecture, max length 11 (enough to hold all
+                // current enum values).
                 name.Append(Trunc(Clean(arch.ToString()), 11));
                 name.Append('|');
 
@@ -205,6 +209,32 @@ namespace Microsoft.Data.SqlClient
                 // Do we have any remaining space?
                 if (remaining > 0)
                 {
+                    // Yes, so we want to end up with OS and Framework
+                    // description lengths like this:
+                    //
+                    //  Remaining | OS | Pipe | Framework
+                    //  ----------|----|------| ---------
+                    //          1 |  1 |    0 |         0
+                    //          2 |  1 |    1 |         0
+                    //          3 |  1 |    1 |         1
+                    //          4 |  2 |    1 |         1
+                    //          5 |  2 |    1 |         2
+                    //          6 |  3 |    1 |         2
+                    //          7 |  3 |    1 |         3
+                    //
+                    // And so on.
+                    //
+                    // If remaining is odd, we'll give the extra character
+                    // to the OS description.
+
+                    // If we have at least 2 characters left, then we will need
+                    // to leave room for the pipe character, so decrement
+                    // remaining accordingly.
+                    if (remaining >= 2)
+                    {
+                        --remaining;
+                    }
+
                     // Will both descriptions together be too long?
                     if (osDesc.Length + frameworkDesc.Length > remaining)
                     {
@@ -217,8 +247,8 @@ namespace Microsoft.Data.SqlClient
                         ushort osHalf = (ushort)(remaining / 2);
                         ushort frameworkHalf = osHalf;
 
-                        // If remaining is odd, we'll give the extra character
-                        // to the OS description.
+                        // Give the OS description the extra character, if
+                        // necessary.
                         if (remaining % 2 != 0)
                         {
                             osHalf++;
@@ -377,6 +407,10 @@ namespace Microsoft.Data.SqlClient
             return value.Substring(0, maxLength);
         }
 
+        #endregion Helpers
+
+        #region Private Fields
+
         // ====================================================================
         // Private Fields
 
@@ -389,5 +423,7 @@ namespace Microsoft.Data.SqlClient
         // A fallback value for parts of the client interface name that are
         // unknown, invalid, or when errors occur.
         private const string Unknown = "Unknown";
+
+        #endregion Private Fields
     }
 }

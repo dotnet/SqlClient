@@ -1,6 +1,6 @@
+using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 
 using Xunit;
 using Xunit.Abstractions;
@@ -11,6 +11,8 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public sealed class ClientInterfaceTests
     {
+        #region Test Setup
+
         // ====================================================================
         // Test Setup
 
@@ -79,6 +81,10 @@ namespace Microsoft.Data.SqlClient.Tests
             _output.WriteLine($"Trunc function: {_truncFunction}");
         }
 
+        #endregion Test Setup
+
+        #region Tests
+
         // ====================================================================
         // Tests
 
@@ -145,10 +151,142 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(parts[4] == "Unknown" || parts[4].Length > 0);
         }
 
-        // Test the Build() function.
-        [Fact]
-        public void Build()
+        // Test the Build() function when it truncates the overall length.
+        [Theory]
+        [InlineData(0, "")]
+        [InlineData(1, "A")]
+        [InlineData(2, "A|")]
+        [InlineData(3, "A|B")]
+        [InlineData(4, "A|B|")]
+        [InlineData(5, "A|B|X")]
+        [InlineData(6, "A|B|X6")]
+        [InlineData(7, "A|B|X64")]
+        [InlineData(8, "A|B|X64|")]
+        [InlineData(9, "A|B|X64|C")]
+        [InlineData(10, "A|B|X64|C|")]
+        [InlineData(11, "A|B|X64|C|D")]
+        [InlineData(12, "A|B|X64|C|D")]
+        public void Build_Truncate_Overall(ushort maxLen, string expected)
         {
+            Assert.Equal(
+                expected,
+                DoBuild(maxLen, "A", "B", Architecture.X64, "C", "D"));
+        }
+
+        // Test the Build() function when it truncates the driver name.
+        [Fact]
+        public void Build_Truncate_Driver_Name()
+        {
+            // The driver name is longer than max length.
+            Assert.Equal(
+                "DriverNa",
+                DoBuild(8, "DriverName", "B", Architecture.X64, "C", "D"));
+            
+            // The driver name is longer than its per-field max length of 10.
+            Assert.Equal(
+                "ReallyLong|B|X64|C|D",
+                DoBuild(
+                    128, "ReallyLongName", "B", Architecture.X64, "C", "D"));
+        }
+
+        // Test the Build() function when it truncates the OS name.
+        [Fact]
+        public void Build_Truncate_OS_Name()
+        {
+            // The OS name puts the overall length over the max.
+            Assert.Equal(
+                "A|LongOs",
+                DoBuild(8, "A", "LongOsName", Architecture.X64, "C", "D"));
+            
+            // The OS name is longer than its per-field max length of 7.
+            Assert.Equal(
+                "A|LongOsN|X64|C|D",
+                DoBuild(
+                    128, "A", "LongOsName", Architecture.X64, "C", "D"));
+        }
+
+        // Test the Build() function when it truncates the Architecture.
+        [Fact]
+        public void Build_Truncate_Arch()
+        {
+            // The Architecture puts the overall length over the max.
+            Assert.Equal(
+                "A|B|Loon",
+                DoBuild(8, "A", "B", Architecture.LoongArch64, "C", "D"));
+            
+            // We can't manufacture an Architecture value that's too long, so we
+            // instead verify that all existing values' string representations
+            // are no longer than the max of 11 characters.
+            foreach (var arch in Enum.GetValues<Architecture>())
+            {
+                Assert.True(arch.ToString().Length <= 11);
+            }
+        }
+
+        // Test the Build() function when one or both of OS and/or framework
+        // description are truncated.
+        [Fact]
+        public void Build_Truncate_OS_Framework_Desc()
+        {
+            // There is no space remaining.
+            Assert.Equal(
+                "A|B|X64|",
+                DoBuild(8, "A", "B", Architecture.X64, "C", "D"));
+            
+            // There is 1 char remaining, which is given to the OS description.
+            Assert.Equal(
+                "A|B|X64|C",
+                DoBuild(9, "A", "B", Architecture.X64, "CCC", "DDD"));
+            
+            // There are 2 chars remaining; 1 for each description, but the pipe
+            // character gets in the way and framework is truncated.
+            Assert.Equal(
+                "A|B|X64|C|",
+                DoBuild(10, "A", "B", Architecture.X64, "CCC", "DDD"));
+            
+            // There are 3 chars remaining; 1 for each description, and 1 for
+            // the pipe.
+            Assert.Equal(
+                "A|B|X64|C|D",
+                DoBuild(11, "A", "B", Architecture.X64, "CCC", "DDD"));
+            
+            // Continue to expand max length until both descriptions fit.
+            Assert.Equal(
+                "A|B|X64|CC|D",
+                DoBuild(12, "A", "B", Architecture.X64, "CCC", "DDD"));
+            Assert.Equal(
+                "A|B|X64|CC|DD",
+                DoBuild(13, "A", "B", Architecture.X64, "CCC", "DDD"));
+            Assert.Equal(
+                "A|B|X64|CCC|DD",
+                DoBuild(14, "A", "B", Architecture.X64, "CCC", "DDD"));
+            Assert.Equal(
+                "A|B|X64|CCC|DDD",
+                DoBuild(15, "A", "B", Architecture.X64, "CCC", "DDD"));
+
+            // OS description is shorter than half, so Framework description
+            // gets the rest.
+            Assert.Equal(
+                "A|B|X64|CC|DDD",
+                DoBuild(14, "A", "B", Architecture.X64, "CC", "DDDD"));
+            Assert.Equal(
+                "A|B|X64|CC|DDDD",
+                DoBuild(15, "A", "B", Architecture.X64, "CC", "DDDD"));
+            Assert.Equal(
+                "A|B|X64|CC|DDDD",
+                DoBuild(16, "A", "B", Architecture.X64, "CC", "DDDD"));
+
+            // Framework description is shorter than half, so OS description
+            // gets the rest.
+            Assert.Equal(
+                "A|B|X64|CCC|DD",
+                DoBuild(14, "A", "B", Architecture.X64, "CCCC", "DD"));
+            Assert.Equal(
+                "A|B|X64|CCCC|DD",
+                DoBuild(15, "A", "B", Architecture.X64, "CCCC", "DD"));
+            Assert.Equal(
+                "A|B|X64|CCCC|DD",
+                DoBuild(16, "A", "B", Architecture.X64, "CCCC", "DD"));
         }
 
         // Test the Clean() function.
@@ -181,15 +319,35 @@ namespace Microsoft.Data.SqlClient.Tests
                 "A_B_C_D_E_F_G_H_I_J_K_L_M_N_O_P",
                 DoClean("A|B,C;D:E'F\"G[H{I]J}K\\L/M<N>O?P"));
             Assert.Equal(
-                "Q_R_S_T_U_V_W_X_Y_Z_a_b_c_d_e_f_g_h_i_j_k_l_m_n_o",
+                "Q_R_S_T_U_V_W_X+Y-Z_a.b_c_d_e_f_g_h_i_j_k_l_m_n_o",
                 DoClean("Q^R_S`T~U(V)W*X+Y-Z_a.b,c/d:e<f>g'h\"i[j]k{l}m|n\\o"));
 
             // All disallowed characters are replaced with underscore.
-            for (char c = (char)0u; c <= 0xffff; c++)
+            for (char c = (char)0u; /* see condition below */ ; ++c)
             {
-                Assert.Equal(
-                    AllPermitted.Contains(c) ? c.ToString() : "_",
-                    DoClean(c.ToString()));
+                var clean = DoClean(c.ToString());
+
+                // Whitespace becomes "Unknown".
+                if (char.IsWhiteSpace(c))
+                {
+                    Assert.Equal("Unknown", clean);
+                }
+                else if (AllPermitted.Contains(c))
+                {
+                    Assert.Equal(c.ToString(), clean);
+                }
+                else
+                {
+                    Assert.Equal("_", clean);
+                }
+
+                // We can't check for c <= 0xffff in the for statement because
+                // ++c will overflow back to 0x0000 and the loop will iterate
+                // forever.
+                if (c == 0xffff)
+                {
+                    break;
+                }
             }
         }
 
@@ -219,8 +377,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("", DoTrunc("", 100));
             Assert.Equal(" ", DoTrunc(" ", 100));
             Assert.Equal("A", DoTrunc("A", 100));
-            Assert.Equal("ABCDE", DoTrunc("ABCDE FGHIJ", 100));
+            Assert.Equal("ABCDE FGHIJ", DoTrunc("ABCDE FGHIJ", 100));
         }
+
+        #endregion Tests
+
+        #region Private Helpers
 
         // ====================================================================
         // Private Helpers
@@ -269,6 +431,10 @@ namespace Microsoft.Data.SqlClient.Tests
             return result;
         }
 
+        #endregion Private Helpers
+
+        #region Private Fields
+
         // ====================================================================
         // Private Fields
         
@@ -286,5 +452,7 @@ namespace Microsoft.Data.SqlClient.Tests
         
         // The ClientInterface.Trunc() function.
         private readonly MethodInfo _truncFunction;
+
+        #endregion Private Fields
     }
 }
