@@ -1697,6 +1697,27 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTableAsync/*' />
+        internal Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+        {
+            // This method wraps GetSchemaTable in a Task, introducing async-over-sync. It should not be publicly exposed until
+            // this has been removed and replaced with an async path to guarantee that metadata has been read. Its purpose meanwhile
+            // is to enable code sharing between netcore and netfx.
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled<DataTable>(cancellationToken);
+            }
+
+            try
+            {
+                return Task.FromResult(GetSchemaTable());
+            }
+            catch (Exception ex)
+            {
+                return Task.FromException<DataTable>(ex);
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
         override public bool GetBoolean(int i)
         {
