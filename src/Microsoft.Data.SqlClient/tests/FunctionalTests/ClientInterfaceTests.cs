@@ -211,13 +211,19 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             // The Architecture puts the overall length over the max.
             Assert.Equal(
-                "A|B|Loon",
-                DoBuild(8, "A", "B", Architecture.LoongArch64, "C", "D"));
+                "A|B|Arm6",
+                DoBuild(8, "A", "B", Architecture.Arm64, "C", "D"));
             
             // We can't manufacture an Architecture value that's too long, so we
             // instead verify that all existing values' string representations
             // are no longer than the max of 11 characters.
-            foreach (var arch in Enum.GetValues<Architecture>())
+            foreach (var arch in
+#if NET
+                     Enum.GetValues<Architecture>()
+#else
+                     Enum.GetValues(typeof(Architecture))
+#endif
+                    )
             {
                 Assert.True(arch.ToString().Length <= 11);
             }
@@ -332,7 +338,13 @@ namespace Microsoft.Data.SqlClient.Tests
                 {
                     Assert.Equal("Unknown", clean);
                 }
-                else if (AllPermitted.Contains(c))
+                else if (
+#if NET
+                    AllPermitted.Contains(c)
+#else
+                    AllPermitted.Contains(c.ToString())
+#endif          
+                )
                 {
                     Assert.Equal(c.ToString(), clean);
                 }

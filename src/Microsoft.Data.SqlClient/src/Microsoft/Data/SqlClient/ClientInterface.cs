@@ -347,7 +347,14 @@ namespace Microsoft.Data.SqlClient
         //
         public static string Clean(string? value)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value)
+#if NETFRAMEWORK
+                // .NET Framework doesn't consider IsNullOrWhiteSpace()
+                // sufficient for nullable checks, so add an explicit check for
+                // null.
+                || value == null
+#endif
+               )
             {
                 return Unknown;
             }
@@ -365,8 +372,15 @@ namespace Microsoft.Data.SqlClient
                 foreach (char c in value)
                 {
                     // Is it a permitted character?
-                    if (char.IsAsciiLetter(c)
+                    if (
+#if NET
+                        char.IsAsciiLetter(c)
                         || char.IsAsciiDigit(c)
+#else
+                        (c >= 'A' && c <= 'Z')
+                        || (c >= 'a' && c <= 'z')
+                        || (c >= '0' && c <= '9')
+#endif // NET
                         || c == ' '
                         || c == '.'
                         || c == '+'
