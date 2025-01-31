@@ -59,8 +59,9 @@ namespace Microsoft.Data.SqlClient
 #endif
 
             var outBuff = outgoingBlobWriter.GetSpan((int)s_maxSSPILength);
+            uint sendLength = 0;
 
-            if (0 != SNINativeWrapper.SNISecGenClientContext(handle, incomingBlob, outBuff, out var sendLength, _sniSpnBuffer[0]))
+            if (0 != SniNativeWrapper.SNISecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, _sniSpnBuffer[0]))
             {
                 throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
             }
