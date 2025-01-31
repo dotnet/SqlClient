@@ -7,6 +7,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -242,12 +243,12 @@ namespace Microsoft.Data.SqlClient
 
         private static void ThrowInvalidOperationException_AdvancedTooFar(int capacity)
         {
-            throw new InvalidOperationException($"Buffer advanced too far: {capacity}");
+            throw new OutOfMemoryException(string.Format(CultureInfo.InvariantCulture, Strings.ArrayBufferWriterAdvancedTooFar, capacity));
         }
 
         private static void ThrowOutOfMemoryException(uint capacity)
         {
-            throw new OutOfMemoryException($"Buffer maximum size exceeded: {capacity}");
+            throw new OutOfMemoryException(string.Format(CultureInfo.InvariantCulture, Strings.ArrayBufferWriterMaximumSizeExceeded, capacity));
         }
     }
 }
