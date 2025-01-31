@@ -113,40 +113,43 @@ namespace Microsoft.Data.SqlClient.Tests
             //
             // The format should be:
             //
-            // MS-MDS|{OS Name}|{Arch}|{OS Info}|{Framework Info}
+            // MS-MDS|{OS Type}|{Arch}|{OS Info}|{Runtime Info}
             //
             var parts = name.Split('|');
             Assert.Equal(5, parts.Length);
             Assert.Equal("MS-MDS", parts[0]);
             
-            // Check the OS name against the guaranteed values.
-            var osName = parts[1];
+            // Check the OS Type against the guaranteed values.
+            var osType = parts[1];
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Assert.Equal("Windows", osName);
+                Assert.Equal("Windows", osType);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                Assert.Equal("Linux", osName);
+                Assert.Equal("Linux", osType);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Assert.Equal("MacOS", osName);
+                Assert.Equal("macOS", osType);
             }
 #if NET
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
             {
-                Assert.Equal("FreeBSD", osName);
+                Assert.Equal("FreeBSD", osType);
             }
 #endif // NET
             else
             {
-                Assert.Equal("Unknown", osName);
+                Assert.Equal("Unknown", osType);
             }
 
-            // The remaining parts have no guaranteed format/content, but they
-            // must all be "Unknown" or non-empty.
+            // Architecture must be non-empty and 12 characters or less.
             Assert.True(parts[2] == "Unknown" || parts[2].Length > 0);
+            Assert.True(parts[2].Length <= 12);
+
+            // The OS and Runtime Info have no guaranteed format/content, but
+            // they must both be "Unknown" or non-empty.
             Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);
             Assert.True(parts[4] == "Unknown" || parts[4].Length > 0);
         }
@@ -189,20 +192,20 @@ namespace Microsoft.Data.SqlClient.Tests
                     128, "ReallyLongName", "B", Architecture.X64, "C", "D"));
         }
 
-        // Test the Build() function when it truncates the OS name.
+        // Test the Build() function when it truncates the OS Type.
         [Fact]
-        public void Build_Truncate_OS_Name()
+        public void Build_Truncate_OS_Type()
         {
-            // The OS name puts the overall length over the max.
+            // The OS Type puts the overall length over the max.
             Assert.Equal(
                 "A|LongOs",
                 DoBuild(8, "A", "LongOsName", Architecture.X64, "C", "D"));
             
-            // The OS name is longer than its per-field max length of 7.
+            // The OS Type is longer than its per-field max length of 10.
             Assert.Equal(
-                "A|LongOsN|X64|C|D",
+                "A|VeryLongOs|X64|C|D",
                 DoBuild(
-                    128, "A", "LongOsName", Architecture.X64, "C", "D"));
+                    128, "A", "VeryLongOsName", Architecture.X64, "C", "D"));
         }
 
         // Test the Build() function when it truncates the Architecture.
@@ -216,7 +219,7 @@ namespace Microsoft.Data.SqlClient.Tests
             
             // We can't manufacture an Architecture value that's too long, so we
             // instead verify that all existing values' string representations
-            // are no longer than the max of 11 characters.
+            // are no longer than the max of 12 characters.
             foreach (var arch in
 #if NET
                      Enum.GetValues<Architecture>()
@@ -225,38 +228,38 @@ namespace Microsoft.Data.SqlClient.Tests
 #endif
                     )
             {
-                Assert.True(arch.ToString().Length <= 11);
+                Assert.True(arch.ToString().Length <= 12);
             }
         }
 
-        // Test the Build() function when one or both of OS and/or framework
-        // description are truncated.
+        // Test the Build() function when one or both of OS and/or Runtime Info
+        // are truncated.
         [Fact]
-        public void Build_Truncate_OS_Framework_Desc()
+        public void Build_Truncate_OS_Runtime_Info()
         {
             // There is no space remaining.
             Assert.Equal(
                 "A|B|X64|",
                 DoBuild(8, "A", "B", Architecture.X64, "C", "D"));
             
-            // There is 1 char remaining, which is given to the OS description.
+            // There is 1 char remaining, which is given to the OS Info.
             Assert.Equal(
                 "A|B|X64|C",
                 DoBuild(9, "A", "B", Architecture.X64, "CCC", "DDD"));
             
-            // There are 2 chars remaining; 1 for each description, but the pipe
-            // character gets in the way and framework is truncated.
+            // There are 2 chars remaining; 1 for each Info field, but the pipe
+            // character gets in the way and Runtime Info is truncated.
             Assert.Equal(
                 "A|B|X64|C|",
                 DoBuild(10, "A", "B", Architecture.X64, "CCC", "DDD"));
             
-            // There are 3 chars remaining; 1 for each description, and 1 for
+            // There are 3 chars remaining; 1 for each Info field, and 1 for
             // the pipe.
             Assert.Equal(
                 "A|B|X64|C|D",
                 DoBuild(11, "A", "B", Architecture.X64, "CCC", "DDD"));
             
-            // Continue to expand max length until both descriptions fit.
+            // Continue to expand max length until both Info values fit.
             Assert.Equal(
                 "A|B|X64|CC|D",
                 DoBuild(12, "A", "B", Architecture.X64, "CCC", "DDD"));
@@ -270,8 +273,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 "A|B|X64|CCC|DDD",
                 DoBuild(15, "A", "B", Architecture.X64, "CCC", "DDD"));
 
-            // OS description is shorter than half, so Framework description
-            // gets the rest.
+            // OS Info is shorter than half, so Runtime Info gets the rest.
             Assert.Equal(
                 "A|B|X64|CC|DDD",
                 DoBuild(14, "A", "B", Architecture.X64, "CC", "DDDD"));
@@ -282,8 +284,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 "A|B|X64|CC|DDDD",
                 DoBuild(16, "A", "B", Architecture.X64, "CC", "DDDD"));
 
-            // Framework description is shorter than half, so OS description
-            // gets the rest.
+            // Runtime Info is shorter than half, so OS Info gets the rest.
             Assert.Equal(
                 "A|B|X64|CCC|DD",
                 DoBuild(14, "A", "B", Architecture.X64, "CCCC", "DD"));
@@ -311,6 +312,11 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("Unknown", DoClean("\r"));
             Assert.Equal("Unknown", DoClean("\n"));
             Assert.Equal("Unknown", DoClean(" \t\r\n"));
+
+            // Leading and trailing whitespace are removed.
+            Assert.Equal("A", DoClean(" A"));
+            Assert.Equal("A", DoClean("A\t"));
+            Assert.Equal("A", DoClean("\rA\n"));
 
             // All permitted characters are preserved.
             const string AllPermitted =
