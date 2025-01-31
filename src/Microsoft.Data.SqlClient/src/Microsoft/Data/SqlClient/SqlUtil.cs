@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Interop.Common.Sni;
 using Microsoft.Data.Common;
 
 #if NETFRAMEWORK
@@ -1420,19 +1421,19 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MultiSubnetFailoverWithMoreThan64IPs()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithMoreThan64IPs);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithMoreThan64IPs);
             return ADP.InvalidOperation(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithInstanceSpecified()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithInstanceSpecified);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithInstanceSpecified);
             return ADP.Argument(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithNonTcpProtocol()
         {
-            string msg = GetSNIErrorMessage((int)SNINativeMethodWrapper.SniSpecialErrors.MultiSubnetFailoverWithNonTcpProtocol);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithNonTcpProtocol);
             return ADP.Argument(msg);
         }
 
@@ -2481,9 +2482,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// gets a message for SNI error (sniError must be valid, non-zero error code)
         /// </summary>
-        internal static string GetSNIErrorMessage(int sniError)
+        internal static string GetSNIErrorMessage(uint sniError)
         {
-            Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
+            Debug.Assert(sniError > 0 && sniError <= SniErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return StringsHelper.GetResourceString(errorMessageId);

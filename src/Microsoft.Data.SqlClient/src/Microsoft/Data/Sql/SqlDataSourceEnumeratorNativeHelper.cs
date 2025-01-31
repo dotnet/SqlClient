@@ -50,23 +50,23 @@ namespace Microsoft.Data.Sql
                 { }
                 finally
                 {
-                    handle = SNINativeMethodWrapper.SNIServerEnumOpen();
+                    handle = SniNativeWrapper.SNIServerEnumOpen();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned handle = {3}.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
-                                                           nameof(SNINativeMethodWrapper.SNIServerEnumOpen), handle);
+                                                           nameof(SniNativeWrapper.SNIServerEnumOpen), handle);
                 }
 
                 if (handle != ADP.s_ptrZero)
                 {
                     while (more && !TdsParserStaticMethods.TimeoutHasExpired(s_timeoutTime))
                     {
-                        readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
+                        readLength = SniNativeWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
 
                         SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned 'readlength':{3}, and 'more':{4} with 'bufferSize' of {5}",
                                                                nameof(SqlDataSourceEnumeratorNativeHelper),
                                                                nameof(GetDataSources),
-                                                               nameof(SNINativeMethodWrapper.SNIServerEnumRead),
+                                                               nameof(SniNativeWrapper.SNIServerEnumRead),
                                                                readLength, more, bufferSize);
                         if (readLength > bufferSize)
                         {
@@ -84,21 +84,21 @@ namespace Microsoft.Data.Sql
             {
                 if (handle != ADP.s_ptrZero)
                 {
-                    SNINativeMethodWrapper.SNIServerEnumClose(handle);
+                    SniNativeWrapper.SNIServerEnumClose(handle);
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} called.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
-                                                           nameof(SNINativeMethodWrapper.SNIServerEnumClose));
+                                                           nameof(SniNativeWrapper.SNIServerEnumClose));
                 }
             }
 
             if (failure)
             {
-                Debug.Assert(false, $"{nameof(GetDataSources)}:{nameof(SNINativeMethodWrapper.SNIServerEnumRead)} returned bad length");
+                Debug.Assert(false, $"{nameof(GetDataSources)}:{nameof(SniNativeWrapper.SNIServerEnumRead)} returned bad length");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR> {2} returned bad length, requested buffer {3}, received {4}",
                                                        nameof(SqlDataSourceEnumeratorNativeHelper),
                                                        nameof(GetDataSources),
-                                                       nameof(SNINativeMethodWrapper.SNIServerEnumRead),
+                                                       nameof(SniNativeWrapper.SNIServerEnumRead),
                                                        bufferSize, readLength);
 
                 throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, readLength), nameof(readLength));

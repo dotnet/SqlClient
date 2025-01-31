@@ -306,7 +306,7 @@ To run the same:
     The program 'dotnet' has exited with code 0 (0x0).
     ```
 
-5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
+5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/Docker/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
 
 ### Troubleshooting Docker issues
 

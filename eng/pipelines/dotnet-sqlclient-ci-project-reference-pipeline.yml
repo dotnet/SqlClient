@@ -37,12 +37,12 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: targetFrameworks
   displayName: 'Target Frameworks on Windows'
   type: object
-  default: [net462, net8.0]
+  default: [net462, net8.0, net9.0]
 
 - name: targetFrameworksLinux
   displayName: 'Target Frameworks on Non-Windows'
   type: object
-  default: [net8.0]
+  default: [net8.0, net9.0]
 
 - name: buildPlatforms
   displayName: 'Build Platforms on Windows'

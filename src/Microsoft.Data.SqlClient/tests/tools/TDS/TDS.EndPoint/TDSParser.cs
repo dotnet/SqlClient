@@ -26,11 +26,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         public TextWriter EventLog { get; set; }
 
         /// <summary>
-        /// Encryption protocol for server to use with AuthenticateAsServer
-        /// </summary>
-        public static SslProtocols ServerSslProtocol { get; set; }
-
-        /// <summary>
         /// Protocol stream between the client and the server
         /// </summary>
         protected TDSStream Transport { get; set; }
@@ -43,8 +38,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Save original transport
             _originalTransport = transport;
 
-            ServerSslProtocol = SslProtocols.Tls12;
-
             // Wrap transport layer with TDS
             Transport = new TDSStream(transport, false);
         }
@@ -55,14 +48,6 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         public void SetTDSStreamPreWriteCallback(Func<byte[], int, int, ushort> funcTDSStreamPreWriteCallBack)
         {
             Transport.PreWriteCallBack = funcTDSStreamPreWriteCallBack;
-        }
-
-        /// <summary>
-        /// Resets the targeted encryption protocol for the server.
-        /// </summary>
-        public static void ResetTargetProtocol()
-        {
-            ServerSslProtocol = SslProtocols.Tls12;
         }
 
         /// <summary>
@@ -105,12 +90,18 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Enable transport encryption
         /// </summary>
-        protected void EnableServerTransportEncryption(X509Certificate certificate)
+        protected void EnableServerTransportEncryption(X509Certificate certificate, SslProtocols encryptionProtocols)
         {
             // Check if transport encryption is applied
             if (Transport.InnerStream is SslStream)
             {
                 return;
+            }
+
+            // The SSL certificate is required for the server to handle transport encryption
+            if (certificate == null)
+            {
+                throw new AuthenticationException("Server is unable to authenticate transport encryption without a valid SSL certificate.");
             }
 
             Log("Enabling server transport encryption...");
@@ -128,7 +119,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             SslStream ssl = new SslStream(multiplexer, true);
 
             // Secure the channel
-            ssl.AuthenticateAsServer(certificate, false, ServerSslProtocol, false);
+            ssl.AuthenticateAsServer(certificate, false, encryptionProtocols, false);
 
             // Replace TDS stream with raw transport stream in multiplexer
             multiplexer.InnerStream = Transport.InnerStream;

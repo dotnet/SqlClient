@@ -3,13 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Interop.Windows.Kernel32;
 using Microsoft.Data.SqlClient;
+using Interop.Windows.Sni;
 
 namespace Microsoft.Data
 {
     internal static partial class LocalDBAPI
     {
-        private static IntPtr LoadProcAddress() => SafeNativeMethods.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
+        private static IntPtr LoadProcAddress() =>
+            Kernel32.GetProcAddress(UserInstanceDLLHandle, "LocalDBFormatMessage");
 
         private static IntPtr UserInstanceDLLHandle
         {
@@ -21,15 +24,15 @@ namespace Microsoft.Data
                     {
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
-                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
+                            SniNativeWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.UserInstanceDLLHandle | LocalDB - handle obtained");
                             }
                             else
                             {
-                                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
-                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: (int)sniError.sniError);
+                                SniNativeWrapper.SNIGetLastError(out SniError sniError);
+                                throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: sniError.sniError);
                             }
                         }
                     }

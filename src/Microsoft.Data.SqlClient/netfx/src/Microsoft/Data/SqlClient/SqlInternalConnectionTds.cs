@@ -1075,9 +1075,11 @@ namespace Microsoft.Data.SqlClient
                 // distributed transaction - otherwise don't reset!
                 if (Is2000)
                 {
-                    // Prepare the parser for the connection reset - the next time a trip
-                    // to the server is made.
-                    _parser.PrepareResetConnection(IsTransactionRoot && !IsNonPoolableTransactionRoot);
+                    // Pooled connections that are enlisted in a transaction must have their transaction
+                    // preserved when reseting the connection state. Otherwise, future uses of the connection
+                    // from the pool will execute outside of the transaction, in auto-commit mode.
+                    // https://github.com/dotnet/SqlClient/issues/2970
+                    _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
                 }
                 else if (!IsEnlistedInTransaction)
                 {

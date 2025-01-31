@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
@@ -77,6 +78,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Certificate to use for encryption
         /// </summary>
         public X509Certificate EncryptionCertificate { get; set; }
+
+        /// <summary>
+        /// SSL/TLS protocols to use for transport encryption
+        /// </summary>
+        public SslProtocols EncryptionProtocols { get; set; }
 
         /// <summary>
         /// Nonce option sent by client
