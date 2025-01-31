@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using Microsoft.Data.SqlClient.Tests;
 
 namespace Microsoft.Data.SqlClient
@@ -143,6 +144,19 @@ namespace Microsoft.Data.SqlClient
         private void AssertValidState() { }
         [DebuggerStepThrough]
         private void AddError(object value) => throw new Exception(value as string ?? "AddError");
+
+        internal static class LocalAppContextSwitches
+        {
+            public static bool UseCompatibilityProcessSni
+            {
+                get
+                {
+                    var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+
+                    return (bool)switchesType.GetProperty(nameof(UseCompatibilityProcessSni), BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                }
+            }
+        }
     }
 
     internal static class TdsEnums
