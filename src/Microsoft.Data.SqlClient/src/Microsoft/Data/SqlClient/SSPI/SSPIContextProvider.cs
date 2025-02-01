@@ -26,24 +26,78 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns);
+        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams);
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
-            => SSPIData(receivedBuff, outgoingBlobWriter, new[] { serverSpn });
-
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] serverSpns)
         {
-            using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
+            using var _ = TrySNIEventScope.Create(nameof(SSPIContextProvider));
+
+            if (!RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
             {
-                try
+                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+            }
+        }
+
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
+        {
+            using var _ = TrySNIEventScope.Create(nameof(SSPIContextProvider));
+
+            foreach (var serverSpn in serverSpns)
+            {
+                if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
                 {
-                    GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpns);
-                }
-                catch (Exception e)
-                {
-                    SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                    return;
                 }
             }
+
+            // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+            SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+        }
+
+        private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
+        {
+            var authParams = CreateSqlAuthParams(_parser.Connection, serverSpn);
+
+            try
+            {
+#if NET8_0_OR_GREATER
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, SPN={3}", GetType().FullName,
+                    nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, serverSpn);
+#else
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName,
+                    nameof(GenerateSspiClientContext), serverSpn);
+#endif
+
+                return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
+            }
+            catch (Exception e)
+            {
+                SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                return false;
+            }
+        }
+
+        private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverSpn)
+        {
+            var auth = new SqlAuthenticationParameters.Builder(
+                authenticationMethod: connection.ConnectionOptions.Authentication,
+                resource: null,
+                authority: null,
+                serverName: serverSpn,
+                connection.ConnectionOptions.InitialCatalog);
+
+            if (connection.ConnectionOptions.UserID is { } userId)
+            {
+                auth.WithUserId(userId);
+            }
+
+            if (connection.ConnectionOptions.Password is { } password)
+            {
+                auth.WithPassword(password);
+            }
+
+            return auth;
         }
 
         protected void SSPIError(string error, string procedure)
