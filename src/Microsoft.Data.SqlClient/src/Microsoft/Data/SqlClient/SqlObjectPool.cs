@@ -3,11 +3,54 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.Text;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
+    // This is a collection of general object pools that can be reused as needed.
+    internal static class SqlObjectPools
+    {
+        private static SqlObjectPool<ArrayBufferWriter<byte>> _bufferWriter;
+
+        internal static SqlObjectPool<ArrayBufferWriter<byte>> BufferWriter
+        {
+            get
+            {
+                if (_bufferWriter is null)
+                {
+                    Interlocked.CompareExchange(ref _bufferWriter, new(20, () => new(), a => a.Clear()), null);
+                }
+
+                return _bufferWriter;
+            }
+        }
+    }
+
+#if NETSTANDARD || NETFRAMEWORK
+    internal static class BufferWriterExtensions
+    {
+        internal static long GetBytes(this Encoding encoding, string str, IBufferWriter<byte> bufferWriter)
+        {
+            var count = encoding.GetByteCount(str);
+            var array = ArrayPool<byte>.Shared.Rent(count);
+
+            try
+            {
+                encoding.GetBytes(str, 0, str.Length, array, 0);
+                bufferWriter.Write(array);
+                return count;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(array);
+            }
+        }
+    }
+#endif
+
     // this is a very simple threadsafe pool derived from the aspnet/extensions default pool implementation
     // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
     internal sealed class SqlObjectPool<T> where T : class
