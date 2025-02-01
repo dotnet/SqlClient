@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
@@ -6,13 +7,12 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SSPIContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/SSPIContextProvider/*'/>
+    public abstract class SSPIContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
         private protected TdsParserStateObject _physicalStateObj = null!;
-
-        internal virtual uint MaxSSPILength => 4096; // TODO: what is a good default here?
 
         internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
         {
@@ -27,27 +27,82 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        internal abstract void GenerateSspiClientContext(ReadOnlyMemory<byte> input, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SSPIContextProvider.xml' path='docs/members[@name="SSPIContextProvider"]/SSPIContextProvider/GenerateSspiClientContext'/>
+        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams);
 
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[] sniSpnBuffer)
-            => SSPIData(receivedBuff, ref sendBuff, ref sendLength, new[] { sniSpnBuffer });
-
-        internal void SSPIData(ReadOnlyMemory<byte> receivedBuff, ref byte[] sendBuff, ref UInt32 sendLength, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverName)
         {
-            using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
+            if (!RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverName))
             {
-                try
-                {
-                    GenerateSspiClientContext(receivedBuff, ref sendBuff, ref sendLength, sniSpnBuffer);
-                }
-                catch (Exception e)
-                {
-                    SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
-                }
+                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
             }
         }
 
-        protected void SSPIError(string error, string procedure)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverNames)
+        {
+            using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
+            {
+                foreach (var serverName in serverNames)
+                {
+                    if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverName))
+                    {
+                        return;
+                    }
+                }
+
+                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+            }
+        }
+
+        private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string serverName)
+        {
+            var authParams = CreateSqlAuthParams(_parser.Connection, serverName);
+
+            try
+            {
+#if NET8_0_OR_GREATER
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, SPN={3}", GetType().FullName,
+                    nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, serverName);
+#else
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName,
+                    nameof(GenerateSspiClientContext), serverName);
+#endif
+
+                return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
+            }
+            catch (Exception e)
+            {
+                //throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
+                SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
+                return false;
+            }
+        }
+
+        private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverName)
+        {
+            var auth = new SqlAuthenticationParameters.Builder(
+                authenticationMethod: connection.ConnectionOptions.Authentication,
+                resource: null,
+                authority: null,
+                serverName: serverName,
+                connection.ConnectionOptions.InitialCatalog);
+
+            if (connection.ConnectionOptions.UserID is { } userId)
+            {
+                auth.WithUserId(userId);
+            }
+
+            if (connection.ConnectionOptions.Password is { } password)
+            {
+                auth.WithPassword(password);
+            }
+
+            return auth;
+        }
+
+        private protected void SSPIError(string error, string procedure)
         {
             Debug.Assert(!ADP.IsEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
             Debug.Assert(!ADP.IsEmpty(error), "TdsParser.SSPIError called with an empty or null error string");
