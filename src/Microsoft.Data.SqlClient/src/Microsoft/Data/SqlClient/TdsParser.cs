@@ -8,10 +8,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParser
     {
-        // This is a shared pool that will retain the last 20 writers to be reused. If more than 20 are requested at a time,
-        // they will not be retained when returned to the pool.
-        private static readonly SqlObjectPool<ArrayBufferWriter<byte>> _writers = new(20, () => new(), a => a.Clear());
-
         internal void ProcessSSPI(int receivedLength)
         {
             Debug.Assert(_authenticationProvider is not null);
@@ -30,15 +26,15 @@ namespace Microsoft.Data.SqlClient
             }
 
             // allocate send buffer and initialize length
-            var writer = _writers.Rent();
+            var writer = SqlObjectPools.BufferWriter.Rent();
 
             // make call for SSPI data
-            _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _sniSpnBuffer);
+            _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _sniSpn);
 
             // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
             _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
 
-            _writers.Return(writer);
+            SqlObjectPools.BufferWriter.Return(writer);
             ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
 
             // set message type so server knows its a SSPI response
@@ -156,14 +152,14 @@ namespace Microsoft.Data.SqlClient
             {
                 if (rec.useSSPI)
                 {
-                    sspiWriter = _writers.Rent();
+                    sspiWriter = SqlObjectPools.BufferWriter.Rent();
 
                     // Call helper function for SSPI data and actual length.
                     // Since we don't have SSPI data from the server, send null for the
                     // byte[] buffer and 0 for the int length.
                     Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
                     _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _sniSpnBuffer);
+                    _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _sniSpn);
 
                     _physicalStateObj.SniContext = SniContext.Snix_Login;
 
@@ -196,7 +192,7 @@ namespace Microsoft.Data.SqlClient
 
             if (sspiWriter is not null)
             {
-                _writers.Return(sspiWriter);
+                SqlObjectPools.BufferWriter.Return(sspiWriter);
             }
 
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);

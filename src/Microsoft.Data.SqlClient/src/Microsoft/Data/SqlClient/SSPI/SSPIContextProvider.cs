@@ -26,18 +26,18 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer);
+        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> _sniSpnBuffer);
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, byte[] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string sniSpnBuffer)
             => SSPIData(receivedBuff, outgoingBlobWriter, new[] { sniSpnBuffer });
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, byte[][] sniSpnBuffer)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] sniSpnBuffer)
         {
             using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
             {
                 try
                 {
-                  GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
+                    GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, sniSpnBuffer);
                 }
                 catch (Exception e)
                 {
