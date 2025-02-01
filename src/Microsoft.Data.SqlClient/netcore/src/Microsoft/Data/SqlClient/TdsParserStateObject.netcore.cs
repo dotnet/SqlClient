@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref byte[][] spnBuffer,
+            ref string[] spn,
             bool flushCache,
             bool async,
             bool fParallel,

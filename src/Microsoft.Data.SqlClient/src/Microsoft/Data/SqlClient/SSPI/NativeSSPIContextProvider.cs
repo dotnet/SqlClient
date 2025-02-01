@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, byte[][] _sniSpnBuffer)
+        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> _sniSpnBuffer)
         {
 #if NETFRAMEWORK
             SNIHandle handle = _physicalStateObj.Handle;
