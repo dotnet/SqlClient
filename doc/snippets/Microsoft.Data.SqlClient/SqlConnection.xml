@@ -2086,6 +2086,11 @@ The following sample tries to open a connection to an invalid database to simula
         Returns 0 if the connection is inactive on the client side.
       </remarks>
     </ServerProcessId>
+    <SspiContextProviderFactory>
+      <summary>
+        Gets or sets the factory used to create an <see cref="SspiContextProvider"/> instance for customizing the SSPI context. If not set, the default for the platform will be used.
+      </summary>
+    </SspiContextProviderFactory>
     <State>
       <summary>
         Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.

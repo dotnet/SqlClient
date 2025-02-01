@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             var sendLength = s_maxSSPILength;
             var outBuff = outgoingBlobWriter.GetSpan((int)sendLength);
 
-            if (0 != SniNativeWrapper.SniSecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, authParams.Resource))
+            if (SniNativeWrapper.SniSecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, authParams.Resource) != 0)
             {
                 return false;
             }

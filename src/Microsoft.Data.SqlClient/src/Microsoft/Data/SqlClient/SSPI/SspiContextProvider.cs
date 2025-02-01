@@ -6,7 +6,8 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SspiContextProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+    public abstract class SspiContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
@@ -25,6 +26,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/GenerateSspiClientContext'/>
         protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
@@ -77,7 +79,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected void SSPIError(string error, string procedure)
+        private protected void SSPIError(string error, string procedure)
         {
             Debug.Assert(!string.IsNullOrEmpty(procedure), "TdsParser.SSPIError called with an empty or null procedure string");
             Debug.Assert(!string.IsNullOrEmpty(error), "TdsParser.SSPIError called with an empty or null error string");

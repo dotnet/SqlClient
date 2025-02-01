@@ -152,6 +152,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventArgs.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatingEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiAuthenticationParameters.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SspiContextProvider.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.DataClassification", "Microsoft.Data.SqlClient.DataClassification", "{5D1F0032-7B0D-4FB6-A969-FCFB25C9EA1D}"
@@ -221,11 +223,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{4600328C-C13
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{4CAE9195-4F1A-4D48-854C-1C9FBC512C66}"
 	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\akv-official-pipeline.yml = ..\eng\pipelines\akv-official-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-core.yml = ..\eng\pipelines\dotnet-sqlclient-ci-core.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml
 		..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml
-		..\eng\pipelines\akv-official-pipeline.yml = ..\eng\pipelines\akv-official-pipeline.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{FD4D7A96-79B1-4F89-B64D-29FACCC9232F}"
@@ -257,9 +259,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\ci-project-build-step.yml = ..\eng\pipelines\common\templates\steps\ci-project-build-step.yml
 		..\eng\pipelines\common\templates\steps\code-analyze-step.yml = ..\eng\pipelines\common\templates\steps\code-analyze-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
 		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
 		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
+		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
 		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
 		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
 		..\eng\pipelines\common\templates\steps\override-sni-version.yml = ..\eng\pipelines\common\templates\steps\override-sni-version.yml
@@ -270,8 +274,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
 		..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml = ..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml
-		..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml
-		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
@@ -288,24 +290,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{
 	ProjectSection(SolutionItems) = preProject
 		..\eng\pipelines\variables\akv-official-variables.yml = ..\eng\pipelines\variables\akv-official-variables.yml
 		..\eng\pipelines\variables\common-variables.yml = ..\eng\pipelines\variables\common-variables.yml
-		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
 		..\eng\pipelines\variables\esrp-signing-variables.yml = ..\eng\pipelines\variables\esrp-signing-variables.yml
+		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
-	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\jobs\ob-build-akv-official-job.yml = ..\eng\pipelines\jobs\build-akv-official-job.yml
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
+		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
 		..\eng\pipelines\steps\compound-esrp-code-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-code-signing-step.yml
+		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
 		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
 		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
 		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
-		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
-		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
+		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 	EndProjectSection
 EndProject
 Global
