@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient
                     _sniSpn = string.Empty;
                 }
 
-                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+                _authenticationProvider = Connection._sspiContextProviderFactory?.Invoke() ?? _physicalStateObj.CreateSSPIContextProvider();
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
             }
             else

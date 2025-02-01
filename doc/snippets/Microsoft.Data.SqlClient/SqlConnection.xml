@@ -3284,6 +3284,11 @@
         Returns 0 if the connection is inactive on the client side.
       </remarks>
     </ServerProcessId>
+    <SSPIContextProviderFactory>
+      <summary>
+        Gets or sets the factory used to create a <see cref="SSPIContextProvider"/> instance for customizing the SSPI context. If not set, the default for the platform will be used
+      </summary>
+    </SSPIContextProviderFactory>
     <State>
       <summary>
         Indicates the state of the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> during the most recent network operation performed on the connection.
