@@ -1,9 +1,8 @@
 ﻿#if NET
 
 using System;
-using System.Text;
-using System.Net.Security;
 using System.Buffers;
+using System.Net.Security;
 
 #nullable enable
 
@@ -11,29 +10,24 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
     {
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverNames)
+        protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams)
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
-            for (int i = 0; i < serverNames.Length; i++)
-            {
-                var negotiateAuth = new NegotiateAuthentication(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = serverNames[0] });
-                var sendBuff = negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
+            var negotiateAuth = new NegotiateAuthentication(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.ServerName });
+            var sendBuff = negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
-                // Log session id, status code and the actual SPN used in the negotiation
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
-                    nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, negotiateAuth.TargetName);
-                if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
-                {
-                    outgoingBlobWriter.Write(sendBuff);
-                    return; // Successful case, exit the loop with current SPN.
-                }
+            // Log session id, status code and the actual SPN used in the negotiation
+            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
+                nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, negotiateAuth.TargetName);
+
+            if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
+            {
+                outgoingBlobWriter.Write(sendBuff);
+                return true; // Successful case, exit the loop with current SPN.
             }
 
-            if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
-            {
-                throw new InvalidOperationException(SQLMessage.SSPIGenerateError() + Environment.NewLine + statusCode);
-            }
+            return false;
         }
     }
 }
