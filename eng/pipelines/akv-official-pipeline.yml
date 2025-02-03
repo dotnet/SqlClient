@@ -1,0 +1,152 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(Year:YY)$(DayOfYear)$(Rev:.r)
+
+# @TODO: Add triggers and schedules
+
+parameters:
+    - name: oneBranchType
+      displayName: "OneBranch template"
+      type: string
+      values:
+          - Official
+          - NonOfficial
+      default: Official
+
+    - name: buildConfiguration
+      display: 'Build configuration'
+      type: string
+      values:
+          - Release
+          - Debug
+      default: Release
+
+    - name: buildPreview
+      display: 'Build is preview'
+      type: boolean
+      default: false
+
+    - name: publishSymbols
+      displayName: 'Publish symbols'
+      type: boolean
+      default: false
+
+variables:
+    - template: /eng/pipelines/variables/common-variables.yml@self
+
+    - name: mdsPackageVersion
+      type: string
+      value: '6.0.1'
+
+    - name: versionMajor
+      type: string
+      value: '6'
+    - name: versionMinor
+      type: string
+      value: '0'
+    - name: versionPatch
+      type: string
+      value: '0'
+    - name: versionPreview
+      type: string
+      value: '-preview1'
+
+    - name: assemblyFileVersion
+      type: string
+      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
+    - name: nugetPackageVersion
+      type: string
+      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
+
+resource:
+    repositories:
+        - repository: templates
+          type: git
+          name: 'OneBranch.Pipelines/GovernedTemplates'
+          ref: 'refs/heads/main'
+
+extends:
+    template: 'v2/OneBranch.${{ parameters.oneBranchType }}.CrossPlay.yml@templates'
+
+    parameters:
+        featureFlags:
+            WindowsHostVersion: 1ESWindows2022
+
+        # @TODO: Reassess if these should be enabled for preview builds as well
+        globalSdl:
+            # See https://aka.ms/obpipelines/sdl
+
+            apiscan:
+                # @TODO: Needs to be run for AKV?
+                enabled: ${{ not(parameters.buildPreview) }}
+                softwareFolder: $(SOFTWARE_PATH)
+                softwareName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
+                softwareVersionNum: ${{ variables.assemblyFileVersion }}
+                symbolsFolder: $(SYMBOLS_PATH)
+
+            armory:
+                enabled: ${{ not(parameters.buildPreview) }}
+                break: true
+
+            asyncSdl:
+                # If this should be enabled, move supported tools under this item,
+                # see https://aka.ms/obpipelines/asyncsdl
+                enabled: false
+
+            binskim:
+                enabled: ${{ not(parameters.buildPreview) }}
+
+            codeinspector:
+                enabled: ${{ not(parameters.buildPreview) }}
+                logLevel: Error
+
+            codeql:
+                enabled: ${{ not(parameters.buildPreview) }}
+                # @TODO: Can be limited to look at only AKV code? via sourceCodeDirectory
+
+            credscan:
+                enabled: ${{ not(parameters.buildPreview) }}
+                suppressionsFile: '$(REPO_ROOT)/.config/CredScanSuppressions.json'
+
+            eslint:
+                enabled: false
+
+            policheck:
+                enabled: ${{ not(parameters.buildPreview) }}
+                break: true
+                exclusionFile: '$(REPO_ROOT)/.config/PolicheckExclusions.xml'
+
+            roslyn:
+                enabled: ${{ not(parameters.buildPreview) }}
+                break: true
+                # Requires RoslynAnalyzers task to be added after build task
+
+            publishLogs:
+                enabled: ${{ not(parameters.buildPreview) }}
+
+            sbom:
+                enabled: ${{ not(parameters.buildPreview) }}
+                packageName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
+                packageVersion: ${{ variables.nugetPackageVersion }}
+
+            tsa:
+                # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will
+                # be forced into 'break' build mode.
+                enabled: ${{ not(parameters.buildPreview) }}
+                configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
+
+        stages:
+            - stage: BuildAkv
+              displayName: 'Build AKV'
+              jobs:
+                  - template: /eng/pipelines/jobs/build-akv-package-job.yml@self
+                    parameters:
+                        assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
+                        buildConfiguration: '${{ parameters.buildConfiguration }}'
+                        nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
+                        mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
+                        publishSymbols: '${{ parameters.publishSymbols }}'

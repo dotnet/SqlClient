@@ -6,11 +6,20 @@
 
 variables:
     - group: 'AKV Variables [v2]'
+      # BuildRemarkPre
+      # BuildRemarkProd
+      # MdsVersion
+      # PAT_AKV
+      # VersionMajor
+      # VersionMinor
+      # VersionPatch
+      # VersionPreviewRevision
+      # VersionPreviewSuffix
 
-    - name: AKVNugetPackageVersion
-      value: '$(AKVMajor).$(AKVMinor).$(AKVPatch)'
-    - name: AKVAssemblyFileVersion
+    - name: assemblyFileVersion
       value: '$(AKVMajor).$(AKVMinor)$(AKVPatch).$(Build.BuildNumber)'
+    - name: nugetPackageVersion
+      value: '$(AKVMajor).$(AKVMinor).$(AKVPatch)'
 
     # @TODO: Should remove in favor of fixed location in project folder
     - name: akvNuspecPath
