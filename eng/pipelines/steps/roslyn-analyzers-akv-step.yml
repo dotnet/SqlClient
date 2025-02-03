@@ -5,6 +5,7 @@
 #################################################################################
 
 # @TODO: This should be made generic if possible once build.proj is disassembled
+# @TODO: Test this without signing, or indicate that this depends on the signing key is downloaded
 
 parameters:
     - name: buildConfiguration
