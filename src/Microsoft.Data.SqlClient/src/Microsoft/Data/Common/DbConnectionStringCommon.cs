@@ -946,7 +946,12 @@ namespace Microsoft.Data.Common
     internal static class DbConnectionStringDefaults
     {
         internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
-        internal const string ApplicationName = "Microsoft SqlClient";
+        internal const string ApplicationName =
+#if NETFRAMEWORK
+            "Framework Microsoft SqlClient Data Provider";
+#else
+            "Core Microsoft SqlClient Data Provider";
+#endif
         internal const string AttachDBFilename = "";
         internal const int CommandTimeout = 30;
         internal const int ConnectTimeout = 15;
