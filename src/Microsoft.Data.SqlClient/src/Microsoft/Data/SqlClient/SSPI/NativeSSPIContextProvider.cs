@@ -58,8 +58,9 @@ namespace Microsoft.Data.SqlClient
             SNIHandle handle = _physicalStateObj.SessionHandle.NativeHandle;
 #endif
 
-            var outBuff = outgoingBlobWriter.GetSpan((int)s_maxSSPILength);
-            uint sendLength = 0;
+            // This must start as the length of the input, but will be updated by the call to SNISecGenClientContext to the written length
+            var sendLength = s_maxSSPILength;
+            var outBuff = outgoingBlobWriter.GetSpan((int)sendLength);
 
             if (0 != SniNativeWrapper.SNISecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, _sniSpnBuffer[0]))
             {
