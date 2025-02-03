@@ -4,7 +4,6 @@
 
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Authentication;
 using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
@@ -33,11 +32,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
             // Test cases possible field values for connection parameters:
             // These combinations are based on the possible values of Encrypt, TrustServerCertificate, Certificate, HostNameInCertificate
             /*
-             * TDSEncryption | Encrypt    | TrustServerCertificate | Certificate  | HNIC         | SSL Protocols    | TestResults
-             * ---------------------------------------------------------------------------------------------------------------
-             *   Off         | Optional   |  true                  | valid        | valid name   | TLS 1.2          | true
-             *   On          | Mandatory  |  false                 | mismatched   | empty        | TLS 1.0, TLS 1.1 | false
-             *   Required    |            |    x                   | ChainError?  | wrong name?  |                  |
+             * TDSEncryption | Encrypt    | TrustServerCertificate | Certificate  | HNIC         | TestResults
+             * ----------------------------------------------------------------------------------------------
+             *   Off         | Optional   |  true                  | valid        | valid name   | true
+             *   On          | Mandatory  |  false                 | mismatched   | empty        | false
+             *   Required    |            |    x                   | ChainError?  | wrong name?  | 
              */
             ConnectionTestParametersList = new List<ConnectionTestParameters>
             {
@@ -79,21 +78,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
                 new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
                 new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
                 new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
-
-                // Multiple SSL protocols test
-#pragma warning disable CA5397 // Do not use deprecated SslProtocols values
-#pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
-#if NET
-#pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
-#endif
-                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, SslProtocols.Tls | SslProtocols.Tls11, true),
-                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, SslProtocols.Tls | SslProtocols.Tls11, true),
-                new(TDSPreLoginTokenEncryptionType.Required, SqlConnectionEncryptOption.Mandatory, false, s_fullPathToCer, _empty, SslProtocols.Tls | SslProtocols.Tls11, true),
-#if NET
-#pragma warning restore SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
-#endif
-#pragma warning restore CA5397 // Do not use deprecated SslProtocols values
-#pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
             };
         }
     }
