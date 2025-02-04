@@ -20,15 +20,15 @@ parameters:
     - name: publishSymbols
       type: boolean
 
-variables:
-    - name: packageName
-      value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
-
 jobs:
     - job: buildSignedAkvPackage
       displayName: 'Build Signed AKV Package'
       pool:
           type: windows
+
+      variables:
+          - name: packageName
+            value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
 
       steps:
           - template: ../steps/script-output-environment-variables-step.yml@self
@@ -54,21 +54,22 @@ jobs:
                 generateSymbolsPackage: true    # Always generate symbols, even if they are not published
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/${{ variables.packageName }}.nuspec'
-                outputDirectory: $(ARTIFACT_PATH)
+                outputDirectory: '$(ARTIFACT_PATH)'
                 referenceType: 'package'
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
-                artifactType: pkg
+                artifactType: 'pkg'
 
-          - template: ../steps/compound-publish-akv-symbols-step.yml@self
-            condition: ${{ parameters.publishSymbols }}
-            parameters:
-                referenceType: 'package'
-                searchPattern: |
-                    Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/${{ variables.packageName }}.pdb
-                    AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/${{ variables.packageName }}.pdb
-                symbolsArtifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
-                symbolsProduct: '${{ variables.packageName }}'
-                symbolsVersion: '${{ parameters.nugetPackageVersion }}'
+          - ${{ if parameters.publishSymbols }}
+            - template: ../steps/compound-publish-akv-symbols-step.yml@self
+              condition: ${{ parameters.publishSymbols }}
+              parameters:
+                  referenceType: 'package'
+                  searchPattern: |
+                      Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/${{ variables.packageName }}.pdb
+                      AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/${{ variables.packageName }}.pdb
+                  symbolsArtifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
+                  symbolsProduct: '${{ variables.packageName }}'
+                  symbolsVersion: '${{ parameters.nugetPackageVersion }}'
 
