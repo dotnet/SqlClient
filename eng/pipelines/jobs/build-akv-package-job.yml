@@ -61,7 +61,7 @@ jobs:
             parameters:
                 artifactType: 'pkg'
 
-          - ${{ if parameters.publishSymbols }}
+          - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-akv-symbols-step.yml@self
               condition: ${{ parameters.publishSymbols }}
               parameters:
