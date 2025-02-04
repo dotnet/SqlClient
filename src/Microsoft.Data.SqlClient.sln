@@ -299,7 +299,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\steps\script-output-environment-variables-steps.yml = ..\eng\pipelines\steps\script-output-environment-variables-steps.yml
+		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
 		..\eng\pipelines\steps\azure-cli-publish-symbols-step.yml = ..\eng\pipelines\steps\azure-cli-publish-symbols-step.yml
 		..\eng\pipelines\steps\compound-esrp-code-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-code-signing-step.yml
 		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
