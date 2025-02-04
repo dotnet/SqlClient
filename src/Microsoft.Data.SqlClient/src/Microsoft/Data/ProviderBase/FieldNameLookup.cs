@@ -2,6 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+
+#if NET8_0_OR_GREATER
+using System;
+using System.Collections;
+using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -10,11 +16,17 @@ using Microsoft.Data.Common;
 namespace Microsoft.Data.ProviderBase
 {
     internal sealed class FieldNameLookup
+#if NET8_0_OR_GREATER
+        : IEnumerable<KeyValuePair<string,int>>, IEnumerator<KeyValuePair<string,int>>
+#endif
     {
         private readonly string[] _fieldNames;
         private readonly int _defaultLocaleID;
+#if NET8_0_OR_GREATER
+        private int _enumeratorIndex;
+#endif
 
-        private Dictionary<string, int> _fieldNameLookup;
+        private IDictionary<string, int> _fieldNameLookup;
         private CompareInfo _compareInfo;
 
         public FieldNameLookup(string[] fieldNames, int defaultLocaleID)
@@ -87,6 +99,17 @@ namespace Microsoft.Data.ProviderBase
                 _compareInfo = GetCompareInfo();
             }
 
+#if NET8_0_OR_GREATER
+            // if we have failed a lookup in the frozen dictionary then we're going
+            // to have to modify the dictionary as we do comparison sensitive lookups
+            // and since we can't modify a frozen dictionary we need to revert to a
+            // standard mutable dictionary
+            if (_fieldNameLookup is FrozenDictionary<string,int> frozen)
+            {
+                _fieldNameLookup = new Dictionary<string,int>(frozen);
+            }
+#endif
+
             for (int index = 0; index < _fieldNames.Length; index++)
             {
                 if (_compareInfo.Compare(fieldName, _fieldNames[index], compareOptions) == 0)
@@ -100,9 +123,12 @@ namespace Microsoft.Data.ProviderBase
 
         private void GenerateLookup()
         {
+#if NET8_0_OR_GREATER
+            _fieldNameLookup = this.ToFrozenDictionary();
+#else
+
             int length = _fieldNames.Length;
             Dictionary<string, int> lookup = new Dictionary<string, int>(length);
-
             // walk the field names from the end to the beginning so that if a name exists
             // multiple times the first (from beginning to end) index of it is stored
             // in the hash table
@@ -112,6 +138,56 @@ namespace Microsoft.Data.ProviderBase
                 lookup[fieldName] = index;
             }
             _fieldNameLookup = lookup;
+#endif
         }
+
+#if NET8_0_OR_GREATER
+        public IEnumerator<KeyValuePair<string, int>> GetEnumerator()
+        {
+            Reset();
+            return this;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        public KeyValuePair<string, int> Current
+        {
+            get
+            {
+                if (_enumeratorIndex == -2)
+                {
+                    throw new ObjectDisposedException(nameof(FieldNameLookup));
+                }
+                int index = _fieldNames.Length - (_enumeratorIndex + 1);
+                return new KeyValuePair<string,int>(_fieldNames[index], index);
+            }
+        }
+        object IEnumerator.Current => Current;
+
+        public bool MoveNext()
+        {
+            if (_enumeratorIndex == -2)
+            {
+                throw new ObjectDisposedException(nameof(FieldNameLookup));
+            }
+            if (_enumeratorIndex == -1)
+            {
+                _enumeratorIndex = 0;
+                return true;
+            }
+            _enumeratorIndex += 1;
+            return _enumeratorIndex < _fieldNames.Length;
+        }
+
+        public void Reset()
+        {
+            _enumeratorIndex = -1;
+        }
+
+        public void Dispose()
+        {
+            _enumeratorIndex = -2;
+        }
+#endif
     }
 }
