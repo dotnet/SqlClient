@@ -26,17 +26,15 @@ namespace Microsoft.Data.SqlClient
             }
 
             // allocate send buffer and initialize length
-            byte[] rentedSendBuff = ArrayPool<byte>.Shared.Rent((int)_authenticationProvider!.MaxSSPILength);
-            byte[] sendBuff = rentedSendBuff; // need to track these separately in case someone updates the ref parameter
-            uint sendLength = _authenticationProvider.MaxSSPILength;
+            var writer = SqlObjectPools.BufferWriter.Rent();
 
             // make call for SSPI data
-            _authenticationProvider.SSPIData(receivedBuff.AsMemory(0, receivedLength), ref sendBuff, ref sendLength, _sniSpnBuffer);
+            _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _sniSpn);
 
             // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
-            _physicalStateObj.WriteByteArray(sendBuff, (int)sendLength, 0);
+            _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
 
-            ArrayPool<byte>.Shared.Return(rentedSendBuff, clearArray: true);
+            SqlObjectPools.BufferWriter.Return(writer);
             ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
 
             // set message type so server knows its a SSPI response
@@ -139,9 +137,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // allocate memory for SSPI variables
-            byte[] rentedSSPIBuff = null;
-            byte[] outSSPIBuff = null; // track the rented buffer as a separate variable in case it is updated via the ref parameter
-            uint outSSPILength = 0;
+            ArrayBufferWriter<byte> sspiWriter = null;
 
             // only add lengths of password and username if not using SSPI or requesting federated authentication info
             if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
@@ -156,27 +152,20 @@ namespace Microsoft.Data.SqlClient
             {
                 if (rec.useSSPI)
                 {
-                    // now allocate proper length of buffer, and set length
-                    outSSPILength = _authenticationProvider.MaxSSPILength;
-                    rentedSSPIBuff = ArrayPool<byte>.Shared.Rent((int)outSSPILength);
-                    outSSPIBuff = rentedSSPIBuff;
+                    sspiWriter = SqlObjectPools.BufferWriter.Rent();
 
                     // Call helper function for SSPI data and actual length.
                     // Since we don't have SSPI data from the server, send null for the
                     // byte[] buffer and 0 for the int length.
                     Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
                     _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    _authenticationProvider.SSPIData(ReadOnlyMemory<byte>.Empty, ref outSSPIBuff, ref outSSPILength, _sniSpnBuffer);
+                    _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _sniSpn);
 
-                    if (outSSPILength > int.MaxValue)
-                    {
-                        throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503
-                    }
                     _physicalStateObj.SniContext = SniContext.Snix_Login;
 
                     checked
                     {
-                        length += (int)outSSPILength;
+                        length += (int)sspiWriter.WrittenCount;
                     }
                 }
             }
@@ -199,12 +188,11 @@ namespace Microsoft.Data.SqlClient
                            length,
                            feOffset,
                            clientInterfaceName,
-                           outSSPIBuff,
-                           outSSPILength);
+                           sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
 
-            if (rentedSSPIBuff != null)
+            if (sspiWriter is not null)
             {
-                ArrayPool<byte>.Shared.Return(rentedSSPIBuff, clearArray: true);
+                SqlObjectPools.BufferWriter.Return(sspiWriter);
             }
 
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
