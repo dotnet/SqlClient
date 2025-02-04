@@ -22,7 +22,6 @@ parameters:
 
 variables:
     - name: packageName
-      type: string
       value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
 
 jobs:

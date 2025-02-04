@@ -30,7 +30,6 @@ variables:
 
     - # Allegedly needed for downstream tasks
       name: ArtifactServices.Symbol.AccountName
-      type: string
       value: '${{ variables.SymbolAccount }}'
 
 steps:

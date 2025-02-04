@@ -18,7 +18,7 @@ parameters:
       default: Official
 
     - name: buildConfiguration
-      display: 'Build configuration'
+      displayName: 'Build configuration'
       type: string
       values:
           - Release
@@ -26,7 +26,7 @@ parameters:
       default: Release
 
     - name: buildPreview
-      display: 'Build is preview'
+      displayName: 'Build is preview'
       type: boolean
       default: false
 
@@ -39,30 +39,23 @@ variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
 
     - name: mdsPackageVersion
-      type: string
       value: '6.0.1'
 
     - name: versionMajor
-      type: string
       value: '6'
     - name: versionMinor
-      type: string
       value: '0'
     - name: versionPatch
-      type: string
       value: '0'
     - name: versionPreview
-      type: string
       value: '-preview1'
 
     - name: assemblyFileVersion
-      type: string
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
     - name: nugetPackageVersion
-      type: string
       value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
 
-resource:
+resources:
     repositories:
         - repository: templates
           type: git
