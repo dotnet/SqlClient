@@ -5,59 +5,139 @@
 #################################################################################
 
 parameters:
+    - # Name of the Azure Key Vault to retrieve certificates from.
+      # note: This has nothing to do with the AKV provider package.
+      name: akvName
+      type: string
+
+    - name: appRegistrationClientId
+      type: string
+
+    - name: appRegistrationTenantId
+      type: string
+
     - name: artifactType
       type: string
       values:
           - dll
           - pkg
 
-variables:
-    - template: '../variables/signing-variables.yml'
+    - name: authCertName
+      type: string
 
-    - ${{ if eq(parameters.artifactType, 'dll') }}:
-          - name: displayName
-            value: 'Code'
-          - name: folderPath
-            value: '$(REPO_ROOT)'
-          - name: inlineSignParams
-            value: '${{ variables.InlineDllSignParams }}'
-          - name: pattern
-            value: '*.dll'
+    - name: connectedServiceName
+      type: string
 
-    - ${{ if eq(parameters.artifactType, 'pkg') }}:
-          - name: displayName
-            value: 'NuGet Package'
-          - name: folderPath
-            value: '$(ARTIFACT_PATH)'
-          - name: inlineSignParams
-            value: '${{ variables.InlinePkgSignParams }}'
-          - name: pattern
-            value: '*.*nupkg'
+    - name: signingCertName
+      type: string
 
 steps:
-    - task: EsrpMalwareScanning@5
-      displayName: 'ESRP Malware Scanning ${{ variables.displayName }}'
-      inputs:
-          AppRegistrationClientId: '${{ variables.AppRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ variables.AppRegistrationTenantId }}'
-          CleanupTempStorage: 1
-          ConnectedServiceName: '${{ variables.ConnectedServiceName }}'
-          AuthAKVName: '${{ variables.AuthAkvName }}'
-          AuthCertName: '${{ variables.AuthCertName }}'
-          FolderPath: '${{ variables.folderPath }}'
-          Pattern: '${{ variables.pattern }}'
-          VerboseLogin: 1
+    - ${{ if eq(parameters.artifactType, 'dll') }}:
+        - task: EsrpMalwareScanning@5
+          displayName: 'ESRP Malware Scanning Code'
+          inputs:
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              CleanupTempStorage: 1
+              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+              AuthAKVName: '${{ parameters.akvName }}'
+              AuthCertName: '${{ parameters.authCertName }}'
+              FolderPath: '$(REPO_ROOT)'
+              Pattern: '*.dll'
+              VerboseLogin: 1
 
-    - task: EsrpCodeSigning@5
-      displayName: 'ESRP Signing ${{ variables.displayName }}'
-      inputs:
-          AppRegistrationClientId: '${{ variables.AppRegistrationClientId }}'
-          AppRegistrationTenantId: '${{ variables.AppRegistrationTenantId }}'
-          AuthAKVName: '${{ variables.AuthAkvName }}'
-          AuthCertName: '${{ variables.AuthCertName }}'
-          AuthSignCertName: '${{ variables.AuthSignCertName }}'
-          ConnectedServiceName: '${{ variables.ConnectedServiceName }}'
-          FolderPath: '${{ variables.folderPath }}'
-          Pattern: '${{ variables.pattern }}'
-          signConfigType: 'inlineSignParams'
-          inlineOperation: '${{ variables.inlineSignParam }}'
+        - task: EsrpCodeSigning@5
+          displayName: 'ESRP Signing Code'
+          inputs:
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              AuthAKVName: '${{ parameters.akvName }}'
+              AuthCertName: '${{ parameters.authCertName }}'
+              AuthSignCertName: '${{ parameters.signingCertName }}'
+              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+              FolderPath: '$(REPO_ROOT)'
+              Pattern: '*.dll'
+              signConfigType: 'inlineSignParams'
+              inlineOperation: |
+                  [ 
+                      {
+                          "keyCode": "CP-230012",
+                          "operationSetCode": "SigntoolSign",
+                          "parameters": 
+                              [
+                                  {
+                                      "parameterName": "OpusName",
+                                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                                  },
+                                  {
+                                      "parameterName": "OpusInfo",
+                                      "parameterValue": "http://www.microsoft.com"
+                                  },
+                                  {
+                                      "parameterName": "FileDigest",
+                                      "parameterValue": "/fd \"SHA256\""
+                                  },
+                                  {
+                                      "parameterName": "PageHash",
+                                      "parameterValue": "/NPH"
+                                  },
+                                  {
+                                      "parameterName": "TimeStamp",
+                                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                                  }
+                              ],
+                          "toolName": "sign",
+                          "toolVersion": "1.0"
+                      },
+                      {
+                          "keyCode": "CP-230012",
+                          "operationSetCode": "SigntoolVerify",
+                          "parameters": [ ],
+                          "toolName": "sign",
+                          "toolVersion": "1.0"
+                      }
+                  ]
+
+    - ${{ else }}:
+        - task: EsrpMalwareScanning@5
+          displayName: 'ESRP Malware Scanning NuGet Package'
+          inputs:
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              CleanupTempStorage: 1
+              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+              AuthAKVName: '${{ parameters.akvName }}'
+              AuthCertName: '${{ parameters.authCertName }}'
+              FolderPath: '$(ARTIFACT_PATH)'
+              Pattern: '*.*nupkg'
+              VerboseLogin: 1
+
+        - task: EsrpCodeSigning@5
+          displayName: 'ESRP Signing NuGet Package'
+          inputs:
+            AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+            AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+            AuthAKVName: '${{ parameters.akvName }}'
+            AuthCertName: '${{ parameters.authCertName }}'
+            AuthSignCertName: '${{ parameters.signingCertName }}'
+            ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+            FolderPath: '$(ARTIFACT_PATH)'
+            Pattern: '*.*nupkg'
+            signConfigType: 'inlineSignParams'
+            inlineOperation: |
+                [ 
+                    { 
+                        "keyCode": "CP-401405", 
+                        "operationSetCode": "NuGetSign", 
+                        "parameters": [ ], 
+                        "toolName": "sign", 
+                        "toolVersion": "1.0" 
+                    },
+                    { 
+                        "keyCode": "CP-401405", 
+                        "operationSetCode": "NuGetVerify", 
+                        "parameters": [ ], 
+                        "toolName": "sign", 
+                        "toolVersion": "1.0" 
+                    } 
+                ]

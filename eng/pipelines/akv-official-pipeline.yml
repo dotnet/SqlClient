@@ -37,23 +37,7 @@ parameters:
 
 variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
-
-    - name: mdsPackageVersion
-      value: '6.0.1'
-
-    - name: versionMajor
-      value: '6'
-    - name: versionMinor
-      value: '0'
-    - name: versionPatch
-      value: '0'
-    - name: versionPreview
-      value: '-preview1'
-
-    - name: assemblyFileVersion
-      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
-    - name: nugetPackageVersion
-      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
+    - template: /eng/pipelines/variables/akv-variables.yml@self
 
 resources:
     repositories:
@@ -136,10 +120,21 @@ extends:
             - stage: BuildAkv
               displayName: 'Build AKV'
               jobs:
-                  - template: /eng/pipelines/jobs/build-akv-package-job.yml@self
+                  - template: /eng/pipelines/jobs/build-akv-signed-package-job.yml@self
                     parameters:
                         assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
                         nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
                         mdsPackageVersion: '${{ variables.mdsPackageVersion }}'
                         publishSymbols: '${{ parameters.publishSymbols }}'
+                        signingAppRegistrationClientId: '${{ variables.SigningAppRegistrationClientId }}'
+                        signingAppRegistrationTenantId: '${{ variables.SigningAppRegistrationTenantId }}'
+                        signingAkvName: '${{ variables.SigningAkvName }}'
+                        signingAuthCertName: '${{ variables.SigningAuthCertName }}'
+                        signingConnectedServiceName: '${{ variables.SigningConnectedServiceName }}'
+                        signingSignCertName: '${{ variables.SigningSignCertName }}'
+                        symbolsAzureSubscription: '${{ variables.SymbolsAzureSubscription }}'
+                        symbolsPublishProjectName: '${{ variables.SymbolsPublishProjectName }}'
+                        symbolsPublishServer: '${{ variables.SymbolsPublishServer }}'
+                        symbolsPublishTokenUri: '${{ variables.SymbolsPublishTokenUri }}'
+                        symbolsUploadAccount: '${{ variables.SymbolsUploadAccount }}'

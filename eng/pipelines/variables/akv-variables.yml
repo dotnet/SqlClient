@@ -5,22 +5,41 @@
 #################################################################################
 
 variables:
-    - group: 'AKV Variables [v2]'
-      # BuildRemarkPre
-      # BuildRemarkProd
-      # MdsVersion
-      # PAT_AKV
-      # VersionMajor
-      # VersionMinor
-      # VersionPatch
-      # VersionPreviewRevision
-      # VersionPreviewSuffix
+    - group: 'AKV Variables (v2)'
+      # SigningAppRegistrationClientId
+      # SigningAppRegistrationTenantId
+      # SigningAkvName
+      # SigningAuthCertName
+      # SigningConnectedServiceName
+      # SigningSignCertName
+      # SymbolsAzureSubscription
+      # SymbolsPublishProjectName
+      # SymbolsPublishServer
+      # SymbolsPublishTokenUri
+      # SymbolsUploadAccount
 
+    # Well-Known Variables -------------------------------------------------
+    - name: PACKAGE_NAME
+      value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+
+    # Base Variables -------------------------------------------------------
+    - name: mdsPackageVersion
+      value: '6.0.1'
+
+    # @TODO: Version should ideally be pulled from one location (versions.props?)
+    - name: versionMajor
+      value: '6'
+    - name: versionMinor
+      value: '0'
+    - name: versionPatch
+      value: '0'
+    - name: versionPreview
+      value: '-preview1'
+
+    # Compound Variables ---------------------------------------------------
     - name: assemblyFileVersion
-      value: '$(AKVMajor).$(AKVMinor)$(AKVPatch).$(Build.BuildNumber)'
+      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}${{ variables.versionPatch }}.$(Build.BuildNumber)'
     - name: nugetPackageVersion
-      value: '$(AKVMajor).$(AKVMinor).$(AKVPatch)'
+      value: '${{ variables.versionMajor }}.${{ variables.versionMinor }}.${{ variables.versionPatch }}${{ variables.versionPreview }}'
 
-    # @TODO: Should remove in favor of fixed location in project folder
-    - name: akvNuspecPath
-      value: '$(REPOROOT)/tools/specs/add-ons/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.nuspec'
+
