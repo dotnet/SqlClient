@@ -66,7 +66,7 @@ resources:
           ref: 'refs/heads/main'
 
 extends:
-    template: 'v2/OneBranch.${{ parameters.oneBranchType }}.CrossPlat.yml@templates'
+    template: 'v2/OneBranch.${{ parameters.oneBranchType }}${{ variables.ob_outputDirectory }}.CrossPlat.yml@templates'
 
     parameters:
         featureFlags:
