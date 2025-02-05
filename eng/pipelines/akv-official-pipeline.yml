@@ -47,9 +47,9 @@ variables:
       name: ob_outputDirectory
       value: '$(ARTIFACT_PATH)'
 
-#    - # https://aka.ms/obpipelines/sdl
-#      name: ob_sdl_binskim_break
-#      value: true
+    - # https://aka.ms/obpipelines/sdl
+      name: ob_sdl_binskim_break
+      value: true
 
     - name: Packaging.EnableSBOMSigning
       value: true
