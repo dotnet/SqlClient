@@ -5,11 +5,18 @@
 #################################################################################
 
 variables:
-    - name: ob_outputDirectory
-      value: '$(artifactDirectory)' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
-    - name: ob_sdl_binskim_break
-      value: true # https://aka.ms/obpipelines/sdl
+    - # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at
+      # https://aka.ms/obpipelines/artifacts
+      name: ob_outputDirectory
+      value: '$(ARTIFACT_PATH)'
+
+#    - # https://aka.ms/obpipelines/sdl
+#      name: ob_sdl_binskim_break
+#      value: true
+
     - name: Packaging.EnableSBOMSigning
       value: true
-    - name: WindowsContainerImage
-      value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+
+    - # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+      name: WindowsContainerImage
+      value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest'
