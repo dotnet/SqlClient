@@ -45,7 +45,7 @@ variables:
     - # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at
       # https://aka.ms/obpipelines/artifacts
       name: ob_outputDirectory
-      value: '$(ARTIFACT_PATH)'
+      value: '${{ variables.ARTIFACT_PATH }}'
 
     - # https://aka.ms/obpipelines/sdl
       name: ob_sdl_binskim_break
