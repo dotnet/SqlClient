@@ -100,7 +100,7 @@ jobs:
                 artifactType: 'pkg'
                 authCertName: '${{ parameters.signingAuthCertName }}'
                 connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
-                signingCertName: '${{ parameters.signingCertName }}'
+                signingCertName: '${{ parameters.signingSignCertName }}'
 
           - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-akv-symbols-step.yml@self
