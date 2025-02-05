@@ -14,11 +14,11 @@ variables:
       value: '$(Build.SourcesDirectory)'
       readonly: true
     - name: ARTIFACT_PATH
-      value: '$(repoRoot)/packages'
+      value: '$(REPO_ROOT)/packages'
       readonly: true
     - name: SOFTWARE_PATH
-      value: '$(repoRoot)/software'
+      value: '$(REPO_ROOT)/software'
       readonly: true
     - name: SYMBOLS_PATH
-      value: '$(repoRoot)/symbols'
+      value: '$(REPO_ROOT)/symbols'
       readonly: true
