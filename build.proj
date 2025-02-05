@@ -201,7 +201,24 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
-  <Target Name="BuildAkv" DependsOnTargets="BuildAKVNetFx;BuildAKVNetCoreAllOS" />
+  <!-- AKV Targets ========================================================= -->
+  <Target Name="BuildAkv">
+    <!-- @TODO: No idea why this works but having a target that depends on both existing targets does not.
+         this needs to be fixed as part of cleaning up the build.proj -->
+    <Message Text=">>> Restoring AKV project for netfx [TestTargetOS=$(TestOS)netfx]" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <Message Text=">>> Building AKV project for netfx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties);$(NugetPackProperties);" Condition="!$(ReferenceType.Contains('Package'))"/>
+
+    <Message Text=">>> Restoring AKV project for netcore [TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+  </Target>
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
