@@ -59,6 +59,9 @@ jobs:
       pool:
           type: windows
 
+      variables:
+          ob_outputDirectory: '$(ARTIFACT_PATH)'
+
       steps:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
