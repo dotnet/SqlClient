@@ -5,10 +5,6 @@
 #################################################################################
 
 variables:
-    - group: 'Common Variables [v2]'
-      # appRegistrationClientId
-      # appRegistrationTenantId
-
     # Well-known paths
     - name: REPO_ROOT
       value: '$(Build.SourcesDirectory)'
