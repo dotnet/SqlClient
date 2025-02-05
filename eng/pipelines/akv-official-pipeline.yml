@@ -37,8 +37,26 @@ parameters:
 
 variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
-    - template: /eng/pipelines/variables/onebranch-variables.yml@self
     - template: /eng/pipelines/variables/akv-variables.yml@self
+
+    # OneBranch Variables --------------------------------------------------
+    # Note: These dont seem to like being defined in a separate file
+
+    - # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at
+      # https://aka.ms/obpipelines/artifacts
+      name: ob_outputDirectory
+      value: '$(ARTIFACT_PATH)'
+
+#    - # https://aka.ms/obpipelines/sdl
+#      name: ob_sdl_binskim_break
+#      value: true
+
+    - name: Packaging.EnableSBOMSigning
+      value: true
+
+    - # Docker image which is used to build the project https://aka.ms/obpipelines/containers
+      name: WindowsContainerImage
+      value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest'
 
 resources:
     repositories:
