@@ -79,10 +79,10 @@ extends:
             apiscan:
                 # @TODO: Needs to be run for AKV?
                 enabled: ${{ not(parameters.buildPreview) }}
-                softwareFolder: $(SOFTWARE_PATH)
+                softwareFolder: '$(SOFTWARE_PATH)'
                 softwareName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
                 softwareVersionNum: ${{ variables.assemblyFileVersion }}
-                symbolsFolder: $(SYMBOLS_PATH)
+                symbolsFolder: '$(SYMBOLS_PATH)'
 
             armory:
                 enabled: ${{ not(parameters.buildPreview) }}
