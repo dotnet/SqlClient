@@ -81,7 +81,7 @@ jobs:
                 artifactType: 'dll'
                 authCertName: '${{ parameters.signingAuthCertName }}'
                 connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
-                signingCertName: '${{ parameters.signingCertName }}'
+                signingCertName: '${{ parameters.signingSignCertName }}'
 
           - template: ../steps/compound-nuget-pack-step.yml@self
             parameters:
