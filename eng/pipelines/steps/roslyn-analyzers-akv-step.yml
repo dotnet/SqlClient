@@ -19,15 +19,16 @@ steps:
       displayName: 'Roslyn Analyzers'
       inputs:
           msBuildArchitecture: x64
-          msBuildCommandLine: 'msbuild $(REPO_ROOT)/build.proj -t:BuildAkv -p:BuildTools=false -p:Configuration=${{ parameters.buildConfiguration }} -p:GenerateNuGet=false -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
-#            msbuild
-#                $(REPO_ROOT)/build.proj
-#                -t:BuildAkv
-#                -p:BuildTools=false
-#                -p:Configuration=${{ parameters.buildConfiguration }}
-#                -p:GenerateNuGet=false
-#                -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
-#                -p:ReferenceType=Package
-#                -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
+          msBuildCommandLine: >-
+#          msBuildCommandLine: 'msbuild $(REPO_ROOT)/build.proj -t:BuildAkv -p:BuildTools=false -p:Configuration=${{ parameters.buildConfiguration }} -p:GenerateNuGet=false -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
+            msbuild
+                $(REPO_ROOT)/build.proj
+                -t:BuildAkv
+                -p:BuildTools=false
+                -p:Configuration=${{ parameters.buildConfiguration }}
+                -p:GenerateNuGet=false
+                -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+                -p:ReferenceType=Package
+                -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022
