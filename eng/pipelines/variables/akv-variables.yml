@@ -5,7 +5,7 @@
 #################################################################################
 
 variables:
-    - group: 'AKV Variables (v2)'
+    - group: 'akv-variables-v2'
       # SigningAppRegistrationClientId
       # SigningAppRegistrationTenantId
       # SigningAkvName
