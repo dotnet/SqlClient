@@ -90,6 +90,9 @@ jobs:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
 
+          - script: tree $(ARTIFACT_PATH)
+            displayName: 'Output Build Output'
+
           - template: ../steps/roslyn-analyzers-akv-step.yml@self
             parameters:
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
