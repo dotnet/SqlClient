@@ -474,7 +474,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate.HasPrivateKey, "Attempting to encrypt with cert without privatekey");
 
             RSA rsa = certificate.GetRSAPublicKey();
-            return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA1);
+            return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA256);
         }
 
         /// <summary>
@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate.HasPrivateKey, "Attempting to decrypt with cert without privatekey");
 
             RSA rsa = certificate.GetRSAPrivateKey();
-            return rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA1);
+            return rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA256);
         }
 
         /// <summary>
