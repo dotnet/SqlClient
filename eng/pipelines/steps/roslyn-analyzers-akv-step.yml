@@ -22,13 +22,13 @@ steps:
 #          msBuildCommandLine: 'msbuild $(REPO_ROOT)/build.proj -t:BuildAkv -p:BuildTools=false -p:Configuration=${{ parameters.buildConfiguration }} -p:GenerateNuGet=false -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
           msBuildCommandLine: >-
             msbuild
-                $(REPO_ROOT)/build.proj
-                -t:BuildAkv
-                -p:BuildTools=false
-                -p:Configuration=${{ parameters.buildConfiguration }}
-                -p:GenerateNuGet=false
-                -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
-                -p:ReferenceType=Package
-                -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
+            $(REPO_ROOT)/build.proj
+            -t:BuildAkv
+            -p:BuildTools=false
+            -p:Configuration=${{ parameters.buildConfiguration }}
+            -p:GenerateNuGet=false
+            -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+            -p:ReferenceType=Package
+            -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022
