@@ -208,7 +208,7 @@
     <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
     <!-- @TODO: RemoveProperties shouldn't be necessary -->
     <Message Text=">>> Restoring AKV project for netfx [TestTargetOS=$(TestOS)netfx]" />
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" TestTargetOS="$(TestOS)netfx"/>
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx"/>
 
     <PropertyGroup>
       <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
@@ -217,7 +217,7 @@
     <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
 
     <Message Text=">>> Restoring AKV project for netcore [TestTargetOS=$(TestOS)netcoreapp]" />
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" TestTargetOS="$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     
     <PropertyGroup>
       <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
