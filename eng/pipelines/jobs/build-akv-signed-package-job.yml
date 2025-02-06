@@ -115,7 +115,7 @@ jobs:
                 packageVersion: '${{ parameters.nugetPackageVersion }}'
                 nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
                 outputDirectory: '$(ARTIFACT_PATH)'
-                referenceType: 'package'
+                referenceType: 'Package'
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
@@ -137,7 +137,7 @@ jobs:
                   publishToInternal: true
                   publishToPublic: true
                   publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
-                  referenceType: 'package'
+                  referenceType: 'Package'
                   searchPattern: |
                       Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
                       AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb

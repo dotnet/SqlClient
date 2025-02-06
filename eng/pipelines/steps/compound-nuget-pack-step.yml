@@ -23,8 +23,8 @@ parameters:
     - name: referenceType
       type: string
       values:
-          - package
-          - project
+          - Package
+          - Project
 
 steps:
     - task: NuGetToolInstaller@1

@@ -205,19 +205,37 @@
   <Target Name="BuildAkv">
     <!-- @TODO: No idea why this works but having a target that depends on both existing targets does not.
          this needs to be fixed as part of cleaning up the build.proj -->
+    <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
+    <!-- @TODO: RemoveProperties shouldn't be necessary -->
     <Message Text=">>> Restoring AKV project for netfx [TestTargetOS=$(TestOS)netfx]" />
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <Message Text=">>> Building AKV project for netfx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties);$(NugetPackProperties);" Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" TestTargetOS="$(TestOS)netfx"/>
 
-    <Message Text=">>> Restoring AKV project for netcore [TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <Message Text=">>> Building AKV project for netcore/unix [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
+
+    <Message Text=">>> Restoring AKV project for netcore [TestTargetOS=$(TestOS)netcoreapp]" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" TestTargetOS="$(TestOS)netcoreapp" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
