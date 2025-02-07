@@ -86,6 +86,8 @@ namespace Microsoft.Data.SqlClient
 
             public Snapshot() => List = new List<PacketData>();
             [DebuggerStepThrough]
+            internal void AssertCurrent() { }
+            [DebuggerStepThrough]
             internal void AppendPacketData(byte[] buffer, int read) => List.Add(new PacketData(buffer, 0, read));
             [DebuggerStepThrough]
             internal void MoveNext()
@@ -142,6 +144,7 @@ namespace Microsoft.Data.SqlClient
         private void SniReadStatisticsAndTracing() { }
         [DebuggerStepThrough]
         private void AssertValidState() { }
+
         [DebuggerStepThrough]
         private void AddError(object value) => throw new Exception(value as string ?? "AddError");
 
@@ -157,6 +160,29 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+#if NETFRAMEWORK
+        private SniNativeWrapperImpl _native;
+        internal SniNativeWrapperImpl SniNativeWrapper
+        {
+            get
+            {
+                if (_native == null)
+                {
+                    _native = new SniNativeWrapperImpl(this);
+                }
+                return _native;
+            }
+        }
+
+        internal class SniNativeWrapperImpl
+        {
+            private readonly TdsParserStateObject _parent;
+            internal SniNativeWrapperImpl(TdsParserStateObject parent) => _parent = parent;
+
+            internal uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SNIPacketGetData(packet, inBuff, ref dataSize);
+        }
+#endif
     }
 
     internal static class TdsEnums
