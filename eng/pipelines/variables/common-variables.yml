@@ -12,9 +12,3 @@ variables:
     - name: ARTIFACT_PATH
       value: '${{ variables.REPO_ROOT }}/packages'
       readonly: true
-    - name: SOFTWARE_PATH
-      value: '${{ variables.REPO_ROOT }}/software'
-      readonly: true
-    - name: SYMBOLS_PATH
-      value: '${{ variables.REPO_ROOT }}/symbols'
-      readonly: true

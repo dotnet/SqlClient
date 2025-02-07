@@ -4,6 +4,8 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# @TODO: These seem to only really apply to official builds. Name should probably be adjusted to match.
+
 variables:
     - group: 'akv-variables-v2'
       # SigningAppRegistrationClientId

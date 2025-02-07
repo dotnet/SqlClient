@@ -5,6 +5,12 @@
 #################################################################################
 
 parameters:
+    - name: apiScanDllPath
+      type: string
+      
+    - name: apiScanPdbPath
+      type: string
+    
     - name: assemblyFileVersion
       type: string
 
@@ -52,6 +58,16 @@ parameters:
 
     - name: symbolsUploadAccount
       type: string
+      
+    # @TODO: This should be determined from build output, or at a higher level
+    - # Note: not intended to be passed in, is only used for copying files for ApiScan.
+      # This is only defined as a parameter since ADO pipelines do not support array variables.
+      name: targetFrameworks
+      type: [string]
+      default:
+          - net462
+          - net8.0
+          - net9.0
 
 jobs:
     - job: buildSignedAkvPackage
@@ -66,6 +82,8 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - script: |
+                echo apiScanDllPath=                 ${{ parameters.apiScanDllPath }}
+                echo apiScanPdbPath=                 ${{ parameters.apiScanPdbPath }}
                 echo assemblyFileVersion=            ${{ parameters.assemblyFileVersion }}
                 echo buildConfiguration=             ${{ parameters.buildConfiguration }}
                 echo nugetPackageVersion=            ${{ parameters.nugetPackageVersion }}
@@ -89,9 +107,15 @@ jobs:
                 assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
                 buildConfiguration: '${{ parameters.buildConfiguration }}'
                 mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
-
-          - script: tree $(REPO_ROOT)/artifacts
-            displayName: 'Output Build Output'
+                
+          - ${{ each targetFramework in parameters.targetFrameworks }}:  
+              - template: ../steps/compound-extract-akv-apiscan-files-step.yml
+                parameters:
+                    buildConfiguration: '${{ parameters.buildConfiguration }}'
+                    dllPath: '${{ parameters.apiScanDllPath }}'
+                    pdbPath: '${{ parameters.apiScanPdbPath }}'
+                    referenceType: Package
+                    targetFramework: '${{ targetFramework }}'
 
           - template: ../steps/roslyn-analyzers-akv-step.yml@self
             parameters:

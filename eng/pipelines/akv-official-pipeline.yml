@@ -38,7 +38,7 @@ parameters:
 variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
     - template: /eng/pipelines/variables/onebranch-variables.yml@self
-    - template: /eng/pipelines/variables/akv-variables.yml@self
+    - template: /eng/pipelines/variables/akv-official-variables.yml@self
 
 resources:
     repositories:
@@ -61,10 +61,10 @@ extends:
             apiscan:
                 # @TODO: Needs to be run for AKV?
                 enabled: ${{ not(parameters.buildPreview) }}
-                softwareFolder: '$(SOFTWARE_PATH)'
+                softwareFolder: '${{ variables.apiScanDllPath }}'
                 softwareName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
                 softwareVersionNum: ${{ variables.assemblyFileVersion }}
-                symbolsFolder: '$(SYMBOLS_PATH)'
+                symbolsFolder: '${{ variables.apiScanPdbPath }}'
 
             armory:
                 enabled: ${{ not(parameters.buildPreview) }}
@@ -122,8 +122,10 @@ extends:
             - stage: BuildAkv
               displayName: 'Build AKV'
               jobs:
-                  - template: /eng/pipelines/jobs/build-akv-signed-package-job.yml@self
+                  - template: /eng/pipelines/jobs/build-akv-official-job.yml@self
                     parameters:
+                        apiScanDllPath: '${{ variables.apiScanDllPath }}'
+                        apiScanPdbPath: '${{ variables.apiScanPdbPath }}'
                         assemblyFileVersion: '${{ variables.assemblyFileVersion }}'
                         buildConfiguration: '${{ parameters.buildConfiguration }}'
                         nugetPackageVersion: '${{ variables.nugetPackageVersion }}'
