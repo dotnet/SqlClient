@@ -63,7 +63,7 @@ parameters:
     - # Note: not intended to be passed in, is only used for copying files for ApiScan.
       # This is only defined as a parameter since ADO pipelines do not support array variables.
       name: targetFrameworks
-      type: [string]
+      type: object
       default:
           - net462
           - net8.0
