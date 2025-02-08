@@ -37,13 +37,13 @@ steps:
       displayName: 'Copy ${{ parameters.targetFramework }} DLL'
       inputs:
           contents: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll'
-          sourceFolder: '$(ARTIFACT_PATH)/${{ parameters.referenceType }}/bin/Windows_NT/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
+          sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin/Windows_NT/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
           targetFolder: '${{ parameters.dllPath }}/win/${{ parameters.targetFramework }}/'
           
     - task: CopyFiles@2
       displayName: 'Copy ${{ parameters.targetFramework }} PDB'
       inputs:
           contents: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb'
-          sourceFolder: '$(ARTIFACT_PATH)/${{ parameters.referenceType }}/bin/Windows_NT/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
+          sourceFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin/Windows_NT/AzureKeyVaultProvider/${{ parameters.targetFramework }}/'
           targetFolder: '${{ parameters.pdbPath }}/win/${{ parameters.targetFramework }}/'
     

@@ -42,7 +42,7 @@ steps:
               ConnectedServiceName: '${{ parameters.connectedServiceName }}'
               AuthAKVName: '${{ parameters.akvName }}'
               AuthCertName: '${{ parameters.authCertName }}'
-              FolderPath: '$(REPO_ROOT)'
+              FolderPath: '$(BUILD_OUTPUT)'
               Pattern: '*.dll'
               VerboseLogin: 1
 
@@ -55,7 +55,7 @@ steps:
               AuthCertName: '${{ parameters.authCertName }}'
               AuthSignCertName: '${{ parameters.signingCertName }}'
               ConnectedServiceName: '${{ parameters.connectedServiceName }}'
-              FolderPath: '$(REPO_ROOT)'
+              FolderPath: '$(BUILD_OUTPUT)'
               Pattern: '*.dll'
               signConfigType: 'inlineSignParams'
               inlineOperation: |

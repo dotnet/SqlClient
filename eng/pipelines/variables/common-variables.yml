@@ -9,6 +9,11 @@ variables:
     - name: REPO_ROOT
       value: '$(Build.SourcesDirectory)'
       readonly: true
+      
+    - name: BUILD_OUTPUT
+      value: '${{ variables.REPO_ROOT }}/artifacts'
+      readonly: true
+      
     - name: ARTIFACT_PATH
       value: '${{ variables.REPO_ROOT }}/packages'
       readonly: true

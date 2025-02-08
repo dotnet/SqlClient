@@ -20,7 +20,7 @@ variables:
       # SymbolsPublishTokenUri
       # SymbolsUploadAccount
 
-    # Well-Known Variables -------------------------------------------------
+    # Well-Known Variables -------------------------------------------------      
     - name: PACKAGE_NAME
       value: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
 

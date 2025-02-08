@@ -47,3 +47,6 @@ steps:
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
               -p:SigningKeyPath=$(Agent.TempDirectory)/netfxKeypair.snk
+              
+    - script: tree /a /f $(BUILD_OUTPUT)
+      displayName: Output Build Output Tree
