@@ -7,10 +7,10 @@
 variables:
     # Variables defined by us ----------------------------------------------
     - name: apiScanDllPath
-      value: '$(Build.SourceDirectory)/apiScan/dlls'
+      value: '$(Build.SourcesDirectory)/apiScan/dlls'
     
     - name: apiScanPdbPath
-      value: '$(Build.SourceDirectory)/apiScan/pdbs'
+      value: '$(Build.SourcesDirectory)/apiScan/pdbs'
     
     # Variables defined by OneBranch ---------------------------------------
     
