@@ -15,6 +15,10 @@ parameters:
       name: azureSubscription
       type: string
 
+    - # Package name, typically the name of the nuget package being built
+      name: packageName
+      type: string
+
     - # Project that symbols will belong to (decided during symbols onboarding)
       name: publishProjectName
       type: string
@@ -73,7 +77,7 @@ steps:
           SymbolsArtifactName: '${{ parameters.artifactName }}'
           SymbolsFolder: '$(ARTIFACT_PATH)/${{ parameters.referenceType }}/bin'
           SymbolsMaximumWaitTime: 60
-          SymbolsProduct: '$(PACKAGE_NAME)'
+          SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
 
     - task: AzureCLI@2
