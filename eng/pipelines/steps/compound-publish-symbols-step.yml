@@ -124,7 +124,7 @@ steps:
           echo ">  2.Request name registered successfully."
           
           # 3) Publish the symbols
-          echo ">  3.Submitting request to publish symbols...
+          echo ">  3.Submitting request to publish symbols..."
           $publishSymbolsBody = "{'publishToInternalServer': $publishToInternal, 'publishToPublicServer': $publishToPublic}"
           Invoke-RestMethod `
             -Method POST `
