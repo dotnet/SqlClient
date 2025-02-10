@@ -157,6 +157,7 @@ jobs:
                   artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
                   publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+                  packageName: '$(PACKAGE_NAME)'
                   publishServer: '${{ parameters.symbolsPublishServer }}'
                   publishToInternal: true
                   publishToPublic: true
