@@ -152,7 +152,7 @@ jobs:
                 signingCertName: '${{ parameters.signingSignCertName }}'
 
           - ${{ if parameters.publishSymbols }}:
-            - template: ../steps/compound-publish-akv-symbols-step.yml@self
+            - template: ../steps/compound-publish-symbols-step.yml@self
               parameters:
                   artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
                   azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
