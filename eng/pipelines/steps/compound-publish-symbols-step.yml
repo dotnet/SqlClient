@@ -75,7 +75,7 @@ steps:
           SymbolExpirationInDays: 1825 # 5 years
           SymbolServerType: 'TeamServices'
           SymbolsArtifactName: '${{ parameters.artifactName }}'
-          SymbolsFolder: '$(ARTIFACT_PATH)/${{ parameters.referenceType }}/bin'
+          SymbolsFolder: '$(BUILD_OUTPUT)/${{ parameters.referenceType }}/bin'
           SymbolsMaximumWaitTime: 60
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
