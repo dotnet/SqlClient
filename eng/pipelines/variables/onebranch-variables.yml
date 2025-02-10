@@ -7,10 +7,10 @@
 variables:
     # Variables defined by us ----------------------------------------------
     - name: apiScanDllPath
-      value: '${{ variables.REPO_ROOT }}/apiScan/dlls/'
+      value: '${{ variables.REPO_ROOT }}/apiScan/dlls'
     
     - name: apiScanPdbPath
-      value: '${{ variables.REPO_ROOT }}/apiScan/pdbs/'
+      value: '${{ variables.REPO_ROOT }}/apiScan/pdbs'
     
     # Variables defined by OneBranch ---------------------------------------
     
