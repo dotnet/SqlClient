@@ -40,8 +40,8 @@ parameters:
       name: referenceType
       type: string
       values:
-        - project
-        - package
+        - Project
+        - Package
 
     - # Pattern to use to search for pdb symbols files to upload/publish
       name: searchPattern
