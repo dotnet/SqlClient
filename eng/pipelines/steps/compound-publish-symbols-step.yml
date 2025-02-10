@@ -63,7 +63,7 @@ steps:
     - # Set variable for downstream tasks (allegedly)
       # Note: Because variables cannot be set in top-level of template, this has to be done during
       #    runtime.
-      script: 'echo "##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}"'
+      script: 'echo ##vso[task.setvariable variable=ArtifactServices.Symbol.AccountName;]${{ parameters.uploadAccount }}'
       displayName: 'Set ArtifactServices.Symbol.AccountName to ${{ parameters.uploadAccount }}'
 
     - task: PublishSymbols@2
