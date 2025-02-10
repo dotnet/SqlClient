@@ -7,18 +7,18 @@
 variables:
     # Variables defined by us ----------------------------------------------
     - name: apiScanDllPath
-      value: '${{ variables.REPO_ROOT }}/apiScan/dlls'
+      value: '$(Build.SourceDirectory)/apiScan/dlls'
     
     - name: apiScanPdbPath
-      value: '${{ variables.REPO_ROOT }}/apiScan/pdbs'
+      value: '$(Build.SourceDirectory)/apiScan/pdbs'
     
     # Variables defined by OneBranch ---------------------------------------
     
-    - # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at
-      # https://aka.ms/obpipelines/artifacts
-      # @TODO: Does this need to be defined here or in build-akv-official-job?
-      name: ob_outputDirectory
-      value: '${{ variables.ARTIFACT_PATH }}'
+#    - # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at
+#      # https://aka.ms/obpipelines/artifacts
+#      # @TODO: Does this need to be defined here or in build-akv-official-job?
+#      name: ob_outputDirectory
+#      value: '${{ variables.ARTIFACT_PATH }}'
 
     - name: Packaging.EnableSBOMSigning
       value: true
