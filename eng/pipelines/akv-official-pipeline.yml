@@ -25,15 +25,15 @@ parameters:
           - Debug
       default: Release
 
-    - name: buildPreview
-      displayName: 'Build is preview'
-      type: boolean
-      default: false
-
     - name: publishSymbols
       displayName: 'Publish symbols'
       type: boolean
       default: false
+
+    - name: runSdlTasks
+      displayName: 'Run SDL Tasks'
+      type: boolean
+      default: true
 
 variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
@@ -56,20 +56,18 @@ extends:
                 Version: 2022
                 Network: KS2  # @TODO: Only added to allow access to nuget.org for vulnerability auditing.
 
-        # @TODO: Reassess if these should be enabled for preview builds as well
         globalSdl:
             # See https://aka.ms/obpipelines/sdl
 
             apiscan:
-                # @TODO: Needs to be run for AKV?
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 softwareFolder: '${{ variables.apiScanDllPath }}'
-                softwareName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
+                softwareName: 'Microsoft.Data.SqlClient' # Note: This name is registered with ApiScan
                 softwareVersionNum: ${{ variables.assemblyFileVersion }}
                 symbolsFolder: '${{ variables.apiScanPdbPath }}'
 
             armory:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 break: true
 
             asyncSdl:
@@ -78,46 +76,49 @@ extends:
                 enabled: false
 
             binskim:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 break: true
 
             codeinspector:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 logLevel: Error
 
             codeql:
-                enabled: ${{ not(parameters.buildPreview) }}
-                # @TODO: Can be limited to look at only AKV code? via sourceCodeDirectory
+                enabled: ${{ parameters.runSdlTasks) }}
+                sourceRoot: "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider"
+                # Note, this can only be done if project doesn't depend on other projects. In
+                #    package reference mode, this is true, but if we ever enable project reference
+                #    builds, this will have to be removed.
 
             credscan:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 suppressionsFile: '$(REPO_ROOT)/.config/CredScanSuppressions.json'
 
             eslint:
                 enabled: false
 
             policheck:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 break: true
                 exclusionFile: '$(REPO_ROOT)/.config/PolicheckExclusions.xml'
 
             roslyn:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 break: true
                 # Requires RoslynAnalyzers task to be added after build task
 
             publishLogs:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
 
             sbom:
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 packageName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
                 packageVersion: ${{ variables.nugetPackageVersion }}
 
             tsa:
-                # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will
+                # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: ${{ not(parameters.buildPreview) }}
+                enabled: ${{ parameters.runSdlTasks) }}
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
