@@ -52,7 +52,9 @@ extends:
 
     parameters:
         featureFlags:
-            WindowsHostVersion: 1ESWindows2022
+            WindowsHostVersion:
+                Version: 2022
+                Network: KS2  # @TODO: Only added to allow access to nuget.org for vulnerability auditing.
 
         # @TODO: Reassess if these should be enabled for preview builds as well
         globalSdl:
