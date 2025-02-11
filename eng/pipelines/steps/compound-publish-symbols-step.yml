@@ -88,7 +88,7 @@ steps:
         scriptType: ps
         inlineScript: |
           # Propagate parameters to PS variables ################################################
-          $artifactName = ${{ parameters.artifactName }}
+          $artifactName = "${{ parameters.artifactName }}"
           echo "artifactName= $artifactName"
           
           $publishProjectName = "${{ parameters.publishProjectName }}"
