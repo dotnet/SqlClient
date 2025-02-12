@@ -15,7 +15,7 @@ parameters:
     
     - # Path where the dll files should be copied
       name: dllPath
-      type: string 
+      type: string
     
     - # Path where the pdb files should be copied
       name: pdbPath

@@ -4,7 +4,9 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# @TODO: This should be made generic if possible once build.proj is disassembled
+# @TODO: This can probably be made generic and pass in the command lines for msbuild
+#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
+#        affect >1 project at a time.
 # @TODO: Test this without signing, or indicate that this depends on the signing key is downloaded
 
 parameters:
@@ -23,9 +25,7 @@ steps:
               msbuild
               $(REPO_ROOT)/build.proj
               -t:BuildAkv
-              -p:BuildTools=false
               -p:Configuration=${{ parameters.buildConfiguration }}
-              -p:GenerateNuGet=false
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
               -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
