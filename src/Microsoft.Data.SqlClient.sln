@@ -234,7 +234,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{3850810F-535E-443A-A9B4-7EE85B327E0A}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\common\templates\jobs\build-signed-akv-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-akv-package-job.yml
 		..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml
 		..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml = ..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml
 		..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml = ..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml
@@ -274,7 +273,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
 	ProjectSection(SolutionItems) = preProject
-		..\eng\pipelines\libraries\akv-variables.yml = ..\eng\pipelines\libraries\akv-variables.yml
 		..\eng\pipelines\libraries\build-variables.yml = ..\eng\pipelines\libraries\build-variables.yml
 		..\eng\pipelines\libraries\ci-build-variables.yml = ..\eng\pipelines\libraries\ci-build-variables.yml
 		..\eng\pipelines\libraries\common-variables.yml = ..\eng\pipelines\libraries\common-variables.yml

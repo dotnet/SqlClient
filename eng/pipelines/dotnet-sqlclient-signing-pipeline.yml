@@ -45,11 +45,6 @@ parameters: # parameters are shown up in ADO UI in a build queue time
   type: boolean
   default: false
 
-- name: MDS_PackageRef_Version
-  displayName: 'MDS package version of AKV Provider (build AKV)'
-  type: string
-  default: 5.1.5
-
 - name: CurrentNetFxVersion
   displayName: 'Lowest supported .NET Framework version (MDS validation)'
   type: string
@@ -130,15 +125,6 @@ extends:
         tsaOptionsPath: $(REPOROOT)\.config\tsaoptions.json
         disableLegacyManifest: true
     stages:
-    - stage: buildAKV
-      displayName: 'Build AKV Provider'
-      jobs:
-      - template: eng/pipelines/common/templates/jobs/build-signed-akv-package-job.yml@self
-        parameters:
-          symbolsFolder: $(symbolsFolder)
-          softwareFolder: $(softwareFolder)
-          publishSymbols: ${{ parameters['publishSymbols'] }}
-
     - stage: buildMDS
       displayName: 'Build MDS'
       jobs:
