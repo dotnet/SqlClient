@@ -68,8 +68,6 @@ variables:
     value: drop_buildMDS_build_signed_package
   - name: PublishSymbols
     value: ${{ parameters['publishSymbols'] }}
-  - name: MDS_PackageRef_Version
-    value: ${{ parameters['MDS_PackageRef_Version'] }}
   - name: CurrentNetFxVersion
     value: ${{ parameters['CurrentNetFxVersion'] }}
 
