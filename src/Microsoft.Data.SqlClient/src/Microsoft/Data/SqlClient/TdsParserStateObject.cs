@@ -2705,6 +2705,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // This is in its own method to avoid always allocating the lambda in WriteBytes
+        private void WriteBytesSetupContinuation(byte[] array, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
+        {
+            AsyncHelper.ContinueTask(packetTask, completion,
+               onSuccess: () => WriteBytes(ReadOnlySpan<byte>.Empty, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion, array)
+           );
+        }
+
         /// <summary>
         /// Creates a human-readable message containing the <c>_inBytesRead</c>, <c>_inBytesUsed</c> counters
         /// and the used and unused portions of the <c>_inBuff</c> array to help diagnosing problems with
@@ -2717,7 +2725,6 @@ namespace Microsoft.Data.SqlClient
             buffer.AppendLine("dumping buffer");
             buffer.AppendFormat("_inBytesRead = {0}", _inBytesRead).AppendLine();
             buffer.AppendFormat("_inBytesUsed = {0}", _inBytesUsed).AppendLine();
-
             int cc = 0; // character counter
             int i;
             buffer.AppendLine("used buffer:");
