@@ -2717,7 +2717,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/GetSqlJson/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
         virtual public SqlJson GetSqlJson(int i)
         {
             ReadColumn(i);
