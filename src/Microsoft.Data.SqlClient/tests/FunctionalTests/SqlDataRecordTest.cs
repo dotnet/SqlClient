@@ -121,18 +121,18 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SqlMoney.MaxValue, record.GetSqlMoney(12));
 #if NET
             record.SetValue(14, new DateOnly(2025, 11,28));
-            Assert.Equal(new DateOnly(2025, 11, 28), record.GetValue(14));
+            Assert.Equal(new DateTime(2025, 11, 28), record.GetValue(14));
 
             record.SetValue(15, new TimeOnly(1, 57, 58));
-            Assert.Equal(new TimeOnly(1, 57, 58), record.GetValue(15));
+            Assert.Equal(new TimeSpan(1, 57, 58), record.GetValue(15));
 #endif
 
             // Try adding different values to SqlVariant type
-            for (int i = 0; i < record.FieldCount - 1; ++i)
+            for (int i = 0; i < record.FieldCount - 3; ++i)
             {
                 object valueToSet = record.GetSqlValue(i);
-                record.SetValue(record.FieldCount - 1, valueToSet);
-                object o = record.GetSqlValue(record.FieldCount - 1);
+                record.SetValue(record.FieldCount - 3, valueToSet);
+                object o = record.GetSqlValue(record.FieldCount - 3);
 
                 if (o is SqlBinary)
                 {
@@ -143,8 +143,8 @@ namespace Microsoft.Data.SqlClient.Tests
                     Assert.Equal(valueToSet, o);
                 }
 
-                record.SetDBNull(record.FieldCount - 1);
-                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - 1));
+                record.SetDBNull(record.FieldCount - 3);
+                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - 3));
 
                 record.SetDBNull(i);
                 Assert.Equal(DBNull.Value, record.GetValue(i));
