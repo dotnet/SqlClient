@@ -7,7 +7,6 @@
 # @TODO: This can probably be made generic and pass in the command lines for msbuild
 #        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
 #        affect >1 project at a time.
-# @TODO: Test this without signing, or indicate that this depends on the signing key is downloaded
 
 parameters:
     - name: buildConfiguration
@@ -28,6 +27,5 @@ steps:
               -p:Configuration=${{ parameters.buildConfiguration }}
               -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
               -p:ReferenceType=Package
-              -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
           msBuildVersion: 17.0
           setupCommandLinePicker: vs2022
