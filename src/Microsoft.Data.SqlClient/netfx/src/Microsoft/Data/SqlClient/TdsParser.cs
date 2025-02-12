@@ -4364,6 +4364,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
             }
+
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)

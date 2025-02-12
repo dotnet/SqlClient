@@ -322,14 +322,22 @@ namespace Microsoft.Data.SqlClient
                             stateObj.SendAttention(mustTakeWriteLock: true);
 
                             PacketHandle syncReadPacket = default;
+                            bool readFromNetwork = true;
                             RuntimeHelpers.PrepareConstrainedRegions();
                             bool shouldDecrement = false;
                             try
                             {
                                 Interlocked.Increment(ref _readingCount);
                                 shouldDecrement = true;
-
-                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
+                                readFromNetwork = !PartialPacketContainsCompletePacket();
+                                if (readFromNetwork)
+                                {
+                                    syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
+                                }
+                                else
+                                {
+                                    error = TdsEnums.SNI_SUCCESS;
+                                }
 
                                 Interlocked.Decrement(ref _readingCount);
                                 shouldDecrement = false;
@@ -342,7 +350,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
+                                    Debug.Assert(!readFromNetwork || !IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
@@ -353,7 +361,7 @@ namespace Microsoft.Data.SqlClient
                                     Interlocked.Decrement(ref _readingCount);
                                 }
 
-                                if (!IsPacketEmpty(syncReadPacket))
+                                if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
                                 {
                                     ReleasePacket(syncReadPacket);
                                 }
@@ -393,60 +401,9 @@ namespace Microsoft.Data.SqlClient
             AssertValidState();
         }
 
-        public void ProcessSniPacket(PacketHandle packet, uint error)
+        private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            if (error != 0)
-            {
-                if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
-                {
-                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
-                    // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
-                    return;
-                }
-
-                AddError(_parser.ProcessSNIError(this));
-                AssertValidState();
-            }
-            else
-            {
-                uint dataSize = 0;
-
-                uint getDataError = SNIPacketGetData(packet, _inBuff, ref dataSize);
-
-                if (getDataError == TdsEnums.SNI_SUCCESS)
-                {
-                    if (_inBuff.Length < dataSize)
-                    {
-                        Debug.Assert(true, "Unexpected dataSize on Read");
-                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
-                    }
-
-                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
-                    _inBytesRead = (int)dataSize;
-                    _inBytesUsed = 0;
-
-                    if (_snapshot != null)
-                    {
-                        _snapshot.AppendPacketData(_inBuff, _inBytesRead);
-                        if (_snapshotReplay)
-                        {
-                            _snapshot.MoveNext();
-#if DEBUG
-                            _snapshot.AssertCurrent();
-#endif
-                        }
-                    }
-
-                    SniReadStatisticsAndTracing();
-                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer: {1}, In Bytes Read: {2}", ObjectID, _inBuff, _inBytesRead);
-
-                    AssertValidState();
-                }
-                else
-                {
-                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
-                }
-            }
+            return SNIPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private void ChangeNetworkPacketTimeout(int dueTime, int period)
@@ -535,7 +492,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
+                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
@@ -547,7 +504,7 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
+                // synchronously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync(asyncClose: true);
@@ -1494,7 +1451,7 @@ namespace Microsoft.Data.SqlClient
             if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
             {
                 // Async reads
-                Debug.Assert(_snapshot == null && !_snapshotReplay, "StateObj has leftover snapshot state");
+                Debug.Assert(_snapshot == null && _snapshotStatus == SnapshotStatus.NotActive, "StateObj has leftover snapshot state");
                 Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
                 Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
                 // Async writes
