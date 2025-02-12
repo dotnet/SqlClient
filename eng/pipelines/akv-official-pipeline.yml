@@ -60,14 +60,14 @@ extends:
             # See https://aka.ms/obpipelines/sdl
 
             apiscan:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 softwareFolder: '${{ variables.apiScanDllPath }}'
                 softwareName: 'Microsoft.Data.SqlClient' # Note: This name is registered with ApiScan
                 softwareVersionNum: ${{ variables.assemblyFileVersion }}
                 symbolsFolder: '${{ variables.apiScanPdbPath }}'
 
             armory:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 break: true
 
             asyncSdl:
@@ -76,49 +76,49 @@ extends:
                 enabled: false
 
             binskim:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 break: true
 
             codeinspector:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 logLevel: Error
 
             codeql:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 sourceRoot: "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider"
                 # Note, this can only be done if project doesn't depend on other projects. In
                 #    package reference mode, this is true, but if we ever enable project reference
                 #    builds, this will have to be removed.
 
             credscan:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 suppressionsFile: '$(REPO_ROOT)/.config/CredScanSuppressions.json'
 
             eslint:
                 enabled: false
 
             policheck:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 break: true
                 exclusionFile: '$(REPO_ROOT)/.config/PolicheckExclusions.xml'
 
             roslyn:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 break: true
                 # Requires RoslynAnalyzers task to be added after build task
 
             publishLogs:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
 
             sbom:
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 packageName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
                 packageVersion: ${{ variables.nugetPackageVersion }}
 
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: ${{ parameters.runSdlTasks) }}
+                enabled: ${{ parameters.runSdlTasks }}
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
