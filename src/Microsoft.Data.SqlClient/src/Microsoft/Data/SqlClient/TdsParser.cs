@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Diagnostics;
 
@@ -8,6 +8,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParser
     {
+        // This is a shared pool that will retain the last 20 writers to be reused. If more than 20 are requested at a time,
+        // they will not be retained when returned to the pool.
         private static readonly SqlObjectPool<ArrayBufferWriter<byte>> _writers = new(20, () => new(), a => a.Clear());
 
         internal void ProcessSSPI(int receivedLength)
