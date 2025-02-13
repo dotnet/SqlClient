@@ -207,7 +207,7 @@
     <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
     <!-- @TODO: RemoveProperties shouldn't be necessary -->
     <Message Text=">>> Restoring AKV project" />
-    <MSBuild Projects="@(AKVProvider)" Targets="restore"/>
+    <MSBuild Projects="@(AKVProvider)" Targets="Restore"/>
 
     <PropertyGroup>
       <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
