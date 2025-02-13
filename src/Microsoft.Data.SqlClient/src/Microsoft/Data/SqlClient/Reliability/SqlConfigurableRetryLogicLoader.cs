@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient
                     HashSet<int> set = new HashSet<int>();
                     for (int index = 0; index < parts.Length; index++)
                     {
-                        if (int.TryParse(parts[index], System.Globalization.NumberStyles.AllowLeadingWhite | System.Globalization.NumberStyles.AllowTrailingWhite, null, out int value))
+                        if (int.TryParse(parts[index], System.Globalization.NumberStyles.Integer, null, out int value))
                         {
                             set.Add(value);
                         }
