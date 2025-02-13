@@ -112,7 +112,7 @@ extends:
 
             sbom:
                 enabled: ${{ parameters.runSdlTasks }}
-                packageName: 'Microsoft.Data.SqlClient'      # @TODO: Should be separate for AKV?
+                packageName: 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
                 packageVersion: ${{ variables.nugetPackageVersion }}
 
             tsa:
