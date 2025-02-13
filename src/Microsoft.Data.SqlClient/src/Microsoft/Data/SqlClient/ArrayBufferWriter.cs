@@ -12,7 +12,9 @@ using System.Globalization;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Internal implementation of <see cref="IBufferWriter{T}"/> for platforms that don't have it available
+    /// Internal implementation of <see cref="IBufferWriter{T}"/> for platforms that don't have it available.
+    ///
+    /// NOTE: This file should not be edited as it is copied from dotnet/runtime and has no tests in this repo.
     /// </summary>
     /// <seealso href="https://github.com/dotnet/runtime/blob/bc2bd2bd77ecd7a7979a3ef815e3ff36881a1b94/src/libraries/Common/src/System/Buffers/ArrayBufferWriter.cs"/>
     sealed class ArrayBufferWriter<T> : IBufferWriter<T>
