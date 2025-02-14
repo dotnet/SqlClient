@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -71,14 +75,14 @@ namespace Microsoft.Data.SqlClient.Tests
             _cleanFunction = cleanFunction;
             _output.WriteLine($"Clean function: {_cleanFunction}");
 
-            // Find the Trunc() function.
-            var truncFunction =
+            // Find the Truncate() function.
+            var truncateFunction =
                 clientInterfaceType.GetMethod(
-                    "Trunc",
+                    "Truncate",
                     BindingFlags.Public | BindingFlags.Static);
-            Assert.NotNull(truncFunction);
-            _truncFunction = truncFunction;
-            _output.WriteLine($"Trunc function: {_truncFunction}");
+            Assert.NotNull(truncateFunction);
+            _truncateFunction = truncateFunction;
+            _output.WriteLine($"Truncate function: {_truncateFunction}");
         }
 
         #endregion Test Setup
@@ -374,28 +378,28 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Trunc()
         {
             // Max length of 0.
-            Assert.Equal("", DoTrunc("", 0));
-            Assert.Equal("", DoTrunc(" ", 0));
-            Assert.Equal("", DoTrunc("A", 0));
-            Assert.Equal("", DoTrunc("ABCDE FGHIJ", 0));
+            Assert.Equal("", DoTruncate("", 0));
+            Assert.Equal("", DoTruncate(" ", 0));
+            Assert.Equal("", DoTruncate("A", 0));
+            Assert.Equal("", DoTruncate("ABCDE FGHIJ", 0));
             
             // Max length of 1.
-            Assert.Equal("", DoTrunc("", 1));
-            Assert.Equal(" ", DoTrunc(" ", 1));
-            Assert.Equal("A", DoTrunc("A", 1));
-            Assert.Equal("A", DoTrunc("ABCDE FGHIJ", 1));
+            Assert.Equal("", DoTruncate("", 1));
+            Assert.Equal(" ", DoTruncate(" ", 1));
+            Assert.Equal("A", DoTruncate("A", 1));
+            Assert.Equal("A", DoTruncate("ABCDE FGHIJ", 1));
             
             // Max length of 5.
-            Assert.Equal("", DoTrunc("", 5));
-            Assert.Equal(" ", DoTrunc(" ", 5));
-            Assert.Equal("A", DoTrunc("A", 5));
-            Assert.Equal("ABCDE", DoTrunc("ABCDE FGHIJ", 5));
+            Assert.Equal("", DoTruncate("", 5));
+            Assert.Equal(" ", DoTruncate(" ", 5));
+            Assert.Equal("A", DoTruncate("A", 5));
+            Assert.Equal("ABCDE", DoTruncate("ABCDE FGHIJ", 5));
             
             // Max length of 100.
-            Assert.Equal("", DoTrunc("", 100));
-            Assert.Equal(" ", DoTrunc(" ", 100));
-            Assert.Equal("A", DoTrunc("A", 100));
-            Assert.Equal("ABCDE FGHIJ", DoTrunc("ABCDE FGHIJ", 100));
+            Assert.Equal("", DoTruncate("", 100));
+            Assert.Equal(" ", DoTruncate(" ", 100));
+            Assert.Equal("A", DoTruncate("A", 100));
+            Assert.Equal("ABCDE FGHIJ", DoTruncate("ABCDE FGHIJ", 100));
         }
 
         #endregion Tests
@@ -439,11 +443,11 @@ namespace Microsoft.Data.SqlClient.Tests
             return result;
         }
         
-        // Convenience helper to call the Trunc() function.
-        private string DoTrunc(string value, ushort maxLen)
+        // Convenience helper to call the Truncate() function.
+        private string DoTruncate(string value, ushort maxLen)
         {
             var result =
-                _truncFunction.Invoke(
+                _truncateFunction.Invoke(
                     null, new object?[] { value, maxLen }) as string;
             Assert.NotNull(result);
             return result;
@@ -468,8 +472,8 @@ namespace Microsoft.Data.SqlClient.Tests
         // The ClientInterface.Clean() function.
         private readonly MethodInfo _cleanFunction;
         
-        // The ClientInterface.Trunc() function.
-        private readonly MethodInfo _truncFunction;
+        // The ClientInterface.Truncate() function.
+        private readonly MethodInfo _truncateFunction;
 
         #endregion Private Fields
     }

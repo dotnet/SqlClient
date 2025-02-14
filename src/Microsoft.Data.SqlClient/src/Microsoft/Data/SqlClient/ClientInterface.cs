@@ -1,3 +1,7 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -8,11 +12,19 @@ using System.Text;
 namespace Microsoft.Data.SqlClient
 {
     // ========================================================================
-    // This class uses runtime environment information to produce a value
-    // suitable for use in the TDS LOGIN7 Client Interface Name field.
-    //
-    // TODO(ADO.Net-33562): Add a link to the spec document.
-    //
+    /// <summary>
+    ///   <para>
+    ///     This class uses runtime environment information to produce a value
+    ///     suitable for use in the TDS LOGIN7 Client Interface Name field.
+    ///   </para>
+    ///   <para>
+    ///     See the spec here:
+    ///
+    ///     <see href="https://microsoft.sharepoint-df.com/:w:/t/sqldevx/EZYUHqdnoXhKoQv0kxcM1QUB2V_uTCWN9GHfrDQY2tojmA?e=1Coybd">
+    ///       SQL Drivers Client Interface Name Specification
+    ///     </see>
+    ///   </para>
+    /// </summary>
     internal static class ClientInterface
     {
         #region Properties
@@ -20,66 +32,97 @@ namespace Microsoft.Data.SqlClient
         // ====================================================================
         // Properties
 
-        // The Client Interface Name, never null, never empty, and never larger
-        // than TdsEnum.MAXLEN_CLIENTINTERFACE (currently 128) characters.
-        //
-        // Format:
-        //
-        //   MS-MDS|{OS Type}|{Arch}|{OS Info}|{Runtime Info}
-        //
-        // The {OS Type} will be one of the following strings:
-        //
-        //   Windows
-        //   Linux
-        //   macOS
-        //   FreeBSD
-        //   Unknown
-        //
-        // The {Arch} will be the process architecture, either the bare metal
-        // hardware architecture or the virtualized architecture.  See
-        // System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture
-        // for possible values.  This value will never be longer than 12
-        // characters.
-        //
-        // The {OS Info} will be sourced from the the
-        // System.Runtime.InteropServices.RuntimeInformation.OSDescription
-        // value, or "Unknown" if that value is empty or all whitespace.
-        //
-        // The {Runtime Info} will be sourced from the
-        // System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
-        // value, or "Unknown" if that value is empty or all whitespace.
-        //
-        // This adheres to the TDS v37.0 spec, which specifies that the Client
-        // Interface Name has a maximum length as noted above.  If the fully
-        // formed Name length is beyond that limit, it will be truncated to the
-        // maximum with no regard for preserving certain fields or pipe ('|')
-        // delimiters.
-        //
-        // The maximum length is expected to be sufficient to accommodate the
-        // driver name, {OS Type}, and {Arch} fields, but those fields will
-        // be truncated as described above if necessary.
-        //
-        // The {OS Info} and {Runtime Info} fields will share any remaining
-        // space as evenly as possible, being truncated equally if both are
-        // longer than half of the remaining space.  If one of these fields is
-        // shorter than half of the remaining space, the other field will
-        // consume as much remaining space as possible.
-        //
-        // Any characters that are not one of the following are replaced with 
-        // underscore ('_'):
-        //
-        //   - ASCII letters ([A-za-z])
-        //   - ASCII digits ([0-9])
-        //   - Space (' ')
-        //   - Period ('.')
-        //   - Plus ('+')
-        //   - Underscore ('_')
-        //   - Hyphen ('-')
-        //
-        // All known exceptions are caught and handled by injecting the fallback
-        // value of "Unknown".  However, no effort is made to catch all
-        // exceptions, for example process-fatal memory allocation errors.
-        // 
+        /// <summary>
+        ///   <para>
+        ///     The Client Interface Name, never null, never empty, and never 
+        ///     larger than
+        ///     <see cref="TdsEnums.MAXLEN_CLIENTINTERFACE">
+        ///       MAXLEN_CLIENTINTERFACE
+        ///     </see>
+        ///     (currently 128) characters.
+        ///   </para>
+        ///   <para> 
+        ///     The format is pipe ('|') delimited into 5 parts:
+        ///
+        ///     <code>MS-MDS|{OS Type}|{Arch}|{OS Info}|{Runtime Info}</code>
+        ///   </para>
+        ///   <para>
+        ///     The <c>{OS Type}</c> part will be one of the following strings:
+        ///     <list type="bullet">
+        ///       <item><description>Windows</description></item>
+        ///       <item><description>Linux</description></item>
+        ///       <item><description>macOS</description></item>
+        ///       <item><description>FreeBSD</description></item>
+        ///       <item><description>Unknown</description></item>
+        ///     </list>
+        ///   </para>
+        ///
+        ///   <para> 
+        ///     The <c>{Arch}</c> part will be the process architecture, either
+        ///     the bare metal hardware architecture or the virtualized
+        ///     architecture.  See
+        ///     <see cref="RuntimeInformation.ProcessArchitecture">
+        ///       ProcessArchitecture
+        ///     </see>
+        ///     for possible values.  This value will never be longer than 12
+        ///     characters.
+        ///   </para>
+        ///   <para>
+        ///     The <c>{OS Info}</c> part will be sourced from the the
+        ///     <see cref="RuntimeInformation.OSDescription">
+        ///       OSDescription
+        ///     </see> 
+        ///     value, or "Unknown" if that value is empty or all whitespace.
+        ///   </para>
+        ///   <para>
+        ///     The <c>{Runtime Info}</c> part will be sourced from the
+        ///     <see cref="RuntimeInformation.FrameworkDescription">
+        ///       FrameworkDescription
+        ///    </see>
+        ///     value, or "Unknown" if that value is empty or all whitespace.
+        ///   </para>
+        ///   <para>
+        ///     This adheres to the TDS v37.0 spec, which specifies that the
+        ///     Client Interface Name has a maximum length as noted above.  If
+        ///     the fully formed Name length is beyond that limit, it will be
+        ///     truncated to the maximum with no regard for preserving certain
+        ///     parts or pipe ('|') delimiters.
+        ///   </para>
+        ///   <para>
+        ///     The maximum length is expected to be sufficient to accommodate
+        ///     the driver name, <c>{OS Type}</c>, and <c>{Arch}</c> parts, but
+        ///     those parts will be truncated as described above if necessary.
+        ///   </para>
+        ///   <para> 
+        ///     The <c>{OS Info}</c> and <c>{Runtime Info}</c> parts will share
+        ///     any remaining space as evenly as possible, being truncated
+        ///     equally if both are longer than half of the remaining space.
+        ///     If one of these parts is shorter than half of the remaining
+        ///     space, the other part will consume as much remaining space as
+        ///     possible.
+        ///   </para>
+        ///   <para>
+        ///     Any characters that are not one of the following are replaced
+        ///     with underscore ('_'):
+        ///     <list type="bullet">
+        ///       <item>
+        ///         <description>ASCII letters ([A-za-z])</description>
+        ///       </item>
+        ///       <item><description>ASCII digits ([0-9])</description></item>
+        ///       <item><description>Space (' ')</description></item>
+        ///       <item><description>Period ('.')</description></item>
+        ///       <item><description>Plus ('+')</description></item>
+        ///       <item><description>Underscore ('_')</description></item>
+        ///       <item><description>Hyphen ('-')</description></item>
+        ///     </list>
+        ///   </para>
+        ///   <para> 
+        ///     All known exceptions are caught and handled by injecting the
+        ///     fallback value of "Unknown".  However, no effort is made to
+        ///     catch all exceptions, for example process-fatal memory
+        ///     allocation errors.
+        ///   </para>
+        /// </summary>
         public static string Name => _name;
 
         #endregion Properties
@@ -89,21 +132,12 @@ namespace Microsoft.Data.SqlClient
         // ====================================================================
         // Helpers
 
-        // Static construction builds the Client Interface Name.
-        //
-        // All known exceptions are consumed.
-        //
+        /// <summary>
+        ///   <para>Static construction builds the Client Interface Name.</para>
+        ///   <para>All known exceptions are consumed.</para>
+        /// </summary>
         static ClientInterface()
         {
-            // The max length must not be negative.
-            //
-            // C# doesn't have compile-time type traits, so we can't confirm
-            // that MAXLEN_CLIENTINTERFACE is unsigned.  Instead, we capture
-            // it into a ushort, and let the compiler decide if that is a
-            // permitted operation.
-            //
-            ushort maxLen = TdsEnums.MAXLEN_CLIENTINTERFACE;
-
             // Determine the OS type.
             //
             // This is done outside of Build() to allow tests to inject
@@ -112,27 +146,27 @@ namespace Microsoft.Data.SqlClient
             string osType = Unknown;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                osType = "Windows";
+                osType = Windows;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                osType = "Linux";
+                osType = Linux;
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                osType = "macOS";
+                osType = macOS;
             }
 // The FreeBSD platform doesn't exist in .NET Framework at all.
 #if NET
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
             {
-                osType = "FreeBSD";
+                osType = FreeBSD;
             }
 #endif // NET
 
             // Build it!
             _name = Build(
-                maxLen,
+                MaxLenOverall,
                 DriverName,
                 osType,
                 RuntimeInformation.ProcessArchitecture,
@@ -140,12 +174,36 @@ namespace Microsoft.Data.SqlClient
                 RuntimeInformation.FrameworkDescription);
         }
 
-        // Build the Client Interface Name and return it.
-        //
-        // The length of the returned value will never be longer than maxLen.
-        //
-        // All known exceptions are consumed.
-        //
+        /// <summary>
+        ///   <para>Build the Client Interface Name and return it.</para>
+        ///   <para>
+        ///     The length of the returned value will never be longer than
+        ///     <paramref name="maxLen"/>.
+        ///   </para>
+        ///   <para>All known exceptions are consumed.</para>
+        /// </summary>
+        /// <param name="maxLen">
+        ///   The maximum length of the returned value.
+        /// </param>
+        /// <param name="driverName">
+        ///   The value of the driver name part. 
+        /// </param>
+        /// <param name="osType">
+        ///   The value of the OS Type part. 
+        /// </param>
+        /// <param name="arch">
+        ///   The value of the Architecture part.
+        /// </param>
+        /// <param name="osInfo">
+        ///   The value of the OS Info part. 
+        /// </param>
+        /// <param name="runtimeInfo">
+        ///   The value of the Runtime Info part. 
+        /// </param>
+        /// <returns>
+        ///   The Client Interface Name value, never null, never empty, and
+        ///   never longer than <paramref name="maxLen"/>.
+        /// </returns>
         public static string Build(
             ushort maxLen,
             string driverName,
@@ -156,9 +214,9 @@ namespace Microsoft.Data.SqlClient
         {
             string result;
 
-            // Clean and truncate the driver name, max length 10.  We will need
-            // it for error handling.
-            driverName = Trunc(Clean(driverName), 10);
+            // Clean and truncate the driver name.  We will need it for error
+            // handling.
+            driverName = Truncate(Clean(driverName), MaxLenDriverName);
 
             try
             {
@@ -175,12 +233,12 @@ namespace Microsoft.Data.SqlClient
                 name.Append(driverName);
                 name.Append('|');
 
-                // Add the OS Type, max length 10.
-                name.Append(Trunc(Clean(osType), 10));
+                // Add the OS Type, truncating to its max length.
+                name.Append(Truncate(Clean(osType), MaxLenOSType));
                 name.Append('|');
 
-                // Add the Architecture, max length 12.
-                name.Append(Trunc(Clean(arch.ToString()), 12));
+                // Add the Architecture, truncating to its max length.
+                name.Append(Truncate(Clean(arch.ToString()), MaxLenArch));
                 name.Append('|');
                 
                 // String.Length is a signed 32-bit integer, but the API
@@ -242,7 +300,7 @@ namespace Microsoft.Data.SqlClient
                         --remaining;
                     }
 
-                    // Will both Info fields together be too long?
+                    // Will both Info parts together be too long?
                     if (
                         // If the addition of both lengths would overflow, then
                         // they are definitely too long.
@@ -330,28 +388,38 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        // Clean the given value of any disallowed characters, replacing them
-        // with underscore ('_'), and return the cleaned value.
-        //
-        // Leading and trailing whitespace are removed.
-        //
-        // Each disallowed character is replaced with an underscore, preserving
-        // the original length of the value.  No effort is made to collapse
-        // adjacent disallowed characters.
-        //
-        // Permitted characters are:
-        //
-        //   - ASCII letters ([A-za-z])
-        //   - ASCII digits ([0-9])
-        //   - Space (' ')
-        //   - Period ('.')
-        //   - Plus ('+')
-        //   - Underscore ('_')
-        //   - Hyphen ('-')
-        //
-        // If the given value is null, empty, or all whitespace, or an error
-        // occurs, the fallback value is returned.
-        //
+        /// <summary>
+        ///   <para>
+        ///     Clean the given value of any disallowed characters, replacing
+        ///     them with underscore ('_'), and return the cleaned value.
+        ///   </para>
+        ///   <para>Leading and trailing whitespace are removed.</para>
+        ///   <para>
+        ///     Each disallowed character is replaced with an underscore,
+        ///     preserving the original length of the value.  No effort is made
+        ///     to collapse adjacent disallowed characters.
+        ///   </para>
+        ///   <para>
+        ///     Permitted characters are:
+        ///     <list type="bullet">
+        ///       <item>
+        ///         <description>ASCII letters ([A-za-z])</description>
+        ///       </item>
+        ///       <item><description>ASCII digits ([0-9])</description></item>
+        ///       <item><description>Space (' ')</description></item>
+        ///       <item><description>Period ('.')</description></item>
+        ///       <item><description>Plus ('+')</description></item>
+        ///       <item><description>Underscore ('_')</description></item>
+        ///       <item><description>Hyphen ('-')</description></item>
+        ///     </list>
+        ///   </para>
+        ///   <para>
+        ///     If the given value is null, empty, or all whitespace, or an
+        ///     error occurs, the fallback value is returned.
+        ///   </para>
+        /// </summary>
+        /// <param name="value">The value to clean.</param>
+        /// <returns>The cleaned value, or the fallback value.</returns>
         public static string Clean(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)
@@ -417,9 +485,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Truncate the given value to the given max length, and return the
-        // result.
-        public static string Trunc(string value, ushort maxLength)
+        /// <summary>
+        ///   Truncate the given value to the given max length, and return the
+        ///   result.
+        /// </summary>
+        /// <param name="value">The value to truncate.</param>
+        /// <param name="maxLength">The maximum length to truncate to.</param>
+        /// <returns>
+        ///   The truncated value, or the original <paramref name="value"/>
+        ///   if no truncation occurred.
+        /// </returns>
+        public static string Truncate(string value, ushort maxLength)
         {
             if (value.Length <= maxLength)
             {
@@ -443,6 +519,28 @@ namespace Microsoft.Data.SqlClient
 
         // Our well-known .NET driver name.
         private const string DriverName = "MS-MDS";
+
+        // The overall maximum length of Name.
+        //
+        // C# doesn't have compile-time type traits, so we can't confirm that
+        // MAXLEN_CLIENTINTERFACE is unsigned.  Instead, we capture it into a
+        // ushort, and let the compiler decide if that is a permitted operation.
+        //
+        private const ushort MaxLenOverall = TdsEnums.MAXLEN_CLIENTINTERFACE;
+        
+        // Maximum part lengths as promised in our API.
+        private const ushort MaxLenDriverName = 10;
+        private const ushort MaxLenOSType = 10;
+        private const ushort MaxLenArch = 12;
+
+        // The OS Type values we promise in our API.
+        private const string Windows = "Windows";
+        private const string Linux = "Linux";
+        private const string macOS = "macOS";
+// The FreeBSD platform doesn't exist in .NET Framework at all.
+#if NET
+        private const string FreeBSD = "FreeBSD";
+#endif // NET
 
         // A fallback value for parts of the client interface name that are
         // unknown, invalid, or when errors occur.
