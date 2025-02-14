@@ -80,7 +80,7 @@
       enabled for local builds.
       @TODO: If/when auditing is enabled for central feeds services, this can be removed. 
     -->
-    <NuGetAudit Condition="'$(ContinuousIntegrationBuild)' == 'true'">false</NuGetAudit>
+    <NuGetAudit>false</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
 
