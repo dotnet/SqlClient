@@ -81,7 +81,7 @@ namespace Microsoft.Data
                         Monitor.Enter(s_dllLock, ref lockTaken);
                         if (s_userInstanceDLLHandle == IntPtr.Zero)
                         {
-                            SNINativeMethodWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
+                            SniNativeWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDLLHandle);
                             if (s_userInstanceDLLHandle != IntPtr.Zero)
                             {
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.UserInstanceDLLHandle> LocalDB - handle obtained");
@@ -89,7 +89,7 @@ namespace Microsoft.Data
                             else
                             {
                                 SniError sniError = new SniError();
-                                SNINativeMethodWrapper.SNIGetLastError(out sniError);
+                                SniNativeWrapper.SNIGetLastError(out sniError);
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"), sniError: sniError.sniError);
                             }
                         }
