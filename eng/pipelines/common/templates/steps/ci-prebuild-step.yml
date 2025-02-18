@@ -28,7 +28,7 @@ steps:
 - template: ensure-dotnet-version.yml
   parameters:
     sdk: false
-    version: 8
+    version: 8.0.406
 
 - ${{if eq(parameters.debug, true)}}:
   - powershell: |
