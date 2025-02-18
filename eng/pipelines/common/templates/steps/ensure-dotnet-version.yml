@@ -6,7 +6,7 @@
 parameters:
 - name: version
   type: number
-  default: 9
+  default: 9.0.102
 - name: sdk
   type: boolean
   default: false
