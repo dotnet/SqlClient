@@ -38,13 +38,13 @@ steps:
   displayName: 'Use .NET 9.x sdk'
   inputs:
     packageType: sdk
-    version: '9.x'
+    version: '9.0.102'
 
 - task: UseDotNet@2
   displayName: 'Install .NET 8.x runtime'
   inputs:
     packageType: runtime
-    version: '8.x'
+    version: '8.0.13'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
