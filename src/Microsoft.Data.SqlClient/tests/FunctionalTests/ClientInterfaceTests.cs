@@ -148,9 +148,9 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal("Unknown", osType);
             }
 
-            // Architecture must be non-empty and 12 characters or less.
+            // Architecture must be non-empty and 10 characters or less.
             Assert.True(parts[2] == "Unknown" || parts[2].Length > 0);
-            Assert.True(parts[2].Length <= 12);
+            Assert.True(parts[2].Length <= 10);
 
             // The OS and Runtime Info have no guaranteed format/content, but
             // they must both be "Unknown" or non-empty.
@@ -189,11 +189,12 @@ namespace Microsoft.Data.SqlClient.Tests
                 "DriverNa",
                 DoBuild(8, "DriverName", "B", Architecture.X64, "C", "D"));
             
-            // The driver name is longer than its per-field max length of 10.
+            // The driver name is longer than its per-field max length of 16.
             Assert.Equal(
-                "ReallyLong|B|X64|C|D",
+                "ReallyLongDriver|B|X64|C|D",
                 DoBuild(
-                    128, "ReallyLongName", "B", Architecture.X64, "C", "D"));
+                    128, "ReallyLongDriverName", "B", Architecture.X64, "C",
+                    "D"));
         }
 
         // Test the Build() function when it truncates the OS Type.
@@ -221,19 +222,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 "A|B|Arm6",
                 DoBuild(8, "A", "B", Architecture.Arm64, "C", "D"));
             
-            // We can't manufacture an Architecture value that's too long, so we
-            // instead verify that all existing values' string representations
-            // are no longer than the max of 12 characters.
-            foreach (var arch in
-#if NET
-                     Enum.GetValues<Architecture>()
-#else
-                     Enum.GetValues(typeof(Architecture))
-#endif
-                    )
-            {
-                Assert.True(arch.ToString().Length <= 12);
-            }
+            // The Architecture is longer than its per-field max length of 10.
+            Assert.Equal(
+                "A|B|LoongArch6|C|D",
+                DoBuild(
+                    128, "A", "B", Architecture.LoongArch64, "C", "D"));
         }
 
         // Test the Build() function when one or both of OS and/or Runtime Info

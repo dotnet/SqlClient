@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
         ///     <see cref="RuntimeInformation.ProcessArchitecture">
         ///       ProcessArchitecture
         ///     </see>
-        ///     for possible values.  This value will never be longer than 12
+        ///     for possible values.  This value will never be longer than 10
         ///     characters.
         ///   </para>
         ///   <para>
@@ -245,19 +245,19 @@ namespace Microsoft.Data.SqlClient
                 // guarantees it will never be negative.  We will not explicitly
                 // check for negative values during arithmetic operations.
 
-                // We should have appended at most 35 characters so far:
+                // We should have appended at most 39 characters so far:
                 //
-                //  10 (driver name)
+                //  16 (driver name)
                 //   1 (pipe)
                 //  10 (OS name)
                 //   1 (pipe)
-                //  12 (architecture)
+                //  10 (architecture)
                 //   1 (pipe)
                 //
-                // This leaves us with at least 93 characters for the OS and
+                // This leaves us with at least 89 characters for the OS and
                 // Runtime Info.
                 //
-                Debug.Assert(name.Length <= 35);
+                Debug.Assert(name.Length <= 39);
 
                 // Obtain cleaned versions of OS and Runtime Info.
                 osInfo = Clean(osInfo);
@@ -529,9 +529,9 @@ namespace Microsoft.Data.SqlClient
         private const ushort MaxLenOverall = TdsEnums.MAXLEN_CLIENTINTERFACE;
         
         // Maximum part lengths as promised in our API.
-        private const ushort MaxLenDriverName = 10;
+        private const ushort MaxLenDriverName = 16;
         private const ushort MaxLenOSType = 10;
-        private const ushort MaxLenArch = 12;
+        private const ushort MaxLenArch = 10;
 
         // The OS Type values we promise in our API.
         private const string Windows = "Windows";
