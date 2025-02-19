@@ -221,12 +221,18 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(
                 "A|B|Arm6",
                 DoBuild(8, "A", "B", Architecture.Arm64, "C", "D"));
-            
+
+#if NET
+            // There are no Architecture enum values defined in .NET Framework
+            // with a length longer than 10, so we can only check truncation
+            // in .NET.
+
             // The Architecture is longer than its per-field max length of 10.
             Assert.Equal(
                 "A|B|LoongArch6|C|D",
                 DoBuild(
                     128, "A", "B", Architecture.LoongArch64, "C", "D"));
+#endif // NET
         }
 
         // Test the Build() function when one or both of OS and/or Runtime Info
