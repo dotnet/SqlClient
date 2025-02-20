@@ -514,11 +514,11 @@ namespace Microsoft.Data.SqlClient
             {
                 uint dataSize = 0;
 
-                uint getDataError =
-#if NETFRAMEWORK
-                    SniNativeWrapper.
-#endif
-                        SNIPacketGetData(packet, _inBuff, ref dataSize);
+                #if NETFRAMEWORK
+                uint getDataError = SniNativeWrapper.SniPacketGetData(packet, _inBuff, ref dataSize);
+                #else
+                uint getDataError = SNIPacketGetData(packet, _inBuff, ref dataSize);
+                #endif
 
                 if (getDataError == TdsEnums.SNI_SUCCESS)
                 {

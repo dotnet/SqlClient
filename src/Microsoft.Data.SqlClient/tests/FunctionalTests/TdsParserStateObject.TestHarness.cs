@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;
         internal SniNativeWrapperImpl SniNativeWrapper
         {
@@ -180,9 +180,9 @@ namespace Microsoft.Data.SqlClient
             private readonly TdsParserStateObject _parent;
             internal SniNativeWrapperImpl(TdsParserStateObject parent) => _parent = parent;
 
-            internal uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SNIPacketGetData(packet, inBuff, ref dataSize);
+            internal uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SNIPacketGetData(packet, inBuff, ref dataSize);
         }
-#endif
+        #endif
     }
 
     internal static class TdsEnums
