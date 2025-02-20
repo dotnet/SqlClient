@@ -405,7 +405,7 @@ namespace Microsoft.Data.SqlClient
 
         private SmiContext _smiRequestContext; // context that _smiRequest came from
         private CommandEventSink _smiEventSink;
-        private SmiEventSink_DeferedProcessing _outParamEventSink;
+        private SmiEventSink_DeferredProcessing _outParamEventSink;
 
         private CommandEventSink EventSink
         {
@@ -421,13 +421,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SmiEventSink_DeferedProcessing OutParamEventSink
+        private SmiEventSink_DeferredProcessing OutParamEventSink
         {
             get
             {
                 if (_outParamEventSink == null)
                 {
-                    _outParamEventSink = new SmiEventSink_DeferedProcessing(EventSink);
+                    _outParamEventSink = new SmiEventSink_DeferredProcessing(EventSink);
                 }
                 else
                 {
