@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -396,12 +395,12 @@ namespace Microsoft.Data.SqlClient
             if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
-                Hashtable netlib = NetlibMapping();
+                Dictionary<string, string> netlib = NetlibMapping();
                 if (!netlib.ContainsKey(networkLibrary))
                 {
                     throw ADP.InvalidConnectionOptionValue(KEY.Network_Library);
                 }
-                _networkLibrary = (string)netlib[networkLibrary];
+                _networkLibrary = netlib[networkLibrary];
             }
             else
             {
@@ -1098,14 +1097,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal Hashtable NetlibMapping()
+        static internal Dictionary<string, string> NetlibMapping()
         {
             const int NetLibCount = 8;
 
-            Hashtable hash = s_netlibMapping;
+            Dictionary<string, string> hash = s_netlibMapping;
             if (hash == null)
             {
-                hash = new Hashtable(NetLibCount)
+                hash = new Dictionary<string, string>(NetLibCount)
                 {
                     { NETLIB.TCPIP, TdsEnums.TCP },
                     { NETLIB.NamedPipes, TdsEnums.NP },
@@ -1147,7 +1146,7 @@ namespace Microsoft.Data.SqlClient
             internal const string VIA = "dbmsgnet";
         }
 
-        private static Hashtable s_netlibMapping;
+        private static Dictionary<string, string> s_netlibMapping;
 
 #if NETFRAMEWORK
         protected internal override PermissionSet CreatePermissionSet()
