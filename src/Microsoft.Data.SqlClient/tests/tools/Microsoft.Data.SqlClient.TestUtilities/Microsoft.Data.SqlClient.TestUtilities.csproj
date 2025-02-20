@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
+
+    <TargetsNetFx Condition="'$(TargetsNetFx)' == '' AND '$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">true</TargetsNetFx>
+
+    <RuntimeIdentifier Condition="'$(TargetsNetFx)' == 'true'">win</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(TargetsNetFx)' == 'true' AND '$(ReferenceType)' == 'Package' AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
+
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
   </PropertyGroup>

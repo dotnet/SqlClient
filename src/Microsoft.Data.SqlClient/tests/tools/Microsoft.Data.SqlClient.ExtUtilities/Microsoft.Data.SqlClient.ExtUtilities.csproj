@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TargetFrameworks>net9.0</TargetFrameworks>
     <StartupObject>Microsoft.Data.SqlClient.ExtUtilities.Runner</StartupObject>
     <TargetFrameworks>net9.0</TargetFrameworks>
   </PropertyGroup>

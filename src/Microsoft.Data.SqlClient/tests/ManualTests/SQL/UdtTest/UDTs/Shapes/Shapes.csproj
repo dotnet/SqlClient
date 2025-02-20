@@ -3,6 +3,7 @@
     <RootNamespace>Shapes</RootNamespace>
     <AssemblyName>Shapes</AssemblyName>
     <ProjectGuid>{B73A7063-37C3-415D-AD53-BB3DA20ABD6E}</ProjectGuid>
+<<<<<<< HEAD
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
@@ -14,4 +15,34 @@
     <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" />
   </ItemGroup>
+=======
+    <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>  
+    <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(ReferenceType)' == 'Package'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <Choose>
+        <When Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">
+          <ItemGroup>
+            <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+          </ItemGroup>
+        </When>
+        <Otherwise>
+          <ItemGroup>
+            <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+          </ItemGroup>
+        </Otherwise>
+      </Choose>
+      <ItemGroup>
+        <ProjectReference Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+>>>>>>> 701e97a4 (User Story 33636: Add Linux build support)
 </Project>

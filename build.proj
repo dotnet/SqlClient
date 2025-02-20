@@ -14,22 +14,18 @@
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
     <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
-    <!-- Flag to control if Windows drivers should be built or not -->
-    <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
-    <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
-    <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
-    <TF Condition="$(TF) == ''">net9.0</TF> <!-- Default Target Framework -->
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETFramework'">netfx</TFGroup>
-    <TFGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TF)))' == '.NETCoreApp'">netcore</TFGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netfx'">netfx</TargetGroup>
-    <TargetGroup Condition="'$(TFGroup)' == 'netcore'">netcoreapp</TargetGroup>
-    <TargetNetCoreVersion Condition="$(TargetGroup) == 'netcoreapp' AND $(TargetNetCoreVersion) == ''">$(TF)</TargetNetCoreVersion>
-    <TargetNetFxVersion Condition="$(TargetGroup) == 'netfx' AND $(TargetNetFxVersion) == ''">$(TF)</TargetNetFxVersion>
-    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND '$(IsEnabledWindows)' == 'true'">true</GenerateNuget>
+    
+    <!--
+      Flag that controls whether or not we generate Nuget packages.
+
+      By default, we only do this on Windows, due to the use of PowerShell and
+      Windows tooling within the Nuget targets.
+    -->
+    <GenerateNuget Condition="'$(GenerateNuget)' == '' AND $(OS.StartsWith('Win'))">true</GenerateNuget>
+
     <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
-    <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
-    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false;TargetNetCoreVersion=$(TargetNetCoreVersion);TargetNetFxVersion=$(TargetNetFxVersion)</TestProjectProperties>
+    <ProjectProperties>BuildProj=true;Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TF=$(TF);</ProjectProperties>
+    <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);BuildForRelease=false</TestProjectProperties>
     <ResultsDirectory Condition="$(ResultsDirectory) == ''">TestResults</ResultsDirectory>
     <!-- 
       Path to a `dotnet` version like a x86 or any especific versions in addition to a default installed version.
@@ -51,8 +47,10 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
-    <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
-    <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <BuildTools Include="**/tools/GenAPI/Microsoft.DotNet.GenAPI/Microsoft.DotNet.GenAPI.csproj" />
+    
+    <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />    
+    <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <!-- Used to build .NET Standard DLL for lib folder from this project. -->
     <NetStandardDriver Include="**/netcore/ref/Microsoft.Data.SqlClient*.csproj" />
@@ -89,8 +87,8 @@
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;BuildNetStandard;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
-
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" />
+  
   <Target Name="RestoreSqlServerLib">
     <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
   </Target>
@@ -105,38 +103,51 @@
     <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
-  <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RestoreNetFx">
     <MSBuild Projects="@(NetFxDriver)" Targets="restore" />
   </Target>
 
-  <Target Name="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)" />
-    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
+  <Target Name="RestoreTestsNetFx">
+    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties);TargetsNetFx=true"/>
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties);TargetsNetFx=true"/>
+    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties);TargetsNetFx=true"/>
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
-    <PropertyGroup>
-      <DotnetBuildCmd>dotnet build -c Release -p:ReferenceType=$(ReferenceType)</DotnetBuildCmd>
-    </PropertyGroup>
-    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
+    <MSBuild Projects="@(BuildTools)" Targets="restore" Properties="ReferenceType=$(ReferenceType)" />
+    <MSBuild Projects="@(BuildTools)" Properties="ReferenceType=$(ReferenceType)" />
   </Target>
 
-  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);" />
   </Target>
 
   <Target Name="BuildSqlServerLibAnyOS" DependsOnTargets="RestoreSqlServerLib">
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;OSGroup=AnyOS" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;OSGroup=AnyOS" />
   </Target>
 
-  <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building SqlServerLib [$(CI);$(SqlServerLibProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
+  <Target
+    Name="BuildSqlServerLib"
+    DependsOnTargets="BuildSqlServerLibProject;BuildSqlServerLibPackage" />
+  <Target
+    Name="BuildSqlServerLibProject"
+    DependsOnTargets="RestoreSqlServerLib"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);$(SqlServerLibProperties);Platform=AnyCPU</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building SqlServerLib via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildSqlServerLibPackage"
+    DependsOnTargets="RestoreSqlServerLib"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);$(SqlServerLibProperties);Platform=$(Platform);ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building SqlServerLib via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(BuildProperties)" />
   </Target>
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">
@@ -144,9 +155,9 @@
   </Target>
 
   <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" />
   </Target>
   <!-- Build .NET Standard target DLLs for Lib folder from here.
    This target enables BuildForLib for the NetCore ref project. -->
@@ -154,50 +165,148 @@
     <MSBuild Projects="@(NetStandardDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;BuildForLib=True" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
-  <Target Name="BuildUnitTestsNetCore" DependsOnTargets="RestoreTestsNetCore" Condition="$(ReferenceType.Contains('Project'))">
-    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
+  <Target
+    Name="BuildUnitTestsNetCore"
+    DependsOnTargets="BuildUnitTestsNetCoreProject;BuildUnitTestsNetCorePackage" />
+  <Target
+    Name="BuildUnitTestsNetCoreProject"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building unit tests for .NET via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(UnitTests)" Properties="$(BuildProperties)" />
   </Target>
-  
-  <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildManualTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building ManualTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
-  </Target>
-
-  <Target Name="BuildUnitTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
-    <Message Text=">>> Building UnitTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
-  </Target>
-  
-  <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
+  <Target
+    Name="BuildUnitTestsNetCorePackage"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building unit tests for .NET via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(UnitTests)" Properties="$(BuildProperties)" />
   </Target>
 
-  <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <Message Text=">>> Building ManualTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
+  <Target
+    Name="BuildFunctionalTestsNetCore"
+    DependsOnTargets="BuildFunctionalTestsNetCoreProject;BuildFunctionalTestsNetCorePackage" />
+  <Target
+    Name="BuildFunctionalTestsNetCoreProject"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building functional tests for .NET via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(FunctionalTests)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildFunctionalTestsNetCorePackage"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building functional tests for .NET via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(FunctionalTests)" Properties="$(BuildProperties)" />
+  </Target>
 
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building ManualTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
+  <Target
+    Name="BuildManualTestsNetCore"
+    DependsOnTargets="BuildManualTestsNetCoreProject;BuildManualTestsNetCorePackage" />
+  <Target
+    Name="BuildManualTestsNetCoreProject"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building manual tests for .NET via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(ManualTests)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildManualTestsNetCorePackage"
+    DependsOnTargets="RestoreTestsNetCore"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building manual tests for .NET via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(ManualTests)" Properties="$(BuildProperties)" />
+  </Target>
+
+  <Target
+    Name="BuildUnitTestsNetFx"
+    DependsOnTargets="BuildUnitTestsNetFxProject;BuildUnitTestsNetFxPackage" />
+  <Target
+    Name="BuildUnitTestsNetFxProject"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building unit tests for .NET Framework via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(UnitTests)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildUnitTestsNetFxPackage"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building unit tests for .NET Framework via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(UnitTests)" Properties="$(BuildProperties)" />
+  </Target>
+
+  <Target
+    Name="BuildFunctionalTestsNetFx"
+    DependsOnTargets="BuildFunctionalTestsNetFxProject;BuildFunctionalTestsNetFxPackage" />
+  <Target
+    Name="BuildFunctionalTestsNetFxProject"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building functional tests for .NET Framework via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(FunctionalTests)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildFunctionalTestsNetFxPackage"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building functional tests for .NET Framework via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(FunctionalTests)" Properties="$(BuildProperties)" />
+  </Target>
+
+  <Target
+    Name="BuildManualTestsNetFx"
+    DependsOnTargets="BuildManualTestsNetFxProject;BuildManualTestsNetFxPackage" />
+  <Target
+    Name="BuildManualTestsNetFxProject"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building manual tests for .NET Framework via project ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(ManualTests)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildManualTestsNetFxPackage"
+    DependsOnTargets="RestoreTestsNetFx"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(TestProjectProperties);Platform=AnyCPU;TargetsNetFx=true;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building manual tests for .NET Framework via package ref [$(BuildProperties)] ..." />
+    <MSBuild Projects="@(ManualTests)" Properties="$(BuildProperties)" />
   </Target>
 
   <!-- Tests -->
@@ -249,43 +358,66 @@
   </Target>
 
   <!-- Run all Functional tests applicable to the host OS. -->
-  <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix" />
+  <Target
+    Name="RunFunctionalTests"
+    DependsOnTargets="RunFunctionalTestsWindowsNetFx;RunFunctionalTestsWindows;RunFunctionalTestsUnix"/>
 
-  <!-- Run all Functional tests applicable to Windows. -->
-  <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+  <!-- Run all Functional tests applicable to Windows on .NET Framework. -->
+  <Target Name="RunFunctionalTestsWindowsNetFx" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TargetsNetFx=true
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Windows$(TargetGroup)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
-        --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
+        --filter "category!=nonnetfxtests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Functional-Windowsnetfx-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+    <Message Text=">>> Running Functional test for Windows on .NET Framework via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
-  <!-- Run all Functional tests applicable to Unix. -->
-  <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+  <!-- Run all Functional tests applicable to Windows on .NET. -->
+  <Target Name="RunFunctionalTestsWindows" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Unixnetcoreapp
+        -p:ReferenceType=$(ReferenceType)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Functional-Windowsnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows on .NET via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all Functional tests applicable to Unix on .NET. -->
+  <Target Name="RunFunctionalTestsUnix" Condition="'$(OS)' != 'WIndows_NT'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TF=$(TF)
+        -p:TestSet=$(TestSet)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
@@ -293,48 +425,71 @@
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+    <Message Text=">>> Running Functional test for Unix on .NET via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
   <!-- Run all Manual tests applicable to the host OS. -->
-  <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix" />
+  <Target
+    Name="RunManualTests"
+    DependsOnTargets="RunManualTestsWindowsNetFx;RunManualTestsWindows;RunManualTestsUnix"/>
 
-  <!-- Run all Manual tests applicable to Windows. -->
-  <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+  <!-- Run all Manual tests applicable to Windows on .NET Framework. -->
+  <Target Name="RunManualTestsWindowsNetFx" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TargetsNetFx=true
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Windows$(TargetGroup)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
-        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+        --filter "category!=nonnetfxtests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Manual-Windowsnetfx-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+    <Message Text=">>> Running Manual test for Windows on .NET Framework via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
-  <!-- Run all Manual tests applicable to Unix. -->
-  <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+  <!-- Run all Manual tests applicable to Windows on .NET. -->
+  <Target Name="RunManualTestsWindows" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Unixnetcoreapp
+        -p:ReferenceType=$(ReferenceType)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Manual-Windowsnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Windows on .NET via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all Manual tests applicable to Unix on .NET. -->
+  <Target Name="RunManualTestsUnix" Condition="'$(OS)' != 'Windows_NT'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TF=$(TF)
+        -p:TestSet=$(TestSet)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
@@ -342,8 +497,8 @@
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)" />
-    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)" />
+    <Message Text=">>> Running Manual test for Unix on .NET via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
   <!-- Clean -->
@@ -355,64 +510,132 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
-  <!-- AKV Targets ========================================================= -->
-  <Target Name="BuildAkv">
-    <!-- @TODO: TestTargetOS for restore poisons the project.assets.json file... We should remove it. -->
-    <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
-    <!-- @TODO: RemoveProperties shouldn't be necessary -->
-    <Message Text=">>> Restoring AKV project" />
-    <MSBuild Projects="@(AKVProvider)" Targets="Restore" />
+  <!-- Modern AKV Targets ================================================= -->
+  
+  <Target Name="BuildAkv" DependsOnTargets="BuildAkvModernNetFx;BuildAkvModernNetCore" />
+  <Target Name="BuildAkvModernNetFx">
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);TargetsNetFx=true</BuildAkvProperties>
+    </PropertyGroup>
+
+    <Message Text=">>> Restoring AKV project for netfx [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(BuildAkvProperties)" />
+
+    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
+  </Target>
+  <Target Name="BuildAkvModernNetCore">
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Restoring AKV project for netcore [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="$(BuildAkvProperties)" />
 
     <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);OSGroup=Unix;</BuildAkvProperties>
     </PropertyGroup>
-    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
+    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);OSGroup=Windows_NT</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
 
     <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT</BuildAkvProperties>
-    </PropertyGroup>
-    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" RemoveProperties="TargetsWindows;TargetsUnix;" />
-
-    <PropertyGroup>
-      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);OSGroup=AnyOS;</BuildAkvProperties>
     </PropertyGroup>
     <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
   </Target>
 
-  <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties)] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(TestProjectProperties);$(NugetPackProperties);" Condition="!$(ReferenceType.Contains('Package'))" />
+  <!-- Legacy AKV Targets ================================================= -->
 
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building AKVNetFx [$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties);$(NugetPackProperties);" Condition="$(ReferenceType.Contains('Package'))" />
+  <!-- Build AKV for .NET Framework. -->
+  <Target Name="BuildAKVNetFx" DependsOnTargets="BuildAKVNetFxProject;BuildAKVNetFxPackage" />
+  <Target Name="RestoreAKVNetFx">
+    <PropertyGroup>
+      <BuildProperties>$(CI);$(ProjectProperties);TargetsNetFx=true</BuildProperties>
+    </PropertyGroup>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Targets="restore"
+      Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildAKVNetFxProject"
+    DependsOnTargets="RestoreAKVNetFx"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);TargetsNetFx=true</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET Framework via project ref [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target Name="BuildAKVNetFxPackage"
+    DependsOnTargets="RestoreAKVNetFx"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=$(Platform);$(ProjectProperties);$(NugetPackProperties);TargetsNetFx=true;ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET Framework via package ref [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
   </Target>
 
-  <Target Name="BuildAKVNetCore">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <Message Text=">>> Building AKVNetCore [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
-
-    <!-- Only build platform specific builds for Package reference types -->
-    <Message Text=">>> Building AKVNetCore [$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))" />
+  <!-- Build AKV for .NET. -->
+  <Target Name="BuildAKVNetCore" DependsOnTargets="BuildAKVNetCoreProject;BuildAKVNetCorePackage" />
+  <Target Name="RestoreAKVNetCore">
+    <PropertyGroup>
+      <BuildProperties>$(CI);$(ProjectProperties)</BuildProperties>
+    </PropertyGroup>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Targets="restore"
+      Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildAKVNetCoreProject"
+    DependsOnTargets="RestoreAKVNetCore"
+    Condition="'$(ReferenceType)' != 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=AnyCPU;$(ProjectProperties)</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET via project ref [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
+  </Target>
+  <Target
+    Name="BuildAKVNetCorePackage"
+    DependsOnTargets="RestoreAKVNetCore"
+    Condition="'$(ReferenceType)' == 'Package'">
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=$(Platform);$(ProjectProperties);ReferenceType=Package</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET via package ref [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
   </Target>
 
-  <Target Name="BuildAKVNetCoreAllOS">
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+  <!-- Build AKV for .NET for all OS types. -->
+  <Target Name="BuildAKVNetCoreAllOS" DependsOnTargets="RestoreAKVNetCore">
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=AnyCPU;OSGroup=Windows_NT;$(ProjectProperties)</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for Windows_NT [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
+    
+    <!-- Build for Unix. -->
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=AnyCPU;OSGroup=Unix;$(ProjectProperties)</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for Unix [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
+    
+    <!-- Build for AnyOS. -->
+    <PropertyGroup>
+      <BuildProperties>$(CI);Platform=AnyCPU;OSGroup=AnyOS;$(ProjectProperties)</BuildProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for AnyOS [$(BuildProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildProperties)" />
   </Target>
 
 </Project>

@@ -17,10 +17,10 @@ parameters:
     default: software
   
   - name: referenceType
-    default: project
+    default: Project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
   - name: listOfTF
     type: object

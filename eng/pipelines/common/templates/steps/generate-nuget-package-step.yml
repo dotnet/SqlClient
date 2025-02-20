@@ -33,10 +33,10 @@ parameters:
     default: true
 
   - name: referenceType
-    default: project
+    default: Project
     values:
-    - project
-    - package
+    - Project
+    - Package
 
 steps:
 - ${{ if parameters.installNuget }}:

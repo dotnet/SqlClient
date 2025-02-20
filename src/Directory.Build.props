@@ -12,14 +12,15 @@
     <!--
       "ReferenceType" property supports below options:
 
-      "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
       "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
+
+      Unset or any other value => Build and run tests with Microsoft.Data.SqlClient as Project Reference
 
       ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
       CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
       > msbuild -p:configuration=Release
     -->
-    <ReferenceType Condition="$(ReferenceType) == ''">Project</ReferenceType>
+    <ReferenceType Condition="'$(ReferenceType)' != 'Package'">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   <PropertyGroup Condition="$(BuildForRelease) == 'true'">
@@ -57,7 +58,6 @@
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>
     <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
-    <GenAPISrcDir Condition="'$(GenAPISrcDir)'==''">$(ToolsDir)GenAPI\</GenAPISrcDir>
     <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
@@ -85,7 +85,7 @@
     <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
 
-  <!-- Packaging  for source link-->
+  <!-- Packaging for source link-->
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -132,4 +132,22 @@
     Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' != '.NETCoreApp'">
     <LangVersion>13.0</LangVersion>
   </PropertyGroup>
+
+  <!--
+    Build runtimes other than .NET Framework require the .NET Framework
+    reference assemblies.
+
+    MSBuildRuntimeType 'Full' means the build is running via .NET Framework
+    tooling, and the reference assemblies are already available.
+
+    Any other value means we need to explicitly add the reference assemblies.
+  -->
+  <ItemGroup Condition="'$(MSBuildRuntimeType)' != 'Full'">
+    <PackageReference
+      Include="Microsoft.NETFramework.ReferenceAssemblies"
+      Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

@@ -1,8 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>ExternalConfigurableRetryLogic</AssemblyName>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
@@ -10,9 +8,22 @@
   <ItemGroup>
     <Compile Include="CustomConfigurableRetryLogic.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" />
-  </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(ReferenceType)' == 'Package'">
+      <ItemGroup>
+        <PackageReference Include="Microsoft.Data.SqlClient" />
+      </ItemGroup>
+    </When>
+    <When Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETFramework'">
+      <ItemGroup>
+        <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
 </Project>
