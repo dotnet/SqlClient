@@ -1993,7 +1993,7 @@ namespace Microsoft.Data.SqlClient
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
                 // NOTE: (VSTFDevDiv - 479609): Not Fixed for TEXT, NTEXT, IMAGE as these are deprecated LOB types.
-                (SqlDbType != SqlDbType.Xml) &&
+                (SqlDbType != SqlDbType.Xml && SqlDbType != SqlDbTypeExtensions.Json) &&
                 !metaType.IsVarTime
             )
             {
