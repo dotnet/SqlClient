@@ -119,7 +119,10 @@ namespace Microsoft.Data.SqlClient.Tests
 
             record.SetSqlMoney(12, SqlMoney.MaxValue);
             Assert.Equal(SqlMoney.MaxValue, record.GetSqlMoney(12));
+
+            int offset = 1;
 #if NET
+            offset = 3;
             record.SetValue(14, new DateOnly(2025, 11,28));
             Assert.Equal(new DateTime(2025, 11, 28), record.GetValue(14));
 
@@ -128,11 +131,11 @@ namespace Microsoft.Data.SqlClient.Tests
 #endif
 
             // Try adding different values to SqlVariant type
-            for (int i = 0; i < record.FieldCount - 3; ++i)
+            for (int i = 0; i < record.FieldCount - offset; ++i)
             {
                 object valueToSet = record.GetSqlValue(i);
-                record.SetValue(record.FieldCount - 3, valueToSet);
-                object o = record.GetSqlValue(record.FieldCount - 3);
+                record.SetValue(record.FieldCount - offset, valueToSet);
+                object o = record.GetSqlValue(record.FieldCount - offset);
 
                 if (o is SqlBinary)
                 {
@@ -143,8 +146,8 @@ namespace Microsoft.Data.SqlClient.Tests
                     Assert.Equal(valueToSet, o);
                 }
 
-                record.SetDBNull(record.FieldCount - 3);
-                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - 3));
+                record.SetDBNull(record.FieldCount - offset);
+                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - offset));
 
                 record.SetDBNull(i);
                 Assert.Equal(DBNull.Value, record.GetValue(i));
