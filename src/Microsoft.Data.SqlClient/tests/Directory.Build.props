@@ -2,13 +2,10 @@
 <Project ToolsVersion="Current" DefaultTargets="Build" 
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <!-- Import parent Directory.build.props -->
-  <Import Project="..\..\Directory.Build.props" />
+  <!-- Import the closest parent Directory.build.props, wherever it happens to be. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
   <PropertyGroup>
-    <OSGroup Condition="$(OSGroup) == ''">$(OS)</OSGroup>
-    <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
-    <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
@@ -21,24 +18,23 @@
 
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
+    <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == '' AND '$(TF)' != ''">$(TF)</TargetNetFxVersion>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net9.0</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == '' AND '$(TF)' != ''">$(TF)</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
   </PropertyGroup>
 
-  <Choose>
-    <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
-    <When Condition="'$(TestTargetOS)' == ''">
-      <PropertyGroup>
-        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetCoreVersion);$(TargetNetFxVersion)</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TargetsUnix)' == 'true'">$(TargetNetCoreVersion);</TargetFrameworks>
-      </PropertyGroup>
-    </When>
-    <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
-    <Otherwise>
-      <PropertyGroup>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">$(TargetNetCoreVersion)</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">$(TargetNetFxVersion)</TargetFrameworks>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
+  <!--
+    When building via build.proj, the build targets imply either .NET or .NET
+    Framework (never both), so restrict the target frameworks accordingly.
+  -->
+  <PropertyGroup Condition="'$(BuildProj)' == 'true'">
+    <TargetFrameworks Condition="'$(TargetsNetFx)' == 'true'">$(TargetNetFxVersion)</TargetFrameworks>
+    <TargetFrameworks Condition="'$(TargetsNetFx)' != 'true'">$(TargetNetCoreVersion)</TargetFrameworks>
+  </PropertyGroup>
+  <!-- Otherwise, allow all target frameworks. -->
+  <PropertyGroup Condition="'$(BuildProj)' != 'true'">
+    <TargetFrameworks>$(TargetNetCoreVersion);$(TargetNetFxVersion)</TargetFrameworks>
+  </PropertyGroup>
+
 </Project>

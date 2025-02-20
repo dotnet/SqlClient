@@ -58,7 +58,6 @@
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>
     <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
-    <GenAPISrcDir Condition="'$(GenAPISrcDir)'==''">$(ToolsDir)GenAPI\</GenAPISrcDir>
     <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
@@ -111,4 +110,22 @@
   <PropertyGroup>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
   </PropertyGroup>
+
+  <!--
+    Build runtimes other than .NET Framework require the .NET Framework
+    reference assemblies.
+
+    MSBuildRuntimeType 'Full' means the build is running via .NET Framework
+    tooling, and the reference assemblies are already available.
+
+    Any other value means we need to explicitly add the reference assemblies.
+  -->
+  <ItemGroup Condition="'$(MSBuildRuntimeType)' != 'Full'">
+    <PackageReference
+      Include="Microsoft.NETFramework.ReferenceAssemblies"
+      Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 </Project>

@@ -37,12 +37,11 @@ Once the environment is setup properly, execute the desired set of commands belo
 |Name|Supported Values|Default|Description|
 |-|-|-|-|
 |`Configuration`|`Debug`, `Release`|`Debug`|Sets the release configuration.|
-|`BuildNetFx`|`true`, `false`|`true` (Windows), `false` (other)|If false, skips building the .NET Framework driver on Windows.|
 |`OSGroup`|`Unix`, `Windows_NT`, `AnyOS`|typically defaults to the client system's OS, unless using `BuildAllConfigurations` or an `AnyOS` specific target|The operating system to target.|
 |`Platform`|`AnyCPU`, `x86`, `x64`, `ARM`, `ARM64`|`AnyCPU`|May only be set when using package reference type or running tests.|
 |`TestSet`|`1`, `2`, `3`, `AE`|all|Build or run a subset of the manual tests. Omit (default) to target all tests.|
 |`DotnetPath`|Absolute file path to an installed `dotnet` version.|The system default specified by the path variable|Set to run tests using a specific dotnet version (e.g. C:\net6-win-x86\)|
-|`TF`|`net8.0`, `net462`, `net47`, `net471`, `net472`, `net48`, `net481`|`net8.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
+|`TF`|`net462`, `net47`, `net471`, `net472`, `net48`, `net481`, `net8.0`, `net9.0`|`net9.0` in netcore, `net462` in netfx|Sets the target framework when building or running tests. Not applicable when building the drivers.|
 |`ResultsDirectory`|An absolute file path|./TestResults relative to current directory|Specifies where to write test results.|
 
 
@@ -245,22 +244,22 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ### Building Tests with custom target framework
 
 ```bash
-msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
+msbuild -t:BuildTestsNetFx -p:TF=net462
 # Build the tests for custom .NET Framework target
 ```
 
 ```bash
-msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=net8.0
+msbuild -t:BuildTestsNetCore -p:TF=net8.0
 # Build the tests for custom .NET target
 ```
 
 ### Running Tests with custom target framework (traditional)
 
 ```bash
-dotnet test -p:TargetNetFxVersion=net462 ...
+dotnet test -p:F=net462 ...
 # Use above property to run Functional Tests with custom .NET Framework target
 
-dotnet test -p:TargetNetCoreVersion=net8.0 ...
+dotnet test -p:TF=net8.0 ...
 # Use above property to run Functional Tests with custom .NET target
 ```
 
