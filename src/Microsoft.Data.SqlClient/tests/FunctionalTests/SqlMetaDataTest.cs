@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataMaxLengthTrimValues))]
+        [MemberData(nameof(SqlMetaDataMaxLengthTrimOrPadValues))]
         public void AdjustWithGreaterThanMaxLengthValues(SqlDbType dbType, object value)
         {
             int maxLength = 4;
@@ -82,6 +82,28 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        [Fact]
+        public void AdjustWithUdtValue_Throws()
+        {
+            SqlMetaData metaData = new SqlMetaData(
+                "col1",
+                SqlDbType.Variant,
+                4,
+                2,
+                2,
+                0,
+                SqlCompareOptions.IgnoreCase,
+                null,
+                true,
+                true,
+                SortOrder.Ascending,
+                0);
+            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() =>
+            {
+                object actual = metaData.Adjust(new Address());
+            });
+            Assert.Contains("no mapping exists from object type", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
 
         [Fact]
         public void AdjustWithNullBytes()
@@ -105,12 +127,13 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(actual);
         }
 
-        [Fact]
-        public void AdjustWithNullChars()
+        [Theory]
+        [MemberData(nameof(SqlMetaDataStringTypes))]
+        public void AdjustWithNullChars(SqlDbType dbType)
         {
             SqlMetaData metaData = new SqlMetaData(
                 "col1",
-                SqlDbType.VarChar,
+                dbType,
                 4,
                 2,
                 2,
@@ -127,12 +150,13 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(actual);
         }
 
-        [Fact]
-        public void AdjustWithNullString()
+        [Theory]
+        [MemberData(nameof(SqlMetaDataStringTypes))]
+        public void AdjustWithNullString(SqlDbType dbType)
         {
             SqlMetaData metaData = new SqlMetaData(
                 "col1",
-                SqlDbType.VarChar,
+                dbType,
                 4,
                 2,
                 2,
@@ -585,10 +609,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData((SByte)1)]
-        [InlineData((UInt16)1)]
-        [InlineData((UInt32)1)]
-        [InlineData((UInt64)1)]
+        [MemberData(nameof(SqlMetaDataInvalidInferredValues))]
         public void InferFromValueWithInvalidValue_Throws(object value)
         {
             ArgumentException ex = Assert.Throws<ArgumentException>(() =>
@@ -801,6 +822,18 @@ namespace Microsoft.Data.SqlClient.Tests
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Xml, "NorthWindDb", "schema", null);
             });
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
+
+            ex = Assert.Throws<ArgumentNullException>(() =>
+            {
+                SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Xml, "NorthWindDb", null, null);
+            });
+            Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
+
+            ex = Assert.Throws<ArgumentNullException>(() =>
+            {
+                SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Xml, null, "schema", null);
+            });
+            Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         #region Test values
@@ -813,15 +846,28 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.SmallDateTime, DateTime.Today},
         };
 
-        public static readonly object[][] SqlMetaDataMaxLengthTrimValues =
+        public static readonly object[][] SqlMetaDataStringTypes =
+        {
+            new object[] {SqlDbType.VarChar},
+            new object[] {SqlDbType.NVarChar},
+            new object[] {SqlDbType.Char},
+            new object[] {SqlDbType.NChar},
+        };
+
+        public static readonly object[][] SqlMetaDataMaxLengthTrimOrPadValues =
         {
             new object[] {SqlDbType.Binary, new SqlBinary(new byte[] { 1, 2, 3, 4, 5 })},
             new object[] {SqlDbType.Binary, new byte[] { 1, 2, 3, 4, 5 }},
             new object[] {SqlDbType.Char, "Tests"},
             new object[] {SqlDbType.Char, "T"},
             new object[] {SqlDbType.Char, new char[]{'T','e','s','t','s'}},
+            new object[] {SqlDbType.Char, new char[]{'T'}},
+            new object[] {SqlDbType.Char, new SqlChars(new char[]{'T'})},
             new object[] {SqlDbType.NChar, "T"},
             new object[] {SqlDbType.NChar, "Tests"},
+            new object[] {SqlDbType.NChar, new char[]{'T','e','s','t','s'}},
+            new object[] {SqlDbType.NChar, new char[]{'T'}},
+            new object[] {SqlDbType.NChar, new SqlChars(new char[]{'T'})},
             new object[] {SqlDbType.VarChar, "Tests" },
             new object[] {SqlDbType.VarChar, new SqlString("Tests")},
             new object[] {SqlDbType.VarChar, new char[]{'T','e','s','t','s'}},
@@ -880,11 +926,13 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.Bit, (UInt64)1},
             new object[] {SqlDbType.Bit, (sbyte)0},
             new object[] {SqlDbType.Int, Guid.Empty},
+            new object[] {SqlDbType.Int, 'T'},
             new object[] {SqlDbType.NText, 'T'},
             new object[] {SqlDbType.SmallMoney, (decimal)int.MaxValue},
             new object[] {SqlDbType.SmallMoney, "Money" },
             new object[] {SqlDbType.Bit, 1.0M },
             new object[] {SqlDbType.Bit, DateTime.Today},
+            new object[] {SqlDbType.Variant, new object()},
         };
 
         public static readonly object[][] SqlMetaDataAdjustValues =
@@ -910,6 +958,8 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.SmallMoney, 10.01M },
             new object[] {SqlDbType.Decimal, 0M },
             new object[] {SqlDbType.Decimal, SqlDecimal.Null},
+            new object[] {SqlDbType.Decimal, new SqlDecimal(2, 1, true, 0, 0, 0, 0)},
+            new object[] {SqlDbType.Decimal, new SqlDecimal(1, 0, true, 0, 0, 0, 0)},
             new object[] {SqlDbType.Char, SqlString.Null},
             new object[] {SqlDbType.Char, new char[] {'T','e','s', 't'}},
             new object[] {SqlDbType.Char, "Test"},
@@ -917,6 +967,7 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.Char, new SqlString("Test")},
             new object[] {SqlDbType.Char, SqlChars.Null},
             new object[] {SqlDbType.Char, new SqlChars(new char[] { 'T', 'e', 's', 't' })},
+            new object[] {SqlDbType.Char, new SqlChars(new char[] { 'T', 'e', 's', 't', 's'})},
             new object[] {SqlDbType.NChar, SqlString.Null},
             new object[] {SqlDbType.NChar, new char[] {'T','e' ,'s', 't'}},
             new object[] {SqlDbType.NChar, SqlChars.Null},
@@ -924,6 +975,7 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.NChar, new SqlString("T")},
             new object[] {SqlDbType.NChar, new SqlString("Test")},
             new object[] {SqlDbType.NChar, new SqlChars(new char[] { 'T', 'e', 's', 't' })},
+            new object[] {SqlDbType.NChar, new SqlChars(new char[] { 'T', 'e', 's', 't', 's'})},
             new object[] {SqlDbType.VarChar, 'T'},
             new object[] {SqlDbType.VarChar, "T"},
             new object[] {SqlDbType.VarChar, "Test"},
@@ -966,6 +1018,7 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.DateTimeOffset, new DateTimeOffset(new DateTime(0), TimeSpan.Zero)},
             new object[] {SqlDbType.UniqueIdentifier, SqlGuid.Null},
             new object[] {SqlDbType.UniqueIdentifier, Guid.Empty},
+            new object[] {SqlDbType.Xml, new SqlXml(new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes("<header />")))},
         };
 
         public static readonly object[][] SqlMetaDataInferredValues =
@@ -1027,6 +1080,15 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] {SqlDbType.DateTime, DateTime.Today},
             new object[] {SqlDbType.Xml, new SqlXml()},
             new object[] {SqlDbType.Variant, new object()}
+        };
+
+        public static readonly object[][] SqlMetaDataInvalidInferredValues =
+        {
+            new object[] { (SByte)1 },
+            new object[] { (UInt16)1 },
+            new object[] { (UInt32)1 },
+            new object[] { (UInt64)1 },
+            new object[] { DBNull.Value },
         };
         #endregion
     }

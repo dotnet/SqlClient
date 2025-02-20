@@ -295,16 +295,18 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("CommandTimeout", ex.ParamName);
         }
 
-        [Fact]
-        public void CommandType_Value_Invalid()
+        [Theory]
+        [InlineData((CommandType)666)]
+        [InlineData(CommandType.TableDirect)]
+        public void CommandType_Value_Invalid(CommandType commandType)
         {
             SqlCommand cmd = new SqlCommand();
 
-            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.CommandType = (CommandType)(666));
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.CommandType = commandType);
             // The CommandType enumeration value, 666, is invalid
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("666", StringComparison.Ordinal) != -1);
+            Assert.True(ex.Message.IndexOf(((int)commandType).ToString(), StringComparison.Ordinal) != -1);
             Assert.Equal("CommandType", ex.ParamName);
         }
 
