@@ -166,7 +166,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("31754")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(UseManagedSNIOnWindows), nameof(IsNotAzureServer), nameof(IsLocalHost))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void RemoteCertificateNameMismatchErrorTest()
@@ -175,6 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = GetLocalIpAddress(),
                 Encrypt = SqlConnectionEncryptOption.Mandatory,
+                TrustServerCertificate = false,
                 HostNameInCertificate = "BadHostName"
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -183,7 +183,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(20, exception.Class);
             Assert.IsType<AuthenticationException>(exception.InnerException);
             Assert.StartsWith("Certificate name mismatch. The provided 'DataSource' or 'HostNameInCertificate' does not match the name in the certificate.", exception.InnerException.Message);
-            Console.WriteLine(exception.Message);
         }
 
         private static void CreateValidCertificate(string script)
