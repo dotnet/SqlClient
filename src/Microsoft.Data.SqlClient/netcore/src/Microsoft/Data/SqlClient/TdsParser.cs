@@ -4368,7 +4368,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            else if (rec.metaType.IsCharType)
+            else if (rec.metaType.IsCharType && rec.metaType.SqlDbType != SqlDbTypeExtensions.Json)
             {
                 // read the collation for 8.x servers
                 result = TryProcessCollation(stateObj, out rec.collation);
