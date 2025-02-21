@@ -4,24 +4,39 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+# Installs dotnet sdk/runtime using UseDotNet on non-windows agents, but uses a custom ps script
+# for installation on Windows.
+# 
+# Reason for not using UseDotNet task:
+#   [BUG]: UseDotNet task installs x86 build on Windows arm64
+#   https://github.com/microsoft/azure-pipelines-tasks/issues/20300
+
 parameters:
-    - name: installDir
+    - # Directory where dotnet binaries should be installed. If not specified, defaults to the
+      # agent's tools directory.
+      name: installDir
       type: string
       default: ''
 
-    - name: sdk
-      type: boolean
-      default: false
+    - # Whether to install the full SDK or the "dotnet" runtime
+      name: packageType
+      type: string
+      values:
+          - runtime
+          - sdk
     
-    - name: usePreview
+    - # Whether to enable preview versions of dotnet
+      name: usePreview
       type: boolean
-      default: false
       
-    - name: version
-      type: number
-      default: 9
+    - # Version to install - supports full major.minor.patch, but can be shortened to major.minor
+      # to get the latest within a given channel.
+      name: version
+      type: string
       
-    - name: windowsArchitecture # This is only used on Windows
+    - # Specifies the architecture to install, only applies on Windows agents. If not provided,
+      # defaults to the same architecture as the agent.
+      name: windowsArchitecture
       type: string
       default: '<auto>'
       values:
@@ -31,53 +46,58 @@ parameters:
           - 'arm'
           - 'arm64'
 
-# Reason for not using UseDotNet task:
-# "[BUG]: UseDotNet task installs x86 build on Windows arm64"
-# https://github.com/microsoft/azure-pipelines-tasks/issues/20300
-#
-# Borrowed from: https://github.com/microsoft/PowerToys/blob/main/.pipelines/v2/templates/steps-ensure-dotnet-version.yml
 steps:
-    - powershell: |-
-        Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
-        $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
+    - ${{ if eq(variables.Agent.OS, 'Windows_NT') }}:
+          - powershell: |-
+                # Propagate parameters from pipeline #######################
+                $agentToolsDir = '$(Agent.ToolsDirectory)'
+                echo "agentToolsDir= $agentToolsDir"
+                
+                $architecture = '${{ parameters.windowsArchitecture }}'
+                echo "architecture= $architecture"
+                
+                $installDir = '${{ parameters.installDir }}'
+                echo "installDir= $installDir"
+                
+                $packageType = '${{ parameters.packageType }}'
+                echo "packageType= $packageType"
+                
+                $usePreview = ${{ parameters.usePreview }}
+                echo "usePreview= $usePreview"
+                
+                $version = ${{ parameters.version }}
+                echo "version= $version"
+                
+                # Install dotnet ###########################################
+                Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
+                
+                $installDir = If ($installDir) { $installDir } Else { $agentToolsDir } 
+                $installParams = @{
+                    Architecture = $architecture
+                    Channel =      $version
+                    InstallDir =   $installDir
+                    Quality =      If ($usePreview) { "GA" } Else { "preview" }
+                }
+                
+                if ($packageType -eq 'runtime') {
+                    $installParams.add('Runtime', 'dotnet')
+                }
+                
+                & ./dotnet-install.ps1 @installParams
+                Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
+                
+                # Propagate values back out to pipeline ####################
+                Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${$installDir}"
+                Write-Host "##vso[task.prependpath]${$installDir}"
+            displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }} for Windows ${{ parameters.windowsArchitecture }}'
     
-        if ('${{parameters.installDir}}' -eq '') {
-          $NEW_DOTNET_ROOT = "$(Agent.ToolsDirectory)\dotnet"
-        } else {
-          $NEW_DOTNET_ROOT = "${{parameters.installDir}}"
-        }
-        
-        if (!$${{parameters.sdk}}) {
-          $runtime = "dotnet"
-        }
-        
-        $quality = "GA"
-        if ($${{parameters.usePreview}}) {
-          $quality = "preview"
-        }
-    
-        & ./dotnet-install.ps1 -Channel "${{parameters.version}}.0" -Quality $quality -InstallDir $NEW_DOTNET_ROOT -Runtime $runtime -Architecture "${{parameters.windowsArchitecture}}"
-        Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${NEW_DOTNET_ROOT}"
-        Write-Host "##vso[task.prependpath]${NEW_DOTNET_ROOT}"
-        Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      ${{ if eq(parameters.sdk, true) }}:
-        displayName: "Install .NET ${{parameters.version}} SDK (Win)"
-      ${{ else }}:
-        displayName: "Install .NET ${{parameters.version}} (Win)"
-    
-    - task: UseDotNet@2
-      inputs:
-        ${{ if eq(parameters.sdk, true) }}:
-          packageType: sdk
-        ${{ else }}:
-          packageType: runtime
-        version: '${{parameters.version}}.x'
-        ${{ if ne(parameters.installDir, '') }}:
-          installationPath: '${{parameters.installDir}}'
-        includePreviewVersions: ${{parameters.usePreview}}
-      condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
-      ${{ if eq(parameters.sdk, true) }}:
-        displayName: "Install .NET ${{parameters.version}} SDK (non-Win)"
-      ${{ else }}:
-        displayName: "Install .NET ${{parameters.version}} (non-Win)"
+    - ${{ else }}:
+        - task: UseDotNet@2
+          displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }}'
+          inputs:
+              ${{ if ne(parameters.installDir, '') }}:
+                  installationPath: '${{ parameters.installDir }}'
+              packageType: '${{ parameters.packageType }}'
+              version: '${{ parameters.version }}'
+              
+              includePreviewVersions: '${{ parameters.usePreview }}'
