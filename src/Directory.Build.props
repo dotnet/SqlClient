@@ -71,8 +71,16 @@
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
   
-  <!-- Audit Settings -->
+  <!-- NuGet Audit Settings -->
   <PropertyGroup>
+    <!--
+      ADO does not support audit/vulnerability feeds, so the audit feed is specified (in
+      nuget.config) as nuget.org. OneBranch default network isolation does not allow connections
+      to nuget.org. To avoid this issue, we will disable auditing for official builds, but leave it
+      enabled for local builds.
+      @TODO: If/when auditing is enabled for central feeds services, this can be removed. 
+    -->
+    <NuGetAudit Condition="'$(TF_BUILD)' == 'true'">false</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
 
@@ -87,7 +95,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>  
+  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
