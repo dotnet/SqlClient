@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
 using System.Text.Json;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -124,6 +125,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         ValidateRowsAffected(rowsAffected3);
                     }
 
+                    //Test 4
+                    // Write json value using a parameterized query with SqlJson type
+                    parameter.Value = new SqlJson(JsonDataString);
+                    int rowsAffected4 = command.ExecuteNonQuery();
+                    ValidateRowsAffected(rowsAffected4);
+
                     DataTestUtility.DropTable(connection, tableName);
                     DataTestUtility.DropStoredProcedure(connection, spName);
                 }
@@ -181,6 +188,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int rowsAffected3 = await command.ExecuteNonQueryAsync();
                         ValidateRowsAffected(rowsAffected3);
                     }
+
+                    //Test 4
+                    // Write json value using a parameterized query with SqlJson type
+                    parameter.Value = new SqlJson(JsonDataString);
+                    int rowsAffected4 = await command.ExecuteNonQueryAsync();
+                    ValidateRowsAffected(rowsAffected4);
 
                     DataTestUtility.DropTable(connection, tableName);
                     DataTestUtility.DropStoredProcedure(connection, spName);
@@ -354,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         // Create Table
                         DataTestUtility.CreateTable(connection, tableName, "(Data json)");
 
-                        // Insert Null value
+                        //Insert
                         command.CommandText = tableInsert;
                         var parameter = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json);
                         parameter.Value = JsonDataString;
@@ -373,6 +386,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 Assert.Equal(JsonDataString, jsonDocument.RootElement.ToString());
                                 Assert.Equal("json", reader.GetDataTypeName(0));
                                 Assert.Equal("System.String", reader.GetFieldType(0).ToString());
+                                Assert.Equal(JsonDataString, reader.GetSqlJson(0).Value);
                             }
                         }
                     }
@@ -436,6 +450,58 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     DataTestUtility.DropTable(connection, table1Name);
                     DataTestUtility.DropTable(connection, table2Name);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
+        public void TestJsonSPParams()
+        {
+            string tableName = DataTestUtility.GenerateObjectName();
+            string procName = DataTestUtility.GenerateObjectName();
+            string tableInsert = $"INSERT INTO {tableName} VALUES (@id, @jsonData)";
+            string tableRead = $"SELECT * FROM {tableName}";
+
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                try
+                {
+                    // Create Table
+                    DataTestUtility.CreateTable(connection, tableName, "(Id int, Data json)");
+
+                    // Create Stored Procedure
+                    string createSP = $@"
+                @id int,
+                @jsonData json OUTPUT
+                AS
+                BEGIN
+                    SELECT @jsonData = (SELECT Data FROM {tableName} WHERE Id = @id)
+                END;";
+                    DataTestUtility.CreateSP(connection, procName, createSP);
+
+                    // Insert Data
+                    using (SqlCommand command = new SqlCommand(tableInsert, connection))
+                    {
+                        command.Parameters.Add(new SqlParameter("@id", SqlDbType.Int) { Value = 1 });
+                        command.Parameters.Add(new SqlParameter("@jsonData", SqlDbTypeExtensions.Json) { Value = JsonDataString });
+                        command.ExecuteNonQuery();
+                    }
+
+                    // Execute Stored Procedure
+                    using (SqlCommand spCommand = new SqlCommand(procName, connection))
+                    {
+                        spCommand.CommandType = CommandType.StoredProcedure;
+                        spCommand.Parameters.Add(new SqlParameter("@id", SqlDbType.Int) { Direction = ParameterDirection.Input, Value = 1 });
+                        SqlParameter outputParam = new SqlParameter("@jsonData", SqlDbTypeExtensions.Json) { Direction = ParameterDirection.Output };
+                        spCommand.Parameters.Add(outputParam);
+                        spCommand.ExecuteNonQuery();
+                        Assert.Equal(JsonDataString, (string)outputParam.Value);
+                    }
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(connection, tableName);
                 }
             }
         }
