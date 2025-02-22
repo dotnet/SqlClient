@@ -331,6 +331,8 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SqlCompareOptions.None, parameter.CompareInfo);
             parameter.CompareInfo = SqlCompareOptions.IgnoreNonSpace;
             Assert.Equal(SqlCompareOptions.IgnoreNonSpace, parameter.CompareInfo);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => parameter.CompareInfo = (SqlCompareOptions)int.MaxValue);
         }
 
         [Fact]
@@ -947,6 +949,9 @@ namespace Microsoft.Data.SqlClient.Tests
             p.ParameterName = string.Empty;
             Assert.Equal(string.Empty, p.ParameterName);
             Assert.Equal(string.Empty, p.SourceColumn);
+
+            Assert.Throws<ArgumentException>(() => p.ParameterName = new string('a', 128));
+            Assert.Throws<ArgumentException>(() => p.ParameterName = "@" + new string('a', 128));
         }
 
         [Fact]
@@ -1141,24 +1146,58 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(3510, p.Value);
         }
 
-        [Fact]
-        public void SqlDbTypeTest_Value_Invalid()
+        [Theory]
+        [InlineData((SqlDbType)666)]
+        [InlineData((SqlDbType)24)]
+        public void SqlDbTypeTest_Value_Invalid(SqlDbType type)
         {
             SqlParameter p = new SqlParameter("zipcode", 3510);
-            try
-            {
-                p.SqlDbType = (SqlDbType)666;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // The SqlDbType enumeration value, 666, is
-                // invalid
-                Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("666", StringComparison.Ordinal) != -1);
-                Assert.Equal("SqlDbType", ex.ParamName);
-            }
+            // The SqlDbType enumeration value, (int)type, is invalid
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => p.SqlDbType = type);
+
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf(((int)type).ToString(), StringComparison.Ordinal) != -1);
+            Assert.Equal(nameof(p.SqlDbType), ex.ParamName);
+        }
+
+        [Fact]
+        public void DirectionTest_Value_Invalid()
+        {
+            SqlParameter p = new SqlParameter("zipcode", 3510);
+            // The ParameterDirection enumeration value, int.MaxValue, is invalid
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => p.Direction = (ParameterDirection)int.MaxValue);
+
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf(int.MaxValue.ToString(), StringComparison.Ordinal) != -1);
+            Assert.Equal(nameof(ParameterDirection), ex.ParamName);
+        }
+
+        [Fact]
+        public void SourceVersionTest_Value_Invalid()
+        {
+            SqlParameter p = new SqlParameter("zipcode", 3510);
+            // The DataRowVersion enumeration value, int.MaxValue, is invalid
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => p.SourceVersion = (DataRowVersion)int.MaxValue);
+
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf(int.MaxValue.ToString(), StringComparison.Ordinal) != -1);
+            Assert.Equal(nameof(DataRowVersion), ex.ParamName);
+        }
+
+        [Fact]
+        public void OffsetTest_Value_Invalid()
+        {
+            SqlParameter p = new SqlParameter("zipcode", 3510);
+            // Invalid parameter Offset value -1. The value must be greater than or equal to 0.
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => p.Offset = -1);
+
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("-1", StringComparison.Ordinal) != -1);
+            Assert.Null(ex.ParamName);
         }
 
         [Fact]
