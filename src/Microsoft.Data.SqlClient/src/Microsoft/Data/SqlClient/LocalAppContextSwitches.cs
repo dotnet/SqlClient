@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
         internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
+        internal const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -30,6 +31,7 @@ namespace Microsoft.Data.SqlClient
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
         private static Tristate s_useCompatProcessSni;
+        private static Tristate s_useCompatAsyncBehaviour;
 
 #if NET
         static LocalAppContextSwitches()
@@ -85,6 +87,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
+        /// <summary>
+        /// In TdsParser the ProcessSni function changed significantly when the packet
+        /// multiplexing code needed for high speed multi-packet column values was added.
+        /// In case of compatibility problems this switch will change TdsParser to use
+        /// the previous version of the function.
+        /// </summary>
         public static bool UseCompatibilityProcessSni
         {
             get
@@ -101,6 +109,40 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_useCompatProcessSni == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// In TdsParser the async multi-packet column value fetch behaviour is capable of
+        /// using a continue snapshot state in addition to the original replay from start
+        /// logic
+        /// This switch disables use of the continue snapshot state. This switch will always
+        /// return tru if <see cref="UseCompatibilityProcessSni"/> is enables because the 
+        /// continue state is not stable without the multiplexer.
+        /// </summary>
+        public static bool UseCompatibilityAsyncBehaviour
+        {
+            get
+            {
+                // async continue functionality is not stable without the packet multiplexer
+                // so if the multiplexer is disabled then this setting MUST return true
+                if (UseCompatibilityProcessSni)
+                {
+                    return true;
+                }
+
+                if (s_useCompatAsyncBehaviour == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useCompatAsyncBehaviour = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useCompatAsyncBehaviour = Tristate.False;
+                    }
+                }
+                return s_useCompatAsyncBehaviour == Tristate.True;
             }
         }
 

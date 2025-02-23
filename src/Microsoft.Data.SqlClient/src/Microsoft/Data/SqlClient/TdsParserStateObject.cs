@@ -3136,8 +3136,6 @@ namespace Microsoft.Data.SqlClient
             private PacketData _continuePacket;
             private PacketData _sparePacket;
 
-            private bool? _continueSupported;
-
 #if DEBUG
             private int _packetCounter;
             private int _rollingPend = 0;
@@ -3179,17 +3177,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 #endif
-            public bool ContinueEnabled
-            {
-                get
-                {
-                    if (_continueSupported == null)
-                    {
-                        _continueSupported = AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseExperimentalAsyncContinue", out bool value) ? value : false;
-                    }
-                    return _continueSupported.Value;
-                }
-            }
+            public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
 
             internal void CloneNullBitmapInfo()
             {

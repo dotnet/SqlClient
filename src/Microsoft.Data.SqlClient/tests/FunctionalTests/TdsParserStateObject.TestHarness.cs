@@ -159,7 +159,18 @@ namespace Microsoft.Data.SqlClient
                     return (bool)switchesType.GetProperty(nameof(UseCompatibilityProcessSni), BindingFlags.Public | BindingFlags.Static).GetValue(null);
                 }
             }
+
+            public static bool UseCompatibilityAsyncBehaviour
+            {
+                get
+                {
+                    var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+
+                    return (bool)switchesType.GetProperty(nameof(UseCompatibilityAsyncBehaviour), BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                }
+            }
         }
+
 
 #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;
