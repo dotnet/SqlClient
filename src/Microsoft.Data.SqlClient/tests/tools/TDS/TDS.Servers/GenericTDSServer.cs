@@ -85,8 +85,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Create a new session
             GenericTDSServerSession session = new GenericTDSServerSession(this, (uint)_sessionCount);
 
-            // Use configured encryption certificate
+            // Use configured encryption certificate and protocols
             session.EncryptionCertificate = Arguments.EncryptionCertificate;
+            session.EncryptionProtocols = Arguments.EncryptionProtocols;
 
             return session;
         }

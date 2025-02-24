@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: SqlClient Community Support / Discussions
+    url: https://github.com/dotnet/SqlClient/discussions
+    about: Please ask and answer questions here.
+  - name: MSRC Vulnerability Reporting / Bug Bounty
+    url: https://msrc.microsoft.com/create-report
+    about: Please report security vulnerabilities here.

@@ -1,0 +1,87 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: password
+    type: string
+    default: $(password)
+
+  - name: condition
+    type: string
+    default: and(succeeded(), eq(variables['Agent.OS'], 'Darwin'))
+
+steps:
+# Linux only steps
+- bash: |
+    # The "user" pipeline variable conflicts with homebrew, causing errors during install. Set it back to the pipeline user.
+    USER=`whoami`
+    SQLCMD_ERRORS=$(Agent.TempDirectory)/sqlcmd_err.log
+    echo $SQLCMD_ERRORS
+
+    brew install colima
+    brew install --cask docker
+    brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+    brew update
+    HOMEBREW_ACCEPT_EULA=Y brew install mssql-tools18
+    colima start --arch x86_64
+    docker --version
+    docker pull mcr.microsoft.com/mssql/server:2022-latest
+    
+    # Password for the SA user (required)
+    MSSQL_SA_PW=${{parameters.password }}
+
+    docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PW" -p 1433:1433 -p 1434:1434 --name sql1 --hostname sql1 -d mcr.microsoft.com/mssql/server:2022-latest
+ 
+    sleep 5
+
+    docker ps -a
+
+    # Connect to server and get the version:
+    counter=1
+    errstatus=1
+    while [ $counter -le 20 ] && [ $errstatus = 1 ]
+    do
+      echo Waiting for SQL Server to start...
+      sleep 3
+      sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" 2>$SQLCMD_ERRORS
+      errstatus=$?
+      ((counter++))
+    done
+
+    # Display error if connection failed:
+    if [ $errstatus = 1 ]
+    then
+      echo Cannot connect to SQL Server, installation aborted
+      cat $SQLCMD_ERRORS
+      rm -f $SQLCMD_ERRORS
+      exit $errstatus
+    else
+      rm -f $SQLCMD_ERRORS
+    fi
+
+    echo "Use sqlcmd to show which IP addresses are being listened on..."
+    echo 0.0.0.0
+    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+    echo 127.0.0.1
+    sqlcmd -S 127.0.0.1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+    echo ::1
+    sqlcmd -S ::1 -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+    echo localhost
+    sqlcmd -S localhost -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+    echo "(sqlcmd default / not specified)"
+    sqlcmd -No -U sa -P $MSSQL_SA_PW -Q "SELECT @@VERSION" -l 2
+
+    echo "Configuring Dedicated Administer Connections to allow remote connections..."
+    sqlcmd -S 0.0.0.0 -No -U sa -P $MSSQL_SA_PW -Q "sp_configure 'remote admin connections', 1; RECONFIGURE;"
+    if [ $? = 1 ]
+    then
+      echo "Error configuring DAC for remote access."
+      exit $errstatus
+    else
+      echo "Configuration complete."
+    fi
+
+  displayName: 'Configure SQL Server [macOS]'
+  condition: ${{parameters.condition }}

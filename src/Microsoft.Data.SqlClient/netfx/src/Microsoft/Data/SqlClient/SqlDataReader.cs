@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -27,7 +28,7 @@ using Microsoft.Data.SqlTypes;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
-    public class SqlDataReader : DbDataReader, IDataReader
+    public class SqlDataReader : DbDataReader, IDataReader, IDbColumnSchemaGenerator
     {
         private enum ALTROWSTATUS
         {
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient
         private CommandBehavior _commandBehavior;
 
         private static int s_objectTypeCount; // EventSource Counter
+        private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
         internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
 
@@ -264,29 +266,11 @@ namespace Microsoft.Data.SqlClient
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
+                        Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                        if (TryConsumeMetaData() != TdsOperationStatus.Done)
                         {
-                            tdsReliabilitySection.Start();
-#else
-                        {
-#endif //DEBUG
-
-                            Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                            if (TryConsumeMetaData() != TdsOperationStatus.Done)
-                            {
-                                throw SQL.SynchronousCallMayNotPend();
-                            }
+                            throw SQL.SynchronousCallMayNotPend();
                         }
-#if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
                     }
                     catch (System.OutOfMemoryException e)
                     {
@@ -891,26 +875,9 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    TdsOperationStatus result = TryCleanPartialRead();
-                    Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
-                    Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                TdsOperationStatus result = TryCleanPartialRead();
+                Debug.Assert(result == TdsOperationStatus.Done, "Should not pend on sync call");
+                Debug.Assert(!_sharedState._dataReady, "_dataReady should be cleared");
             }
             catch (System.OutOfMemoryException e)
             {
@@ -1060,77 +1027,60 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    if ((!_isClosed) && (parser != null) && (stateObj != null) && (stateObj.HasPendingData))
+                    // It is possible for this to be called during connection close on a
+                    // broken connection, so check state first.
+                    if (parser.State == TdsParserState.OpenLoggedIn)
                     {
-                        // It is possible for this to be called during connection close on a
-                        // broken connection, so check state first.
-                        if (parser.State == TdsParserState.OpenLoggedIn)
+                        // if user called read but didn't fetch any values, skip the row
+                        // same applies after NextResult on ALTROW because NextResult starts rowconsumption in that case ...
+
+                        Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, String.Format((IFormatProvider)null, "The SniContext should be Snix_Read but it actually is {0}", stateObj.SniContext));
+
+                        if (_altRowStatus == ALTROWSTATUS.AltRow)
                         {
-                            // if user called read but didn't fetch any values, skip the row
-                            // same applies after NextResult on ALTROW because NextResult starts rowconsumption in that case ...
-
-                            Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, String.Format((IFormatProvider)null, "The SniContext should be Snix_Read but it actually is {0}", stateObj.SniContext));
-
-                            if (_altRowStatus == ALTROWSTATUS.AltRow)
+                            _sharedState._dataReady = true;      // set _sharedState._dataReady to not confuse CleanPartialRead
+                        }
+                        _stateObj.SetTimeoutStateStopped();
+                        if (_sharedState._dataReady)
+                        {
+                            cleanDataFailed = true;
+                            result = TryCleanPartialRead();
+                            if (result == TdsOperationStatus.Done)
                             {
-                                _sharedState._dataReady = true;      // set _sharedState._dataReady to not confuse CleanPartialRead
+                                cleanDataFailed = false;
                             }
-                            _stateObj.SetTimeoutStateStopped();
-                            if (_sharedState._dataReady)
-                            {
-                                cleanDataFailed = true;
-                                result = TryCleanPartialRead();
-                                if (result == TdsOperationStatus.Done)
-                                {
-                                    cleanDataFailed = false;
-                                }
-                                else
-                                {
-                                    return result;
-                                }
-                            }
-#if DEBUG
                             else
-                            {
-                                byte token;
-                                result = _stateObj.TryPeekByte(out token);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-
-                                Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
-                            }
-#endif
-
-
-                            result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out _);
-                            if (result != TdsOperationStatus.Done)
                             {
                                 return result;
                             }
                         }
-                    }
-
-                    RestoreServerSettings(parser, stateObj);
-                    return TdsOperationStatus.Done;
-                }
 #if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
+                        else
+                        {
+                            byte token;
+                            result = _stateObj.TryPeekByte(out token);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+
+                            Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
+                        }
+#endif
+
+
+                        result = parser.TryRun(RunBehavior.Clean, _command, this, null, stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                    }
                 }
-#endif //DEBUG
+
+                RestoreServerSettings(parser, stateObj);
+                return TdsOperationStatus.Done;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -1204,41 +1154,24 @@ namespace Microsoft.Data.SqlClient
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
+                        // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
+                        if (!wasClosed && stateObj != null)
                         {
-                            tdsReliabilitySection.Start();
-#else
-                        {
-#endif //DEBUG
-                            // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
-                            if (!wasClosed && stateObj != null)
+                            if (!cleanDataFailed)
                             {
-                                if (!cleanDataFailed)
+                                stateObj.CloseSession();
+                            }
+                            else
+                            {
+                                if (parser != null)
                                 {
-                                    stateObj.CloseSession();
-                                }
-                                else
-                                {
-                                    if (parser != null)
-                                    {
-                                        parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
-                                        parser.PutSession(stateObj);
-                                        parser.Connection.BreakConnection();
-                                    }
+                                    parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
+                                    parser.PutSession(stateObj);
+                                    parser.Connection.BreakConnection();
                                 }
                             }
-                            // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                         }
-#if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
+                        // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
                     }
                     catch (System.OutOfMemoryException e)
                     {
@@ -1851,249 +1784,232 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                int cbytes = 0;
+                AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                // sequential reading
+                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    int cbytes = 0;
-                    AssertReaderState(requireData: true, permitAsync: true, columnIndex: i, enforceSequentialAccess: true);
+                    Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
 
-                    // sequential reading
-                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    if (_metaData[i] != null && _metaData[i].cipherMD != null)
                     {
-                        Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has an active Stream or TextReader");
-
-                        if (_metaData[i] != null && _metaData[i].cipherMD != null)
-                        {
-                            throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
-                        }
-
-                        if (_sharedState._nextColumnHeaderToRead <= i)
-                        {
-                            result = TryReadColumnHeader(i);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                        }
-
-                        // If data is null, ReadColumnHeader sets the data.IsNull bit.
-                        if (_data[i] != null && _data[i].IsNull)
-                        {
-                            throw new SqlNullValueException();
-                        }
-
-                        // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                        if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
-                        {
-                            ulong left;
-                            result = _parser.TryPlpBytesLeft(_stateObj, out left);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                            _sharedState._columnDataBytesRemaining = (long)left;
-                        }
-
-                        if (0 == _sharedState._columnDataBytesRemaining)
-                        {
-                            return TdsOperationStatus.Done; // We've read this column to the end
-                        }
-
-                        // if no buffer is passed in, return the number total of bytes, or -1
-                        if (buffer == null)
-                        {
-                            if (_metaData[i].metaType.IsPlp)
-                            {
-                                remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
-                                return TdsOperationStatus.Done;
-                            }
-                            remaining = _sharedState._columnDataBytesRemaining;
-                            return TdsOperationStatus.Done;
-                        }
-
-                        if (dataIndex < 0)
-                        {
-                            throw ADP.NegativeParameter(nameof(dataIndex));
-                        }
-
-                        if (dataIndex < _columnDataBytesRead)
-                        {
-                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
-                        }
-
-                        // if the dataIndex is not equal to bytes read, then we have to skip bytes
-                        long cb = dataIndex - _columnDataBytesRead;
-
-                        // if dataIndex is outside of the data range, return 0
-                        if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
-                        {
-                            return TdsOperationStatus.Done;
-                        }
-
-                        // if bad buffer index, throw
-                        if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                        {
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
-                        }
-
-                        // if there is not enough room in the buffer for data
-                        if (length + bufferIndex > buffer.Length)
-                        {
-                            throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
-                        }
-
-                        if (length < 0)
-                        {
-                            throw ADP.InvalidDataLength(length);
-                        }
-
-                        // Skip if needed
-                        if (cb > 0)
-                        {
-                            if (_metaData[i].metaType.IsPlp)
-                            {
-                                ulong skipped;
-                                result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                                _columnDataBytesRead += (long)skipped;
-                            }
-                            else
-                            {
-                                result = _stateObj.TrySkipLongBytes(cb);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                                _columnDataBytesRead += cb;
-                                _sharedState._columnDataBytesRemaining -= cb;
-                            }
-                        }
-
-                        int bytesRead;
-                        result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
-                        remaining = (int)bytesRead;
-                        return result;
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(_metaData[i].column);
                     }
 
-                    // random access now!
-                    // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
-                    // we need can cast to int if the dataIndex is in range
+                    if (_sharedState._nextColumnHeaderToRead <= i)
+                    {
+                        result = TryReadColumnHeader(i);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                    }
+
+                    // If data is null, ReadColumnHeader sets the data.IsNull bit.
+                    if (_data[i] != null && _data[i].IsNull)
+                    {
+                        throw new SqlNullValueException();
+                    }
+
+                    // If there are an unknown (-1) number of bytes left for a PLP, read its size
+                    if ((-1 == _sharedState._columnDataBytesRemaining) && (_metaData[i].metaType.IsPlp))
+                    {
+                        ulong left;
+                        result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        _sharedState._columnDataBytesRemaining = (long)left;
+                    }
+
+                    if (0 == _sharedState._columnDataBytesRemaining)
+                    {
+                        return TdsOperationStatus.Done; // We've read this column to the end
+                    }
+
+                    // if no buffer is passed in, return the number total of bytes, or -1
+                    if (buffer == null)
+                    {
+                        if (_metaData[i].metaType.IsPlp)
+                        {
+                            remaining = (long)_parser.PlpBytesTotalLength(_stateObj);
+                            return TdsOperationStatus.Done;
+                        }
+                        remaining = _sharedState._columnDataBytesRemaining;
+                        return TdsOperationStatus.Done;
+                    }
+
                     if (dataIndex < 0)
                     {
                         throw ADP.NegativeParameter(nameof(dataIndex));
                     }
 
-                    if (dataIndex > int.MaxValue)
+                    if (dataIndex < _columnDataBytesRead)
                     {
-                        throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
+                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
                     }
 
-                    int ndataIndex = (int)dataIndex;
-                    byte[] data;
+                    // if the dataIndex is not equal to bytes read, then we have to skip bytes
+                    long cb = dataIndex - _columnDataBytesRead;
 
-                    // WebData 99342 - in the non-sequential case, we need to support
-                    //                 the use of GetBytes on string data columns, but
-                    //                 GetSqlBinary isn't supposed to.  What we end up
-                    //                 doing isn't exactly pretty, but it does work.
-                    if (_metaData[i].metaType.IsBinType)
+                    // if dataIndex is outside of the data range, return 0
+                    if ((cb > _sharedState._columnDataBytesRemaining) && !_metaData[i].metaType.IsPlp)
                     {
-                        data = GetSqlBinary(i).Value;
+                        return TdsOperationStatus.Done;
                     }
-                    else
-                    {
-                        Debug.Assert(_metaData[i].metaType.IsLong, "non long type?");
-                        Debug.Assert(_metaData[i].metaType.IsCharType, "non-char type?");
 
-                        SqlString temp = GetSqlString(i);
-                        if (_metaData[i].metaType.IsNCharType)
+                    // if bad buffer index, throw
+                    if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                    {
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                    }
+
+                    // if there is not enough room in the buffer for data
+                    if (length + bufferIndex > buffer.Length)
+                    {
+                        throw ADP.InvalidBufferSizeOrIndex(length, bufferIndex);
+                    }
+
+                    if (length < 0)
+                    {
+                        throw ADP.InvalidDataLength(length);
+                    }
+
+                    // Skip if needed
+                    if (cb > 0)
+                    {
+                        if (_metaData[i].metaType.IsPlp)
                         {
-                            data = temp.GetUnicodeBytes();
+                            ulong skipped;
+                            result = _parser.TrySkipPlpValue((ulong)cb, _stateObj, out skipped);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                return result;
+                            }
+                            _columnDataBytesRead += (long)skipped;
                         }
                         else
                         {
-                            data = temp.GetNonUnicodeBytes();
-                        }
-                    }
-
-                    cbytes = data.Length;
-
-                    // if no buffer is passed in, return the number of characters we have
-                    if (buffer == null)
-                    {
-                        remaining = cbytes;
-                        return TdsOperationStatus.Done;
-                    }
-
-                    // if dataIndex is outside of data range, return 0
-                    if (ndataIndex < 0 || ndataIndex >= cbytes)
-                    {
-                        return TdsOperationStatus.Done;
-                    }
-                    try
-                    {
-                        if (ndataIndex < cbytes)
-                        {
-                            // help the user out in the case where there's less data than requested
-                            if ((ndataIndex + length) > cbytes)
+                            result = _stateObj.TrySkipLongBytes(cb);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                cbytes = cbytes - ndataIndex;
+                                return result;
                             }
-                            else
-                            {
-                                cbytes = length;
-                            }
+                            _columnDataBytesRead += cb;
+                            _sharedState._columnDataBytesRemaining -= cb;
                         }
-
-                        Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
                     }
-                    catch (Exception e)
+
+                    int bytesRead;
+                    result = TryGetBytesInternalSequential(i, buffer, bufferIndex, length, out bytesRead);
+                    remaining = (int)bytesRead;
+                    return result;
+                }
+
+                // random access now!
+                // note that since we are caching in an array, and arrays aren't 64 bit ready yet,
+                // we need can cast to int if the dataIndex is in range
+                if (dataIndex < 0)
+                {
+                    throw ADP.NegativeParameter(nameof(dataIndex));
+                }
+
+                if (dataIndex > int.MaxValue)
+                {
+                    throw ADP.InvalidSourceBufferIndex(cbytes, dataIndex, nameof(dataIndex));
+                }
+
+                int ndataIndex = (int)dataIndex;
+                byte[] data;
+
+                // WebData 99342 - in the non-sequential case, we need to support
+                //                 the use of GetBytes on string data columns, but
+                //                 GetSqlBinary isn't supposed to.  What we end up
+                //                 doing isn't exactly pretty, but it does work.
+                if (_metaData[i].metaType.IsBinType)
+                {
+                    data = GetSqlBinary(i).Value;
+                }
+                else
+                {
+                    Debug.Assert(_metaData[i].metaType.IsLong, "non long type?");
+                    Debug.Assert(_metaData[i].metaType.IsCharType, "non-char type?");
+
+                    SqlString temp = GetSqlString(i);
+                    if (_metaData[i].metaType.IsNCharType)
                     {
-                        // UNDONE - should not be catching all exceptions!!!
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-                        cbytes = data.Length;
-
-                        if (length < 0)
-                        {
-                            throw ADP.InvalidDataLength(length);
-                        }
-
-                        // if bad buffer index, throw
-                        if (bufferIndex < 0 || bufferIndex >= buffer.Length)
-                        {
-                            throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
-                        }
-
-                        // if there is not enough room in the buffer for data
-                        if (cbytes + bufferIndex > buffer.Length)
-                        {
-                            throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
-                        }
-
-                        throw;
+                        data = temp.GetUnicodeBytes();
                     }
+                    else
+                    {
+                        data = temp.GetNonUnicodeBytes();
+                    }
+                }
 
+                cbytes = data.Length;
+
+                // if no buffer is passed in, return the number of characters we have
+                if (buffer == null)
+                {
                     remaining = cbytes;
                     return TdsOperationStatus.Done;
                 }
-#if DEBUG
-                finally
+
+                // if dataIndex is outside of data range, return 0
+                if (ndataIndex < 0 || ndataIndex >= cbytes)
                 {
-                    tdsReliabilitySection.Stop();
+                    return TdsOperationStatus.Done;
                 }
-#endif //DEBUG
+                try
+                {
+                    if (ndataIndex < cbytes)
+                    {
+                        // help the user out in the case where there's less data than requested
+                        if ((ndataIndex + length) > cbytes)
+                        {
+                            cbytes = cbytes - ndataIndex;
+                        }
+                        else
+                        {
+                            cbytes = length;
+                        }
+                    }
+
+                    Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
+                }
+                catch (Exception e)
+                {
+                    // UNDONE - should not be catching all exceptions!!!
+                    if (!ADP.IsCatchableExceptionType(e))
+                    {
+                        throw;
+                    }
+                    cbytes = data.Length;
+
+                    if (length < 0)
+                    {
+                        throw ADP.InvalidDataLength(length);
+                    }
+
+                    // if bad buffer index, throw
+                    if (bufferIndex < 0 || bufferIndex >= buffer.Length)
+                    {
+                        throw ADP.InvalidDestinationBufferIndex(buffer.Length, bufferIndex, nameof(bufferIndex));
+                    }
+
+                    // if there is not enough room in the buffer for data
+                    if (cbytes + bufferIndex > buffer.Length)
+                    {
+                        throw ADP.InvalidBufferSizeOrIndex(cbytes, bufferIndex);
+                    }
+
+                    throw;
+                }
+
+                remaining = cbytes;
+                return TdsOperationStatus.Done;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2177,61 +2093,46 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
                 {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                    if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
+                    // No data left or nothing requested, return 0
+                    bytesRead = 0;
+                    return TdsOperationStatus.Done;
+                }
+                else
+                {
+                    // if plp columns, do partial reads. Don't read the entire value in one shot.
+                    if (_metaData[i].metaType.IsPlp)
                     {
-                        // No data left or nothing requested, return 0
-                        bytesRead = 0;
+                        // Read in data
+                        result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                        _columnDataBytesRead += bytesRead;
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+
+                        // Query for number of bytes left
+                        ulong left;
+                        result = _parser.TryPlpBytesLeft(_stateObj, out left);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            _sharedState._columnDataBytesRemaining = -1;
+                            return result;
+                        }
+                        _sharedState._columnDataBytesRemaining = (long)left;
                         return TdsOperationStatus.Done;
                     }
                     else
                     {
-                        // if plp columns, do partial reads. Don't read the entire value in one shot.
-                        if (_metaData[i].metaType.IsPlp)
-                        {
-                            // Read in data
-                            result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
-                            _columnDataBytesRead += bytesRead;
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-
-                            // Query for number of bytes left
-                            ulong left;
-                            result = _parser.TryPlpBytesLeft(_stateObj, out left);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                _sharedState._columnDataBytesRemaining = -1;
-                                return result;
-                            }
-                            _sharedState._columnDataBytesRemaining = (long)left;
-                            return TdsOperationStatus.Done;
-                        }
-                        else
-                        {
-                            // Read data (not exceeding the total amount of data available)
-                            int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                            result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
-                            _columnDataBytesRead += bytesRead;
-                            _sharedState._columnDataBytesRemaining -= bytesRead;
-                            return result;
-                        }
+                        // Read data (not exceeding the total amount of data available)
+                        int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
+                        result = _stateObj.TryReadByteArray(buffer.AsSpan(index), bytesToRead, out bytesRead);
+                        _columnDataBytesRead += bytesRead;
+                        _sharedState._columnDataBytesRemaining -= bytesRead;
+                        return result;
                     }
-#if DEBUG
                 }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2534,113 +2435,96 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                long cch;
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
+                Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has active Stream or TextReader");
+                // don't allow get bytes on non-long or non-binary columns
+                Debug.Assert(_metaData[i].metaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
+                // Must be sequential reading
+                Debug.Assert(IsCommandBehavior(CommandBehavior.SequentialAccess), "GetCharsFromPlpData called for non-Sequential access");
+
+                if (!_metaData[i].metaType.IsCharType)
                 {
-                    tdsReliabilitySection.Start();
-#else
+                    throw SQL.NonCharColumn(_metaData[i].column);
+                }
+
+                if (_sharedState._nextColumnHeaderToRead <= i)
                 {
-#endif //DEBUG
-                    long cch;
+                    ReadColumnHeader(i);
+                }
 
-                    AssertReaderState(requireData: true, permitAsync: false, columnIndex: i, enforceSequentialAccess: true);
-                    Debug.Assert(!HasActiveStreamOrTextReaderOnColumn(i), "Column has active Stream or TextReader");
-                    // don't allow get bytes on non-long or non-binary columns
-                    Debug.Assert(_metaData[i].metaType.IsPlp, "GetCharsFromPlpData called on a non-plp column!");
-                    // Must be sequential reading
-                    Debug.Assert(IsCommandBehavior(CommandBehavior.SequentialAccess), "GetCharsFromPlpData called for non-Sequential access");
+                // If data is null, ReadColumnHeader sets the data.IsNull bit.
+                if (_data[i] != null && _data[i].IsNull)
+                {
+                    throw new SqlNullValueException();
+                }
 
-                    if (!_metaData[i].metaType.IsCharType)
-                    {
-                        throw SQL.NonCharColumn(_metaData[i].column);
-                    }
+                if (dataIndex < _columnDataCharsRead)
+                {
+                    // Don't allow re-read of same chars in sequential access mode
+                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
+                }
 
-                    if (_sharedState._nextColumnHeaderToRead <= i)
-                    {
-                        ReadColumnHeader(i);
-                    }
+                // If we start reading the new column, either dataIndex is 0 or
+                // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
+                // In both cases we will clean decoder
+                if (dataIndex == 0)
+                {
+                    _stateObj._plpdecoder = null;
+                }
 
-                    // If data is null, ReadColumnHeader sets the data.IsNull bit.
-                    if (_data[i] != null && _data[i].IsNull)
-                    {
-                        throw new SqlNullValueException();
-                    }
+                bool isUnicode = _metaData[i].metaType.IsNCharType;
 
-                    if (dataIndex < _columnDataCharsRead)
-                    {
-                        // Don't allow re-read of same chars in sequential access mode
-                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
-                    }
-
-                    // If we start reading the new column, either dataIndex is 0 or
-                    // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
-                    // In both cases we will clean decoder
-                    if (dataIndex == 0)
-                    {
-                        _stateObj._plpdecoder = null;
-                    }
-
-                    bool isUnicode = _metaData[i].metaType.IsNCharType;
-
-                    // If there are an unknown (-1) number of bytes left for a PLP, read its size
-                    if (-1 == _sharedState._columnDataBytesRemaining)
-                    {
-                        _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
-                    }
-
-                    if (0 == _sharedState._columnDataBytesRemaining)
-                    {
-                        _stateObj._plpdecoder = null;
-                        return 0; // We've read this column to the end
-                    }
-
-                    // if no buffer is passed in, return the total number of characters or -1
-                    // TODO: for DBCS encoding it returns number of bytes, not number of chars
-                    if (buffer == null)
-                    {
-                        cch = (long)_parser.PlpBytesTotalLength(_stateObj);
-                        return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
-                    }
-                    if (dataIndex > _columnDataCharsRead)
-                    {
-                        // Skip chars
-
-                        // Clean decoder state: we do not reset it, but destroy to ensure
-                        // that we do not start decoding the column with decoder from the old one
-                        _stateObj._plpdecoder = null;
-                        // TODO: for DBCS encoding skip positioning dataIndex is not in characters but is interpreted as
-                        // number of chars already read + number of bytes to skip
-                        cch = dataIndex - _columnDataCharsRead;
-                        cch = isUnicode ? (cch << 1) : cch;
-                        cch = (long)_parser.SkipPlpValue((ulong)(cch), _stateObj);
-                        _columnDataBytesRead += cch;
-                        _columnDataCharsRead += (isUnicode && (cch > 0)) ? cch >> 1 : cch;
-                    }
-                    cch = length;
-
-                    if (isUnicode)
-                    {
-                        cch = (long)_parser.ReadPlpUnicodeChars(ref buffer, bufferIndex, length, _stateObj);
-                        _columnDataBytesRead += (cch << 1);
-                    }
-                    else
-                    {
-                        cch = (long)_parser.ReadPlpAnsiChars(ref buffer, bufferIndex, length, _metaData[i], _stateObj);
-                        _columnDataBytesRead += cch << 1;
-                    }
-                    _columnDataCharsRead += cch;
+                // If there are an unknown (-1) number of bytes left for a PLP, read its size
+                if (-1 == _sharedState._columnDataBytesRemaining)
+                {
                     _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
-                    return cch;
                 }
-#if DEBUG
-                finally
+
+                if (0 == _sharedState._columnDataBytesRemaining)
                 {
-                    tdsReliabilitySection.Stop();
+                    _stateObj._plpdecoder = null;
+                    return 0; // We've read this column to the end
                 }
-#endif //DEBUG
+
+                // if no buffer is passed in, return the total number of characters or -1
+                // TODO: for DBCS encoding it returns number of bytes, not number of chars
+                if (buffer == null)
+                {
+                    cch = (long)_parser.PlpBytesTotalLength(_stateObj);
+                    return (isUnicode && (cch > 0)) ? cch >> 1 : cch;
+                }
+                if (dataIndex > _columnDataCharsRead)
+                {
+                    // Skip chars
+
+                    // Clean decoder state: we do not reset it, but destroy to ensure
+                    // that we do not start decoding the column with decoder from the old one
+                    _stateObj._plpdecoder = null;
+                    // TODO: for DBCS encoding skip positioning dataIndex is not in characters but is interpreted as
+                    // number of chars already read + number of bytes to skip
+                    cch = dataIndex - _columnDataCharsRead;
+                    cch = isUnicode ? (cch << 1) : cch;
+                    cch = (long)_parser.SkipPlpValue((ulong)(cch), _stateObj);
+                    _columnDataBytesRead += cch;
+                    _columnDataCharsRead += (isUnicode && (cch > 0)) ? cch >> 1 : cch;
+                }
+                cch = length;
+
+                if (isUnicode)
+                {
+                    cch = (long)_parser.ReadPlpUnicodeChars(ref buffer, bufferIndex, length, _stateObj);
+                    _columnDataBytesRead += (cch << 1);
+                }
+                else
+                {
+                    cch = (long)_parser.ReadPlpAnsiChars(ref buffer, bufferIndex, length, _metaData[i], _stateObj);
+                    _columnDataBytesRead += cch << 1;
+                }
+                _columnDataCharsRead += cch;
+                _sharedState._columnDataBytesRemaining = (long)_parser.PlpBytesLeft(_stateObj);
+                return cch;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2928,7 +2812,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/GetSqlJson/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlJson/*' />
         virtual public SqlJson GetSqlJson(int i)
         {
             ReadColumn(i);
@@ -3785,32 +3669,111 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    SetTimeout(_defaultTimeoutMilliseconds);
+
+                    if (IsClosed)
                     {
-                        tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                        throw ADP.DataReaderClosed(nameof(NextResult));
+                    }
+                    _fieldNameLookup = null;
 
-                        SetTimeout(_defaultTimeoutMilliseconds);
+                    bool success = false; // WebData 100390
+                    _hasRows = false; // reset HasRows
 
-                        if (IsClosed)
+                    // if we are specifically only processing a single result, then read all the results off the wire and detach
+                    if (IsCommandBehavior(CommandBehavior.SingleResult))
+                    {
+                        result = TryCloseInternal(closeReader: false);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            throw ADP.DataReaderClosed(nameof(NextResult));
+                            more = false;
+                            return result;
                         }
-                        _fieldNameLookup = null;
 
-                        bool success = false; // WebData 100390
-                        _hasRows = false; // reset HasRows
+                        // In the case of not closing the reader, null out the metadata AFTER
+                        // CloseInternal finishes - since CloseInternal may go to the wire
+                        // and use the metadata.
+                        ClearMetaData();
+                        more = success;
+                        return TdsOperationStatus.Done;
+                    }
 
-                        // if we are specifically only processing a single result, then read all the results off the wire and detach
-                        if (IsCommandBehavior(CommandBehavior.SingleResult))
+                    if (_parser != null)
+                    {
+                        // if there are more rows, then skip them, the user wants the next result
+                        bool moreRows = true;
+                        while (moreRows)
                         {
+                            result = TryReadInternal(false, out moreRows);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                // don't reset set the timeout value
+                                more = false;
+                                return result;
+                            }
+                        }
+                    }
+
+                    // we may be done, so continue only if we have not detached ourselves from the parser
+                    if (_parser != null)
+                    {
+                        bool moreResults;
+                        result = TryHasMoreResults(out moreResults);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            more = false;
+                            return result;
+                        }
+                        if (moreResults)
+                        {
+                            _metaDataConsumed = false;
+                            _browseModeInfoConsumed = false;
+
+                            switch (_altRowStatus)
+                            {
+                                case ALTROWSTATUS.AltRow:
+                                    int altRowId;
+                                    result = _parser.TryGetAltRowId(_stateObj, out altRowId);
+                                    if (result != TdsOperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                    _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
+                                    if (altMetaDataSet != null)
+                                    {
+                                        _metaData = altMetaDataSet;
+                                    }
+                                    Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
+                                    break;
+                                case ALTROWSTATUS.Done:
+                                    // restore the row-metaData
+                                    _metaData = _altMetaDataSetCollection.metaDataSet;
+                                    Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
+                                    _altRowStatus = ALTROWSTATUS.Null;
+                                    break;
+                                default:
+                                    result = TryConsumeMetaData();
+                                    if (result != TdsOperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                    if (_metaData == null)
+                                    {
+                                        more = false;
+                                        return TdsOperationStatus.Done;
+                                    }
+                                    break;
+                            }
+
+                            success = true;
+                        }
+                        else
+                        {
+                            // detach the parser from this reader now
                             result = TryCloseInternal(closeReader: false);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -3821,120 +3784,24 @@ namespace Microsoft.Data.SqlClient
                             // In the case of not closing the reader, null out the metadata AFTER
                             // CloseInternal finishes - since CloseInternal may go to the wire
                             // and use the metadata.
-                            ClearMetaData();
-                            more = success;
-                            return TdsOperationStatus.Done;
-                        }
-
-                        if (_parser != null)
-                        {
-                            // if there are more rows, then skip them, the user wants the next result
-                            bool moreRows = true;
-                            while (moreRows)
-                            {
-                                result = TryReadInternal(false, out moreRows);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    // don't reset set the timeout value
-                                    more = false;
-                                    return result;
-                                }
-                            }
-                        }
-
-                        // we may be done, so continue only if we have not detached ourselves from the parser
-                        if (_parser != null)
-                        {
-                            bool moreResults;
-                            result = TryHasMoreResults(out moreResults);
+                            result = TrySetMetaData(null, false);
                             if (result != TdsOperationStatus.Done)
                             {
                                 more = false;
                                 return result;
                             }
-                            if (moreResults)
-                            {
-                                _metaDataConsumed = false;
-                                _browseModeInfoConsumed = false;
-
-                                switch (_altRowStatus)
-                                {
-                                    case ALTROWSTATUS.AltRow:
-                                        int altRowId;
-                                        result = _parser.TryGetAltRowId(_stateObj, out altRowId);
-                                        if (result != TdsOperationStatus.Done)
-                                        {
-                                            more = false;
-                                            return result;
-                                        }
-                                        _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
-                                        if (altMetaDataSet != null)
-                                        {
-                                            _metaData = altMetaDataSet;
-                                        }
-                                        Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
-                                        break;
-                                    case ALTROWSTATUS.Done:
-                                        // restore the row-metaData
-                                        _metaData = _altMetaDataSetCollection.metaDataSet;
-                                        Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
-                                        _altRowStatus = ALTROWSTATUS.Null;
-                                        break;
-                                    default:
-                                        result = TryConsumeMetaData();
-                                        if (result != TdsOperationStatus.Done)
-                                        {
-                                            more = false;
-                                            return result;
-                                        }
-                                        if (_metaData == null)
-                                        {
-                                            more = false;
-                                            return TdsOperationStatus.Done;
-                                        }
-                                        break;
-                                }
-
-                                success = true;
-                            }
-                            else
-                            {
-                                // detach the parser from this reader now
-                                result = TryCloseInternal(closeReader: false);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-
-                                // In the case of not closing the reader, null out the metadata AFTER
-                                // CloseInternal finishes - since CloseInternal may go to the wire
-                                // and use the metadata.
-                                result = TrySetMetaData(null, false);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                            }
                         }
-                        else
-                        {
-                            // Clear state in case of Read calling CloseInternal() then user calls NextResult()
-                            // MDAC 81986.  Or, also the case where the Read() above will do essentially the same
-                            // thing.
-                            ClearMetaData();
-                        }
-
-                        more = success;
-                        return TdsOperationStatus.Done;
                     }
-#if DEBUG
-                    finally
+                    else
                     {
-                        tdsReliabilitySection.Stop();
+                        // Clear state in case of Read calling CloseInternal() then user calls NextResult()
+                        // MDAC 81986.  Or, also the case where the Read() above will do essentially the same
+                        // thing.
+                        ClearMetaData();
                     }
-#endif //DEBUG
+
+                    more = success;
+                    return TdsOperationStatus.Done;
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -4001,140 +3868,107 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    TdsOperationStatus result;
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    if (_parser != null)
                     {
-                        tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                        TdsOperationStatus result;
-                        statistics = SqlStatistics.StartTimer(Statistics);
-
-                        if (_parser != null)
+                        if (setTimeout)
                         {
-                            if (setTimeout)
+                            SetTimeout(_defaultTimeoutMilliseconds);
+                        }
+                        if (_sharedState._dataReady)
+                        {
+                            result = TryCleanPartialRead();
+                            if (result != TdsOperationStatus.Done)
                             {
-                                SetTimeout(_defaultTimeoutMilliseconds);
+                                more = false;
+                                return result;
                             }
-                            if (_sharedState._dataReady)
+                        }
+
+                        // clear out our buffers
+                        SqlBuffer.Clear(_data);
+
+                        _sharedState._nextColumnHeaderToRead = 0;
+                        _sharedState._nextColumnDataToRead = 0;
+                        _sharedState._columnDataBytesRemaining = -1; // unknown
+                        _lastColumnWithDataChunkRead = -1;
+
+                        if (!_haltRead)
+                        {
+                            bool moreRows;
+                            result = TryHasMoreRows(out moreRows);
+                            if (result != TdsOperationStatus.Done)
                             {
-                                result = TryCleanPartialRead();
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
+                                more = false;
+                                return result;
                             }
-
-                            // clear out our buffers
-                            SqlBuffer.Clear(_data);
-
-                            _sharedState._nextColumnHeaderToRead = 0;
-                            _sharedState._nextColumnDataToRead = 0;
-                            _sharedState._columnDataBytesRemaining = -1; // unknown
-                            _lastColumnWithDataChunkRead = -1;
-
-                            if (!_haltRead)
+                            if (moreRows)
                             {
-                                bool moreRows;
-                                result = TryHasMoreRows(out moreRows);
-                                if (result != TdsOperationStatus.Done)
+                                // read the row from the backend (unless it's an altrow were the marker is already inside the altrow ...)
+                                while (_stateObj.HasPendingData)
                                 {
-                                    more = false;
-                                    return result;
-                                }
-                                if (moreRows)
-                                {
-                                    // read the row from the backend (unless it's an altrow were the marker is already inside the altrow ...)
-                                    while (_stateObj.HasPendingData)
+                                    if (_altRowStatus != ALTROWSTATUS.AltRow)
                                     {
-                                        if (_altRowStatus != ALTROWSTATUS.AltRow)
-                                        {
-                                            // if this is an ordinary row we let the run method consume the ROW token
-                                            result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
-                                            if (result != TdsOperationStatus.Done)
-                                            {
-                                                more = false;
-                                                return result;
-                                            }
-                                            if (_sharedState._dataReady)
-                                            {
-                                                break;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            // ALTROW token and AltrowId are already consumed ...
-                                            Debug.Assert(_altRowStatus == ALTROWSTATUS.AltRow, "invalid AltRowStatus");
-                                            _altRowStatus = ALTROWSTATUS.Done;
-                                            _sharedState._dataReady = true;
-                                            break;
-                                        }
-                                    }
-                                    if (_sharedState._dataReady)
-                                    {
-                                        _haltRead = IsCommandBehavior(CommandBehavior.SingleRow);
-                                        more = true;
-                                        return TdsOperationStatus.Done;
-                                    }
-                                }
-
-                                if (!_stateObj.HasPendingData)
-                                {
-                                    result = TryCloseInternal(closeReader: false);
-                                    if (result != TdsOperationStatus.Done)
-                                    {
-                                        more = false;
-                                        return result;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                // if we did not get a row and halt is true, clean off rows of result
-                                // success must be false - or else we could have just read off row and set
-                                // halt to true
-                                bool moreRows;
-                                result = TryHasMoreRows(out moreRows);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                                while (moreRows)
-                                {
-                                    // if we are in SingleRow mode, and we've read the first row,
-                                    // read the rest of the rows, if any
-                                    while (_stateObj.HasPendingData && !_sharedState._dataReady)
-                                    {
+                                        // if this is an ordinary row we let the run method consume the ROW token
                                         result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
                                         if (result != TdsOperationStatus.Done)
                                         {
                                             more = false;
                                             return result;
                                         }
-                                    }
-
-                                    if (_sharedState._dataReady)
-                                    {
-                                        result = TryCleanPartialRead();
-                                        if (result != TdsOperationStatus.Done)
+                                        if (_sharedState._dataReady)
                                         {
-                                            more = false;
-                                            return result;
+                                            break;
                                         }
                                     }
+                                    else
+                                    {
+                                        // ALTROW token and AltrowId are already consumed ...
+                                        Debug.Assert(_altRowStatus == ALTROWSTATUS.AltRow, "invalid AltRowStatus");
+                                        _altRowStatus = ALTROWSTATUS.Done;
+                                        _sharedState._dataReady = true;
+                                        break;
+                                    }
+                                }
+                                if (_sharedState._dataReady)
+                                {
+                                    _haltRead = IsCommandBehavior(CommandBehavior.SingleRow);
+                                    more = true;
+                                    return TdsOperationStatus.Done;
+                                }
+                            }
 
-                                    // clear out our buffers
-                                    SqlBuffer.Clear(_data);
-
-                                    _sharedState._nextColumnHeaderToRead = 0;
-
-                                    result = TryHasMoreRows(out moreRows);
+                            if (!_stateObj.HasPendingData)
+                            {
+                                result = TryCloseInternal(closeReader: false);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    more = false;
+                                    return result;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // if we did not get a row and halt is true, clean off rows of result
+                            // success must be false - or else we could have just read off row and set
+                            // halt to true
+                            bool moreRows;
+                            result = TryHasMoreRows(out moreRows);
+                            if (result != TdsOperationStatus.Done)
+                            {
+                                more = false;
+                                return result;
+                            }
+                            while (moreRows)
+                            {
+                                // if we are in SingleRow mode, and we've read the first row,
+                                // read the rest of the rows, if any
+                                while (_stateObj.HasPendingData && !_sharedState._dataReady)
+                                {
+                                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
                                     if (result != TdsOperationStatus.Done)
                                     {
                                         more = false;
@@ -4142,38 +3976,54 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
 
-                                // reset haltRead
-                                _haltRead = false;
+                                if (_sharedState._dataReady)
+                                {
+                                    result = TryCleanPartialRead();
+                                    if (result != TdsOperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                }
+
+                                // clear out our buffers
+                                SqlBuffer.Clear(_data);
+
+                                _sharedState._nextColumnHeaderToRead = 0;
+
+                                result = TryHasMoreRows(out moreRows);
+                                if (result != TdsOperationStatus.Done)
+                                {
+                                    more = false;
+                                    return result;
+                                }
                             }
+
+                            // reset haltRead
+                            _haltRead = false;
                         }
-                        else if (IsClosed)
-                        {
-                            throw ADP.DataReaderClosed(nameof(Read));
-                        }
-                        more = false;
+                    }
+                    else if (IsClosed)
+                    {
+                        throw ADP.DataReaderClosed(nameof(Read));
+                    }
+                    more = false;
 
 #if DEBUG
-                        if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
+                    if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
+                    {
+                        byte token;
+                        result = _stateObj.TryPeekByte(out token);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            byte token;
-                            result = _stateObj.TryPeekByte(out token);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-
-                            Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
+                            return result;
                         }
+
+                        Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
+                    }
 #endif
 
-                        return TdsOperationStatus.Done;
-                    }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    return TdsOperationStatus.Done;
                 }
                 catch (OutOfMemoryException e)
                 {
@@ -4234,38 +4084,21 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
+                Debug.Assert(_sharedState._nextColumnDataToRead <= _metaData.Length, "_sharedState._nextColumnDataToRead too large");
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                if (setTimeout)
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
-                    Debug.Assert(_sharedState._nextColumnDataToRead <= _metaData.Length, "_sharedState._nextColumnDataToRead too large");
-
-                    if (setTimeout)
-                    {
-                        SetTimeout(_defaultTimeoutMilliseconds);
-                    }
-
-                    TdsOperationStatus result = TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-
-                    Debug.Assert(_data[i] != null, " data buffer is null?");
+                    SetTimeout(_defaultTimeoutMilliseconds);
                 }
-#if DEBUG
-                finally
+
+                TdsOperationStatus result = TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming);
+                if (result != TdsOperationStatus.Done)
                 {
-                    tdsReliabilitySection.Stop();
+                    return result;
                 }
-#endif //DEBUG
+
+                Debug.Assert(_data[i] != null, " data buffer is null?");
             }
             catch (System.OutOfMemoryException e)
             {
@@ -4339,22 +4172,7 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                    return TryReadColumnInternal(i, readHeaderOnly: true, forStreaming: false);
-#if DEBUG
-                }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                return TryReadColumnInternal(i, readHeaderOnly: true, forStreaming: false);
             }
             catch (System.OutOfMemoryException e)
             {
@@ -5824,18 +5642,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    bool internalReadSuccess = false;
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false) == TdsOperationStatus.Done;
-                    }
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
+                    bool internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false) == TdsOperationStatus.Done;
 
                     if (internalReadSuccess)
                     {
@@ -6360,5 +6167,73 @@ namespace Microsoft.Data.SqlClient
             _stateObj._asyncReadWithoutSnapshot = true;
         }
 
-    }// SqlDataReader
-}// namespace
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetColumnSchema/*' />
+        public ReadOnlyCollection<DbColumn> GetColumnSchema()
+        {
+            SqlStatistics statistics = null;
+            try
+            {
+                statistics = SqlStatistics.StartTimer(Statistics);
+                if (_metaData == null || _metaData.dbColumnSchema == null)
+                {
+                    if (this.MetaData != null)
+                    {
+
+                        _metaData.dbColumnSchema = BuildColumnSchema();
+                        Debug.Assert(_metaData.dbColumnSchema != null, "No schema information yet!");
+                        // filter table?
+                    }
+                }
+                if (_metaData != null)
+                {
+                    return _metaData.dbColumnSchema;
+                }
+                return s_emptySchema;
+            }
+            finally
+            {
+                SqlStatistics.StopTimer(statistics);
+            }
+        }
+
+        private ReadOnlyCollection<DbColumn> BuildColumnSchema()
+        {
+            _SqlMetaDataSet md = MetaData;
+            DbColumn[] columnSchema = new DbColumn[md.Length];
+            for (int i = 0; i < md.Length; i++)
+            {
+                _SqlMetaData col = md[i];
+                SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
+
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                {
+                    dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
+                }
+                else if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.scale)
+                {
+                    dbColumn.SqlNumericScale = col.scale;
+                }
+                else
+                {
+                    dbColumn.SqlNumericScale = col.metaType.Scale;
+                }
+
+                if (_browseModeInfoConsumed)
+                {
+                    dbColumn.SqlIsAliased = col.IsDifferentName;
+                    dbColumn.SqlIsKey = col.IsKey;
+                    dbColumn.SqlIsHidden = col.IsHidden;
+                    dbColumn.SqlIsExpression = col.IsExpression;
+                }
+
+                dbColumn.SqlDataType = GetFieldTypeInternal(col);
+
+                dbColumn.SqlDataTypeName = GetDataTypeNameInternal(col);
+
+                columnSchema[i] = dbColumn;
+            }
+
+            return new ReadOnlyCollection<DbColumn>(columnSchema);
+        }
+    }
+}
