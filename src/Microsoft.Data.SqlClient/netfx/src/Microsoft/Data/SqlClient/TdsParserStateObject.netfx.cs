@@ -214,22 +214,7 @@ namespace Microsoft.Data.SqlClient
                     // We serialize Cancel/CloseSession to prevent a race condition between these two states.
                     // The problem is that both sending and receiving attentions are time taking
                     // operations.
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-#endif //DEBUG
-                        Parser.ProcessPendingAck(this);
-#if DEBUG
-                    }
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    Parser.ProcessPendingAck(this);
                 }
                 SetTimeoutStateStopped();
             }
@@ -429,8 +414,6 @@ namespace Microsoft.Data.SqlClient
         // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
         private void ReadSniError(TdsParserStateObject stateObj, uint error)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSyncError");  // you need to setup for a thread abort somewhere before you call this method
-
             if (TdsEnums.SNI_WAIT_TIMEOUT == error)
             {
                 Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
@@ -797,8 +780,6 @@ namespace Microsoft.Data.SqlClient
         //
         internal void WriteSecureString(SecureString secureString)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to WriteSecureString");  // you need to setup for a thread abort somewhere before you call this method
-
             Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
 
             int index = _securePasswords[0] != null ? 1 : 0;
@@ -876,8 +857,6 @@ namespace Microsoft.Data.SqlClient
         // and then the buffer is re-initialized in flush() and then the byte is put in the buffer.
         internal void WriteByte(byte b)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to WriteByte");  // you need to setup for a thread abort somewhere before you call this method
-
             Debug.Assert(_outBytesUsed <= _outBuff.Length, "ERROR - TDSParser: _outBytesUsed > _outBuff.Length");
 
             // check to make sure we haven't used the full amount of space available in the buffer, if so, flush it
