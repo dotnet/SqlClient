@@ -60,9 +60,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // ExecuteNonQuery will drain every result set, info message and exception, collating these into a single exception.
             SqlException exNonQuery = Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
-            Assert.Equal($"{ResultSet2_Error}\n{ResultSet4_Error}\n{ResultSet6_Error}\n{ResultSet8_Error}\n{ResultSet10_Error}\n" +
-                $"{ResultSet1_Message}\n{ResultSet2_Message}\n{ResultSet3_Message}\n{ResultSet4_Message}\n{ResultSet5_Message}\n" +
-                $"{ResultSet6_Message}\n{ResultSet7_Message}\n{ResultSet8_Message}\n{ResultSet9_Message}\n{ResultSet10_Message}\n{ResultSet11_Message}", exNonQuery.Message.Replace("\r\n", "\n"));
+            string expectedInfoMessages =
+                $"{ResultSet2_Error}\n" +
+                $"{ResultSet4_Error}\n" +
+                $"{ResultSet6_Error}\n" +
+                $"{ResultSet8_Error}\n" +
+                $"{ResultSet10_Error}\n" +
+                $"{ResultSet1_Message}\n" +
+                $"{ResultSet2_Message}\n" +
+                $"{ResultSet3_Message}\n" +
+                $"{ResultSet4_Message}\n" +
+                $"{ResultSet5_Message}\n" +
+                $"{ResultSet6_Message}\n" +
+                $"{ResultSet7_Message}\n" +
+                $"{ResultSet8_Message}\n" +
+                $"{ResultSet9_Message}\n" +
+                $"{ResultSet10_Message}\n" +
+                $"{ResultSet11_Message}";
+
+            Assert.Equal(expectedInfoMessages, exNonQuery.Message.Replace("\r\n", "\n"));
             Assert.Empty(messages);
         }
 
