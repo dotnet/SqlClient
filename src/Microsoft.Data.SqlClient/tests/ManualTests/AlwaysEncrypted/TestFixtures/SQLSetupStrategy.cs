@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategy()
             : base(true)
         {
-            ColumnMasterKeyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", ColumnMasterKeyCertificate.Thumbprint);
+            ColumnMasterKeyPath = string.Format("{0}/{1}/{2}", StoreLocation.CurrentUser, StoreName.My, ColumnMasterKeyCertificate.Thumbprint);
         }
 
         protected SQLSetupStrategy(string customKeyPath)

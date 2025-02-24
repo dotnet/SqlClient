@@ -10,12 +10,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
     public class CspCertificateFixture : CertificateFixtureBase
     {
-        public X509Certificate2 CspCertificate { get; }
-
-        public string CspCertificatePath { get; }
-
-        public string CspKeyPath { get; }
-
         public CspCertificateFixture()
         {
             CspCertificate = CreateCertificate(nameof(CspCertificate), Array.Empty<string>(), Array.Empty<string>(), true);
@@ -25,6 +19,12 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             CspCertificatePath = string.Format("{0}/{1}/{2}", StoreLocation.CurrentUser, StoreName.My, CspCertificate.Thumbprint);
             CspKeyPath = GetCspPathFromCertificate();
         }
+
+        public X509Certificate2 CspCertificate { get; }
+
+        public string CspCertificatePath { get; }
+
+        public string CspKeyPath { get; }
 
         private string GetCspPathFromCertificate()
         {

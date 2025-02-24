@@ -8,12 +8,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public sealed class AzureKeyVaultKeyFixture : AzureKeyVaultKeyFixtureBase
     {
-        public string GeneratedKeyUri { get; }
-
         public AzureKeyVaultKeyFixture()
             : base(DataTestUtility.AKVBaseUri, DataTestUtility.GetTokenCredential())
         {
             GeneratedKeyUri = CreateKey(nameof(GeneratedKeyUri), 2048).ToString();
         }
+
+        public string GeneratedKeyUri { get; }
     }
 }

@@ -147,17 +147,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
 
             // Add entries for one server
-            List<string> server1TrustedKeyPaths = new List<string>();
-
-            // Add some random key paths
-            foreach (char c in new char[] { 'A', 'B' })
+            List<string> server1TrustedKeyPaths = new List<string>()
             {
-                string invalidKeyPath = string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint);
-                server1TrustedKeyPaths.Add(invalidKeyPath);
-            }
-
-            // Add the key path used by the test
-            server1TrustedKeyPaths.Add(columnMasterKeyPath);
+                // Add some random key paths
+                string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint),
+                string.Format(@"{0}/my/{1}", StoreLocation.CurrentUser.ToString(), dummyThumbprint),
+                // Add the key path used by the test
+                columnMasterKeyPath
+            };
 
             // Add it to the dictionary
             SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.Add(connBuilder.DataSource, server1TrustedKeyPaths);

@@ -9,12 +9,12 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
     public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
     {
-        public X509Certificate2 ColumnMasterKeyCertificate { get; }
-
         public ColumnMasterKeyCertificateFixture()
             : this(true)
         {
         }
+
+        public X509Certificate2 ColumnMasterKeyCertificate { get; }
 
         protected ColumnMasterKeyCertificateFixture(bool createCertificate)
         {

@@ -15,8 +15,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private readonly List<CspParameters> _cspKeyParameters = new List<CspParameters>();
 
-        public SqlColumnEncryptionCspProvider CspProvider { get; }
-
         public SQLSetupStrategyCspProvider(CspParameters cspParameters)
             : base(cspParameters.ProviderName + "/" + cspParameters.KeyContainerName)
         {
@@ -31,6 +29,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             CspProvider = new SqlColumnEncryptionCspProvider();
             SetupDatabase();
         }
+
+        public SqlColumnEncryptionCspProvider CspProvider { get; }
 
         internal override void SetupDatabase()
         {
