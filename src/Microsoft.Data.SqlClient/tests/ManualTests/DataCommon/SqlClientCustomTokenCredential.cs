@@ -35,8 +35,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    string AKVUrl = (new Uri(DataTestUtility.AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
-                    HttpResponseMessage response = await httpClient.GetAsync(AKVUrl);
+                    string akvUrl = new Uri(DataTestUtility.AKVBaseUri, $"/keys/{AKVKeyName}").AbsoluteUri;
+                    HttpResponseMessage response = await httpClient.GetAsync(akvUrl);
                     string challenge = response?.Headers.WwwAuthenticate.FirstOrDefault()?.ToString();
                     string trimmedChallenge = ValidateChallenge(challenge);
                     string[] pairs = trimmedChallenge.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
