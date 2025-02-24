@@ -60,7 +60,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             command.CommandText = s_sqlStatement;
 
             // ExecuteNonQuery will drain every result set, info message and exception, collating these into a single exception.
-            SqlException exNonQuery = Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
+            Func<object> testCode = () => command.ExecuteNonQuery();
+            SqlException exNonQuery = Assert.Throws<SqlException>(testCode);
 
             string expectedInfoMessages = string.Join(Environment.NewLine,
                 ResultSet2_Error, ResultSet4_Error, ResultSet6_Error, ResultSet8_Error, ResultSet10_Error,
