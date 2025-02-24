@@ -2825,7 +2825,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         previous = PrevPacket.TotalSize;
                     }
-                    return TotalSize - (TotalSize - previous);
+                    return previous;
                 }
 
                 internal void Clear()

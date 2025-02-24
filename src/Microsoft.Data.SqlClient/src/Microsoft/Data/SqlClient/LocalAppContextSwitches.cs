@@ -115,19 +115,21 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// In TdsParser the async multi-packet column value fetch behaviour is capable of
         /// using a continue snapshot state in addition to the original replay from start
-        /// logic
+        /// logic.
         /// This switch disables use of the continue snapshot state. This switch will always
-        /// return tru if <see cref="UseCompatibilityProcessSni"/> is enables because the 
+        /// return true if <see cref="UseCompatibilityProcessSni"/> is enabled because the 
         /// continue state is not stable without the multiplexer.
         /// </summary>
         public static bool UseCompatibilityAsyncBehaviour
         {
             get
             {
-                // async continue functionality is not stable without the packet multiplexer
-                // so if the multiplexer is disabled then this setting MUST return true
                 if (UseCompatibilityProcessSni)
                 {
+                    // If ProcessSni compatibility mode has been enabled then the packet
+                    // multiplexer has been disabled. The new async behaviour using continue
+                    // point capture is only stable if the multiplexer is enabled so we must
+                    // return true to enable compatibility async behaviour using only restarts.
                     return true;
                 }
 
