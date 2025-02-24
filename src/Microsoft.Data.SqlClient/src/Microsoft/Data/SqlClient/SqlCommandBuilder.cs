@@ -260,27 +260,11 @@ namespace Microsoft.Data.SqlClient
 #endif
             try
             {
-#if NETFRAMEWORK
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
+                    #if NETFRAMEWORK
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
-#endif // NETFRAMEWORK
+                    #endif
+
                     command.DeriveParameters();
-#if NETFRAMEWORK
-                }
-#if DEBUG
-                finally {
-                    tdsReliabilitySection.Stop();
-                }
-#endif // DEBUG
-#endif // NETFRAMEWORK
             }
             catch (OutOfMemoryException e)
             {

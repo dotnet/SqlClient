@@ -6,11 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [Stable release 6.0.1] - 2025-01-23
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed reference assembly definitions for SqlClientDiagnostic APIs [#3097](https://github.com/dotnet/SqlClient/pull/3097)
+- Fixed issue with down-level SSL/TLS version warnings [#3126](https://github.com/dotnet/SqlClient/pull/3126)
+
+### Changed
+
+- Dependency changes
+  - Updated SNI dependency `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` to `6.0.2` [#3116](https://github.com/dotnet/SqlClient/pull/3116) [#3117](https://github.com/dotnet/SqlClient/pull/3117)
+
+## [Stable release 6.0.0] - 2024-12-09
+
+_No changes since the last preview release_
+
 ## [Preview Release 6.0.0-preview3.24332.3] - 2024-11-27
 
 This update brings the below changes over the previous release:
 
-## Breaking Changes
+### Breaking Changes
 - Dropped support for .NET 6 [#2927](https://github.com/dotnet/SqlClient/pull/2927)
 - Removed SQL 2000 client-side debugging support for .NET Framework [#2981](https://github.com/dotnet/SqlClient/pull/2981), [#2940](https://github.com/dotnet/SqlClient/pull/2940)
 
@@ -73,7 +91,7 @@ This update brings the below changes over the previous release:
 ### Added
 
 - Added `TokenCredential` object to take advantage of token caching in `ActiveDirectoryAuthenticationProvider`. [#2380](https://github.com/dotnet/SqlClient/pull/2380)
-- Added `DateOnly` and `TimeOnly` support to `DataTable` as a structured parameter. [#2258](https://github.com/dotnet/SqlClient/pull/2258)
+- Added support for using `DateOnly` and `TimeOnly` in `DataTable` and `SqlDataRecord` structured parameters. [#2258](https://github.com/dotnet/SqlClient/pull/2258)
 - Added `Microsoft.Data.SqlClient.Diagnostics.SqlClientDiagnostic` type in .NET. [#2226](https://github.com/dotnet/SqlClient/pull/2226)
 - Added scope trace for `GenerateSspiClientContext`. [#2497](https://github.com/dotnet/SqlClient/pull/2497), [#2725](https://github.com/dotnet/SqlClient/pull/2725)
 
@@ -89,7 +107,7 @@ This update brings the below changes over the previous release:
 - Fixed clone of `SqlConnection` to include `AccessTokenCallback`. [#2525](https://github.com/dotnet/SqlClient/pull/2525)
 - Fixed issue with `DateTimeOffset` in table-valued parameters, which was introduced in 5.2. [#2453](https://github.com/dotnet/SqlClient/pull/2453)
 - Fixed `ArgumentNullException` on `SqlDataRecord.GetValue` when using user-defined data type on .NET. [#2448](https://github.com/dotnet/SqlClient/pull/2448)
-- Fixed `SqlBuffer` and `SqlGuild` when it's null. [#2310](https://github.com/dotnet/SqlClient/pull/2310)
+- Fixed `SqlBuffer` and `SqlGuid` when it's null. [#2310](https://github.com/dotnet/SqlClient/pull/2310)
 - Fixed `SqlBulkCopy.WriteToServer` state in a consecutive calls. [#2375](https://github.com/dotnet/SqlClient/pull/2375)
 - Fixed null reference exception with `SqlConnection.FireInfoMessageEventOnUserErrors` after introducing the batch command. [#2399](https://github.com/dotnet/SqlClient/pull/2399)
 

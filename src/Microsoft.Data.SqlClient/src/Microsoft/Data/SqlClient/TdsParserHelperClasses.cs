@@ -305,9 +305,7 @@ namespace Microsoft.Data.SqlClient
 
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
-#if !NETFRAMEWORK
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
-#endif
 
         private int _hiddenColumnCount;
         private int[] _visibleColumnMap;
@@ -327,11 +325,9 @@ namespace Microsoft.Data.SqlClient
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
             _visibleColumnMap = original._visibleColumnMap;
-#if !NETFRAMEWORK
             dbColumnSchema = original.dbColumnSchema;
-#else
             schemaTable = original.schemaTable;
-#endif
+
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -769,18 +765,18 @@ namespace Microsoft.Data.SqlClient
             }*/
 #pragma warning disable CA5397 // Do not use deprecated SslProtocols values
 #pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
-            if ((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+            if ((protocol & SslProtocols.Tls12) != SslProtocols.None)
             {
                 name = "TLS 1.2";
             }
 #if NET8_0_OR_GREATER
 #pragma warning disable SYSLIB0039 // Type or member is obsolete: TLS 1.0 & 1.1 are deprecated
 #endif
-            else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
+            else if ((protocol & SslProtocols.Tls11) != SslProtocols.None)
             {
                 name = "TLS 1.1";
             }
-            else if ((protocol & SslProtocols.Tls) == SslProtocols.Tls)
+            else if ((protocol & SslProtocols.Tls) != SslProtocols.None)
             {
                 name = "TLS 1.0";
             }
@@ -788,11 +784,11 @@ namespace Microsoft.Data.SqlClient
 #pragma warning restore SYSLIB0039 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
 #endif
 #pragma warning disable CS0618 // Type or member is obsolete: SSL is deprecated
-            else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
+            else if ((protocol & SslProtocols.Ssl3) != SslProtocols.None)
             {
                 name = "SSL 3.0";
             }
-            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
+            else if ((protocol & SslProtocols.Ssl2) != SslProtocols.None)
 #pragma warning restore CS0618 // Type or member is obsolete: SSL and TLS 1.0 & 1.1 is deprecated
             {
                 name = "SSL 2.0";

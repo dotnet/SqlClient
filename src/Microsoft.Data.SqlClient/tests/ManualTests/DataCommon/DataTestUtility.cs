@@ -598,6 +598,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        public static void CreateSP(SqlConnection sqlConnection, string spName, string spBody)
+        {
+            DropStoredProcedure(sqlConnection, spName);
+            string spCreate = "CREATE PROCEDURE " + spName + spBody;
+            using (SqlCommand command = sqlConnection.CreateCommand())
+            {
+                command.CommandText = spCreate;
+                command.ExecuteNonQuery();
+            }
+        }
+
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
             ResurrectConnection(sqlConnection);
