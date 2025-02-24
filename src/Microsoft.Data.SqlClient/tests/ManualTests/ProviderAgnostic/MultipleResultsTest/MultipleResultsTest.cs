@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Concurrent;
 using Xunit;
 
@@ -60,25 +61,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // ExecuteNonQuery will drain every result set, info message and exception, collating these into a single exception.
             SqlException exNonQuery = Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
-            string expectedInfoMessages =
-                $"{ResultSet2_Error}\n" +
-                $"{ResultSet4_Error}\n" +
-                $"{ResultSet6_Error}\n" +
-                $"{ResultSet8_Error}\n" +
-                $"{ResultSet10_Error}\n" +
-                $"{ResultSet1_Message}\n" +
-                $"{ResultSet2_Message}\n" +
-                $"{ResultSet3_Message}\n" +
-                $"{ResultSet4_Message}\n" +
-                $"{ResultSet5_Message}\n" +
-                $"{ResultSet6_Message}\n" +
-                $"{ResultSet7_Message}\n" +
-                $"{ResultSet8_Message}\n" +
-                $"{ResultSet9_Message}\n" +
-                $"{ResultSet10_Message}\n" +
-                $"{ResultSet11_Message}";
 
-            Assert.Equal(expectedInfoMessages, exNonQuery.Message.Replace("\r\n", "\n"));
+            string expectedInfoMessages = string.Join(Environment.NewLine,
+                ResultSet2_Error, ResultSet4_Error, ResultSet6_Error, ResultSet8_Error, ResultSet10_Error,
+                ResultSet1_Message, ResultSet2_Message, ResultSet3_Message, ResultSet4_Message, ResultSet5_Message,
+                ResultSet6_Message, ResultSet7_Message, ResultSet8_Message, ResultSet9_Message, ResultSet10_Message,
+                ResultSet11_Message);
+
+            Assert.Equal(expectedInfoMessages, exNonQuery.Message);
             Assert.Empty(messages);
         }
 
