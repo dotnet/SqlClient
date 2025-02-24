@@ -152,10 +152,13 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.True(parts[2] == "Unknown" || parts[2].Length > 0);
             Assert.True(parts[2].Length <= 10);
 
-            // The OS and Runtime Info have no guaranteed format/content, but
-            // they must both be "Unknown" or non-empty.
+            // OS Info must be non-empty and 44 characters or less.
             Assert.True(parts[3] == "Unknown" || parts[3].Length > 0);
+            Assert.True(parts[3].Length <= 44);
+            
+            // Runtime Info must be non-empty and 44 characters or less.
             Assert.True(parts[4] == "Unknown" || parts[4].Length > 0);
+            Assert.True(parts[4].Length <= 44);
         }
 
         // Test the Build() function when it truncates the overall length.
@@ -235,69 +238,98 @@ namespace Microsoft.Data.SqlClient.Tests
 #endif // NET
         }
 
-        // Test the Build() function when one or both of OS and/or Runtime Info
-        // are truncated.
+        // Test the Build() function when it truncates the OS Info.
         [Fact]
-        public void Build_Truncate_OS_Runtime_Info()
+        public void Build_Truncate_OS_Info()
         {
-            // There is no space remaining.
+            // The OS Info puts the overall length over the max.
             Assert.Equal(
-                "A|B|X64|",
-                DoBuild(8, "A", "B", Architecture.X64, "C", "D"));
+                "A|B|X64|LongOsI",
+                DoBuild(15, "A", "B", Architecture.X64, "LongOsInfo", "D"));
             
-            // There is 1 char remaining, which is given to the OS Info.
+            // The OS Type is longer than its per-field max length of 44.
             Assert.Equal(
-                "A|B|X64|C",
-                DoBuild(9, "A", "B", Architecture.X64, "CCC", "DDD"));
-            
-            // There are 2 chars remaining; 1 for each Info field, but the pipe
-            // character gets in the way and Runtime Info is truncated.
-            Assert.Equal(
-                "A|B|X64|C|",
-                DoBuild(10, "A", "B", Architecture.X64, "CCC", "DDD"));
-            
-            // There are 3 chars remaining; 1 for each Info field, and 1 for
-            // the pipe.
-            Assert.Equal(
-                "A|B|X64|C|D",
-                DoBuild(11, "A", "B", Architecture.X64, "CCC", "DDD"));
-            
-            // Continue to expand max length until both Info values fit.
-            Assert.Equal(
-                "A|B|X64|CC|D",
-                DoBuild(12, "A", "B", Architecture.X64, "CCC", "DDD"));
-            Assert.Equal(
-                "A|B|X64|CC|DD",
-                DoBuild(13, "A", "B", Architecture.X64, "CCC", "DDD"));
-            Assert.Equal(
-                "A|B|X64|CCC|DD",
-                DoBuild(14, "A", "B", Architecture.X64, "CCC", "DDD"));
-            Assert.Equal(
-                "A|B|X64|CCC|DDD",
-                DoBuild(15, "A", "B", Architecture.X64, "CCC", "DDD"));
-
-            // OS Info is shorter than half, so Runtime Info gets the rest.
-            Assert.Equal(
-                "A|B|X64|CC|DDD",
-                DoBuild(14, "A", "B", Architecture.X64, "CC", "DDDD"));
-            Assert.Equal(
-                "A|B|X64|CC|DDDD",
-                DoBuild(15, "A", "B", Architecture.X64, "CC", "DDDD"));
-            Assert.Equal(
-                "A|B|X64|CC|DDDD",
-                DoBuild(16, "A", "B", Architecture.X64, "CC", "DDDD"));
-
-            // Runtime Info is shorter than half, so OS Info gets the rest.
-            Assert.Equal(
-                "A|B|X64|CCC|DD",
-                DoBuild(14, "A", "B", Architecture.X64, "CCCC", "DD"));
-            Assert.Equal(
-                "A|B|X64|CCCC|DD",
-                DoBuild(15, "A", "B", Architecture.X64, "CCCC", "DD"));
-            Assert.Equal(
-                "A|B|X64|CCCC|DD",
-                DoBuild(16, "A", "B", Architecture.X64, "CCCC", "DD"));
+                "A|B|X64|01234567890123456789012345678901234567890123|D",
+                DoBuild(
+                    128, "A", "B", Architecture.X64,
+                    "01234567890123456789012345678901234567890123456789",
+                    "D"));
         }
+
+        // Test the Build() function when it truncates the Runtime Info.
+        [Fact]
+        public void Build_Truncate_Runtime_Info()
+        {
+            // The Runtime Info puts the overall length over the max.
+            Assert.Equal(
+                "A|B|X64|C|LongRunt",
+                DoBuild(18, "A", "B", Architecture.X64, "C",
+                "LongRuntimeInfo"));
+            
+            // The Runtime Type is longer than its per-field max length of 44.
+            Assert.Equal(
+                "A|B|X64|C|01234567890123456789012345678901234567890123",
+                DoBuild(
+                    128, "A", "B", Architecture.X64, "C",
+                    "01234567890123456789012345678901234567890123456789"));
+        }
+
+        // Test the Build() function when most of the fields are truncated.
+        [Fact]
+        public void Build_Truncate_Most()
+        {
+            var name = 
+                DoBuild(
+                    128,
+                    // Driver name > 16 chars.
+                    "A01234567890123456789",
+                    // OS Type > 10 chars.
+                    "B01234567890123456789",
+                    // Architecture isn't truncated (because .NET Framework
+                    // doesn't have any enum values long enough).
+                    Architecture.X64,
+                    // OS Info > 44 chars.
+                    "C01234567890123456789012345678901234567890123456789",
+                    // Runtime Info > 44 chars.
+                    "D01234567890123456789012345678901234567890123456789");
+            Assert.Equal(121, name.Length);
+            Assert.Equal(
+                "A012345678901234|" +
+                "B012345678|" +
+                "X64|" +
+                "C0123456789012345678901234567890123456789012|" +
+                "D0123456789012345678901234567890123456789012",
+                name);
+        }
+
+#if NET
+        // Test the Build() function when all the fields are truncated.
+        [Fact]
+        public void Build_Truncate_All()
+        {
+            var name = 
+                DoBuild(
+                    128,
+                    // Driver name > 16 chars.
+                    "A01234567890123456789",
+                    // OS Type > 10 chars.
+                    "B01234567890123456789",
+                    // Architecture > 10 chars.
+                    Architecture.LoongArch64,
+                    // OS Info > 44 chars.
+                    "C01234567890123456789012345678901234567890123456789",
+                    // Runtime Info > 44 chars.
+                    "D01234567890123456789012345678901234567890123456789");
+            Assert.Equal(128, name.Length);
+            Assert.Equal(
+                "A012345678901234|" +
+                "B012345678|" +
+                "LoongArch6|" +
+                "C0123456789012345678901234567890123456789012|" +
+                "D0123456789012345678901234567890123456789012",
+                name);
+        }
+#endif // NET
 
         // Test the Clean() function.
         [Fact]
