@@ -254,17 +254,15 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
-                    #if NETFRAMEWORK
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
-                    #endif
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
 
-                    command.DeriveParameters();
+                command.DeriveParameters();
             }
             catch (OutOfMemoryException e)
             {
@@ -279,9 +277,7 @@ namespace Microsoft.Data.SqlClient
             catch (ThreadAbortException e)
             {
                 command?.Connection?.Abort(e);
-#if NETFRAMEWORK
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-#endif
                 throw;
             }
         }

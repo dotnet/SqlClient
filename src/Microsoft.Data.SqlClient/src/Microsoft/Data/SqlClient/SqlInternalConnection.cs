@@ -231,15 +231,13 @@ namespace Microsoft.Data.SqlClient
         virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
         {
             SqlStatistics statistics = null;
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
-                #if NETFRAMEWORK
                 bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-                #endif
 
                 statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
@@ -278,9 +276,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
-#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
-#endif // NETFRAMEWORK
                 throw;
             }
             finally
@@ -321,17 +317,15 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
 
-                #if NETFRAMEWORK
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
-                #endif
 
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (referenceCollection != null)
@@ -355,9 +349,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException)
             {
                 DoomThisConnection();
-#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
-#endif
                 throw;
             }
             catch (Exception e)
@@ -644,20 +636,15 @@ namespace Microsoft.Data.SqlClient
             // enlist in the user specified distributed transaction.  This
             // behavior matches OLEDB and ODBC.
 
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-            try
+ #endif // NETFRAMEWORK
+           try
             {
                 bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
                 Enlist(transaction);
             }
-#else
-            try
-            {
-                Enlist(transaction);
-            }
-#endif // NETFRAMEWORK
             catch (OutOfMemoryException e)
             {
                 Connection.Abort(e);
@@ -671,9 +658,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
-#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
-#endif
                 throw;
             }
         }
@@ -733,7 +718,6 @@ namespace Microsoft.Data.SqlClient
 
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
 
-#if NETFRAMEWORK
         static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
         {
             if (connection != null)
@@ -748,6 +732,14 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
+#if NET
+        // This method is called only by ThreadAbortException, which is only thrown in .NET Framework.
+        // The empty method body facilitates the code merge.
+        static internal void BestEffortCleanup(TdsParser target)
+        {
+            _ = target;
+        }
+#else
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         static internal void BestEffortCleanup(TdsParser target)
         {

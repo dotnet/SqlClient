@@ -265,12 +265,12 @@ namespace Microsoft.Data.SqlClient
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
 #if NET
-            Func<Exception, Exception> exceptionConverter = null
+            Func<Exception, Exception> exceptionConverter = null,
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
+#endif
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
-#endif
         )
         {
 #if NETFRAMEWORK
@@ -310,10 +310,11 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-#if NETFRAMEWORK
                     else if (connectionToDoom != null || connectionToAbort != null)
                     {
+#if NETFRAMEWORK
                         RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                         try
                         {
                             onSuccess(state2);
@@ -362,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                             completion.SetException(e);
                         }
                     }
-#endif
                     else
                     {
                         try
