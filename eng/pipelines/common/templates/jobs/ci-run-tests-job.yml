@@ -240,6 +240,8 @@ jobs:
           packageType: sdk
           ${{ if not(startsWith(parameters.targetFramework, 'net4')) }}:
             version: "${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}"
+          ${{ else }}:
+            version: "LTS"
           usePreview: false
           windowsArchitecture: x86
 
