@@ -239,7 +239,7 @@ jobs:
           installDir: $(dotnetx86RootPath)
           packageType: sdk
           ${{ if not(startsWith(parameters.targetFramework, 'net4')) }}:
-            version: "${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}"
+            version: "${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}.x"
           ${{ else }}:
             version: "LTS"
           usePreview: false
