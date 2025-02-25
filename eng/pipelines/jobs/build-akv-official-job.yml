@@ -83,7 +83,7 @@ jobs:
 
           - powershell: |
                 $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
-                $jsonParams | ConvertFrom-Json | Format-Table -Autosize
+                $jsonParams | ConvertFrom-Json | Format-List
             displayName: 'Output Job Parameters'
 
           - template: ../steps/compound-build-akv-step.yml@self
