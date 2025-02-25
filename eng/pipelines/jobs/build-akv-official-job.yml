@@ -82,7 +82,9 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - script: |
-                echo ${{ convertToJson(parameters) }}
+                echo "${JSON_PARAMS}"
+            env:
+                JSON_PARAMS: ${{ convertToJson(parameters) }}
             displayName: 'Output Job Parameters'
 
           - template: ../steps/compound-build-akv-step.yml@self
