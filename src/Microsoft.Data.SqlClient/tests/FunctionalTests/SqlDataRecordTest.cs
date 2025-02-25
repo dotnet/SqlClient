@@ -34,7 +34,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 new SqlMetaData("col11", SqlDbType.Real),
                 new SqlMetaData("col12", SqlDbType.Decimal),
                 new SqlMetaData("col13", SqlDbType.Money),
-                new SqlMetaData("col14", SqlDbType.Variant)
+                new SqlMetaData("col14", SqlDbType.Variant),
+#if NET
+                new SqlMetaData("col15", SqlDbType.Date),
+                new SqlMetaData("col16", SqlDbType.Time),
+#endif
             };
 
             SqlDataRecord record = new SqlDataRecord(metaData);
@@ -116,13 +120,22 @@ namespace Microsoft.Data.SqlClient.Tests
             record.SetSqlMoney(12, SqlMoney.MaxValue);
             Assert.Equal(SqlMoney.MaxValue, record.GetSqlMoney(12));
 
+            int offset = 1;
+#if NET
+            offset = 3;
+            record.SetValue(14, new DateOnly(2025, 11,28));
+            Assert.Equal(new DateTime(2025, 11, 28), record.GetValue(14));
+
+            record.SetValue(15, new TimeOnly(1, 57, 58));
+            Assert.Equal(new TimeSpan(1, 57, 58), record.GetValue(15));
+#endif
 
             // Try adding different values to SqlVariant type
-            for (int i = 0; i < record.FieldCount - 1; ++i)
+            for (int i = 0; i < record.FieldCount - offset; ++i)
             {
                 object valueToSet = record.GetSqlValue(i);
-                record.SetValue(record.FieldCount - 1, valueToSet);
-                object o = record.GetSqlValue(record.FieldCount - 1);
+                record.SetValue(record.FieldCount - offset, valueToSet);
+                object o = record.GetSqlValue(record.FieldCount - offset);
 
                 if (o is SqlBinary)
                 {
@@ -133,8 +146,8 @@ namespace Microsoft.Data.SqlClient.Tests
                     Assert.Equal(valueToSet, o);
                 }
 
-                record.SetDBNull(record.FieldCount - 1);
-                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - 1));
+                record.SetDBNull(record.FieldCount - offset);
+                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - offset));
 
                 record.SetDBNull(i);
                 Assert.Equal(DBNull.Value, record.GetValue(i));

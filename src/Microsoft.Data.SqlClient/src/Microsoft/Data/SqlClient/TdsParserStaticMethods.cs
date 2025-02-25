@@ -139,10 +139,14 @@ namespace Microsoft.Data.SqlClient
                 // Pick up the process Id from the current process instead of randomly generating it.
                 // This would be helpful while tracing application related issues.
                 int processId;
+#if NET
+                processId = Environment.ProcessId;
+#else
                 using (System.Diagnostics.Process p = System.Diagnostics.Process.GetCurrentProcess())
                 {
                     processId = p.Id;
                 }
+#endif
                 System.Threading.Volatile.Write(ref s_currentProcessId, processId);
             }
             return s_currentProcessId;
