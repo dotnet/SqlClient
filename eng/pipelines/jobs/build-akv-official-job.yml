@@ -82,9 +82,8 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
-                echo "${env.JSON_PARAMS}"
-            env:
-                JSON_PARAMS: ${{ convertToJson(parameters) }}
+                $jsonParams = '${{ convertToJson(parameters) }}'
+                $jsonParams | ConvertFrom-Json | Format-Table -Autosize
             displayName: 'Output Job Parameters'
 
           - template: ../steps/compound-build-akv-step.yml@self
