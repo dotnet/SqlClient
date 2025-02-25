@@ -82,24 +82,7 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - script: |
-                echo apiScanDllPath=                 ${{ parameters.apiScanDllPath }}
-                echo apiScanPdbPath=                 ${{ parameters.apiScanPdbPath }}
-                echo assemblyFileVersion=            ${{ parameters.assemblyFileVersion }}
-                echo buildConfiguration=             ${{ parameters.buildConfiguration }}
-                echo nugetPackageVersion=            ${{ parameters.nugetPackageVersion }}
-                echo mdsPackageVersion=              ${{ parameters.mdsPackageVersion }}
-                echo publishSymbols=                 ${{ parameters.publishSymbols }}
-                echo signingAppRegistrationClientId= ${{ parameters.signingAppRegistrationClientId }}
-                echo signingAppRegistrationTenantId= ${{ parameters.signingAppRegistrationTenantId }}
-                echo signingAkvName=                 ${{ parameters.signingAkvName }}
-                echo signingAuthCertName=            ${{ parameters.signingAuthCertName }}
-                echo signingConnectedServiceName=    ${{ parameters.signingConnectedServiceName }}
-                echo signingSignCertName=            ${{ parameters.signingSignCertName }}
-                echo symbolsAzureSubscription=       ${{ parameters.symbolsAzureSubscription }}
-                echo symbolsPublishProjectName=      ${{ parameters.symbolsPublishProjectName }}
-                echo symbolsPublishServer=           ${{ parameters.symbolsPublishServer }}
-                echo symbolsPublishTokenUri=         ${{ parameters.symbolsPublishTokenUri }}
-                echo symbolsUploadAccount=           ${{ parameters.symbolsUploadAccount }}
+                echo ${{ convertToJson(parameters) }}
             displayName: 'Output Job Parameters'
 
           - template: ../steps/compound-build-akv-step.yml@self
