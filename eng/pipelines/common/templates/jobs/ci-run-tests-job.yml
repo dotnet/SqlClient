@@ -236,11 +236,12 @@ jobs:
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
       - template: ../steps/ensure-dotnet-version.yml
         parameters:
-          sdk: true
-          ${{ if not(startsWith(parameters.targetFramework, 'net4')) }}:
-            version: ${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}
-          windowsArchitecture: x86
           installDir: $(dotnetx86RootPath)
+          packageType: sdk
+          ${{ if not(startsWith(parameters.targetFramework, 'net4')) }}:
+            version: "${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}"
+          usePreview: false
+          windowsArchitecture: x86
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
