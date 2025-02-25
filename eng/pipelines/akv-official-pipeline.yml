@@ -10,29 +10,29 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 
 parameters:
     - name: oneBranchType
-      displayName: "OneBranch template"
-      type: string
+      displayName: 'OneBranch template'
+      type: 'string'
       values:
-          - Official
-          - NonOfficial
-      default: Official
+          - 'Official'
+          - 'NonOfficial'
+      default: 'Official'
 
     - name: buildConfiguration
       displayName: 'Build configuration'
-      type: string
+      type: 'string'
       values:
-          - Release
-          - Debug
-      default: Release
+          - 'Release'
+          - 'Debug'
+      default: 'Release'
 
     - name: publishSymbols
       displayName: 'Publish symbols'
-      type: boolean
+      type: 'boolean'
       default: false
 
     - name: runSdlTasks
       displayName: 'Run SDL Tasks'
-      type: boolean
+      type: 'boolean'
       default: true
 
 variables:
@@ -43,7 +43,7 @@ variables:
 resources:
     repositories:
         - repository: templates
-          type: git
+          type: 'git'
           name: 'OneBranch.Pipelines/GovernedTemplates'
           ref: 'refs/heads/main'
 
@@ -53,7 +53,7 @@ extends:
     parameters:
         featureFlags:
             WindowsHostVersion:
-                Version: 2022
+                Version: '2022'
 
         globalSdl:
             # See https://aka.ms/obpipelines/sdl
@@ -62,7 +62,7 @@ extends:
                 enabled: ${{ parameters.runSdlTasks }}
                 softwareFolder: '${{ variables.apiScanDllPath }}'
                 softwareName: 'Microsoft.Data.SqlClient' # Note: This name is registered with ApiScan
-                softwareVersionNum: ${{ variables.assemblyFileVersion }}
+                softwareVersionNum: '${{ variables.assemblyFileVersion }}'
                 symbolsFolder: '${{ variables.apiScanPdbPath }}'
 
             armory:
@@ -84,7 +84,7 @@ extends:
 
             codeql:
                 enabled: ${{ parameters.runSdlTasks }}
-                sourceRoot: "$(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider"
+                sourceRoot: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient/add-ons/AzureKeyVaultProvider'
                 # Note, this can only be done if project doesn't depend on other projects. In
                 #    package reference mode, this is true, but if we ever enable project reference
                 #    builds, this will have to be removed.
@@ -117,7 +117,7 @@ extends:
             tsa:
                 # OneBranch publishes all sdl results to TSA. If TSA is disabled all SDL tools will
                 # be forced into 'break' build mode.
-                enabled: ${{ eq(parameters.oneBranchType, 'Official') }}'
+                enabled: ${{ eq(parameters.oneBranchType, 'Official') }}
                 configFile: '$(REPO_ROOT)/.config/tsaoptions.json'
 
         stages:
