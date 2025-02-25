@@ -232,17 +232,17 @@ jobs:
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
 
-  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}: # run x86 tests
+  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
+    # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
+    # is only used to execute the test runtime (framework to test is specified in build params), so
+    # it should be acceptable to just install a specific version in all cases.
     - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
       - template: ../steps/ensure-dotnet-version.yml
         parameters:
           installDir: $(dotnetx86RootPath)
           packageType: sdk
-          ${{ if not(startsWith(parameters.targetFramework, 'net4')) }}:
-            version: "${{ split(replace(parameters.targetFramework, 'net', ''), '.')[0] }}.x"
-          ${{ else }}:
-            version: "LTS"
           usePreview: false
+          version: 9.x
           windowsArchitecture: x86
 
     - template: ../steps/run-all-tests-step.yml@self
