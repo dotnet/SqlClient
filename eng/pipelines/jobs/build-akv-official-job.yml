@@ -82,7 +82,7 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
-                echo "${JSON_PARAMS}"
+                echo "${env.JSON_PARAMS}"
             env:
                 JSON_PARAMS: ${{ convertToJson(parameters) }}
             displayName: 'Output Job Parameters'
