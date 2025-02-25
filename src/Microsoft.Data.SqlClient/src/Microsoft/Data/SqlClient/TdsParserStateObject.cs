@@ -1023,7 +1023,6 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
         internal TdsOperationStatus TryPrepareBuffer()
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
 
             // Header spans packets, or we haven't read the header yet - process header
@@ -1207,7 +1206,6 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
 
 #if DEBUG
@@ -1267,7 +1265,6 @@ namespace Microsoft.Data.SqlClient
         // before the byte is returned.
         internal TdsOperationStatus TryReadByte(out byte value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
             value = 0;
 
@@ -1374,7 +1371,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadInt32(out int value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt32");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
@@ -1405,7 +1401,6 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without snapshot
         internal TdsOperationStatus TryReadInt64(out long value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 TdsOperationStatus result = TryPrepareBuffer();
@@ -1487,7 +1482,6 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without replay
         internal TdsOperationStatus TryReadUInt32(out uint value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 TdsOperationStatus result = TryPrepareBuffer();
@@ -1538,7 +1532,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadSingle(out float value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSingle");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
@@ -1573,7 +1566,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadDouble(out double value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadDouble");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8))
             {
@@ -1608,7 +1600,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadString(int length, out string value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadString");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             int cBytes = length << 1;
             byte[] buf;
@@ -1650,7 +1641,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadStringWithEncoding(int length, System.Text.Encoding encoding, bool isPlp, out string value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
             if (encoding == null)
@@ -1989,8 +1979,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadNetworkPacket()
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
-
 #if DEBUG
             Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
 #endif
@@ -2093,8 +2081,6 @@ namespace Microsoft.Data.SqlClient
             bool shouldDecrement = false;
             try
             {
-                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
-
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
@@ -2547,8 +2533,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
-
                     SniContext = SniContext.Snix_Connect;
 
                     uint error = CheckConnection();

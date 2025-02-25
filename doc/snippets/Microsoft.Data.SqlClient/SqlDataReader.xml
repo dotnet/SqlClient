@@ -1246,6 +1246,11 @@
         No conversions are performed; therefore, the data retrieved must already be a 64-bit signed integer, or an exception is generated.
       </remarks>
     </GetSqlInt64>
+    <GetSqlJson>
+      <param name="i"></param>
+      <summary>Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlJson"/>.</summary>
+      <returns>A <see cref="T:Microsoft.Data.SqlTypes.SqlJson"/> object representing the column at the given ordinal.</returns>
+    </GetSqlJson>
     <GetSqlMoney>
       <param name="i">
         The zero-based column ordinal.

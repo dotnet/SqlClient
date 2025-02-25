@@ -298,11 +298,29 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
+      <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\FieldNameLookup.cs">
       <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\TimeoutTimer.cs">
       <Link>Microsoft\Data\ProviderBase\TimeoutTimer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlNotificationRequest.cs">
+      <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
+      <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
@@ -318,18 +336,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
-      <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
-      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
-      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlNotificationRequest.cs">
-      <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
       <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
@@ -381,6 +387,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceROot)Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
@@ -802,6 +811,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
+      <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.cs</Link>
     </Compile>
@@ -814,17 +826,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
-      <Link>Resources\ResCategoryAttribute.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
-      <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
-      <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
@@ -836,7 +839,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />

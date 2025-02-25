@@ -183,21 +183,7 @@ namespace Microsoft.Data.SqlClient
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-#if DEBUG
-                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                                    onSuccess();
-#if DEBUG
-                                }
-                                finally
-                                {
-                                    tdsReliabilitySection.Stop();
-                                }
-#endif //DEBUG
+                                onSuccess();
                             }
                             catch (System.OutOfMemoryException e)
                             {
@@ -330,21 +316,7 @@ namespace Microsoft.Data.SqlClient
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-#if DEBUG
-                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-                                tdsReliabilitySection.Start();
-#endif //DEBUG
-                                onSuccess(state2);
-#if DEBUG
-                            }
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
-#endif //DEBUG
+                            onSuccess(state2);
                         }
                         catch (System.OutOfMemoryException e)
                         {
