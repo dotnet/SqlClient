@@ -82,7 +82,7 @@ jobs:
           - template: ../steps/script-output-environment-variables-step.yml@self
 
           - powershell: |
-                $jsonParams = '${{ convertToJson(parameters) }}'
+                $jsonParams = '${{ replace(convertToJson(parameters), '\', '\\') }}'
                 $jsonParams | ConvertFrom-Json | Format-Table -Autosize
             displayName: 'Output Job Parameters'
 
