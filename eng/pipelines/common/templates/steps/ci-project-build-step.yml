@@ -34,6 +34,16 @@ parameters:
       - all
 
 steps:
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+      packageType: 'sdk'
+      version: '9.x'
+
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+      packageType: 'runtime'
+      version: '8.x'
+
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
     - task: MSBuild@1
