@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
             Architecture.Arm64 => new SniNativeMethodsArm64(),
             Architecture.X64 => new SniNativeMethodsX64(),
             Architecture.X86 => new SniNativeMethodsX86(),
-            _ => new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture)
+            _ => new SniNativeMethodsNotSupported(RuntimeInformation.ProcessArchitecture),
         };
         #else
         private static readonly SniNativeMethods s_nativeMethods = new SniNativeMethods();
@@ -64,7 +64,8 @@ namespace Microsoft.Data.SqlClient
         #if NETFRAMEWORK
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static uint SniAddProvider(SNIHandle pConn,
+        internal static uint SniAddProvider(
+            SNIHandle pConn,
             Provider providerEnum,
             AuthProviderInfo authInfo)
         {
@@ -211,7 +212,7 @@ namespace Microsoft.Data.SqlClient
                     case 2:
                         clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.ParallelMode;
                         break;
-                };
+                }
                 clientConsumerInfo.totalTimeout = totalTimeout;
                 #else
                 clientConsumerInfo.transparentNetworkResolution = TransparentNetworkResolutionMode.DisabledMode;
@@ -395,18 +396,19 @@ namespace Microsoft.Data.SqlClient
         internal static unsafe uint SniSecGenClientContext(
             SNIHandle pConnectionObject,
             ReadOnlySpan<byte> inBuff,
-            byte[] outBuff,
+            Span<byte> outBuff,
             ref uint sendLength,
             byte[] serverUserName)
         {
             fixed (byte* pServerUserName = serverUserName)
             fixed (byte* pInBuff = inBuff)
+            fixed (byte* pOutBuff = outBuff)
             {
                 return s_nativeMethods.SniSecGenClientContextWrapper(
                     pConn: pConnectionObject,
                     pIn: pInBuff,
                     cbIn: (uint)inBuff.Length,
-                    pOut: outBuff,
+                    pOut: pOutBuff,
                     pcbOut: ref sendLength,
                     pfDone: out _,
                     szServerInfo: pServerUserName,
