@@ -547,6 +547,7 @@ namespace Microsoft.Data.SqlClient
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
+            Dictionary<string, bool> columnMappingStatusLookup = new Dictionary<string, bool>();
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
@@ -569,9 +570,16 @@ namespace Microsoft.Data.SqlClient
                 int assocId;
                 for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
                 {
+                    if (!columnMappingStatusLookup.ContainsKey(_localColumnMappings[assocId].DestinationColumn))
+		    {
+                        columnMappingStatusLookup.Add(_localColumnMappings[assocId].DestinationColumn, false);
+		    }
+
                     if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
                         (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
                     {
+                        columnMappingStatusLookup[_localColumnMappings[assocId].DestinationColumn] = true;
+
                         if (rejectColumn)
                         {
                             nrejected++; // Count matched columns only
@@ -703,6 +711,7 @@ namespace Microsoft.Data.SqlClient
                         break;
                     }
                 }
+
                 if (assocId == _localColumnMappings.Count)
                 {
                     // Remove metadata for unmatched columns
@@ -713,7 +722,17 @@ namespace Microsoft.Data.SqlClient
             // All columnmappings should have matched up
             if (nmatched + nrejected != _localColumnMappings.Count)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                List<string> unmatchedColumns = new List<string>();
+
+                foreach(KeyValuePair<string, bool> keyValuePair in columnMappingStatusLookup)
+                {
+                    if (!keyValuePair.Value)
+		    {
+                        unmatchedColumns.Add(keyValuePair.Key);
+		    }
+                }
+
+                throw SQL.BulkLoadNonMatchingColumnName(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
