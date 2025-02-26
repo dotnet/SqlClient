@@ -8,15 +8,16 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using Interop.Windows.Kernel32;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient;
-using Interop.Windows.Kernel32;
 
 #if NETFRAMEWORK
 using System.Collections.Generic;
 using System.Configuration;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Microsoft.Data.SqlClient.LocalDb;
 #endif
 
 namespace Microsoft.Data
@@ -182,13 +183,13 @@ namespace Microsoft.Data
                         if (section != null) // if no section just skip creation
                         {
                             // validate section type
-                            LocalDBConfigurationSection configSection = section as LocalDBConfigurationSection;
+                            LocalDbConfigurationSection configSection = section as LocalDbConfigurationSection;
                             if (configSection == null)
                             {
                                 throw CreateLocalDBException(errorMessage: StringsHelper.GetString("LocalDB_BadConfigSectionType"));
                             }
-                                
-                            foreach (LocalDBInstanceElement confElement in configSection.LocalDbInstances)
+
+                            foreach (LocalDbInstanceElement confElement in configSection.LocalDbInstances)
                             {
                                 Debug.Assert(confElement.Name != null && confElement.Version != null, "Both name and version should not be null");
                                 tempConfigurableInstances.Add(confElement.Name.Trim(), new InstanceInfo(confElement.Version.Trim()));
@@ -215,7 +216,7 @@ namespace Microsoft.Data
             if (!s_configurableInstances.TryGetValue(instance, out instanceInfo))
             {
                 // instance name was not in the config
-                return; 
+                return;
             }
 
             if (instanceInfo.created)
@@ -364,7 +365,7 @@ namespace Microsoft.Data
 
             if (localDbError != 0)
             {
-                collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, GetLocalDBMessage(localDbError), null, 0));   
+                collection.Add(new SqlError(errorCode, 0, TdsEnums.FATAL_ERROR_CLASS, instance, GetLocalDBMessage(localDbError), null, 0));
             }
 
             SqlException exc = SqlException.CreateException(collection, null);
