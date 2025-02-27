@@ -1,0 +1,99 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+- name: SNIVersion
+  type: string
+
+- name: SNIValidationFeed
+  type: string
+
+steps:
+- task: PowerShell@2
+  displayName: Update SNI Version in Nuget.config
+  inputs:
+    targetType: inline
+    script: |
+      #Purpose:  Updates Nuget.config to add SNIValidation Internal Feed and the required credentials 
+      Write-Host "Starting update to Nuget.config"
+      Write-Host "SNI Version to test = ${{parameters.SNIVersion}}"
+
+      # define file to update
+      $NugetCfg = Join-Path -Path '.' -ChildPath 'NuGet.config'
+      type $NugetCfg
+            
+      # define an xml object
+      $xml = New-Object XML
+              
+      # load content of xml from file defined above
+      $xml.Load($NugetCfg)
+              
+      # define namespace used to read a node
+      $nsm = New-Object Xml.XmlNamespaceManager($xml.NameTable)
+      $nsm.AddNamespace('ns', $xml.DocumentElement.NamespaceURI)
+              
+      # get the package sources node
+      $packageSources = $xml.SelectSingleNode('//ns:packageSources', $nsm)
+              
+      # define new package source
+      $newSource = $xml.CreateElement("add")
+      $newSource.SetAttribute("key","SNIValidation")
+      $newSource.SetAttribute("value","${{parameters.SNIValidationFeed}}")
+              
+      # add the new package source
+      $packageSources.AppendChild($newSource)
+              
+      # save the xml file
+      $xml.Save($NugetCfg)
+      type $NugetCfg
+- task: PowerShell@2
+  displayName: Update SNI Version in Versions.props
+  inputs:
+    targetType: inline
+    script: |
+      #Purpose:  Updates SNI Version
+      Write-Host "Starting update to Versions.props"
+      Write-Host "SNI Version to test = ${{parameters.SNIVersion}}"
+
+      #Get the SNI Version to test from the user entered version.
+      $SharedSNIVersion = "${{parameters.SNIVersion}}"
+
+      # define file to update
+      $PropsPath = Join-Path -Path '.' -ChildPath 'tools\props\Versions.props'
+      type $PropsPath
+
+      # new version number to update to
+      ##Write-Host "SNI Version to test = $(SNIValidationVersion)"
+      Write-Host "SNI Version to test = $SharedSNIVersion"
+
+
+      # define an xml object
+      $xml = New-Object XML
+
+      # load content of xml from file defined above
+      $xml.Load($PropsPath)
+
+      # define namespace used to read a node 
+      $nsm = New-Object Xml.XmlNamespaceManager($xml.NameTable)
+      $nsm.AddNamespace('ns', $xml.DocumentElement.NamespaceURI)
+      $netFxSniVersion = $xml.SelectSingleNode('//ns:MicrosoftDataSqlClientSniVersion', $nsm)
+
+      Write-Host "Node NetFx SNI Version = $($netFxSniVersion.InnerText)"
+
+      # update the node inner text
+      $netFxSniVersion.InnerText = "$SharedSNIVersion"
+
+      $netCoreSniVersion = $xml.SelectSingleNode('//ns:MicrosoftDataSqlClientSNIRuntimeVersion', $nsm)
+
+      # update the node inner text
+      $netCoreSniVersion.InnerText = "$SharedSNIVersion"
+
+      # save the xml file
+      $xml.Save($PropsPath)
+
+      type $PropsPath
+- task: NuGetAuthenticate@1
+  displayName: 'NuGet Authenticate with SNI Validation Feed'
