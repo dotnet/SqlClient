@@ -1254,7 +1254,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Abort(e);
+#if NETFRAMEWORK
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             finally
@@ -1367,7 +1369,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     e = ex;
                     Abort(ex);
+#if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                     throw;
                 }
                 catch (Exception ex)

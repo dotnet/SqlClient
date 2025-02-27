@@ -277,7 +277,9 @@ namespace Microsoft.Data.SqlClient
             catch (ThreadAbortException e)
             {
                 command?.Connection?.Abort(e);
+#if NETFRAMEWORK
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
         }

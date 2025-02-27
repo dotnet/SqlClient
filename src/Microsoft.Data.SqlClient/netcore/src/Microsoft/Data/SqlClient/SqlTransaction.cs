@@ -56,7 +56,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         diagnosticScope.SetException(e);
                         _connection.Abort(e);
+#if NETFRAMEWORK
                         SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                         throw;
                     }
                     catch (SqlException ex)
@@ -112,7 +114,9 @@ namespace Microsoft.Data.SqlClient
                 catch (System.Threading.ThreadAbortException e)
                 {
                     _connection.Abort(e);
+#if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                     throw;
                 }
             }
@@ -165,7 +169,9 @@ namespace Microsoft.Data.SqlClient
                         {
                             diagnosticScope.SetException(e);
                             _connection.Abort(e);
+#if NETFRAMEWORK
                             SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                             throw;
                         }
                         catch (Exception ex)
@@ -219,7 +225,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         diagnosticScope.SetException(e);
                         _connection.Abort(e);
+#if NETFRAMEWORK
                         SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                         throw;
                     }
                     catch (Exception ex)
@@ -265,7 +273,9 @@ namespace Microsoft.Data.SqlClient
                 catch (System.Threading.ThreadAbortException e)
                 {
                     _connection.Abort(e);
+#if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                     throw;
                 }
                 finally

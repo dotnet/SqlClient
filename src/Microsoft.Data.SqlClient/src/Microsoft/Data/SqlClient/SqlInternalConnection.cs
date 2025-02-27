@@ -276,7 +276,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
+#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             finally
@@ -349,7 +351,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException)
             {
                 DoomThisConnection();
+#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             catch (Exception e)
@@ -639,7 +643,7 @@ namespace Microsoft.Data.SqlClient
             TdsParser bestEffortCleanupTarget = null;
 #if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
- #endif // NETFRAMEWORK
+#endif // NETFRAMEWORK
            try
             {
                 bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
@@ -658,7 +662,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
+#if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
         }
@@ -732,14 +738,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-#if NET
-        // This method is called only by ThreadAbortException, which is only thrown in .NET Framework.
-        // The empty method body facilitates the code merge.
-        static internal void BestEffortCleanup(TdsParser target)
-        {
-            _ = target;
-        }
-#else
+#if NETFRAMEWORK
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         static internal void BestEffortCleanup(TdsParser target)
         {

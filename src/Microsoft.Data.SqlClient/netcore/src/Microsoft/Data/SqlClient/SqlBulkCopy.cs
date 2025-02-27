@@ -2020,7 +2020,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _connection.Abort(e);
+#if NETFRAMEWORK
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             finally
@@ -2448,10 +2450,10 @@ namespace Microsoft.Data.SqlClient
                                         connectionToDoom: _connection.GetOpenTdsConnection()
                                     );
                                 }
-                           },
+                            },
                             connectionToDoom: _connection.GetOpenTdsConnection()
-                       );
-                       return resultTask;
+                        );
+                        return resultTask;
                     }
                 }
 
