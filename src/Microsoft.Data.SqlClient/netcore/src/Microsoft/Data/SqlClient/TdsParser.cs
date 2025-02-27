@@ -453,6 +453,8 @@ namespace Microsoft.Data.SqlClient
                 hostNameInCertificate,
                 serverCertificateFilename);
 
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -466,8 +468,6 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
-
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
             _server = serverInfo.ResolvedServerName;
 
@@ -552,14 +552,14 @@ namespace Microsoft.Data.SqlClient
                     hostNameInCertificate,
                     serverCertificateFilename);
 
+                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Login failure");
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
-
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
                 uint retCode = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
 
