@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="fullServerName">Full server name from connection string</param>
         /// <param name="timeout">Timer expiration</param>
         /// <param name="instanceName">Instance name</param>
-        /// <param name="spnBuffer">SPN</param>
+        /// <param name="spns">SPNs</param>
         /// <param name="serverSPN">pre-defined SPN</param>
         /// <param name="flushCache">Flush packet cache</param>
         /// <param name="async">Asynchronous connection</param>
@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string fullServerName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spnBuffer,
+            ref string[] spns,
             string serverSPN,
             bool flushCache,
             bool async,
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    spnBuffer = GetSqlServerSPNs(details, serverSPN);
+                    spns = GetSqlServerSPNs(details, serverSPN);
                 }
                 catch (Exception e)
                 {

@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string _sniSpn = null;
+        private string _serverSpn = null;
 
         // UNDONE - need to have some for both instances - both command and default???
 
@@ -432,13 +432,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
-                    _sniSpn = serverInfo.ServerSPN;
+                    _serverSpn = serverInfo.ServerSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
                 }
                 else
                 {
-                    // Empty signifies to interop layer that SNI needs to be generated
-                    _sniSpn = string.Empty;
+                    // Empty signifies to interop layer that SPN needs to be generated
+                    _serverSpn = string.Empty;
                 }
 
                 _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _authenticationProvider = null;
-                _sniSpn = null;
+                _serverSpn = null;
 
                 switch (authType)
                 {
@@ -526,7 +526,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _sniSpn,
+                ref _serverSpn,
                 false,
                 true,
                 fParallel,
@@ -626,7 +626,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref _sniSpn,
+                    ref _serverSpn,
                     true,
                     true,
                     fParallel,
@@ -13782,7 +13782,7 @@ namespace Microsoft.Data.SqlClient
                             _is2000 ? bool.TrueString : bool.FalseString,
                             _is2000SP1 ? bool.TrueString : bool.FalseString,
                             _is2005 ? bool.TrueString : bool.FalseString,
-                            _sniSpn == null ? "(null)" : _sniSpn.Length.ToString((IFormatProvider)null),
+                            _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
