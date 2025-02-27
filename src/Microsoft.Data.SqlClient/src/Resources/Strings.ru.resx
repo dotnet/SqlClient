@@ -4747,9 +4747,9 @@
     <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value />
+    <value>Buffer advanced too far {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value />
+    <value>Buffer maximum size exceeded: {0}</value>
   </data>
 </root>

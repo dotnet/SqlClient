@@ -4747,9 +4747,9 @@
     <value>열 '{0}'의 JsonDocument를 가져오려는 시도가 잘못되었습니다. JsonDocument는 json 형식의 열에 대해서만 지원됩니다.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value />
+    <value>Buffer advanced too far {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value />
+    <value>Buffer maximum size exceeded: {0}</value>
   </data>
 </root>

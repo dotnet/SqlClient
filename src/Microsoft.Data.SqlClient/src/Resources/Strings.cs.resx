@@ -4747,9 +4747,9 @@
     <value>Neplatný pokus o získání třídy JsonDocument ve sloupci {0}. Třída JsonDocument se podporuje jenom pro sloupce typu json.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value />
+    <value>Buffer advanced too far {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value />
+    <value>Buffer maximum size exceeded: {0}</value>
   </data>
 </root>
