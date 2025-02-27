@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn);
+                    GenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpns);
                 }
                 catch (Exception e)
                 {

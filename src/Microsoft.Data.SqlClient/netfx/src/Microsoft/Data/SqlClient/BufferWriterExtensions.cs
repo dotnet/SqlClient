@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.Text;
 
 namespace Microsoft.Data.SqlClient
@@ -12,9 +13,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                encoding.GetBytes(str, 0, str.Length, array, 0);
-                bufferWriter.Write(array);
-                return count;
+                var length = encoding.GetBytes(str, 0, str.Length, array, 0);
+                bufferWriter.Write(array.AsSpan(0, length));
+                return length;
             }
             finally
             {

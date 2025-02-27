@@ -1,7 +1,6 @@
 ﻿#if NET
 
 using System;
-using System.Text;
 using System.Net.Security;
 using System.Buffers;
 
@@ -12,14 +11,14 @@ namespace Microsoft.Data.SqlClient
     internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
     {
         private NegotiateAuthentication? _negotiateAuth = null;
-         
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverNames)
+
+        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
-            for (int i = 0; i < serverNames.Length; i++)
+            for (int i = 0; i < serverSpns.Length; i++)
             {
-                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = serverNames[i] });
+                _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = serverSpns[i] });
                 var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
                 // Log session id, status code and the actual SPN used in the negotiation

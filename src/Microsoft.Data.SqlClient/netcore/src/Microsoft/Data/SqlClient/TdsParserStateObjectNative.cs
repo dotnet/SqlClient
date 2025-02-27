@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
                 flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
-            spn = new[] { serverSPN.TrimEnd() };
+            spns = new[] { serverSPN.TrimEnd() };
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
