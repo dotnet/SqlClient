@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpn);
+        protected abstract void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns);
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
             => SSPIData(receivedBuff, outgoingBlobWriter, new[] { serverSpn });
