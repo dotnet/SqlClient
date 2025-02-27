@@ -14,32 +14,39 @@ namespace Microsoft.Data.SqlClient
 
             SniContext outerContext = _physicalStateObj.SniContext;
             _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
+
             // allocate received buffer based on length from SSPI message
             byte[] receivedBuff = ArrayPool<byte>.Shared.Rent(receivedLength);
 
-            // read SSPI data received from server
-            Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
-            if (result != TdsOperationStatus.Done)
-            {
-                throw SQL.SynchronousCallMayNotPend();
-            }
-
-            // allocate send buffer and initialize length
-            var writer = SqlObjectPools.BufferWriter.Rent();
-
             try
             {
-                // make call for SSPI data
-                _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _serverSpn);
+                // read SSPI data received from server
+                Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
 
-                // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
-                _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
+                // allocate send buffer and initialize length
+                var writer = SqlObjectPools.BufferWriter.Rent();
 
+                try
+                {
+                    // make call for SSPI data
+                    _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _serverSpn);
+
+                    // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
+                    _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
+
+                }
+                finally
+                {
+                    SqlObjectPools.BufferWriter.Return(writer);
+                }
             }
             finally
             {
-                SqlObjectPools.BufferWriter.Return(writer);
                 ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
             }
 

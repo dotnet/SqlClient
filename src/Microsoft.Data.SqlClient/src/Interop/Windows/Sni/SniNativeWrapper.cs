@@ -395,12 +395,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         var writer = SqlObjectPools.BufferWriter.Rent();
 
-                        // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
-                        Encoding.Unicode.GetBytes(spn, writer);
-                        Trace.Assert(writer.WrittenCount <= SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
-
                         try
                         {
+                            // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
+                            Encoding.Unicode.GetBytes(spn, writer);
+                            Trace.Assert(writer.WrittenCount <= SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
+
                             fixed (byte* pin_spnBuffer = writer.WrittenSpan)
                             {
                                 clientConsumerInfo.szSPN = pin_spnBuffer;
