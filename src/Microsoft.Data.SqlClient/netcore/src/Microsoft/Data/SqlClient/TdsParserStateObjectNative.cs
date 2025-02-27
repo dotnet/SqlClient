@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spn,
+            ref string[] spns,
             bool flushCache,
             bool async,
             bool fParallel,
