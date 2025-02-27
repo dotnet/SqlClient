@@ -258,6 +258,9 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.PendingBeginXXXExists();
                     }
 
+#if NETFRAMEWORK
+                    RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
@@ -868,6 +871,9 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: false);
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 TdsOperationStatus result = TryCleanPartialRead();
@@ -1148,6 +1154,9 @@ namespace Microsoft.Data.SqlClient
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
 
+#if NETFRAMEWORK
+                    RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
@@ -1774,6 +1783,9 @@ namespace Microsoft.Data.SqlClient
             remaining = 0;
             TdsOperationStatus result;
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 int cbytes = 0;
@@ -2081,6 +2093,9 @@ namespace Microsoft.Data.SqlClient
             bytesRead = 0;
             TdsOperationStatus result;
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
@@ -2422,6 +2437,9 @@ namespace Microsoft.Data.SqlClient
 
         private long GetCharsFromPlpData(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
         {
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 long cch;
@@ -4055,6 +4073,9 @@ namespace Microsoft.Data.SqlClient
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: null);
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 Debug.Assert(_sharedState._nextColumnHeaderToRead <= _metaData.Length, "_sharedState._nextColumnHeaderToRead too large");
@@ -4143,6 +4164,9 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidRead();
             }
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 return TryReadColumnInternal(i, readHeaderOnly: true);

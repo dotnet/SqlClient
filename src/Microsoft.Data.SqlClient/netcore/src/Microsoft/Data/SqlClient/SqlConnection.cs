@@ -1235,6 +1235,9 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
             TdsParser bestEffortCleanupTarget = null;
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
@@ -1323,8 +1326,11 @@ namespace Microsoft.Data.SqlClient
 
                 SqlStatistics statistics = null;
                 TdsParser bestEffortCleanupTarget = null;
-
                 Exception e = null;
+
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);

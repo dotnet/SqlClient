@@ -31,6 +31,9 @@ namespace Microsoft.Data.SqlClient
                     TdsParser bestEffortCleanupTarget = null;
 
                     SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
+#if NETFRAMEWORK
+                    RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
@@ -93,6 +96,9 @@ namespace Microsoft.Data.SqlClient
             if (disposing)
             {
                 TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
@@ -144,6 +150,9 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
 
                         TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+                        RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                         try
                         {
                             bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
@@ -200,6 +209,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlStatistics statistics = null;
                     TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+                    RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
@@ -253,6 +265,9 @@ namespace Microsoft.Data.SqlClient
             using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName))
             {
                 TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);

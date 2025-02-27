@@ -1970,6 +1970,9 @@ namespace Microsoft.Data.SqlClient
             _parserLock.Wait(canReleaseFromAnyThread: _isAsyncBulkCopy);
 
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
@@ -2690,6 +2693,9 @@ namespace Microsoft.Data.SqlClient
         private void CopyBatchesAsyncContinuedOnError(bool cleanupParser)
         {
             SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
