@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
             => SSPIData(receivedBuff, outgoingBlobWriter, new[] { serverSpn });
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] serverSpn)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string[] serverSpns)
         {
             using (TrySNIEventScope.Create(nameof(SSPIContextProvider)))
             {
