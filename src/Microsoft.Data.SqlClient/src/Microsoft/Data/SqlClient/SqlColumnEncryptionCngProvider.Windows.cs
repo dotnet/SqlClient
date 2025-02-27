@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(columnEncryptionKey != null);
             Debug.Assert(rsaCngProvider != null);
 
-            return rsaCngProvider.Encrypt(columnEncryptionKey, RSAEncryptionPadding.OaepSHA1);
+            return rsaCngProvider.Encrypt(columnEncryptionKey, RSAEncryptionPadding.OaepSHA256);
         }
 
         /// <summary>
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((encryptedColumnEncryptionKey != null) && (encryptedColumnEncryptionKey.Length != 0));
             Debug.Assert(rsaCngProvider != null);
 
-            return rsaCngProvider.Decrypt(encryptedColumnEncryptionKey, RSAEncryptionPadding.OaepSHA1);
+            return rsaCngProvider.Decrypt(encryptedColumnEncryptionKey, RSAEncryptionPadding.OaepSHA256);
         }
 
         /// <summary>

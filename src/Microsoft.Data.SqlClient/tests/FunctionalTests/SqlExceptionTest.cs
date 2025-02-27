@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var settings = new JsonSerializerSettings()
             {
-                TypeNameHandling = TypeNameHandling.All,
+                TypeNameHandling = TypeNameHandling.None,
             };
 
             // TODO: Deserialization fails on Unix with "Member 'ClassName' was not found."
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Tests
 #if NETFRAMEWORK
         [Fact]
         [ActiveIssue("12161", TestPlatforms.AnyUnix)]
-        public static void SqlExcpetionSerializationTest()
+        public static void SqlExceptionSerializationTest()
         {
             var formatter = new BinaryFormatter();
             SqlException e = CreateException();
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             var settings = new JsonSerializerSettings()
             {
-                TypeNameHandling = TypeNameHandling.All,
+                TypeNameHandling = TypeNameHandling.None,
             };
 
             var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
