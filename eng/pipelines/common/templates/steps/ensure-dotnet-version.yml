@@ -28,6 +28,7 @@ parameters:
     - # Whether to enable preview versions of dotnet
       name: usePreview
       type: boolean
+      default: false
       
     - # Version to install - supports full major.minor.patch, but can be shortened to major.minor
       # to get the latest within a given channel.
