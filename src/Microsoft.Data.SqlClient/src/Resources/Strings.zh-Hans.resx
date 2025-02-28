@@ -4747,9 +4747,9 @@
     <value>在列 ‘{0}’ 上获取 JsonDocument 的尝试无效。只有 json 类型的列支持 JsonDocument。</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value>Buffer advanced too far {0}</value>
+    <value>缓冲区过大 {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value>Buffer maximum size exceeded: {0}</value>
+    <value>超出缓冲区最大大小： {0}</value>
   </data>
 </root>

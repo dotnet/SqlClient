@@ -4747,9 +4747,9 @@
     <value>Tentative non valide d’obtention de JsonDocument sur la colonne « {0} ». JsonDocument est uniquement pris en charge pour les colonnes de type JSON.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value>Buffer advanced too far {0}</value>
+    <value>Mémoire tampon avancée trop loin {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value>Buffer maximum size exceeded: {0}</value>
+    <value>Taille maximale de la mémoire tampon dépassée : {0}</value>
   </data>
 </root>
