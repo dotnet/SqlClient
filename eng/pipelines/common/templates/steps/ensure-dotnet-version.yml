@@ -47,7 +47,14 @@ parameters:
           - 'arm64'
 
 steps:
-    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
+    - script: |
+          echo variables.Agent.OS:  ${{ variables.Agent.OS }}
+          echo variables[Agent.OS]: ${{ variables['Agent.OS'] }}
+          echo {{Agent.OS}}:        ${{ Agent.OS }}
+          echo (Agent.OS):          $(Agent.OS)
+      displayName: 'Output Agent OS'
+        
+    - ${{ if eq(variables.Agent.OS, 'Windows_NT') }}:
           - powershell: |-
                 # Propagate parameters from pipeline #######################
                 $agentToolsDir = '$(Agent.ToolsDirectory)'
@@ -97,6 +104,8 @@ steps:
           inputs:
               ${{ if ne(parameters.installDir, '') }}:
                   installationPath: '${{ parameters.installDir }}'
+              ${{ else }}:
+                  installationPath: '$(Agent.ToolsDirectory)'
               packageType: '${{ parameters.packageType }}'
               version: '${{ parameters.version }}'
               
