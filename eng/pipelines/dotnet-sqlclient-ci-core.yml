@@ -43,13 +43,13 @@ parameters:
 
 - name: SNIVersion
   displayName: |
-    Use a specific SNI version from the internal validation feed
+    SNI Version Override
   type: string
   default: ''
 
 - name: SNIValidationFeed
   displayName: |
-    The specific SNI test version is pulled from this feed
+    SNI Version Override Nuget Feed
   type: string
   default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
 
