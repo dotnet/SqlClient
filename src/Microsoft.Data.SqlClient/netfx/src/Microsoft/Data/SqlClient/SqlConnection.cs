@@ -1502,8 +1502,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
                 SqlStatistics statistics = null;
-
                 TdsParser bestEffortCleanupTarget = null;
+
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {

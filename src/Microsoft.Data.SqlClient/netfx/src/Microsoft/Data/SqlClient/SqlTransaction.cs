@@ -23,12 +23,12 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Commit|API> {0}", ObjectID))
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
+                SqlStatistics statistics = null;
                 TdsParser bestEffortCleanupTarget = null;
+
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
@@ -173,9 +173,9 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName))
             {
+                SqlStatistics statistics = null;
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -222,7 +222,6 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Save|API> {0} savePointName='{1}'", ObjectID, savePointName))
             {
-
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try

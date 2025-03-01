@@ -2032,7 +2032,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs, tcs,
+                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                state: tcs,
                                 onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
@@ -2684,9 +2685,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
-,
-                        connectionToDoom: _connection.GetOpenTdsConnection());
+                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
+                    );
 
                     return source.Task;
                 }
@@ -3014,7 +3015,10 @@ namespace Microsoft.Data.SqlClient
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection
                         AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
                                 () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTaskWithState(cancellableReconnectTS.Task, source, regReconnectCancel,
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task,
+                            completion: source,
+                            state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
                                 ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
