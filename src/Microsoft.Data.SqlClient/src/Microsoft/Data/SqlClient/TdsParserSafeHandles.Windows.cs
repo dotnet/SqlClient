@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.LocalDb;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -77,7 +78,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (TdsEnums.SNI_SUCCESS == _sniStatus)
                 {
-                    LocalDBAPI.ReleaseDLLHandles();
+                    LocalDbApi.ReleaseDllHandles();
                     SniNativeWrapper.SNITerminate();
                 }
                 base.handle = IntPtr.Zero;

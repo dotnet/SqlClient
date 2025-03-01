@@ -7,19 +7,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-#if NETFRAMEWORK
-using System.IO;
-using System.Runtime.Remoting;
-using System.Runtime.Serialization;
-using System.Runtime.Versioning;
-using System.Security.Permissions;
-#endif
 using System.Text;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+
+#if NETFRAMEWORK
+using System.IO;
+using System.Runtime.Remoting;
+using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Security.Permissions;
+using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.LocalDb;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -600,7 +603,7 @@ namespace Microsoft.Data.SqlClient
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
-                    LocalDBAPI.DemandLocalDBPermissions();
+                    LocalDbApi.DemandLocalDbPermissions();
                 }
 #endif
                 // End duplicate Start/Stop logic.
@@ -753,7 +756,7 @@ namespace Microsoft.Data.SqlClient
                 connectionStringObject.DemandPermission();
                 if (connectionStringObject.LocalDBInstance != null)
                 {
-                    LocalDBAPI.DemandLocalDBPermissions();
+                    LocalDbApi.DemandLocalDbPermissions();
                 }
 #endif
                 // End duplicate Start/Stop logic.

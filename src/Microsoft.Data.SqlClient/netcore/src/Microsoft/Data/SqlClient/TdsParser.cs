@@ -21,6 +21,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
+using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 
@@ -1557,7 +1558,7 @@ namespace Microsoft.Data.SqlClient
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
-                            errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
+                            errorMessage += LocalDbApi.GetLocalDbMessage((int)details.nativeError);
                             win32ErrorCode = 0;
                         }
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
