@@ -607,6 +607,8 @@ namespace Microsoft.Data.SqlClient
                     if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
                         (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
                     {
+                        _localColumnMappings[assocId]._matchedOrRejected = true;
+
                         if (rejectColumn)
                         {
                             nrejected++; // Count matched columns only
@@ -754,7 +756,16 @@ namespace Microsoft.Data.SqlClient
             // All columnmappings should have matched up
             if (nmatched + nrejected != _localColumnMappings.Count)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                int assocId;
+                for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
+                {
+                    SqlBulkCopyColumnMapping columnMapping = _localColumnMappings[assocId];
+
+                    if(!columnMapping._matchedOrRejected)
+                    {
+                        throw (SQL.BulkLoadNonMatchingColumnName(columnMapping.SourceColumn));
+                    }
+                }
             }
 
             updateBulkCommandText.Append(")");

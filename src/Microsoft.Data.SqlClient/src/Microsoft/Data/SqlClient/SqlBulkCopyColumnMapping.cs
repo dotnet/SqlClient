@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient
         internal int _destinationColumnOrdinal;
         internal string _sourceColumnName;
         internal int _sourceColumnOrdinal;
+        internal bool _matchedOrRejected;
 
         // devnote: we don't want the user to detect the columnordinal after WriteToServer call.
         // _sourceColumnOrdinal(s) will be copied to _internalSourceColumnOrdinal when WriteToServer executes.
