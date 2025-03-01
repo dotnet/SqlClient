@@ -4747,9 +4747,9 @@
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value>Buffer advanced too far {0}</value>
+    <value>Arabellek çok fazla ilerledi {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value>Buffer maximum size exceeded: {0}</value>
+    <value>Arabellek boyut üst sınırı aşıldı: {0}</value>
   </data>
 </root>

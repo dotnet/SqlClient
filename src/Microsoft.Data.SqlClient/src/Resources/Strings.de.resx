@@ -4747,9 +4747,9 @@
     <value>Ungültiger Versuch, „JsonDocument“ für Spalte „{0}“ abzurufen. „JsonDocument“ wird nur für Spalten vom Typ JSON unterstützt.</value>
   </data>
   <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
-    <value>Buffer advanced too far {0}</value>
+    <value>Puffer wurde zu weit erweitert {0}</value>
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
-    <value>Buffer maximum size exceeded: {0}</value>
+    <value>Maximale Puffergröße überschritten: {0}</value>
   </data>
 </root>
