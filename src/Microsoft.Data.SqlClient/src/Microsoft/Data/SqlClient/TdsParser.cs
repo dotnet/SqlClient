@@ -8,38 +8,47 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParser
     {
-        // This is a shared pool that will retain the last 20 writers to be reused. If more than 20 are requested at a time,
-        // they will not be retained when returned to the pool.
-        private static readonly SqlObjectPool<ArrayBufferWriter<byte>> _writers = new(20, () => new(), a => a.Clear());
-
         internal void ProcessSSPI(int receivedLength)
         {
             Debug.Assert(_authenticationProvider is not null);
 
             SniContext outerContext = _physicalStateObj.SniContext;
             _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
+
             // allocate received buffer based on length from SSPI message
             byte[] receivedBuff = ArrayPool<byte>.Shared.Rent(receivedLength);
 
-            // read SSPI data received from server
-            Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
-            if (result != TdsOperationStatus.Done)
+            try
             {
-                throw SQL.SynchronousCallMayNotPend();
+                // read SSPI data received from server
+                Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                TdsOperationStatus result = _physicalStateObj.TryReadByteArray(receivedBuff, receivedLength);
+                if (result != TdsOperationStatus.Done)
+                {
+                    throw SQL.SynchronousCallMayNotPend();
+                }
+
+                // allocate send buffer and initialize length
+                var writer = SqlObjectPools.BufferWriter.Rent();
+
+                try
+                {
+                    // make call for SSPI data
+                    _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _serverSpn);
+
+                    // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
+                    _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
+
+                }
+                finally
+                {
+                    SqlObjectPools.BufferWriter.Return(writer);
+                }
             }
-
-            // allocate send buffer and initialize length
-            var writer = _writers.Rent();
-
-            // make call for SSPI data
-            _authenticationProvider!.SSPIData(receivedBuff.AsSpan(0, receivedLength), writer, _sniSpnBuffer);
-
-            // DO NOT SEND LENGTH - TDS DOC INCORRECT!  JUST SEND SSPI DATA!
-            _physicalStateObj.WriteByteSpan(writer.WrittenSpan);
-
-            _writers.Return(writer);
-            ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(receivedBuff, clearArray: true);
+            }
 
             // set message type so server knows its a SSPI response
             _physicalStateObj._outputMessageType = TdsEnums.MT_SSPI;
@@ -143,60 +152,65 @@ namespace Microsoft.Data.SqlClient
             // allocate memory for SSPI variables
             ArrayBufferWriter<byte> sspiWriter = null;
 
-            // only add lengths of password and username if not using SSPI or requesting federated authentication info
-            if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
+            try
             {
-                checked
+                // only add lengths of password and username if not using SSPI or requesting federated authentication info
+                if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
-                    length += (userName.Length * 2) + encryptedPasswordLengthInBytes
-                    + encryptedChangePasswordLengthInBytes;
-                }
-            }
-            else
-            {
-                if (rec.useSSPI)
-                {
-                    sspiWriter = _writers.Rent();
-
-                    // Call helper function for SSPI data and actual length.
-                    // Since we don't have SSPI data from the server, send null for the
-                    // byte[] buffer and 0 for the int length.
-                    Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
-                    _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _sniSpnBuffer);
-
-                    _physicalStateObj.SniContext = SniContext.Snix_Login;
-
                     checked
                     {
-                        length += (int)sspiWriter.WrittenCount;
+                        length += (userName.Length * 2) + encryptedPasswordLengthInBytes
+                        + encryptedChangePasswordLengthInBytes;
                     }
                 }
+                else
+                {
+                    if (rec.useSSPI)
+                    {
+                        sspiWriter = SqlObjectPools.BufferWriter.Rent();
+
+                        // Call helper function for SSPI data and actual length.
+                        // Since we don't have SSPI data from the server, send null for the
+                        // byte[] buffer and 0 for the int length.
+                        Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
+                        _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
+                        _authenticationProvider.SSPIData(ReadOnlySpan<byte>.Empty, sspiWriter, _serverSpn);
+
+                        _physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                        checked
+                        {
+                            length += (int)sspiWriter.WrittenCount;
+                        }
+                    }
+                }
+
+                int feOffset = length;
+                // calculate and reserve the required bytes for the featureEx
+                length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
+
+                WriteLoginData(rec,
+                               requestedFeatures,
+                               recoverySessionData,
+                               fedAuthFeatureExtensionData,
+                               encrypt,
+                               encryptedPassword,
+                               encryptedChangePassword,
+                               encryptedPasswordLengthInBytes,
+                               encryptedChangePasswordLengthInBytes,
+                               useFeatureExt,
+                               userName,
+                               length,
+                               feOffset,
+                               clientInterfaceName,
+                               sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
             }
-
-            int feOffset = length;
-            // calculate and reserve the required bytes for the featureEx
-            length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
-
-            WriteLoginData(rec,
-                           requestedFeatures,
-                           recoverySessionData,
-                           fedAuthFeatureExtensionData,
-                           encrypt,
-                           encryptedPassword,
-                           encryptedChangePassword,
-                           encryptedPasswordLengthInBytes,
-                           encryptedChangePasswordLengthInBytes,
-                           useFeatureExt,
-                           userName,
-                           length,
-                           feOffset,
-                           clientInterfaceName,
-                           sspiWriter is { } ? sspiWriter.WrittenSpan : ReadOnlySpan<byte>.Empty);
-
-            if (sspiWriter is not null)
+            finally
             {
-                _writers.Return(sspiWriter);
+                if (sspiWriter is not null)
+                {
+                    SqlObjectPools.BufferWriter.Return(sspiWriter);
+                }
             }
 
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
