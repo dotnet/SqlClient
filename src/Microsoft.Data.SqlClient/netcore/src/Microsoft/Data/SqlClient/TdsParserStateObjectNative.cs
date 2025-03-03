@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref byte[][] spnBuffer,
+            ref string[] spns,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -157,22 +157,18 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
-            spnBuffer = new byte[1][];
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
                     // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
-                    byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
-                    Trace.Assert(srvSPN.Length <= SniNativeWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
-                    spnBuffer[0] = srvSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.", nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
                 }
                 else
                 {
-                    spnBuffer[0] = new byte[SniNativeWrapper.SniMaxComposedSpnLength];
+                    // This will signal to the interop layer that we need to retrieve the SPN
+                    serverSPN = string.Empty;
                 }
             }
 
@@ -180,8 +176,9 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], timeout.MillisecondsRemainingInt, out instanceName,
+            _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
                 flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+            spns = new[] { serverSPN.TrimEnd() };
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)

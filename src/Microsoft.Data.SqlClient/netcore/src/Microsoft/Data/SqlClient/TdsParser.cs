@@ -113,8 +113,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private byte[][] _sniSpnBuffer = null;
-        // UNDONE - need to have some for both instances - both command and default???
+        private string[] _serverSpn = null;
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
@@ -391,7 +390,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _sniSpnBuffer = null;
+                _serverSpn = null;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
@@ -403,7 +402,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
             }
 
-            _sniSpnBuffer = null;
+            _serverSpn = null;
             _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -442,7 +441,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _sniSpnBuffer,
+                ref _serverSpn,
                 false,
                 true,
                 fParallel,
@@ -541,7 +540,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
                     timeout, out instanceName,
-                    ref _sniSpnBuffer,
+                    ref _serverSpn,
                     true,
                     true,
                     fParallel,
@@ -13318,7 +13317,7 @@ namespace Microsoft.Data.SqlClient
                            _fMARS ? bool.TrueString : bool.FalseString,
                            _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
                            _is2005 ? bool.TrueString : bool.FalseString,
-                           _sniSpnBuffer == null ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
+                           _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
