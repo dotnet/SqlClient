@@ -11,18 +11,6 @@ using System.Collections;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 {
-    public class JsonBulkCopyTestData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            yield return new object[] { CommandBehavior.Default, false, 300, 100 };
-            yield return new object[] { CommandBehavior.Default, true, 300, 100 };
-            yield return new object[] { CommandBehavior.SequentialAccess, false, 300, 100 };
-            yield return new object[] { CommandBehavior.SequentialAccess, true, 300, 100 };
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
     public class JsonBulkCopyTest
     {
         private readonly ITestOutputHelper _output;
@@ -34,6 +22,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         public JsonBulkCopyTest(ITestOutputHelper output)
         {
             _output = output;
+        }
+
+        public static IEnumerable<object[]> JsonBulkCopyTestData()
+        {
+            yield return new object[] { CommandBehavior.Default, false, 300, 100 };
+            yield return new object[] { CommandBehavior.Default, true, 300, 100 };
+            yield return new object[] { CommandBehavior.SequentialAccess, false, 300, 100 };
+            yield return new object[] { CommandBehavior.SequentialAccess, true, 300, 100 };
         }
 
         private void PopulateData(int noOfRecords, int rows)
@@ -270,7 +266,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
-        [ClassData(typeof(JsonBulkCopyTestData))]
+        [MemberData(
+            nameof(JsonBulkCopyTestData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
             PopulateData(jsonArrayElements, rows);
@@ -285,7 +290,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsJsonSupported))]
-        [ClassData(typeof(JsonBulkCopyTestData))]
+        [MemberData(
+            nameof(JsonBulkCopyTestData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
             PopulateData(jsonArrayElements, rows);
