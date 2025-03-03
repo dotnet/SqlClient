@@ -16,9 +16,6 @@ steps:
     packageType: runtime
     version: '8.x'
 
-- script: dotnet tool install --global powershell
-  displayName: 'Install PowerShell Core (pwsh)'
-
 - script: SET
   displayName: 'Print Environment Variables'
 
