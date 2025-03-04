@@ -1850,7 +1850,8 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadPlpBytes(ref byte[] buff, int offset, int len, out int totalBytesRead)
         {
-            return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, IsSnapshotAvailable());
+            ( _, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
+            return TryReadPlpBytes(ref buff, offset, len, out totalBytesRead, isStarting || isContinuing);
         }
         // Reads the requested number of bytes from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
@@ -1894,6 +1895,11 @@ namespace Microsoft.Data.SqlClient
                         totalBytesRead = offset;
                     }
                 }
+                else if (_snapshot != null)
+                {
+                    // legacy replay path perf optimization
+                    buff = (byte[])TryTakeSnapshotStorage();
+                }
 
                 if ((ulong)(buff?.Length ?? 0) != _longlen)
                 {
@@ -1925,7 +1931,6 @@ namespace Microsoft.Data.SqlClient
 
             while (bytesLeft > 0)
             {
-                bool stored = false;
                 int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
                 if (buff.Length < (offset + bytesToRead))
                 {
@@ -1951,20 +1956,15 @@ namespace Microsoft.Data.SqlClient
                         // a partial read has happened so store the target buffer in the snapshot
                         // so it can be re-used when another packet arrives and we read again
                         SetSnapshotStorage(buff);
+                        SetSnapshotDataSize(bytesRead);
+                        
+                    }
+                    else if (_snapshot != null)
+                    {
+                        // legacy replay path perf optimization
+                        SetSnapshotStorage(buff);
                     }
                     return result;
-                }
-                else
-                {
-                    if (writeDataSizeToSnapshot)
-                    {
-                        SetSnapshotStorage(buff);
-                        if (_snapshot.ContinueEnabled)
-                        {
-                            SetSnapshotDataSize(bytesRead);
-                            stored = true;
-                        }
-                    }
                 }
 
                 if (_longlenleft == 0)
@@ -1973,9 +1973,18 @@ namespace Microsoft.Data.SqlClient
                     result = TryReadPlpLength(false, out _);
                     if (result != TdsOperationStatus.Done)
                     {
-                        if (result == TdsOperationStatus.NeedMoreData && writeDataSizeToSnapshot && !stored)
+                        if (result == TdsOperationStatus.NeedMoreData)
                         {
-                            SetSnapshotDataSize(bytesRead);
+                            if (writeDataSizeToSnapshot)
+                            {
+                                SetSnapshotStorage(buff);
+                                SetSnapshotDataSize(bytesRead);
+                            }
+                            else if (_snapshot != null)
+                            {
+                                // legacy replay path perf optimization
+                                SetSnapshotStorage(buff);
+                            }
                         }
                         return result;
                     }
@@ -2888,7 +2897,7 @@ namespace Microsoft.Data.SqlClient
 
         internal object TryTakeSnapshotStorage()
         {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "should not access snapshot accessor functions without first checking that the snapshot is present");
+            Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is present");
             object buffer = null;
             if (_snapshot != null)
             {
@@ -2900,7 +2909,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetSnapshotStorage(object buffer)
         {
-            Debug.Assert(_snapshot != null && _snapshot.ContinueEnabled, "should not access snapshot accessor functions without first checking that the snapshot is available");
+            Debug.Assert(_snapshot != null, "should not access snapshot accessor functions without first checking that the snapshot is available");
             Debug.Assert(_snapshot._storage == null, "should not overwrite snapshot stored buffer");
             if (_snapshot != null)
             {
