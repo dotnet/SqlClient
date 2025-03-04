@@ -6970,7 +6970,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (isContinuing || isStarting)
                 {
-                    temp = (byte[])stateObj.TryTakeSnapshotStorage();
+                    temp = stateObj.TryTakeSnapshotStorage() as byte[];
                     Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
                 }
                 if (temp != null)
@@ -13458,7 +13458,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (isContinuing || isStarting)
                 {
-                    temp = (char[])stateObj.TryTakeSnapshotStorage();
+                    temp = stateObj.TryTakeSnapshotStorage() as char[];
                     Debug.Assert(temp == null || length == int.MaxValue || temp.Length == length, "stored buffer length must be null or must have been created with the correct length");
                 }
                 if (temp != null)
