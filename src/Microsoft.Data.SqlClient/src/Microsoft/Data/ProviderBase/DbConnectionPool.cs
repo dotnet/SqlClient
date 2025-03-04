@@ -9,8 +9,6 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
@@ -362,17 +360,17 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        private const int MAX_Q_SIZE = (int)0x00100000;
+        private const int MAX_Q_SIZE = 0x00100000;
 
         // The order of these is important; we want the WaitAny call to be signaled
         // for a free object before a creation signal.  Only the index first signaled
         // object is returned from the WaitAny call.
-        private const int SEMAPHORE_HANDLE = (int)0x0;
-        private const int ERROR_HANDLE = (int)0x1;
-        private const int CREATION_HANDLE = (int)0x2;
-        private const int BOGUS_HANDLE = (int)0x3;
+        private const int SEMAPHORE_HANDLE = 0x0;
+        private const int ERROR_HANDLE = 0x1;
+        private const int CREATION_HANDLE = 0x2;
+        private const int BOGUS_HANDLE = 0x3;
 
-        private const int WAIT_ABANDONED = (int)0x80;
+        private const int WAIT_ABANDONED = 0x80;
 
         private const int ERROR_WAIT_DEFAULT = 5 * 1000; // 5 seconds
 
@@ -511,7 +509,7 @@ namespace Microsoft.Data.ProviderBase
                 if (totalObjects < MinPoolSize)
                     return true;
 
-                int freeObjects = (_stackNew.Count + _stackOld.Count);
+                int freeObjects = _stackNew.Count + _stackOld.Count;
                 int waitingRequests = _waitCount;
                 bool needToReplenish = (freeObjects < waitingRequests) || ((freeObjects == waitingRequests) && (totalObjects > 1));
 
@@ -606,7 +604,7 @@ namespace Microsoft.Data.ProviderBase
 
             // Destroy free objects that put us above MinPoolSize from old stack.
             while (Count > MinPoolSize)
-            { 
+            {
                 // While above MinPoolSize...
                 if (_waitHandles.PoolSemaphore.WaitOne(0, false))
                 {
@@ -1429,17 +1427,17 @@ namespace Microsoft.Data.ProviderBase
                                 }
                                 break;
 
-                            case (WAIT_ABANDONED + SEMAPHORE_HANDLE):
+                            case WAIT_ABANDONED + SEMAPHORE_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Semaphore handle abandonded.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(SEMAPHORE_HANDLE, _waitHandles.PoolSemaphore);
 
-                            case (WAIT_ABANDONED + ERROR_HANDLE):
+                            case WAIT_ABANDONED + ERROR_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Error handle abandonded.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(ERROR_HANDLE, _waitHandles.ErrorEvent);
 
-                            case (WAIT_ABANDONED + CREATION_HANDLE):
+                            case WAIT_ABANDONED + CREATION_HANDLE:
                                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Creation handle abandoned.", ObjectID);
                                 Interlocked.Decrement(ref _waitCount);
                                 throw new AbandonedMutexException(CREATION_HANDLE, _waitHandles.CreationSemaphore);
@@ -1561,7 +1559,7 @@ namespace Microsoft.Data.ProviderBase
                 PerformanceCounters.NumberOfFreeConnections.Decrement();
 #endif
             }
-            return (obj);
+            return obj;
         }
 
         private DbConnectionInternal GetFromTransactedPool(out Transaction transaction)

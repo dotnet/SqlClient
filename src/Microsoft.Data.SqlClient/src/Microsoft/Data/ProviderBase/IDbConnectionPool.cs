@@ -24,6 +24,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
+        #region Abstract Properties
         internal abstract int Count
         {
             get;
@@ -84,7 +85,9 @@ namespace Microsoft.Data.ProviderBase
         {
             get;
         }
+        #endregion
 
+        #region Abstract Methods
         internal abstract void Clear();
 
         internal abstract void DestroyObject(DbConnectionInternal obj);
@@ -104,7 +107,6 @@ namespace Microsoft.Data.ProviderBase
         internal abstract void Shutdown();
 
         internal abstract void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject);
-
-
+        #endregion
     }
 }
