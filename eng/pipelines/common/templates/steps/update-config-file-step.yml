@@ -126,7 +126,7 @@ parameters:
 
 steps:
 # All properties should be added here, and this template should be used for any manipulation of the config.json file.
-- powershell: |
+- pwsh: |
     $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
     foreach ($p in $jdata)
     {
@@ -186,7 +186,7 @@ steps:
   displayName: 'Update config.json'
 
 - ${{ if eq(parameters.debug, true) }}:
-  - powershell: |
+  - pwsh: |
       $jdata = Get-Content -Raw "config.json" | ConvertFrom-Json
       foreach ($p in $jdata)
       {
