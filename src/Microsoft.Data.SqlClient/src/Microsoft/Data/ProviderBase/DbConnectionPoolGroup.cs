@@ -187,7 +187,7 @@ namespace Microsoft.Data.ProviderBase
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
                                 DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
-                                DbConnectionPool newPool = new(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                DbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
 
                                 if (MarkPoolGroupAsActive())
                                 {

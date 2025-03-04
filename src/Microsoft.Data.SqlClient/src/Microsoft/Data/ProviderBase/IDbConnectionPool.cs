@@ -11,7 +11,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
 {
-    internal abstract class IDbConnectionPool
+    internal abstract class DbConnectionPool
     {
         private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
@@ -22,6 +22,13 @@ namespace Microsoft.Data.ProviderBase
             {
                 return _objectID;
             }
+        }
+
+        private DbConnectionPoolState _state;
+        internal DbConnectionPoolState State
+        {
+            get => _state;
+            set => _state = value;
         }
 
         #region Abstract Properties

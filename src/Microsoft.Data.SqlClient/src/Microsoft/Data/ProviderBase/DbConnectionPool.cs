@@ -15,18 +15,12 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using static Microsoft.Data.ProviderBase.DbConnectionPoolState;
 
 namespace Microsoft.Data.ProviderBase
 {
-    internal sealed class DbConnectionPool : IDbConnectionPool
+    internal sealed class WaitHandleDbConnectionPool : DbConnectionPool
     {
-        private enum State
-        {
-            Initializing,
-            Running,
-            ShuttingDown,
-        }
-
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
@@ -390,8 +384,6 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         private readonly ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> _pooledDbAuthenticationContexts;
 
-        private State _state;
-
         private readonly ConcurrentStack<DbConnectionInternal> _stackOld = new ConcurrentStack<DbConnectionInternal>();
         private readonly ConcurrentStack<DbConnectionInternal> _stackNew = new ConcurrentStack<DbConnectionInternal>();
 
@@ -417,7 +409,7 @@ namespace Microsoft.Data.ProviderBase
         private int _totalObjects;
 
         // only created by DbConnectionPoolGroup.GetConnectionPool
-        internal DbConnectionPool(
+        internal WaitHandleDbConnectionPool(
                             DbConnectionFactory connectionFactory,
                             DbConnectionPoolGroup connectionPoolGroup,
                             DbConnectionPoolIdentity identity,
@@ -430,7 +422,7 @@ namespace Microsoft.Data.ProviderBase
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
 
-            _state = State.Initializing;
+            State = Initializing;
 
             lock (s_random)
             {
@@ -457,7 +449,7 @@ namespace Microsoft.Data.ProviderBase
             _transactedConnectionPool = new TransactedConnectionPool(this);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
-            _state = State.Running;
+            State = Running;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DbConnectionPool|RES|CPOOL> {0}, Constructed.", ObjectID);
 
             //_cleanupTimer & QueuePoolCreateRequest is delayed until DbConnectionPoolGroup calls
@@ -498,7 +490,7 @@ namespace Microsoft.Data.ProviderBase
         {
             get
             {
-                if (State.Running != _state) // Don't allow connection create when not running.
+                if (State != Running) // Don't allow connection create when not running.
                     return false;
 
                 int totalObjects = Count;
@@ -524,7 +516,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal override bool IsRunning
         {
-            get { return State.Running == _state; }
+            get { return State == Running; }
         }
 
         private int MaxPoolSize
@@ -812,20 +804,6 @@ namespace Microsoft.Data.ProviderBase
 #endif
                 }
 
-                // If the old connection belonged to another pool, we need to remove it from that
-                if (oldConnection != null)
-                {
-                    var oldConnectionPool = oldConnection.Pool;
-                    if (oldConnectionPool != null && oldConnectionPool != this)
-                    {
-                        Debug.Assert(oldConnectionPool._state == State.ShuttingDown, "Old connections pool should be shutting down");
-                        lock (oldConnectionPool._objectList)
-                        {
-                            oldConnectionPool._objectList.Remove(oldConnection);
-                            oldConnectionPool._totalObjects = oldConnectionPool._objectList.Count;
-                        }
-                    }
-                }
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", ObjectID, newObj?.ObjectID);
 
                 // Reset the error wait:
@@ -913,7 +891,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 // NOTE: constructor should ensure that current state cannot be State.Initializing, so it can only
                 //   be State.Running or State.ShuttingDown
-                Debug.Assert(_state == State.Running || _state == State.ShuttingDown);
+                Debug.Assert(State == Running || State == ShuttingDown);
 
                 lock (obj)
                 {
@@ -923,7 +901,7 @@ namespace Microsoft.Data.ProviderBase
                     // transaction object will ensure that it is owned (not lost),
                     // and it will be certain to put it back into the pool.                    
 
-                    if (_state == State.ShuttingDown)
+                    if (State == ShuttingDown)
                     {
                         if (obj.IsTransactionRoot)
                         {
@@ -1237,7 +1215,7 @@ namespace Microsoft.Data.ProviderBase
                 allowCreate = true;
             }
 
-            if (_state != State.Running)
+            if (State != Running)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, DbConnectionInternal State != Running.", ObjectID);
                 connection = null;
@@ -1615,7 +1593,7 @@ namespace Microsoft.Data.ProviderBase
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {0}", ObjectID);
             try
             {
-                if (State.Running == _state)
+                if (State == Running)
                 {
                     // in case WaitForPendingOpen ever failed with no subsequent OpenAsync calls,
                     // start it back up again
@@ -1804,7 +1782,7 @@ namespace Microsoft.Data.ProviderBase
             // done and all transactions are ended.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", ObjectID, obj.ObjectID);
 
-            if (_state == State.Running && obj.CanBePooled)
+            if (State == Running && obj.CanBePooled)
             {
                 PutNewObject(obj);
             }
@@ -1817,7 +1795,7 @@ namespace Microsoft.Data.ProviderBase
 
         private void QueuePoolCreateRequest()
         {
-            if (State.Running == _state)
+            if (State == Running)
             {
                 // Make sure we're at quota by posting a callback to the threadpool.
                 ThreadPool.QueueUserWorkItem(_poolCreateRequest);
@@ -1908,7 +1886,7 @@ namespace Microsoft.Data.ProviderBase
         internal override void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
-            _state = State.ShuttingDown;
+            State = ShuttingDown;
 
             // deactivate timer callbacks
             Timer t = _cleanupTimer;

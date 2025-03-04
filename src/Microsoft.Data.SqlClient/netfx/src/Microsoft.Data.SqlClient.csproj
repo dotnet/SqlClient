@@ -271,6 +271,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolState.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolState.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
