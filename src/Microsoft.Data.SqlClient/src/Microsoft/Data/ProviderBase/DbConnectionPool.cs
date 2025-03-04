@@ -11,7 +11,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.ProviderBase
 {
-    internal abstract class IDbConnectionPool
+    internal abstract class DbConnectionPool
     {
         private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);

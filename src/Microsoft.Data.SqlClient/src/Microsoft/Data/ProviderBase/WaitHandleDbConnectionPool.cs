@@ -19,7 +19,7 @@ using static Microsoft.Data.ProviderBase.DbConnectionPoolState;
 
 namespace Microsoft.Data.ProviderBase
 {
-    internal sealed class WaitHandleDbConnectionPool : IDbConnectionPool
+    internal sealed class WaitHandleDbConnectionPool : DbConnectionPool
     {
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
@@ -60,12 +60,12 @@ namespace Microsoft.Data.ProviderBase
         {
             Dictionary<Transaction, TransactedConnectionList> _transactedCxns;
 
-            IDbConnectionPool _pool;
+            DbConnectionPool _pool;
 
             private static int _objectTypeCount; // EventSource Counter
             internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-            internal TransactedConnectionPool(IDbConnectionPool pool)
+            internal TransactedConnectionPool(DbConnectionPool pool)
             {
                 Debug.Assert(pool != null, "null pool?");
 
@@ -82,7 +82,7 @@ namespace Microsoft.Data.ProviderBase
                 }
             }
 
-            internal IDbConnectionPool Pool
+            internal DbConnectionPool Pool
             {
                 get
                 {
