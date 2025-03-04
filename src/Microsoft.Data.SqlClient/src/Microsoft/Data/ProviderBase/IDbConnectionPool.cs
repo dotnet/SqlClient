@@ -1,0 +1,110 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Collections.Concurrent;
+using System.Data.Common;
+using System.Threading.Tasks;
+using System.Transactions;
+using Microsoft.Data.Common;
+
+namespace Microsoft.Data.ProviderBase
+{
+    internal abstract class IDbConnectionPool
+    {
+        private static int _objectTypeCount; // EventSource counter
+        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+
+        internal int ObjectID
+        {
+            get
+            {
+                return _objectID;
+            }
+        }
+
+        internal abstract int Count
+        {
+            get;
+        }
+
+        internal abstract DbConnectionFactory ConnectionFactory
+        {
+            get;
+        }
+
+        internal abstract bool ErrorOccurred
+        {
+            get;
+        }
+
+        internal abstract TimeSpan LoadBalanceTimeout
+        {
+            get;
+        }
+
+        internal abstract DbConnectionPoolIdentity Identity
+        {
+            get;
+        }
+
+        internal abstract bool IsRunning
+        {
+            get;
+        }
+
+#if NETFRAMEWORK
+        internal abstract DbConnectionPoolCounters PerformanceCounters
+        {
+            get;
+        }
+#endif
+        internal abstract DbConnectionPoolGroup PoolGroup
+        {
+            get;
+        }
+
+        internal abstract DbConnectionPoolGroupOptions PoolGroupOptions
+        {
+            get;
+        }
+
+        internal abstract DbConnectionPoolProviderInfo ProviderInfo
+        {
+            get;
+        }
+
+        internal abstract ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts
+        {
+            get;
+        }
+
+        internal abstract bool UseLoadBalancing
+        {
+            get;
+        }
+
+        internal abstract void Clear();
+
+        internal abstract void DestroyObject(DbConnectionInternal obj);
+
+        internal abstract bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection);
+
+        internal abstract DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);
+
+        internal abstract void PutNewObject(DbConnectionInternal obj);
+
+        internal abstract void PutObject(DbConnectionInternal obj, object owningObject);
+
+        internal abstract void PutObjectFromTransactedPool(DbConnectionInternal obj);
+
+        internal abstract void Startup();
+
+        internal abstract void Shutdown();
+
+        internal abstract void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject);
+
+
+    }
+}

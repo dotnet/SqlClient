@@ -77,6 +77,9 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\IDbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\IDbConnectionPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
     </Compile>
