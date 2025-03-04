@@ -278,7 +278,7 @@ stages:
           pool: ${{parameters.defaultPoolName }} 
           images: 
             Win22_Azure_Sql: ADO-MMS22-SQL19
-            win11_Azure_Sql: ADO-CI-Win11
+            win11_Azure_Sql: ADO-CI-Win11-Paul
           TargetFrameworks: ${{parameters.targetFrameworks }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
