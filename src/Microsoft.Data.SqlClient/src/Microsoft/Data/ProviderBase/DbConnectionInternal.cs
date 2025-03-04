@@ -156,7 +156,7 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// The pooler that the connection came from (Pooled connections only)
         /// </summary>
-        internal DbConnectionPool Pool { get; private set; }
+        internal IDbConnectionPool Pool { get; private set; }
 
         public abstract string ServerVersion { get; }
 
@@ -400,7 +400,7 @@ namespace Microsoft.Data.ProviderBase
         {
             DetachTransaction(transaction, false);
 
-            DbConnectionPool pool = Pool;
+            IDbConnectionPool pool = Pool;
             pool?.TransactionEnded(transaction, this);
         }
 
@@ -461,7 +461,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         PrepareForCloseConnection();
 
-                        DbConnectionPool connectionPool = Pool;
+                        IDbConnectionPool connectionPool = Pool;
 
                         // Detach from enlisted transactions that are no longer active on close
                         DetachCurrentTransactionIfEnded();
@@ -585,7 +585,7 @@ namespace Microsoft.Data.ProviderBase
 
                 Deactivate(); // call it one more time just in case
 
-                DbConnectionPool pool = Pool;
+                IDbConnectionPool pool = Pool;
 
                 if (pool == null)
                 {
@@ -741,7 +741,7 @@ namespace Microsoft.Data.ProviderBase
         /// Used by DbConnectionFactory to indicate that this object IS part of a connection pool.
         /// </summary>
         /// <param name="connectionPool"></param>
-        internal void MakePooledConnection(DbConnectionPool connectionPool)
+        internal void MakePooledConnection(IDbConnectionPool connectionPool)
         {
             _createTime = DateTime.UtcNow;
             Pool = connectionPool;

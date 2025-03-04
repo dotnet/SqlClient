@@ -80,8 +80,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\IDbConnectionPool.cs">
       <Link>Microsoft\Data\ProviderBase\IDbConnectionPool.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\WaitHandleDbConnectionPool.cs">
+      <Link>Microsoft\Data\ProviderBase\WaitHandleDbConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolState.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolState.cs</Link>

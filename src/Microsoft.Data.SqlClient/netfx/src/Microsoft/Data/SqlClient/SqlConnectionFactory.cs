@@ -32,12 +32,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;

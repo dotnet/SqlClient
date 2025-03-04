@@ -34,7 +34,7 @@ namespace Microsoft.Data.ProviderBase
         private readonly DbConnectionOptions _connectionOptions;
         private readonly DbConnectionPoolKey _poolKey;
         private readonly DbConnectionPoolGroupOptions _poolGroupOptions;
-        private ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool> _poolCollection;
+        private ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool> _poolCollection;
 
         private int _state;          // see PoolGroupState* below
 
@@ -64,7 +64,7 @@ namespace Microsoft.Data.ProviderBase
             // HybridDictionary does not create any sub-objects until add
             // so it is safe to use for non-pooled connection as long as
             // we check _poolGroupOptions first
-            _poolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>();
+            _poolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool>();
             _state = PoolGroupStateActive;
         }
 
@@ -113,22 +113,22 @@ namespace Microsoft.Data.ProviderBase
             // will return the number of connections in the group after clearing has finished
 
             // First, note the old collection and create a new collection to be used
-            ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool> oldPoolCollection = null;
+            ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool> oldPoolCollection = null;
             lock (this)
             {
                 if (_poolCollection.Count > 0)
                 {
                     oldPoolCollection = _poolCollection;
-                    _poolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>();
+                    _poolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool>();
                 }
             }
 
             // Then, if a new collection was created, release the pools from the old collection
             if (oldPoolCollection != null)
             {
-                foreach (KeyValuePair<DbConnectionPoolIdentity, DbConnectionPool> entry in oldPoolCollection)
+                foreach (KeyValuePair<DbConnectionPoolIdentity, IDbConnectionPool> entry in oldPoolCollection)
                 {
-                    DbConnectionPool pool = entry.Value;
+                    IDbConnectionPool pool = entry.Value;
                     if (pool != null)
                     {
                         DbConnectionFactory connectionFactory = pool.ConnectionFactory;
@@ -144,7 +144,7 @@ namespace Microsoft.Data.ProviderBase
             return _poolCollection.Count;
         }
 
-        internal DbConnectionPool GetConnectionPool(DbConnectionFactory connectionFactory)
+        internal IDbConnectionPool GetConnectionPool(DbConnectionFactory connectionFactory)
         {
             // When this method returns null it indicates that the connection
             // factory should not use pooling.
@@ -152,7 +152,7 @@ namespace Microsoft.Data.ProviderBase
             // We don't support connection pooling on Win9x;
             // PoolGroupOptions will only be null when we're not supposed to pool
             // connections.
-            DbConnectionPool pool = null;
+            IDbConnectionPool pool = null;
             if (_poolGroupOptions != null)
             {
 #if NETFRAMEWORK
@@ -187,7 +187,7 @@ namespace Microsoft.Data.ProviderBase
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
                                 DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
-                                DbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                IDbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
 
                                 if (MarkPoolGroupAsActive())
                                 {
@@ -257,11 +257,11 @@ namespace Microsoft.Data.ProviderBase
             {
                 if (_poolCollection.Count > 0)
                 {
-                    var newPoolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>();
+                    var newPoolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, IDbConnectionPool>();
 
-                    foreach (KeyValuePair<DbConnectionPoolIdentity, DbConnectionPool> entry in _poolCollection)
+                    foreach (KeyValuePair<DbConnectionPoolIdentity, IDbConnectionPool> entry in _poolCollection)
                     {
-                        DbConnectionPool pool = entry.Value;
+                        IDbConnectionPool pool = entry.Value;
                         if (pool != null)
                         {
                             // Actually prune the pool if there are no connections in the pool and no errors occurred.
