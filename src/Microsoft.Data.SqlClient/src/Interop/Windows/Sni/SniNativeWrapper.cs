@@ -5,14 +5,12 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 
 #if NETFRAMEWORK
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security;
