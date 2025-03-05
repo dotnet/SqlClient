@@ -1257,6 +1257,10 @@ namespace Microsoft.Data.SqlClient
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
         }
+        internal static Exception BulkLoadNonMatchingColumnName(IEnumerable<string> columns)
+        {
+            return BulkLoadNonMatchingColumnName(String.Join(",", columns), null);
+        }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
