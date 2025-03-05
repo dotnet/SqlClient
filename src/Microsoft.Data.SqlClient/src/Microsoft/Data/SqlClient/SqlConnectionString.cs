@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -14,6 +13,7 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
             _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
@@ -396,12 +396,12 @@ namespace Microsoft.Data.SqlClient
             if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
-                Hashtable netlib = NetlibMapping();
+                Dictionary<string, string> netlib = NetlibMapping();
                 if (!netlib.ContainsKey(networkLibrary))
                 {
                     throw ADP.InvalidConnectionOptionValue(KEY.Network_Library);
                 }
-                _networkLibrary = (string)netlib[networkLibrary];
+                _networkLibrary = netlib[networkLibrary];
             }
             else
             {
@@ -628,7 +628,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = connectionOptions._contextConnection;
             _currentLanguage = connectionOptions._currentLanguage;
             _dataSource = dataSource;
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = connectionOptions._failoverPartner;
             _initialCatalog = connectionOptions._initialCatalog;
             _password = connectionOptions._password;
@@ -1098,14 +1098,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal Hashtable NetlibMapping()
+        static internal Dictionary<string, string> NetlibMapping()
         {
             const int NetLibCount = 8;
 
-            Hashtable hash = s_netlibMapping;
+            Dictionary<string, string> hash = s_netlibMapping;
             if (hash == null)
             {
-                hash = new Hashtable(NetLibCount)
+                hash = new Dictionary<string, string>(NetLibCount)
                 {
                     { NETLIB.TCPIP, TdsEnums.TCP },
                     { NETLIB.NamedPipes, TdsEnums.NP },
@@ -1147,7 +1147,7 @@ namespace Microsoft.Data.SqlClient
             internal const string VIA = "dbmsgnet";
         }
 
-        private static Hashtable s_netlibMapping;
+        private static Dictionary<string, string> s_netlibMapping;
 
 #if NETFRAMEWORK
         protected internal override PermissionSet CreatePermissionSet()

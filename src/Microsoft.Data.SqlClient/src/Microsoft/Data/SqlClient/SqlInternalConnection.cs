@@ -237,50 +237,33 @@ namespace Microsoft.Data.SqlClient
 #endif
             try
             {
-#if NETFRAMEWORK
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                #if NETFRAMEWORK
+                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
+                #endif
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                statistics = SqlStatistics.StartTimer(Connection.Statistics);
+
+                #if NETFRAMEWORK
+                SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+                #endif
+
+                ValidateConnectionForExecute(null);
+
+                if (HasLocalTransactionFromAPI)
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
-                    bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-#endif // NETFRAMEWORK
-                    statistics = SqlStatistics.StartTimer(Connection.Statistics);
-
-#if NETFRAMEWORK
-                    SqlConnection.ExecutePermission.Demand(); // MDAC 81476
-#endif // NETFRAMEWORK
-                    ValidateConnectionForExecute(null);
-
-                    if (HasLocalTransactionFromAPI)
-                    {
-                        throw ADP.ParallelTransactionsNotSupported(Connection);
-                    }
-
-                    if (iso == System.Data.IsolationLevel.Unspecified)
-                    {
-                        iso = System.Data.IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
-                    }
-
-                    SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
-                    transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
-                    ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
-                    transaction.InternalTransaction.RestoreBrokenConnection = false;
-                    return transaction;
-#if NETFRAMEWORK
+                    throw ADP.ParallelTransactionsNotSupported(Connection);
                 }
-#if DEBUG
-                finally
+
+                if (iso == System.Data.IsolationLevel.Unspecified)
                 {
-                    tdsReliabilitySection.Stop();
+                    iso = System.Data.IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
                 }
-#endif // DEBUG
-#endif // NETFRAMEWORK
+
+                SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
+                transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
+                ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
+                transaction.InternalTransaction.RestoreBrokenConnection = false;
+                return transaction;
             }
             catch (OutOfMemoryException e)
             {
@@ -346,36 +329,18 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
 
-#if NETFRAMEWORK
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                #if NETFRAMEWORK
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+                #endif
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+                if (referenceCollection != null)
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
-#endif // NETFRAMEWORK
-                    SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-                    if (referenceCollection != null)
-                    {
-                        referenceCollection.Deactivate();
-                    }
+                    referenceCollection.Deactivate();
+                }
 
-                    // Invoke subclass-specific deactivation logic
-                    InternalDeactivate();
-#if NETFRAMEWORK
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif // DEBUG
-#endif // NETFRAMEWORK
+                // Invoke subclass-specific deactivation logic
+                InternalDeactivate();
             }
             catch (OutOfMemoryException)
             {
@@ -684,25 +649,8 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
-                    bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-                    Enlist(transaction);
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif // DEBUG
+                bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
+                Enlist(transaction);
             }
 #else
             try

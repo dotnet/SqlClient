@@ -4,11 +4,14 @@
 
 using System;
 
-namespace Microsoft.Data
+namespace Microsoft.Data.SqlClient.LocalDb
 {
-    internal static partial class LocalDBAPI
+    internal static class LocalDbApi
     {
-        internal static string GetLocalDBMessage(int hrCode) =>
+        internal static string GetLocalDbInstanceNameFromServerName(string serverName) =>
+            null;
+
+        internal static string GetLocalDbMessage(int hrCode) =>
             throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // LocalDB is not available for Unix and hence it cannot be supported.
     }
 }

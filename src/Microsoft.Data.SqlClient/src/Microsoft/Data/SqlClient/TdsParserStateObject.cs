@@ -1023,7 +1023,6 @@ namespace Microsoft.Data.SqlClient
         // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
         internal TdsOperationStatus TryPrepareBuffer()
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_inBuff != null, "packet buffer should not be null!");
 
             // Header spans packets, or we haven't read the header yet - process header
@@ -1207,7 +1206,6 @@ namespace Microsoft.Data.SqlClient
         // Every time you call this method increment the offset and decrease len by the value of totalRead
         public TdsOperationStatus TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
 
 #if DEBUG
@@ -1267,7 +1265,6 @@ namespace Microsoft.Data.SqlClient
         // before the byte is returned.
         internal TdsOperationStatus TryReadByte(out byte value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadByte");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_inBytesUsed >= 0 && _inBytesUsed <= _inBytesRead, "ERROR - TDSParser: _inBytesUsed < 0 or _inBytesUsed > _inBytesRead");
             value = 0;
 
@@ -1374,7 +1371,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadInt32(out int value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt32");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
@@ -1405,7 +1401,6 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without snapshot
         internal TdsOperationStatus TryReadInt64(out long value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadInt64");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 TdsOperationStatus result = TryPrepareBuffer();
@@ -1487,7 +1482,6 @@ namespace Microsoft.Data.SqlClient
         // This method is safe to call when doing async without replay
         internal TdsOperationStatus TryReadUInt32(out uint value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadUInt32");  // you need to setup for a thread abort somewhere before you call this method
             if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
             {
                 TdsOperationStatus result = TryPrepareBuffer();
@@ -1538,7 +1532,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadSingle(out float value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSingle");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
@@ -1573,7 +1566,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadDouble(out double value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadDouble");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             if (((_inBytesUsed + 8) > _inBytesRead) || (_inBytesPacket < 8))
             {
@@ -1608,7 +1600,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadString(int length, out string value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadString");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
             int cBytes = length << 1;
             byte[] buf;
@@ -1650,7 +1641,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadStringWithEncoding(int length, System.Text.Encoding encoding, bool isPlp, out string value)
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadStringWithEncoding");  // you need to setup for a thread abort somewhere before you call this method
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
             if (encoding == null)
@@ -1989,8 +1979,6 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsOperationStatus TryReadNetworkPacket()
         {
-            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
-
 #if DEBUG
             Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
 #endif
@@ -2093,8 +2081,6 @@ namespace Microsoft.Data.SqlClient
             bool shouldDecrement = false;
             try
             {
-                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
-
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
@@ -2547,8 +2533,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
-
                     SniContext = SniContext.Snix_Connect;
 
                     uint error = CheckConnection();
@@ -2572,6 +2556,143 @@ namespace Microsoft.Data.SqlClient
             }
 
             return isAlive;
+        }
+
+        internal Task WriteByteSpan(ReadOnlySpan<byte> span, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
+        {
+            return WriteBytes(span, span.Length, 0, canAccumulate, completion);
+        }
+
+        internal Task WriteByteArray(byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
+        {
+            return WriteBytes(ReadOnlySpan<byte>.Empty, len, offsetBuffer, canAccumulate, completion, b);
+        }
+
+        //
+        // Takes a span or a byte array and writes it to the buffer
+        // If you pass in a span and a null array then the span wil be used.
+        // If you pass in a non-null array then the array will be used and the span is ignored.
+        // if the span cannot be written into the current packet then the remaining contents of the span are copied to a
+        //  new heap allocated array that will used to callback into the method to continue the write operation.
+        private Task WriteBytes(ReadOnlySpan<byte> b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null, byte[] array = null)
+        {
+            if (array != null)
+            {
+                b = new ReadOnlySpan<byte>(array, offsetBuffer, len);
+            }
+            try
+            {
+                bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
+                Debug.Assert(async || _asyncWriteCount == 0);
+                // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?
+                // would prefer to do something like:
+                //
+                // if (len > what we have room for || len > out buf)
+                //   flush buffer
+                //   UnsafeNativeMethods.Write(b)
+                //
+
+                int offset = offsetBuffer;
+
+                Debug.Assert(b.Length >= len, "Invalid length sent to WriteBytes()!");
+
+                // loop through and write the entire array
+                do
+                {
+                    if ((_outBytesUsed + len) > _outBuff.Length)
+                    {
+                        // If the remainder of the data won't fit into the buffer, then we have to put
+                        // whatever we can into the buffer, and flush that so we can then put more into
+                        // the buffer on the next loop of the while.
+
+                        int remainder = _outBuff.Length - _outBytesUsed;
+
+                        // write the remainder
+                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, remainder);
+                        ReadOnlySpan<byte> copyFrom = b.Slice(0, remainder);
+
+                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length{copyFrom.Length:D} should be the same");
+
+                        copyFrom.CopyTo(copyTo);
+
+                        offset += remainder;
+                        _outBytesUsed += remainder;
+                        len -= remainder;
+                        b = b.Slice(remainder, len);
+
+                        Task packetTask = WritePacket(TdsEnums.SOFTFLUSH, canAccumulate);
+
+                        if (packetTask != null)
+                        {
+                            Task task = null;
+                            Debug.Assert(async, "Returned task in sync mode");
+                            if (completion == null)
+                            {
+                                completion = new TaskCompletionSource<object>();
+                                task = completion.Task; // we only care about return from topmost call, so do not access Task property in other cases
+                            }
+
+                            if (array == null)
+                            {
+                                byte[] tempArray = new byte[len];
+                                Span<byte> copyTempTo = tempArray.AsSpan();
+
+                                Debug.Assert(copyTempTo.Length == b.Length, $"copyTempTo.Length:{copyTempTo.Length} and copyTempFrom.Length:{b.Length:D} should be the same");
+
+                                b.CopyTo(copyTempTo);
+                                array = tempArray;
+                                offset = 0;
+                            }
+
+                            WriteBytesSetupContinuation(array, len, completion, offset, packetTask);
+                            return task;
+                        }
+                    }
+                    else
+                    {
+                        //((stateObj._outBytesUsed + len) <= stateObj._outBuff.Length )
+                        // Else the remainder of the string will fit into the buffer, so copy it into the
+                        // buffer and then break out of the loop.
+
+                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, len);
+                        ReadOnlySpan<byte> copyFrom = b.Slice(0, len);
+
+                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length:{copyFrom.Length:D} should be the same");
+
+                        copyFrom.CopyTo(copyTo);
+
+                        // handle out buffer bytes used counter
+                        _outBytesUsed += len;
+                        break;
+                    }
+                } while (len > 0);
+
+                if (completion != null)
+                {
+                    completion.SetResult(null);
+                }
+                return null;
+            }
+            catch (Exception e)
+            {
+                if (completion != null)
+                {
+                    completion.SetException(e);
+                    return null;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        // This is in its own method to avoid always allocating the lambda in WriteBytes
+        private void WriteBytesSetupContinuation(byte[] array, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
+        {
+            AsyncHelper.ContinueTask(packetTask, completion,
+               onSuccess: () => WriteBytes(ReadOnlySpan<byte>.Empty, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion, array)
+           );
         }
 
         /// <summary>

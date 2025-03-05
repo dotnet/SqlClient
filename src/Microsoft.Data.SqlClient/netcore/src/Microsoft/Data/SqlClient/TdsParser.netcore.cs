@@ -21,27 +21,6 @@ namespace Microsoft.Data.SqlClient
             public Exception exception;
         }
 
-        internal struct ReliabilitySection
-        {
-            /// <summary>
-            /// This is a no-op in netcore version. Only needed for merging with netfx codebase.
-            /// </summary>
-            [Conditional("NETFRAMEWORK")]
-            internal static void Assert(string message)
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Start()
-            {
-            }
-
-            [Conditional("NETFRAMEWORK")]
-            internal void Stop()
-            {
-            }
-        }
-
         internal static void FillGuidBytes(Guid guid, Span<byte> buffer) => guid.TryWriteBytes(buffer);
 
         internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));

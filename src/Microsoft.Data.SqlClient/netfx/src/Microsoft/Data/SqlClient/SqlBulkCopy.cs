@@ -2059,58 +2059,40 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
+                Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
+                if (resultTask != null)
                 {
-                    tdsReliabilitySection.Start();
-#else   // !DEBUG
-                {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
-                    Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
-                    if (resultTask != null)
-                    {
-                        finishedSynchronously = false;
-                        return resultTask.ContinueWith(
-                            static (Task task, object state) =>
+                    finishedSynchronously = false;
+                    return resultTask.ContinueWith(
+                        static (Task task, object state) =>
+                        {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            try
                             {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                try
+                                sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                            }
+                            finally
+                            {
+                                sqlBulkCopy._isBulkCopyingInProgress = false;
+                                if (sqlBulkCopy._parser != null)
                                 {
-                                    sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                                    sqlBulkCopy._parser._asyncWrite = false;
                                 }
-                                finally
+                                if (sqlBulkCopy._parserLock != null)
                                 {
-                                    sqlBulkCopy._isBulkCopyingInProgress = false;
-                                    if (sqlBulkCopy._parser != null)
-                                    {
-                                        sqlBulkCopy._parser._asyncWrite = false;
-                                    }
-                                    if (sqlBulkCopy._parserLock != null)
-                                    {
-                                        sqlBulkCopy._parserLock.Release();
-                                        sqlBulkCopy._parserLock = null;
-                                    }
+                                    sqlBulkCopy._parserLock.Release();
+                                    sqlBulkCopy._parserLock = null;
                                 }
-                                return task;
-                            }, 
-                            state: this,
-                            scheduler: TaskScheduler.Default
-                        ).Unwrap();
-                    }
-                    return null;
+                            }
+                            return task;
+                        },
+                        state: this,
+                        scheduler: TaskScheduler.Default
+                    ).Unwrap();
                 }
-
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                return null;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2796,13 +2778,6 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
                 {
                     _parser._asyncWrite = false;
@@ -2815,13 +2790,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     CleanUpStateObject();
                 }
-#if DEBUG
-                }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (OutOfMemoryException)
             {
