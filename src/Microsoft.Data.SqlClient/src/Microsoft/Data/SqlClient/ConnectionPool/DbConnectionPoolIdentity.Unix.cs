@@ -2,12 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
-    internal enum DbConnectionPoolState
+    partial class DbConnectionPoolIdentity
     {
-        Initializing,
-        Running,
-        ShuttingDown,
+        internal static DbConnectionPoolIdentity GetCurrent()
+        {
+            return GetCurrentManaged();
+        }
     }
 }

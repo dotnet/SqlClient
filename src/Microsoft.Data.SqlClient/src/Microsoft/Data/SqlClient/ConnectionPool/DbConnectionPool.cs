@@ -8,8 +8,9 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal abstract class DbConnectionPool
     {

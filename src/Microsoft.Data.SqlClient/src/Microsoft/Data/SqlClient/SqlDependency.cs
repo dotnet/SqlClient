@@ -18,8 +18,8 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -17,8 +17,8 @@ using Microsoft.Data;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 // This class is the process wide dependency dispatcher.  It contains all connection listeners for the entire process and 
 // receives notifications on those connections to dispatch to the corresponding AppDomain dispatcher to notify the

@@ -14,10 +14,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
-using static Microsoft.Data.ProviderBase.DbConnectionPoolState;
+using Microsoft.Data.ProviderBase;
+using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal sealed class WaitHandleDbConnectionPool : DbConnectionPool
     {
