@@ -71,7 +71,6 @@
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <SystemTextJsonVersion>6.0.11</SystemTextJsonVersion>
     <SystemTextRegularExpressionsVersion>4.3.1</SystemTextRegularExpressionsVersion>
     <XunitVersion>2.6.3</XunitVersion>
     <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
