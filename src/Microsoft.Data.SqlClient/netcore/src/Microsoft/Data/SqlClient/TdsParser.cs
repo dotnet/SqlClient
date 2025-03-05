@@ -5556,6 +5556,12 @@ namespace Microsoft.Data.SqlClient
         {
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
+                if (stateObj.IsSnapshotContinuing())
+                {
+                    length = (ulong)stateObj.GetSnapshotStorageLength<byte>();
+                    isNull = length == 0;
+                    return TdsOperationStatus.Done;
+                }
                 //
                 // we don't care about TextPtrs, simply go after the data after it
                 //
