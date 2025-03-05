@@ -121,11 +121,10 @@ namespace Microsoft.Data.SqlClient
             // length in bytes
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
-            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
+            // Obtain the client interface name.
+            string clientInterfaceName = ClientInterface.Name;
 
             // add up variable-len portions (multiply by 2 for byte len of char strings)
-            //
             checked
             {
                 length += (rec.hostName.Length + rec.applicationName.Length +
