@@ -12,6 +12,7 @@ using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
