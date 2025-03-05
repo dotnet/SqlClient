@@ -101,6 +101,27 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
+  <!-- Avoid vulnerabilities in transitive packages. -->
+  <ItemGroup>
+    <!--
+      System.Net.Http 4.3.0:
+
+      https://github.com/advisories/GHSA-7jgj-8wvc-jh57
+    -->
+    <PackageReference Include="System.Net.Http" Version="$(SystemNetHttpVersion)" />
+    <!--
+      System.Text.Json 6.0.0:
+
+      https://github.com/advisories/GHSA-8g4q-xg66-9fp4
+    -->
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+    <!--
+      System.Text.RegularExpressions 4.3.0:
+
+      https://github.com/advisories/GHSA-cmhx-cq75-c4mj
+    -->
+    <PackageReference Include="System.Text.RegularExpressions" Version="$(SystemTextRegularExpressionsVersion)" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
   </ItemGroup>

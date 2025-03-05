@@ -66,10 +66,13 @@
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
     <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
+    <SystemNetHttpVersion>4.3.4</SystemNetHttpVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
+    <SystemTextJsonVersion>6.0.11</SystemTextJsonVersion>
+    <SystemTextRegularExpressionsVersion>4.3.1</SystemTextRegularExpressionsVersion>
     <XunitVersion>2.6.3</XunitVersion>
     <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
   </PropertyGroup>
