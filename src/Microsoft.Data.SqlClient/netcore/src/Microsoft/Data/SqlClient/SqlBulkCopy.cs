@@ -1988,8 +1988,13 @@ namespace Microsoft.Data.SqlClient
             _parserLock = internalConnection._parserLock;
             _parserLock.Wait(canReleaseFromAnyThread: _isAsyncBulkCopy);
 
+            TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                 WriteRowSourceToServerCommon(columnCount); // This is common in both sync and async
                 Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
                 if (resultTask != null)
@@ -2037,6 +2042,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _connection.Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             finally
@@ -2297,7 +2305,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         source.SetResult(null);
                     }
-                }
+                },
+                connectionToDoom: _connection.GetOpenTdsConnection()
            );
         }
 
@@ -2434,8 +2443,8 @@ namespace Microsoft.Data.SqlClient
                             resultTask = source.Task;
 
                             AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source)
-                                
+                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source),
+                                connectionToDoom: _connection.GetOpenTdsConnection()
                             );
                             return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
                         }
@@ -2459,12 +2468,14 @@ namespace Microsoft.Data.SqlClient
                                 else
                                 {
                                     AsyncHelper.ContinueTaskWithState(readTask, source, sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source)
+                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source),
+                                        connectionToDoom: _connection.GetOpenTdsConnection()
                                     );
                                 }
-                           }
-                       );
-                       return resultTask;
+                            },
+                            connectionToDoom: _connection.GetOpenTdsConnection()
+                        );
+                        return resultTask;
                     }
                 }
 
@@ -2542,7 +2553,8 @@ namespace Microsoft.Data.SqlClient
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
                                     sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
-                            }
+                            },
+                            connectionToDoom: _connection.GetOpenTdsConnection()
                         );
                         return source.Task;
                     }
@@ -2609,7 +2621,8 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
+                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
 
                     return source.Task;
@@ -2675,7 +2688,8 @@ namespace Microsoft.Data.SqlClient
                             // Always call back into CopyBatchesAsync
                             sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false)
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return source.Task;
                 }
@@ -2698,6 +2712,9 @@ namespace Microsoft.Data.SqlClient
         private void CopyBatchesAsyncContinuedOnError(bool cleanupParser)
         {
             SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
@@ -2838,7 +2855,8 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                             }
-                        }
+                        },
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return;
                 }
@@ -2957,6 +2975,7 @@ namespace Microsoft.Data.SqlClient
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
+                            connectionToAbort: _connection,
                             onFailure: static (Exception _, object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             onCancellation: static (object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             exceptionConverter: (ex) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
@@ -3008,7 +3027,8 @@ namespace Microsoft.Data.SqlClient
                 if (internalResultsTask != null)
                 {
                     AsyncHelper.ContinueTaskWithState(internalResultsTask, source, this,
-                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source)
+                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                 }
                 else
@@ -3092,7 +3112,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
                             }
-                        }
+                        },
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return resultTask;
                 }
