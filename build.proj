@@ -59,6 +59,7 @@
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <FunctionalTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
@@ -198,6 +199,39 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
+  </Target>
+
+  <!-- AKV Targets ========================================================= -->
+  <Target Name="BuildAkv">
+    <!-- @TODO: TestTargetOS for restore poisons the project.assets.json file... We should remove it. -->
+    <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
+    <!-- @TODO: RemoveProperties shouldn't be necessary -->
+    <Message Text=">>> Restoring AKV project" />
+    <MSBuild Projects="@(AKVProvider)" Targets="Restore"/>
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">

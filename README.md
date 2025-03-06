@@ -1,4 +1,4 @@
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/dotnet/sqlclient/master/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Nuget](https://img.shields.io/nuget/dt/Microsoft.Data.SqlClient?label=Nuget.org%20Downloads&style=flat-square&color=blue)](https://www.nuget.org/packages/Microsoft.Data.SqlClient)
 [![Build status](https://sqlclientdrivers.visualstudio.com/public/_apis/build/status/ADO/CI-SqlClient)](https://sqlclientdrivers.visualstudio.com/public/_build/latest?definitionId=1879)
 
@@ -11,7 +11,7 @@ Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url
 The Microsoft.Data.SqlClient package supports the following environments:
 
 - .NET Framework 4.6.2+
-- .NET 8.0
+- .NET 8.0+
 
 ## Download
 
@@ -40,15 +40,17 @@ When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient
 Special thanks to everyone who has contributed to the project.
 We thank you for your continuous support in improving the SqlClient library!
 
-- Wraith ([@Wraith2](https://github.com/Wraith2))
+- Edward Neal ([@edwardneal](https://github.com/edwardneal))
 - Erik Ejlskov Jensen ([@ErikEJ](https://github.com/ErikEJ))
+- Michel Zehnder ([@MichelZ](https://github.com/MichelZ))
+- Shay Rojansky ([@roji](https://github.com/roji))
+- Phillip Haydon ([@phillip-haydon](https://github.com/phillip-haydon))
+- Rasmus Melchior Jacobsen ([@rmja](https://github.com/rmja))
+- Robin Sue ([@Suchiman](https://github.com/Suchiman))
 - Simon Cropp ([@SimonCropp](https://github.com/SimonCropp))
 - Stefán Jökull Sigurðarson ([@stebet](https://github.com/stebet))
-- Shay Rojansky ([@roji](https://github.com/roji))
 - Stephen Toub ([@stephentoub](https://github.com/stephentoub))
-- Rasmus Melchior Jacobsen ([@rmja](https://github.com/rmja))
-- Phillip Haydon ([@phillip-haydon](https://github.com/phillip-haydon))
-- Robin Sue ([@Suchiman](https://github.com/Suchiman))
+- Wraith ([@Wraith2](https://github.com/Wraith2))
 
 Up-to-date list of contributors: [Contributor Insights](https://github.com/dotnet/SqlClient/graphs/contributors)
 
@@ -108,7 +110,7 @@ Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https:
 
 ## License
 
-The Microsoft.Data.SqlClient Driver for SQL Server is licensed under the MIT license. See the [LICENSE](https://github.com/dotnet/SqlClient/blob/master/LICENSE) file for more details.
+The Microsoft.Data.SqlClient Driver for SQL Server is licensed under the MIT license. See the [LICENSE](LICENSE) file for more details.
 
 ## Trademarks
 

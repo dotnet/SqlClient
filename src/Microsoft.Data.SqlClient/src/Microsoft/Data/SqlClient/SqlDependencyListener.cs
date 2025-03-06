@@ -8,17 +8,18 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-#if NETFRAMEWORK
-using System.Runtime.CompilerServices;
-using System.Runtime.Versioning;
-using System.Security.Principal;
-using Microsoft.Data;
-#endif
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+
+#if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
+using System.Security.Principal;
+using Microsoft.Data.SqlClient.LocalDb;
+#endif
 
 // This class is the process wide dependency dispatcher.  It contains all connection listeners for the entire process and 
 // receives notifications on those connections to dispatch to the corresponding AppDomain dispatcher to notify the
@@ -100,7 +101,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 if (connStringObj.LocalDBInstance != null)
                 {
                     // If it is LocalDB, we demanded LocalDB permissions too
-                    LocalDBAPI.AssertLocalDBPermissions();
+                    LocalDbApi.AssertLocalDbPermissions();
                 }
 #endif
                 _con.Open();

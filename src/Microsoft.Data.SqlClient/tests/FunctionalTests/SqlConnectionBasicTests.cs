@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFaultTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -386,6 +386,52 @@ namespace Microsoft.Data.SqlClient.Tests
 
         }
 
+        // Test that we send the expected TDS Client Interface Name value with
+        // the LOGIN7 packet.
+        [Fact]
+        public void ConnectionOpen_ClientInterfaceName()
+        {
+            // Peek into the internal ClientInterface class to get the value
+            // we expect to see in the LOGIN packet.
+            var expected =
+                new Func<string>(() =>
+                {
+                    var clientInterfaceType =
+                        typeof(SqlCommand).Assembly
+                        .GetType("Microsoft.Data.SqlClient.ClientInterface");
+                    Assert.NotNull(clientInterfaceType);
+
+                    var nameProperty =
+                        clientInterfaceType.GetProperty(
+                            "Name",
+                            BindingFlags.Public | BindingFlags.Static);
+                    Assert.NotNull(nameProperty);
+
+                    return nameProperty.GetValue(null) as string;
+                })();
+            
+            // Start the test TDS server.
+            using var server = TestTdsServer.StartTestServer();
+            
+            // Assign a delegate to save the Client Interface Name value from
+            // the LOGIN7 packet.
+            string actual = null;
+            server.OnLogin7Validated =
+                (TDSLogin7Token login) =>
+                {
+                    // The test TDS server uses "LibraryName" for the TDS Client
+                    // Interface Name field.
+                    actual = login.LibraryName;
+                };
+
+            // Connect to the test TDS server.
+            using SqlConnection connection = new(server.ConnectionString);
+            connection.Open();
+
+            // Verify that the expected value was sent in the LOGIN packet.
+            Assert.Equal(expected, actual);
+        }
+
         [Fact]
         public void ConnectionTestWithCultureTH()
         {
@@ -491,6 +537,38 @@ namespace Microsoft.Data.SqlClient.Tests
                     conn.ConnectionString = authConnStr;
                 });
             }
+        }
+
+        [Theory]
+        [InlineData(9, 0, 2047)] // SQL Server 2005
+        [InlineData(10, 0, 2531)] // SQL Server 2008
+        [InlineData(10, 50, 2500)] // SQL Server 2008 R2
+        [InlineData(11, 0, 3000)] // SQL Server 2012-2022
+        public void ConnectionTestPermittedVersion(int major, int minor, int build)
+        {
+            Version simulatedServerVersion = new Version(major, minor, build);
+            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
+            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+
+            conn.Open();
+            Assert.Equal(ConnectionState.Open, conn.State);
+
+            Version returnedServerVersion = Version.Parse(conn.ServerVersion);
+
+            Assert.Equal(simulatedServerVersion, returnedServerVersion);
+        }
+
+        [Theory]
+        [InlineData(7, 0, 623)] // SQL Server 7.0
+        [InlineData(8, 0, 194)] // SQL Server 2000 RTM
+        [InlineData(8, 0, 384)] // SQL Server 2000 SP1
+        public void ConnectionTestDeniedVersion(int major, int minor, int build)
+        {
+            Version simulatedServerVersion = new Version(major, minor, build);
+            using TestTdsServer server = TestTdsServer.StartTestServer(serverVersion: simulatedServerVersion);
+            using SqlConnection conn = new SqlConnection(server.ConnectionString);
+
+            Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
     }
 }

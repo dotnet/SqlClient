@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Neplatný pokus o získání třídy JsonDocument ve sloupci {0}. Třída JsonDocument se podporuje jenom pro sloupce typu json.</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Velikost vyrovnávací paměti se příliš zvýšila {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Byla překročena maximální velikost vyrovnávací paměti: {0}</value>
+  </data>
 </root>

@@ -1897,6 +1897,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Buffer advanced too far {0}.
+        /// </summary>
+        internal static string ArrayBufferWriterAdvancedTooFar {
+            get {
+                return ResourceManager.GetString("ArrayBufferWriterAdvancedTooFar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Buffer maximum size exceeded: {0}.
+        /// </summary>
+        internal static string ArrayBufferWriterMaximumSizeExceeded {
+            get {
+                return ResourceManager.GetString("ArrayBufferWriterMaximumSizeExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the computed signature using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services..
         /// </summary>
         internal static string AttestationTokenSignatureValidationFailed {

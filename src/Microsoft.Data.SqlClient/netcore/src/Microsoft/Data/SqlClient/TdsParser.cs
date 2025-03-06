@@ -21,6 +21,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
+using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 
@@ -112,8 +113,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private byte[][] _sniSpnBuffer = null;
-        // UNDONE - need to have some for both instances - both command and default???
+        private string[] _serverSpn = null;
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
@@ -390,7 +390,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _sniSpnBuffer = null;
+                _serverSpn = null;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
@@ -402,7 +402,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
             }
 
-            _sniSpnBuffer = null;
+            _serverSpn = null;
             _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _sniSpnBuffer,
+                ref _serverSpn,
                 false,
                 true,
                 fParallel,
@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
                     timeout, out instanceName,
-                    ref _sniSpnBuffer,
+                    ref _serverSpn,
                     true,
                     true,
                     fParallel,
@@ -1557,7 +1557,7 @@ namespace Microsoft.Data.SqlClient
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
-                            errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
+                            errorMessage += LocalDbApi.GetLocalDbMessage((int)details.nativeError);
                             win32ErrorCode = 0;
                         }
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
@@ -2047,11 +2047,19 @@ namespace Microsoft.Data.SqlClient
 
                 if (!IsValidTdsToken(token))
                 {
-                    Debug.Fail($"unexpected token; token = {token,-2:X2}");
+#if DEBUG
+                    string message = stateObj.DumpBuffer();
+                    Debug.Fail(message);
+#endif
                     _state = TdsParserState.Broken;
                     _connHandler.BreakConnection();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
+#if DEBUG
+                    throw new InvalidOperationException(message);
+#else
                     throw SQL.ParsingError();
+#endif
+
                 }
 
                 int tokenLength;
@@ -4143,6 +4151,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
+            
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
@@ -4333,7 +4342,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            else if (rec.metaType.IsCharType)
+            else if (rec.metaType.IsCharType && rec.metaType.SqlDbType != SqlDbTypeExtensions.Json)
             {
                 // read the collation for 8.x servers
                 result = TryProcessCollation(stateObj, out rec.collation);
@@ -4540,7 +4549,6 @@ namespace Microsoft.Data.SqlClient
                 collation = null;
                 return result;
             }
-
             if (SqlCollation.Equals(_cachedCollation, info, sortId))
             {
                 collation = _cachedCollation;
@@ -5263,7 +5271,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
-                {    
+                {
                     result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -6002,7 +6010,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    s = "";
+                                    s = string.Empty;
                                 }
                             }
 
@@ -8492,8 +8500,7 @@ namespace Microsoft.Data.SqlClient
                                      int length,
                                      int featureExOffset,
                                      string clientInterfaceName,
-                                     byte[] outSSPIBuff,
-                                     uint outSSPILength)
+                                     ReadOnlySpan<byte> outSSPI)
         {
             try
             {
@@ -8665,8 +8672,8 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(offset, _physicalStateObj); // ibSSPI offset
                 if (rec.useSSPI)
                 {
-                    WriteShort((int)outSSPILength, _physicalStateObj);
-                    offset += (int)outSSPILength;
+                    WriteShort(outSSPI.Length, _physicalStateObj);
+                    offset += outSSPI.Length;
                 }
                 else
                 {
@@ -8721,7 +8728,7 @@ namespace Microsoft.Data.SqlClient
 
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
-                    _physicalStateObj.WriteByteArray(outSSPIBuff, (int)outSSPILength, 0);
+                    _physicalStateObj.WriteByteSpan(outSSPI);
 
                 WriteString(rec.attachDBFilename, _physicalStateObj);
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
@@ -12869,7 +12876,14 @@ namespace Microsoft.Data.SqlClient
         // requested length is -1 or larger than the actual length of data. First call to this method
         //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual chars read.
-        internal TdsOperationStatus TryReadPlpUnicodeChars(ref char[] buff, int offst, int len, TdsParserStateObject stateObj, out int totalCharsRead, bool supportRentedBuff, ref bool rentedBuff)
+        internal TdsOperationStatus TryReadPlpUnicodeChars(
+            ref char[] buff,
+            int offst,
+            int len,
+            TdsParserStateObject stateObj,
+            out int totalCharsRead,
+            bool supportRentedBuff,
+            ref bool rentedBuff)
         {
             int charsRead = 0;
             int charsLeft = 0;
@@ -12882,7 +12896,7 @@ namespace Microsoft.Data.SqlClient
                 return TdsOperationStatus.Done;       // No data
             }
 
-            Debug.Assert(((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL), "Out of sync plp read request");
+            Debug.Assert((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
 
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             charsLeft = len;
@@ -13303,7 +13317,7 @@ namespace Microsoft.Data.SqlClient
                            _fMARS ? bool.TrueString : bool.FalseString,
                            _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
                            _is2005 ? bool.TrueString : bool.FalseString,
-                           _sniSpnBuffer == null ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
+                           _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),

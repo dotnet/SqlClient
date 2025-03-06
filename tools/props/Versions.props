@@ -23,25 +23,27 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSniVersion>
+    <MicrosoftDataSqlClientSniVersion>6.0.2</MicrosoftDataSqlClientSniVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
     <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
+    <SystemDataCommonVersion>4.3.0</SystemDataCommonVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>9.0.0</MicrosoftExtensionsCachingMemoryVersion>
+    <MicrosoftBclCryptographyVersion>8.0.0</MicrosoftBclCryptographyVersion>
+    <MicrosoftExtensionsCachingMemoryVersion>8.0.1</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <SystemSecurityCryptographyPkcsVersion>9.0.0</SystemSecurityCryptographyPkcsVersion>
-    <MicrosoftBclCryptographyVersion>9.0.0</MicrosoftBclCryptographyVersion>
+    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
+    <SystemSecurityCryptographyPkcsVersion>8.0.1</SystemSecurityCryptographyPkcsVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>9.0.0</SystemConfigurationConfigurationManagerVersion>
+    <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.2</MicrosoftDataSqlClientSNIRuntimeVersion>
+    <SystemConfigurationConfigurationManagerVersion>8.0.1</SystemConfigurationConfigurationManagerVersion>
     <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->

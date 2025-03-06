@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    var s = new SignedCms();
+                    SignedCms s = new SignedCms();
                     s.Decode(data);
                     certificateCollection.AddRange(s.Certificates);
                 }

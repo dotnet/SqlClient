@@ -101,11 +101,7 @@ steps:
 
 - powershell: |
     $password = "${{parameters.password }}"
-    if ( "generated_placeholder" -eq $password )
-    {
-        $password = [guid]::NewGuid().ToString()
-    }
-    
+
     $machineName = $env:COMPUTERNAME
     
     if ("${{parameters.instanceName }}" -ne "MSSQLSERVER"){

@@ -511,51 +511,34 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                // If transient fault handling is enabled then we can retry the login upto the ConnectRetryCount.
+                int connectionEstablishCount = applyTransientFaultHandling ? connectionOptions.ConnectRetryCount + 1 : 1;
+                int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000; // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for ConnectRetryInterval is 60
+                for (int i = 0; i < connectionEstablishCount; i++)
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
-
-                    // If transient fault handling is enabled then we can retry the login upto the ConnectRetryCount.
-                    int connectionEstablishCount = applyTransientFaultHandling ? connectionOptions.ConnectRetryCount + 1 : 1;
-                    int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000; // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for ConnectRetryInterval is 60
-                    for (int i = 0; i < connectionEstablishCount; i++)
+                    try
                     {
-                        try
+                        OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
+                        break;
+                    }
+                    catch (SqlException sqlex)
+                    {
+                        if (i + 1 == connectionEstablishCount
+                          || !applyTransientFaultHandling
+                          || _timeout.IsExpired
+                          || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
+                          || !IsTransientError(sqlex))
                         {
-                            OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
-                            break;
+                            throw;
                         }
-                        catch (SqlException sqlex)
+                        else
                         {
-                            if (i + 1 == connectionEstablishCount
-                              || !applyTransientFaultHandling
-                              || _timeout.IsExpired
-                              || _timeout.MillisecondsRemaining < transientRetryIntervalInMilliSeconds
-                              || !IsTransientError(sqlex))
-                            {
-                                throw;
-                            }
-                            else
-                            {
-                                Thread.Sleep(transientRetryIntervalInMilliSeconds);
-                            }
+                            Thread.Sleep(transientRetryIntervalInMilliSeconds);
                         }
                     }
                 }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (System.OutOfMemoryException)
             {
@@ -973,29 +956,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool IsConnectionAlive(bool throwOnException)
-        {
-            bool isAlive = false;
-#if DEBUG
-            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-            RuntimeHelpers.PrepareConstrainedRegions();
-            try
-            {
-                tdsReliabilitySection.Start();
-#endif //DEBUG
-
-                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
-
-#if DEBUG
-            }
-            finally
-            {
-                tdsReliabilitySection.Stop();
-            }
-#endif //DEBUG
-            return isAlive;
-        }
+        internal override bool IsConnectionAlive(bool throwOnException) =>
+            _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // POOLING METHODS
@@ -1075,9 +1037,11 @@ namespace Microsoft.Data.SqlClient
                 // distributed transaction - otherwise don't reset!
                 if (Is2000)
                 {
-                    // Prepare the parser for the connection reset - the next time a trip
-                    // to the server is made.
-                    _parser.PrepareResetConnection(IsTransactionRoot && !IsNonPoolableTransactionRoot);
+                    // Pooled connections that are enlisted in a transaction must have their transaction
+                    // preserved when reseting the connection state. Otherwise, future uses of the connection
+                    // from the pool will execute outside of the transaction, in auto-commit mode.
+                    // https://github.com/dotnet/SqlClient/issues/2970
+                    _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
                 }
                 else if (!IsEnlistedInTransaction)
                 {
@@ -2374,32 +2338,18 @@ namespace Microsoft.Data.SqlClient
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    Task reconnectTask = parent.ValidateAndReconnect(() =>
                     {
-                        tdsReliabilitySection.Start();
-#endif //DEBUG
-                        Task reconnectTask = parent.ValidateAndReconnect(() =>
-                        {
-                            ThreadHasParserLockForClose = false;
-                            _parserLock.Release();
-                            releaseConnectionLock = false;
-                        }, timeout);
-                        if (reconnectTask != null)
-                        {
-                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                            return true;
-                        }
-                        return false;
-#if DEBUG
-                    }
-                    finally
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                        releaseConnectionLock = false;
+                    }, timeout);
+                    if (reconnectTask != null)
                     {
-                        tdsReliabilitySection.Stop();
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                        return true;
                     }
-#endif //DEBUG
+                    return false;
                 }
                 catch (System.OutOfMemoryException)
                 {

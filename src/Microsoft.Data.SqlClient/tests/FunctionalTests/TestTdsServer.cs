@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Engine = engine;
         }
 
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, Version serverVersion = null, [CallerMemberName] string methodName = "")
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -40,12 +40,16 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 args.Encryption = SqlServer.TDS.PreLogin.TDSPreLoginTokenEncryptionType.None;
             }
+            if (serverVersion != null)
+            {
+                args.ServerVersion = serverVersion;
+            }
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = Console.Out;
+            server._endpoint.EventLog = enableLog ? Console.Out : null;
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
@@ -58,9 +62,9 @@ namespace Microsoft.Data.SqlClient.Tests
             return server;
         }
 
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, Version serverVersion = null, [CallerMemberName] string methodName = "")
         {
-            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, excludeEncryption, methodName);
+            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, excludeEncryption, serverVersion, methodName);
         }
 
         public void Dispose() => _endpoint?.Stop();

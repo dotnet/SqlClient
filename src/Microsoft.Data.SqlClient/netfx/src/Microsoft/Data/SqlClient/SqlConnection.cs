@@ -1426,26 +1426,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    InnerConnection.ChangeDatabase(database);
-                }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                statistics = SqlStatistics.StartTimer(Statistics);
+                InnerConnection.ChangeDatabase(database);
             }
             catch (System.OutOfMemoryException e)
             {
@@ -1519,53 +1502,36 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
                 SqlStatistics statistics = null;
-
                 TdsParser bestEffortCleanupTarget = null;
+
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
-                            tdsReliabilitySection.Start();
-#else
+                    Task reconnectTask = _currentReconnectionTask;
+                    if (reconnectTask != null && !reconnectTask.IsCompleted)
                     {
-#endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                        statistics = SqlStatistics.StartTimer(Statistics);
-
-                        Task reconnectTask = _currentReconnectionTask;
-                        if (reconnectTask != null && !reconnectTask.IsCompleted)
+                        CancellationTokenSource cts = _reconnectionCancellationSource;
+                        if (cts != null)
                         {
-                            CancellationTokenSource cts = _reconnectionCancellationSource;
-                            if (cts != null)
-                            {
-                                cts.Cancel();
-                            }
-                            AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                            if (State != ConnectionState.Open)
-                            {// if we cancelled before the connection was opened
-                                OnStateChange(DbConnectionInternal.StateChangeClosed);
-                            }
+                            cts.Cancel();
                         }
-                        CancelOpenAndWait();
-                        CloseInnerConnection();
-                        GC.SuppressFinalize(this);
-
-                        if (Statistics != null)
-                        {
-                            _statistics._closeTimestamp = ADP.TimerCurrent();
+                        AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                        if (State != ConnectionState.Open)
+                        {// if we cancelled before the connection was opened
+                            OnStateChange(DbConnectionInternal.StateChangeClosed);
                         }
                     }
-#if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
+                    CancelOpenAndWait();
+                    CloseInnerConnection();
+                    GC.SuppressFinalize(this);
+
+                    if (Statistics != null)
+                    {
+                        _statistics._closeTimestamp = ADP.TimerCurrent();
+                    }
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -2138,69 +2104,52 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                if (ForceNewConnection)
                 {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif //DEBUG
-                    if (ForceNewConnection)
+                    if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
                     {
-                        if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
-                        {
-                            return false;
-                        }
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                    {
+                        return false;
+                    }
+                }
+                // does not require GC.KeepAlive(this) because of OnStateChange
+
+                // GetBestEffortCleanup must happen AFTER OpenConnection to get the correct target.
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+
+                var tdsInnerConnection = (InnerConnection as SqlInternalConnectionTds);
+                if (tdsInnerConnection == null)
+                {
+                    SqlInternalConnectionSmi innerConnection = (InnerConnection as SqlInternalConnectionSmi);
+                    innerConnection.AutomaticEnlistment();
+                }
+                else
+                {
+                    Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
+
+                    if (!tdsInnerConnection.ConnectionOptions.Pooling)
+                    {
+                        // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
+                        GC.ReRegisterForFinalize(this);
+                    }
+
+                    if (StatisticsEnabled)
+                    {
+                        _statistics._openTimestamp = ADP.TimerCurrent();
+                        tdsInnerConnection.Parser.Statistics = _statistics;
                     }
                     else
                     {
-                        if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
-                        {
-                            return false;
-                        }
-                    }
-                    // does not require GC.KeepAlive(this) because of OnStateChange
-
-                    // GetBestEffortCleanup must happen AFTER OpenConnection to get the correct target.
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-
-                    var tdsInnerConnection = (InnerConnection as SqlInternalConnectionTds);
-                    if (tdsInnerConnection == null)
-                    {
-                        SqlInternalConnectionSmi innerConnection = (InnerConnection as SqlInternalConnectionSmi);
-                        innerConnection.AutomaticEnlistment();
-                    }
-                    else
-                    {
-                        Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
-
-                        if (!tdsInnerConnection.ConnectionOptions.Pooling)
-                        {
-                            // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
-                            GC.ReRegisterForFinalize(this);
-                        }
-
-                        if (StatisticsEnabled)
-                        {
-                            _statistics._openTimestamp = ADP.TimerCurrent();
-                            tdsInnerConnection.Parser.Statistics = _statistics;
-                        }
-                        else
-                        {
-                            tdsInnerConnection.Parser.Statistics = null;
-                            _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
-                        }
+                        tdsInnerConnection.Parser.Statistics = null;
+                        _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
                     }
                 }
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (System.OutOfMemoryException e)
             {

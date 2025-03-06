@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Nieprawidłowa próba pobrania pliku JsonDocument w kolumnie „{0}”. Obiekt JsonDocument jest obsługiwany tylko w przypadku kolumn typu JSON.</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Bufor przesunięty za daleko {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Przekroczono maksymalny rozmiar buforu: {0}</value>
+  </data>
 </root>
