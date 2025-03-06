@@ -10,10 +10,10 @@ namespace Microsoft.Data.SqlClient
     using System.Diagnostics;
     using System.Runtime.ConstrainedExecution;
     using System.Threading;
+    using System.Transactions;
     using Microsoft.Data.Common;
     using Microsoft.Data.ProviderBase;
     using Microsoft.Data.SqlClient.ConnectionPool;
-    using System.Transactions;
 
     public sealed partial class SqlConnection : DbConnection
     {

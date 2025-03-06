@@ -14,85 +14,37 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal abstract class DbConnectionPool
     {
-        private static int _objectTypeCount; // EventSource counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int _objectTypeCount;
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectId { get; } = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
-        private DbConnectionPoolState _state;
-        internal DbConnectionPoolState State
-        {
-            get => _state;
-            set => _state = value;
-        }
+        internal DbConnectionPoolState State { get; set; }
 
         #region Abstract Properties
-        internal abstract int Count
-        {
-            get;
-        }
+        internal abstract int Count { get; }
 
-        internal abstract DbConnectionFactory ConnectionFactory
-        {
-            get;
-        }
+        internal abstract DbConnectionFactory ConnectionFactory { get; }
 
-        internal abstract bool ErrorOccurred
-        {
-            get;
-        }
+        internal abstract bool ErrorOccurred { get; }
 
-        internal abstract TimeSpan LoadBalanceTimeout
-        {
-            get;
-        }
+        internal abstract TimeSpan LoadBalanceTimeout { get; }
 
-        internal abstract DbConnectionPoolIdentity Identity
-        {
-            get;
-        }
+        internal abstract DbConnectionPoolIdentity Identity { get; }
 
-        internal abstract bool IsRunning
-        {
-            get;
-        }
+        internal abstract bool IsRunning { get; }
 
 #if NETFRAMEWORK
-        internal abstract DbConnectionPoolCounters PerformanceCounters
-        {
-            get;
-        }
+        internal abstract DbConnectionPoolCounters PerformanceCounters { get; }
 #endif
-        internal abstract DbConnectionPoolGroup PoolGroup
-        {
-            get;
-        }
+        internal abstract DbConnectionPoolGroup PoolGroup { get; }
 
-        internal abstract DbConnectionPoolGroupOptions PoolGroupOptions
-        {
-            get;
-        }
+        internal abstract DbConnectionPoolGroupOptions PoolGroupOptions { get; }
 
-        internal abstract DbConnectionPoolProviderInfo ProviderInfo
-        {
-            get;
-        }
+        internal abstract DbConnectionPoolProviderInfo ProviderInfo { get; }
 
-        internal abstract ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts
-        {
-            get;
-        }
+        internal abstract ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; }
 
-        internal abstract bool UseLoadBalancing
-        {
-            get;
-        }
+        internal abstract bool UseLoadBalancing { get; }
         #endregion
 
         #region Abstract Methods

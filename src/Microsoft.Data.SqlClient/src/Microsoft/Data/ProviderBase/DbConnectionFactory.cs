@@ -578,7 +578,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == pool.Count)
                             {
                                 _poolsToRelease.Remove(pool);
-                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectID);
+                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectId);
 #if NETFRAMEWORK
                                 PerformanceCounters.NumberOfInactiveConnectionPools.Decrement();
 #else
