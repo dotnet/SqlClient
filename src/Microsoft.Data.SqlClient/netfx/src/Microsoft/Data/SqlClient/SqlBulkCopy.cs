@@ -562,11 +562,11 @@ namespace Microsoft.Data.SqlClient
             if (_parser.Is2005OrNewer)
             {
                 hasExistingTransaction = _connection.HasLocalTransaction;
-             }
-             else
-             {
+            }
+            else
+            {
                 hasExistingTransaction = (bool)(0 < (SqlInt32)internalResults[TranCountResultId][TranCountRowId][TranCountValueId]);
-             }
+            }
 
             // Throw if there is a transaction but no flag is set
             if (hasExistingTransaction
