@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using Xunit;
@@ -29,9 +30,26 @@ namespace Microsoft.Data.SqlClient.Tests
             VerifyException<InvalidOperationException>(ex, "CommandText property has not been initialized");
         }
 
+        public static IEnumerable<object[]> CommandTypeData()
+        {
+            return new object[][]
+            {
+                new object[] { CommandType.TableDirect },
+                new object[] { (CommandType)5 }
+            };
+        }
+
         [Theory]
-        [InlineData(CommandType.TableDirect)]
-        [InlineData((CommandType)5)]
+        [MemberData(
+            nameof(CommandTypeData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void AppendBadCommandType_Throws(CommandType commandType)
         {
             var cmdSet = CreateInstance();
