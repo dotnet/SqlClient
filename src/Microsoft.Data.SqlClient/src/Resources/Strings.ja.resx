@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>SourceColumn '{1}' の '{0}' と {3} の DataColumn '{2}' の間に変換不可能な型の不一致があります。</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>SourceColumn '{2}' の DataColumn '{0}' が見つかりません。</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>SourceColumn '{2}' の DataTable '{1}' に DataColumn '{0}' が見つかりません。</value>
   </data>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>接続プールのためのブロック期間ビヘイビアーを定義します。</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>クエリ メタデータ キャッシュが有効であるかどうかを定義します。</value>
   </data>
@@ -4751,5 +4736,8 @@
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
     <value>バッファーの最大サイズを超えました: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>SourceColumn '{2}' の DataColumn '{0}' が見つかりません。</value>
   </data>
 </root>
