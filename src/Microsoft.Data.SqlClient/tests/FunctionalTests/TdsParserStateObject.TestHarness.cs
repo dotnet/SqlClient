@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SNIPacketGetData(packet, _inBuff, ref dataSize);
+            return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private class StringsHelper
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
         [DebuggerStepThrough]
-        private uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
+        private uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
         {
             Span<byte> target = inBuff.AsSpan(0, _packetSize);
             Span<byte> source = Current.Array.AsSpan(Current.Start, Current.Length);
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         private SniNativeWrapperImpl _native;
         internal SniNativeWrapperImpl SniNativeWrapper
         {
@@ -180,9 +180,9 @@ namespace Microsoft.Data.SqlClient
             private readonly TdsParserStateObject _parent;
             internal SniNativeWrapperImpl(TdsParserStateObject parent) => _parent = parent;
 
-            internal uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SNIPacketGetData(packet, inBuff, ref dataSize);
+            internal uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SniPacketGetData(packet, inBuff, ref dataSize);
         }
-#endif
+        #endif
     }
 
     internal static class TdsEnums

@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void ReleasePacket(PacketHandle syncReadPacket);
 
-        protected abstract uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
+        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SNIPacketGetData(packet, _inBuff, ref dataSize);
+            return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private void ChangeNetworkPacketTimeout(int dueTime, int period)

@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
 
 
-                result = SniNativeWrapper.SniGetConnectionIPString(_physicalStateObj.Handle, ref IPStringFromSNI);
+                result = SniNativeWrapper.SniGetConnectionIpString(_physicalStateObj.Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 
                 _connHandler.pendingSQLDNSObject = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
