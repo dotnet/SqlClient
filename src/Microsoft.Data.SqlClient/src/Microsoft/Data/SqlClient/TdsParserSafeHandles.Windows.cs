@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.LocalDb;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -77,7 +78,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (TdsEnums.SNI_SUCCESS == _sniStatus)
                 {
-                    LocalDBAPI.ReleaseDLLHandles();
+                    LocalDbApi.ReleaseDllHandles();
                     SniNativeWrapper.SNITerminate();
                 }
                 base.handle = IntPtr.Zero;
@@ -150,7 +151,7 @@ namespace Microsoft.Data.SqlClient
         internal SNIHandle(
             ConsumerInfo myInfo,
             string serverName,
-            byte[] spnBuffer,
+            ref string spn,
             int timeout,
             out byte[] instanceName,
             bool flushCache,
@@ -189,7 +190,7 @@ namespace Microsoft.Data.SqlClient
                     myInfo,
                     serverName,
                     ref base.handle,
-                    spnBuffer,
+                    ref spn,
                     instanceName,
                     flushCache,
                     fSync,
@@ -205,7 +206,7 @@ namespace Microsoft.Data.SqlClient
                     myInfo,
                     serverName,
                     ref base.handle,
-                    spnBuffer,
+                    ref spn,
                     instanceName,
                     flushCache,
                     fSync,

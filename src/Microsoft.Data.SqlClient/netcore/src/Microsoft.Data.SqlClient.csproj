@@ -155,6 +155,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ClientInterface.cs">
+      <Link>Microsoft\Data\SqlClient\ClientInterface.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
@@ -515,6 +518,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPools.cs">
+      <Link>Microsoft\Data\SqlClient\SqlObjectPools.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlParameter.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameter.cs</Link>
     </Compile>
@@ -786,8 +792,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
@@ -824,8 +830,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs</Link>
     </Compile>
 
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />

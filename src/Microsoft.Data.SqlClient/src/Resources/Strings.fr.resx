@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentative non valide d’obtention de JsonDocument sur la colonne « {0} ». JsonDocument est uniquement pris en charge pour les colonnes de type JSON.</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Mémoire tampon avancée trop loin {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Taille maximale de la mémoire tampon dépassée : {0}</value>
+  </data>
 </root>
