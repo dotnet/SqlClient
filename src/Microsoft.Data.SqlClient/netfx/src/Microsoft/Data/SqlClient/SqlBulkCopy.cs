@@ -613,8 +613,8 @@ namespace Microsoft.Data.SqlClient
 
                     // Are we missing a mapping between the result column and
                     // this local column (by ordinal or name)?
-                    if (! (localColumn._destinationColumnOrdinal == metadata.ordinal
-                           || UnquotedName(localColumn._destinationColumnName) == metadata.column))
+                    if (localColumn._destinationColumnOrdinal != metadata.ordinal
+                        && UnquotedName(localColumn._destinationColumnName) != metadata.column)
                     {
                         // Yes, so move on to the next local column.
                         continue;
@@ -631,7 +631,7 @@ namespace Microsoft.Data.SqlClient
                     //
                     // We will not process timestamp or identity columns.
                     //
-                    if ((metadata.type == SqlDbType.Timestamp)
+                    if (metadata.type == SqlDbType.Timestamp
                         || (metadata.IsIdentity && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
                     {
                         rejected = true;
