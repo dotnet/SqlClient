@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;

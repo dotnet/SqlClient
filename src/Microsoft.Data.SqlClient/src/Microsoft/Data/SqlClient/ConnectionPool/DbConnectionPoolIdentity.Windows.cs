@@ -8,7 +8,7 @@ using System.Security.Permissions;
 using System.Security.Principal;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     partial class DbConnectionPoolIdentity
     {
