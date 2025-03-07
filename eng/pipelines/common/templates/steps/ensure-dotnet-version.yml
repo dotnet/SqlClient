@@ -48,8 +48,8 @@ parameters:
 
 steps:
     - script: |
-          echo {{variables.Agent.OS}}:  ${{ variables.Agent.OS }}
-          echo (Agent.OS):          $(Agent.OS)
+          echo variables.Agent.OS:  ${{ variables.Agent.OS }}
+          echo Agent.OS:            $(Agent.OS)
       displayName: 'Output Agent OS'
         
     - ${{ if eq(variables.Agent.OS, 'Windows_NT') }}:
