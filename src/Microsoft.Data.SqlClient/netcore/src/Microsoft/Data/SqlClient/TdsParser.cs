@@ -408,7 +408,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+                _authenticationProvider = Connection._sspiContextProviderFactory?.Invoke() ?? _physicalStateObj.CreateSSPIContextProvider();
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
