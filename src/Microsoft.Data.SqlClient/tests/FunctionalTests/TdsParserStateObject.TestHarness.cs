@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient
 
         public class Parser
         {
-            internal object ProcessSniError(TdsParserStateObject tdsParserStateObject) => "ProcessSNIError";
+            internal object ProcessSNIError(TdsParserStateObject tdsParserStateObject) => "ProcessSNIError";
             public TdsParserState State = TdsParserState.OpenLoggedIn;
         }
 
