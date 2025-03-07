@@ -6,7 +6,7 @@ using Interop.Windows.Kernel32;
 
 #if NETFRAMEWORK
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
 
     using System;

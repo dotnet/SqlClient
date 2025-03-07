@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal sealed class DbConnectionPoolGroupOptions
     {

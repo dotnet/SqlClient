@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient

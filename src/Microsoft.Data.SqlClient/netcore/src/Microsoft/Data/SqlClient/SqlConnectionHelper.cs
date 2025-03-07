@@ -10,6 +10,7 @@ using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 
 namespace Microsoft.Data.SqlClient

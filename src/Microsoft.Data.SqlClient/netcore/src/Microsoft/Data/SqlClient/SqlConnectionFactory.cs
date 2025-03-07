@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
