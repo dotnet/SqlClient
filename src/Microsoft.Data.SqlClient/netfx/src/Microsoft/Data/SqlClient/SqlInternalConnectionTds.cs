@@ -713,14 +713,8 @@ namespace Microsoft.Data.SqlClient
                 return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
-
-        override internal bool Is2000
-        {
-            get
-            {
-                return _loginAck.isVersion8;
-            }
-        }
+        
+        override internal bool Is2000 => true;
 
         override internal bool Is2005OrNewer
         {

@@ -105,8 +105,6 @@ namespace Microsoft.Data.SqlClient
 
         // Version variables
 
-        private bool _is2005 = false; // set to true if speaking to 2005 or later
-
         private bool _is2008 = false;
 
         private bool _is2012 = false;
@@ -931,7 +929,6 @@ namespace Microsoft.Data.SqlClient
             // Assign default values
             marsCapable = _fMARS; 
             fedAuthRequired = false;
-            bool is2005OrLater = false;
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             TdsOperationStatus result = _physicalStateObj.TryReadNetworkPacket();
             if (result != TdsOperationStatus.Done)
@@ -990,13 +987,6 @@ namespace Microsoft.Data.SqlClient
                         byte minorVersion = payload[payloadOffset + 1];
                         int level = (payload[payloadOffset + 2] << 8) |
                                              payload[payloadOffset + 3];
-
-                        is2005OrLater = majorVersion >= 9;
-                        if (!is2005OrLater)
-                        {
-                            marsCapable = false;            // If pre-2005, MARS not supported.
-                        }
-
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
@@ -1154,7 +1144,7 @@ namespace Microsoft.Data.SqlClient
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
                     (_connHandler._accessTokenInBytes != null && !trustServerCert);
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                    | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+                    | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
                 EnableSsl(info, encrypt, integratedSecurity, serverCert);
             }
@@ -2747,30 +2737,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
 
-                    case TdsEnums.ENV_CHARSET:
-                        // we copied this behavior directly from luxor - see charset envchange
-                        // section from sqlctokn.c
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        if (env._newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
-                        {
-                            _defaultCodePage = TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE;
-                            _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
-                        }
-                        else
-                        {
-                            Debug.Assert(env._newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
-
-                            string stringCodePage = env._newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
-
-                            _defaultCodePage = int.Parse(stringCodePage, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                            _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
-                        }
-
-                        break;
+                    // TdsEnums.ENV_CHARSET (3) is only supported in TDS <= 7 which is no longer supported
 
                     case TdsEnums.ENV_PACKETSIZE:
                         // take care of packet size right here
@@ -2802,24 +2769,9 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case TdsEnums.ENV_LOCALEID:
-                        // UNDONE: this LCID may be incorrect for OEM code pages on 7.0
-                        // need a way to get lcid from code page
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        _defaultLCID = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                        break;
+                    // TdsEnums.ENV_LOCALE (5) is only supported in TDS <= 7 which is no longer supported
 
-                    case TdsEnums.ENV_COMPFLAGS:
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        break;
+                    // TdsEnums.ENV_COMPFLAGS (6) is only supported in TDS <= 7 which is no longer supported
 
                     case TdsEnums.ENV_COLLATION:
                         Debug.Assert(env._newLength == 5 || env._newLength == 0, "Improper length in new collation!");
@@ -3829,7 +3781,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _is2005 = true;
                     break;
                 case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
                     if (increment != TdsEnums.SQL2008_INCREMENT)
@@ -3857,7 +3808,6 @@ namespace Microsoft.Data.SqlClient
             }
             _is2012 |= _is2022;
             _is2008 |= _is2012;
-            _is2005 |= _is2008;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
