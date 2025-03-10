@@ -4,16 +4,14 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
-    packageType: sdk
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+    packageType: 'sdk'
     version: '9.x'
 
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
-    packageType: runtime
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+    packageType: 'runtime'
     version: '8.x'
 
 - script: SET
