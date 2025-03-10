@@ -43,10 +43,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 string sidString = user.Value;
 
                 // Win32NativeMethods.IsTokenRestricted will raise exception if the native call fails
-                bool isRestricted = Win32NativeMethods.IsTokenRestrictedWrapper(token);
+                SniNativeWrapper.SniIsTokenRestricted(token, out bool isRestricted);
 
                 var lastIdentity = s_lastIdentity;
-                if ((lastIdentity != null) && (lastIdentity._sidString == sidString) && (lastIdentity._isRestricted == isRestricted) && (lastIdentity._isNetwork == isNetwork))
+                if (lastIdentity != null && 
+                    lastIdentity._sidString == sidString &&
+                    lastIdentity._isRestricted == isRestricted &&
+                    lastIdentity._isNetwork == isNetwork)
                 {
                     current = lastIdentity;
                 }

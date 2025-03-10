@@ -945,7 +945,7 @@ namespace Microsoft.Data.Common
 
             SqlDependencyObtainProcessDispatcherFailureObjectHandle = 50,
             SqlDependencyProcessDispatcherFailureCreateInstance = 51,
-            SqlDependencyProcessDispatcherFailureAppDomain = 52,
+            
             SqlDependencyCommandHashIsNotAssociatedWithNotification = 53,
 
             UnknownTransactionFailure = 60,
