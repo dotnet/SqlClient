@@ -6,6 +6,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
 namespace Microsoft.Data.SqlClient.RateLimiter
 {
     /// <summary>
@@ -14,6 +15,10 @@ namespace Microsoft.Data.SqlClient.RateLimiter
     internal sealed class PassthroughRateLimiter : RateLimiterBase
     {
         //TODO: no state, add static instance
+
+        internal PassthroughRateLimiter(RateLimiterBase? next = null) : base(next)
+        {
+        }
 
         /// <inheritdoc/>
         internal override ValueTask<TResult> Execute<State, TResult>(
@@ -34,7 +39,7 @@ namespace Microsoft.Data.SqlClient.RateLimiter
 
         public override void Dispose()
         {
-            Next.Dispose();
+            Next?.Dispose();
         }
     }
 }

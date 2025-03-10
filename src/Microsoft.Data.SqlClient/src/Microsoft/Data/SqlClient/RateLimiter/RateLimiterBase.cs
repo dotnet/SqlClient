@@ -7,6 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
 namespace Microsoft.Data.SqlClient.RateLimiter
 {
     /// <summary>
@@ -18,7 +19,13 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         /// <summary>
         /// The next rate limiter that should be executed within the context of this rate limiter.
         /// </summary>
-        protected readonly RateLimiterBase Next;
+        private RateLimiterBase? _next;
+        protected RateLimiterBase? Next => _next;
+
+        internal RateLimiterBase(RateLimiterBase? next = null)
+        {
+            _next = next;
+        }
 
         /// <summary>
         /// Execute the provided callback within the context of the rate limit, or pass the responsibility along to the next rate limiter.

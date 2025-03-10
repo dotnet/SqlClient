@@ -6,6 +6,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 
+#nullable enable
+
 namespace Microsoft.Data.SqlClient.RateLimiter
 {
     /// <summary>
@@ -20,7 +22,8 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         /// Initializes a new ConcurrencyRateLimiter with the specified concurrency limit.
         /// </summary>
         /// <param name="concurrencyLimit">The maximum number of concurrent requests.</param>
-        internal ConcurrencyRateLimiter(int concurrencyLimit)
+        /// <param name="next">The next rate limiter to apply.</param>
+        internal ConcurrencyRateLimiter(int concurrencyLimit, RateLimiterBase? next = null) : base(next)
         {
             _concurrencyLimitSemaphore = new SemaphoreSlim(concurrencyLimit);
         }
@@ -61,7 +64,7 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         public override void Dispose()
         {
             _concurrencyLimitSemaphore.Dispose();
-            Next.Dispose();
+            Next?.Dispose();
         }
     }
 }

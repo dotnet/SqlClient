@@ -194,19 +194,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         //TODO: support auth contexts and provider info
         internal BetterSyncPool(
-            SqlConnectionString connectionString,
-            SqlCredential credential,
-            RateLimiterBase connectionRateLimiter,
             DbConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
-            DbConnectionPoolGroupOptions connectionPoolGroupOptions,
+            DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
-            DbConnectionPoolIdentity identity)
+            RateLimiterBase connectionRateLimiter)
         {
             _connectionRateLimiter = connectionRateLimiter;
             _connectionFactory = connectionFactory;
             _connectionPoolGroup = connectionPoolGroup;
-            _connectionPoolGroupOptions = connectionPoolGroupOptions;
+            _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
             _identity = identity;
             _pooledDbAuthenticationContexts = new ConcurrentDictionary<
@@ -814,6 +811,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         // TODO: override clear method
         #endregion
+
+        internal struct PoolPruningParameters
+        {
+            internal int _minIdleCount;
+            internal readonly PeriodicTimer PruningTimer { get; init; }
+            internal readonly PeriodicTimer MinIdleCountTimer { get; init; }
+            internal readonly ValueTask PruningTimerListener { get; init; }
+            internal Task PruningTask { get; set; }
+            internal readonly ValueTask UpdateMinIdleCountTask { get; init; }
+            internal readonly SemaphoreSlim PruningLock { get; init; }
+        }
     }
 }
 #endif
