@@ -30,6 +30,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`RunTests`|Runs the functional and manual tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
+|`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
 
 
 ### Parameters
