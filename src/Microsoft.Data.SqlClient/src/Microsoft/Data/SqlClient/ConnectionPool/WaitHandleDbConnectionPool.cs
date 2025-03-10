@@ -1136,12 +1136,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
-            if (retry == null)
+            if (taskCompletionSource == null)
             {
                 waitForMultipleObjectsTimeout = (uint)CreationTimeout;
 
@@ -1164,7 +1164,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 return true;
             }
-            else if (retry == null)
+            else if (taskCompletionSource == null)
             {
                 // timed out on a sync call
                 return true;
@@ -1174,7 +1174,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 new PendingGetConnection(
                     CreationTimeout == 0 ? Timeout.Infinite : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000),
                     owningObject,
-                    retry,
+                    taskCompletionSource,
                     userOptions);
             _pendingOpens.Enqueue(pendingGetConnection);
 

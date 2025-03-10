@@ -1391,8 +1391,8 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
         }
 
-        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
-            => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> taskCompletionSource, SqlConnectionOverrides overrides)
+            => RetryLogicProvider.Execute(this, () => TryOpen(taskCompletionSource, overrides));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
@@ -1899,7 +1899,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
+        private bool TryOpen(TaskCompletionSource<DbConnectionInternal> taskCompletionSource, SqlConnectionOverrides overrides = SqlConnectionOverrides.None)
         {
             SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
 
@@ -1961,14 +1961,14 @@ namespace Microsoft.Data.SqlClient
 
             if (ForceNewConnection)
             {
-                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!InnerConnection.TryReplaceConnection(this, ConnectionFactory, taskCompletionSource, UserConnectionOptions))
                 {
                     return false;
                 }
             }
             else
             {
-                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, retry, UserConnectionOptions))
+                if (!InnerConnection.TryOpenConnection(this, ConnectionFactory, taskCompletionSource, UserConnectionOptions))
                 {
                     return false;
                 }

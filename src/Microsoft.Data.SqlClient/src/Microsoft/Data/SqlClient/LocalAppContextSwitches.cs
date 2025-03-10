@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
         internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
+        internal const string UseLegacyConnectionPoolString = @"Switch.Microsoft.Data.SqlClient.UseLegacyConnectionPool";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -30,6 +31,7 @@ namespace Microsoft.Data.SqlClient
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
         private static Tristate s_useCompatProcessSni;
+        private static Tristate s_useLegacyConnectionPool;
 
 #if NET
         static LocalAppContextSwitches()
@@ -85,6 +87,25 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
+        public static bool UseLegacyConnectionPool
+        {
+            get
+            {
+                if (s_useLegacyConnectionPool == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseLegacyConnectionPoolString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useLegacyConnectionPool = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useLegacyConnectionPool = Tristate.False;
+                    }
+                }
+                return s_useLegacyConnectionPool == Tristate.True;
+            }
+        }
+
         public static bool UseCompatibilityProcessSni
         {
             get

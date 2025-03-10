@@ -867,7 +867,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
             DbConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource,
             DbConnectionOptions userOptions)
         {
             throw ADP.ConnectionAlreadyOpen(State);
@@ -876,7 +876,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
             DbConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> retry,
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource,
             DbConnectionOptions userOptions)
         {
             throw ADP.MethodNotImplemented();

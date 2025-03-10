@@ -66,14 +66,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
            //TODO
         }
 
-        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection)
         {
-            //TODO
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            connection = null;
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-                              
-            return true;
+            if (taskCompletionSource is not null)
+            {
+                ThreadPool.QueueUserWorkItem(async (_) =>
+                {
+                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.Zero, false, CancellationToken.None).ConfigureAwait(false);
+                    taskCompletionSource.SetResult(connection);
+                });
+                connection = null;
+                return false;
+            } 
+            else
+            {
+                connection = GetInternalConnection(owningObject, userOptions, TimeSpan.Zero, false, CancellationToken.None).Result;
+                return connection is not null;
+            }
         }
 
         /// <summary>
@@ -94,6 +103,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
+            ReturnInternalConnection(obj);
         }
 
         internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
@@ -103,12 +113,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal override void Startup()
         {
-            //TODO
+            // NOTE: this occupies a thread for the whole duration of the warmup process.
+            ThreadPool.QueueUserWorkItem(async (_) => { await WarmUp(); });
         }
 
         internal override void Shutdown()
         {
-            //TODO
+            // NOTE: this occupies a thread for the whole duration of the shutdown process.
+            ThreadPool.QueueUserWorkItem(async (_) => { await ShutdownAsync(); });
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool
