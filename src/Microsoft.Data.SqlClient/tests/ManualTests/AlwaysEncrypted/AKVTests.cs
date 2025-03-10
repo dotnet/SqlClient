@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestEncryptDecryptWithAKV()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldFail()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -133,22 +133,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRoundTripWithAKVAndCertStoreProvider()
         {
-            using SQLSetupStrategyCertStoreProvider certStoreFixture = new();
+            SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
             byte[] plainTextColumnEncryptionKey = ColumnEncryptionKey.GenerateRandomBytes(ColumnEncryptionKey.KeySizeInBytes);
-            byte[] encryptedColumnEncryptionKeyUsingAKV = _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreFixture.CertStoreProvider.DecryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
+            byte[] encryptedColumnEncryptionKeyUsingAKV = _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(_fixture.AkvKeyUrl, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedAKV2Cert = certStoreProvider.DecryptColumnEncryptionKey(_fixture.ColumnMasterKeyPath, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingAKV);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedAKV2Cert), @"Roundtrip failed");
 
             // Try the opposite.
-            byte[] encryptedColumnEncryptionKeyUsingCert = certStoreFixture.CertStoreProvider.EncryptColumnEncryptionKey(certStoreFixture.CspColumnMasterKey.KeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
-            byte[] columnEncryptionKeyReturnedCert2AKV = _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
+            byte[] encryptedColumnEncryptionKeyUsingCert = certStoreProvider.EncryptColumnEncryptionKey(_fixture.ColumnMasterKeyPath, @"RSA_OAEP", plainTextColumnEncryptionKey);
+            byte[] columnEncryptionKeyReturnedCert2AKV = _fixture.AkvStoreProvider.DecryptColumnEncryptionKey(_fixture.AkvKeyUrl, @"RSA_OAEP", encryptedColumnEncryptionKeyUsingCert);
             Assert.True(plainTextColumnEncryptionKey.SequenceEqual(columnEncryptionKeyReturnedCert2AKV), @"Roundtrip failed");
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
