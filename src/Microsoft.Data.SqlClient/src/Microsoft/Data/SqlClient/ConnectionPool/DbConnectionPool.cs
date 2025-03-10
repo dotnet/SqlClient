@@ -50,8 +50,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         #region Abstract Methods
         internal abstract void Clear();
 
-        internal abstract void DestroyObject(DbConnectionInternal obj);
-
         internal abstract bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection);
 
         internal abstract DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);

@@ -956,7 +956,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Debug.Assert(rootTxn == true || returnToGeneralPool == true || destroyObject == true);
         }
 
-        internal override void DestroyObject(DbConnectionInternal obj)
+        private void DestroyObject(DbConnectionInternal obj)
         {
             // A connection with a delegated transaction cannot be disposed of
             // until the delegated transaction has actually completed.  Instead,

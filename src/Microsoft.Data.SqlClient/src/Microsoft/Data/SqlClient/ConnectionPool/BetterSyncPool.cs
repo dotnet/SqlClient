@@ -66,11 +66,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
            //TODO
         }
 
-        internal override void DestroyObject(DbConnectionInternal obj)
-        {
-            //TODO
-        }
-
         internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             //TODO
@@ -255,7 +250,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
         #endregion
 
-        static int DivideRoundingUp(int value, int divisor) => 1 + (value - 1) / divisor;
 
         /// <inheritdoc/>
         internal async ValueTask<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
@@ -761,7 +755,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         null,
                         // connections opened by the pool use the pool groups options in place of user provided options
                         _connectionPoolGroup.ConnectionOptions,
-                        LoadBalanceTimeout,
+                        ConnectionLifetime,
                         true,
                         ct)
                         .ConfigureAwait(false);
