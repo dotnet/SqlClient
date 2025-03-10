@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -298,6 +299,105 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SetLegacyRowVersionNullBehavior(originalValue);
                 }
             }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static int CanReadEmployeesTableCompletely()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    conn.Open();
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!reader.IsDBNull(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadEmployeesTableCompletelyAsync()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    await conn.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!await reader.IsDBNullAsync(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadEmployeesTableCompletelyWithNullImageAsync()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,convert(image,NULL) as Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    await conn.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!await reader.IsDBNullAsync(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
         }
 
         // Synapse: Cannot find data type 'rowversion'.
