@@ -56,9 +56,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal abstract DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);
 
-        internal abstract void PutNewObject(DbConnectionInternal obj);
-
-        internal abstract void PutObject(DbConnectionInternal obj, object owningObject);
+        internal abstract void ReturnInternalConnection(DbConnectionInternal obj, object owningObject);
 
         internal abstract void PutObjectFromTransactedPool(DbConnectionInternal obj);
 

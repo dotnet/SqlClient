@@ -95,6 +95,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         #region Properties
+        internal DateTime OpenTimestamp => _createTime;
 
         internal bool AllowSetConnectionString { get; }
 
@@ -472,8 +473,8 @@ namespace Microsoft.Data.ProviderBase
                         // into the pool.
                         if (connectionPool is not null)
                         {
-                            // PutObject calls Deactivate for us...
-                            connectionPool.PutObject(this, owningObject);
+                            // ReturnInternalConnection calls Deactivate for us...
+                            connectionPool.ReturnInternalConnection(this, owningObject);
 
                             // NOTE: Before we leave the PutObject call, another thread may have
                             // already popped the connection from the pool, so don't expect to be

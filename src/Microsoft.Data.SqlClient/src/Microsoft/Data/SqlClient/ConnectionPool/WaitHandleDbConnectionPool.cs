@@ -1121,7 +1121,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             if (!next.Completion.TrySetResult(connection))
                             {
                                 // if the completion was cancelled, lets try and get this connection back for the next try
-                                PutObject(connection, next.Owner);
+                                ReturnInternalConnection(connection, next.Owner);
                             }
                         }
                     }
@@ -1406,7 +1406,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // if Activate throws an exception
                 // put it back in the pool or have it properly disposed of
-                this.PutObject(obj, owningObject);
+                this.ReturnInternalConnection(obj, owningObject);
                 throw;
             }
         }
@@ -1654,7 +1654,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal override void PutNewObject(DbConnectionInternal obj)
+        private void PutNewObject(DbConnectionInternal obj)
         {
             Debug.Assert(obj != null, "why are we adding a null object to the pool?");
 
@@ -1670,7 +1670,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         }
 
-        internal override void PutObject(DbConnectionInternal obj, object owningObject)
+        internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
             Debug.Assert(obj != null, "null obj?");
 
