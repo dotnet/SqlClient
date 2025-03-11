@@ -8540,7 +8540,7 @@ namespace Microsoft.Data.SqlClient
                 // Feature Data Length
                 WriteInt(1, _physicalStateObj);
 
-                _physicalStateObj.WriteByte(0x9);
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
             }
 
             return len;

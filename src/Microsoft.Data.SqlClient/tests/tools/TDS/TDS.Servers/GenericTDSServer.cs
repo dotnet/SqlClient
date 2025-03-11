@@ -592,7 +592,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                 byte[] data = new byte[1];
                 data[0] = (byte)1;
 
-                // Create Json support as a generic feature extension option
+                // Create vector support as a generic feature extension option
                 TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
 
                 // Look for feature extension token

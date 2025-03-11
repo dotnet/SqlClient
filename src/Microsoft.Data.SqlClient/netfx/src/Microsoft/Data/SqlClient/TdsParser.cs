@@ -8717,6 +8717,24 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteVectorSupportFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_VECTORSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                     TdsEnums.FeatureExtension requestedFeatures,
                                     SessionData recoverySessionData,
@@ -9047,6 +9065,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
                     {
                         length += WriteJsonSupportFeatureRequest(write);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
+                    {
+                        length += WriteVectorSupportFeatureRequest(write);
                     }
 
                     length++; // for terminator

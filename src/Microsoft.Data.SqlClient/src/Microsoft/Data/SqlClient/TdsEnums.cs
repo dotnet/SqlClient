@@ -980,7 +980,7 @@ namespace Microsoft.Data.SqlClient
         internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
 
         // JSON Support constants
-        internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x02;
+        internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
