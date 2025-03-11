@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private static void ObtainProcessDispatcher()
         {
-            byte[] nativeStorage = SniNativeWrapper.GetData();
+            byte[] nativeStorage = SqlDependencyProcessDispatcherStorage.NativeGetData();
 
             if (nativeStorage == null)
             {
@@ -473,47 +473,40 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
-
 #endif // DEBUG
-                _AppDomain masterDomain = SniNativeWrapper.GetDefaultAppDomain();
-
-                if (masterDomain != null)
+                
+                _AppDomain masterDomain = AppDomain.CurrentDomain;
+                
+                ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+                if (handle != null)
                 {
-                    ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+                    SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
 
-                    if (handle != null)
+                    if (dependency != null)
                     {
-                        SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
+                        s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
 
-                        if (dependency != null)
+                        // Serialize and set in native.
+                        using (MemoryStream stream = new())
                         {
-                            s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
-
-                            // Serialize and set in native.
-                            using (MemoryStream stream = new())
-                            {
-                                SqlClientObjRef objRef = new(s_processDispatcher);
-                                DataContractSerializer serializer = new(objRef.GetType());
-                                GetSerializedObject(objRef, serializer, stream);
-                                SniNativeWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
-                            }
-                        }
-                        else
-                        {
-                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
-                            throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
+                            SqlClientObjRef objRef = new(s_processDispatcher);
+                            DataContractSerializer serializer = new(objRef.GetType());
+                            GetSerializedObject(objRef, serializer, stream);
+                            
+                            // Native will be forced to synchronize and not overwrite.
+                            SqlDependencyProcessDispatcherStorage.NativeSetData(stream.ToArray()); 
                         }
                     }
                     else
                     {
-                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
-                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
+                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
                     }
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!");
-                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureAppDomain);
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
+                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
                 }
             }
             else

@@ -146,11 +146,13 @@ catch [Exception]
                 {
                     FileName = "powershell.exe",
                     RedirectStandardOutput = true,
+                    RedirectStandardError = false,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     // Pass the Base64-encoded command to remove the need to escape quote marks
                     Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
-                    Verb = "runas"
+                    Verb = "runas",
+                    LoadUserProfile = true
                 }
             })
             {
