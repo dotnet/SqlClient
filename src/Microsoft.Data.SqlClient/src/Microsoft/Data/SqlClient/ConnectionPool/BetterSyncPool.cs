@@ -61,6 +61,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal override bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
+        /// <summary>
+        /// This only clears idle connections. Connections that are in use are not affected.
+        /// Different from previous behavior where all connections in the pool are doomed and eventually cleaned up.
+        /// </summary>
         internal override void Clear()
         {
             Interlocked.Increment(ref _clearCounter);
@@ -139,7 +143,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal override void Shutdown()
         {
             // NOTE: this occupies a thread for the whole duration of the shutdown process.
-            ThreadPool.QueueUserWorkItem(async (_) => { await ShutdownAsync(); });
+            var shutdownTask = new Task(async () => await ShutdownAsync());
+            shutdownTask.RunSynchronously();
         }
 
         // TransactionEnded merely provides the plumbing for DbConnectionInternal to access the transacted pool
@@ -300,6 +305,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionInternal? connector = GetIdleConnector();
             if (connector != null)
             {
+                // TODO: transactions
+                connector.ActivateConnection(null);
                 return connector;
             }
 
@@ -307,6 +314,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             connector = await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
             if (connector != null)
             {
+                // TODO: transactions
+                connector.ActivateConnection(null);
                 return connector;
             }
 
@@ -350,6 +359,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                         if (CheckIdleConnector(connector))
                         {
+                            // TODO: transactions
+                            connector.ActivateConnection(null);
                             return connector;
                         }
                     }
@@ -372,6 +383,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connector = GetIdleConnector();
                     if (connector != null)
                     {
+                        // TODO: transactions
+                        connector.ActivateConnection(null);
                         return connector;
                     }
 
@@ -380,6 +393,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connector = await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
                     if (connector != null)
                     {
+                        // TODO: transactions
+                        connector.ActivateConnection(null);
                         return connector;
                     }
                 }
@@ -470,7 +485,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             try
             {
-                connector.DeactivateConnection();
+                connector.Dispose();
             }
             catch
             {
@@ -634,9 +649,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             _shutdownCT.ThrowIfCancellationRequested();
 
-            while (await PruningTimer.WaitForNextTickAsync(_shutdownCT))
+            try
             {
-                await await PruneIdleConnections();
+                while (await PruningTimer.WaitForNextTickAsync(_shutdownCT))
+                {
+                    await await PruneIdleConnections();
+                }
+            } catch (OperationCanceledException)
+            {
+                //TODO: log something here?
             }
         }
 
@@ -721,31 +742,37 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             _shutdownCT.ThrowIfCancellationRequested();
 
-            while (await MinIdleCountTimer.WaitForNextTickAsync(_shutdownCT))
+            try
             {
-                if (State is not Running)
+                while (await MinIdleCountTimer.WaitForNextTickAsync(_shutdownCT))
                 {
-                    continue;
-                }
-                try
-                {
-                    int currentMinIdle;
-                    int currentIdle;
-                    do
+                    if (State is not Running)
                     {
-                        currentMinIdle = _minIdleCount;
-                        currentIdle = _idleCount;
-                        if (currentIdle >= currentMinIdle)
-                        {
-                            break;
-                        }
+                        continue;
                     }
-                    while (Interlocked.CompareExchange(ref _minIdleCount, currentIdle, currentMinIdle) != currentMinIdle);
+                    try
+                    {
+                        int currentMinIdle;
+                        int currentIdle;
+                        do
+                        {
+                            currentMinIdle = _minIdleCount;
+                            currentIdle = _idleCount;
+                            if (currentIdle >= currentMinIdle)
+                            {
+                                break;
+                            }
+                        }
+                        while (Interlocked.CompareExchange(ref _minIdleCount, currentIdle, currentMinIdle) != currentMinIdle);
+                    }
+                    catch
+                    {
+                        // TODO: log exception
+                    }
                 }
-                catch
-                {
-                    // TODO: log exception
-                }
+            } catch (OperationCanceledException)
+            {
+                // TODO: log here?
             }
         }
 
