@@ -1257,9 +1257,9 @@ namespace Microsoft.Data.SqlClient
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
         }
-        internal static Exception BulkLoadNonMatchingColumnName(IEnumerable<string> columns)
+        internal static Exception BulkLoadNonMatchingColumnNames(IEnumerable<string> columnNames)
         {
-            return BulkLoadNonMatchingColumnName(String.Join(",", columns), null);
+            return BulkLoadNonMatchingColumnName(string.Join(",", columnNames), null);
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
