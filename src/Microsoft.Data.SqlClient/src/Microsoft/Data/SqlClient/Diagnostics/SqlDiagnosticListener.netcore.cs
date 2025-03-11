@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -21,3 +23,5 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+
+#endif
