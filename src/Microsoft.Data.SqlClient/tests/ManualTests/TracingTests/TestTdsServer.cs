@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = Console.Out;
+            server._endpoint.EventLog = enableLog ? Console.Out : null;
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;

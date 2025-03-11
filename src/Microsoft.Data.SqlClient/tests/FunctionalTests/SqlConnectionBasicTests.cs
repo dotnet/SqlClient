@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFaultTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -384,6 +384,52 @@ namespace Microsoft.Data.SqlClient.Tests
                 using TestTdsServer server = TestTdsServer.StartTestServer(false, false, -5);
             });
 
+        }
+
+        // Test that we send the expected TDS Client Interface Name value with
+        // the LOGIN7 packet.
+        [Fact]
+        public void ConnectionOpen_ClientInterfaceName()
+        {
+            // Peek into the internal ClientInterface class to get the value
+            // we expect to see in the LOGIN packet.
+            var expected =
+                new Func<string>(() =>
+                {
+                    var clientInterfaceType =
+                        typeof(SqlCommand).Assembly
+                        .GetType("Microsoft.Data.SqlClient.ClientInterface");
+                    Assert.NotNull(clientInterfaceType);
+
+                    var nameProperty =
+                        clientInterfaceType.GetProperty(
+                            "Name",
+                            BindingFlags.Public | BindingFlags.Static);
+                    Assert.NotNull(nameProperty);
+
+                    return nameProperty.GetValue(null) as string;
+                })();
+            
+            // Start the test TDS server.
+            using var server = TestTdsServer.StartTestServer();
+            
+            // Assign a delegate to save the Client Interface Name value from
+            // the LOGIN7 packet.
+            string actual = null;
+            server.OnLogin7Validated =
+                (TDSLogin7Token login) =>
+                {
+                    // The test TDS server uses "LibraryName" for the TDS Client
+                    // Interface Name field.
+                    actual = login.LibraryName;
+                };
+
+            // Connect to the test TDS server.
+            using SqlConnection connection = new(server.ConnectionString);
+            connection.Open();
+
+            // Verify that the expected value was sent in the LOGIN packet.
+            Assert.Equal(expected, actual);
         }
 
         [Fact]

@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                     {
                         if (s_userInstanceDllHandle == IntPtr.Zero)
                         {
-                            SniNativeWrapper.SNIQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDllHandle);
+                            SniNativeWrapper.SniQueryInfo(QueryType.SNI_QUERY_LOCALDB_HMODULE, ref s_userInstanceDllHandle);
                             if (s_userInstanceDllHandle != IntPtr.Zero)
                             {
                                 #if NETFRAMEWORK
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                             }
                             else
                             {
-                                SniNativeWrapper.SNIGetLastError(out SniError sniError);
+                                SniNativeWrapper.SniGetLastError(out SniError sniError);
                                 throw CreateLocalDbException(
                                     errorMessage: StringsHelper.GetString("LocalDB_FailedGetDLLHandle"),
                                     sniError: sniError.sniError);

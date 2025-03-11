@@ -1495,27 +1495,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             while (rdr.NextResult());
         }
 
-        private void DumpSqlParam(SqlParameter param)
-        {
-            Console.WriteLine("Parameter {0}", param.ParameterName);
-            Console.WriteLine("  IsNullable: {0}", param.IsNullable);
-            Console.WriteLine("  LocaleId: {0}", param.LocaleId);
-            Console.WriteLine("  Offset: {0}", param.Offset);
-            Console.WriteLine("  CompareInfo: {0}", param.CompareInfo);
-            Console.WriteLine("  DbType: {0}", param.DbType);
-            Console.WriteLine("  Direction: {0}", param.Direction);
-            Console.WriteLine("  Precision: {0}", param.Precision);
-            Console.WriteLine("  Scale: {0}", param.Scale);
-            Console.WriteLine("  Size: {0}", param.Size);
-            Console.WriteLine("  SqlDbType: {0}", param.SqlDbType);
-            Console.WriteLine("  TypeName: {0}", param.TypeName);
-            //Console.WriteLine("  UdtTypeName: {0}", param.UdtTypeName);
-            Console.WriteLine("  XmlSchemaCollectionDatabase: {0}", param.XmlSchemaCollectionDatabase);
-            Console.WriteLine("  XmlSchemaCollectionName: {0}", param.XmlSchemaCollectionName);
-            Console.WriteLine("  XmlSchemaCollectionSchema: {0}", param.XmlSchemaCollectionOwningSchema);
-        }
-
-
         #endregion
     }
 
