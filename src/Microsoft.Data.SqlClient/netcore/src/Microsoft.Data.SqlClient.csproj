@@ -179,6 +179,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs</Link>
     </Compile>
@@ -205,9 +211,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientDiagnosticListenerExtensions.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientDiagnosticListenerExtensions.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs</Link>
