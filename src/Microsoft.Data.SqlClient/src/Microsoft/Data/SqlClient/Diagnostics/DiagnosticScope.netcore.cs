@@ -7,7 +7,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Diagnostics
 {
     internal ref struct DiagnosticScope //: IDisposable //ref structs cannot implement interfaces but the compiler will use pattern matching
     {

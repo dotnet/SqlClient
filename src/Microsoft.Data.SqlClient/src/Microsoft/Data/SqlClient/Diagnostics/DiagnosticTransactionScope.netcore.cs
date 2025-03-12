@@ -8,8 +8,7 @@ using System;
 using System.Data;
 using System.Runtime.CompilerServices;
 
-
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Diagnostics
 {
     internal ref struct DiagnosticTransactionScope //: IDisposable //ref structs cannot implement interfaces but the compiler will use pattern matching
     {

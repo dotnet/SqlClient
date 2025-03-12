@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Data.Common;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {

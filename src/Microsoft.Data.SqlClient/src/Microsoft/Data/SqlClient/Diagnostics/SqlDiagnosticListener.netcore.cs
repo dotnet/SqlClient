@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using Microsoft.Data.SqlClient.Diagnostics;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Diagnostics
 {
     internal sealed class SqlDiagnosticListener : DiagnosticListener
     {
