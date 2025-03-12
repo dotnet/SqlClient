@@ -17,7 +17,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenError";
 
-        internal SqlClientConnectionOpenError(Guid operationId, string operation, long timestamp, Guid connectionId, SqlConnection connection, string clientVersion, Exception exception)
+        internal SqlClientConnectionOpenError(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            Guid connectionId,
+            SqlConnection connection,
+            string clientVersion,
+            Exception exception)
         {
             OperationId = operationId;
             Operation = operation;

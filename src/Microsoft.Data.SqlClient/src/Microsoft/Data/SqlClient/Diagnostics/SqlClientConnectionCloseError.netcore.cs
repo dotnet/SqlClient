@@ -16,7 +16,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseError";
 
-        internal SqlClientConnectionCloseError(Guid operationId, string operation, long timestamp, Guid? connectionId, SqlConnection connection, IDictionary statistics, Exception ex)
+        internal SqlClientConnectionCloseError(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            Guid? connectionId,
+            SqlConnection connection,
+            IDictionary statistics,
+            Exception ex)
         {
             OperationId = operationId;
             Operation = operation;

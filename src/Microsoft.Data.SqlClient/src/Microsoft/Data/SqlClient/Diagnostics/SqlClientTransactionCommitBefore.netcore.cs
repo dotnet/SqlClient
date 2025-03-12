@@ -17,7 +17,13 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitBefore"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitBefore";
 
-        internal SqlClientTransactionCommitBefore(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId)
+        internal SqlClientTransactionCommitBefore(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            IsolationLevel isolationLevel,
+            SqlConnection connection,
+            long? transactionId)
         {
             OperationId = operationId;
             Operation = operation;

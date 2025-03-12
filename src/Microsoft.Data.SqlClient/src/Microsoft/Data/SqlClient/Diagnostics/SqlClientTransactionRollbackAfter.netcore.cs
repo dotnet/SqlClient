@@ -17,7 +17,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackAfter";
 
-        internal SqlClientTransactionRollbackAfter(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName)
+        internal SqlClientTransactionRollbackAfter(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            IsolationLevel isolationLevel,
+            SqlConnection connection,
+            long? transactionId,
+            string transactionName)
         {
             OperationId = operationId;
             Operation = operation;
