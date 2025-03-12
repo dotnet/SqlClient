@@ -359,21 +359,6 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
-  <!-- Avoid vulnerabilities in transitive packages. -->
-  <ItemGroup>
-    <!--
-      System.Net.Http 4.3.0:
-
-      https://github.com/advisories/GHSA-7jgj-8wvc-jh57
-    -->
-    <PackageReference Include="System.Net.Http" Version="$(SystemNetHttpVersion)" />
-    <!--
-      System.Text.RegularExpressions 4.3.0:
-
-      https://github.com/advisories/GHSA-cmhx-cq75-c4mj
-    -->
-    <PackageReference Include="System.Text.RegularExpressions" Version="$(SystemTextRegularExpressionsVersion)" />
-  </ItemGroup>
   <ItemGroup>
     <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
