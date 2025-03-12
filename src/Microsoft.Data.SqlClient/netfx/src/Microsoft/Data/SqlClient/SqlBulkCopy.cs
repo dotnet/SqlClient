@@ -193,7 +193,6 @@ namespace Microsoft.Data.SqlClient
 
         private object _rowSource;
         private SqlDataReader _sqlDataReaderRowSource;
-        private bool _rowSourceIsSqlDataReaderSmi;
         private DbDataReader _dbDataReaderRowSource;
         private DataTable _dataTableSource;
 
@@ -1276,7 +1275,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             // Check for data streams
-            else if ((_enableStreaming) && ((metadata.length == MAX_LENGTH) || metadata.metaType.SqlDbType == SqlDbTypeExtensions.Json) && (!_rowSourceIsSqlDataReaderSmi))
+            else if ((_enableStreaming) && ((metadata.length == MAX_LENGTH) || metadata.metaType.SqlDbType == SqlDbTypeExtensions.Json))
             {
                 isSqlType = false;
 
@@ -1720,10 +1719,6 @@ namespace Microsoft.Data.SqlClient
                 _dbDataReaderRowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
 
-                if (_sqlDataReaderRowSource != null)
-                {
-                    _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
-                }
                 _rowSourceType = ValueSourceType.DbDataReader;
 
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
@@ -1756,10 +1751,6 @@ namespace Microsoft.Data.SqlClient
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
-                if (_sqlDataReaderRowSource != null)
-                {
-                    _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
-                }
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
