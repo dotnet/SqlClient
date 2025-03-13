@@ -272,7 +272,10 @@ namespace Microsoft.Data.SqlClient
                 #endif
                 try
                 {
+                    #if NETFRAMEWORK
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    #endif
+
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     _isFromAPI = true;
