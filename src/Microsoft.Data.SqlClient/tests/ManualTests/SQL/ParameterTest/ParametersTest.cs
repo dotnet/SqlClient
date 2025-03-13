@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 using System.Globalization;
 
@@ -957,30 +958,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ClosedConnection_SqlParameterValueTest()
         {
-            var threads = new List<Thread>();
-            for (int i = 0; i < 100; i++)
+            var tasks = new Task[100];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                var t = new Thread(() =>
+                var t = Task.Factory.StartNew(() =>
                 {
                     for (int j = 0; j < 1000; j++)
                     {
-                        try
-                        {
-                            RunParameterTest();
-                        }
-                        catch (Exception e)
-                        {
-                            Assert.Fail($"Unexpected exception occurred: {e.Message}");
-                        }
+                        RunParameterTest();
                     }
-                });
-                t.Start();
-                threads.Add(t);
+                }, TaskCreationOptions.LongRunning);
+                tasks[i] = t;
             }
-            for (int i = 0; i < threads.Count; i++)
-            {
-                threads[i].Join();
-            }
+            Task.WaitAll(tasks);
         }
 
         private static void RunParameterTest()
@@ -998,7 +988,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cm.Parameters.Add(new SqlParameter("@id2", SqlDbType.UniqueIdentifier) { Direction = ParameterDirection.Output });
             try
             {
-                System.Threading.Tasks.Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
+                Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
                 task.Wait();
             }
             catch (Exception)
