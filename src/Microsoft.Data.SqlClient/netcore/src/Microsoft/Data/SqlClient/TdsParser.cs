@@ -13070,56 +13070,53 @@ namespace Microsoft.Data.SqlClient
 
             while (charsLeft > 0)
             {
-                if (partialReadInProgress)
+                if (!partialReadInProgress)
                 {
-                    goto resumePartialRead;
-                }
-                charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
-                if ((buff == null) || (buff.Length < (offst + charsRead)))
-                {
-                    char[] newbuf;
-                    bool returnRentedBufferAfterCopy = rentedBuff;
-                    if (supportRentedBuff && (offst + charsRead) < 1073741824) // 1 Gib
+                    charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
+                    if ((buff == null) || (buff.Length < (offst + charsRead)))
                     {
-                        newbuf = ArrayPool<char>.Shared.Rent(offst + charsRead);
-                        rentedBuff = true;
-                    }
-                    else
-                    {
-                        newbuf = new char[offst + charsRead];
-                        rentedBuff = false;
-                    }
-
-                    if (buff != null)
-                    {
-                        Buffer.BlockCopy(buff, 0, newbuf, 0, offst * 2);
-                        if (returnRentedBufferAfterCopy)
+                        char[] newbuf;
+                        bool returnRentedBufferAfterCopy = rentedBuff;
+                        if (supportRentedBuff && (offst + charsRead) < 1073741824) // 1 Gib
                         {
-                            buff.AsSpan(0, offst).Clear();
-                            ArrayPool<char>.Shared.Return(buff, clearArray: false);
+                            newbuf = ArrayPool<char>.Shared.Rent(offst + charsRead);
+                            rentedBuff = true;
+                        }
+                        else
+                        {
+                            newbuf = new char[offst + charsRead];
+                            rentedBuff = false;
+                        }
+
+                        if (buff != null)
+                        {
+                            Buffer.BlockCopy(buff, 0, newbuf, 0, offst * 2);
+                            if (returnRentedBufferAfterCopy)
+                            {
+                                buff.AsSpan(0, offst).Clear();
+                                ArrayPool<char>.Shared.Return(buff, clearArray: false);
+                            }
+                        }
+                        buff = newbuf;
+                        newbuf = null;
+                    }
+                    if (charsRead > 0)
+                    {
+                        result = TryReadPlpUnicodeCharsChunk(buff, offst, charsRead, stateObj, out charsRead);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            return result;
+                        }
+                        charsLeft -= charsRead;
+                        offst += charsRead;
+                        totalCharsRead += charsRead;
+
+                        if (writeDataSizeToSnapshot)
+                        {
+                            currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, charsRead * 2);
                         }
                     }
-                    buff = newbuf;
-                    newbuf = null;
                 }
-                if (charsRead > 0)
-                {
-                    result = TryReadPlpUnicodeCharsChunk(buff, offst, charsRead, stateObj, out charsRead);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    charsLeft -= charsRead;
-                    offst += charsRead;
-                    totalCharsRead += charsRead;
-
-                    if (writeDataSizeToSnapshot)
-                    {
-                        currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, charsRead * 2);
-                    }
-                }
-
-            resumePartialRead:
                 // Special case single byte
                 if (
                     (stateObj._longlenleft == 1 || partialReadInProgress)
