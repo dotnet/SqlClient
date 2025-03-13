@@ -168,6 +168,7 @@ namespace Microsoft.Data.SqlClient
                 _connection,
                 InternalTransaction,
                 transactionName: null);
+            #endif
 
             if (Is2005PartialZombie)
             {
@@ -242,20 +243,32 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
        public override void Rollback(string transactionName)
         {
-            //netcore using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(_isolationLevel, _connection, InternalTransaction, transactionName))
-            //netcore {
+            #if NET
+            using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
+                _isolationLevel,
+                _connection,
+                InternalTransaction,
+                transactionName);
+            #endif
 
-            //netfx SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+            #endif
 
             ZombieCheck();
 
-            //netcore using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection?.ClientConnectionId)))
-            //netfx   using (TryEventScope.Create("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName))
+            var eventScopeEnter = TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
+                "SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}",
+                ObjectID,
+                transactionName,
+                ActivityCorrelator.Current,
+                Connection?.ClientConnectionId));
+            using (eventScopeEnter)
             {
                 SqlStatistics statistics = null;
-                TdsParser bestEffortCleanupTarget = null;
 
                 #if NETFRAMEWORK
+                TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 #endif
                 try
@@ -264,45 +277,38 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     _isFromAPI = true;
-
                     _internalTransaction.Rollback(transactionName);
                 }
-                catch (System.OutOfMemoryException e)
+                #if NETFRAMEWORK
+                catch (OutOfMemoryException e)
                 {
-                    //netcore diagnosticScope.SetException(e);
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (StackOverflowException e)
                 {
-                    //netcore diagnosticScope.SetException(e);
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.Threading.ThreadAbortException e)
+                catch (ThreadAbortException e)
                 {
-                    //netcore diagnosticScope.SetException(e);
                     _connection.Abort(e);
-
-                    #if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    #endif
                     throw;
                 }
-                //netcore---
+                #else
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
                     throw;
                 }
-                //---netcore
+                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
                     _isFromAPI = false;
                 }
             }
-            //netcore }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />

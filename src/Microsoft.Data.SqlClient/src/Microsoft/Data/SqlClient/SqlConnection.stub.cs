@@ -12,6 +12,10 @@ namespace Microsoft.Data.SqlClient
     {
         internal Guid ClientConnectionId { get; set; }
 
+        #if NETFRAMEWORK
+        internal static System.Security.CodeAccessPermission ExecutePermission { get; set; }
+        #endif
+
         internal SqlStatistics Statistics { get; set; }
 
         internal void Abort(Exception e) { }
