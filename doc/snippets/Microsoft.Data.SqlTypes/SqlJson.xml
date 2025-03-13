@@ -24,10 +24,5 @@
     <Value>
       <summary>Gets the string representation of the Json content of this <see cref="SqlJson" /> instance.</summary>
     </Value>
-    <GetSqlJson>
-      <param name="i"></param>
-      <summary>Retrieves the column at ordinal as a <see cref="SqlJson"/>.</summary>
-      <returns>A <see cref="SqlJson"/> object representing the column at the given ordinal.</returns>
-    </GetSqlJson>
   </members>
 </docs>

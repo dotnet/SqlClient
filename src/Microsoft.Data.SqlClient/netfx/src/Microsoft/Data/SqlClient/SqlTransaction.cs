@@ -23,38 +23,21 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Commit|API> {0}", ObjectID))
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
+                SqlStatistics statistics = null;
                 TdsParser bestEffortCleanupTarget = null;
+
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                    _isFromAPI = true;
 
-                        _isFromAPI = true;
-
-                        _internalTransaction.Commit();
-                    }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    _internalTransaction.Commit();
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -101,28 +84,11 @@ namespace Microsoft.Data.SqlClient
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    if (!IsZombied && !Is2005PartialZombie)
                     {
-                        tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        if (!IsZombied && !Is2005PartialZombie)
-                        {
-                            _internalTransaction.Dispose();
-                        }
+                        _internalTransaction.Dispose();
                     }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -167,29 +133,12 @@ namespace Microsoft.Data.SqlClient
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                        statistics = SqlStatistics.StartTimer(Statistics);
 
-                        RuntimeHelpers.PrepareConstrainedRegions();
-                        try
-                        {
-                            tdsReliabilitySection.Start();
-#else
-                        {
-#endif //DEBUG
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                            statistics = SqlStatistics.StartTimer(Statistics);
+                        _isFromAPI = true;
 
-                            _isFromAPI = true;
-
-                            _internalTransaction.Rollback();
-                        }
-#if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
-#endif //DEBUG
+                        _internalTransaction.Rollback();
                     }
                     catch (System.OutOfMemoryException e)
                     {
@@ -224,36 +173,19 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName))
             {
+                SqlStatistics statistics = null;
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                    _isFromAPI = true;
 
-                        _isFromAPI = true;
-
-                        _internalTransaction.Rollback(transactionName);
-                    }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    _internalTransaction.Rollback(transactionName);
                 }
                 catch (System.OutOfMemoryException e)
                 {
@@ -290,32 +222,14 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlTransaction.Save|API> {0} savePointName='{1}'", ObjectID, savePointName))
             {
-
                 TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-#else
-                    {
-#endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
-
-                        _internalTransaction.Save(savePointName);
-                    }
-#if DEBUG
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
+                    _internalTransaction.Save(savePointName);
                 }
                 catch (System.OutOfMemoryException e)
                 {

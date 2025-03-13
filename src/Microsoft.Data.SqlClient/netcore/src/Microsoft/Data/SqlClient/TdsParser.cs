@@ -21,6 +21,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
+using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 
@@ -104,16 +105,13 @@ namespace Microsoft.Data.SqlClient
 
         // Version variables
 
-        private bool _is2005 = false; // set to true if speaking to 2005 or later
-
         private bool _is2008 = false;
 
         private bool _is2012 = false;
 
         private bool _is2022 = false;
 
-        private byte[][] _sniSpnBuffer = null;
-        // UNDONE - need to have some for both instances - both command and default???
+        private string[] _serverSpn = null;
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
@@ -390,7 +388,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _sniSpnBuffer = null;
+                _serverSpn = null;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
@@ -402,7 +400,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
             }
 
-            _sniSpnBuffer = null;
+            _serverSpn = null;
             _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -441,7 +439,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _sniSpnBuffer,
+                ref _serverSpn,
                 false,
                 true,
                 fParallel,
@@ -540,7 +538,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.CreatePhysicalSNIHandle(
                     serverInfo.ExtendedServerName,
                     timeout, out instanceName,
-                    ref _sniSpnBuffer,
+                    ref _serverSpn,
                     true,
                     true,
                     fParallel,
@@ -931,7 +929,6 @@ namespace Microsoft.Data.SqlClient
             // Assign default values
             marsCapable = _fMARS; 
             fedAuthRequired = false;
-            bool is2005OrLater = false;
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             TdsOperationStatus result = _physicalStateObj.TryReadNetworkPacket();
             if (result != TdsOperationStatus.Done)
@@ -990,13 +987,6 @@ namespace Microsoft.Data.SqlClient
                         byte minorVersion = payload[payloadOffset + 1];
                         int level = (payload[payloadOffset + 2] << 8) |
                                              payload[payloadOffset + 3];
-
-                        is2005OrLater = majorVersion >= 9;
-                        if (!is2005OrLater)
-                        {
-                            marsCapable = false;            // If pre-2005, MARS not supported.
-                        }
-
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
@@ -1154,7 +1144,7 @@ namespace Microsoft.Data.SqlClient
                 bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
                     (_connHandler._accessTokenInBytes != null && !trustServerCert);
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                    | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+                    | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
                 EnableSsl(info, encrypt, integratedSecurity, serverCert);
             }
@@ -1557,7 +1547,7 @@ namespace Microsoft.Data.SqlClient
                         // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
                         if (details.sniErrorNumber == SniErrors.LocalDBErrorCode)
                         {
-                            errorMessage += LocalDBAPI.GetLocalDBMessage((int)details.nativeError);
+                            errorMessage += LocalDbApi.GetLocalDbMessage((int)details.nativeError);
                             win32ErrorCode = 0;
                         }
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > Extracting the latest exception from native SNI. errorMessage: {0}", errorMessage);
@@ -2047,11 +2037,19 @@ namespace Microsoft.Data.SqlClient
 
                 if (!IsValidTdsToken(token))
                 {
-                    Debug.Fail($"unexpected token; token = {token,-2:X2}");
+#if DEBUG
+                    string message = stateObj.DumpBuffer();
+                    Debug.Fail(message);
+#endif
                     _state = TdsParserState.Broken;
                     _connHandler.BreakConnection();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Run|ERR> Potential multi-threaded misuse of connection, unexpected TDS token found {0}", ObjectID);
+#if DEBUG
+                    throw new InvalidOperationException(message);
+#else
                     throw SQL.ParsingError();
+#endif
+
                 }
 
                 int tokenLength;
@@ -2739,30 +2737,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
 
-                    case TdsEnums.ENV_CHARSET:
-                        // we copied this behavior directly from luxor - see charset envchange
-                        // section from sqlctokn.c
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        if (env._newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
-                        {
-                            _defaultCodePage = TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE;
-                            _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
-                        }
-                        else
-                        {
-                            Debug.Assert(env._newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
-
-                            string stringCodePage = env._newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
-
-                            _defaultCodePage = int.Parse(stringCodePage, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                            _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
-                        }
-
-                        break;
+                    // TdsEnums.ENV_CHARSET (3) is only supported in TDS <= 7 which is no longer supported
 
                     case TdsEnums.ENV_PACKETSIZE:
                         // take care of packet size right here
@@ -2794,24 +2769,9 @@ namespace Microsoft.Data.SqlClient
 
                         break;
 
-                    case TdsEnums.ENV_LOCALEID:
-                        // UNDONE: this LCID may be incorrect for OEM code pages on 7.0
-                        // need a way to get lcid from code page
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        _defaultLCID = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
-                        break;
+                    // TdsEnums.ENV_LOCALE (5) is only supported in TDS <= 7 which is no longer supported
 
-                    case TdsEnums.ENV_COMPFLAGS:
-                        result = TryReadTwoStringFields(env, stateObj);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                        break;
+                    // TdsEnums.ENV_COMPFLAGS (6) is only supported in TDS <= 7 which is no longer supported
 
                     case TdsEnums.ENV_COLLATION:
                         Debug.Assert(env._newLength == 5 || env._newLength == 0, "Improper length in new collation!");
@@ -3821,7 +3781,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _is2005 = true;
                     break;
                 case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
                     if (increment != TdsEnums.SQL2008_INCREMENT)
@@ -3849,7 +3808,6 @@ namespace Microsoft.Data.SqlClient
             }
             _is2012 |= _is2022;
             _is2008 |= _is2012;
-            _is2005 |= _is2008;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4143,6 +4101,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
+            
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
@@ -4333,7 +4292,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            else if (rec.metaType.IsCharType)
+            else if (rec.metaType.IsCharType && rec.metaType.SqlDbType != SqlDbTypeExtensions.Json)
             {
                 // read the collation for 8.x servers
                 result = TryProcessCollation(stateObj, out rec.collation);
@@ -4540,7 +4499,6 @@ namespace Microsoft.Data.SqlClient
                 collation = null;
                 return result;
             }
-
             if (SqlCollation.Equals(_cachedCollation, info, sortId))
             {
                 collation = _cachedCollation;
@@ -5263,7 +5221,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the column is encrypted, we should have a valid cipherTable
                 if (cipherTable != null)
-                {    
+                {
                     result = TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false);
                     if (result != TdsOperationStatus.Done)
                     {
@@ -8492,8 +8450,7 @@ namespace Microsoft.Data.SqlClient
                                      int length,
                                      int featureExOffset,
                                      string clientInterfaceName,
-                                     byte[] outSSPIBuff,
-                                     uint outSSPILength)
+                                     ReadOnlySpan<byte> outSSPI)
         {
             try
             {
@@ -8665,8 +8622,8 @@ namespace Microsoft.Data.SqlClient
                 WriteShort(offset, _physicalStateObj); // ibSSPI offset
                 if (rec.useSSPI)
                 {
-                    WriteShort((int)outSSPILength, _physicalStateObj);
-                    offset += (int)outSSPILength;
+                    WriteShort(outSSPI.Length, _physicalStateObj);
+                    offset += outSSPI.Length;
                 }
                 else
                 {
@@ -8721,7 +8678,7 @@ namespace Microsoft.Data.SqlClient
 
                 // send over SSPI data if we are using SSPI
                 if (rec.useSSPI)
-                    _physicalStateObj.WriteByteArray(outSSPIBuff, (int)outSSPILength, 0);
+                    _physicalStateObj.WriteByteSpan(outSSPI);
 
                 WriteString(rec.attachDBFilename, _physicalStateObj);
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
@@ -13303,7 +13260,7 @@ namespace Microsoft.Data.SqlClient
                            _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                            _fMARS ? bool.TrueString : bool.FalseString,
                            _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                           _sniSpnBuffer == null ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
+                           _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),

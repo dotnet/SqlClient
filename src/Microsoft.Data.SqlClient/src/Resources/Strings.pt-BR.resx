@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativa inválida de obter JsonDocument na coluna ''{0}''. Só há suporte para JsonDocument em colunas do tipo json.</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>O armazenamento em buffer avançou demais {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Tamanho máximo do buffer excedido: {0}</value>
+  </data>
 </root>

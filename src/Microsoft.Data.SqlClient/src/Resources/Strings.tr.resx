@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Arabellek çok fazla ilerledi {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Arabellek boyut üst sınırı aşıldı: {0}</value>
+  </data>
 </root>

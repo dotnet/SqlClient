@@ -556,6 +556,7 @@ namespace Microsoft.Data.SqlClient
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
+            Dictionary<string, bool> columnMappingStatusLookup = new Dictionary<string, bool>();
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
@@ -578,9 +579,16 @@ namespace Microsoft.Data.SqlClient
                 int assocId;
                 for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
                 {
+                    if (!columnMappingStatusLookup.ContainsKey(_localColumnMappings[assocId].DestinationColumn))
+		    {
+                        columnMappingStatusLookup.Add(_localColumnMappings[assocId].DestinationColumn, false);
+		    }
+
                     if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
                         (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
                     {
+                        columnMappingStatusLookup[_localColumnMappings[assocId].DestinationColumn] = true;
+
                         if (rejectColumn)
                         {
                             nrejected++; // Count matched columns only
@@ -723,7 +731,17 @@ namespace Microsoft.Data.SqlClient
             // All columnmappings should have matched up
             if (nmatched + nrejected != _localColumnMappings.Count)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                List<string> unmatchedColumns = new List<string>();
+
+                foreach(KeyValuePair<string, bool> keyValuePair in columnMappingStatusLookup)
+                {
+                    if (!keyValuePair.Value)
+		    {
+                        unmatchedColumns.Add(keyValuePair.Key);
+		    }
+                }
+
+                throw SQL.BulkLoadNonMatchingColumnName(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
@@ -2001,7 +2019,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs, tcs,
+                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                state: tcs,
                                 onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
@@ -2028,58 +2047,40 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
+                Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
+                if (resultTask != null)
                 {
-                    tdsReliabilitySection.Start();
-#else   // !DEBUG
-                {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
-                    Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
-                    if (resultTask != null)
-                    {
-                        finishedSynchronously = false;
-                        return resultTask.ContinueWith(
-                            static (Task task, object state) =>
+                    finishedSynchronously = false;
+                    return resultTask.ContinueWith(
+                        static (Task task, object state) =>
+                        {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            try
                             {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                try
+                                sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                            }
+                            finally
+                            {
+                                sqlBulkCopy._isBulkCopyingInProgress = false;
+                                if (sqlBulkCopy._parser != null)
                                 {
-                                    sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                                    sqlBulkCopy._parser._asyncWrite = false;
                                 }
-                                finally
+                                if (sqlBulkCopy._parserLock != null)
                                 {
-                                    sqlBulkCopy._isBulkCopyingInProgress = false;
-                                    if (sqlBulkCopy._parser != null)
-                                    {
-                                        sqlBulkCopy._parser._asyncWrite = false;
-                                    }
-                                    if (sqlBulkCopy._parserLock != null)
-                                    {
-                                        sqlBulkCopy._parserLock.Release();
-                                        sqlBulkCopy._parserLock = null;
-                                    }
+                                    sqlBulkCopy._parserLock.Release();
+                                    sqlBulkCopy._parserLock = null;
                                 }
-                                return task;
-                            }, 
-                            state: this,
-                            scheduler: TaskScheduler.Default
-                        ).Unwrap();
-                    }
-                    return null;
+                            }
+                            return task;
+                        },
+                        state: this,
+                        scheduler: TaskScheduler.Default
+                    ).Unwrap();
                 }
-
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                return null;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2671,9 +2672,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
-,
-                        connectionToDoom: _connection.GetOpenTdsConnection());
+                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
+                    );
 
                     return source.Task;
                 }
@@ -2765,13 +2766,6 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
                 {
                     _parser._asyncWrite = false;
@@ -2784,13 +2778,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     CleanUpStateObject();
                 }
-#if DEBUG
-                }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (OutOfMemoryException)
             {
@@ -3015,7 +3002,10 @@ namespace Microsoft.Data.SqlClient
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection
                         AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
                                 () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTaskWithState(cancellableReconnectTS.Task, source, regReconnectCancel,
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task,
+                            completion: source,
+                            state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
                                 ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();

@@ -4746,4 +4746,10 @@
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>列 '{0}' で JsonDocument を取得しようとしましたが無効です。JsonDocument は json 型の列でのみサポートされています。</value>
   </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>バッファーの進行が過剰です: {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>バッファーの最大サイズを超えました: {0}</value>
+  </data>
 </root>

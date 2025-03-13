@@ -183,21 +183,7 @@ namespace Microsoft.Data.SqlClient
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-#if DEBUG
-                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                                    onSuccess();
-#if DEBUG
-                                }
-                                finally
-                                {
-                                    tdsReliabilitySection.Stop();
-                                }
-#endif //DEBUG
+                                onSuccess();
                             }
                             catch (System.OutOfMemoryException e)
                             {
@@ -279,12 +265,12 @@ namespace Microsoft.Data.SqlClient
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
 #if NET
-            Func<Exception, Exception> exceptionConverter = null
+            Func<Exception, Exception> exceptionConverter = null,
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
+#endif
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
-#endif
         )
         {
 #if NETFRAMEWORK
@@ -324,27 +310,14 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-#if NETFRAMEWORK
                     else if (connectionToDoom != null || connectionToAbort != null)
                     {
+#if NETFRAMEWORK
                         RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                         try
                         {
-#if DEBUG
-                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-                                tdsReliabilitySection.Start();
-#endif //DEBUG
-                                onSuccess(state2);
-#if DEBUG
-                            }
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
-#endif //DEBUG
+                            onSuccess(state2);
                         }
                         catch (System.OutOfMemoryException e)
                         {
@@ -390,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                             completion.SetException(e);
                         }
                     }
-#endif
                     else
                     {
                         try
@@ -1284,6 +1256,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadNonMatchingColumnName(string columnName)
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
+        }
+        internal static Exception BulkLoadNonMatchingColumnName(IEnumerable<string> columns)
+        {
+            return BulkLoadNonMatchingColumnName(String.Join(",", columns), null);
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {

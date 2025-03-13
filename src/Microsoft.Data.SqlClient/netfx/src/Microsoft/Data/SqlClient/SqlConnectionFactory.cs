@@ -11,6 +11,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient

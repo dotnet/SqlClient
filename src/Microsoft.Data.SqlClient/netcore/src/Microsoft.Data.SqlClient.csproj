@@ -53,9 +53,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionPoolKey.cs">
-      <Link>Microsoft\Data\Common\DbConnectionPoolKey.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionStringCommon.cs">
       <Link>Microsoft\Data\Common\DbConnectionStringCommon.cs</Link>
     </Compile>
@@ -71,38 +68,56 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\OperationAbortedException.cs">
       <Link>Microsoft\Data\OperationAbortedException.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionClosed.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionClosed.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPool.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContextKey.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroup.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroup.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroupProviderInfo.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroupProviderInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolKey.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolKey.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolOptions.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolProviderInfo.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolKey.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolKey.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
@@ -155,6 +170,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ClientInterface.cs">
+      <Link>Microsoft\Data\SqlClient\ClientInterface.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
@@ -187,6 +205,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Packet.cs">
+      <Link>Microsoft\Data\SqlClient\Packet.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs">
       <Link>Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs</Link>
@@ -413,15 +434,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs">
-      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs">
-      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
-      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionString.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionString.cs</Link>
     </Compile>
@@ -437,6 +449,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDbColumn.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDbColumn.cs</Link>
+    </Compile>  
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs</Link>
     </Compile>
@@ -508,6 +523,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPools.cs">
+      <Link>Microsoft\Data\SqlClient\SqlObjectPools.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlParameter.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameter.cs</Link>
@@ -581,6 +599,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
     </Compile>
@@ -624,7 +645,6 @@
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
@@ -654,7 +674,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
@@ -770,14 +789,17 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
@@ -797,9 +819,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Common.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
@@ -813,12 +833,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs</Link>
     </Compile>
 
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />

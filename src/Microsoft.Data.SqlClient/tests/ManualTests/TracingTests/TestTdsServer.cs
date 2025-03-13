@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.PreLogin;
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
+            X509Certificate2 encryptionCertificate = null, SslProtocols encryptionProtocols = SslProtocols.Tls12, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -44,6 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             args.EncryptionCertificate = encryptionCertificate;
+            args.EncryptionProtocols = encryptionProtocols;
             args.Encryption = encryptionType;
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
@@ -51,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = Console.Out;
+            server._endpoint.EventLog = enableLog ? Console.Out : null;
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
@@ -79,9 +81,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false,
             int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "",
-            X509Certificate2 encryptionCertificate = null, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
+            X509Certificate2 encryptionCertificate = null, SslProtocols encryptionProtocols = SslProtocols.Tls12, TDSPreLoginTokenEncryptionType encryptionType = TDSPreLoginTokenEncryptionType.NotSupported)
         {
-            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName, encryptionCertificate, encryptionType);
+            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName, encryptionCertificate, encryptionProtocols, encryptionType);
         }
 
         public void Dispose() => _endpoint?.Stop();
