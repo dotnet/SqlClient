@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
@@ -20,18 +21,15 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed class SqlTransaction : DbTransaction
     {
-        private static int s_objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
-        internal readonly IsolationLevel _isolationLevel = IsolationLevel.ReadCommitted;
-
-        private SqlInternalTransaction _internalTransaction;
-        private readonly SqlConnection _connection;
-
-        private bool _isFromAPI;
-
         #if NET
         private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
         #endif
+
+        private static int s_objectTypeCount; // EventSource Counter
+
+        private readonly SqlConnection _connection;
+        private readonly IsolationLevel _isolationLevel;
+        private bool _isFromApi;
 
         internal SqlTransaction(
             SqlInternalConnection internalConnection,
@@ -47,33 +45,20 @@ namespace Microsoft.Data.SqlClient
 
             if (internalTransaction == null)
             {
-                _internalTransaction = new SqlInternalTransaction(internalConnection, TransactionType.LocalFromAPI, this);
+                InternalTransaction = new SqlInternalTransaction(internalConnection, TransactionType.LocalFromAPI, this);
             }
             else
             {
                 Debug.Assert(internalConnection.CurrentTransaction == internalTransaction, "Unexpected Parser.CurrentTransaction state!");
-                _internalTransaction = internalTransaction;
-                _internalTransaction.InitParent(this);
+                InternalTransaction = internalTransaction;
+                InternalTransaction.InitParent(this);
             }
         }
 
         #region Properties
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
-        public new SqlConnection Connection
-        {// MDAC 66655
-            get
-            {
-                if (IsZombied)
-                {
-                    return null;
-                }
-                else
-                {
-                    return _connection;
-                }
-            }
-        }
+        public new SqlConnection Connection => IsZombied ? null : _connection;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
         public override IsolationLevel IsolationLevel
@@ -85,31 +70,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlInternalTransaction InternalTransaction => _internalTransaction;
+        internal SqlInternalTransaction InternalTransaction { get; private set; }
 
-        internal bool IsZombied => _internalTransaction == null || _internalTransaction.IsCompleted;
+        internal bool IsZombied => InternalTransaction == null || InternalTransaction.IsCompleted;
 
-        internal int ObjectID => _objectID;
-
-        internal SqlStatistics Statistics
-        {
-            get
-            {
-                if (_connection != null)
-                {
-                    if (_connection.StatisticsEnabled)
-                    {
-                        return _connection.Statistics;
-                    }
-                }
-                return null;
-            }
-        }
+        internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         protected override DbConnection DbConnection => Connection;
 
-        private bool Is2005PartialZombie => _internalTransaction !=null && _internalTransaction.IsCompleted;
+        private bool Is2005PartialZombie => InternalTransaction?.IsCompleted == true;
+
+        private SqlStatistics Statistics => _connection?.StatisticsEnabled == true ? _connection.Statistics : null;
 
         #endregion
 
@@ -125,13 +97,13 @@ namespace Microsoft.Data.SqlClient
 
             ZombieCheck();
 
-            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectID))
+            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectId))
             {
                 SqlStatistics statistics = null;
 
                 SqlClientEventSource.Log.TryCorrelationTraceEvent(
                     "SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}",
-                    ObjectID,
+                    ObjectId,
                     ActivityCorrelator.Current,
                     Connection?.ClientConnectionId);
 
@@ -147,9 +119,9 @@ namespace Microsoft.Data.SqlClient
 
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    _isFromAPI = true;
+                    _isFromApi = true;
 
-                    _internalTransaction.Commit();
+                    InternalTransaction.Commit();
                 }
                 #if NETFRAMEWORK
                 catch (OutOfMemoryException e)
@@ -194,7 +166,7 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
-                    _isFromAPI = false;
+                    _isFromApi = false;
                 }
             }
         }
@@ -216,7 +188,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (!IsZombied && !Is2005PartialZombie)
                     {
-                        _internalTransaction.Dispose();
+                        InternalTransaction.Dispose();
                     }
                 }
                 catch (OutOfMemoryException e)
@@ -260,20 +232,20 @@ namespace Microsoft.Data.SqlClient
                 // Put something in the trace in case a customer has an issue
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Rollback | ADV | Object Id {0}, partial zombie no rollback required",
-                    ObjectID);
+                    ObjectId);
 
-                _internalTransaction = null; // 2005 zombification
+                InternalTransaction = null; // 2005 zombification
             }
             else
             {
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                using (TryEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectID))
+                using (TryEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectId))
                 {
                     SqlClientEventSource.Log.TryCorrelationTraceEvent(
                         "SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}",
-                        ObjectID,
+                        ObjectId,
                         ActivityCorrelator.Current,
                         Connection?.ClientConnectionId);
 
@@ -289,8 +261,8 @@ namespace Microsoft.Data.SqlClient
 
                         statistics = SqlStatistics.StartTimer(Statistics);
 
-                        _isFromAPI = true;
-                        _internalTransaction.Rollback();
+                        _isFromApi = true;
+                        InternalTransaction.Rollback();
                     }
                     #if NETFRAMEWORK
                     catch (OutOfMemoryException e)
@@ -319,7 +291,7 @@ namespace Microsoft.Data.SqlClient
                     finally
                     {
                         SqlStatistics.StopTimer(statistics);
-                        _isFromAPI = false;
+                        _isFromApi = false;
                     }
                 }
             }
@@ -348,7 +320,7 @@ namespace Microsoft.Data.SqlClient
 
             var eventScopeEnter = TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent(
                 "SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}",
-                ObjectID,
+                ObjectId,
                 transactionName,
                 ActivityCorrelator.Current,
                 Connection?.ClientConnectionId));
@@ -368,8 +340,8 @@ namespace Microsoft.Data.SqlClient
 
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    _isFromAPI = true;
-                    _internalTransaction.Rollback(transactionName);
+                    _isFromApi = true;
+                    InternalTransaction.Rollback(transactionName);
                 }
                 #if NETFRAMEWORK
                 catch (OutOfMemoryException e)
@@ -398,7 +370,7 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
-                    _isFromAPI = false;
+                    _isFromApi = false;
                 }
             }
         }
@@ -417,7 +389,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName))
+            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectId, savePointName))
             {
                 #if NETFRAMEWORK
                 TdsParser bestEffortCleanupTarget = null;
@@ -431,7 +403,7 @@ namespace Microsoft.Data.SqlClient
 
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    _internalTransaction.Save(savePointName);
+                    InternalTransaction.Save(savePointName);
                 }
                 catch (OutOfMemoryException e)
                 {
@@ -462,23 +434,23 @@ namespace Microsoft.Data.SqlClient
 
         internal void Zombie()
         {
-            // For Yukon, we have to defer "zombification" until
-            //                 we get past the users' next rollback, else we'll
-            //                 throw an exception there that is a breaking change.
-            //                 Of course, if the connection is already closed,
-            //                 then we're free to zombify...
-            SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
-            if (internalConnection != null
-#if NETFRAMEWORK
+            // For Yukon, we have to defer "zombification" until we get past the users' next
+            // rollback, else we'll throw an exception there that is a breaking change. Of course,
+            // if the connection is already closed, then we're free to zombify...
+            if (_connection.InnerConnection is SqlInternalConnection internalConnection
+                #if NETFRAMEWORK
                 && internalConnection.Is2005OrNewer
-#endif
-                && !_isFromAPI)
+                #endif
+                && !_isFromApi)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",
+                    ObjectId);
             }
             else
             {
-                _internalTransaction = null; // pre SQL 2005 zombification
+                // pre SQL 2005 zombification
+                InternalTransaction = null;
             }
         }
 
@@ -489,7 +461,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (Is2005PartialZombie)
                 {
-                    _internalTransaction = null; // SQL 2005 zombification
+                    // SQL 2005 zombification
+                    InternalTransaction = null;
                 }
 
                 throw ADP.TransactionZombied(this);
