@@ -314,43 +314,47 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
         public override void Save(string savePointName)
         {
-            //netfx SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+            #if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+            #endif
 
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            //netcore using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName))
-            //netfx   using ("<sc.SqlTransaction.Save|API> {0} savePointName='{1}'", ObjectID, savePointName))
+            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName))
             {
-                TdsParser bestEffortCleanupTarget = null;
-
                 #if NETFRAMEWORK
+                TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 #endif
                 try
                 {
+                    #if NETFRAMEWORK
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    #endif
+
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     _internalTransaction.Save(savePointName);
                 }
-                catch (System.OutOfMemoryException e)
+                catch (OutOfMemoryException e)
                 {
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (StackOverflowException e)
                 {
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.Threading.ThreadAbortException e)
+                catch (ThreadAbortException e)
                 {
                     _connection.Abort(e);
 
                     #if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                     #endif
+
                     throw;
                 }
                 finally
