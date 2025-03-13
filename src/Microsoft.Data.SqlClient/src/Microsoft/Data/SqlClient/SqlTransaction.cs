@@ -5,30 +5,25 @@
 using System;
 using System.ComponentModel;
 using System.Data.Common;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.Common;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;
 #else
-
+using System.Runtime.CompilerServices;
 #endif
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
         #if NET
         private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
         #endif
 
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // PUBLIC METHODS
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         public override void Commit()
         {
             #if NET
@@ -114,7 +109,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -159,7 +154,7 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         public override void Rollback()
         {
             #if NET
@@ -208,17 +203,17 @@ namespace Microsoft.Data.SqlClient
                         _internalTransaction.Rollback();
                     }
                     #if NETFRAMEWORK
-                    catch (System.OutOfMemoryException e)
+                    catch (OutOfMemoryException e)
                     {
                         _connection.Abort(e);
                         throw;
                     }
-                    catch (System.StackOverflowException e)
+                    catch (StackOverflowException e)
                     {
                         _connection.Abort(e);
                         throw;
                     }
-                    catch (System.Threading.ThreadAbortException e)
+                    catch (ThreadAbortException e)
                     {
                         _connection.Abort(e);
                         SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
@@ -240,8 +235,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
-       public override void Rollback(string transactionName)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
+        #if NET
+        public override void Rollback(string transactionName)
+        #else
+        public void Rollback(string transactionName)
+        #endif
         {
             #if NET
             using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(
@@ -311,8 +310,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
+        #if NET
         public override void Save(string savePointName)
+        #else
+        public void Save(string savePointName)
+        #endif
         {
             #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
