@@ -4,13 +4,13 @@
 
 
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.ProviderBase;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     // set_ConnectionString calls DbConnectionFactory.GetConnectionPoolGroup
     // when not found a new pool entry is created and potentially added
@@ -187,7 +187,7 @@ namespace Microsoft.Data.ProviderBase
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
                                 DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
-                                DbConnectionPool newPool = new(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                DbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
 
                                 if (MarkPoolGroupAsActive())
                                 {

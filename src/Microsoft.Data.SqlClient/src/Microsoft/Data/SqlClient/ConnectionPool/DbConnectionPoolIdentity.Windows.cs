@@ -8,7 +8,7 @@ using System.Security.Permissions;
 using System.Security.Principal;
 using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.ProviderBase
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     partial class DbConnectionPoolIdentity
     {
@@ -43,10 +43,13 @@ namespace Microsoft.Data.ProviderBase
                 string sidString = user.Value;
 
                 // Win32NativeMethods.IsTokenRestricted will raise exception if the native call fails
-                bool isRestricted = Win32NativeMethods.IsTokenRestrictedWrapper(token);
+                SniNativeWrapper.SniIsTokenRestricted(token, out bool isRestricted);
 
                 var lastIdentity = s_lastIdentity;
-                if ((lastIdentity != null) && (lastIdentity._sidString == sidString) && (lastIdentity._isRestricted == isRestricted) && (lastIdentity._isNetwork == isNetwork))
+                if (lastIdentity != null && 
+                    lastIdentity._sidString == sidString &&
+                    lastIdentity._isRestricted == isRestricted &&
+                    lastIdentity._isNetwork == isNetwork)
                 {
                     current = lastIdentity;
                 }

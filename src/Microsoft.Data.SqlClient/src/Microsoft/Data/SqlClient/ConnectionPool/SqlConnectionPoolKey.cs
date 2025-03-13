@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     // SqlConnectionPoolKey: Implementation of a key to connection pool groups for specifically to be used for SqlConnection
     //  Connection string and SqlCredential are used as a key

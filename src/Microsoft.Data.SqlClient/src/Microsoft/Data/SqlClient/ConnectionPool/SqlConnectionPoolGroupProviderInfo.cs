@@ -3,9 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Security;
-using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     internal sealed class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
     {

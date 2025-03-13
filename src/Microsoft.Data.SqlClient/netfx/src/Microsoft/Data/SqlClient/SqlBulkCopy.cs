@@ -582,6 +582,7 @@ namespace Microsoft.Data.SqlClient
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
+            Dictionary<string, bool> columnMappingStatusLookup = new Dictionary<string, bool>();
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
@@ -604,9 +605,16 @@ namespace Microsoft.Data.SqlClient
                 int assocId;
                 for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
                 {
+                    if (!columnMappingStatusLookup.ContainsKey(_localColumnMappings[assocId].DestinationColumn))
+		    {
+                        columnMappingStatusLookup.Add(_localColumnMappings[assocId].DestinationColumn, false);
+		    }
+
                     if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
                         (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
                     {
+                        columnMappingStatusLookup[_localColumnMappings[assocId].DestinationColumn] = true;
+
                         if (rejectColumn)
                         {
                             nrejected++; // Count matched columns only
@@ -754,7 +762,17 @@ namespace Microsoft.Data.SqlClient
             // All columnmappings should have matched up
             if (nmatched + nrejected != _localColumnMappings.Count)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                List<string> unmatchedColumns = new List<string>();
+
+                foreach(KeyValuePair<string, bool> keyValuePair in columnMappingStatusLookup)
+                {
+                    if (!keyValuePair.Value)
+		    {
+                        unmatchedColumns.Add(keyValuePair.Key);
+		    }
+                }
+
+                throw SQL.BulkLoadNonMatchingColumnName(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
@@ -2032,7 +2050,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs, tcs,
+                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                state: tcs,
                                 onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
@@ -2684,9 +2703,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
-,
-                        connectionToDoom: _connection.GetOpenTdsConnection());
+                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
+                    );
 
                     return source.Task;
                 }
@@ -3014,7 +3033,10 @@ namespace Microsoft.Data.SqlClient
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection
                         AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
                                 () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTaskWithState(cancellableReconnectTS.Task, source, regReconnectCancel,
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task,
+                            completion: source,
+                            state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
                                 ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();

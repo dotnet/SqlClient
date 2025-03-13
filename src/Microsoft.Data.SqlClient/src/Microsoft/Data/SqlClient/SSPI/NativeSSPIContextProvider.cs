@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
                         // use local for ref param to defer setting s_maxSSPILength until we know the call succeeded.
                         uint maxLength = 0;
 
-                        if (0 != SniNativeWrapper.SNISecInitPackage(ref maxLength))
+                        if (0 != SniNativeWrapper.SniSecInitPackage(ref maxLength))
                             SSPIError(SQLMessage.SSPIInitializeError(), TdsEnums.INIT_SSPI_PACKAGE);
 
                         s_maxSSPILength = maxLength;
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             var sendLength = s_maxSSPILength;
             var outBuff = outgoingBlobWriter.GetSpan((int)sendLength);
 
-            if (0 != SniNativeWrapper.SNISecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, authParams.ServerName))
+            if (0 != SniNativeWrapper.SniSecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, authParams.ServerName))
             {
                 return false;
             }

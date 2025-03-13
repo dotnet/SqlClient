@@ -7,7 +7,7 @@ using System.Data.Common;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class MissingTargetColumn
+    public class MissingTargetColumns
     {
         public static void Test(string srcConstr, string dstConstr, string dstTable)
         {
@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 try
                 {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col3 nvarchar(10))");
+                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(10))");
 
                     using (SqlConnection srcConn = new SqlConnection(srcConstr))
                     using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
@@ -32,11 +32,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
 
                             ColumnMappings.Add("EmployeeID", "col1");
-                            ColumnMappings.Add("LastName", "col2"); // this column does not exist
-                            ColumnMappings.Add("FirstName", "col3");
+                            ColumnMappings.Add("LastName", "col3"); // this column does not exist
+                            ColumnMappings.Add("FirstName", "col4"); // this column does not exist
 
                             string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnName;
-                            errorMsg = string.Format(errorMsg, "col2");
+                            errorMsg = string.Format(errorMsg, "col3,col4");
 
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
                         }
