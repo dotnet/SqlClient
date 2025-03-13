@@ -6,12 +6,13 @@ using System;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Microsoft.Data.Common;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;
 #else
-using System.Threading;
+
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -118,39 +119,43 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                TdsParser bestEffortCleanupTarget = null;
-
                 #if NETFRAMEWORK
+                TdsParser bestEffortCleanupTarget = null;
                 RuntimeHelpers.PrepareConstrainedRegions();
                 #endif
                 try
                 {
+                    #if NETFRAMEWORK
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                    #endif
+
                     if (!IsZombied && !Is2005PartialZombie)
                     {
                         _internalTransaction.Dispose();
                     }
                 }
-                catch (System.OutOfMemoryException e)
+                catch (OutOfMemoryException e)
                 {
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (StackOverflowException e)
                 {
                     _connection.Abort(e);
                     throw;
                 }
-                catch (System.Threading.ThreadAbortException e)
+                catch (ThreadAbortException e)
                 {
                     _connection.Abort(e);
-                    
+
                     #if NETFRAMEWORK
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                     #endif
+
                     throw;
                 }
             }
+
             base.Dispose(disposing);
         }
 
