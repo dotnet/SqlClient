@@ -550,9 +550,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
-      <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
