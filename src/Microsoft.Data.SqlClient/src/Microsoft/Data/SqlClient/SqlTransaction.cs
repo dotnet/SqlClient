@@ -8,12 +8,20 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 
+#if NET
+using Microsoft.Data.SqlClient.Diagnostics;
+#else
+using System.Threading;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
-        //netcore private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        #if NET
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
+        #endif
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // PUBLIC METHODS
@@ -22,79 +30,87 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         public override void Commit()
         {
-            //netcore using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionCommitScope(_isolationLevel, _connection, InternalTransaction))
-            //netcore {
-                ZombieCheck();
+            #if NET
+            using DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionCommitScope(
+                _isolationLevel,
+                _connection,
+                InternalTransaction);
+            #endif
 
-                //netcore using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectID))
-                //netfx   using (TryEventScope.Create("<sc.SqlTransaction.Commit|API|API> {0}", ObjectID))
+            ZombieCheck();
+
+            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectID))
+            {
+                SqlStatistics statistics = null;
+
+                SqlClientEventSource.Log.TryCorrelationTraceEvent(
+                    "SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}",
+                    ObjectID,
+                    ActivityCorrelator.Current,
+                    Connection?.ClientConnectionId);
+
+                #if NETFRAMEWORK
+                TdsParser bestEffortCleanupTarget = null;
+                RuntimeHelpers.PrepareConstrainedRegions();
+                #endif
+                try
                 {
-                    SqlStatistics statistics = null;
-                    TdsParser bestEffortCleanupTarget = null;
-
-                    //netcore SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-                    //netfx   SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
                     #if NETFRAMEWORK
-                    RuntimeHelpers.PrepareConstrainedRegions();
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                     #endif
-                    try
-                    {
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        statistics = SqlStatistics.StartTimer(Statistics);
 
-                        _isFromAPI = true;
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                        _internalTransaction.Commit();
-                    }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        //netcore diagnosticScope.SetException(e);
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        //netcore diagnosticScope.SetException(e);
-                        _connection.Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        //netcore diagnosticScope.SetException(e);
-                        _connection.Abort(e);
+                    _isFromAPI = true;
 
-                        #if NETFRAMEWORK
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        #endif
-                        throw;
-                    }
-                    catch (SqlException ex)
-                    {
-                        diagnosticScope.SetException(ex);
-                        // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
-                        // this connection may not be in reusable state.
-                        // We will abort this connection and make sure it does not go back to the pool.
-                        if (ex.InnerException is Win32Exception innerException && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
-                        {
-                            _connection.Abort(ex);
-                        }
-                        throw;
-                    }
-                    //netcore---
-                    catch (Exception ex)
-                    {
-                        diagnosticScope.SetException(ex);
-                        throw;
-                    }
-                    //---netcore
-                    finally
-                    {
-                        SqlStatistics.StopTimer(statistics);
-                        _isFromAPI = false;
-                    }
+                    _internalTransaction.Commit();
                 }
-            //netcore }
+                #if NETFRAMEWORK
+                catch (OutOfMemoryException e)
+                {
+                    _connection.Abort(e);
+                    throw;
+                }
+                catch (StackOverflowException e)
+                {
+                    _connection.Abort(e);
+                    throw;
+                }
+                catch (ThreadAbortException e)
+                {
+                    _connection.Abort(e);
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                    throw;
+                }
+                #endif
+                catch (SqlException ex)
+                {
+                    #if NET
+                    diagnosticScope.SetException(ex);
+                    #endif
+
+                    // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
+                    // this connection may not be in reusable state.
+                    // We will abort this connection and make sure it does not go back to the pool.
+                    if (ex.InnerException is Win32Exception innerException && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                    {
+                        _connection.Abort(ex);
+                    }
+                    throw;
+                }
+                #if NET
+                catch (Exception ex)
+                {
+                    diagnosticScope.SetException(ex);
+                    throw;
+                }
+                #endif
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    _isFromAPI = false;
+                }
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />

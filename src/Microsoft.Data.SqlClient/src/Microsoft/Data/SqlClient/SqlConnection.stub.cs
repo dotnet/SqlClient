@@ -13,5 +13,7 @@ namespace Microsoft.Data.SqlClient
         internal Guid ClientConnectionId { get; set; }
 
         internal SqlStatistics Statistics { get; set; }
+
+        internal void Abort(Exception e) { }
     }
 }
