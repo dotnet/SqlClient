@@ -856,6 +856,7 @@
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Resources\Strings.Designer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
