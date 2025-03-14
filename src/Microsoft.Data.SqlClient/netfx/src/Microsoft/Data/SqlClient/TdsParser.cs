@@ -444,9 +444,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     #pragma warning disable 0618
                     case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                    #pragma warning restore 0618
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
                         break;
-                    #pragma warning restore 0618
                     case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Integrated authentication");
                         break;
@@ -8558,9 +8558,9 @@ namespace Microsoft.Data.SqlClient
                         {
                             #pragma warning disable 0618
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                            #pragma warning restore 0618
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
-                            #pragma warning restore 0618
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
                                 break;

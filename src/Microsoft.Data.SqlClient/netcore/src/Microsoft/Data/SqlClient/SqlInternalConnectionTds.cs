@@ -2488,9 +2488,9 @@ namespace Microsoft.Data.SqlClient
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
-                        #pragma warning disable 618
+                        #pragma warning disable 0618
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        #pragma warning restore 618
+                        #pragma warning restore 0618
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
