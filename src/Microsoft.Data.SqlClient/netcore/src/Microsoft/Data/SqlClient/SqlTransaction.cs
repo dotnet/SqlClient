@@ -6,13 +6,14 @@ using System;
 using System.ComponentModel;
 using System.Data.Common;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // PUBLIC METHODS
