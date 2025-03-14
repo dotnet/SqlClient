@@ -641,12 +641,10 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
-                        Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                         schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.Is2005OrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -1339,7 +1337,6 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     dataTypeName = metaData.udt?.DatabaseName + "." + metaData.udt?.SchemaName + "." + metaData.udt?.TypeName;
                 }
                 else
@@ -1428,7 +1425,6 @@ namespace Microsoft.Data.SqlClient
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
@@ -1541,7 +1537,6 @@ namespace Microsoft.Data.SqlClient
                 // TypeSystem.SQLServer2005 and above
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
                 }

@@ -1117,7 +1117,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_inBuff == null
                           ||
                           (
-                          _parser.Is2005OrNewer &&
                            _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen)) &&
                            _outputPacketNumber == 1)
                           ||
