@@ -10,7 +10,9 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         [Theory]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
+        #pragma warning disable 0618
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
+        #pragma warning restore 0618
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
