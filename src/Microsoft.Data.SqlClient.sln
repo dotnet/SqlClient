@@ -270,6 +270,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E
 		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
 		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
 		..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml = ..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml
+		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
