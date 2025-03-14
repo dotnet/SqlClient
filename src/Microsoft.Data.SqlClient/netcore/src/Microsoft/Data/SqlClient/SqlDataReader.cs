@@ -3766,7 +3766,7 @@ namespace Microsoft.Data.SqlClient
                             if (result != TdsOperationStatus.Done)
                             {
                                 more = false;
-                                return TdsOperationStatus.Done;
+                                return result;
                             }
 
                             // In the case of not closing the reader, null out the metadata AFTER
@@ -4525,7 +4525,12 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             else
             {
-                Debug.Assert((_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1) && _stateObj._longlen == 0, "Haven't read header yet, but column is partially read?");
+                Debug.Assert(
+                    (_sharedState._columnDataBytesRemaining == 0 || _sharedState._columnDataBytesRemaining == -1)
+                    &&
+                    (_stateObj._longlen == 0 || _stateObj.IsSnapshotContinuing()),
+                    "Haven't read header yet, but column is partially read?"
+                );
             }
 #endif
 
