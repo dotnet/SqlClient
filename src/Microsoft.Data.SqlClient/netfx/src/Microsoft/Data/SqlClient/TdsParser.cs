@@ -442,9 +442,11 @@ namespace Microsoft.Data.SqlClient
 
                 switch (authType)
                 {
+                    #pragma warning disable 0618
                     case SqlAuthenticationMethod.ActiveDirectoryPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
                         break;
+                    #pragma warning restore 0618
                     case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Integrated authentication");
                         break;
@@ -8554,9 +8556,11 @@ namespace Microsoft.Data.SqlClient
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication)
                         {
+                            #pragma warning disable 0618
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
+                            #pragma warning restore 0618
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
                                 break;

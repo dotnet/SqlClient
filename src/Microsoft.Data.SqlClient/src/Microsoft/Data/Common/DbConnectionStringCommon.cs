@@ -347,6 +347,7 @@ namespace Microsoft.Data.Common
         }
 
         const string SqlPasswordString = "Sql Password";
+        [Obsolete("ActiveDirectoryPassword is deprecated.")]
         const string ActiveDirectoryPasswordString = "Active Directory Password";
         const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
@@ -405,12 +406,14 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.SqlPassword;
                 isSuccess = true;
             }
+            #pragma warning disable 0618
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryPasswordString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryPassword, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryPassword;
                 isSuccess = true;
             }
+            #pragma warning restore 0618
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryIntegratedString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryIntegrated, CultureInfo.InvariantCulture)))
             {
@@ -526,7 +529,9 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 11, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
+                #pragma warning disable 0618
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
+                #pragma warning restore 0618
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
                 || value == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
@@ -545,7 +550,9 @@ namespace Microsoft.Data.Common
             return value switch
             {
                 SqlAuthenticationMethod.SqlPassword => SqlPasswordString,
+                #pragma warning disable 0618
                 SqlAuthenticationMethod.ActiveDirectoryPassword => ActiveDirectoryPasswordString,
+                #pragma warning restore 0618
                 SqlAuthenticationMethod.ActiveDirectoryIntegrated => ActiveDirectoryIntegratedString,
                 SqlAuthenticationMethod.ActiveDirectoryInteractive => ActiveDirectoryInteractiveString,
                 SqlAuthenticationMethod.ActiveDirectoryServicePrincipal => ActiveDirectoryServicePrincipalString,

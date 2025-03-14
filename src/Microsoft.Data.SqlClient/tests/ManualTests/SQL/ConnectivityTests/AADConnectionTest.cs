@@ -49,10 +49,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
+            #pragma warning disable 0618
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
             {
                 return authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryPassword);
             }
+            #pragma warning restore 0618
         }
 
         private static void ConnectAndDisconnect(string connectionString, SqlCredential credential = null)
@@ -255,6 +257,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        #pragma warning disable 0618
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void TestCustomProviderAuthentication()
         {
@@ -278,6 +281,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Reset to driver internal provider.
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
         }
+        #pragma warning restore 0618
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryPasswordWithNoAuthType()

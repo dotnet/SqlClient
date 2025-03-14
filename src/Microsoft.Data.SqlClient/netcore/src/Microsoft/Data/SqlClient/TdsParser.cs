@@ -8277,9 +8277,11 @@ namespace Microsoft.Data.SqlClient
                         byte workflow = 0x00;
                         switch (fedAuthFeatureData.authentication)
                         {
+                            #pragma warning disable 0618
                             case SqlAuthenticationMethod.ActiveDirectoryPassword:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD;
                                 break;
+                            #pragma warning restore 0618
                             case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED;
                                 break;
