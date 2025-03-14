@@ -1,4 +1,4 @@
-﻿#if NET
+#if NET
 
 using System;
 using System.Buffers;
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
             if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
             {
                 outgoingBlobWriter.Write(sendBuff);
-                return true; // Successful case, exit the loop with current SPN.
+                return true;
             }
 
             return false;
