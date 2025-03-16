@@ -49,13 +49,7 @@ namespace Microsoft.Data.SqlClient
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectID => _objectID;
 
         /// <summary>
         /// Verify client encryption possibility.
@@ -5159,10 +5153,7 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-        private bool IsVarTimeTds(byte tdsType)
-        {
-            return tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
-        }
+        private bool IsVarTimeTds(byte tdsType) => tdsType == TdsEnums.SQLTIME || tdsType == TdsEnums.SQLDATETIME2 || tdsType == TdsEnums.SQLDATETIMEOFFSET;
 
         private TdsOperationStatus TryProcessTypeInfo(TdsParserStateObject stateObj, SqlMetaDataPriv col, UInt32 userType)
         {
