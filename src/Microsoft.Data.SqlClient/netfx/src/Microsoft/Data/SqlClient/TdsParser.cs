@@ -2452,7 +2452,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _SqlMetaDataSet metadata;
                                 result = TryProcessMetaData(tokenLength, stateObj, out metadata,
-                                                        cmdHandler != null ? cmdHandler.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+                                                        cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     return result;
@@ -2587,7 +2587,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             SqlReturnValue returnValue;
                             result = TryProcessReturnValue(tokenLength, stateObj, out returnValue,
-                                                       cmdHandler != null ? cmdHandler.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+                                                       cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
