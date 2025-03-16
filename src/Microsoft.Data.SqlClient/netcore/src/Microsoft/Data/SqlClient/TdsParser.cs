@@ -6747,8 +6747,9 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        Debug.Assert(length == 16, "invalid length for SqlGuid type!");
-                        Span<byte> b = stackalloc byte[16];
+                        Debug.Assert(length == GUID_SIZE, "invalid length for SqlGuid type!");
+
+                        Span<byte> b = stackalloc byte[GUID_SIZE];
                         result = stateObj.TryReadByteArray(b, length);
                         if (result != TdsOperationStatus.Done)
                         {
