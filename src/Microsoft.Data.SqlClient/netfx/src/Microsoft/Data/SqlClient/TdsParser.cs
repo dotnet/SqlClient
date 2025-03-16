@@ -47,8 +47,6 @@ namespace Microsoft.Data.SqlClient
         private SSPIContextProvider _authenticationProvider;
 
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
-
-
         internal int ObjectID => _objectID;
 
         /// <summary>
@@ -199,6 +197,7 @@ namespace Microsoft.Data.SqlClient
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
+
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
@@ -238,8 +237,8 @@ namespace Microsoft.Data.SqlClient
                 // change it; this can occur when there is a delegated transaction
                 // and the user attempts to do an API begin transaction; in these
                 // cases, it's safe to ignore the set.
-                if ((_currentTransaction == null && value != null) ||
-                    (_currentTransaction != null && value == null))
+                if ((_currentTransaction == null && value != null)
+                    || (_currentTransaction != null && value == null))
                 {
                     _currentTransaction = value;
                 }
@@ -581,12 +580,7 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-
-            SendPreLoginHandshake(
-                instanceName,
-                encrypt,
-                integratedSecurity,
-                serverCertificateFilename);
+            SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -640,12 +634,7 @@ namespace Microsoft.Data.SqlClient
                 // for DNS Caching phase 1
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCache);
 
-                SendPreLoginHandshake(
-                    instanceName,
-                    encrypt,
-                    integratedSecurity,
-                    serverCertificateFilename);
-
+                SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
                     authType,
                     encrypt,
@@ -1610,7 +1599,6 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!ADP.IsEmpty(errorMessage), "Empty error message received from SNI");
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
-
             string providerRid = string.Format("SNI_PN{0}", (int)sniError.provider);
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
@@ -2886,7 +2874,6 @@ namespace Microsoft.Data.SqlClient
                             // Give the parser the new collation values in case parameters don't specify one
                             _defaultCollation = env._newCollation;
                             _defaultLCID = env._newCollation.LCID;
-
 
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
@@ -4186,11 +4173,10 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
-
         internal TdsOperationStatus TryProcessReturnValue(int length,
-                                            TdsParserStateObject stateObj,
-                                            out SqlReturnValue returnValue,
-                                            SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+            TdsParserStateObject stateObj,
+            out SqlReturnValue returnValue,
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             TdsOperationStatus result;
             returnValue = null;
@@ -5379,6 +5365,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             col.IsColumnSet = (TdsEnums.IsColumnSet == (flags & TdsEnums.IsColumnSet));
+
             if (fColMD && IsColumnEncryptionSupported)
             {
                 col.isEncrypted = (TdsEnums.IsEncrypted == (flags & TdsEnums.IsEncrypted));
@@ -5514,7 +5501,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private void WriteUDTMetaData(object value, string database, string schema, string type,
-                                        TdsParserStateObject stateObj)
+            TdsParserStateObject stateObj)
         {
             // database
             if (string.IsNullOrEmpty(database))
@@ -5695,6 +5682,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
+
                 result = stateObj.TryReadByte(out col.tableNum);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -5902,8 +5890,8 @@ namespace Microsoft.Data.SqlClient
                     // should be read in chunks in sequential read mode
                     // For Plp columns, we may have gotten only the length of the first chunk
                     result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (int.MaxValue) : (int)len, stateObj,
-                                         SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
-                                         md.column);
+                        SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
+                        md.column);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -5924,10 +5912,8 @@ namespace Microsoft.Data.SqlClient
         /// Determines if a column value should be transparently decrypted (based on SqlCommand and Connection String settings).
         /// </summary>
         /// <returns>true if the value should be transparently decrypted, false otherwise</returns>
-        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-            SqlInternalConnectionTds connection)
+        internal static bool ShouldHonorTceForRead(SqlCommandColumnEncryptionSetting columnEncryptionSetting, SqlInternalConnectionTds connection)
         {
-
             // Command leve setting trumps all
             switch (columnEncryptionSetting)
             {
@@ -5941,16 +5927,15 @@ namespace Microsoft.Data.SqlClient
                     // Check connection level setting!
                     Debug.Assert(SqlCommandColumnEncryptionSetting.UseConnectionSetting == columnEncryptionSetting,
                         "Unexpected value for command level override");
-                    return (connection != null && connection.ConnectionOptions != null &&
-                        connection.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled);
+                    return (connection != null && connection.ConnectionOptions != null
+                        && connection.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled);
             }
         }
 
-        internal static object GetNullSqlValue(
-                SqlBuffer nullVal,
-                SqlMetaDataPriv md,
-                SqlCommandColumnEncryptionSetting columnEncryptionSetting,
-                SqlInternalConnectionTds connection)
+        internal static object GetNullSqlValue(SqlBuffer nullVal,
+            SqlMetaDataPriv md,
+            SqlCommandColumnEncryptionSetting columnEncryptionSetting,
+            SqlInternalConnectionTds connection)
         {
             SqlDbType type = md.type;
 
@@ -6546,12 +6531,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal TdsOperationStatus TryReadSqlValue(SqlBuffer value,
-                                      SqlMetaDataPriv md,
-                                      int length,
-                                      TdsParserStateObject stateObj,
-                                      SqlCommandColumnEncryptionSetting columnEncryptionOverride,
-                                      string columnName,
-                                      SqlCommand command = null)
+            SqlMetaDataPriv md,
+            int length,
+            TdsParserStateObject stateObj,
+            SqlCommandColumnEncryptionSetting columnEncryptionOverride,
+            string columnName,
+            SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;
@@ -10438,7 +10423,7 @@ namespace Microsoft.Data.SqlClient
             {
                 value = param.GetCoercedValue();
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                                                    metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
+                    metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
             }
 
             var sendDefaultValue = sendDefault ? 1 : 0;
@@ -11806,6 +11791,7 @@ namespace Microsoft.Data.SqlClient
                     if (value is SqlChars)
                     {
                         string sch = new string(((SqlChars)value).Value);
+
                         return WriteEncodingChar(sch, actualLength, offset, _defaultEncoding, stateObj, canAccumulate: false);
                     }
                     else
@@ -13358,12 +13344,12 @@ namespace Microsoft.Data.SqlClient
 
                 // Special case single byte
                 if (
-                    (stateObj._longlenleft == 1 || partialReadInProgress )
+                    (stateObj._longlenleft == 1 || partialReadInProgress)
                     && (charsLeft > 0)
                 )
                 {
-                    byte b1=0; 
-                    byte b2=0;
+                    byte b1 = 0; 
+                    byte b2 = 0;
                     if (partialReadInProgress)
                     {
                         partialReadInProgress = false;
