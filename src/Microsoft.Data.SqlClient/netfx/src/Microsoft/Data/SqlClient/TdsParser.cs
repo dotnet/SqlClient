@@ -11,24 +11,29 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+#if NET
+using System.Security.Authentication;
+#else
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
+#endif
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
-using System.Net;
 using Interop.Common.Sni;
+#if NETFRAMEWORK
 using Interop.Windows.Sni;
+#endif
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.LocalDb;
 using Microsoft.Data.SqlClient.Server;
+#if NETFRAMEWORK
 using Microsoft.Data.SqlTypes;
+#endif
 using Microsoft.SqlServer.Server;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
