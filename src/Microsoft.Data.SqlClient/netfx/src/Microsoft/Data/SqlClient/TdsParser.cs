@@ -801,14 +801,14 @@ namespace Microsoft.Data.SqlClient
             byte[] instanceName,
             SqlConnectionEncryptOption encrypt,
             bool integratedSecurity,
-            string serverCertificate)
+            string serverCertificateFilename)
         {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
                 //Always validate the certificate when in strict encryption mode
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCertificate);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
                 // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
@@ -976,7 +976,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificate)
+        private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
         {
             uint error = 0;
 
@@ -996,7 +996,7 @@ namespace Microsoft.Data.SqlClient
             authInfo.certHash = false;
             authInfo.clientCertificateCallbackContext = IntPtr.Zero;
             authInfo.clientCertificateCallback = null;
-            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificate) ? null : serverCertificate;
+            authInfo.serverCertFileName = string.IsNullOrEmpty(serverCertificateFilename) ? null : serverCertificateFilename;
 
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 
@@ -1555,14 +1555,14 @@ namespace Microsoft.Data.SqlClient
             // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
-            SniError sniError = new SniError();
-            SniNativeWrapper.SniGetLastError(out sniError);
+            SniError details = new SniError();
+            SniNativeWrapper.SniGetLastError(out details);
 
-            if (sniError.sniError != 0)
+            if (details.sniError != 0)
             {
 
                 // handle special SNI error codes that are converted into exception which is not a SqlException.
-                switch (sniError.sniError)
+                switch (details.sniError)
                 {
                     case SniErrors.MultiSubnetFailoverWithMoreThan64IPs:
                         // Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported.
@@ -1582,7 +1582,7 @@ namespace Microsoft.Data.SqlClient
 
             // error.errorMessage is null terminated with garbage beyond that, since fixed length
             string errorMessage;
-            errorMessage = string.IsNullOrEmpty(sniError.errorMessage) ? string.Empty : sniError.errorMessage;
+            errorMessage = string.IsNullOrEmpty(details.errorMessage) ? string.Empty : details.errorMessage;
             /*  Format SNI errors and add Context Information
              *
              *  General syntax is:
@@ -1599,12 +1599,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!ADP.IsEmpty(errorMessage), "Empty error message received from SNI");
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
-            string providerRid = string.Format("SNI_PN{0}", (int)sniError.provider);
+            string providerRid = string.Format("SNI_PN{0}", (int)details.provider);
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
-            uint win32ErrorCode = sniError.nativeError;
+            uint win32ErrorCode = details.nativeError;
 
-            if (sniError.sniError == 0)
+            if (details.sniError == 0)
             {
                 // Provider error. The message from provider is preceeded with non-localizable info from SNI
                 // strip provider info from SNI
@@ -1635,20 +1635,20 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // SNI error. Replace the entire message.
-                errorMessage = SQL.GetSNIErrorMessage(sniError.sniError);
+                errorMessage = SQL.GetSNIErrorMessage(details.sniError);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
-                if (sniError.sniError == SniErrors.LocalDBErrorCode)
+                if (details.sniError == SniErrors.LocalDBErrorCode)
                 {
-                    errorMessage += LocalDbApi.GetLocalDbMessage((int)sniError.nativeError);
+                    errorMessage += LocalDbApi.GetLocalDbMessage((int)details.nativeError);
                     win32ErrorCode = 0;
                 }
             }
             errorMessage = string.Format("{0} (provider: {1}, error: {2} - {3})",
-                sqlContextInfo, providerName, (int)sniError.sniError, errorMessage);
+                sqlContextInfo, providerName, (int)details.sniError, errorMessage);
 
-            return new SqlError((int)sniError.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                _server, errorMessage, sniError.function, (int)sniError.lineNumber, win32ErrorCode);
+            return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
+                                _server, errorMessage, details.function, (int)details.lineNumber, win32ErrorCode);
         }
 
         internal void CheckResetConnection(TdsParserStateObject stateObj)

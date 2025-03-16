@@ -934,7 +934,7 @@ namespace Microsoft.Data.SqlClient
             out bool marsCapable,
             out bool fedAuthRequired,
             bool tlsFirst,
-            string serverCert)
+            string serverCertificateFilename)
         {
             // Assign default values
             marsCapable = _fMARS; 
@@ -1157,7 +1157,7 @@ namespace Microsoft.Data.SqlClient
                 uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
-                EnableSsl(info, encrypt, integratedSecurity, serverCert);
+                EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
             }
 
             return PreLoginHandshakeStatus.Successful;
