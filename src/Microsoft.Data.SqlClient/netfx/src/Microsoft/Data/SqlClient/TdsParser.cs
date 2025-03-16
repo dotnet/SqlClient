@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient
 
         private SSPIContextProvider _authenticationProvider;
 
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
 
         internal int ObjectID
@@ -398,7 +398,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            UInt32 sniStatus = SNILoadHandle.SingletonInstance.Status;
+            uint sniStatus = SNILoadHandle.SingletonInstance.Status;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
@@ -1617,7 +1617,7 @@ namespace Microsoft.Data.SqlClient
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
 
-            string providerRid = String.Format("SNI_PN{0}", (int)sniError.provider);
+            string providerRid = string.Format("SNI_PN{0}", (int)sniError.provider);
             string providerName = StringsHelper.GetString(providerRid);
             Debug.Assert(!string.IsNullOrEmpty(providerName), $"invalid providerResourceId '{providerRid}'");
             uint win32ErrorCode = sniError.nativeError;
@@ -1997,7 +1997,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal byte[] SerializeDouble(double v)
         {
-            if (Double.IsInfinity(v) || Double.IsNaN(v))
+            if (double.IsInfinity(v) || double.IsNaN(v))
             {
                 throw ADP.ParameterValueOutOfRange(v.ToString());
             }
@@ -4804,17 +4804,17 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
             }
-            catch (System.OutOfMemoryException)
+            catch (OutOfMemoryException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            catch (System.StackOverflowException)
+            catch (StackOverflowException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            catch (System.Threading.ThreadAbortException)
+            catch (ThreadAbortException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
@@ -5214,7 +5214,7 @@ namespace Microsoft.Data.SqlClient
                              "Invalid streaming datatype");
                 col.metaType = MetaType.GetMaxMetaTypeFromMetaType(col.metaType);
                 Debug.Assert(col.metaType.IsLong, "Max datatype not IsLong");
-                col.length = Int32.MaxValue;
+                col.length = int.MaxValue;
                 if (tdsType == TdsEnums.SQLXMLTYPE)
                 {
                     byte schemapresent;
@@ -5910,7 +5910,7 @@ namespace Microsoft.Data.SqlClient
                     // We only read up to 2Gb. Throw if data is larger. Very large data
                     // should be read in chunks in sequential read mode
                     // For Plp columns, we may have gotten only the length of the first chunk
-                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (Int32.MaxValue) : (int)len, stateObj,
+                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (int.MaxValue) : (int)len, stateObj,
                                          SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/,
                                          md.column);
                     if (result != TdsOperationStatus.Done)
@@ -7891,7 +7891,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static decimal AdjustDecimalScale(decimal value, int newScale)
         {
-            int oldScale = (Decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
+            int oldScale = (decimal.GetBits(value)[3] & 0x00ff0000) >> 0x10;
 
             if (newScale != oldScale)
             {
@@ -10296,17 +10296,17 @@ namespace Microsoft.Data.SqlClient
             {
                 FailureCleanup(stateObj, exc);
             }
-            catch (System.OutOfMemoryException)
+            catch (OutOfMemoryException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            catch (System.StackOverflowException)
+            catch (StackOverflowException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
             }
-            catch (System.Threading.ThreadAbortException)
+            catch (ThreadAbortException)
             {
                 _connHandler.DoomThisConnection();
                 throw;
@@ -10326,19 +10326,19 @@ namespace Microsoft.Data.SqlClient
                     {
                         FailureCleanup(stateObj, tsk.Exception);
                     }
-                    catch (System.OutOfMemoryException e)
+                    catch (OutOfMemoryException e)
                     {
                         _connHandler.DoomThisConnection();
                         completion.SetException(e);
                         throw;
                     }
-                    catch (System.StackOverflowException e)
+                    catch (StackOverflowException e)
                     {
                         _connHandler.DoomThisConnection();
                         completion.SetException(e);
                         throw;
                     }
-                    catch (System.Threading.ThreadAbortException e)
+                    catch (ThreadAbortException e)
                     {
                         _connHandler.DoomThisConnection();
                         completion.SetException(e);
@@ -12024,17 +12024,17 @@ namespace Microsoft.Data.SqlClient
 
                     return task ?? Task.CompletedTask;
                 }
-                catch (System.OutOfMemoryException)
+                catch (OutOfMemoryException)
                 {
                     _parser._connHandler.DoomThisConnection();
                     throw;
                 }
-                catch (System.StackOverflowException)
+                catch (StackOverflowException)
                 {
                     _parser._connHandler.DoomThisConnection();
                     throw;
                 }
-                catch (System.Threading.ThreadAbortException)
+                catch (ThreadAbortException)
                 {
                     _parser._connHandler.DoomThisConnection();
                     throw;

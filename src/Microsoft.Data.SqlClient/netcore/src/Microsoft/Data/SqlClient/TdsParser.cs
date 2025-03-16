@@ -5646,7 +5646,7 @@ namespace Microsoft.Data.SqlClient
                     // We only read up to 2Gb. Throw if data is larger. Very large data
                     // should be read in chunks in sequential read mode
                     // For Plp columns, we may have gotten only the length of the first chunk
-                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (Int32.MaxValue) : (int)len, stateObj, SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/, md.column);
+                    result = TryReadSqlValue(data, md, md.metaType.IsPlp ? (int.MaxValue) : (int)len, stateObj, SqlCommandColumnEncryptionSetting.Disabled /*Column Encryption Disabled for Bulk Copy*/, md.column);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -9796,7 +9796,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
-                    SqlServer.Server.Format format = SqlServer.Server.Format.Native;
+                    Format format = Format.Native;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {
