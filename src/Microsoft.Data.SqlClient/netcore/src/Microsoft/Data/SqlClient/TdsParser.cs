@@ -1007,7 +1007,8 @@ namespace Microsoft.Data.SqlClient
                             ON,
                             NOT_SUP,
                             REQ,
-                            LOGIN
+                            LOGIN,
+                            OPTIONS_MASK = 0x3f
                         } */
 
                         // Any response other than NOT_SUP means the server supports encryption.
@@ -6382,7 +6383,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlBinary.WrapBytes(b);
+                        value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
                     }
                     break;
 
@@ -6741,7 +6742,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlBinary.WrapBytes(b);
+                        value.SqlBinary = SqlBinary.WrapBytes(b); // doesn't copy the byte array
 
                         break;
                     }
@@ -8367,7 +8368,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int WriteTceFeatureRequest(bool write /* if false just calculates the length */)
         {
-            int len = 6; // (1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
 
             if (write)
             {
@@ -8679,7 +8680,7 @@ namespace Microsoft.Data.SqlClient
                 // write variable length portion
                 WriteString(rec.hostName, _physicalStateObj);
 
-                // if we are using SSPI, do not send over username/password, since we will use SSPI instead
+                // if we are using SSPI or fed auth MSAL, do not send over username/password, since we will use SSPI instead
                 // same behavior as Luxor
                 if (!rec.useSSPI && !(_connHandler._federatedAuthenticationInfoRequested || _connHandler._federatedAuthenticationRequested))
                 {
@@ -11137,7 +11138,6 @@ namespace Microsoft.Data.SqlClient
         // Write mars header data, not including the mars header length
         private void WriteMarsHeaderData(TdsParserStateObject stateObj, SqlInternalTransaction transaction)
         {
-            // Function to send over additional payload header data for 2005 and beyond only.
             // We may need to update the mars header length if mars header is changed in the future
             WriteShort(TdsEnums.HEADERTYPE_MARS, stateObj);
 
@@ -11901,7 +11901,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             XmlWriterSettings writerSettings = new XmlWriterSettings();
-            writerSettings.CloseOutput = false;     // don't close the memory stream
+            writerSettings.CloseOutput = false; // don't close the memory stream
             writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
             if (_asyncWrite)
             {

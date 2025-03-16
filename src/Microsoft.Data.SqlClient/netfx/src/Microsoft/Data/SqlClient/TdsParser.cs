@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     internal sealed partial class TdsParser
     {
-        private static int _objectTypeCount; // EventSource Counter
+        private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
         private SSPIContextProvider _authenticationProvider;
@@ -126,8 +126,6 @@ namespace Microsoft.Data.SqlClient
 
         private string _serverSpn = null;
 
-        // UNDONE - need to have some for both instances - both command and default???
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -146,10 +144,10 @@ namespace Microsoft.Data.SqlClient
         // Various other statics
         private const int ATTENTION_TIMEOUT = 5000;  // internal attention timeout, in ticks
 
-        // XML metadata substitue sequence
+        // XML metadata substitute sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        // JSON metadata substitue sequence
+        // JSON metadata substitute sequence
         private static readonly byte[] s_jsonMetadataSubstituteSequence = { 0xa7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
@@ -556,7 +554,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ResolvedServerName : serverInfo.PreRoutingServerName);
             }
             _state = TdsParserState.OpenNotLoggedIn;
-            _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
+            _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite;
             _physicalStateObj.TimeoutTime = timeout.LegacyTimerExpire;
 
             bool marsCapable = false;
@@ -1145,9 +1143,7 @@ namespace Microsoft.Data.SqlClient
                             NOT_SUP,
                             REQ,
                             LOGIN,
-                            OPTIONS_MASK = 0x3f,
-                            CTAIP = 0x40,
-                            CLIENT_CERT = 0x80,
+                            OPTIONS_MASK = 0x3f
                         } */
 
                         // Any response other than NOT_SUP means the server supports encryption.
@@ -1634,7 +1630,7 @@ namespace Microsoft.Data.SqlClient
                 if (0 <= iColon)
                 {
                     int len = errorMessage.Length;
-                    len -= 2;    // exclude "\r\n" sequence
+                    len -= 2; // exclude newline sequence
                     iColon += 2;  // skip over ": " sequence
                     len -= iColon;
                     /*
@@ -1651,8 +1647,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // SNI error. Replace the entire message
-                //
+                // SNI error. Replace the entire message.
                 errorMessage = SQL.GetSNIErrorMessage(sniError.sniError);
 
                 // If its a LocalDB error, then nativeError actually contains a LocalDB-specific error code, not a win32 error code
@@ -3022,7 +3017,6 @@ namespace Microsoft.Data.SqlClient
 
                     case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
                     case TdsEnums.ENV_SPRESETCONNECTIONACK:
-                        // TODO UNDONE BUGBUG - need to implement support for these env changes
                         result = TryReadTwoBinaryFields(env, stateObj);
                         if (result != TdsOperationStatus.Done)
                         {
@@ -6672,7 +6666,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
                     }
                     break;
 
@@ -7036,7 +7030,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);   // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
 
                         break;
                     }
@@ -8648,7 +8642,7 @@ namespace Microsoft.Data.SqlClient
 
             if (write)
             {
-                // Write Feature ID, legth of the version# field and Sensitivity Classification Version#
+                // Write Feature ID, length of the version# field and Sensitivity Classification Version#
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_DATACLASSIFICATION);
                 WriteInt(1, _physicalStateObj);
                 _physicalStateObj.WriteByte(TdsEnums.DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED);
@@ -8659,11 +8653,11 @@ namespace Microsoft.Data.SqlClient
 
         internal int WriteTceFeatureRequest(bool write /* if false just calculates the length */)
         {
-            int len = 6; // (1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
 
             if (write)
             {
-                // Write Feature ID, legth of the version# field and TCE Version#
+                // Write Feature ID, length of the version# field and TCE Version#
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_TCE);
                 WriteInt(1, _physicalStateObj);
                 _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_TCE_VERSION);
@@ -9365,7 +9359,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                // UNDONE - should not be catching all exceptions!!!
                 if (!ADP.IsCatchableExceptionType(e))
                 {
                     throw;
@@ -9423,7 +9416,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    // Reset the ThreadHasParserLock value incase our caller expects it to be set\not set
+                    // Reset the ThreadHasParserLock value in case our caller expects it to be set\not set
                     _connHandler.ThreadHasParserLockForClose = originalThreadHasParserLock;
                 }
             }
@@ -9538,7 +9531,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                //Debug.Assert(_state == TdsParserState.Broken, "Caught exception in TdsExecuteSQLBatch but connection was not broken!");
                 // UNDONE - should not be catching all exceptions!!!
                 if (!ADP.IsCatchableExceptionType(e))
                 {
@@ -9929,7 +9921,7 @@ namespace Microsoft.Data.SqlClient
                                             maxsize = 1;
                                     }
 
-                                    WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);
+                                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
                                 }
                             }
                             else
@@ -9985,7 +9977,6 @@ namespace Microsoft.Data.SqlClient
                                         Debug.Assert(udtVal != null, "GetBytes returned null instance. Make sure that it always returns non-null value");
                                         size = udtVal.Length;
 
-                                        //it may be legitimate, but we dont support it yet
                                         if (size < 0 || (size >= maxSupportedSize && maxsize != -1))
                                         {
                                             throw SQL.UDTInvalidSize(maxsize, maxSupportedSize);
@@ -10016,10 +10007,10 @@ namespace Microsoft.Data.SqlClient
                                         WriteUnsignedLong((ulong)udtVal.Length, stateObj); // PLP length
                                         if (udtVal.Length > 0)
                                         { // Only write chunk length if its value is greater than 0
-                                            WriteInt(udtVal.Length, stateObj);                  // Chunk length
+                                            WriteInt(udtVal.Length, stateObj); // Chunk length
                                             stateObj.WriteByteArray(udtVal, udtVal.Length, 0); // Value
                                         }
-                                        WriteInt(0, stateObj);                              // Terminator
+                                        WriteInt(0, stateObj); // Terminator
                                     }
                                     else
                                     {
@@ -10045,7 +10036,7 @@ namespace Microsoft.Data.SqlClient
                                             maxsize = 1;
                                     }
 
-                                    WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);
+                                    WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
                                 }
                             }
 
@@ -11019,7 +11010,7 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
 
-                    WriteShort(flags, stateObj);// write the flags
+                    WriteShort(flags, stateObj); // write the flags
 
                     // todo:
                     // for xml WriteTokenLength results in a no-op
@@ -12208,7 +12199,7 @@ namespace Microsoft.Data.SqlClient
             ConstrainedTextWriter writer = new ConstrainedTextWriter(new StreamWriter(new TdsOutputStream(this, stateObj, preambleToSkip), encoding), size);
 
             XmlWriterSettings writerSettings = new XmlWriterSettings();
-            writerSettings.CloseOutput = false;    // don't close the memory stream
+            writerSettings.CloseOutput = false; // don't close the memory stream
             writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
             if (_asyncWrite)
             {
