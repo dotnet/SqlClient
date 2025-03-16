@@ -89,9 +89,9 @@ namespace Microsoft.Data.SqlClient
 
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
-        private static EncryptionOptions _sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
+        private static EncryptionOptions s_sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
 
-        private EncryptionOptions _encryptionOption = _sniSupportedEncryptionOption;
+        private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
         private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient
 
         // now data length is 1 byte
         // First bit is 1 indicating client support failover partner with readonly intent
-        private static readonly byte[] s_FeatureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
+        private static readonly byte[] s_featureExtDataAzureSQLSupportFeatureRequest = { 0x01 };
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
@@ -8686,9 +8686,9 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_AZURESQLSUPPORT);
 
                 // Feature Data length
-                WriteInt(s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
+                WriteInt(s_featureExtDataAzureSQLSupportFeatureRequest.Length, _physicalStateObj);
 
-                _physicalStateObj.WriteByteArray(s_FeatureExtDataAzureSQLSupportFeatureRequest, s_FeatureExtDataAzureSQLSupportFeatureRequest.Length, 0);
+                _physicalStateObj.WriteByteArray(s_featureExtDataAzureSQLSupportFeatureRequest, s_featureExtDataAzureSQLSupportFeatureRequest.Length, 0);
             }
 
             return len;
