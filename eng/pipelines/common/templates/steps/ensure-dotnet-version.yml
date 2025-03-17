@@ -47,68 +47,61 @@ parameters:
           - 'arm64'
 
 steps:
-    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
-          - powershell: |
-                Write-Host "Running on Windows"
-                Write-Host $env:Agent_OS
-    - ${{ else }}:
-          - powershell: |
-                Write-Host "Running on non-windows..."
-                Write-Host $env:Agent_OS
+    # Note: as much as I'd love to use template expressions here, I can't because ${{ }} is
+    #     evaluated at compile time, while Agent is not known until runtime.
+    - powershell: |-
+          # Propagate parameters from pipeline #######################
+          $agentToolsDir = '$(Agent.ToolsDirectory)'
+          echo "agentToolsDir= $agentToolsDir"
+          
+          $architecture = '${{ parameters.windowsArchitecture }}'
+          echo "architecture= $architecture"
+          
+          $installDir = '${{ parameters.installDir }}'
+          echo "installDir= $installDir"
+          
+          $packageType = '${{ parameters.packageType }}'
+          echo "packageType= $packageType"
+          
+          $usePreview = ${{ parameters.usePreview }}
+          echo "usePreview= $usePreview"
+          
+          $version = ${{ parameters.version }}
+          echo "version= $version"
+          
+          # Install dotnet ###########################################
+          Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
+          
+          $installDir = If ($installDir) { $installDir } Else { $agentToolsDir } 
+          $installParams = @{
+              Architecture = $architecture
+              Channel =      $version
+              InstallDir =   $installDir
+              Quality =      If ($usePreview) { "GA" } Else { "preview" }
+          }
+          
+          if ($packageType -eq 'runtime') {
+              $installParams.add('Runtime', 'dotnet')
+          }
+          
+          & ./dotnet-install.ps1 @installParams
+          Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
+          
+          # Propagate values back out to pipeline ####################
+          Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${$installDir}"
+          Write-Host "##vso[task.prependpath]${$installDir}"
+      displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }} for Windows ${{ parameters.windowsArchitecture }}'
+      condition: eq(variables['Agent.OS'], 'Windows_NT')
 
-    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
-          - powershell: |-
-                # Propagate parameters from pipeline #######################
-                $agentToolsDir = '$(Agent.ToolsDirectory)'
-                echo "agentToolsDir= $agentToolsDir"
-                
-                $architecture = '${{ parameters.windowsArchitecture }}'
-                echo "architecture= $architecture"
-                
-                $installDir = '${{ parameters.installDir }}'
-                echo "installDir= $installDir"
-                
-                $packageType = '${{ parameters.packageType }}'
-                echo "packageType= $packageType"
-                
-                $usePreview = ${{ parameters.usePreview }}
-                echo "usePreview= $usePreview"
-                
-                $version = ${{ parameters.version }}
-                echo "version= $version"
-                
-                # Install dotnet ###########################################
-                Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
-                
-                $installDir = If ($installDir) { $installDir } Else { $agentToolsDir } 
-                $installParams = @{
-                    Architecture = $architecture
-                    Channel =      $version
-                    InstallDir =   $installDir
-                    Quality =      If ($usePreview) { "GA" } Else { "preview" }
-                }
-                
-                if ($packageType -eq 'runtime') {
-                    $installParams.add('Runtime', 'dotnet')
-                }
-                
-                & ./dotnet-install.ps1 @installParams
-                Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
-                
-                # Propagate values back out to pipeline ####################
-                Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${$installDir}"
-                Write-Host "##vso[task.prependpath]${$installDir}"
-            displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }} for Windows ${{ parameters.windowsArchitecture }}'
-    
-    - ${{ else }}:
-        - task: UseDotNet@2
-          displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }}'
-          inputs:
-              ${{ if ne(parameters.installDir, '') }}:
-                  installationPath: '${{ parameters.installDir }}'
-              ${{ else }}:
-                  installationPath: '$(Agent.ToolsDirectory)'
-              packageType: '${{ parameters.packageType }}'
-              version: '${{ parameters.version }}'
-              
-              includePreviewVersions: '${{ parameters.usePreview }}'
+    - task: UseDotNet@2
+      displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }}'
+      inputs:
+          ${{ if ne(parameters.installDir, '') }}:
+              installationPath: '${{ parameters.installDir }}'
+          ${{ else }}:
+              installationPath: '$(Agent.ToolsDirectory)'
+          packageType: '${{ parameters.packageType }}'
+          version: '${{ parameters.version }}'
+
+          includePreviewVersions: '${{ parameters.usePreview }}'
+      condition: ne(variables['Agent.OS'], 'Windows_NT')
