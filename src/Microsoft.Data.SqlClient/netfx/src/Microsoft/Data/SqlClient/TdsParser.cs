@@ -10297,6 +10297,7 @@ namespace Microsoft.Data.SqlClient
                 if (tsk.Exception != null)
                 {
                     Exception exc = tsk.Exception.InnerException;
+
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
