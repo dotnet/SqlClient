@@ -46,7 +46,16 @@ parameters:
           - 'x64'
           - 'arm64'
 
-steps:  
+steps:
+    - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
+          - powershell: |
+                Write-Host "Running on Windows"
+                Write-Host $env:Agent_OS
+    - ${{ else }}:
+          - powershell: |
+                Write-Host "Running on non-windows..."
+                Write-Host $env:Agent_OS
+
     - ${{ if eq(variables['Agent.OS'], 'Windows_NT') }}:
           - powershell: |-
                 # Propagate parameters from pipeline #######################
