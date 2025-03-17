@@ -162,22 +162,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2000
-        {
-            get
-            {
-                return false;   // Can't be direct connecting to 2000.
-            }
-        }
-
-        override internal bool Is2005OrNewer
-        {
-            get
-            {
-                return true;    // Must be direct connecting to 2005 or newer.
-            }
-        }
-
         override internal bool Is2008OrNewer
         {
             get
