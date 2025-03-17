@@ -63,10 +63,10 @@ steps:
           $packageType = '${{ parameters.packageType }}'
           echo "packageType= $packageType"
           
-          $usePreview = ${{ parameters.usePreview }}
+          $usePreview = '${{ parameters.usePreview }}'
           echo "usePreview= $usePreview"
           
-          $version = ${{ parameters.version }}
+          $version = '${{ parameters.version }}'
           echo "version= $version"
           
           # Install dotnet ###########################################
