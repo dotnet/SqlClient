@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             string authority,
             string userId,
             string password,
-            Guid connectionId, 
+            Guid connectionId,
             int connectionTimeout)
         {
             AuthenticationMethod = authenticationMethod;
@@ -149,11 +149,13 @@ namespace Microsoft.Data.SqlClient
                 return this;
             }
 
-            internal Builder(SqlAuthenticationMethod authenticationMethod, string resource, string authority, string serverName, string databaseName)
+            internal Builder(SqlInternalConnectionTds connection, string resource, string authority)
             {
-                _authenticationMethod = authenticationMethod;
-                _serverName = serverName;
-                _databaseName = databaseName;
+                _authenticationMethod = connection.ConnectionOptions.Authentication;
+                _serverName = connection.ConnectionOptions.DataSource;
+                _databaseName = connection.ConnectionOptions.InitialCatalog;
+                _connectionTimeout = connection.ConnectionOptions.ConnectTimeout;
+                _connectionId = connection.ClientConnectionId;
                 _resource = resource;
                 _authority = authority;
             }

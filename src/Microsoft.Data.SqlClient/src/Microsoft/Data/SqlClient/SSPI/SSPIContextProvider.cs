@@ -75,11 +75,10 @@ namespace Microsoft.Data.SqlClient
         private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverSpn)
         {
             var auth = new SqlAuthenticationParameters.Builder(
-                authenticationMethod: connection.ConnectionOptions.Authentication,
-                resource: null,
-                authority: null,
-                serverName: serverSpn,
-                connection.ConnectionOptions.InitialCatalog);
+                connection: connection,
+                resource: serverSpn,
+                authority: null);
+
 
             if (connection.ConnectionOptions.UserID is { } userId)
             {

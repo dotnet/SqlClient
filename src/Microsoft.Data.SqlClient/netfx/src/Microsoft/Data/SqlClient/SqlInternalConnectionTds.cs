@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -15,11 +14,11 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
-using System.Transactions;
 
 
 namespace Microsoft.Data.SqlClient
@@ -137,7 +136,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
@@ -1651,12 +1650,12 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     _timeoutErrorInternal.SetFailoverScenario(false); // not a failover scenario
-                    LoginNoFailover(dataSource, 
-                            newPassword, 
-                            newSecurePassword, 
+                    LoginNoFailover(dataSource,
+                            newPassword,
+                            newSecurePassword,
                             redirectedUserInstance,
-                            connectionOptions, 
-                            credential, 
+                            connectionOptions,
+                            credential,
                             timeout);
                 }
 
@@ -2625,7 +2624,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (_newDbConnectionPoolAuthenticationContext != null)
                     {
-                         _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
+                        _dbConnectionPool.AuthenticationContexts.TryAdd(_dbConnectionPoolAuthenticationContextKey, _newDbConnectionPoolAuthenticationContext);
                     }
                 }
             }
@@ -2739,13 +2738,10 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
-                        authenticationMethod: ConnectionOptions.Authentication,
+                        connection: this,
                         resource: fedAuthInfo.spn,
-                        authority: fedAuthInfo.stsurl,
-                        serverName: ConnectionOptions.DataSource,
-                        databaseName: ConnectionOptions.InitialCatalog)
-                        .WithConnectionId(_clientConnectionId)
-                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
+                        authority: fedAuthInfo.stsurl);
+
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
