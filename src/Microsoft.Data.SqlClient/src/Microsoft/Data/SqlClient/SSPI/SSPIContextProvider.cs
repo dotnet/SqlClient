@@ -61,13 +61,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-#if NET8_0_OR_GREATER
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, SPN={3}", GetType().FullName,
-                    nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, serverSpn);
-#else
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName,
-                    nameof(GenerateSspiClientContext), serverSpn);
-#endif
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), serverSpn);
 
                 return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
             }
