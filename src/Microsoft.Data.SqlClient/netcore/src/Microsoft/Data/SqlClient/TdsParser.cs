@@ -8060,7 +8060,6 @@ namespace Microsoft.Data.SqlClient
                     tokenLength = -1;
                     return TdsOperationStatus.Done;
                 case TdsEnums.SQLSESSIONSTATE:
-                    return stateObj.TryReadInt32(out tokenLength);
                 case TdsEnums.SQLFEDAUTHINFO:
                     return stateObj.TryReadInt32(out tokenLength);
             }
@@ -11511,7 +11510,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask, WriteInt, 0, stateObj);
+                    return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
+                        WriteInt, 0, stateObj
+                    );
                 }
             }
             else

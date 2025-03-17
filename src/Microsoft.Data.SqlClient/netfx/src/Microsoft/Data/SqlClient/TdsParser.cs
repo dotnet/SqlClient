@@ -138,9 +138,6 @@ namespace Microsoft.Data.SqlClient
         // textptr sequence
         private static readonly byte[] s_longDataHeader = { 0x10, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-        // Various other statics
-        private const int ATTENTION_TIMEOUT = 5000;  // internal attention timeout, in ticks
-
         // XML metadata substitute sequence
         private static readonly byte[] s_xmlMetadataSubstituteSequence = { 0xe7, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -588,7 +585,6 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
             PreLoginHandshakeStatus status = ConsumePreLoginHandshake(
-                authType,
                 encrypt,
                 trustServerCert,
                 integratedSecurity,
@@ -636,7 +632,6 @@ namespace Microsoft.Data.SqlClient
 
                 SendPreLoginHandshake(instanceName, encrypt, integratedSecurity, serverCertificateFilename);
                 status = ConsumePreLoginHandshake(
-                    authType,
                     encrypt,
                     trustServerCert,
                     integratedSecurity,
@@ -1040,7 +1035,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
-            SqlAuthenticationMethod authType,
             SqlConnectionEncryptOption encrypt,
             bool trustServerCert,
             bool integratedSecurity,
@@ -5174,7 +5168,7 @@ namespace Microsoft.Data.SqlClient
 
             if (TdsEnums.SQLUDT == tdsType)
             {
-                result = TryProcessUDTMetaData((SqlMetaDataPriv)col, stateObj);
+                result = TryProcessUDTMetaData(col, stateObj);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -6591,8 +6585,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     if (md.isEncrypted
-                        && ((columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
-                            || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly)
+                        && (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.Enabled
+                            || columnEncryptionOverride == SqlCommandColumnEncryptionSetting.ResultSetOnly
                             || (columnEncryptionOverride == SqlCommandColumnEncryptionSetting.UseConnectionSetting
                                 && _connHandler != null && _connHandler.ConnectionOptions != null
                                 && _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled)))
@@ -8112,12 +8106,12 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        private unsafe static void CopyCharsToBytes(char[] source, int sourceOffset, byte[] dest, int destOffset, int charLength)
+        private static void CopyCharsToBytes(char[] source, int sourceOffset, byte[] dest, int destOffset, int charLength)
         {
             Buffer.BlockCopy(source, sourceOffset, dest, destOffset, charLength * ADP.CharSize);
         }
 
-        private unsafe static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)
+        private static void CopyStringToBytes(string source, int sourceOffset, byte[] dest, int destOffset, int charLength)
         {
             Encoding.Unicode.GetBytes(source, sourceOffset, charLength, dest, destOffset);
         }
@@ -9920,10 +9914,9 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else if (mt.SqlDbType == SqlDbType.Udt)
                                 {
+                                    int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                                     byte[] udtVal = null;
                                     Format format = Format.Native;
-
-                                    int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
 
                                     if (!isNull)
                                     {
@@ -10980,8 +10973,8 @@ namespace Microsoft.Data.SqlClient
                     // Write the flags
                     ushort flags;
                     flags = (ushort)(md.Updatability << 2);
-                    flags |= (ushort)(md.IsNullable ? (ushort)TdsEnums.Nullable : (ushort)0);
-                    flags |= (ushort)(md.IsIdentity ? (ushort)TdsEnums.Identity : (ushort)0);
+                    flags |= md.IsNullable ? TdsEnums.Nullable : (ushort)0;
+                    flags |= md.IsIdentity ? TdsEnums.Identity : (ushort)0;
 
                     // Write the next byte of flags
                     if (IsColumnEncryptionSupported)
