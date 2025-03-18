@@ -180,7 +180,7 @@
       <remarks>
         The supported authentication modes with <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
         <list type="bullet">
-          <item>Active Directory Password</item>
+          <item>Active Directory Password (deprecated)</item>
           <item>Active Directory Integrated</item>
           <item>Active Directory Interactive</item>
           <item>Active Directory Service Principal</item>

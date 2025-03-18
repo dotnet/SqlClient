@@ -28,16 +28,6 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class GenericTDSServer : ITDSServer
     {
         /// <summary>
-        /// Delegate to be called when a LOGIN7 request has been received and is
-        /// validated.  This is called before any authentication work is done,
-        /// and before any response is sent.
-        /// </summary>
-        ///
-        public delegate void OnLogin7ValidatedDelegate(
-            TDSLogin7Token login7Token);
-        public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
-
-        /// <summary>
         /// Session counter
         /// </summary>
         private int _sessionCount = 0;
@@ -257,9 +247,6 @@ namespace Microsoft.SqlServer.TDS.Servers
                     }
                 }
             }
-
-            // Pass the packet to our delegate if we have one.
-            OnLogin7Validated?.Invoke(loginRequest);
 
             // Check if SSPI authentication is requested
             if (loginRequest.OptionalFlags2.IntegratedSecurity == TDSLogin7OptionalFlags2IntSecurity.On)

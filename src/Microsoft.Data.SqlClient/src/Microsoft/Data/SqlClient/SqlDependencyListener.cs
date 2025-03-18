@@ -11,8 +11,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;

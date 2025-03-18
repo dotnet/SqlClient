@@ -598,17 +598,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool Is2000
-        {
-            get
-            {
-                Debug.Assert(_activeConnection != null, "The active connection is null!");
-                if (_activeConnection == null)
-                    return false;
-                return _activeConnection.Is2000;
-            }
-        }
-
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
@@ -2679,9 +2668,16 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     _cachedAsyncState.ResetAsyncState();
                                 }
-                                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                                try
+                                {
+                                    _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
 
-                                globalCompletion.TrySetException(e);
+                                    globalCompletion.TrySetException(e);
+                                }
+                                catch (Exception e2)
+                                {
+                                    globalCompletion.TrySetException(e2);
+                                }
                             }
                             else
                             {
@@ -2696,21 +2692,26 @@ namespace Microsoft.Data.SqlClient
                                     _internalEndExecuteInitiated = false;
                                     Task<object> retryTask = (Task<object>)retryFunc(behavior, null, stateObject, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), true/*inRetry*/, asyncWrite);
 
-                                    retryTask.ContinueWith(retryTsk =>
-                                    {
-                                        if (retryTsk.IsFaulted)
+                                    retryTask.ContinueWith(
+                                        static (Task<object> retryTask, object state) =>
                                         {
-                                            globalCompletion.TrySetException(retryTsk.Exception.InnerException);
-                                        }
-                                        else if (retryTsk.IsCanceled)
-                                        {
-                                            globalCompletion.TrySetCanceled();
-                                        }
-                                        else
-                                        {
-                                            globalCompletion.TrySetResult(retryTsk.Result);
-                                        }
-                                    }, TaskScheduler.Default);
+                                            TaskCompletionSource<object> completion = (TaskCompletionSource<object>)state;
+                                            if (retryTask.IsFaulted)
+                                            {
+                                                completion.TrySetException(retryTask.Exception.InnerException);
+                                            }
+                                            else if (retryTask.IsCanceled)
+                                            {
+                                                completion.TrySetCanceled();
+                                            }
+                                            else
+                                            {
+                                                completion.TrySetResult(retryTask.Result);
+                                            }
+                                        },
+                                        state: globalCompletion,
+                                        TaskScheduler.Default
+                                    );
                                 }
                                 catch (Exception e2)
                                 {
@@ -3390,16 +3391,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (this.Connection.Is2005OrNewer)
-                {
-                    // Procedure - [sp_procedure_params_managed]
-                    cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
-                }
-                else
-                {
-                    // Procedure - [sp_procedure_params_rowset]
-                    cmdText.Append(".[").Append(TdsEnums.SP_PARAMS).Append("]");
-                }
+                // Procedure - [sp_procedure_params_managed]
+                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
 
                 colNames = PreSql2008ProcParamsNames;
                 useManagedDataType = false;
@@ -3516,9 +3509,6 @@ namespace Microsoft.Data.SqlClient
                     // type name for Udt
                     if (SqlDbType.Udt == p.SqlDbType)
                     {
-
-                        Debug.Assert(this._activeConnection.Is2005OrNewer, "Invalid datatype token received from pre-2005 server");
-
                         string udtTypeName;
                         if (useManagedDataType)
                         {
@@ -3642,19 +3632,16 @@ namespace Microsoft.Data.SqlClient
             // present.  If so, auto enlist to the dependency ID given in the context data.
             if (NotificationAutoEnlist)
             {
-                if (_activeConnection.Is2005OrNewer)
-                { // Only supported for 2005...
-                    string notifyContext = SqlNotificationContext();
-                    if (!ADP.IsEmpty(notifyContext))
-                    {
-                        // Map to dependency by ID set in context data.
-                        SqlDependency dependency = SqlDependencyPerAppDomainDispatcher.SingletonInstance.LookupDependencyEntry(notifyContext);
+                string notifyContext = SqlNotificationContext();
+                if (!ADP.IsEmpty(notifyContext))
+                {
+                    // Map to dependency by ID set in context data.
+                    SqlDependency dependency = SqlDependencyPerAppDomainDispatcher.SingletonInstance.LookupDependencyEntry(notifyContext);
 
-                        if (dependency != null)
-                        {
-                            // Add this command to the dependency.
-                            dependency.AddCommandDependency(this);
-                        }
+                    if (dependency != null)
+                    {
+                        // Add this command to the dependency.
+                        dependency.AddCommandDependency(this);
                     }
                 }
             }
@@ -5210,7 +5197,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_execType == EXECTYPE.PREPAREPENDING)
                     {
-                        Debug.Assert(_activeConnection.Is2000, "Invalid attempt to call sp_prepexec on non 7.x server");
                         rpc = BuildPrepExec(cmdBehavior);
                         // next time through, only do an exec
                         _execType = EXECTYPE.PREPARED;
@@ -5226,8 +5212,7 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // if 2000, then set NOMETADATA_UNLESSCHANGED flag
-                    if (_activeConnection.Is2000)
-                        rpc.options = TdsEnums.RPC_NOMETADATA;
+                    rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.ExecuteReader|INFO> {0}, Command executed as RPC.", ObjectID);
@@ -5240,10 +5225,6 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Debug.Assert(this.CommandType == System.Data.CommandType.StoredProcedure, "unknown command type!");
-                    // note: invalid asserts on 2000. On 8.0 (2000) and above a command is ALWAYS prepared
-                    // and IsDirty is always set if there are changes and the command is marked Prepared!
-                    Debug.Assert(Is2000 || !IsPrepared, "RPC should not be prepared!");
-                    Debug.Assert(Is2000 || !IsDirty, "RPC should not be marked as dirty!");
 
                     BuildRPC(inSchema, _parameters, ref rpc);
 
@@ -5596,12 +5577,6 @@ namespace Microsoft.Data.SqlClient
             if (ADP.IsEmpty(this.CommandText))
             {
                 throw ADP.CommandTextRequired(method);
-            }
-
-            // Notification property must be null for pre-2005 connections
-            if ((Notification != null) && !_activeConnection.Is2005OrNewer)
-            {
-                throw SQL.NotificationsRequire2005();
             }
 
             if ((async) && (_activeConnection.IsContextConnection))
@@ -6634,14 +6609,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (0 == precision)
                     {
-                        if (Is2000)
-                        {
-                            precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
-                        }
-                        else
-                        {
-                            precision = TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION;
-                        }
+                        precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
                     }
 
                     paramList.Append(precision);

@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Data.Common
+namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     // DbConnectionPoolKey: Base class implementation of a key to connection pool groups
     //  Only connection string is used as a key
