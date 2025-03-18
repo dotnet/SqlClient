@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient
 
             // Flag to remember whether or not we need to append a comma before
             // the next column in the command text.
-            bool appendColumn = false;
+            bool appendComma = false;
 
             // Loop over the metadata for each result column.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
@@ -607,13 +607,13 @@ namespace Microsoft.Data.SqlClient
                     destColumnNames.Add(metadata.column);
 
                     // Append a comma for each subsequent column.
-                    if (appendColumn)
+                    if (appendComma)
                     {
                         updateBulkCommandText.Append(", ");
                     }
                     else
                     {
-                        appendColumn = true;
+                        appendComma = true;
                     }
 
                     // Some datatypes need special handling ...
