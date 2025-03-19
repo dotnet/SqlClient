@@ -176,6 +176,60 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticScope.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\DiagnosticTransactionScope.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandAfter.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandBefore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientCommandError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseAfter.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseBefore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionCloseError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenAfter.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenBefore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitBefore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackAfter.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackBefore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionRollbackError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlDiagnosticListener.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs">
       <Link>Microsoft\Data\SqlClient\DisposableTemporaryOnStack.cs</Link>
     </Compile>
@@ -662,8 +716,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnostic.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
@@ -671,7 +723,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
