@@ -8717,9 +8717,21 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal int WriteVectorSupportFeatureRequest(bool write /* if false just calculates the length */)
+        /// <summary>
+        /// Writes the Vector Support feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, and version number.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// </remarks>
+        internal int WriteVectorSupportFeatureRequest(bool write)
         {
-            int len = 6; // 1byte = featureID, 4bytes = featureData length, 1 bytes = Version
+            int len = 6; 
 
             if (write)
             {

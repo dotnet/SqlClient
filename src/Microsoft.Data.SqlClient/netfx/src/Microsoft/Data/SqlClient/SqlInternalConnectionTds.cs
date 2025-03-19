@@ -3078,7 +3078,7 @@ namespace Microsoft.Data.SqlClient
                         byte vectorSupportVersion = data[0];
                         if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number for VECTORSUPPORT", ObjectID);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number {1} for VECTORSUPPORT", ObjectID, vectorSupportVersion);
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         IsVectorSupportEnabled = true;
