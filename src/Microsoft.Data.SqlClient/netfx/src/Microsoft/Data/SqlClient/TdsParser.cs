@@ -8731,7 +8731,7 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         internal int WriteVectorSupportFeatureRequest(bool write)
         {
-            int len = 6; 
+            const int len = 6; 
 
             if (write)
             {
