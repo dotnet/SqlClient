@@ -55,9 +55,12 @@
               </description>
             </item>
           </list>
-          <note type="note">
-            Due to the nature of the mechanism used by <see cref="T:Microsoft.Data.Sql.SqlDataSourceEnumerator" /> to locate data sources on a network, the method will not always return a complete list of the available servers, and the list might not be the same on every call. If you plan to use this function to let users select a server from a list, make sure that you always also supply an option to type in a name that is not in the list, in case the server enumeration does not return all the available servers. In addition, this method may take a significant amount of time to execute, so be careful about calling it when performance is critical.
-          </note>
+          <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Due to the nature of the mechanism used by <xref:Microsoft.Data.Sql.SqlDataSourceEnumerator> to locate data sources on a network, the method will not always return a complete list of the available servers, and the list might not be the same on every call. If you plan to use this function to let users select a server from a list, make sure that you always also supply an option to type in a name that is not in the list, in case the server enumeration does not return all the available servers. In addition, this method may take a significant amount of time to execute, so be careful about calling it when performance is critical.
+          ]]>
+          </format>
         </para>
       </remarks>
       <example>

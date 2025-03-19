@@ -458,9 +458,12 @@
         The starting character or characters to use. The default is an empty string.
       </value>
       <remarks>
-        <note type="note">
-          Although you cannot change the <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix" /> or <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix" /> properties after an insert, update, or delete command has been generated, you can change their settings after calling the <c>Update</c> method of a DataAdapter.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Although you cannot change the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix> or <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix> properties after an insert, update, or delete command has been generated, you can change their settings after calling the `Update` method of a DataAdapter.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         This property cannot be changed after an INSERT, UPDATE, or DELETE command has been generated.
@@ -474,9 +477,12 @@
         The ending character or characters to use. The default is an empty string.
       </value>
       <remarks>
-        <note type="note">
-          Although you cannot change the <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix" /> or <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix" /> properties after an insert, update, or delete operation has been generated, you can change their settings after calling the <c>Update</c> method of a DataAdapter.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Although you cannot change the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix> or <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix> properties after an insert, update, or delete operation has been generated, you can change their settings after calling the `Update` method of a DataAdapter.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         This property cannot be changed after an insert, update, or delete command has been generated.

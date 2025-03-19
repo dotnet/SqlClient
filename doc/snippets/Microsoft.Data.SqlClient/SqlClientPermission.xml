@@ -8,9 +8,10 @@
         <para>
           The <see cref="P:System.Data.Common.DBDataPermission.IsUnrestricted" /> property takes precedence over the <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> property. Therefore, if you set <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> to <see langword="false" />, you must also set <see cref="P:System.Data.Common.DBDataPermission.IsUnrestricted" /> to <see langword="false" /> to prevent a user from making a connection using a blank password.
         </para>
-        <note type="note">
-          When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then denying a specific permission, is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then denying a specific permission, is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.
+        </format>
       </remarks>
     </SqlClientPermission>
     <ctor name="default">
@@ -60,9 +61,10 @@
         <code language="c#">
           permission.Add("server=MyServer; database=MyDatabase; Integrated Security=true", "", KeyRestrictionBehavior.AllowOnly)
         </code>
-        <note type="note">
-          When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then trying to deny a specific permission, is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then trying to deny a specific permission, is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.
+        </format>
       </remarks>
       <example>
         <para>

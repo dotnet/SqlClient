@@ -11,9 +11,10 @@
         <para>
           Specifying the FILESTREAM attribute on a VARBINARY(MAX) column causes SQL Server to store the data in the local NTFS file system instead of in the database file. Transact-SQL statements provide data manipulation capabilities within the server, and Win32 file system interfaces provide streaming access to the data.
         </para>
-        <note type="note">
-          Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.
+        </format>
         <para>
           The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class is derived from the <see cref="T:System.IO.Stream" /> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.
         </para>

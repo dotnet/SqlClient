@@ -43,9 +43,12 @@
         <para>
           The following console application builds connection strings for a SQL Server database. The code uses a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class to create the connection string, and then passes the <see cref="P:System.Data.Common.DbConnectionStringBuilder.ConnectionString" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance to the constructor of the connection class. The example also parses an existing connection string and demonstrates various ways of manipulating the connection string's contents.
         </para>
-        <note type="note">
-          This example includes a password to demonstrate how <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
+          ]]>
+        </format>
         <!-- SqlConnectionStringBuilder -->
         <code language="c#">
           using System;
@@ -121,9 +124,12 @@
         <para>
           The following example supplies a simple SQL Server connection string in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> object's constructor, and then iterates through all the key/value pairs within the object. Note that the collection provides default values for each item. Also note that the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class converts synonyms for the well-known keys so that they are consistent with the well-known names.
         </para>
-        <note type="note">
-          This example includes a password to demonstrate how <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
+          ]]>
+        </format>
         <!-- SqlConnectionStringBuilder3 -->
         <code language="c#">
           using System;
@@ -431,16 +437,16 @@
       <summary>
         The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. The default value for non Azure endpoints is 1. For Azure SQL endpoints, the default is 2. Starting in version 5.x, for Azure SQL serverless or on demand endpoints, the default is 5 to improve connection success for connections to an idle or paused instance. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside the allowed range.
       </summary>
-      <value>
-        The number of reconnections attempted after identifying that there was an idle connection failure.
-      </value>
       <remarks>
         <para>
           This property corresponds to the <c>Connect Retry Count</c> key within the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> connection string.
         </para>
-        <note type="note">
-          Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to improve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[        
+> [!NOTE]
+> Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to improve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
+          ]]>
+        </format>
       </remarks>
     </ConnectRetryCount>
     <ConnectRetryInterval>
@@ -723,12 +729,16 @@
         <para>
           When <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="false" /> and <b>Encrypt</b> is <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> or <see langword="true" />, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see <see href="https://learn.microsoft.com/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements">Enable encrypted connections to the Database Engine</see> .
         </para>
-        <note type="note">
-          Starting from <b>version 4.0</b>, the default value of the property <b>Encrypt</b> is set to <see langword="true" /> while it is <see langword="false" /> for earlier versions.
-        </note>
-        <note type="note">
-          Starting from <b>version 5.0</b>, the data type is updated to <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> , and the default value of the <c>Encrypt</c> property is set to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> .
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> Starting with **version 4.0**, the default value of the property **Encrypt** is set to `true` while it is `false` for earlier versions.
+        </format>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Starting from **version 5.0**, the data type is updated to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption> , and the default value of the `Encrypt` property is set to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory>.
+          ]]>
+        </format>
       </remarks>
       <seealso href="https://learn.microsoft.com/sql/connect/ado-net/connection-strings">
         Working with Connection Strings
@@ -784,9 +794,10 @@
         <para>
           This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN" keys within the connection string.
         </para>
-        <note type="note">
-          This property only applies when using Integrated Security mode, otherwise it is ignored.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
+        </format>
       </remarks>
     </FailoverPartnerSPN>
     <HostNameInCertificate>
@@ -800,9 +811,12 @@
         <para>
           This property corresponds to the "HostNameInCertificate" and "Host Name in Certificate" keys within the connection string.
         </para>
-        <note type="note">
-          This property only applies when using <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> in <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This property only applies when using <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt> in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict> mode, otherwise it is ignored.
+          ]]>
+        </format>
       </remarks>
     </HostNameInCertificate>
     <InitialCatalog>
@@ -893,9 +907,12 @@
         <para>
           The following example converts an existing connection string from using SQL Server Authentication to using integrated security. The example does its work by removing the username and password from the connection string and then setting the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> object.
         </para>
-        <note type="note">
-          This example includes a password to demonstrate how <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
+          ]]>
+        </format>
         <!-- SqlConnectionStringBuilder_IntegratedSecurity -->
         <code language="c#">
           using System;
@@ -1456,9 +1473,12 @@
         <para>
           The following example converts an existing connection string from using Windows Authentication to using integrated security. The example works by removing the username and password from the connection string, and then setting the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> object.
         </para>
-        <note type="note">
-          This example includes a password to demonstrate how <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.
+          ]]>
+        </format>
         <!-- SqlConnectionStringBuilder_Remove -->
         <code language="c#">
           using Microsoft.Data.SqlClient;
@@ -1540,9 +1560,12 @@
         <para>
           This property corresponds to the "ServerCertificate" and "Server Certificate" keys within the connection string.
         </para>
-        <note type="note">
-          This property only applies when using <c>Encrypt</c> in <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> or <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> mode, otherwise it is ignored.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict> mode, otherwise it is ignored.
+          ]]>
+        </format>
       </remarks>
     </ServerCertificate>
     <ServerSPN>
@@ -1556,9 +1579,12 @@
         <para>
           This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.
         </para>
-        <note type="note">
-          This property only applies when using Integrated Security mode, otherwise it is ignored.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
+          ]]>
+        </format>
       </remarks>
     </ServerSPN>
     <ShouldSerialize>
@@ -1826,9 +1852,10 @@
         <para>
           This property corresponds to the "User Instance" key within the connection string.
         </para>
-        <note type="note">
-          This feature is available only with the SQL Server Express Edition. For more information on user instances, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-express-user-instances">SQL Server Express User Instances</see>.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> This feature is available only with the SQL Server Express Edition. For more information on user instances, see [SQL Server Express User Instances](https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-express-user-instances).
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         To set the value to null, use <see cref="F:System.DBNull.Value" /> .
