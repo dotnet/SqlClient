@@ -2,22 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using BenchmarkDotNet.Running;
-using Newtonsoft.Json;
 using System;
-using System.IO;
+using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     public class Program
     {
-        private static Config s_config;
+        private readonly Config _config;
 
-        public static void Main()
+        public Program()
         {
             // Load config file
-            s_config = JsonConvert.DeserializeObject<Config>(File.ReadAllText("runnerconfig.json"));
-            if (s_config.UseManagedSniOnWindows)
+            _config = Config.Load();
+            if (_config.UseManagedSniOnWindows)
             {
                 AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             }
@@ -37,44 +35,50 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // Always Encrypted
         }
 
-        private static void Run_SqlConnectionBenchmark()
+        private void Run_SqlConnectionBenchmark()
         {
-            if (s_config.Benchmarks.SqlConnectionRunnerConfig?.Enabled == true)
+            if (_config.Benchmarks.SqlConnectionRunnerConfig?.Enabled == true)
             {
-                BenchmarkRunner.Run<SqlConnectionRunner>(BenchmarkConfig.s_instance(s_config.Benchmarks.SqlConnectionRunnerConfig));
+                BenchmarkRunner.Run<SqlConnectionRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.SqlConnectionRunnerConfig));
             }
         }
 
-        private static void Run_SqlCommandBenchmark()
+        private void Run_SqlCommandBenchmark()
         {
-            if (s_config.Benchmarks.SqlCommandRunnerConfig?.Enabled == true)
+            if (_config.Benchmarks.SqlCommandRunnerConfig?.Enabled == true)
             {
-                BenchmarkRunner.Run<SqlCommandRunner>(BenchmarkConfig.s_instance(s_config.Benchmarks.SqlCommandRunnerConfig));
+                BenchmarkRunner.Run<SqlCommandRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.SqlCommandRunnerConfig));
             }
         }
 
-        private static void Run_DataTypeReaderBenchmark()
+        private void Run_DataTypeReaderBenchmark()
         {
-            if (s_config.Benchmarks.DataTypeReaderRunnerConfig?.Enabled == true)
+            if (_config.Benchmarks.DataTypeReaderRunnerConfig?.Enabled == true)
             {
-                BenchmarkRunner.Run<DataTypeReaderRunner>(BenchmarkConfig.s_instance(s_config.Benchmarks.DataTypeReaderRunnerConfig));
+                BenchmarkRunner.Run<DataTypeReaderRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.DataTypeReaderRunnerConfig));
             }
         }
 
-        private static void Run_DataTypeReaderAsyncBenchmark()
+        private void Run_DataTypeReaderAsyncBenchmark()
         {
-            if (s_config.Benchmarks.DataTypeReaderAsyncRunnerConfig?.Enabled == true)
+            if (_config.Benchmarks.DataTypeReaderAsyncRunnerConfig?.Enabled == true)
             {
-                BenchmarkRunner.Run<DataTypeReaderAsyncRunner>(BenchmarkConfig.s_instance(s_config.Benchmarks.DataTypeReaderAsyncRunnerConfig));
+                BenchmarkRunner.Run<DataTypeReaderAsyncRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.DataTypeReaderAsyncRunnerConfig));
             }
         }
 
-        private static void Run_SqlBulkCopyBenchmark()
+        private void Run_SqlBulkCopyBenchmark()
         {
-            if (s_config.Benchmarks.SqlBulkCopyRunnerConfig?.Enabled == true)
+            if (_config.Benchmarks.SqlBulkCopyRunnerConfig?.Enabled == true)
             {
-                BenchmarkRunner.Run<SqlBulkCopyRunner>(BenchmarkConfig.s_instance(s_config.Benchmarks.SqlBulkCopyRunnerConfig));
+                BenchmarkRunner.Run<SqlBulkCopyRunner>(BenchmarkConfig.s_instance(_config.Benchmarks.SqlBulkCopyRunnerConfig));
             }
+        }
+
+        public static void Main()
+        {
+            // Run the benchmarks.
+            new Program();
         }
     }
 }

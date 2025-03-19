@@ -342,11 +342,30 @@ dotnet test <test_properties...> --collect:"XPlat Code Coverage"
 ### Running Performance test project directly
 
 Project location from Root: `src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj`
-Configure `runnerconfig.json` file with connection string and preferred settings to run Benchmark Jobs.
+
+Create an empty database for the benchmarks to use:
+```bash
+> create database [sqlclient-perf-db]
+> go
+```
+
+Configure `runnerconfig.json` file with connection string and preferred settings
+to run Benchmark Jobs.
 
 ```bash
 cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
 dotnet run -c Release -f net8.0
+```
+
+Optionally, to avoid polluting your git workspace, copy `runnerconfig.json` to a
+new file, make your edits there, and then specify the new file with the
+RUNNER_CONFIG environment variable.
+
+```bash
+cd src/Microsoft.Data.SqlClient/tests/PerformanceTests
+cp runnerconfig.json ~/.configs/runnerconfig.json
+# Make edits to ~/.configs/runnerconfig.json
+RUNNER_CONFIG=~/.configs/runnerconfig.json dotnet run -c Release -f net9.0
 ```
 
 _Only "**Release** Configuration" applies to Performance Tests_
