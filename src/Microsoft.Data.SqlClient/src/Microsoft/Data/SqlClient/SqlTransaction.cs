@@ -437,11 +437,7 @@ namespace Microsoft.Data.SqlClient
             // For Yukon, we have to defer "zombification" until we get past the users' next
             // rollback, else we'll throw an exception there that is a breaking change. Of course,
             // if the connection is already closed, then we're free to zombify...
-            if (_connection.InnerConnection is SqlInternalConnection internalConnection
-                #if NETFRAMEWORK
-                && internalConnection.Is2005OrNewer
-                #endif
-                && !_isFromApi)
+            if (_connection.InnerConnection is SqlInternalConnection internalConnection && !_isFromApi)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",
