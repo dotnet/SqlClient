@@ -754,6 +754,11 @@ namespace Microsoft.Data.Common
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE3 = ".pbidedicated.windows.net";
+        private const string AZURE_SQL = ".database.windows.net";
+        private const string AZURE_SQL_GERMANY = ".database.cloudapi.de";
+        private const string AZURE_SQL_USGOV = ".database.usgovcloudapi.net";
+        private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
+        private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
@@ -765,11 +770,11 @@ namespace Microsoft.Data.Common
                 || dataSource.Contains(PBI_DATAWAREHOUSE3);
         }
 
-        internal static readonly string[] s_azureSqlServerEndpoints = { ".database.windows.net",
-                                                                        ".database.cloudapi.de",
-                                                                        ".database.usgovcloudapi.net",
-                                                                        ".database.chinacloudapi.cn",
-                                                                        ".database.fabric.microsoft.com"};
+        internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
+                                                                        AZURE_SQL_GERMANY,
+                                                                        AZURE_SQL_USGOV,
+                                                                        AZURE_SQL_CHINA,
+                                                                        AZURE_SQL_FABRIC };
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {

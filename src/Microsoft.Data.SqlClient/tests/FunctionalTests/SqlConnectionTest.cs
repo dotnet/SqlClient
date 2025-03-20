@@ -1082,10 +1082,15 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(1, (int)field.GetValue(cn));
         }
 
-        [Fact]
-        public void ConnectionRetryForAzureDbEndpoints()
+        [Theory]
+        [InlineData("myserver.database.windows.net")]
+        [InlineData("myserver.database.cloudapi.de")]
+        [InlineData("myserver.database.usgovcloudapi.net")]
+        [InlineData("myserver.database.chinacloudapi.cn")]
+        [InlineData("myserver.database.fabric.microsoft.com")]
+        public void ConnectionRetryForAzureDbEndpoints(string serverName)
         {
-            SqlConnection cn = new SqlConnection("Data Source = someserver.database.windows.net");
+            SqlConnection cn = new SqlConnection($"Data Source = {serverName}");
             FieldInfo field = typeof(SqlConnection).GetField("_connectRetryCount", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(field.GetValue(cn));
             Assert.Equal(2, (int)field.GetValue(cn));
@@ -1094,6 +1099,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [Theory]
         [InlineData("myserver-ondemand.sql.azuresynapse.net")]
         [InlineData("someserver-ondemand.database.windows.net")]
+        [InlineData("datawarehouse.fabric.microsoft.com")]
+        [InlineData("datawarehouse.pbidedicated.microsoft.com")]
+        [InlineData("someserver.pbidedicated.microsoft.com")]
+        [InlineData("someserver.pbidedicated.windows.net")]
         public void ConnectionRetryForAzureOnDemandEndpoints(string serverName)
         {
             SqlConnection cn = new SqlConnection($"Data Source = {serverName}");
