@@ -405,6 +405,7 @@ namespace Microsoft.Data.SqlClient
 
                     InternalTransaction.Save(savePointName);
                 }
+                #if NETFRAMEWORK
                 catch (OutOfMemoryException e)
                 {
                     _connection.Abort(e);
@@ -425,6 +426,7 @@ namespace Microsoft.Data.SqlClient
 
                     throw;
                 }
+                #endif
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
