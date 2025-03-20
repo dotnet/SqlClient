@@ -89,8 +89,8 @@ steps:
           Remove-Item dotnet-install.ps1 -ErrorAction:Ignore
           
           # Propagate values back out to pipeline ####################
-          Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${$installDir}"
-          Write-Host "##vso[task.prependpath]${$installDir}"
+          Write-Host "##vso[task.setvariable variable=DOTNET_ROOT]${installDir}"
+          Write-Host "##vso[task.prependpath]${installDir}"
       displayName: 'Install dotnet ${{ parameters.version }} ${{ parameters.packageType }} for Windows ${{ parameters.windowsArchitecture }}'
       condition: eq(variables['Agent.OS'], 'Windows_NT')
 
