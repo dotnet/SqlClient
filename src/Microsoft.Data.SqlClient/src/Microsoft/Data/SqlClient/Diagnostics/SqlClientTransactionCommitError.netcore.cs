@@ -17,7 +17,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionCommitError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionCommitError";
 
-        internal SqlClientTransactionCommitError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, Exception ex)
+        internal SqlClientTransactionCommitError(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            IsolationLevel isolationLevel,
+            SqlConnection connection,
+            long? transactionId,
+            Exception ex)
         {
             OperationId = operationId;
             Operation = operation;

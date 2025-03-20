@@ -17,7 +17,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
         public const string Name = "Microsoft.Data.SqlClient.WriteCommandError";
 
-        internal SqlClientCommandError(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, Exception exception)
+        internal SqlClientCommandError(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            Guid? connectionId,
+            long? transactionId,
+            SqlCommand command,
+            Exception exception)
         {
             OperationId = operationId;
             Operation = operation;

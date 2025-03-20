@@ -17,7 +17,15 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientTransactionRollbackError"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteTransactionRollbackError";
 
-        internal SqlClientTransactionRollbackError(Guid operationId, string operation, long timestamp, IsolationLevel isolationLevel, SqlConnection connection, long? transactionId, string transactionName, Exception ex)
+        internal SqlClientTransactionRollbackError(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            IsolationLevel isolationLevel,
+            SqlConnection connection,
+            long? transactionId,
+            string transactionName,
+            Exception ex)
         {
             OperationId = operationId;
             Operation = operation;

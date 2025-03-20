@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlTransaction : DbTransaction
     {
         #if NET
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new();
         #endif
 
         private static int s_objectTypeCount; // EventSource Counter
