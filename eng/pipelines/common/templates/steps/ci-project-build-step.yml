@@ -65,7 +65,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
+        msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
         clean: true
 
   - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all')) }}:
@@ -77,7 +77,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAKVNetFx -p:BuildNumber=${{ parameters.buildNumber }}'
+        msbuildArguments: '-t:BuildAKVNetFx -p:GenerateDocumentationFile=false -p:BuildNumber=${{ parameters.buildNumber }}'
 
     - task: MSBuild@1
       displayName: 'Build AKV Provider NetCore All OS [Win]'
@@ -87,7 +87,7 @@ steps:
         msbuildArchitecture: x64
         platform: '${{ parameters.platform }}'
         configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:BuildNumber=${{ parameters.buildNumber }}'
+        msbuildArguments: '-t:BuildAKVNetCoreAllOS -p:GenerateDocumentationFile=false -p:BuildNumber=${{ parameters.buildNumber }}'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Linux'), eq(parameters.operatingSystem, 'MacOS'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - task: DotNetCoreCLI@2
