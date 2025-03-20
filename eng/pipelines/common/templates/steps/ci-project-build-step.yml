@@ -37,12 +37,12 @@ steps:
 - template: ./ensure-dotnet-version.yml@self
   parameters:
       packageType: 'sdk'
-      version: '9.x'
+      version: '9.0'
 
 - template: ./ensure-dotnet-version.yml@self
   parameters:
       packageType: 'runtime'
-      version: '8.x'
+      version: '8.0'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
   - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:

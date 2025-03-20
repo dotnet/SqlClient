@@ -242,7 +242,7 @@ jobs:
           installDir: $(dotnetx86RootPath)
           packageType: sdk
           usePreview: false
-          version: 9.x
+          version: 9.0
           windowsArchitecture: x86
 
     - template: ../steps/run-all-tests-step.yml@self

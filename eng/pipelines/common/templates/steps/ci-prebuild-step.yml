@@ -24,13 +24,13 @@ steps:
   parameters:
     packageType: sdk
     usePreview: false
-    version: 9.x
+    version: 9.0
 
 - template: ensure-dotnet-version.yml
   parameters:
     packageType: runtime
     usePreview: false
-    version: 8.x
+    version: 8.0
 
 - ${{if eq(parameters.debug, true)}}:
   - powershell: |

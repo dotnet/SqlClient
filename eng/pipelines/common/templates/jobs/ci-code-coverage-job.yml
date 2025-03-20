@@ -47,7 +47,7 @@ jobs:
   - template: ../steps/ensure-dotnet-version.yml@self
     parameters:
         packageType: 'sdk'
-        version: '8.0.x'
+        version: '8.0'
 
   - ${{ parameters.downloadArtifactsSteps }}
 

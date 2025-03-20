@@ -31,7 +31,8 @@ parameters:
       default: false
       
     - # Version to install - supports full major.minor.patch, but can be shortened to major.minor
-      # to get the latest within a given channel.
+      # to get the latest within a given channel. Do not append .x to the end (as per UseDotNet),
+      # it is not supported by dotnet-install script, and we will add it if we use UseDotNet task.
       name: version
       type: string
       
@@ -101,7 +102,7 @@ steps:
           ${{ else }}:
               installationPath: '$(Agent.ToolsDirectory)'
           packageType: '${{ parameters.packageType }}'
-          version: '${{ parameters.version }}'
+          version: '${{ parameters.version }}.x'
 
           includePreviewVersions: '${{ parameters.usePreview }}'
       condition: ne(variables['Agent.OS'], 'Windows_NT')
