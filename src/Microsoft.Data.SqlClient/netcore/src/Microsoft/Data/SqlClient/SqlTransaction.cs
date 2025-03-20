@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new(SqlDiagnosticListener.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new();
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // PUBLIC METHODS

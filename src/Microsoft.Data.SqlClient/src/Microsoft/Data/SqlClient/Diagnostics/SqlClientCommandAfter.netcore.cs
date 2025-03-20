@@ -16,7 +16,14 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandAfter"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteCommandAfter";
 
-        internal SqlClientCommandAfter(Guid operationId, string operation, long timestamp, Guid? connectionId, long? transactionId, SqlCommand command, IDictionary statistics)
+        internal SqlClientCommandAfter(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            Guid? connectionId,
+            long? transactionId,
+            SqlCommand command,
+            IDictionary statistics)
         {
             OperationId = operationId;
             Operation = operation;

@@ -16,7 +16,12 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionOpenBefore"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionOpenBefore";
 
-        internal SqlClientConnectionOpenBefore(Guid operationId, string operation, long timestamp, SqlConnection connection, string clientVersion)
+        internal SqlClientConnectionOpenBefore(
+            Guid operationId,
+            string operation,
+            long timestamp,
+            SqlConnection connection,
+            string clientVersion)
         {
             OperationId = operationId;
             Operation = operation;
