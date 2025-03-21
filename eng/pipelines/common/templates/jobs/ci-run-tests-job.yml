@@ -236,7 +236,7 @@ jobs:
     - powershell: |
         dotnet --info
         
-        Invoke-WebRequest https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
+        Invoke-WebRequest https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
         
         # install .net x86
         $version = "LTS"

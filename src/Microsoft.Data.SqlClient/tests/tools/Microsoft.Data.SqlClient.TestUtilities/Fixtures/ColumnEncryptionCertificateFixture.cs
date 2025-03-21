@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             using (X509Certificate2 createdCertificate = CreateCertificate(nameof(CertificateWithoutPrivateKey), Array.Empty<string>(), Array.Empty<string>()))
             {
                 // This will strip the private key away from the created certificate
-#if NET9_0
+#if NET9_0_OR_GREATER
                 CertificateWithoutPrivateKey = X509CertificateLoader.LoadCertificate(createdCertificate.Export(X509ContentType.Cert));
 #else
                 CertificateWithoutPrivateKey = new X509Certificate2(createdCertificate.Export(X509ContentType.Cert));
