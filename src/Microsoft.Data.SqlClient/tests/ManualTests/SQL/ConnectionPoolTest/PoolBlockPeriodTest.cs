@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string AzureChinaEnpointSample = "nonexistent.database.chinacloudapi.cn";
         private const string AzureUSGovernmentEndpointSample = "nonexistent.database.usgovcloudapi.net";
         private const string AzureGermanEndpointSample = "nonexistent.database.cloudapi.de";
+        private const string AzureFabricEndpointSample = "nonexistent.database.fabric.microsoft.com";
         private const string AzureEndpointMixedCaseSample = "nonexistent.database.WINDOWS.net";
         private const string NonExistentServer = "nonexistentserver";
         private const string PolicyKeyword = "PoolBlockingPeriod";

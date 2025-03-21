@@ -1924,42 +1924,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .database.chinacloudapi.cn.
-        /// </summary>
-        internal static string AZURESQL_ChinaEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_ChinaEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.windows.net.
-        /// </summary>
-        internal static string AZURESQL_GenericEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_GenericEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.cloudapi.de.
-        /// </summary>
-        internal static string AZURESQL_GermanEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_GermanEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to .database.usgovcloudapi.net.
-        /// </summary>
-        internal static string AZURESQL_UsGovEndpoint {
-            get {
-                return ResourceManager.GetString("AZURESQL_UsGovEndpoint", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to There is more than one table with the same name &apos;{0}&apos; (even if namespace is different)..
         /// </summary>
         internal static string CodeGen_DuplicateTableName {
@@ -13962,3 +13926,4 @@ namespace System {
         }
     }
 }
+
