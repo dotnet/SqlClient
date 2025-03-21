@@ -367,9 +367,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AssemblyCache.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\AssemblyCache.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AssemblyRef.cs">
       <Link>Microsoft\Data\SqlClient\AssemblyRef.cs</Link>
     </Compile>
