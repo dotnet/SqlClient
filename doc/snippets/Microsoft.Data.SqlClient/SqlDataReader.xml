@@ -17,9 +17,12 @@
         <para>
           When using sequential access (<see cref="F:System.Data.CommandBehavior.SequentialAccess" />), an <see cref="T:System.InvalidOperationException" /> will be raised if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> position is advanced and another read operation is attempted on the previous column.
         </para>
-        <note type="note">
-          For optimal performance, <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> avoids creating unnecessary objects or making unnecessary copies of data. Therefore, multiple calls to methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)" /> return a reference to the same object. Use caution if you are modifying the underlying value of the objects returned by methods such as <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)" />.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> For optimal performance, <xref:Microsoft.Data.SqlClient.SqlDataReader> avoids creating unnecessary objects or making unnecessary copies of data. Therefore, multiple calls to methods such as <xref:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)> return a reference to the same object. Use caution if you are modifying the underlying value of the objects returned by methods such as <xref:Microsoft.Data.SqlClient.SqlDataReader.GetValue(System.Int32)>.
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
@@ -85,9 +88,12 @@
         <para>
           The <b>Close</b> method populates the values for output parameters, return values and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and <see cref="P:Microsoft.Data.SqlClient.SqlDataReader.RecordsAffected" /> are not important to your application, the time to close may be shortened by calling the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.Cancel" /> method of the associated <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object before the <b>Close</b> method is called.
         </para>
-        <note type="caution">
-          Do not call <b>Close</b> or <see cref="M:System.IDisposable.Dispose" /> on a Connection, a DataReader, or any other managed object in the finalizer method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a finalizer method in your class definition. For more information, see <see href="https://learn.microsoft.com/dotnet/standard/garbage-collection/">Garbage Collection</see>.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!CAUTION]
+> Do not call **Close** or <xref:System.IDisposable.Dispose> on a Connection, a DataReader, or any other managed object in the finalizer method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a finalizer method in your class definition. For more information, see [Garbage Collection](https://learn.microsoft.com/dotnet/standard/garbage-collection/).
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
@@ -307,9 +313,10 @@
         <para>
           No conversions are performed; therefore. the data retrieved must already be a character array.
         </para>
-        <note type="note">
-          The <b>GetChars</b> method returns 0 when <paramref name="dataIndex" /> is negative.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The **GetChars** method returns 0 when `dataIndex` is negative.
+        </format>
       </remarks>
     </GetChars>
     <GetColumnSchema>
@@ -317,7 +324,7 @@
         Gets the read-only column schema collection.
       </summary>
       <returns>
-        The read-only column schema collection).
+        The read-only column schema collection.
       </returns>
       <remarks>
         This method is an implementation of <see cref="M:System.Data.Common.IDbColumnSchemaGenerator.GetColumnSchema" /> method, which enables the use of the <see cref="T:System.Data.Common.IDbColumnSchemaGenerator" /> interface to populate the <see cref="T:System.Data.Common.DbColumn" /> schema metadata without using a <see cref="T:System.Data.DataTable" />.
@@ -1076,9 +1083,12 @@
             </description>
           </item>
         </list>
-        <note type="note">
-          To make sure that metadata columns return the correct information, you must call <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" /> with the <c>behavior</c> parameter set to <c>KeyInfo</c>. Otherwise, some of the columns in the schema table may return default, null, or incorrect data.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> To make sure that metadata columns return the correct information, you must call <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader> with the `behavior` parameter set to `KeyInfo`. Otherwise, some of the columns in the schema table may return default, null, or incorrect data.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
@@ -1882,9 +1892,12 @@
         <para>
           For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
         </para>
-        <note type="note">
-          When reading large data (binary/text), it is recommended to use <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> for optimal performance.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> When reading large data (binary/text), it is recommended to use <xref:Microsoft.Data.SqlClient.SqlDataReader.Read> for optimal performance.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         Calling <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.ReadAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.

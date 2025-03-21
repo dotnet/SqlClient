@@ -9,9 +9,13 @@
       </remarks>
       <example>
         The following console application demonstrates how to load data using the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class. In this example, a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is used to copy data from the <b>Production.Product</b> table in the SQL Server <b>AdventureWorks</b> database to a similar table in the same database.
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
+        <para>
+        This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
+        </para>
         <code language="c#">
           using System;
           using System.Data;
@@ -114,9 +118,10 @@
         <para>
           The following console application demonstrates how to bulk load data using a connection that is already open. In this example, a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is used to copy data from the <b>Production.Product</b> table in the SQL Server <b>AdventureWorks</b> database to a similar table in the same database. This example is for demonstration purposes only. You would not use <c>SqlBulkCopy</c> to move data from one table to another in the same database in a production application. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -253,9 +258,10 @@
         <para>
           The following console application demonstrates how to bulk load data by using a connection specified as a string. The connection is automatically closed when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -357,9 +363,10 @@
         <para>
           The following console application demonstrates how to perform a bulk load by using a connection specified as a string. An option is set to use the value in the identity column of the source table when you load the destination table. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source table and destination table each include an Identity column. By default, a new value for the <b>Identity</b> column is generated in the destination table for each row added. In this example, an option is set when the connection is opened that forces the bulk load process to use the <b>Identity</b> values from the source table instead. To see how the option changes the way the bulk load works, run the sample with the <b>dbo.BulkCopyDemoMatchingColumns</b> table empty. All rows load from the source. Then run the sample again without emptying the table. An exception is thrown and the code writes a message to the console notifying you that rows weren't added because of primary key constraint violations.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -467,9 +474,10 @@
         <para>
           The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> works with a transaction, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see>.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -566,9 +574,10 @@
         <para>
           The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data. In this example, the source data is first read from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -666,9 +675,10 @@
         <para>
           The following example uses the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to add sales orders and their associated details to two destination tables. Because the <b>AdventureWorks</b> sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method is used only after both bulk copy operations are complete.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -838,9 +848,10 @@
         <para>
           When <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming" /> is <see langword="true" />, <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> reads from an <see cref="T:System.Data.IDataReader" /> object using <see cref="F:System.Data.CommandBehavior.SequentialAccess" />, optimizing memory usage by using the <see cref="T:System.Data.IDataReader" /> streaming capabilities. Streaming is only applicable to max data types (i.e. VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming" /> is set to <see langword="false" />, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class loads all the data returned by the <see cref="T:System.Data.IDataReader" /> object into memory before sending it to the server.
         </para>
-        <note type="note">
-          The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
+        </format>
       </remarks>
     </EnableStreaming>
     <ColumnMappings>
@@ -895,9 +906,10 @@
         <para>
           In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. The source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -1011,9 +1023,10 @@
         <para>
           In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. Then a second connection is opened to bulk copy the data. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. 
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -1128,9 +1141,10 @@
         <para>
           In this example, the connection is first used to read data from a SQL Server table to a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> instance. Note that the source data does not have to be located on SQL Server; you can use any data source that can be read to an <see cref="T:System.Data.IDataReader" /> or loaded to a <see cref="T:System.Data.DataTable" />.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -1269,9 +1283,12 @@
         <para>
           For more information, see <see href="https://learn.microsoft.com/dotnet/standard/garbage-collection/unmanaged">Cleaning Up Unmanaged Resources</see> and <see href="https://learn.microsoft.com/dotnet/standard/garbage-collection/implementing-dispose">Implementing a Dispose Method</see>.
         </para>
-        <note type="note">
-          Always call <c>Dispose</c> before you release your last reference to the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />. Otherwise, the resources it is using will not be freed until the garbage collector calls the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object's <c>Finalize</c> method.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
+          ]]>
+        </format>
       </remarks>
     </System.IDisposable.Dispose>
     <WriteToServer name="DbDataReaderParameter">
@@ -1310,9 +1327,10 @@
         <para>
           The following console application demonstrates how to bulk load data from a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The destination table is a table in the <b>AdventureWorks</b> database.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. 
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+        </format>
         <para>
           This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
         </para>
@@ -1419,9 +1437,10 @@
         <para>
           The following Console application demonstrates how to bulk load data from a <see cref="T:System.Data.DataTable" />. The destination table is a table in the <b>AdventureWorks</b> database.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
         <para>
           In this example, a <see cref="T:System.Data.DataTable" /> is created at run time and is the source of the <c>SqlBulkCopy</c> operation.
         </para>
@@ -1566,9 +1585,12 @@
         <para>
           Only rows in the <see cref="T:System.Data.DataTable" /> that are in the states indicated in the <paramref name="rowState" /> argument and have not been deleted are copied to the destination table.
         </para>
-        <note type="note">
-          If <see cref="F:System.Data.DataRowState.Deleted" /> is specified, any <see cref="F:System.Data.DataRowState.Unchanged" />, <see cref="F:System.Data.DataRowState.Added" />, and <see cref="F:System.Data.DataRowState.Modified" /> rows will also be copied to the server. No exception will be raised.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> If <xref:System.Data.DataRowState.Deleted> is specified, any <xref:System.Data.DataRowState.Unchanged>, <xref:System.Data.DataRowState.Added>, and <xref:System.Data.DataRowState.Modified> rows will also be copied to the server. No exception will be raised.
+          ]]>
+        </format>
         <para>
           While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
         </para>
@@ -1583,9 +1605,13 @@
         <para>
           In this example, a <see cref="T:System.Data.DataTable" /> is created at run time and three rows are added to it. Before the <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method is executed, one of the rows is edited. The <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> method is called with a <see cref="F:System.Data.DataRowState.Unchanged" /> <paramref name="rowState" /> argument, so only the two unchanged rows are bulk copied to the destination.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). 
+        </format>
+        <para>
+          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
+        </para>
         <code language="c#">
           using System;
           using System.Data;
@@ -1731,9 +1757,13 @@
         <para>
           In this example, a <see cref="T:System.Data.DataTable" /> is created at run time. A single row is selected from the <see cref="T:System.Data.DataTable" /> to copy to the destination table.
         </para>
-        <note type="important">
-          This sample will not run unless you have created the work tables as described in <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup">Bulk Copy Example Setup</see>. This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
+        </format>
+        <para>
+          This code is provided to demonstrate the syntax for using <b>SqlBulkCopy</b> only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL <c>INSERT … SELECT</c> statement to copy the data.
+        </para>
         <code language="c#">
           using System;
           using System.Data;

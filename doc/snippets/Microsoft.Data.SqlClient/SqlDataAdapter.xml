@@ -8,9 +8,12 @@
         <para>
           The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />, serves as a bridge between a <see cref="T:System.Data.DataSet" /> and SQL Server for retrieving and saving data. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> provides this bridge by mapping <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" />, which changes the data in the <see cref="T:System.Data.DataSet" /> to match the data in the data source, and <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, which changes the data in the data source to match the data in the <see cref="T:System.Data.DataSet" />, using the appropriate Transact-SQL statements against the data source. The update is performed on a by-row basis. For every inserted, modified, and deleted row, the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> method determines the type of change that has been performed on it (<c>Insert</c>, <c>Update</c>, or <c>Delete</c>). Depending on the type of change, the <c>Insert</c>, <c>Update</c>, or <c>Delete</c> command template executes to propagate the modified row to the data source. When the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> fills a <see cref="T:System.Data.DataSet" />, it creates the necessary tables and columns for the returned data if they do not already exist. However, primary key information is not included in the implicitly created schema unless the <see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /> property is set to <see cref="F:System.Data.MissingSchemaAction.AddWithKey" />. You may also have the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> create the schema of the <see cref="T:System.Data.DataSet" />, including primary key information, before filling it with data using <c>FillSchema</c>. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/add-existing-constraints-to-dataset">Adding Existing Constraints to a DataSet</see>. <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is used in conjunction with <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to increase performance when connecting to a SQL Server database.
         </para>
-        <note type="note">
-          If you are using SQL Server stored procedures to edit or delete data using a <c>DataAdapter</c>, make sure that you do not use SET NOCOUNT ON in the stored procedure definition. This causes the rows affected count returned to be zero, which the <c>DataAdapter</c> interprets as a concurrency conflict. In this event, a <see cref="T:System.Data.DBConcurrencyException" /> will be thrown.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> If you are using SQL Server stored procedures to edit or delete data using a `DataAdapter`, make sure that you do not use SET NOCOUNT ON in the stored procedure definition. This causes the rows affected count returned to be zero, which the `DataAdapter` interprets as a concurrency conflict. In this event, a <xref:System.Data.DBConcurrencyException> will be thrown.
+          ]]>
+        </format>
         <para>
           The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> also includes the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:System.Data.Common.DataAdapter.TableMappings" /> properties to facilitate the loading and updating of data.
         </para>
@@ -23,9 +26,12 @@
         <para>
           For every column that you propagate to the data source on <see cref="P:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to the <c>InsertCommand</c>, <c>UpdateCommand</c>, or <c>DeleteCommand</c>. The <see cref="P:System.Data.Common.DbParameter.SourceColumn" /> property of the <see cref="T:System.Data.Common.DbParameter" /> object should be set to the name of the column. This setting indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
         </para>
-        <note type="note">
-          An <see cref="T:System.InvalidOperationException" /> will occur if the <see cref="M:System.Data.Common.DbDataAdapter.Fill" /> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see <see href="https://learn.microsoft.com/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types">CLR User-Defined Types</see>.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> An <xref:System.InvalidOperationException> will occur if the <xref:System.Data.Common.DbDataAdapter.Fill> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see [CLR User-Defined Types](https://learn.microsoft.com/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types).
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
@@ -1288,9 +1294,12 @@
         <para>
           When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
         </para>
-        <note type="note">
-          If execution of this command returns rows, the updated rows may be merged with the <see cref="T:System.Data.DataSet" /> depending on how you set the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> If execution of this command returns rows, the updated rows may be merged with the <xref:System.Data.DataSet> depending on how you set the <xref:Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource> property of the <xref:Microsoft.Data.SqlClient.SqlCommand> object.
+          ]]>
+        </format>
         <para>
           For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <b>UpdateCommand</b>, or <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />.
         </para>

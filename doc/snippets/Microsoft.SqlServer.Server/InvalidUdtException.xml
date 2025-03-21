@@ -36,9 +36,10 @@
         <para>
           This method Looks up a localized string similar to <c>'{0}' is an invalid user defined type, reason: {1}.</c>, and fills it in order with the corresponding <paramref name="udtType" /> and <paramref name="resourceReason" /> values.
         </para>
-        <note type="important">
-          This function is exposed for backward compatibility and should be used with the default value for the <paramref name="resourceReason" /> parameter.
-        </note>
+        <format type="text/markdown">
+> [!IMPORTANT]
+> This function is exposed for backward compatibility and should be used with the default value for the `resourceReason` parameter.
+        </format>
       </remarks>
     </Create>
   </members>
