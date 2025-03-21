@@ -35,7 +35,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             ColumnMappings.Add("LastName", "col2"); // this column does not exist
                             ColumnMappings.Add("FirstName", "col3");
 
-                            string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnMapping;
+                            string errorMsg = SystemDataResourceManager.Instance.SQL_BulkLoadNonMatchingColumnName;
+                            errorMsg = string.Format(errorMsg, "col2");
+
                             DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: errorMsg);
                         }
                     }

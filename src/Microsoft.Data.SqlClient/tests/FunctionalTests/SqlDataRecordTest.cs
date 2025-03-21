@@ -34,7 +34,11 @@ namespace Microsoft.Data.SqlClient.Tests
                 new SqlMetaData("col11", SqlDbType.Real),
                 new SqlMetaData("col12", SqlDbType.Decimal),
                 new SqlMetaData("col13", SqlDbType.Money),
-                new SqlMetaData("col14", SqlDbType.Variant)
+                new SqlMetaData("col14", SqlDbType.Variant),
+#if NET
+                new SqlMetaData("col15", SqlDbType.Date),
+                new SqlMetaData("col16", SqlDbType.Time),
+#endif
             };
 
             SqlDataRecord record = new SqlDataRecord(metaData);
@@ -116,13 +120,22 @@ namespace Microsoft.Data.SqlClient.Tests
             record.SetSqlMoney(12, SqlMoney.MaxValue);
             Assert.Equal(SqlMoney.MaxValue, record.GetSqlMoney(12));
 
+            int offset = 1;
+#if NET
+            offset = 3;
+            record.SetValue(14, new DateOnly(2025, 11,28));
+            Assert.Equal(new DateTime(2025, 11, 28), record.GetValue(14));
+
+            record.SetValue(15, new TimeOnly(1, 57, 58));
+            Assert.Equal(new TimeSpan(1, 57, 58), record.GetValue(15));
+#endif
 
             // Try adding different values to SqlVariant type
-            for (int i = 0; i < record.FieldCount - 1; ++i)
+            for (int i = 0; i < record.FieldCount - offset; ++i)
             {
                 object valueToSet = record.GetSqlValue(i);
-                record.SetValue(record.FieldCount - 1, valueToSet);
-                object o = record.GetSqlValue(record.FieldCount - 1);
+                record.SetValue(record.FieldCount - offset, valueToSet);
+                object o = record.GetSqlValue(record.FieldCount - offset);
 
                 if (o is SqlBinary)
                 {
@@ -133,8 +146,8 @@ namespace Microsoft.Data.SqlClient.Tests
                     Assert.Equal(valueToSet, o);
                 }
 
-                record.SetDBNull(record.FieldCount - 1);
-                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - 1));
+                record.SetDBNull(record.FieldCount - offset);
+                Assert.Equal(DBNull.Value, record.GetSqlValue(record.FieldCount - offset));
 
                 record.SetDBNull(i);
                 Assert.Equal(DBNull.Value, record.GetValue(i));
@@ -320,7 +333,13 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [ClassData(typeof(GetUdtTypeTestData))]
+        [MemberData(
+            nameof(GetUdtTypeTestData.Get),
+            MemberType = typeof(GetUdtTypeTestData),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         public void GetUdt_ReturnsValue(Type udtType, object value, string serverTypeName)
         {
             SqlMetaData[] metadata = new SqlMetaData[] { new SqlMetaData(nameof(udtType.Name), SqlDbType.Udt, udtType, serverTypeName) };
@@ -333,7 +352,10 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [ClassData(typeof(GetXXXBadTypeTestData))]
+        [MemberData(
+            nameof(GetXXXBadTypeTestData.Get),
+            MemberType = typeof(GetXXXBadTypeTestData),
+            DisableDiscoveryEnumeration = true)]
         public void GetXXX_ThrowsIfBadType(Func<SqlDataRecord, object> getXXX)
         {
             SqlMetaData[] metaData = new SqlMetaData[]
@@ -347,7 +369,10 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [ClassData(typeof(GetXXXCheckValueTestData))]
+        [MemberData(
+            nameof(GetXXXCheckValueTestData.Get),
+            MemberType = typeof(GetXXXCheckValueTestData),
+            DisableDiscoveryEnumeration = true)]
         public void GetXXX_ReturnValue(SqlDbType dbType, object value, Func<SqlDataRecord, object> getXXX)
         {
             SqlMetaData[] metaData = new SqlMetaData[]
@@ -361,9 +386,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
     }
 
-    public class GetXXXBadTypeTestData : IEnumerable<object[]>
+    public class GetXXXBadTypeTestData
     {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> Get()
         {
             yield return new object[] { new Func<SqlDataRecord, object>(r => r.GetGuid(0)) };
             yield return new object[] { new Func<SqlDataRecord, object>(r => r.GetInt16(0)) };
@@ -376,31 +401,21 @@ namespace Microsoft.Data.SqlClient.Tests
             yield return new object[] { new Func<SqlDataRecord, object>(r => r.GetDateTimeOffset(0)) };
             yield return new object[] { new Func<SqlDataRecord, object>(r => r.GetTimeSpan(0)) };
         }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
     }
 
-    public class GetUdtTypeTestData : IEnumerable<object[]>
+    public class GetUdtTypeTestData
     {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> Get()
         {
             yield return new object[] { typeof(SqlGeography), SqlGeography.Point(43, -81, 4326), "Geography" };
             yield return new object[] { typeof(SqlGeometry), SqlGeometry.Point(43, -81, 4326), "Geometry" };
             yield return new object[] { typeof(SqlHierarchyId), SqlHierarchyId.Parse("/"), "HierarchyId" };
         }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
     }
 
-    public class GetXXXCheckValueTestData : IEnumerable<object[]>
+    public class GetXXXCheckValueTestData
     {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> Get()
         {
             yield return new object[] { SqlDbType.UniqueIdentifier, Guid.NewGuid(), new Func<SqlDataRecord, object>(r => r.GetGuid(0)) };
             yield return new object[] { SqlDbType.SmallInt, (short)123, new Func<SqlDataRecord, object>(r => r.GetInt16(0)) };
@@ -416,11 +431,6 @@ namespace Microsoft.Data.SqlClient.Tests
             yield return new object[] { SqlDbType.Bit, bool.Parse(bool.TrueString), new Func<SqlDataRecord, object>(r => r.GetBoolean(0)) };
             yield return new object[] { SqlDbType.SmallDateTime, DateTime.Now, new Func<SqlDataRecord, object>(r => r.GetDateTime(0)) };
             yield return new object[] { SqlDbType.TinyInt, (byte)1, new Func<SqlDataRecord, object>(r => r.GetByte(0)) };
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
     }
     [SqlServer.Server.SqlUserDefinedType(SqlServer.Server.Format.UserDefined)]

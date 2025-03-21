@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 {
     public class ConnectionTestParametersData
     {
-        private const int CASES = 30;
         private string _empty = string.Empty;
         // It was advised to store the client certificate in its own folder.
         private static readonly string s_fullPathToCer = Path.Combine(Directory.GetCurrentDirectory(), "clientcert", "localhostcert.cer");
@@ -22,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 
         public static IEnumerable<object[]> GetConnectionTestParameters()
         {
-            for (int i = 0; i < CASES; i++)
+            for (int i = 0; i < Data.ConnectionTestParametersList.Count; i++)
             {
                 yield return new object[] { Data.ConnectionTestParametersList[i] };
             }

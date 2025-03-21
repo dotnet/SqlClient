@@ -72,7 +72,7 @@ namespace Interop.Windows.Sni
             SNIHandle pConn,
             byte* pIn,
             uint cbIn,
-            byte[] pOut,
+            byte* pOut,
             ref uint pcbOut,
             out bool pfDone,
             byte* szServerInfo,

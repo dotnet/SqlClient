@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
@@ -946,11 +947,11 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against 2000, or we are not enlisted in a
-                // distributed transaction - otherwise don't reset!
-                // Prepare the parser for the connection reset - the next time a trip
-                // to the server is made.
-                _parser.PrepareResetConnection(IsTransactionRoot && !IsNonPoolableTransactionRoot);
+                // Pooled connections that are enlisted in a transaction must have their transaction
+                // preserved when reseting the connection state. Otherwise, future uses of the connection
+                // from the pool will execute outside of the transaction, in auto-commit mode.
+                // https://github.com/dotnet/SqlClient/issues/2970
+                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
 
                 // Reset dictionary values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
@@ -1328,7 +1329,9 @@ namespace Microsoft.Data.SqlClient
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            #pragma warning disable 0618
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
@@ -2485,7 +2488,9 @@ namespace Microsoft.Data.SqlClient
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
+                        #pragma warning disable 0618
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        #pragma warning restore 0618
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {

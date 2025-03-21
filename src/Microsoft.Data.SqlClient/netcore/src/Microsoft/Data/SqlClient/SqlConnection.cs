@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 
@@ -66,7 +67,7 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         // diagnostics listener
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
@@ -1233,10 +1234,34 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
+            TdsParser bestEffortCleanupTarget = null;
+
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
+            }
+            catch (System.OutOfMemoryException e)
+            {
+                Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e)
+            {
+                Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)
+            {
+                Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
+                throw;
             }
             finally
             {
@@ -1301,10 +1326,15 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlStatistics statistics = null;
-
+                TdsParser bestEffortCleanupTarget = null;
                 Exception e = null;
+
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     Task reconnectTask = _currentReconnectionTask;
@@ -1329,6 +1359,27 @@ namespace Microsoft.Data.SqlClient
                     {
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
+                }
+                catch (System.OutOfMemoryException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+                    throw;
+                }
+                catch (System.StackOverflowException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+#if NETFRAMEWORK
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -1950,7 +2001,9 @@ namespace Microsoft.Data.SqlClient
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                    #pragma warning disable 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    #pragma warning restore 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
@@ -2299,8 +2352,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (con != null)
-                    con.Dispose();
+                con?.Dispose();
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 

@@ -112,14 +112,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {
-        private enum TableNameComponents
-        {
-            Server = 0,
-            Catalog,
-            Owner,
-            TableName,
-        }
-
         private enum ValueSourceType
         {
             Unspecified = 0,
@@ -160,10 +152,6 @@ namespace Microsoft.Data.SqlClient
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
-
-        private const int TranCountResultId = 0;
-        private const int TranCountRowId = 0;
-        private const int TranCountValueId = 0;
 
         private const int MetaDataResultId = 1;
 
@@ -439,66 +427,60 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
-            if (_connection.Is2000)
+
+            // If its a temp DB then try to connect
+
+            string TableCollationsStoredProc;
+            if (_connection.Is2008OrNewer)
             {
-                // If its a temp DB then try to connect
+                TableCollationsStoredProc = "sp_tablecollations_100";
+            }
+            else
+            {
+                TableCollationsStoredProc = "sp_tablecollations_90";
+            }
 
-                string TableCollationsStoredProc;
-                if (_connection.Is2008OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_100";
-                }
-                else if (_connection.Is2005OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_90";
-                }
-                else
-                {
-                    TableCollationsStoredProc = "sp_tablecollations";
-                }
+            string TableName = parts[MultipartIdentifier.TableIndex];
+            bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
+            if (!ADP.IsEmpty(TableName))
+            {
+                // Escape table name to be put inside TSQL literal block (within N'').
+                TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
+                // VSDD 581951 - escape the table name
+                TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
+            }
 
-                string TableName = parts[MultipartIdentifier.TableIndex];
-                bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
-                if (!ADP.IsEmpty(TableName))
-                {
-                    // Escape table name to be put inside TSQL literal block (within N'').
-                    TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
-                    // VSDD 581951 - escape the table name
-                    TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
-                }
+            string SchemaName = parts[MultipartIdentifier.SchemaIndex];
+            if (!ADP.IsEmpty(SchemaName))
+            {
+                // Escape schema name to be put inside TSQL literal block (within N'').
+                SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
+                // VSDD 581951 - escape the schema name
+                SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+            }
 
-                string SchemaName = parts[MultipartIdentifier.SchemaIndex];
-                if (!ADP.IsEmpty(SchemaName))
+            string CatalogName = parts[MultipartIdentifier.CatalogIndex];
+            if (isTempTable && ADP.IsEmpty(CatalogName))
+            {
+                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
+            }
+            else
+            {
+                // VSDD 581951 - escape the catalog name
+                if (!ADP.IsEmpty(CatalogName))
                 {
-                    // Escape schema name to be put inside TSQL literal block (within N'').
-                    SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
-                    // VSDD 581951 - escape the schema name
-                    SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+                    CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                 }
-
-                string CatalogName = parts[MultipartIdentifier.CatalogIndex];
-                if (isTempTable && ADP.IsEmpty(CatalogName))
-                {
-                    TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
-                else
-                {
-                    // VSDD 581951 - escape the catalog name
-                    if (!ADP.IsEmpty(CatalogName))
-                    {
-                        CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
-                    }
-                    TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
-                        CatalogName,
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
+                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
+                    CatalogName,
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
             }
             return TDSCommand;
         }
@@ -549,7 +531,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
+            if (0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
             }
@@ -562,15 +544,7 @@ namespace Microsoft.Data.SqlClient
 
             bool isInTransaction;
 
-            if (_parser.Is2005OrNewer)
-            {
-                isInTransaction = _connection.HasLocalTransaction;
-            }
-            else
-            {
-                isInTransaction = (bool)(0 < (SqlInt32)(internalResults[TranCountResultId][TranCountRowId][TranCountValueId]));
-            }
-
+            isInTransaction = _connection.HasLocalTransaction;
             // Throw if there is a transaction but no flag is set
             if (isInTransaction &&
                 _externalTransaction == null &&
@@ -582,6 +556,7 @@ namespace Microsoft.Data.SqlClient
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
+            Dictionary<string, bool> columnMappingStatusLookup = new Dictionary<string, bool>();
             // Loop over the metadata for each column
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
@@ -604,9 +579,16 @@ namespace Microsoft.Data.SqlClient
                 int assocId;
                 for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
                 {
+                    if (!columnMappingStatusLookup.ContainsKey(_localColumnMappings[assocId].DestinationColumn))
+		    {
+                        columnMappingStatusLookup.Add(_localColumnMappings[assocId].DestinationColumn, false);
+		    }
+
                     if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
                         (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
                     {
+                        columnMappingStatusLookup[_localColumnMappings[assocId].DestinationColumn] = true;
+
                         if (rejectColumn)
                         {
                             nrejected++; // Count matched columns only
@@ -693,50 +675,45 @@ namespace Microsoft.Data.SqlClient
                                 }
                         }
 
-                        if (_connection.Is2000)
+                        // Get collation for column i
+                        Result rowset = internalResults[CollationResultId];
+                        object rowvalue = rowset[i][CollationId];
+
+                        bool shouldSendCollation;
+                        switch (metadata.type)
                         {
-                            // 2000 or above!
-                            // get collation for column i
+                            case SqlDbType.Char:
+                            case SqlDbType.NChar:
+                            case SqlDbType.VarChar:
+                            case SqlDbType.NVarChar:
+                            case SqlDbType.Text:
+                            case SqlDbType.NText:
+                                shouldSendCollation = true;
+                                break;
 
-                            Result rowset = internalResults[CollationResultId];
-                            object rowvalue = rowset[i][CollationId];
+                            default:
+                                shouldSendCollation = false;
+                                break;
+                        }
 
-                            bool shouldSendCollation;
-                            switch (metadata.type)
+                        if (rowvalue != null && shouldSendCollation)
+                        {
+                            Debug.Assert(rowvalue is SqlString);
+                            SqlString collation_name = (SqlString)rowvalue;
+
+                            if (!collation_name.IsNull)
                             {
-                                case SqlDbType.Char:
-                                case SqlDbType.NChar:
-                                case SqlDbType.VarChar:
-                                case SqlDbType.NVarChar:
-                                case SqlDbType.Text:
-                                case SqlDbType.NText:
-                                    shouldSendCollation = true;
-                                    break;
-
-                                default:
-                                    shouldSendCollation = false;
-                                    break;
-                            }
-
-                            if (rowvalue != null && shouldSendCollation)
-                            {
-                                Debug.Assert(rowvalue is SqlString);
-                                SqlString collation_name = (SqlString)rowvalue;
-
-                                if (!collation_name.IsNull)
+                                updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
+                                // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
+                                if (_sqlDataReaderRowSource != null && metadata.collation != null)
                                 {
-                                    updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
-                                    // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
-                                    if (_sqlDataReaderRowSource != null && metadata.collation != null)
+                                    // On SqlDataReader we can verify the sourcecolumn collation!
+                                    int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
+                                    int destinationLcid = metadata.collation.LCID;
+                                    int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
+                                    if (sourceLcid != destinationLcid)
                                     {
-                                        // On SqlDataReader we can verify the sourcecolumn collation!
-                                        int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
-                                        int destinationLcid = metadata.collation.LCID;
-                                        int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
-                                        if (sourceLcid != destinationLcid)
-                                        {
-                                            throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
-                                        }
+                                        throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
                                     }
                                 }
                             }
@@ -754,7 +731,17 @@ namespace Microsoft.Data.SqlClient
             // All columnmappings should have matched up
             if (nmatched + nrejected != _localColumnMappings.Count)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                List<string> unmatchedColumns = new List<string>();
+
+                foreach(KeyValuePair<string, bool> keyValuePair in columnMappingStatusLookup)
+                {
+                    if (!keyValuePair.Value)
+		    {
+                        unmatchedColumns.Add(keyValuePair.Key);
+		    }
+                }
+
+                throw SQL.BulkLoadNonMatchingColumnName(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
@@ -2032,7 +2019,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs, tcs,
+                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                state: tcs,
                                 onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
@@ -2059,58 +2047,40 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
+                WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
+                Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
+                if (resultTask != null)
                 {
-                    tdsReliabilitySection.Start();
-#else   // !DEBUG
-                {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                    WriteRowSourceToServerCommon(columnCount); //this is common in both sync and async
-                    Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
-                    if (resultTask != null)
-                    {
-                        finishedSynchronously = false;
-                        return resultTask.ContinueWith(
-                            static (Task task, object state) =>
+                    finishedSynchronously = false;
+                    return resultTask.ContinueWith(
+                        static (Task task, object state) =>
+                        {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            try
                             {
-                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                                try
+                                sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                            }
+                            finally
+                            {
+                                sqlBulkCopy._isBulkCopyingInProgress = false;
+                                if (sqlBulkCopy._parser != null)
                                 {
-                                    sqlBulkCopy.AbortTransaction(); // if there is one, on success transactions will be commited
+                                    sqlBulkCopy._parser._asyncWrite = false;
                                 }
-                                finally
+                                if (sqlBulkCopy._parserLock != null)
                                 {
-                                    sqlBulkCopy._isBulkCopyingInProgress = false;
-                                    if (sqlBulkCopy._parser != null)
-                                    {
-                                        sqlBulkCopy._parser._asyncWrite = false;
-                                    }
-                                    if (sqlBulkCopy._parserLock != null)
-                                    {
-                                        sqlBulkCopy._parserLock.Release();
-                                        sqlBulkCopy._parserLock = null;
-                                    }
+                                    sqlBulkCopy._parserLock.Release();
+                                    sqlBulkCopy._parserLock = null;
                                 }
-                                return task;
-                            }, 
-                            state: this,
-                            scheduler: TaskScheduler.Default
-                        ).Unwrap();
-                    }
-                    return null;
+                            }
+                            return task;
+                        },
+                        state: this,
+                        scheduler: TaskScheduler.Default
+                    ).Unwrap();
                 }
-
-#if DEBUG
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
+                return null;
             }
             catch (System.OutOfMemoryException e)
             {
@@ -2702,9 +2672,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
-,
-                        connectionToDoom: _connection.GetOpenTdsConnection());
+                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
+                    );
 
                     return source.Task;
                 }
@@ -2796,13 +2766,6 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    tdsReliabilitySection.Start();
-#endif //DEBUG
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
                 {
                     _parser._asyncWrite = false;
@@ -2815,13 +2778,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     CleanUpStateObject();
                 }
-#if DEBUG
-                }
-                finally
-                {
-                    tdsReliabilitySection.Stop();
-                }
-#endif //DEBUG
             }
             catch (OutOfMemoryException)
             {
@@ -3046,7 +3002,10 @@ namespace Microsoft.Data.SqlClient
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection
                         AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
                                 () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTaskWithState(cancellableReconnectTS.Task, source, regReconnectCancel,
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task,
+                            completion: source,
+                            state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
                                 ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
