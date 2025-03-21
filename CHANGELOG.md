@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [Stable release 6.0.2] - 2025-03-13
+
+This update brings the below changes over the previous release:
+
+### Fixed
+
+- Fixed reference assembly definitions for SqlJson APIs [#3169](https://github.com/dotnet/SqlClient/pull/3169)
+- Fixed an error reading the output parameter of type JSON while executing stored procedure [#3173](https://github.com/dotnet/SqlClient/pull/3173)
+
 ## [Stable release 6.0.1] - 2025-01-23
 
 This update brings the below changes over the previous release:
