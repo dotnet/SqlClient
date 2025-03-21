@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
-#if NET9_0
+#if NET9_0_OR_GREATER
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = RSA.Create(2048);
@@ -151,7 +151,9 @@ catch [Exception]
                     CreateNoWindow = true,
                     // Pass the Base64-encoded command to remove the need to escape quote marks
                     Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
-                    Verb = "runas",
+                    // Run as Administrator, since we're manipulating the system
+                    // certificate store.
+                    Verb = "RunAs",
                     LoadUserProfile = true
                 }
             })
@@ -172,7 +174,9 @@ catch [Exception]
                 }
                 else
                 {
-                    throw new Exception($"PowerShell command raised exception: {commandOutput}");
+                    throw new Exception(
+                        "PowerShell command raised exception: " +
+                        $"{commandOutput}; command was: {formattedCommand}");
                 }
             }
 #endif
