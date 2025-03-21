@@ -635,6 +635,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
+            connector.DeactivateConnection();
+
             // Statement order is important since we have synchronous completions on the channel.
             Interlocked.Increment(ref _idleCount);
             var written = _idleConnectorWriter.TryWrite(connector);
