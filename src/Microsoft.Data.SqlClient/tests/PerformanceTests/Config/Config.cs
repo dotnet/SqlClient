@@ -12,6 +12,28 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public string ConnectionString;
         public bool UseManagedSniOnWindows;
         public Benchmarks Benchmarks;
+
+        /// <summary>
+        /// Load the benchmark configuration from a JSON file.
+        ///
+        /// If the environment variable "RUNNER_CONFIG" is set, it will be used
+        /// as the path to the config file.  Otherwise, the file
+        /// "runnerconfig.json" in the current working directory will be used.
+        /// </summary>
+        ///
+        /// <returns>
+        ///   The Config instance populated from the JSON config file.
+        /// </returns>
+        ///
+        /// <exception cref="InvalidOperationException">
+        ///   Thrown if the config file cannot be read or deserialized.
+        /// </exception>
+        ///
+        public static Config Load()
+        {
+            return Loader.FromJsonFile<Config>(
+                "runnerconfig.json", "RUNNER_CONFIG");
+        }
     }
 
     public class Benchmarks
