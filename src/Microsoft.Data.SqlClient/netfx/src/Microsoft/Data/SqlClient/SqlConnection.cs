@@ -2725,7 +2725,7 @@ namespace Microsoft.Data.SqlClient
 
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
         {
-            SqlUdtInfo attr = AssemblyCache.GetInfoFromType(o.GetType());
+            SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
             format = attr.SerializationFormat;
 
@@ -2742,6 +2742,25 @@ namespace Microsoft.Data.SqlClient
                 retval = stm.ToArray();
             }
             return retval;
+        }
+
+        private SqlUdtInfo GetInfoFromType(Type t)
+        {
+            Debug.Assert(t != null, "Type object can't be NULL");
+            Type orig = t;
+            do
+            {
+                SqlUdtInfo attr = SqlUdtInfo.TryGetFromType(t);
+                if (attr != null)
+                {
+                    return attr;
+                }
+
+                t = t.BaseType;
+            }
+            while (t != null);
+
+            throw SQL.UDTInvalidSqlType(orig.AssemblyQualifiedName);
         }
     } // SqlConnection
 } // Microsoft.Data.SqlClient namespace

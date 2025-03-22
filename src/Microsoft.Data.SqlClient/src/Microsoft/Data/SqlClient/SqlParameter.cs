@@ -1614,12 +1614,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Udt:
                             if (!IsNull)
                             {
-#if NETFRAMEWORK
-                                //call the static function
-                                coercedSize = AssemblyCache.GetLength(val);
-#else
                                 coercedSize = SerializationHelperSql9.SizeInBytes(val);
-#endif
                             }
                             break;
                         case SqlDbType.Structured:
