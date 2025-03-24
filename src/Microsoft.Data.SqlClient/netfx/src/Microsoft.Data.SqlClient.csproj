@@ -862,7 +862,6 @@
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\BufferWriterExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
