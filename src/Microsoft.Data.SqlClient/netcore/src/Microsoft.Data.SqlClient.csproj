@@ -34,6 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ManualTests" />
+    <InternalsVisibleTo Include="FunctionalTests" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
