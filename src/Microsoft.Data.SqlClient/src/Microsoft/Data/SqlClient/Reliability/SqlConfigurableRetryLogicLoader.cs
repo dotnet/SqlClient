@@ -4,11 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
 #if NET
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Loader;
 #endif
@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
     /// This class shouldn't throw exceptions;
     /// All exceptions should be handled internally and logged with Event Source.
     /// </summary>
-    internal sealed partial class SqlConfigurableRetryLogicLoader
+    internal sealed class SqlConfigurableRetryLogicLoader
     {
         private const string TypeName = nameof(SqlConfigurableRetryLogicLoader);
 
@@ -334,9 +334,9 @@ namespace Microsoft.Data.SqlClient
             return new HashSet<int>();
         }
         
-        #if NET
         #region Type Resolution
         
+        #if NET
         private static Assembly AssemblyResolver(AssemblyName arg)
         {
             string methodName = nameof(AssemblyResolver);
@@ -428,8 +428,23 @@ namespace Microsoft.Data.SqlClient
             }
             return result;
         }
+        #else
+        /// <summary>
+        /// Performs a case-sensitive search to resolve the specified type name.
+        /// </summary>
+        /// <param name="fullyQualifiedName"></param>
+        /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
+        private static Type LoadType(string fullyQualifiedName)
+        {
+            string methodName = nameof(LoadType);
+
+            var result = Type.GetType(fullyQualifiedName);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved."
+                , TypeName, methodName, result?.FullName);
+            return result != null ? result : typeof(SqlConfigurableRetryFactory);
+        }
+        #endif
         
         #endregion
-        #endif
     }
 }
