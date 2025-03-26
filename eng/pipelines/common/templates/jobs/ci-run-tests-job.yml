@@ -263,7 +263,7 @@ jobs:
             installDir: "$(dotnetx86RootPath)"
             packageType: "sdk"
             usePreview: "false"
-            version: "$(variables.netVersionX86)"
+            version: "$[variables.netVersionX86]"
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
