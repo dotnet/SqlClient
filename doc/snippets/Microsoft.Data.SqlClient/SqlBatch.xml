@@ -332,14 +332,13 @@
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
-        <para>
-          For more information about asynchronous programming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
-        </para>
-        <para>
-          This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)" />.
-        </para>
         <format type="text/markdown">
           <![CDATA[
+
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)>.
+
 > [!NOTE]
 > This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
           ]]>
@@ -355,9 +354,10 @@
       </summary>
       <returns>The total number of rows affected across all the batch commands.</returns>
       <remarks>
-        You can use <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" /> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
         <format type="text/markdown">
           <![CDATA[
+You can use <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
+
 > [!NOTE]
 > This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery>, and all the expected exceptions of that method also apply here.
           ]]>
@@ -373,14 +373,12 @@
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <remarks>
-        <para>
-          For more information about asynchronous programming, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
-        </para>
-        <para>
-          If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
-        </para>
         <format type="text/markdown">
           <![CDATA[
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException" />, are still thrown synchronously.
+
 > [!NOTE]
 > This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
           ]]>
