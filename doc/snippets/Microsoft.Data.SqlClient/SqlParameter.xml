@@ -8,9 +8,10 @@
         <para>
           Parameter names are not case-sensitive.
         </para>
-        <note type="note">
-          Nameless, also called ordinal, parameters are not supported by the .NET Framework Data Provider for SQL Server.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> Nameless, also called ordinal, parameters are not supported by the .NET Framework Data Provider for SQL Server.
+        </format>
         <para>
           For more information, along with additional sample code demonstrating how to use parameters, see <see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see>.
         </para>
@@ -621,12 +622,18 @@
         <para>
           You do not need to specify values for the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> properties for input parameters, as they can be inferred from the parameter value. <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
         </para>
-        <note type="note">
-          Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <see cref="T:System.Math" /> class that is part of the <c>System</c> namespace prior to assigning a value to the parameter's <see paramref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
-        </note>
-        <note type="note">
-          Microsoft .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <b>Precision</b> or <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data being inserted at the data source. If you are using .NET Framework version 1.0, validate the <b>Precision</b> and <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. When you use .NET Framework version 1.1 or a later version, an exception is thrown if a <see cref="T:System.Decimal" /> parameter value is set with an invalid <b>Precision</b>. <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Scale" /> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <xref:System.Math> class that is part of the `System` namespace prior to assigning a value to the parameter's <xref:Microsoft.Data.SqlClient.SqlParameter.Value> property.
+          ]]>
+        </format>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Microsoft .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the **Precision** or <xref:Microsoft.Data.SqlClient.SqlParameter.Scale> of <xref:System.Decimal> parameter values. This can cause truncated data being inserted at the data source. If you are using .NET Framework version 1.0, validate the **Precision** and <xref:Microsoft.Data.SqlClient.SqlParameter.Scale> of <xref:System.Decimal> values before setting the parameter value. When you use .NET Framework version 1.1 or a later version, an exception is thrown if a <xref:System.Decimal> parameter value is set with an invalid **Precision**. <xref:Microsoft.Data.SqlClient.SqlParameter.Scale> values that exceed the <xref:System.Decimal> parameter scale are still truncated.
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
@@ -680,18 +687,25 @@
         <para>
           The <b>Scale</b> property is used by parameters that have a <see cref="T:System.Data.SqlDbType" /> of <c>Decimal</c>.
         </para>
-        <note type="warning">
-          Data may be truncated if the <b>Scale</b> property is not explicitly specified and the data on the server does not fit in scale 0 (the default).
-        </note>
+        <format type="text/markdown">
+> [!WARNING]
+> Data may be truncated if the **Scale** property is not explicitly specified and the data on the server does not fit in scale 0 (the default).
+        </format>
         <para>
           You do not need to specify values for the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <b>Scale</b> properties for input parameters, as they can be inferred from the parameter value. <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <c>Scale</c> are required for output parameters and for scenarios where you need to specify complete metadata for a parameter without indicating a value, such as specifying a null value with a specific precision and scale.
         </para>
-        <note type="note">
-          Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <see cref="T:System.Math" /> class that is part of the <c>System</c> namespace prior to assigning a value to the parameter's <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> property.
-        </note>
-        <note type="note">
-          .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> or <b>Scale</b> of <see cref="T:System.Decimal" /> parameter values. This can cause truncated data to be inserted at the data source. If you are using .NET Framework version 1.0, validate the <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Precision" /> and <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> of <see cref="T:System.Decimal" /> values before setting the parameter value. <b>Scale</b> values that exceed the <see cref="T:System.Decimal" /> parameter scale are still truncated.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Use of this property to coerce data passed to the database is not supported. To round, truncate, or otherwise coerce data before passing it to the database, use the <xref:System.Math> class that is part of the `System` namespace prior to assigning a value to the parameter's <xref:Microsoft.Data.SqlClient.SqlParameter.Value> property.
+          ]]>
+        </format>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> .NET Framework data providers that are included with the .NET Framework version 1.0 do not verify the <xref:Microsoft.Data.SqlClient.SqlParameter.Precision> or **Scale** of <xref:System.Decimal> parameter values. This can cause truncated data to be inserted at the data source. If you are using .NET Framework version 1.0, validate the <xref:Microsoft.Data.SqlClient.SqlParameter.Precision> and <xref:Microsoft.Data.SqlClient.SqlParameter> of <xref:System.Decimal> values before setting the parameter value. **Scale** values that exceed the <xref:System.Decimal> parameter scale are still truncated.
+          ]]>
+        </format>
       </remarks>
       <example>
         <para>
