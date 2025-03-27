@@ -89,9 +89,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
 
-                // Insert data for TrustedMasterKeyPaths tests.
-                InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
             }
+            // Insert data for TrustedMasterKeyPaths tests.
+            InsertSampleData(TrustedMasterKeyPathsTestTable.Name);
         }
 
         protected void InsertSampleData(string tableName)
