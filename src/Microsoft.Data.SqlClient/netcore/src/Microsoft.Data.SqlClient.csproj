@@ -272,6 +272,15 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Reliability\IAppContextSwitchOverridesSection.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\IAppContextSwitchOverridesSection.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Reliability\ISqlConfigurableRetryCommandSection.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\ISqlConfigurableRetryCommandSection.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Reliability\ISqlConfigurableRetryConnectionSection.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\ISqlConfigurableRetryConnectionSection.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Reliability\Common\SqlRetryingEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryingEventArgs.cs</Link>
     </Compile>
@@ -699,7 +708,6 @@
     <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Common\System\Threading\Tasks\TaskToApm.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
