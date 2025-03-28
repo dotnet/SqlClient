@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
+        // JSON Column type
         public static readonly bool IsJsonSupported = false;
 
         // Azure Synapse EngineEditionId == 6
@@ -107,8 +107,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     s_sqlServerEngineEdition ??= GetSqlServerProperty(TCPConnectionString, "EngineEdition");
                 }
-                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEditon);
-                return engineEditon == 6;
+                _ = int.TryParse(s_sqlServerEngineEdition, out int engineEdition);
+                return engineEdition == 6;
             }
         }
 
@@ -232,6 +232,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
+        }
+
+        public static IEnumerable<object[]> GetConnectionStringsWithEnclaveMemberData()
+        {
+            return GetConnectionStrings(true).Select(x => new object[] { x });
+        }
+
+        public static IEnumerable<object[]> GetConnectionStringsWithoutEnclaveMemberData()
+        {
+            return GetConnectionStrings(false).Select(x => new object[] { x });
         }
 
         public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
@@ -455,6 +465,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsNotAzureServer()
         {
             return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((TCPConnectionString)).DataSource);
+        }
+
+        public static bool IsNotNamedInstance()
+        {
+            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
         }
 
         // Synapse: Always Encrypted is not supported with Azure Synapse.

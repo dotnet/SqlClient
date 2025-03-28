@@ -135,7 +135,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("14588")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
@@ -261,7 +260,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue("14325")]
         // avoid creating a new database in Azure
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
@@ -283,7 +281,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cnn1.Open();
                 cmd.Connection = cnn1;
                 // Create the database and wait until it is finalized.
-                cmd.CommandText = $"CREATE DATABASE [{database}]; \nWHILE(NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) \nWAITFOR DELAY '00:00:10' ";
+                cmd.CommandText = $"CREATE DATABASE [{database}]; \nWHILE(NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) \nWAITFOR DELAY '00:00:01' ";
                 cmd.ExecuteNonQuery();
 
                 try
@@ -292,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cnn2.Open();
                     cnn3.Open();
 
-                    // kill the active connection to the database after the first faliure.
+                    // kill the active connection to the database after the first failure.
                     provider.Retrying += (s, e) =>
                     {
                         currentRetries = e.RetryCount;
