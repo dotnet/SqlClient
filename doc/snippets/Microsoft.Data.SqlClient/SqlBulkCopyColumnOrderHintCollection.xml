@@ -4,7 +4,8 @@
       <summary>
         Collection of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> objects that inherits from <see cref="T:System.Collections.CollectionBase" />.
       </summary>
-      <format type="text/markdown"><![CDATA[  
+      <remarks>
+        <format type="text/markdown"><![CDATA[  
 ## Remarks  
 Column order hints define the sort order of the column in the destination table.
 
