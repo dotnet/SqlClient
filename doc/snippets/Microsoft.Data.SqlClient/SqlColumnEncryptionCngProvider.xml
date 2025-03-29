@@ -66,7 +66,7 @@
         The signature of the column master key metadata.
       </returns>
       <remarks>
-        The <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata" /> method must be implemented by the corresponding key store providers. <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata" /> should use an asymmetric key identified by a key path and sign the master key metadata consisting of <paramref name="masterKeyPath" />, <paramref name="allowEnclaveComputations" />, and <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.ProviderName" />.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata(System.String,System.Boolean)" /> method must be implemented by the corresponding key store providers. <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.SignColumnMasterKeyMetadata(System.String,System.Boolean)" /> should use an asymmetric key identified by a key path and sign the master key metadata consisting of <paramref name="masterKeyPath" />, <paramref name="allowEnclaveComputations" />, and <see cref="P:Microsoft.Data.SqlClient.SqlColumnEncryptionCngProvider.ProviderName" />.
       </remarks>
     </SignColumnMasterKeyMetadata>
     <VerifyColumnMasterKeyMetadata>
