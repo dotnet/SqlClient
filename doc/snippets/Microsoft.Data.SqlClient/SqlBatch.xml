@@ -176,7 +176,7 @@
     </BatchCommands>
     <Commands>
       <summary>
-        The list of commands contained in the batch in a <see cref="T:System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand>" />.
+        The list of commands contained in the batch in a <see cref="T:System.Collections.Generic.List&lt;Microsoft.Data.SqlClient.SqlBatchCommand&gt;" />.
       </summary>
     </Commands>
     <ExecuteReader>
