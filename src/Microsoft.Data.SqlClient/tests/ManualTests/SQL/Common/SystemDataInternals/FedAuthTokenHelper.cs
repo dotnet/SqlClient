@@ -6,6 +6,8 @@
 using System.Collections;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInternals
 {
@@ -92,17 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInte
 
         internal static object GetAuthenticationContextValue(SqlConnection connection)
         {
-            object innerConnectionObj = connection.GetType().GetProperty("InnerConnection", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(connection);
-
-            object databaseConnectionPoolObj = innerConnectionObj.GetType().GetProperty("Pool", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(innerConnectionObj);
-
-            IEnumerable authenticationContexts = (IEnumerable)databaseConnectionPoolObj.GetType().GetProperty("AuthenticationContexts", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(databaseConnectionPoolObj, null);
-
-            object authenticationContextObj = authenticationContexts.Cast<object>().FirstOrDefault();
-
-            object authenticationContextValueObj = authenticationContextObj.GetType().GetProperty("Value").GetValue(authenticationContextObj, null);
-
-            return authenticationContextValueObj;
+            return connection.InnerConnection.Pool.AuthenticationContexts.FirstOrDefault().Value;
         }
     }
 }

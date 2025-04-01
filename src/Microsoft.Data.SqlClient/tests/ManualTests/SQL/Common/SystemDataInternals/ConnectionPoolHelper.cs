@@ -15,23 +15,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class ConnectionPoolHelper
     {
-        private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(typeof(DbConnectionPoolKey), typeof(DbConnectionPoolGroup));
-        private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(typeof(DbConnectionPoolIdentity), typeof(DbConnectionPool));
-        private static PropertyInfo s_dbConnectionPoolCount = typeof(WaitHandleDbConnectionPool).GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_dictStringPoolGroupGetKeys = s_dictStringPoolGroup.GetProperty("Keys");
-        private static PropertyInfo s_dictPoolIdentityPoolValues = s_dictPoolIdentityPool.GetProperty("Values");
         private static FieldInfo s_dbConnectionFactoryPoolGroupList = typeof(DbConnectionFactory).GetField("_connectionPoolGroups", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_dbConnectionPoolGroupPoolCollection = typeof(DbConnectionPoolGroup).GetField("_poolCollection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_sqlConnectionFactorySingleton = typeof(SqlConnectionFactory).GetField("SingletonInstance", BindingFlags.Static | BindingFlags.Public);
         private static FieldInfo s_dbConnectionPoolStackOld = typeof(WaitHandleDbConnectionPool).GetField("_stackOld", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_dbConnectionPoolStackNew = typeof(WaitHandleDbConnectionPool).GetField("_stackNew", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dbConnectionPoolCleanup = typeof(WaitHandleDbConnectionPool).GetMethod("CleanupCallback", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static MethodInfo s_dictStringPoolGroupTryGetValue = s_dictStringPoolGroup.GetMethod("TryGetValue");
 
         public static int CountFreeConnections(DbConnectionPool pool)
         {
-            VerifyObjectIsPool(pool);
-
             ICollection oldStack = (ICollection)s_dbConnectionPoolStackOld.GetValue(pool);
             ICollection newStack = (ICollection)s_dbConnectionPoolStackNew.GetValue(pool);
 
@@ -42,24 +33,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// Finds all connection pools
         /// </summary>
         /// <returns></returns>
-        public static List<Tuple<DbConnectionPool, object>> AllConnectionPools()
+        public static List<Tuple<DbConnectionPool, DbConnectionPoolKey>> AllConnectionPools()
         {
-            List<Tuple<DbConnectionPool, object>> connectionPools = new List<Tuple<DbConnectionPool, object>>();
-            object factorySingleton = s_sqlConnectionFactorySingleton.GetValue(null);
-            object AllPoolGroups = s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
-            ICollection connectionPoolKeys = (ICollection)s_dictStringPoolGroupGetKeys.GetValue(AllPoolGroups, null);
-            foreach (var item in connectionPoolKeys)
+            List<Tuple<DbConnectionPool, DbConnectionPoolKey>> connectionPools = new List<Tuple<DbConnectionPool, DbConnectionPoolKey>>();
+            
+            SqlConnectionFactory factorySingleton = SqlConnectionFactory.SingletonInstance;
+            Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> AllPoolGroups = (Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>)s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
+            foreach (var item in AllPoolGroups)
             {
-                object[] args = new object[] { item, null };
-                s_dictStringPoolGroupTryGetValue.Invoke(AllPoolGroups, args);
-                if (args[1] != null)
+                var poolCollection = (ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>)s_dbConnectionPoolGroupPoolCollection.GetValue(item.Value);
+                foreach (var pool in poolCollection.Values)
                 {
-                    object poolCollection = s_dbConnectionPoolGroupPoolCollection.GetValue(args[1]);
-                    IEnumerable poolList = (IEnumerable)(s_dictPoolIdentityPoolValues.GetValue(poolCollection));
-                    foreach (object pool in poolList)
-                    {
-                        connectionPools.Add(new Tuple<DbConnectionPool, object>((DbConnectionPool)pool, item));
-                    }
+                    connectionPools.Add(new Tuple<DbConnectionPool, DbConnectionPoolKey>(pool, item.Key));
                 }
             }
 
@@ -77,18 +62,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
                 throw new ArgumentNullException(nameof(connectionString));
 
             DbConnectionPool pool = null;
-            object factorySingleton = s_sqlConnectionFactorySingleton.GetValue(null);
-            object AllPoolGroups = s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
-            object[] args = new object[] { connectionString, null };
-            bool found = (bool)s_dictStringPoolGroupTryGetValue.Invoke(AllPoolGroups, args);
-            if ((found) && (args[1] != null))
+            SqlConnectionFactory factorySingleton = SqlConnectionFactory.SingletonInstance;
+            Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> AllPoolGroups = (Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>)s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
+            
+            if (AllPoolGroups.TryGetValue(new DbConnectionPoolKey(connectionString), out var poolGroup) && poolGroup != null)
             {
-                ICollection poolList = (ICollection)s_dictPoolIdentityPoolValues.GetValue(args[1]);
-                if (poolList.Count == 1)
+                var poolCollection = (ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>)s_dbConnectionPoolGroupPoolCollection.GetValue(poolGroup);
+                if (poolCollection.Count == 1)
                 {
-                    poolList.Cast<object>().First();
+                    pool = poolCollection.First().Value;
                 }
-                else if (poolList.Count > 1)
+                else if (poolCollection.Count > 1)
                 {
                     throw new NotSupportedException("Using multiple identities with SSPI is not supported");
                 }
@@ -103,27 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// <param name="obj">A connection pool object</param>
         internal static void CleanConnectionPool(DbConnectionPool pool)
         {
-            VerifyObjectIsPool(pool);
             s_dbConnectionPoolCleanup.Invoke(pool, new object[] { null });
-        }
-
-        /// <summary>
-        /// Counts the number of connections in a connection pool
-        /// </summary>
-        /// <param name="pool">Pool to count connections in</param>
-        /// <returns></returns>
-        internal static int CountConnectionsInPool(DbConnectionPool pool)
-        {
-            VerifyObjectIsPool(pool);
-            return (int)s_dbConnectionPoolCount.GetValue(pool, null);
-        }
-
-        private static void VerifyObjectIsPool(DbConnectionPool pool)
-        {
-            if (pool == null)
-                throw new ArgumentNullException(nameof(pool));
-            if (!typeof(DbConnectionPool).IsInstanceOfType(pool))
-                throw new ArgumentException("Object provided was not a DbConnectionPool", "pool");
         }
     }
 }

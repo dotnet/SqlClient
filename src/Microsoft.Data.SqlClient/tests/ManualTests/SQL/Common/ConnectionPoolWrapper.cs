@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The number of connections in this connection pool (free + non-free; including transaction pools)
         /// </summary>
         public int ConnectionCount
-        { get { return ConnectionPoolHelper.CountConnectionsInPool(_connectionPool); } }
+        { get { return _connectionPool.Count; } }
 
         /// <summary>
         /// Counts the number of free connection in the pool (excluding any transaction pools)
