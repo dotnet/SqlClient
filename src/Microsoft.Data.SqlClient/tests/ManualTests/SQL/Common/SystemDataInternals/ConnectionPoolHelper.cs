@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         {
             if (pool == null)
                 throw new ArgumentNullException(nameof(pool));
-            if (!s_dbConnectionPool.IsInstanceOfType(pool))
+            if (!typeof(DbConnectionPool).IsInstanceOfType(pool))
                 throw new ArgumentException("Object provided was not a DbConnectionPool", "pool");
         }
     }

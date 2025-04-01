@@ -42,13 +42,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             return internalConnection;
         }
 
-        public static bool IsConnectionAlive(object internalConnection)
+        public static bool IsConnectionAlive(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
             return (bool)s_dbConnectionInternalIsConnectionAlive.Invoke(internalConnection, new object[] { false });
         }
 
-        private static void VerifyObjectIsInternalConnection(object internalConnection)
+        private static void VerifyObjectIsInternalConnection(DbConnectionInternal internalConnection)
         {
             if (internalConnection == null)
                 throw new ArgumentNullException(nameof(internalConnection));
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
                 throw new ArgumentException("Object provided was not a DbConnectionInternal", nameof(internalConnection));
         }
 
-        private static void VerifyObjectIsConnection(object connection)
+        private static void VerifyObjectIsConnection(SqlConnection connection)
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
@@ -64,25 +64,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
                 throw new ArgumentException("Object provided was not a SqlConnection", nameof(connection));
         }
 
-        public static bool IsEnlistedInTransaction(object internalConnection)
+        public static bool IsEnlistedInTransaction(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
             return (dbConnectionInternalEnlistedTrans.GetValue(internalConnection, null) != null);
         }
 
-        public static bool IsTransactionRoot(object internalConnection)
+        public static bool IsTransactionRoot(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
             return (bool)dbConnectionInternalIsTransRoot.GetValue(internalConnection, null);
         }
         
-        public static bool IsTxRootWaitingForTxEnd(object internalConnection)
+        public static bool IsTxRootWaitingForTxEnd(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
             return (bool)dbConnectionInternalIsTxRootWaitingForTxEnd.GetValue(internalConnection, null);
         }
 
-        public static object GetParser(object internalConnection)
+        public static object GetParser(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
             return s_sqlInternalConnectionTdsParser.GetValue(internalConnection);
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// <returns>FQDN, AddrIPv4, AddrIPv6, and Port in sequence</returns>
         public static Tuple<string, string, string, string> GetSQLDNSInfo(this SqlConnection connection)
         {
-            object internalConnection = GetInternalConnection(connection);
+            DbConnectionInternal internalConnection = GetInternalConnection(connection);
             VerifyObjectIsInternalConnection(internalConnection);
             object pendingSQLDNSInfo = s_pendingSQLDNSObject.GetValue(internalConnection);
             string fqdn = s_pendingSQLDNS_FQDN.GetValue(pendingSQLDNSInfo) as string;
