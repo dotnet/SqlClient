@@ -5,36 +5,29 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class ConnectionHelper
     {
-        private static Assembly s_MicrosoftDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-        private static Type s_sqlConnection = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlConnection");
-        private static Type s_sqlInternalConnection = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnection");
-        private static Type s_sqlInternalConnectionTds = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnectionTds");
-        private static Type s_dbConnectionInternal = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionInternal");
-        private static Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParser");
-        private static Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-        private static Type s_SQLDNSInfo = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SQLDNSInfo");
-        private static PropertyInfo s_sqlConnectionInternalConnection = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_dbConnectionInternalPool = s_dbConnectionInternal.GetProperty("Pool", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static MethodInfo s_dbConnectionInternalIsConnectionAlive = s_dbConnectionInternal.GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_sqlInternalConnectionTdsParser = s_sqlInternalConnectionTds.GetField("_parser", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_innerConnectionProperty = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_tdsParserProperty = s_sqlInternalConnectionTds.GetProperty("Parser", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_tdsParserStateObjectProperty = s_tdsParser.GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_enforceTimeoutDelayProperty = s_tdsParserStateObject.GetField("_enforceTimeoutDelay", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_enforcedTimeoutDelayInMilliSeconds = s_tdsParserStateObject.GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_pendingSQLDNSObject = s_sqlInternalConnectionTds.GetField("pendingSQLDNSObject", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_pendingSQLDNS_FQDN = s_SQLDNSInfo.GetProperty("FQDN", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo s_pendingSQLDNS_AddrIPv4 = s_SQLDNSInfo.GetProperty("AddrIPv4", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo s_pendingSQLDNS_AddrIPv6 = s_SQLDNSInfo.GetProperty("AddrIPv6", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo s_pendingSQLDNS_Port = s_SQLDNSInfo.GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
-        private static PropertyInfo dbConnectionInternalIsTransRoot = s_dbConnectionInternal.GetProperty("IsTransactionRoot", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo dbConnectionInternalEnlistedTrans = s_sqlInternalConnection.GetProperty("EnlistedTransaction", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo dbConnectionInternalIsTxRootWaitingForTxEnd = s_dbConnectionInternal.GetProperty("IsTxRootWaitingForTxEnd", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_sqlConnectionInternalConnection = typeof(SqlConnection).GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_dbConnectionInternalPool = typeof(DbConnectionInternal).GetProperty("Pool", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static MethodInfo s_dbConnectionInternalIsConnectionAlive = typeof(DbConnectionInternal).GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_sqlInternalConnectionTdsParser = typeof(SqlInternalConnectionTds).GetField("_parser", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_innerConnectionProperty = typeof(SqlConnection).GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_tdsParserProperty = typeof(SqlInternalConnectionTds).GetProperty("Parser", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_tdsParserStateObjectProperty = typeof(TdsParser).GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_enforceTimeoutDelayProperty = typeof(TdsParserStateObject).GetField("_enforceTimeoutDelay", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_enforcedTimeoutDelayInMilliSeconds = typeof(TdsParserStateObject).GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_pendingSQLDNSObject = typeof(SqlInternalConnectionTds).GetField("pendingSQLDNSObject", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_pendingSQLDNS_FQDN = typeof(SQLDNSInfo).GetProperty("FQDN", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_pendingSQLDNS_AddrIPv4 = typeof(SQLDNSInfo).GetProperty("AddrIPv4", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_pendingSQLDNS_AddrIPv6 = typeof(SQLDNSInfo).GetProperty("AddrIPv6", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo s_pendingSQLDNS_Port = typeof(SQLDNSInfo).GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo dbConnectionInternalIsTransRoot = typeof(DbConnectionInternal).GetProperty("IsTransactionRoot", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo dbConnectionInternalEnlistedTrans = typeof(SqlInternalConnection).GetProperty("EnlistedTransaction", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo dbConnectionInternalIsTxRootWaitingForTxEnd = typeof(DbConnectionInternal).GetProperty("IsTxRootWaitingForTxEnd", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static object GetConnectionPool(object internalConnection)
         {
@@ -46,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         {
             VerifyObjectIsConnection(connection);
             object internalConnection = s_sqlConnectionInternalConnection.GetValue(connection, null);
-            Debug.Assert(((internalConnection != null) && (s_dbConnectionInternal.IsInstanceOfType(internalConnection))), "Connection provided has an invalid internal connection");
+            Debug.Assert(((internalConnection != null) && (typeof(DbConnectionInternal).IsInstanceOfType(internalConnection))), "Connection provided has an invalid internal connection");
             return internalConnection;
         }
 
@@ -60,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         {
             if (internalConnection == null)
                 throw new ArgumentNullException(nameof(internalConnection));
-            if (!s_dbConnectionInternal.IsInstanceOfType(internalConnection))
+            if (!typeof(DbConnectionInternal).IsInstanceOfType(internalConnection))
                 throw new ArgumentException("Object provided was not a DbConnectionInternal", nameof(internalConnection));
         }
 
@@ -68,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         {
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
-            if (!s_sqlConnection.IsInstanceOfType(connection))
+            if (!typeof(SqlConnection).IsInstanceOfType(connection))
                 throw new ArgumentException("Object provided was not a SqlConnection", nameof(connection));
         }
 
