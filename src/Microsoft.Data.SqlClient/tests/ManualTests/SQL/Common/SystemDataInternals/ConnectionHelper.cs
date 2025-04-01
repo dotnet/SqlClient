@@ -6,13 +6,12 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class ConnectionHelper
     {
-        private static PropertyInfo s_sqlConnectionInternalConnection = typeof(SqlConnection).GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static PropertyInfo s_dbConnectionInternalPool = typeof(DbConnectionInternal).GetProperty("Pool", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dbConnectionInternalIsConnectionAlive = typeof(DbConnectionInternal).GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_sqlInternalConnectionTdsParser = typeof(SqlInternalConnectionTds).GetField("_parser", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_innerConnectionProperty = typeof(SqlConnection).GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -29,16 +28,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static PropertyInfo dbConnectionInternalEnlistedTrans = typeof(SqlInternalConnection).GetProperty("EnlistedTransaction", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo dbConnectionInternalIsTxRootWaitingForTxEnd = typeof(DbConnectionInternal).GetProperty("IsTxRootWaitingForTxEnd", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        public static object GetConnectionPool(object internalConnection)
+        public static DbConnectionPool GetConnectionPool(DbConnectionInternal internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);
-            return s_dbConnectionInternalPool.GetValue(internalConnection, null);
+            return internalConnection.Pool;
         }
 
-        public static object GetInternalConnection(this SqlConnection connection)
+        public static DbConnectionInternal GetInternalConnection(this SqlConnection connection)
         {
             VerifyObjectIsConnection(connection);
-            object internalConnection = s_sqlConnectionInternalConnection.GetValue(connection, null);
+            DbConnectionInternal internalConnection = connection.InnerConnection;
             Debug.Assert(((internalConnection != null) && (typeof(DbConnectionInternal).IsInstanceOfType(internalConnection))), "Connection provided has an invalid internal connection");
             return internalConnection;
         }

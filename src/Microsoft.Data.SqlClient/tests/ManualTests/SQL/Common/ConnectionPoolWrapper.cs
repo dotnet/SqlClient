@@ -5,12 +5,14 @@
 using System;
 using System.Linq;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionPoolWrapper
     {
-        private object _connectionPool = null;
+        private DbConnectionPool _connectionPool = null;
 
         /// <summary>
         /// Finds the connection pool for the given connection
@@ -49,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Finds the connection pool for the given internal connection
         /// </summary>
         /// <param name="internalConnection"></param>
-        internal ConnectionPoolWrapper(object internalConnection, string connectionString)
+        internal ConnectionPoolWrapper(DbConnectionInternal internalConnection, string connectionString)
         {
             _connectionPool = ConnectionHelper.GetConnectionPool(internalConnection);
             ConnectionString = connectionString;

@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static MethodInfo s_dbConnectionPoolCleanup = typeof(WaitHandleDbConnectionPool).GetMethod("CleanupCallback", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dictStringPoolGroupTryGetValue = s_dictStringPoolGroup.GetMethod("TryGetValue");
 
-        public static int CountFreeConnections(object pool)
+        public static int CountFreeConnections(DbConnectionPool pool)
         {
             VerifyObjectIsPool(pool);
 
@@ -42,9 +42,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// Finds all connection pools
         /// </summary>
         /// <returns></returns>
-        public static List<Tuple<object, object>> AllConnectionPools()
+        public static List<Tuple<DbConnectionPool, object>> AllConnectionPools()
         {
-            List<Tuple<object, object>> connectionPools = new List<Tuple<object, object>>();
+            List<Tuple<DbConnectionPool, object>> connectionPools = new List<Tuple<DbConnectionPool, object>>();
             object factorySingleton = s_sqlConnectionFactorySingleton.GetValue(null);
             object AllPoolGroups = s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
             ICollection connectionPoolKeys = (ICollection)s_dictStringPoolGroupGetKeys.GetValue(AllPoolGroups, null);
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
                     IEnumerable poolList = (IEnumerable)(s_dictPoolIdentityPoolValues.GetValue(poolCollection));
                     foreach (object pool in poolList)
                     {
-                        connectionPools.Add(new Tuple<object, object>(pool, item));
+                        connectionPools.Add(new Tuple<DbConnectionPool, object>((DbConnectionPool)pool, item));
                     }
                 }
             }
@@ -71,12 +71,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// </summary>
         /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static object ConnectionPoolFromString(string connectionString)
+        public static DbConnectionPool ConnectionPoolFromString(string connectionString)
         {
             if (connectionString == null)
                 throw new ArgumentNullException(nameof(connectionString));
 
-            object pool = null;
+            DbConnectionPool pool = null;
             object factorySingleton = s_sqlConnectionFactorySingleton.GetValue(null);
             object AllPoolGroups = s_dbConnectionFactoryPoolGroupList.GetValue(factorySingleton);
             object[] args = new object[] { connectionString, null };
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// Causes the cleanup timer code in the connection pool to be invoked
         /// </summary>
         /// <param name="obj">A connection pool object</param>
-        internal static void CleanConnectionPool(object pool)
+        internal static void CleanConnectionPool(DbConnectionPool pool)
         {
             VerifyObjectIsPool(pool);
             s_dbConnectionPoolCleanup.Invoke(pool, new object[] { null });
@@ -112,13 +112,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         /// </summary>
         /// <param name="pool">Pool to count connections in</param>
         /// <returns></returns>
-        internal static int CountConnectionsInPool(object pool)
+        internal static int CountConnectionsInPool(DbConnectionPool pool)
         {
             VerifyObjectIsPool(pool);
             return (int)s_dbConnectionPoolCount.GetValue(pool, null);
         }
 
-        private static void VerifyObjectIsPool(object pool)
+        private static void VerifyObjectIsPool(DbConnectionPool pool)
         {
             if (pool == null)
                 throw new ArgumentNullException(nameof(pool));

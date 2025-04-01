@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -31,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static Dictionary<string, string> s_killByTSqlConnectionStrings = new Dictionary<string, string>();
         private static ReaderWriterLockSlim s_killByTSqlConnectionStringsLock = new ReaderWriterLockSlim();
 
-        private object _internalConnection = null;
+        private DbConnectionInternal _internalConnection = null;
         private object _spid = null;
 
         /// <summary>
