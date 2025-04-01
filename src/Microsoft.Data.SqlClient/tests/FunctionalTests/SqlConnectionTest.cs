@@ -1082,6 +1082,18 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(1, (int)field.GetValue(cn));
         }
 
+
+
+        [Fact]
+        public void ConnectionString_WithOnlyComma_ShouldNotThrow()
+        {
+            SqlConnection cn = new SqlConnection("Data Source=,;Initial Catalog=master;Integrated Security=True");
+            Exception ex = Record.Exception(() => cn.Open());
+
+            Assert.NotNull(ex);
+            Assert.False(ex is ArgumentOutOfRangeException);
+        }
+
         [Theory]
         [InlineData("myserver.database.windows.net")]
         [InlineData("myserver.database.cloudapi.de")]
