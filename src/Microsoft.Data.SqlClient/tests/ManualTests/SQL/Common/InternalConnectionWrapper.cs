@@ -38,18 +38,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Is this internal connection enlisted in a distributed transaction?
         /// </summary>
-        public bool IsEnlistedInTransaction => ConnectionHelper.IsEnlistedInTransaction(_internalConnection);
+        public bool IsEnlistedInTransaction => _internalConnection.EnlistedTransaction != null;
 
         /// <summary>
         /// Is this internal connection the root of a distributed transaction?
         /// </summary>
-        public bool IsTransactionRoot => ConnectionHelper.IsTransactionRoot(_internalConnection);
+        public bool IsTransactionRoot => _internalConnection.IsTransactionRoot;
 
         /// <summary>
         /// True if this connection is the root of a transaction AND it is waiting for the transaction 
         /// to complete (i.e. it has been 'aged' or 'put into stasis'), otherwise false
         /// </summary>
-        public bool IsTxRootWaitingForTxEnd => ConnectionHelper.IsTxRootWaitingForTxEnd(_internalConnection);
+        public bool IsTxRootWaitingForTxEnd => _internalConnection.IsTxRootWaitingForTxEnd;
 
         /// <summary>
         /// Gets the internal connection associated with the given SqlConnection
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            _internalConnection = connection.GetInternalConnection();
+            _internalConnection = connection.InnerConnection;
             ConnectionString = connection.ConnectionString;
 
             if (supportKillByTSql)
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            return (_internalConnection == connection.GetInternalConnection());
+            return (_internalConnection == connection.InnerConnection);
         }
 
 
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         public bool IsConnectionAlive()
         {
-            return ConnectionHelper.IsConnectionAlive(_internalConnection);
+            return _internalConnection.IsConnectionAlive(false);
         }
 
         /// <summary>
@@ -126,7 +126,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void KillConnection()
         {
             object tdsParser = ConnectionHelper.GetParser(_internalConnection);
-            object stateObject = TdsParserHelper.GetStateObject(tdsParser);
+            object stateObject = typeof(TdsParser)
+                .GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(tdsParser);
 
             Assembly assembly = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
             Type sniHandleType = assembly.GetType("Microsoft.Data.SqlClient.SNI.SNIHandle");

@@ -9,21 +9,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class TdsParserHelper
     {
-        private static Assembly s_systemDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-        private static Type s_tdsParser = s_systemDotData.GetType("Microsoft.Data.SqlClient.TdsParser");
-        private static FieldInfo s_tdsParserPhysicalStateObject = s_tdsParser.GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_tdsParserPhysicalStateObject = typeof(TdsParser).GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        private static void VerifyObjectIsTdsParser(object parser)
+        internal static object GetStateObject(TdsParser parser)
         {
-            if (parser == null)
-                throw new ArgumentNullException("stateObject");
-            if (!s_tdsParser.IsInstanceOfType(parser))
-                throw new ArgumentException("Object provided was not a TdsParser", nameof(parser));
-        }
-
-        internal static object GetStateObject(object parser)
-        {
-            VerifyObjectIsTdsParser(parser);
             return s_tdsParserPhysicalStateObject.GetValue(parser);
         }
     }

@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            _connectionPool = ConnectionHelper.GetConnectionPool(connection.GetInternalConnection());
+            _connectionPool = connection.InnerConnection.Pool;
             ConnectionString = connection.ConnectionString;
 
             if (_connectionPool == null)
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="internalConnection"></param>
         internal ConnectionPoolWrapper(DbConnectionInternal internalConnection, string connectionString)
         {
-            _connectionPool = ConnectionHelper.GetConnectionPool(internalConnection);
+            _connectionPool = internalConnection.Pool;
             ConnectionString = connectionString;
 
             if (_connectionPool == null)
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            return (_connectionPool == ConnectionHelper.GetConnectionPool(connection.GetInternalConnection()));
+            return (_connectionPool == connection.InnerConnection.Pool);
         }
 
         /// <summary>
