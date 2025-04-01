@@ -1085,13 +1085,15 @@ namespace Microsoft.Data.SqlClient.Tests
 
 
         [Fact]
-        public void ConnectionString_WithOnlyComma_ShouldNotThrow()
+        public void ConnectionString_WithOnlyComma()
         {
-            SqlConnection cn = new SqlConnection("Data Source=,;Initial Catalog=master;Integrated Security=True");
-            Exception ex = Record.Exception(() => cn.Open());
+            // Test Case for https://github.com/dotnet/SqlClient/issues/3110
+            // Validates that a single-comma Data Source (e.g., "Data Source=,") no longer causes ArgumentOutOfRangeException
+            // Instead, it should throw a SqlException indicating a connection failure
 
-            Assert.NotNull(ex);
-            Assert.False(ex is ArgumentOutOfRangeException);
+            SqlConnection cn = new SqlConnection("Data Source=,;Initial Catalog=master;Integrated Security=True");
+            Assert.Throws<SqlException>(() => { cn.Open(); });
+
         }
 
         [Theory]
