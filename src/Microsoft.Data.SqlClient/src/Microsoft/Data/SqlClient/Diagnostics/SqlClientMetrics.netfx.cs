@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
         {
             // First try GetEntryAssembly name, then AppDomain.FriendlyName.
             Assembly? assembly = Assembly.GetEntryAssembly();
-            AssemblyName? name = assembly.GetName();
+            AssemblyName? name = assembly?.GetName();
 
             return name?.Name;
         }
