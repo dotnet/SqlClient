@@ -8,25 +8,21 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class ConnectionPoolHelper
     {
-        private static Assembly s_MicrosoftDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-        private static Type s_dbConnectionPoolGroup = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolGroup");
-        private static Type s_dbConnectionPoolIdentity = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolIdentity");
-        private static Type s_dbConnectionFactory = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionFactory");
-        private static Type s_sqlConnectionFactory = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlConnectionFactory");
-        private static Type s_dbConnectionPoolKey = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolKey");
-        private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(s_dbConnectionPoolKey, s_dbConnectionPoolGroup);
-        private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(s_dbConnectionPoolIdentity, typeof(DbConnectionPool));
+        private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(typeof(DbConnectionPoolKey), typeof(DbConnectionPoolGroup));
+        private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(typeof(DbConnectionPoolIdentity), typeof(DbConnectionPool));
         private static PropertyInfo s_dbConnectionPoolCount = typeof(WaitHandleDbConnectionPool).GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
         private static PropertyInfo s_dictStringPoolGroupGetKeys = s_dictStringPoolGroup.GetProperty("Keys");
         private static PropertyInfo s_dictPoolIdentityPoolValues = s_dictPoolIdentityPool.GetProperty("Values");
-        private static FieldInfo s_dbConnectionFactoryPoolGroupList = s_dbConnectionFactory.GetField("_connectionPoolGroups", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_dbConnectionPoolGroupPoolCollection = s_dbConnectionPoolGroup.GetField("_poolCollection", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static FieldInfo s_sqlConnectionFactorySingleton = s_sqlConnectionFactory.GetField("SingletonInstance", BindingFlags.Static | BindingFlags.Public);
+        private static FieldInfo s_dbConnectionFactoryPoolGroupList = typeof(DbConnectionFactory).GetField("_connectionPoolGroups", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_dbConnectionPoolGroupPoolCollection = typeof(DbConnectionPoolGroup).GetField("_poolCollection", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static FieldInfo s_sqlConnectionFactorySingleton = typeof(SqlConnectionFactory).GetField("SingletonInstance", BindingFlags.Static | BindingFlags.Public);
         private static FieldInfo s_dbConnectionPoolStackOld = typeof(WaitHandleDbConnectionPool).GetField("_stackOld", BindingFlags.Instance | BindingFlags.NonPublic);
         private static FieldInfo s_dbConnectionPoolStackNew = typeof(WaitHandleDbConnectionPool).GetField("_stackNew", BindingFlags.Instance | BindingFlags.NonPublic);
         private static MethodInfo s_dbConnectionPoolCleanup = typeof(WaitHandleDbConnectionPool).GetMethod("CleanupCallback", BindingFlags.Instance | BindingFlags.NonPublic);
