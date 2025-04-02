@@ -2,12 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Sql;
-using System;
 using System.Data.Common;
+using Microsoft.Data.Sql;
+
+#if NETFRAMEWORK
+using System;
+using System.Reflection;
 using System.Security.Permissions;
 using System.Security;
-using Microsoft.Data.Common;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -17,7 +20,36 @@ namespace Microsoft.Data.SqlClient
         , IServiceProvider
 #endif
     {
+        #if NETFRAMEWORK
+        #region Constants / Member Variables
 
+        private const string ExtensionAssemblyRef = 
+            "System.Data.Entity, Version=4.0.0.0, Culture=neutral, PublicKeyToken=" + AssemblyRef.EcmaPublicKey;
+
+        private const string MicrosoftDataSqlClientSqlProviderServicesTypeName =
+            "Microsoft.Data.SqlClient.SQLProviderServices, " + ExtensionAssemblyRef;
+        
+        private const string SystemDataCommonDbProviderServicesTypeName =
+            "System.Data.Common.DbProviderServices, " + ExtensionAssemblyRef;
+
+        private static readonly Lazy<object> MicrosoftDataSqlClientProviderServicesInstance =
+            new(static () =>
+            {
+                FieldInfo instanceFieldInfo = MicrosoftDataSqlClientSqlProviderServicesType.Value?.GetField(
+                    "Instance",
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+                return instanceFieldInfo?.GetValue(null);
+            });
+        
+        private static readonly Lazy<Type> MicrosoftDataSqlClientSqlProviderServicesType =
+            new (static () => Type.GetType(MicrosoftDataSqlClientSqlProviderServicesTypeName, throwOnError: false));
+
+        private static readonly Lazy<Type> SystemDataCommonDbProviderServicesType =
+            new(static () => Type.GetType(SystemDataCommonDbProviderServicesTypeName, throwOnError: false));
+        
+        #endregion
+        #endif
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
         public static readonly SqlClientFactory Instance = new SqlClientFactory();
 
@@ -64,7 +96,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlParameter();
         }
 
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
         public override CodeAccessPermission CreatePermission(PermissionState state)
         {
@@ -72,20 +104,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Extension mechanism for additional services; currently the only service
-        /// supported is the DbProviderServices
+        /// Extension mechanism for additional services; currently the only service supported is
+        /// the <c>System.Data.Common.DbProviderServices</c> type.
         /// </summary>
-        /// <returns>requested service provider or null.</returns>
-        object IServiceProvider.GetService(Type serviceType)
-        {
-            object result = null;
-            if (serviceType == GreenMethods.SystemDataCommonDbProviderServices_Type)
-            {
-                result = GreenMethods.MicrosoftDataSqlClientSqlProviderServices_Instance();
-            }
-            return result;
-        }
-#endif
+        /// <returns>Requested service provider or <c>null</c>.</returns>
+        object IServiceProvider.GetService(Type serviceType) =>
+            serviceType == SystemDataCommonDbProviderServicesType.Value
+                ? MicrosoftDataSqlClientProviderServicesInstance.Value
+                : null;
+        #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
         public override DbDataSourceEnumerator CreateDataSourceEnumerator()
@@ -93,7 +120,7 @@ namespace Microsoft.Data.SqlClient
             return SqlDataSourceEnumerator.Instance;
         }
 
-#if NET
+        #if NET
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch => true;
 
@@ -102,7 +129,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
         public override DbBatchCommand CreateBatchCommand() => new SqlBatchCommand();
-#endif
-
+        #endif
     }
 }
