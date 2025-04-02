@@ -792,8 +792,19 @@ namespace Microsoft.Data.Common
                 length = foundIndex;
             }
 
-            // check for the instance name
-            foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            // Safeguard LastIndexOf call to avoid ArgumentOutOfRangeException when length is 0
+            if (length > 0)
+            {
+                // check for the instance name
+                foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            }
+            else
+            {
+                foundIndex = -1;
+            }
+
+
+  
             if (foundIndex > 0)
             {
                 length = foundIndex;
