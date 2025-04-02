@@ -5,8 +5,8 @@
         Provides a simple way to create and manage the contents of connection strings used by the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class.
       </summary>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[
 The connection string builder lets developers programmatically create syntactically correct connection strings, and parse and rebuild existing connection strings, using properties and methods of the class. The connection string builder provides strongly typed properties corresponding to the known key/value pairs allowed by SQL Server. Developers needing to create connection strings as part of applications can use the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to build and modify connection strings. The class also makes it easy to manage connection strings stored in an application configuration file.  
 
 The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> performs checks for valid key/value pairs. Therefore, you cannot use this class to create invalid connection strings; trying to add invalid pairs will throw an exception. The class maintains a fixed collection of synonyms and can translate from a synonym to the corresponding well-known key name.  
@@ -64,8 +64,8 @@ The following console application builds connection strings for a SQL Server dat
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class. The provided connection string provides the data for the instance's internal connection information.
       </summary>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[
 The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the `ConnectionString` property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.  
 
 ## Examples  
@@ -348,8 +348,8 @@ The following example supplies a simple SQL Server connection string in the <xre
         The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. The default value for non Azure endpoints is 1. For Azure SQL endpoints, the default is 2. Starting in version 5.x, for Azure SQL serverless or on demand endpoints, the default is 5 to improve connection success for connections to an idle or paused instance. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside the allowed range.
       </summary>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
 
 > [!NOTE]
@@ -443,7 +443,7 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
       </returns>
       <remarks>
         <para>
-          Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a fixed-size collection of key/value pairs, the <see cref="M:System.Data.Common.DbConnectionStringBuilder.ContainsKey" /> method determines only if a particular key name is valid.
+          Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a fixed-size collection of key/value pairs, the <see cref="M:System.Data.Common.DbConnectionStringBuilder.ContainsKey(System.String)" /> method determines only if a particular key name is valid.
         </para>
       </remarks>
       <example>
@@ -633,8 +633,8 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[
 This property corresponds to the "Encrypt" key within the connection string.  
 
 When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> or `true`, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](https://learn.microsoft.com/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
@@ -698,8 +698,8 @@ When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.Sql
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartnerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN" keys within the connection string.  
 
 > [!NOTE]
@@ -717,8 +717,8 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.HostNameInCertificate" /> property, or <see langword="String.Empty" /> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[
 This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
 
 > [!NOTE]
@@ -805,8 +805,8 @@ This property corresponds to the "HostNameInCertificiate" and "Host Name in Cert
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity" /> property, or <see langword="false" /> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "Integrated Security" and "trusted_connection" keys within the connection string.  
 
 If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.
@@ -864,7 +864,7 @@ The following example converts an existing connection string from using SQL Serv
       </remarks>
       <example>
         <para>
-          The following code, in a console application, creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and adds key/value pairs to its connection string, using the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item[System.String]" /> property.
+          The following code, in a console application, creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and adds key/value pairs to its connection string, using the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" /> property.
         </para>
         <!-- SqlConnectionStringBuilder2 -->
         <code language="c#">
@@ -1212,8 +1212,8 @@ The following example converts an existing connection string from using SQL Serv
         <see langword="true" /> if the key existed within the connection string and was removed; <see langword="false" /> if the key did not exist.
       </returns>
       <remarks>
-            <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 Because the **Remove** method returns a value that indicates its success, it is not required to look for a key before trying to remove the key/value pair from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance. Because the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> maintains a fixed-size collection of key/value pairs, calling the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method simply resets the value of the key/value pair back to its default value.  
 
 Because the collection of keys supported by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is fixed, every item within the collection has a known default value. The following table lists the keys, and the value for each when the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is first initialized, or after the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method has been called.  
@@ -1287,8 +1287,8 @@ Database = AdventureWorks
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" /> property, or <c>string.Empty</c> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
 
 > [!NOTE]
@@ -1306,8 +1306,8 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
 
 > [!NOTE]
@@ -1437,7 +1437,7 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
       </returns>
       <remarks>
         <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue" /> method lets developers safely retrieve a value from a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> without needing to verify that the supplied key name is a valid key name. Because <b>TryGetValue</b> does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value. Calling <b>TryGetValue</b> with a nonexistent key will place the value null (<c>Nothing</c> in Visual Basic) in the <paramref name="value" /> parameter.
+          The <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue(String,Object)" /> method lets developers safely retrieve a value from a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> without needing to verify that the supplied key name is a valid key name. Because <b>TryGetValue</b> does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value. Calling <b>TryGetValue</b> with a nonexistent key will place the value null (<c>Nothing</c> in Visual Basic) in the <paramref name="value" /> parameter.
         </para>
       </remarks>
       <example>
@@ -1579,8 +1579,8 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
         The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserInstance" /> property, or <see langword="false" /> if none has been supplied.
       </value>
       <remarks>
-        <format type="text/markdown"><![CDATA[  
-## Remarks  
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "User Instance" key within the connection string.  
 
 > [!NOTE]

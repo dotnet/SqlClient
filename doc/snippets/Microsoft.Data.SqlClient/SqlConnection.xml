@@ -245,7 +245,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
         Gets or sets the access token callback for the connection.
       </summary>
       <value>
-        The Func that takes a <see cref="T:SqlAuthenticationParameters" /> and <see cref="T:System.Threading.CancellationToken" /> and returns a <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationToken" />.
+        The Func that takes a <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> and <see cref="T:System.Threading.CancellationToken" /> and returns a <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationToken" />.
       </value>
       <example>
         <para>
@@ -794,7 +794,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         Empties the connection pool associated with the specified connection.
       </summary>
       <remarks>
-        <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool" /> clears the connection pool that is associated with the <paramref name="connection" />. If additional connections associated with <paramref name="connection" /> are in use at the time of the call, they are marked appropriately and are discarded (instead of being returned to the pool) when <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> is called on them.
+        <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)" /> clears the connection pool that is associated with the <paramref name="connection" />. If additional connections associated with <paramref name="connection" /> are in use at the time of the call, they are marked appropriately and are discarded (instead of being returned to the pool) when <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> is called on them.
       </remarks>
     </ClearPool>
     <ClientConnectionId>

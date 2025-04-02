@@ -2,7 +2,7 @@
   <members name="SqlRetryLogicBaseProvider">
     <SqlRetryLogicBaseProvider>
       <summary>
-        Applies retry logic on an operation through the <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute&lt;TResult&gt;(System.Object,System.Func&lt;TResult&gt;)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute&lt;TResult&gt;(System.Object,System.Func&lt;System.Threading.Task&lt;TResult&gt;&gt;,System.Threading.CancellationToken)" /> function.
+        Applies retry logic on an operation through the <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute``1(System.Object,System.Func{``0})" /> or <see cref="M:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync``1(System.Object,System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)" /> function.
       </summary>
     </SqlRetryLogicBaseProvider>
     <Retrying>
@@ -15,8 +15,6 @@
       <remarks>
         <format type="text/markdown">
           <![CDATA[
-## Remarks
-
 > [!IMPORTANT]
 > Don't block execution with a time-consuming action when an event occurs. For instance, if you log data to a file, run it in a new thread to avoid blocking the main execution thread.
           ]]>
