@@ -15,10 +15,11 @@ using System.Security;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/SqlClientFactory/*'/>
+    #if NETFRAMEWORK
+    public sealed class SqlClientFactory : DbProviderFactory, IServiceProvider
+    #else
     public sealed class SqlClientFactory : DbProviderFactory
-#if NETFRAMEWORK
-        , IServiceProvider
-#endif
+    #endif
     {
         #if NETFRAMEWORK
         #region Constants / Member Variables
@@ -56,6 +57,17 @@ namespace Microsoft.Data.SqlClient
         private SqlClientFactory()
         {
         }
+        
+        #if NET
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
+        public override bool CanCreateBatch => true;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
+        public override DbBatch CreateBatch() => new SqlBatch();
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
+        public override DbBatchCommand CreateBatchCommand() => new SqlBatchCommand();
+        #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateDataSourceEnumerator/*'/>
         public override bool CanCreateDataSourceEnumerator => true;
@@ -119,16 +131,5 @@ namespace Microsoft.Data.SqlClient
         {
             return SqlDataSourceEnumerator.Instance;
         }
-
-        #if NET
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
-        public override bool CanCreateBatch => true;
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
-        public override DbBatch CreateBatch() => new SqlBatch();
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
-        public override DbBatchCommand CreateBatchCommand() => new SqlBatchCommand();
-        #endif
     }
 }
