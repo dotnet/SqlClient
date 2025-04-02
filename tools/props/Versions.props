@@ -56,7 +56,7 @@
   <PropertyGroup>
     <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>[4.4.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>6.0.1</MicrosoftExtensionsCachingMemoryVersion>
+    <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
@@ -73,7 +73,7 @@
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
-    <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
+    <MicrosoftExtensionsHostingVersion>6.0.1</MicrosoftExtensionsHostingVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
