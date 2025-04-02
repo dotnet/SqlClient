@@ -2728,7 +2728,7 @@
     <value>Bu hata {0} sunucusuna bağlanmaya çalışılırken meydana geldi.</value>
   </data>
   <data name="SQL_Timeout_RoutingDestinationInfo" xml:space="preserve">
-    <value>Bu hata, yönlendirme hedefine bağlanmaya çalışılırken meydana geldi. Orijinal sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={1}; [Oturum Açma] başlatma={2}; kimlik doğrulaması={3}; [Oturum Açma Sonrası] tamamlandı={4};  </value>
+    <value>Bu hata, yönlendirme hedefine bağlanmaya çalışılırken meydana geldi. Orijinal sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0}; el sıkışma={0}; [Oturum Açma] başlatma={1}; kimlik doğrulaması={2}; [Oturum Açma Sonrası] tamamlandı={3};  </value>
   </data>
   <data name="SQL_Duration_PreLogin_Begin" xml:space="preserve">
     <value>Bu sunucuya bağlanmaya çalışırken harcanan süre - [Oturum Açma Öncesi] başlatma={0};</value>
@@ -4243,7 +4243,7 @@
     <value>{2}'den alınan '{0}' normalleştirme sürümü desteklenmiyor. Geçerli normalleştirme sürümleri: {1}.</value>
   </data>
   <data name="TCE_UnrecognizedKeyStoreProviderName" xml:space="preserve">
-    <value>Bir sütun şifreleme anahtarının şifresi çözülemedi. Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{2}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
+    <value>Bir sütun şifreleme anahtarının şifresi çözülemedi. Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{0}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
   </data>
   <data name="TCE_KeyDecryptionFailedCertStore" xml:space="preserve">
     <value>Anahtar deposu sağlayıcısı kullanılarak bir sütun şifreleme anahtarının şifresi çözülemedi: '{0}'. Şifrelenmiş sütun şifreleme anahtarının son 10 baytı: '{1}'.</value>
@@ -4273,7 +4273,7 @@
     <value>Kapanım sağlayıcısı tarafından '{0}' kapanım türü için belirtilen geçersiz kanıtlama parametreleri. '{2}' parametresinin '{1}' değeri işaretsiz int'e dönüştürülürken hata oluştu. Hata İletisi: {3}</value>
   </data>
   <data name="TCE_InvalidKeyStoreProviderName" xml:space="preserve">
-    <value>Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{2}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
+    <value>Geçersiz anahtar deposu sağlayıcı adı: '{0}'. Bir anahtar deposu sağlayıcısı adı ya bir sistem anahtar deposu sağlayıcısını ya da kayıtlı bir özel anahtar deposu sağlayıcısını göstermelidir. Geçerli sistem anahtar deposu sağlayıcı adları: {1}. Geçerli (şu anda kayıtlı) özel anahtar deposu sağlayıcı adları:{0}. Lütfen veritabanındaki sütun ana anahtar tanımlarında anahtar deposu sağlayıcısı bilgilerini doğrulayın ve uygulamanızda kullanılan tüm özel anahtar deposu sağlayıcılarının doğru şekilde kaydedildiğini doğrulayın.</value>
   </data>
   <data name="TCE_FailedToEncryptRegisterRulesBytePackage" xml:space="preserve">
     <value>İç Hata.  Kapanıma gönderilecek bayt paketi şifrelenemedi. Hata İletisi: {0} </value>

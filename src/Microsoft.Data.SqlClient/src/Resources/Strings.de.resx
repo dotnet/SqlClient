@@ -4477,7 +4477,7 @@
     <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL „{0}“ zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Vergewissern Sie sich, dass die Nachweis-URL korrekt ist und der HGS-Server online und vollständig initialisiert ist. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Um weitere Unterstützung zu erhalten, wenden Sie sich an den Kundensupport. Fehlerdetails: „{1}“</value>
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Vergewissern Sie sich, dass die Nachweis-URL korrekt ist und der HGS-Server online und vollständig initialisiert ist. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Um weitere Unterstützung zu erhalten, wenden Sie sich an den Kundensupport. Fehlerdetails: „{0}“</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
