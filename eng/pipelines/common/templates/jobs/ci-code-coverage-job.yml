@@ -44,10 +44,10 @@ jobs:
   - task: NuGetAuthenticate@1
     displayName: 'NuGet Authenticate'
 
-  - task: UseDotNet@2
-    displayName: 'Use .NET SDK 8.0.x'
-    inputs:
-      version: 8.0.x
+  - template: ../steps/ensure-dotnet-version.yml@self
+    parameters:
+        packageType: 'sdk'
+        version: '8.0'
 
   - ${{ parameters.downloadArtifactsSteps }}
 
