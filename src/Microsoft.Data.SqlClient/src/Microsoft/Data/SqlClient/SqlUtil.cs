@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
         static internal Exception InvalidCertAuth()
         {

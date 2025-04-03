@@ -579,22 +579,22 @@ namespace Microsoft.Data.SqlClient
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryMSIString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
             }
         }
 
@@ -945,7 +945,7 @@ namespace Microsoft.Data.SqlClient
             // wrap Format and Overflow exceptions with Argument one, to be consistent with rest of the keyword types (like int and bool)
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
+                return DbConnectionStringUtilities.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
             }
             catch (FormatException e)
             {
@@ -977,7 +977,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(KEY.Authentication, value);
+                return DbConnectionStringUtilities.ConvertToAuthenticationType(KEY.Authentication, value);
             }
             catch (FormatException e)
             {
@@ -1002,7 +1002,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
+                return DbConnectionStringUtilities.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
             }
             catch (FormatException e)
             {
@@ -1027,7 +1027,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
+                return AttestationProtocolUtilities.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
             }
             catch (FormatException e)
             {
@@ -1052,7 +1052,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
+                return IpAddressPreferenceUtilities.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
             }
             catch (FormatException e)
             {
@@ -1073,7 +1073,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
+                return PoolBlockingUtilities.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
             }
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
@@ -1090,7 +1090,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
+                return AttestationProtocolUtilities.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
             }
             catch (FormatException e)
             {
