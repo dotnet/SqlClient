@@ -13,6 +13,7 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
@@ -23,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
+        // @TODO: Remove this in favor of using DbConnectionStringDefaults??
         internal static class DEFAULT
         {
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
@@ -71,6 +73,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor of DbConnectionStringKeywords
         // SqlConnection ConnectionString Options
         internal static class KEY
         {
@@ -126,6 +129,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor DbConnectionStringSynonyms
         // Constant for the number of duplicate options in the connection string
         private static class SYNONYM
         {

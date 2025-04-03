@@ -15,6 +15,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {

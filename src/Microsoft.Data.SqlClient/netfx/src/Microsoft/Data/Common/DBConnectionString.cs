@@ -2,16 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Text;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient;
+
 namespace Microsoft.Data.Common
 {
-
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Text;
-    using Microsoft.Data.SqlClient;
-
     [Serializable] // MDAC 83147
     internal sealed class DBConnectionString
     {
@@ -19,6 +19,7 @@ namespace Microsoft.Data.Common
         // used by permission classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
+        // @TODO: Remove in favor of DbConnectionStringKeywords
         private static class KEY
         {
             internal const string Password = DbConnectionStringKeywords.Password;
