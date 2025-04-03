@@ -19,7 +19,11 @@ If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection is 
 
 If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
 
-## Examples  
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[    
 
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint>s are added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> of the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy operation.  
 
@@ -31,7 +35,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.ColumnOrderHintCollection#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintCollection.cs#1)]
 
 ]]></format>
-      </remarks>
+      </example>
     </SqlBulkCopyColumnOrderHintCollection>
     <Add name="columnOrderHintParameter">
       <param name="columnOrderHint">
@@ -44,8 +48,8 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> object.
       </returns>
       <example>
-        <format type="text/markdown"><![CDATA[
-## Examples
+        <format type="text/markdown">
+          <![CDATA[  
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. A <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> object is used to define the sort order for the **ProductNumber** destination column.
 
 > [!IMPORTANT]
@@ -76,8 +80,8 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         A column column order hint.
       </returns>
       <example>
-        <format type="text/markdown"><![CDATA[
-## Examples
+        <format type="text/markdown">
+          <![CDATA[
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. A <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint> object is added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnOrderHints> by providing the destination column name and its sort order.
 
 > [!IMPORTANT]

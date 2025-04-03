@@ -5,11 +5,8 @@
         Enables the .NET Framework Data Provider for SQL Server to help make sure that a user has a security level sufficient to access a data source.
       </summary>
       <remarks>
-        <para>
-        </para>
         <format type="text/markdown">
-          <![CDATA[
-
+          <![CDATA[  
 The <xref:System.Data.Common.DBDataPermission.IsUnrestricted> property takes precedence over the <xref:System.Data.Common.DBDataPermission.AllowBlankPassword> property. Therefore, if you set <xref:System.Data.Common.DBDataPermission.AllowBlankPassword> to `false`, you must also set <xref:System.Data.Common.DBDataPermission.IsUnrestricted> to `false` to prevent a user from making a connection using a blank password.
 
 > [!NOTE]
