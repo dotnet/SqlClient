@@ -5,11 +5,11 @@
         Lets you efficiently bulk load a SQL Server table with data from another source.
       </summary>
       <remarks>
+        Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
+			</remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <xref:Microsoft.Data.SqlClient.SqlBulkCopy> offers a significant performance advantage over them. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <xref:System.Data.DataTable> instance or read with a <xref:System.Data.IDataReader> instance. <xref:Microsoft.Data.SqlClient.SqlBulkCopy> will fail when bulk loading a <xref:System.Data.DataTable> column of type <xref:System.Data.SqlTypes.SqlDateTime> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
-
-## Examples
+          <![CDATA[  
 The following console application demonstrates how to load data using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class. In this example, a <xref:Microsoft.Data.SqlClient.SqlDataReader> is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database.
 
 > [!IMPORTANT]
@@ -18,8 +18,9 @@ The following console application demonstrates how to load data using the <xref:
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[BulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
+
 ]]></format>
-			</remarks>
+			</example>
     </SqlBulkCopy>
     <ctor name="SqlConnectionParameter">
       <param name="connection">
@@ -29,11 +30,11 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class using the specified open instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />.
       </summary>
       <remarks>
+        Because the connection is already open when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is initialized, the connection remains open after the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. If the `connection` argument is null, an <see cref="T:System.ArgumentNullException" /> is thrown.
+			</remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-Because the connection is already open when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance is initialized, the connection remains open after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance is closed. If the `connection` argument is null, an <xref:System.ArgumentNullException> is thrown.
-
-## Examples
+          <![CDATA[  
 The following console application demonstrates how to bulk load data using a connection that is already open. In this example, a <xref:Microsoft.Data.SqlClient.SqlDataReader>
 is used to copy data from the **Production.Product** table in the SQL Server **AdventureWorks** database to a similar table in the same database. This example is for demonstration
 purposes only. You would not use `SqlBulkCopy` to move data from one table to another in the same database in a production application.
@@ -46,8 +47,9 @@ Note that the source data does not have to be located on SQL Server; you can use
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[BulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </ctor>
     <ctor name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters">
       <param name="connection">
@@ -88,11 +90,11 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Initializes and opens a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> based on the supplied <paramref name="connectionString" />. The constructor uses the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> to initialize a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class.
       </summary>
       <remarks>
+        The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <see cref="T::System.ArgumentNullException" /> is thrown. If `connectionString` is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
+			</remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <xref:System.ArgumentNullException> is thrown. If `connectionString` is an empty string, an <xref:System.ArgumentException> is thrown.
-
-## Examples
+          <![CDATA[  
 The following console application demonstrates how to bulk load data by using a connection specified as a string. The connection is automatically
 closed when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance is closed.
 In this example, the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
@@ -104,8 +106,9 @@ The source data does not have to be located on SQL Server; you can use any data 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
       <exception cref="T:System.ArgumentException">
         If <paramref name="connectionString" /> is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
       </exception>
@@ -121,11 +124,11 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Initializes and opens a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> based on the supplied <paramref name="connectionString" />. The constructor uses that <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> to initialize a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class. The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance behaves according to options supplied in the <paramref name="copyOptions" /> parameter.
       </summary>
       <remarks>
+        You can obtain detailed information about all the bulk copy options in the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> topic.
+			</remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-You can obtain detailed information about all the bulk copy options in the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions> topic. 
-
-## Examples
+          <![CDATA[  
 The following console application demonstrates how to perform a bulk load by using a connection specified as a string.
 An option is set to use the value in the identity column of the source table when you load the destination table. In this example,
 the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
@@ -141,8 +144,9 @@ added because of primary key constraint violations.
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.KeepIdentity#1](~/../sqlclient/doc/samples/SqlBulkCopy_KeepIdentity.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </ctor>
     <BatchSize>
       <summary>
@@ -153,21 +157,25 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 A batch is complete when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows have been processed or there are no more rows to send to the destination data source.
 
-Zero (the default) indicates that each <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> operation is a single batch.
+Zero (the default) indicates that each <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is a single batch.
 
 If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance has been declared without the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> option in effect,
 rows are sent to the server <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows at a time, but no transaction-related action is taken.
 If <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> is in effect, each batch of rows is inserted as a separate transaction.
 
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size.
-Subsequent batches use the new size. If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> is initially zero and changed while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A>
-operation is already in progress, that operation loads the data as a single batch. Any subsequent <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A>
+Subsequent batches use the new size. If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> is initially zero and changed while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
+operation is already in progress, that operation loads the data as a single batch. Any subsequent <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
 operations on the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance use the new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data in batches of 50 rows. For an example illustrating how <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>
 works with a transaction, see [Transaction and Bulk Copy Operations](https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations).
 
@@ -178,8 +186,9 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.BatchSize#1](~/../sqlclient/doc/samples/SqlBulkCopy_BatchSize.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </BatchSize>
     <BulkCopyTimeout>
       <summary>
@@ -189,11 +198,11 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BulkCopyTimeout" /> property. The default is 30 seconds. A value of 0 indicates no limit; the bulk copy will wait indefinitely.
       </value>
       <remarks>
+        If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.  
+			</remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.  
-
-## Examples  
+          <![CDATA[  
 The following console application demonstrates how to modify the time-out to 60 seconds when bulk loading data.
 In this example, the source data is first read from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance.
 The source data does not have to be located on SQL Server; you can use any data source that can be read to an <xref:System.Data.IDataReader> or loaded to a <xref:System.Data.DataTable>.
@@ -204,8 +213,9 @@ The source data does not have to be located on SQL Server; you can use any data 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.Timeout#1](~/../sqlclient/doc/samples/SqlBulkCopy_Timeout.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </BulkCopyTimeout>
     <Close>
       <summary>
@@ -213,11 +223,15 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
-After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
+          <![CDATA[  
+After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
 Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to add sales orders and their associated details to two destination tables. Because the **AdventureWorks** sales order tables are large, the sample reads only orders placed by a certain account number and bulk copies those orders and details to the destination tables. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method is used only after both bulk copy operations are complete.
 
 > [!IMPORTANT]
@@ -226,8 +240,9 @@ The following example uses the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.OrdersDetails#1](~/../sqlclient/doc/samples/SqlBulkCopy_OrdersDetails.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </Close>
     <EnableStreaming>
       <summary>
@@ -238,7 +253,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is `true`, <xref:Microsoft.Data.SqlClient.SqlBulkCopy> reads from an <xref:System.Data.IDataReader> object using <xref:System.Data.CommandBehavior.SequentialAccess>,
 optimizing memory usage by using the <xref:System.Data.IDataReader> streaming capabilities. Streaming is only applicable to max data types (i.e.
 VARBINARY(MAX), VARCHAR(MAX), NVARCHAR(MAX), and XML). When <xref:Microsoft.Data.SqlClient.SqlBulkCopy.EnableStreaming> is set to false,
@@ -246,6 +261,7 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returne
 
 > [!NOTE]
 > The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
+
 ]]></format>
 			</remarks>
     </EnableStreaming>
@@ -285,17 +301,21 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returne
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
-If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> has not been set when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> is called, an <xref:System.ArgumentNullException>
-is thrown. If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is modified while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> operation is running,
-the change does not affect the current operation. The new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> value is used the next time a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is called.
+          <![CDATA[  
+If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> has not been set when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> is called, an <xref:System.ArgumentNullException>
+is thrown. If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is modified while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is running,
+the change does not affect the current operation. The new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> value is used the next time a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is called.
 
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is a three-part name (`<database>.<owningschema>.<name>`). You can qualify the table name with its database and owning schema if you choose.
 However, if the table name uses an underscore ("_") or any other special characters, you must escape the name using surrounding brackets as in (`[<database>.<owningschema>.<name_01>]`).
 
 You can bulk-copy data to a temporary table by using a value such as `tempdb..#table` or `tempdb.<owner>.#table` for the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> property.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data using a connection that is already open. The destination table is a table in the **AdventureWorks** database.
 
 In this example, the connection is first used to read data from a SQL Server table to a <xref:Microsoft.Data.SqlClient.SqlDataReader> instance. The source data does not have to
@@ -307,8 +327,9 @@ be located on SQL Server; you can use any data source that can be read to an <xr
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </DestinationTableName>
     <NotifyAfter>
       <summary>
@@ -319,14 +340,18 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 This property is designed for user interface components that illustrate the progress of a bulk copy operation. It indicates the number of rows to be processed before generating a notification event.
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property can be set at any time, even while a bulk copy operation is underway. Changes made during a bulk copy operation take effect after
 the next notification. The new setting applies to all subsequent operations on the same instance.
 
 If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> is set to a number less than zero, an <xref:System.ArgumentOutOfRangeException> is thrown.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data using a connection that is already open. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property is set so that
 the event handler is called after every 50 rows copied to the table.
 
@@ -340,8 +365,9 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.NotifyAfter#1](~/../sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </NotifyAfter>
     <SqlRowsCopied>
       <summary>
@@ -349,7 +375,7 @@ statement to copy the data.
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 Note that the settings of <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> and <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> are independent. Receipt of a
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event does not imply that any rows have been sent to the server or committed.
 
@@ -362,7 +388,11 @@ operation from the event, the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventA
 No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used
 during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event. However, you can open a different connection.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data using a connection that is already open. The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property is set so that
 the event handler is called after every 50 rows copied to the table.
 
@@ -376,8 +406,9 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.NotifyAfter#1](~/../sqlclient/doc/samples/SqlBulkCopy_NotifyAfter.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </SqlRowsCopied>
     <RowsCopied>
       <summary>
@@ -420,7 +451,7 @@ and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 Call `Dispose` when you are finished using the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. The `Dispose` method leaves the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> in an unusable state.
 After calling `Dispose`, you must release all references to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> so the garbage collector can reclaim the memory that the
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy> was occupying.
@@ -430,6 +461,7 @@ For more information, see [Cleaning Up Unmanaged Resources](https://learn.micros
 
 > [!NOTE]
 > Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
+
 ]]></format>
 			</remarks>
     </System.IDisposable.Dispose>
@@ -453,20 +485,24 @@ For more information, see [Cleaning Up Unmanaged Resources](https://learn.micros
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <xref:System.Data.IDbCommand.ExecuteReader> or a similar call,
 so the next available row is the first row. To process multiple results, call <xref:System.Data.IDataReader.NextResult> on the data reader and call
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> again.
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> again.
 
-Note that using <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> modifies the state of the reader. The method will call <xref:System.Data.IDataReader.Read>
+Note that using <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> modifies the state of the reader. The method will call <xref:System.Data.IDataReader.Read>
 until it returns false, the operation is aborted, or an error occurs. This means that the data reader will be in a different state, probably at the end of the result set,
-when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> operation is complete.
+when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is complete.
 
 While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.
 
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the data reader columns to the destination database table.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data from a <xref:Microsoft.Data.SqlClient.SqlDataReader>. The destination table is a table in the **AdventureWorks** database.
 
 > [!IMPORTANT]
@@ -476,8 +512,9 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.ConnectionString#1](~/../sqlclient/doc/samples/SqlBulkCopy_ConnectionString.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
@@ -491,14 +528,18 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 All rows in the <xref:System.Data.DataTable> are copied to the destination table except those that have been deleted.
 
 While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.
 
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataTable> columns to the destination database table.
 
-## Examples
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following Console application demonstrates how to bulk load data from a <xref:System.Data.DataTable>. The destination table is a table in the **AdventureWorks** database.
 
 In this example, a <xref:System.Data.DataTable> is created at run time and is the source of the `SqlBulkCopy` operation.
@@ -509,8 +550,9 @@ In this example, a <xref:System.Data.DataTable> is created at run time and is th
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataTable#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataTable.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
@@ -533,7 +575,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 Only rows in the <xref:System.Data.DataTable> that are in the states indicated in the `rowState` argument and have not been deleted are copied to the destination table.
 
 > [!NOTE]
@@ -544,11 +586,16 @@ While the bulk copy operation is in progress, the associated destination <xref:M
 
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataTable> columns to the destination database table.
 
-## Examples
+]]>
+      </format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[ 
 The following Console application demonstrates how to bulk load only the rows in a <xref:System.Data.DataTable> that match a specified state. In this case, only unchanged rows are added. The destination table is a table in the **AdventureWorks** database.
 
-In this example, a <xref:System.Data.DataTable> is created at run time and three rows are added to it. Before the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is executed, one of the rows is edited.
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
+In this example, a <xref:System.Data.DataTable> is created at run time and three rows are added to it. Before the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is executed, one of the rows is edited.
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
@@ -556,8 +603,9 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method is calle
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
+
 ]]></format>
-			</remarks>
+			</example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
@@ -576,7 +624,11 @@ While the bulk copy operation is in progress, the associated destination <xref:M
 
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataRow> columns to the destination database table.  
 
-## Examples  
+]]></format>
+			</remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application demonstrates how to bulk load data from a <xref:System.Data.DataRow> array. The destination table is a table in the **AdventureWorks** database.  
 
 In this example, a <xref:System.Data.DataTable> is created at run time. A single row is selected from the <xref:System.Data.DataTable> to copy to the destination table.  
@@ -589,7 +641,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.RowArray#1](~/../sqlclient/doc/samples/SqlBulkCopy_RowArray.cs#1)]
 
 ]]></format>
-			</remarks>
+      </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>

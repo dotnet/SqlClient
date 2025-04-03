@@ -9,7 +9,7 @@
       </remarks>
       <example>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 The following console application demonstrates how to perform a bulk load that copies the value in the identity column of the source table to the corresponding column in the destination table, instead of generating a new value for each row's identity column.  
 
 To see how the option changes the way the bulk load works, run the sample with the **dbo.BulkCopyDemoMatchingColumns** table empty. All rows load from the source. Next, run the sample again without emptying the table. An exception is thrown, and the code writes a message to the console window notifying you that rows were not added because of primary key violations.  
