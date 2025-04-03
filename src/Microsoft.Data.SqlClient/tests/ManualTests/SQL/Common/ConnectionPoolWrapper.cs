@@ -5,12 +5,14 @@
 using System;
 using System.Linq;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConnectionPoolWrapper
     {
-        private object _connectionPool = null;
+        private DbConnectionPool _connectionPool = null;
 
         /// <summary>
         /// Finds the connection pool for the given connection
@@ -22,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            _connectionPool = ConnectionHelper.GetConnectionPool(connection.GetInternalConnection());
+            _connectionPool = connection.InnerConnection.Pool;
             ConnectionString = connection.ConnectionString;
 
             if (_connectionPool == null)
@@ -49,9 +51,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Finds the connection pool for the given internal connection
         /// </summary>
         /// <param name="internalConnection"></param>
-        internal ConnectionPoolWrapper(object internalConnection, string connectionString)
+        internal ConnectionPoolWrapper(DbConnectionInternal internalConnection, string connectionString)
         {
-            _connectionPool = ConnectionHelper.GetConnectionPool(internalConnection);
+            _connectionPool = internalConnection.Pool;
             ConnectionString = connectionString;
 
             if (_connectionPool == null)
@@ -65,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// The number of connections in this connection pool (free + non-free; including transaction pools)
         /// </summary>
         public int ConnectionCount
-        { get { return ConnectionPoolHelper.CountConnectionsInPool(_connectionPool); } }
+        { get { return _connectionPool.Count; } }
 
         /// <summary>
         /// Counts the number of free connection in the pool (excluding any transaction pools)
@@ -107,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (connection == null)
                 throw new ArgumentNullException(nameof(connection));
 
-            return (_connectionPool == ConnectionHelper.GetConnectionPool(connection.GetInternalConnection()));
+            return (_connectionPool == connection.InnerConnection.Pool);
         }
 
         /// <summary>
