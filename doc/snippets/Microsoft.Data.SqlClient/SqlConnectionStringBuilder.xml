@@ -6,7 +6,7 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 The connection string builder lets developers programmatically create syntactically correct connection strings, and parse and rebuild existing connection strings, using properties and methods of the class. The connection string builder provides strongly typed properties corresponding to the known key/value pairs allowed by SQL Server. Developers needing to create connection strings as part of applications can use the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to build and modify connection strings. The class also makes it easy to manage connection strings stored in an application configuration file.  
 
 The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> performs checks for valid key/value pairs. Therefore, you cannot use this class to create invalid connection strings; trying to add invalid pairs will throw an exception. The class maintains a fixed collection of synonyms and can translate from a synonym to the corresponding well-known key name.  
@@ -40,7 +40,11 @@ Source=(local);Initial Catalog="AdventureWorks;NewValue=Bad";
 Integrated Security=True  
 ```
 
-## Examples  
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following console application builds connection strings for a SQL Server database. The code uses a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to create the connection string, and then passes the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance to the constructor of the connection class. The example also parses an existing connection string and demonstrates various ways of manipulating the connection string's contents.  
 
 > [!NOTE]
@@ -49,7 +53,7 @@ The following console application builds connection strings for a SQL Server dat
 [!code-csharp[SqlConnectionStringBuilder#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder.cs#1)]
 
 ]]></format>
-      </remarks>
+      </example>
     </SqlConnectionStringBuilder>
     <ctor2>
       <summary>
@@ -65,10 +69,14 @@ The following console application builds connection strings for a SQL Server dat
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the `ConnectionString` property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.  
 
-## Examples  
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following example supplies a simple SQL Server connection string in the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object's constructor, and then iterates through all the key/value pairs within the object. Note that the collection provides default values for each item. Also note that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the well-known keys so that they are consistent with the well-known names.  
 
 > [!NOTE]
@@ -77,7 +85,7 @@ The following example supplies a simple SQL Server connection string in the <xre
 [!code-csharp[SqlConnectionStringBuilder3#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder3.cs#1)]
 
 ]]></format>
-      </remarks>
+      </example>
       <exception cref="T:System.Collections.Generic.KeyNotFoundException">
         Invalid key name within the connection string.
       </exception>
@@ -634,7 +642,7 @@ This property corresponds to the "Connect Retry Count" key within the <xref:Micr
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 This property corresponds to the "Encrypt" key within the connection string.  
 
 When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> or `true`, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](https://learn.microsoft.com/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
@@ -718,7 +726,7 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
       </value>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
 
 > [!NOTE]
@@ -813,7 +821,11 @@ If User ID and Password are specified and Integrated Security is set to true, th
 
 <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).
 
-## Examples  
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following example converts an existing connection string from using SQL Server Authentication to using integrated security. The example does its work by removing the user name and password from the connection string and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
 
 > [!NOTE]
@@ -822,7 +834,7 @@ The following example converts an existing connection string from using SQL Serv
 [!code-csharp[SqlConnectionStringBuilder_IntegratedSecurity#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_IntegratedSecurity.cs#1)]
 
 ]]></format>
-      </remarks>
+      </example>
     </IntegratedSecurity>
     <IPAddressPreference>
       <summary>
@@ -1246,7 +1258,11 @@ Because the collection of keys supported by the <xref:Microsoft.Data.SqlClient.S
 |User Instance|False|  
 |Workstation ID|Empty string|  
 
-## Examples  
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following example converts an existing connection string from using Windows Authentication to using integrated security. The example works by removing the user name and password from the connection string, and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
 
 > [!NOTE]
@@ -1263,7 +1279,7 @@ Database = AdventureWorks
 ```  
 
 ]]></format>
-      </remarks>
+      </example>
       <exception cref="T:System.ArgumentNullException">
         <paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)
       </exception>

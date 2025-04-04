@@ -6,7 +6,7 @@
       </summary>
       <remarks>
         <format type="text/markdown">
-          <![CDATA[
+          <![CDATA[  
 Column mappings define the mapping between data source and the target table.
 
 If mappings are not defined - that is, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection is empty - the columns are mapped implicitly based on ordinal position. For this to work, source and target schemas must match. If they do not, an <xref:System.InvalidOperationException> will be thrown.
@@ -15,7 +15,11 @@ If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings%2A> collection 
 
 You can refer to source and target columns by either name or ordinal. You can also mix by-name and by-ordinal column references in the same mappings collection.
 
-## Examples
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, and each destination column is in the same ordinal position as its corresponding source column, the column names do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
 
 > [!IMPORTANT]
@@ -24,27 +28,29 @@ The following example bulk copies data from a source table in the **AdventureWor
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
+
 ]]></format>
-			</remarks>
+			</example>
     </SqlBulkCopyColumnMapping>
     <ctor name="default">
       <summary>
         Parameterless constructor that initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping" /> object.
       </summary>
       <remarks>
+        If you use this constructor, you must then define the source for the mapping using the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> property or the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> property, and define the destination for the mapping using the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> property or the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> property.
+      </remarks>
+      <example>
         <format type="text/markdown">
-          <![CDATA[
-If you use this constructor, you must then define the source for the mapping using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn> property or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal%2A> property, and define the destination for the mapping using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn%2A> property or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal%2A> property.
-
-## Examples
+          <![CDATA[  
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.
 
 [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
+
 ]]></format>
-			</remarks>
+      </example>
     </ctor>
     <ctor name="sourceColumnOrdinalIntegerAndDestinationOrdinalInteger">
       <param name="sourceColumnOrdinal">
@@ -58,8 +64,7 @@ The following example bulk copies data from a source table in the **AdventureWor
       </summary>
       <example>
         <format type="text/markdown">
-          <![CDATA[
-## Examples
+          <![CDATA[  
 The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. Although the number of columns in the destination matches the number of columns in the source, the column names and ordinal positions do not match. <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping> objects are used to create a column map for the bulk copy based on the ordinal positions of the columns.
 
 > [!IMPORTANT]

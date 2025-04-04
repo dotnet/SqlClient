@@ -90,7 +90,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Initializes and opens a new instance of <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> based on the supplied <paramref name="connectionString" />. The constructor uses the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> to initialize a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class.
       </summary>
       <remarks>
-        The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <see cref="T::System.ArgumentNullException" /> is thrown. If `connectionString` is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
+        The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <see cref="T:System.ArgumentNullException" /> is thrown. If `connectionString` is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -158,19 +158,19 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
-A batch is complete when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows have been processed or there are no more rows to send to the destination data source.
-
-Zero (the default) indicates that each <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is a single batch.
-
-If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance has been declared without the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> option in effect,
-rows are sent to the server <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows at a time, but no transaction-related action is taken.
-If <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> is in effect, each batch of rows is inserted as a separate transaction.
-
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size.
-Subsequent batches use the new size. If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> is initially zero and changed while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
+          A batch is complete when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows have been processed or there are no more rows to send to the destination data source.
+        
+          Zero (the default) indicates that each <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is a single batch.
+        
+          If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance has been declared without the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> option in effect,
+rows are sent to the server <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows at a time, but no transaction-related action is taken. 
+          If <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> is in effect, each batch of rows is inserted as a separate transaction.
+        
+          The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. 
+          Subsequent batches use the new size. If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> is initially zero and changed while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
 operation is already in progress, that operation loads the data as a single batch. Any subsequent <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
 operations on the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance use the new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>.
-
+        
 ]]></format>
 			</remarks>
       <example>
@@ -222,10 +222,10 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Closes the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance.
       </summary>
       <remarks>
-        <format type="text/markdown">
+<format type="text/markdown">
           <![CDATA[  
-After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
-Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
+        After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
+        Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
 
 ]]></format>
 			</remarks>
