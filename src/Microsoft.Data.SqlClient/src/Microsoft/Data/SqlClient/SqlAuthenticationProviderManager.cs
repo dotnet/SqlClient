@@ -58,9 +58,7 @@ namespace Microsoft.Data.SqlClient
             {
                 var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
-                #pragma warning disable 0618
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
-                #pragma warning restore 0618
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
@@ -232,10 +230,8 @@ namespace Microsoft.Data.SqlClient
             {
                 case ActiveDirectoryIntegrated:
                     return SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                #pragma warning disable 0618
                 case ActiveDirectoryPassword:
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
-                #pragma warning restore 0618
                 case ActiveDirectoryInteractive:
                     return SqlAuthenticationMethod.ActiveDirectoryInteractive;
                 case ActiveDirectoryServicePrincipal:

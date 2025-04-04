@@ -1642,7 +1642,7 @@
             </list>
           </item>
           <item>
-            <c>Authentication</c> is one of the 'Active Directory' authentication types.
+            <c>Authentication</c> is 'Active Directory Password' or 'Active Directory Integrated'
           </item>
           <item>Otherwise it defaults to <c>true</c>.</item>
         </list>
