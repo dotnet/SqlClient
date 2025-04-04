@@ -1410,6 +1410,7 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
               <item>.database.usgovcloudapi.net</item>
               <item>.database.cloudapi.de</item>
               <item>.database.windows.net</item>
+              <item>.database.fabric.microsoft.com</item>
             </list>
           </item>
           <item>
