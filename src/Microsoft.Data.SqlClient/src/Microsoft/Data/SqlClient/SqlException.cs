@@ -96,6 +96,28 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class => Errors.Count > 0 ? Errors[0].Class : default;
 
+#if NET6_0_OR_GREATER
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="IsTransient"]/IsTransient/*' />
+        public override bool IsTransient
+        {
+            get
+            {
+                if (Errors.Count == 0)
+                    return false;
+
+                for (int i = 0; i < Errors.Count; i++)
+                {
+                    if (!SqlConfigurableRetryFactory.IsKnownTransientErrorCode(Errors[i].Number))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+#endif
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
         public int LineNumber => Errors.Count > 0 ? Errors[0].LineNumber : default;
 
