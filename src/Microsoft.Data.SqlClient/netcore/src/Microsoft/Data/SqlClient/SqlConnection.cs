@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         // diagnostics listener
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
@@ -2001,7 +2001,9 @@ namespace Microsoft.Data.SqlClient
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                    #pragma warning disable 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    #pragma warning restore 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
@@ -2350,8 +2352,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (con != null)
-                    con.Dispose();
+                con?.Dispose();
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 

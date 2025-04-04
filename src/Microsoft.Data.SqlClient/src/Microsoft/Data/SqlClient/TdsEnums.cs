@@ -13,6 +13,9 @@ namespace Microsoft.Data.SqlClient
     {
         // internal tdsparser constants
 
+
+        public const string SQL_PROVIDER_NAME = Common.DbConnectionStringDefaults.ApplicationName;
+
         public static readonly decimal SQL_SMALL_MONEY_MIN = new(-214748.3648);
         public static readonly decimal SQL_SMALL_MONEY_MAX = new(214748.3647);
 
@@ -341,29 +344,22 @@ namespace Microsoft.Data.SqlClient
             0x72xx0002 -> 2005 RTM
         */
 
-        // Pre 2000 SP1 versioning scheme:
-        public const int SQL70OR2000_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
-        public const int SQL70_INCREMENT = 0x00;     // 7.0 and 2000
-        public const int SQL2000_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
-        public const int DEFAULT_MINOR = 0x0000;
-
         // Majors:
-        public const int SQL2000SP1_MAJOR = 0x71;     // For 2000 SP1 and later the versioning schema changed and
-        public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
+        // For 2000 SP1 and later the versioning schema changed and
+        // the high-byte is sufficient to distinguish later versions
+        public const int SQL2005_MAJOR = 0x72;
         public const int SQL2008_MAJOR = 0x73;
         public const int SQL2012_MAJOR = 0x74;
         public const int TDS8_MAJOR = 0x08;          // TDS8 version to be used at login7
         public const string TDS8_Protocol = "tds/8.0"; //TDS8
 
         // Increments:
-        public const int SQL2000SP1_INCREMENT = 0x00;
         public const int SQL2005_INCREMENT = 0x09;
         public const int SQL2008_INCREMENT = 0x0b;
         public const int SQL2012_INCREMENT = 0x00;
         public const int TDS8_INCREMENT = 0x00;
 
         // Minors:
-        public const int SQL2000SP1_MINOR = 0x0001;
         public const int SQL2005_RTM_MINOR = 0x0002;
         public const int SQL2008_MINOR = 0x0003;
         public const int SQL2012_MINOR = 0x0004;
@@ -548,22 +544,7 @@ namespace Microsoft.Data.SqlClient
         public const ushort RPC_PROCID_PREPEXECRPC = 14;
         public const ushort RPC_PROCID_UNPREPARE = 15;
 
-        // For Transactions
-        public const string TRANS_BEGIN = "BEGIN TRANSACTION";
-        public const string TRANS_COMMIT = "COMMIT TRANSACTION";
-        public const string TRANS_ROLLBACK = "ROLLBACK TRANSACTION";
-        public const string TRANS_IF_ROLLBACK = "IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION";
-        public const string TRANS_SAVE = "SAVE TRANSACTION";
-
-        // For Transactions - isolation levels
-        public const string TRANS_READ_COMMITTED = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED";
-        public const string TRANS_READ_UNCOMMITTED = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED";
-        public const string TRANS_REPEATABLE_READ = "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ";
-        public const string TRANS_SERIALIZABLE = "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE";
-        public const string TRANS_SNAPSHOT = "SET TRANSACTION ISOLATION LEVEL SNAPSHOT";
-
-        // Batch RPC flags
-        public const byte SQL2000_RPCBATCHFLAG = 0x80;
+        // Batch RPC flag
         public const byte SQL2005_RPCBATCHFLAG = 0xFF;
 
         // RPC flags
@@ -1149,6 +1130,7 @@ namespace Microsoft.Data.SqlClient
         SqlPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
+        [Obsolete("ActiveDirectoryPassword is deprecated.")]
         ActiveDirectoryPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>

@@ -1638,10 +1638,11 @@
               <item>.database.usgovcloudapi.net</item>
               <item>.database.cloudapi.de</item>
               <item>.database.windows.net</item>
+              <item>.database.fabric.microsoft.com</item>
             </list>
           </item>
           <item>
-            <c>Authentication</c> is 'Active Directory Password' or 'Active Directory Integrated'
+            <c>Authentication</c> is one of the 'Active Directory' authentication types.
           </item>
           <item>Otherwise it defaults to <c>true</c>.</item>
         </list>

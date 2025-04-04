@@ -18,6 +18,28 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public MaxLengthBinaryType[] Binary;
         public MaxLengthValueLengthType[] MaxTypes;
         public DataType[] Others;
+
+        /// <summary>
+        /// Load the data types configuration from a JSON file.
+        ///
+        /// If the environment variable "DATATYPES_CONFIG" is set, it will be
+        /// used as the path to the config file.  Otherwise, the file
+        /// "datatypes.json" in the current working directory will be used.
+        /// </summary>
+        ///
+        /// <returns>
+        ///   The DataTypes instance populated from the JSON file.
+        /// </returns>
+        ///
+        /// <exception cref="InvalidOperationException">
+        ///   Thrown if the config file cannot be read or deserialized.
+        /// </exception>
+        ///
+        public static DataTypes Load()
+        {
+            return Loader.FromJsonFile<DataTypes>(
+                "datatypes.json", "DATATYPES_CONFIG");
+        }
     }
 
     /// <summary>

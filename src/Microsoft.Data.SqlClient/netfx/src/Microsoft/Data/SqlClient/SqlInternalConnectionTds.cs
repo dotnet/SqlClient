@@ -714,16 +714,6 @@ namespace Microsoft.Data.SqlClient
                 return IsTransactionRoot && (!Is2008OrNewer || Pool == null);
             }
         }
-        
-        override internal bool Is2000 => true;
-
-        override internal bool Is2005OrNewer
-        {
-            get
-            {
-                return _parser.Is2005OrNewer;
-            }
-        }
 
         override internal bool Is2008OrNewer
         {
@@ -1028,39 +1018,11 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against 2000, or we are not enlisted in a
-                // distributed transaction - otherwise don't reset!
-                if (Is2000)
-                {
-                    // Pooled connections that are enlisted in a transaction must have their transaction
-                    // preserved when reseting the connection state. Otherwise, future uses of the connection
-                    // from the pool will execute outside of the transaction, in auto-commit mode.
-                    // https://github.com/dotnet/SqlClient/issues/2970
-                    _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
-                }
-                else if (!IsEnlistedInTransaction)
-                {
-                    // If not 2000, we are going against 7.0.  On 7.0, we
-                    // may only reset if not enlisted in a distributed transaction.
-                    try
-                    {
-                        // execute sp
-                        System.Threading.Tasks.Task executeTask = _parser.TdsExecuteSQLBatch("sp_reset_connection", 30, null, _parser._physicalStateObj, sync: true);
-                        Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-                        _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
-                    }
-                    catch (Exception e)
-                    {
-                        // UNDONE - should not be catching all exceptions!!!
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-
-                        DoomThisConnection();
-                        ADP.TraceExceptionWithoutRethrow(e);
-                    }
-                }
+                // Pooled connections that are enlisted in a transaction must have their transaction
+                // preserved when reseting the connection state. Otherwise, future uses of the connection
+                // from the pool will execute outside of the transaction, in auto-commit mode.
+                // https://github.com/dotnet/SqlClient/issues/2970
+                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
 
                 // Reset hashtable values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
@@ -1123,103 +1085,7 @@ namespace Microsoft.Data.SqlClient
 
             string transactionName = name == null ? string.Empty : name;
 
-            if (!_parser.Is2005OrNewer)
-            {
-                ExecuteTransactionPre2005(transactionRequest, transactionName, iso, internalTransaction);
-            }
-            else
-            {
-                ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
-            }
-        }
-
-        // This function will not handle idle connection resiliency, as older servers will not support it
-        internal void ExecuteTransactionPre2005(
-                    TransactionRequest transactionRequest,
-                    string transactionName,
-                    System.Data.IsolationLevel iso,
-                    SqlInternalTransaction internalTransaction)
-        {
-            StringBuilder sqlBatch = new StringBuilder();
-
-            switch (iso)
-            {
-                case System.Data.IsolationLevel.Unspecified:
-                    break;
-                case System.Data.IsolationLevel.ReadCommitted:
-                    sqlBatch.Append(TdsEnums.TRANS_READ_COMMITTED);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.ReadUncommitted:
-                    sqlBatch.Append(TdsEnums.TRANS_READ_UNCOMMITTED);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.RepeatableRead:
-                    sqlBatch.Append(TdsEnums.TRANS_REPEATABLE_READ);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.Serializable:
-                    sqlBatch.Append(TdsEnums.TRANS_SERIALIZABLE);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.Snapshot:
-                    throw SQL.SnapshotNotSupported(System.Data.IsolationLevel.Snapshot);
-
-                case System.Data.IsolationLevel.Chaos:
-                    throw SQL.NotSupportedIsolationLevel(iso);
-
-                default:
-                    throw ADP.InvalidIsolationLevel(iso);
-            }
-
-            if (!ADP.IsEmpty(transactionName))
-            {
-                transactionName = " " + SqlConnection.FixupDatabaseTransactionName(transactionName);
-            }
-
-            switch (transactionRequest)
-            {
-                case TransactionRequest.Begin:
-                    sqlBatch.Append(TdsEnums.TRANS_BEGIN);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Promote:
-                    Debug.Assert(false, "Promote called with transaction name or on pre-2005!");
-                    break;
-                case TransactionRequest.Commit:
-                    sqlBatch.Append(TdsEnums.TRANS_COMMIT);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Rollback:
-                    sqlBatch.Append(TdsEnums.TRANS_ROLLBACK);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.IfRollback:
-                    sqlBatch.Append(TdsEnums.TRANS_IF_ROLLBACK);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Save:
-                    sqlBatch.Append(TdsEnums.TRANS_SAVE);
-                    sqlBatch.Append(transactionName);
-                    break;
-                default:
-                    Debug.Fail("Unknown transaction type");
-                    break;
-            }
-
-            System.Threading.Tasks.Task executeTask = _parser.TdsExecuteSQLBatch(sqlBatch.ToString(), ConnectionOptions.ConnectTimeout, null, _parser._physicalStateObj, sync: true);
-            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-            _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
-
-            // Prior to 2005, we didn't have any transaction tokens to manage,
-            // or any feedback to know when one was created, so we just presume
-            // that successful execution of the request caused the transaction
-            // to be created, and we set that on the parser.
-            if (TransactionRequest.Begin == transactionRequest)
-            {
-                Debug.Assert(internalTransaction != null, "Begin Transaction request without internal transaction");
-                _parser.CurrentTransaction = internalTransaction;
-            }
+            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
 
@@ -1536,7 +1402,9 @@ namespace Microsoft.Data.SqlClient
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
+            #pragma warning disable 0618
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
+            #pragma warning restore 0618
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
@@ -1938,7 +1806,9 @@ namespace Microsoft.Data.SqlClient
             Boolean isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
             Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
+                                       #pragma warning disable 0618
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                                       #pragma warning restore 0618
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
@@ -2779,7 +2649,9 @@ namespace Microsoft.Data.SqlClient
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
+                        #pragma warning disable 0618
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                        #pragma warning restore 0618
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {

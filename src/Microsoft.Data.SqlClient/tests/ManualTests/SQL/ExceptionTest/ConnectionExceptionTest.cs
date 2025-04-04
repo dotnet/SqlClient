@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string orderIdQuery = "select orderid from orders where orderid < 10250";
         private static bool IsNotKerberos() => DataTestUtility.IsKerberosTest != true;
 
+        [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(nameof(IsNotKerberos))]
         public void TestConnectionStateWithErrorClass20()
         {

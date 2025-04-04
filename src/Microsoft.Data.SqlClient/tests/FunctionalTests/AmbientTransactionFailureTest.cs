@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
@@ -75,7 +76,12 @@ namespace Microsoft.Data.SqlClient.Tests
         };
 
         [ConditionalTheory(nameof(s_isNotArmProcess))] // https://github.com/dotnet/corefx/issues/21598
-        [MemberData(nameof(ExceptionTestDataForSqlException))]
+        [MemberData(
+            nameof(ExceptionTestDataForSqlException),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         public void TestSqlException(Action<string> connectAction, string connectionString)
         {
             Assert.Throws<SqlException>(() =>

@@ -1257,9 +1257,9 @@ namespace Microsoft.Data.SqlClient
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
         }
-        internal static Exception BulkLoadNonMatchingColumnName(IEnumerable<string> columns)
+        internal static Exception BulkLoadNonMatchingColumnNames(IEnumerable<string> columnNames)
         {
-            return BulkLoadNonMatchingColumnName(String.Join(",", columns), null);
+            return BulkLoadNonMatchingColumnName(string.Join(",", columnNames), null);
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
@@ -1524,7 +1524,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVersionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }

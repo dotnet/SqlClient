@@ -2058,7 +2058,9 @@ namespace Microsoft.Data.SqlClient
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
+                    #pragma warning disable 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
+                    #pragma warning restore 0618
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
                 (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
@@ -2195,30 +2197,6 @@ namespace Microsoft.Data.SqlClient
                     return false; //we will not go into reconnection if we are inside the transaction
                 }
                 return GetOpenConnection().HasLocalTransactionFromAPI;
-            }
-        }
-
-        internal bool Is2000
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenConnection().Is2000;
-            }
-        }
-
-        internal bool Is2005OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenConnection().Is2005OrNewer;
             }
         }
 
@@ -2538,12 +2516,14 @@ namespace Microsoft.Data.SqlClient
             // Normally we would simply create a regular connectoin and open it but there is no other way to pass the
             // new password down to the constructor. Also it would have an unwanted impact on the connection pool
             //
-            using (SqlInternalConnectionTds con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null))
+            SqlInternalConnectionTds con = null;
+            try
             {
-                if (!con.Is2005OrNewer)
-                {
-                    throw SQL.ChangePasswordRequires2005();
-                }
+                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null);
+            }
+            finally
+            {
+                con?.Dispose();
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
@@ -2745,7 +2725,7 @@ namespace Microsoft.Data.SqlClient
 
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
         {
-            SqlUdtInfo attr = AssemblyCache.GetInfoFromType(o.GetType());
+            SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
             format = attr.SerializationFormat;
 
@@ -2762,6 +2742,25 @@ namespace Microsoft.Data.SqlClient
                 retval = stm.ToArray();
             }
             return retval;
+        }
+
+        private SqlUdtInfo GetInfoFromType(Type t)
+        {
+            Debug.Assert(t != null, "Type object can't be NULL");
+            Type orig = t;
+            do
+            {
+                SqlUdtInfo attr = SqlUdtInfo.TryGetFromType(t);
+                if (attr != null)
+                {
+                    return attr;
+                }
+
+                t = t.BaseType;
+            }
+            while (t != null);
+
+            throw SQL.UDTInvalidSqlType(orig.AssemblyQualifiedName);
         }
     } // SqlConnection
 } // Microsoft.Data.SqlClient namespace

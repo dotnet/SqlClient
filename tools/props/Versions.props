@@ -53,7 +53,7 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
+    <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftDotNetRemoteExecutorVersion>10.0.0-beta.24564.1</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.24123.1</MicrosoftDotNetXUnitExtensionsVersion>
