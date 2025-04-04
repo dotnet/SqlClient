@@ -156,22 +156,18 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> property, or zero if no value has been set.
       </value>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-          A batch is complete when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows have been processed or there are no more rows to send to the destination data source.
-        
-          Zero (the default) indicates that each <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is a single batch.
-        
-          If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance has been declared without the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> option in effect,
-rows are sent to the server <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> rows at a time, but no transaction-related action is taken. 
-          If <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction> is in effect, each batch of rows is inserted as a separate transaction.
-        
-          The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. 
-          Subsequent batches use the new size. If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> is initially zero and changed while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
-operation is already in progress, that operation loads the data as a single batch. Any subsequent <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
-operations on the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance use the new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize>.
-        
-]]></format>
+        <para>
+          A batch is complete when <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> rows have been processed or there are no more rows to send to the destination data source.
+        </para>
+        <para>
+          Zero (the default) indicates that each <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is a single batch.
+        </para>
+        <para>
+          If the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance has been declared without the <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction" /> option in effect, rows are sent to the server <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> rows at a time, but no transaction-related action is taken. If <see cref="F:Microsoft.Data.SqlClient.SqlBulkCopyOptions.UseInternalTransaction" /> is in effect, each batch of rows is inserted as a separate transaction.
+        </para>
+        <para>
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. Subsequent batches use the new size. If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> is initially zero and changed while a <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is already in progress, that operation loads the data as a single batch. Any subsequent <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operations on the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance use the new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" />.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -222,12 +218,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Closes the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance.
       </summary>
       <remarks>
-<format type="text/markdown">
-          <![CDATA[  
-        After you call a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> on the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object, no other operation will succeed. Calls to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method will throw an <xref:System.InvalidOperationException>. Calling the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close> method from the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event causes an <xref:System.InvalidOperationException> to be thrown.
-        Note that open <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instances are closed implicitly at the end of a `using` block.
-
-]]></format>
+        After you call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object, no other operation will succeed. Calls to the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> method will throw an <see cref="T:System.InvalidOperationException" />. Calling the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method from the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event causes an <see cref="T:System.InvalidOperationException" /> to be thrown. Note that open <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instances are closed implicitly at the end of a <c>using</c> block.
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -300,18 +291,15 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returne
         The string value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property, or null if none as been supplied.
       </value>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> has not been set when <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> is called, an <xref:System.ArgumentNullException>
-is thrown. If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is modified while a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is running,
-the change does not affect the current operation. The new <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> value is used the next time a <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is called.
-
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> is a three-part name (`<database>.<owningschema>.<name>`). You can qualify the table name with its database and owning schema if you choose.
-However, if the table name uses an underscore ("_") or any other special characters, you must escape the name using surrounding brackets as in (`[<database>.<owningschema>.<name_01>]`).
-
-You can bulk-copy data to a temporary table by using a value such as `tempdb..#table` or `tempdb.<owner>.#table` for the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName> property.
-
-]]></format>
+        <para>
+          If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> has not been set when <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> is called, an <see cref="T:System.ArgumentNullException" /> is thrown. If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is modified while a <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader" /> operation is running, the change does not affect the current operation. The new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> value is used the next time a <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> method is called. 
+        </para>
+        <para>
+          <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> is a three-part name (<c>&lt;database&gt;.&lt;owningschema&gt;.&lt;name&gt;</c>). You can qualify the table name with its database and owning schema if you choose. However, if the table name uses an underscore ("_") or any other special characters, you must escape the name using surrounding brackets as in (<c>[&lt;database&gt;.&lt;owningschema&gt;.&lt;name_01&gt;]</c>).
+        </para>
+        <para>
+          You can bulk-copy data to a temporary table by using a value such as <c>tempdb..#table</c> or <c>tempdb.&lt;owner&gt;.#table</c> for the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -339,15 +327,12 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> property, or zero if the property has not been set.
       </value>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-This property is designed for user interface components that illustrate the progress of a bulk copy operation. It indicates the number of rows to be processed before generating a notification event.
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> property can be set at any time, even while a bulk copy operation is underway. Changes made during a bulk copy operation take effect after
-the next notification. The new setting applies to all subsequent operations on the same instance.
-
-If <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> is set to a number less than zero, an <xref:System.ArgumentOutOfRangeException> is thrown.
-
-]]></format>
+        <para>
+          This property is designed for user interface components that illustrate the progress of a bulk copy operation. It indicates the number of rows to be processed before generating a notification event. The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> property can be set at any time, even while a bulk copy operation is underway. Changes made during a bulk copy operation take effect after the next notification. The new setting applies to all subsequent operations on the same instance.
+        </para>
+        <para>
+          If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> is set to a number less than zero, an <see cref="T:System.ArgumentOutOfRangeException" /> is thrown.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -374,21 +359,15 @@ statement to copy the data.
         Occurs every time that the number of rows specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> property have been processed.
       </summary>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-Note that the settings of <xref:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter> and <xref:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize> are independent. Receipt of a
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event does not imply that any rows have been sent to the server or committed.
-
-You cannot call SqlBulkCopy.Close (<xref:Microsoft.Data.SqlClient.SqlBulkCopy.Close>) or SqlConnection.Close (<xref:Microsoft.Data.SqlClient.SqlConnection.Close>) from this event.
-Doing this will cause an <xref:System.InvalidOperationException> being thrown, and the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object state will not change. If the user wants to cancel the
-operation from the event, the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property of the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs> can be used.
-(See [Transaction and Bulk Copy Operations](https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations) for examples that use the
-<xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort> property.)
-
-No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used
-during the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event. However, you can open a different connection.
-
-]]></format>
+        <para>
+          Note that the settings of <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> are independent. Receipt of a <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event does not imply that any rows have been sent to the server or committed.
+        </para>
+        <para>
+          You cannot call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> or <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> from this event. Doing this will cause an <see cref="T:System.InvalidOperationException" /> being thrown, and the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object state will not change. If the user wants to cancel the operation from the event, the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs" /> can be used. (See <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/transaction-bulk-copy-operations">Transaction and Bulk Copy Operations</see> for examples that use the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" /> property.)
+        </para>
+        <para>
+          No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used during the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event. However, you can open a different connection.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -484,21 +463,18 @@ For more information, see [Cleaning Up Unmanaged Resources](https://learn.micros
         Copies all rows in the supplied <see cref="T:System.Data.IDataReader" /> to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object.
       </summary>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <xref:System.Data.IDbCommand.ExecuteReader> or a similar call,
-so the next available row is the first row. To process multiple results, call <xref:System.Data.IDataReader.NextResult> on the data reader and call
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> again.
-
-Note that using <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> modifies the state of the reader. The method will call <xref:System.Data.IDataReader.Read>
-until it returns false, the operation is aborted, or an error occurs. This means that the data reader will be in a different state, probably at the end of the result set,
-when the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> operation is complete.
-
-While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.
-
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the data reader columns to the destination database table.
-
-]]></format>
+        <para>
+          The copy operation starts at the next available row in the reader. Most of the time, the reader was just returned by <see cref="M:System.Data.IDbCommand.ExecuteReader" /> or a similar call, so the next available row is the first row. To process multiple results, call <see cref="M:System.Data.IDataReader.NextResult" /> on the data reader and call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> again.
+        </para>
+        <para>
+          Note that using <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> modifies the state of the reader. The method will call <see cref="M:System.Data.IDataReader.Read" /> until it returns false, the operation is aborted, or an error occurs. This means that the data reader will be in a different state, probably at the end of the result set, when the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> operation is complete.
+        </para>
+        <para>
+          While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
+        </para>
+        <para>
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the data reader columns to the destination database table.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -527,15 +503,15 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
         Copies all rows in the supplied <see cref="T:System.Data.DataTable" /> to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object.
       </summary>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-All rows in the <xref:System.Data.DataTable> are copied to the destination table except those that have been deleted.
-
-While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.
-
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataTable> columns to the destination database table.
-
-]]></format>
+        <para>
+          All rows in the <see cref="T:System.Data.DataTable" /> are copied to the destination table except those that have been deleted.
+        </para>
+        <para>
+          While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
+        </para>
+        <para>
+          The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">
@@ -594,8 +570,8 @@ The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps f
           <![CDATA[ 
 The following Console application demonstrates how to bulk load only the rows in a <xref:System.Data.DataTable> that match a specified state. In this case, only unchanged rows are added. The destination table is a table in the **AdventureWorks** database.
 
-In this example, a <xref:System.Data.DataTable> is created at run time and three rows are added to it. Before the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is executed, one of the rows is edited.
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
+In this example, a <xref:System.Data.DataTable> is created at run time and three rows are added to it. Before the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)> method is executed, one of the rows is edited.
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)> method is called with a `DataRowState.Unchanged` `rowState` argument, so only the two unchanged rows are bulk copied to the destination.
 
 > [!IMPORTANT]
 > This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup).
@@ -618,13 +594,12 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         Copies all rows from the supplied <see cref="T:System.Data.DataRow" /> array to a destination table specified by the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property of the <see cref="T:System.Data.SqlClient.SqlBulkCopy" /> object.
       </summary>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-While the bulk copy operation is in progress, the associated destination <xref:Microsoft.Data.SqlClient.SqlConnection> is busy serving it, and no other operations can be performed on the connection.  
-
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection maps from the <xref:System.Data.DataRow> columns to the destination database table.  
-
-]]></format>
+        <para>
+          While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
+        </para>
+        <para>
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataRow" /> columns to the destination database table.
+        </para>
 			</remarks>
       <example>
         <format type="text/markdown">

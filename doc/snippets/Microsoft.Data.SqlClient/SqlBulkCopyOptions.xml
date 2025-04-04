@@ -5,7 +5,7 @@
         Bitwise flag that specifies one or more options to use with an instance of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />.
       </summary>
       <remarks>
-        You can use the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> enumeration when you construct a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to change how the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> methods for that instance behave.  
+        You can use the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> enumeration when you construct a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to change how the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> methods for that instance behave.  
       </remarks>
       <example>
         <format type="text/markdown">
