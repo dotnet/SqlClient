@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
@@ -166,8 +167,10 @@ catch [Exception]
             //
             //  https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/34304
             //
+            // Delay 5 seconds between retries, and retry 3 times.
             const int delay = 5;
             const int retries = 3;
+
             string commandOutput = string.Empty;
 
             for (int attempt = 1; attempt <= retries; ++attempt)
@@ -195,7 +198,7 @@ catch [Exception]
                     $"attempt {attempt} of {retries}; " +
                     $"retrying in {delay} seconds...");
                 
-                System.Threading.Thread.Sleep(delay * 1000);
+                Thread.Sleep(TimeSpan.FromSeconds(delay));
             }
                 
             throw new Exception(
