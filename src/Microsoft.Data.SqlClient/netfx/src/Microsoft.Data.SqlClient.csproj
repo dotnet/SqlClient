@@ -310,9 +310,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
     </Compile>

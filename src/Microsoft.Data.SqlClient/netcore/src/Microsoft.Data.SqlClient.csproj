@@ -215,9 +215,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.netcore.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs</Link>
     </Compile>

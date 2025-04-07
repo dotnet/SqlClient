@@ -26,15 +26,17 @@ namespace Microsoft.Data.SqlClient
         private const string NullStr = "null";
         private const string SqlCommand_ClassName = nameof(SqlCommand);
 
+#if NET
         protected override void OnEventCommand(EventCommandEventArgs command)
         {
             base.OnEventCommand(command);
 
             if (command.Command == EventCommand.Enable)
             {
-                Metrics.EnableTraceMetrics();
+                Metrics.EnableEventCounters();
             }
         }
+#endif
 
         #region Event IDs
         // Initialized static Scope IDs

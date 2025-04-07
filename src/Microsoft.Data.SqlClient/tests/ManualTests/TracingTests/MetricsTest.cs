@@ -348,24 +348,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_log = SqlClientEventSource.Metrics;
 
-#if NET
-            s_getActiveHardConnections = GenerateFieldGetter("_activeHardConnectionsCounter");
-            s_getHardConnects = GenerateFieldGetter("_hardConnectsCounter");
-            s_getHardDisconnects = GenerateFieldGetter("_hardDisconnectsCounter");
-            s_getActiveSoftConnections = GenerateFieldGetter("_activeSoftConnectionsCounter");
-            s_getSoftConnects = GenerateFieldGetter("_softConnectsCounter");
-            s_getSoftDisconnects = GenerateFieldGetter("_softDisconnectsCounter");
-            s_getNonPooledConnections = GenerateFieldGetter("_nonPooledConnectionsCounter");
-            s_getPooledConnections = GenerateFieldGetter("_pooledConnectionsCounter");
-            s_getActiveConnectionPoolGroups = GenerateFieldGetter("_activeConnectionPoolGroupsCounter");
-            s_getInactiveConnectionPoolGroups = GenerateFieldGetter("_inactiveConnectionPoolGroupsCounter");
-            s_getActiveConnectionPools = GenerateFieldGetter("_activeConnectionPoolsCounter");
-            s_getInactiveConnectionPools = GenerateFieldGetter("_inactiveConnectionPoolsCounter");
-            s_getActiveConnections = GenerateFieldGetter("_activeConnectionsCounter");
-            s_getFreeConnections = GenerateFieldGetter("_freeConnectionsCounter");
-            s_getStasisConnections = GenerateFieldGetter("_stasisConnectionsCounter");
-            s_getReclaimedConnections = GenerateFieldGetter("_reclaimedConnectionsCounter");
+#if NETFRAMEWORK
+            Func<long> notApplicableFunction = static () => -1;
 
+            // .NET Framework doesn't have performance counters for the number of hard and soft connections.
+            s_getActiveHardConnections = notApplicableFunction;
+            s_getActiveSoftConnections = notApplicableFunction;
+#endif
+            s_getActiveHardConnections = GenerateFieldGetter("_activeHardConnections");
+            s_getHardConnects = GenerateFieldGetter("_hardConnectsRate");
+            s_getHardDisconnects = GenerateFieldGetter("_hardDisconnectsRate");
+            s_getActiveSoftConnections = GenerateFieldGetter("_activeSoftConnections");
+            s_getSoftConnects = GenerateFieldGetter("_softConnectsRate");
+            s_getSoftDisconnects = GenerateFieldGetter("_softDisconnectsRate");
+            s_getNonPooledConnections = GenerateFieldGetter("_nonPooledConnections");
+            s_getPooledConnections = GenerateFieldGetter("_pooledConnections");
+            s_getActiveConnectionPoolGroups = GenerateFieldGetter("_activeConnectionPoolGroups");
+            s_getInactiveConnectionPoolGroups = GenerateFieldGetter("_inactiveConnectionPoolGroups");
+            s_getActiveConnectionPools = GenerateFieldGetter("_activeConnectionPools");
+            s_getInactiveConnectionPools = GenerateFieldGetter("_inactiveConnectionPools");
+            s_getActiveConnections = GenerateFieldGetter("_activeConnections");
+            s_getFreeConnections = GenerateFieldGetter("_freeConnections");
+            s_getStasisConnections = GenerateFieldGetter("_stasisConnections");
+            s_getReclaimedConnections = GenerateFieldGetter("_reclaimedConnections");
+
+#if NET
             static Func<long> GenerateFieldGetter(string fieldName)
             {
                 FieldInfo counterField = s_log.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
@@ -374,28 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return () => (long)counterField.GetValue(s_log)!;
             }
 #else
-            Func<long> notApplicableFunction = static () => -1;
-
-            // .NET Framework doesn't have performance counters for the number of hard and soft connections.
-            s_getActiveHardConnections = notApplicableFunction;
-            s_getHardConnects = GeneratePerformanceCounterGetter("_hardConnectsPerSecond");
-            s_getHardDisconnects = GeneratePerformanceCounterGetter("_hardDisconnectsPerSecond");
-            s_getActiveSoftConnections = notApplicableFunction;
-            s_getSoftConnects = GeneratePerformanceCounterGetter("_softConnectsPerSecond");
-            s_getSoftDisconnects = GeneratePerformanceCounterGetter("_softDisconnectsPerSecond");
-
-            s_getNonPooledConnections = GeneratePerformanceCounterGetter("_numberOfNonPooledConnections");
-            s_getPooledConnections = GeneratePerformanceCounterGetter("_numberOfPooledConnections");
-            s_getActiveConnectionPoolGroups = GeneratePerformanceCounterGetter("_numberOfActiveConnectionPoolGroups");
-            s_getInactiveConnectionPoolGroups = GeneratePerformanceCounterGetter("_numberOfInactiveConnectionPoolGroups");
-            s_getActiveConnectionPools = GeneratePerformanceCounterGetter("_numberOfActiveConnectionPools");
-            s_getInactiveConnectionPools = GeneratePerformanceCounterGetter("_numberOfInactiveConnectionPools");
-            s_getActiveConnections = GeneratePerformanceCounterGetter("_numberOfActiveConnections");
-            s_getFreeConnections = GeneratePerformanceCounterGetter("_numberOfFreeConnections");
-            s_getStasisConnections = GeneratePerformanceCounterGetter("_numberOfStasisConnections");
-            s_getReclaimedConnections = GeneratePerformanceCounterGetter("_numberOfReclaimedConnections");
-
-            static Func<long> GeneratePerformanceCounterGetter(string fieldName)
+            static Func<long> GenerateFieldGetter(string fieldName)
             {
                 FieldInfo counterField = s_log.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
                 Debug.Assert(counterField != null);
