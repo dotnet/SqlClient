@@ -136,6 +136,9 @@ namespace Microsoft.Data.SqlClient
         // cancel request.
         internal void Cancel(object caller)
         {
+            Debug.Assert(caller != null, "Null caller for Cancel!");
+            Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
+
             bool hasLock = false;
             try
             {
@@ -147,8 +150,7 @@ namespace Microsoft.Data.SqlClient
                     { // Lock for the time being - since we need to synchronize the attention send.
                       // This lock is also protecting against concurrent close and async continuations
 
-                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
-                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
+                        // Ensure that, once we have the lock, that we are still the owner
                         if ((!_cancelled) && (_cancellationOwner.Target == caller))
                         {
                             _cancelled = true;
