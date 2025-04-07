@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SharedState _sharedState = new SharedState();
 
-        private TdsParser _parser;                 // TODO: Probably don't need this, since it's on the stateObj
+        private TdsParser _parser;
         private TdsParserStateObject _stateObj;
         private SqlCommand _command;
         private SqlConnection _connection;
@@ -74,10 +74,9 @@ namespace Microsoft.Data.SqlClient
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
-        private static int s_objectTypeCount; // EventSource Counter
+        private static int s_objectTypeCount; // EventSource counter
         private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
         internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
-
 
         // metadata (no explicit table, use 'Table')
         private MultiPartTableName[] _tableNames = null;
@@ -297,6 +296,7 @@ namespace Microsoft.Data.SqlClient
                         throw;
                     }
                 }
+
                 return _metaData;
             }
         }
@@ -638,6 +638,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
+                        Debug.Assert(Connection.Is2008OrNewer, "Invalid Column type received from the server");
                         schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
@@ -779,12 +780,13 @@ namespace Microsoft.Data.SqlClient
             return schemaTable;
         }
 
-        internal void Cancel(int objectID)
+        internal void Cancel(SqlCommand command)
         {
+            Debug.Assert(command == _command, "Calling command from an object that isn't this reader's command");
             TdsParserStateObject stateObj = _stateObj;
             if (stateObj != null)
             {
-                stateObj.Cancel(objectID);
+                stateObj.Cancel(command);
             }
         }
 
@@ -855,7 +857,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                Debug.Assert(TdsParser.IsValidTdsToken(token), string.Format("Invalid token after performing CleanPartialRead: {0,-2:X2}", token));
+                Debug.Assert(TdsParser.IsValidTdsToken(token), $"Invalid token after performing CleanPartialRead: {token,-2:X2}");
             }
 #endif
             _sharedState._dataReady = false;
@@ -923,7 +925,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            using (TryEventScope.Create("<sc.SqlDataReader.Close|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 SqlStatistics statistics = null;
                 try
@@ -1031,7 +1033,7 @@ namespace Microsoft.Data.SqlClient
                         // if user called read but didn't fetch any values, skip the row
                         // same applies after NextResult on ALTROW because NextResult starts rowconsumption in that case ...
 
-                        Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, String.Format((IFormatProvider)null, "The SniContext should be Snix_Read but it actually is {0}", stateObj.SniContext));
+                        Debug.Assert(SniContext.Snix_Read == stateObj.SniContext, $"The SniContext should be Snix_Read but it actually is {stateObj.SniContext}");
 
                         if (_altRowStatus == ALTROWSTATUS.AltRow)
                         {
@@ -1144,7 +1146,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                     }
-
 
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
@@ -1598,7 +1599,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID))
             {
                 try
                 {
@@ -1973,7 +1974,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    // UNDONE - should not be catching all exceptions!!!
                     if (!ADP.IsCatchableExceptionType(e))
                     {
                         throw;
@@ -2481,7 +2481,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // if no buffer is passed in, return the total number of characters or -1
-                // TODO: for DBCS encoding it returns number of bytes, not number of chars
                 if (buffer == null)
                 {
                     cch = (long)_parser.PlpBytesTotalLength(_stateObj);
@@ -2494,8 +2493,6 @@ namespace Microsoft.Data.SqlClient
                     // Clean decoder state: we do not reset it, but destroy to ensure
                     // that we do not start decoding the column with decoder from the old one
                     _stateObj._plpdecoder = null;
-                    // TODO: for DBCS encoding skip positioning dataIndex is not in characters but is interpreted as
-                    // number of chars already read + number of bytes to skip
                     cch = dataIndex - _columnDataCharsRead;
                     cch = isUnicode ? (cch << 1) : cch;
                     cch = (long)_parser.SkipPlpValue((ulong)(cch), _stateObj);
@@ -3655,7 +3652,7 @@ namespace Microsoft.Data.SqlClient
         {
             TdsOperationStatus result;
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("<sc.SqlDataReader.NextResult|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.NextResult | API | Object Id {0}", ObjectID))
             {
                 RuntimeHelpers.PrepareConstrainedRegions();
 
@@ -3787,8 +3784,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // Clear state in case of Read calling CloseInternal() then user calls NextResult()
-                        // MDAC 81986.  Or, also the case where the Read() above will do essentially the same
-                        // thing.
+                        // and the case where the Read() above will do essentially the same thing.
                         ClearMetaData();
                     }
 
@@ -3831,7 +3827,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*' />
         // user must call Read() to position on the first row
-        override public bool Read()
+        public override bool Read()
         {
             if (_currentTask != null)
             {
@@ -3854,7 +3850,7 @@ namespace Microsoft.Data.SqlClient
         private TdsOperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            using (TryEventScope.Create("<sc.SqlDataReader.Read|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
                 RuntimeHelpers.PrepareConstrainedRegions();
 
@@ -4071,7 +4067,7 @@ namespace Microsoft.Data.SqlClient
 
         private TdsOperationStatus TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
-            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: nameof(CheckDataIsReady));
+            CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: null);
 
             RuntimeHelpers.PrepareConstrainedRegions();
             try
@@ -4164,7 +4160,7 @@ namespace Microsoft.Data.SqlClient
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                return TryReadColumnInternal(i, readHeaderOnly: true, forStreaming: false);
+                return TryReadColumnInternal(i, readHeaderOnly: true);
             }
             catch (System.OutOfMemoryException e)
             {
@@ -4195,7 +4191,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly/* = false*/, bool forStreaming)
+        internal TdsOperationStatus TryReadColumnInternal(int i, bool readHeaderOnly = false, bool forStreaming = false)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i);
 
@@ -4562,7 +4558,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current);
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlDataReader.RestoreServerSettings | Info | Correlation | Object Id {0}, Activity Id '{1}'", ObjectID, ActivityCorrelator.Current);
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4677,9 +4673,10 @@ namespace Microsoft.Data.SqlClient
                     _metaDataConsumed = true;
 
                     if (_parser != null)
-                    { // There is a valid case where parser is null
-                      // Peek, and if row token present, set _hasRows true since there is a
-                      // row in the result
+                    {
+                        // There is a valid case where parser is null
+                        // Peek, and if row token present, set _hasRows true since there is a
+                        // row in the result
                         byte b;
                         TdsOperationStatus result = _stateObj.TryPeekByte(out b);
                         if (result != TdsOperationStatus.Done)
@@ -4877,7 +4874,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4922,7 +4919,7 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsyncExecute> attempt retry {0}", context.Reader.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.NextResultAsyncExecute | attempt retry {0}", context.Reader.ObjectID);
                 context.Reader.PrepareForAsyncContinuation();
             }
 
@@ -5207,7 +5204,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            using (TryEventScope.Create("<sc.SqlDataReader.ReadAsync|API> {0}", ObjectID))
+            using (TryEventScope.Create("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID))
             using (var registrationHolder = new DisposableTemporaryOnStack<CancellationTokenRegistration>())
             {
                 if (IsClosed)
@@ -5669,7 +5666,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    bool internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false) == TdsOperationStatus.Done;
+                    bool internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done;
 
                     if (internalReadSuccess)
                     {

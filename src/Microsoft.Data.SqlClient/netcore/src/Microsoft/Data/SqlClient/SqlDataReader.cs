@@ -10,7 +10,9 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+#if NET
 using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Globalization;
 using System.IO;
 using System.Reflection;
@@ -75,9 +77,9 @@ namespace Microsoft.Data.SqlClient
         private FieldNameLookup _fieldNameLookup;
         private CommandBehavior _commandBehavior;
 
-        private static int s_objectTypeCount; // Eventsource counter
+        private static int s_objectTypeCount; // EventSource counter
         private static readonly ReadOnlyCollection<DbColumn> s_emptySchema = new ReadOnlyCollection<DbColumn>(Array.Empty<DbColumn>());
-        internal static readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
+        internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // metadata (no explicit table, use 'Table')
         private MultiPartTableName[] _tableNames = null;
@@ -99,6 +101,10 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlDataReader(SqlCommand command, CommandBehavior behavior)
         {
+#if NETFRAMEWORK
+            SqlConnection.VerifyExecutePermission();
+#endif
+
             _command = command;
             _commandBehavior = behavior;
             if (_command != null)
@@ -644,7 +650,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.Is2008OrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -1494,11 +1499,15 @@ namespace Microsoft.Data.SqlClient
         override public string GetName(int i)
         {
             CheckMetaDataIsReady(columnIndex: i);
+
+            Debug.Assert(_metaData[i].column != null, "MDAC 66681");
             return _metaData[i].column;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
+#if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         override public Type GetProviderSpecificFieldType(int i)
         {
             SqlStatistics statistics = null;
@@ -2585,6 +2594,15 @@ namespace Microsoft.Data.SqlClient
             return cnt;
         }
 
+#if NETFRAMEWORK
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/System.Data.IDataRecord.GetData/*' />
+        [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
+        IDataReader IDataRecord.GetData(int i)
+        {
+            throw ADP.NotSupported();
+        }
+#endif
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTime/*' />
         override public DateTime GetDateTime(int i)
         {
@@ -3608,6 +3626,19 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNull/*' />
         override public bool IsDBNull(int i)
         {
+#if NETFRAMEWORK
+            if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && ((_sharedState._nextColumnHeaderToRead > i + 1) || (_lastColumnWithDataChunkRead > i)))
+            {
+                // Bug 447026 : A breaking change in System.Data .NET 4.5 for calling IsDBNull on commands in SequentialAccess mode
+                // http://vstfdevdiv:8080/web/wi.aspx?pcguid=22f9acc9-569a-41ff-b6ac-fac1b6370209&id=447026
+                // In .NET 4.0 and previous, it was possible to read a previous column using IsDBNull when in sequential mode
+                // However, since it had already gone past the column, the current IsNull value is simply returned
+
+                // To replicate this behavior we will skip CheckHeaderIsReady\ReadColumnHeader and instead just check that the reader is ready and the column is valid
+                CheckMetaDataIsReady(columnIndex: i);
+            }
+            else
+#endif
             {
                 CheckHeaderIsReady(columnIndex: i);
 
@@ -3653,7 +3684,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
-#endif 
+#endif
 
                 try
                 {
@@ -4034,9 +4065,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     throw;
                 }
-                /* Even though ThreadAbortException exists in .NET Core, 
-                 * since Abort is not supported, the common language runtime won't ever throw ThreadAbortException.
-                 * just to keep a common codebase!*/
                 catch (System.Threading.ThreadAbortException e)
                 {
                     _isClosed = true;
@@ -4219,8 +4247,8 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(i == _sharedState._nextColumnDataToRead ||                                                          // Either we haven't read the column yet
                         ((i + 1 < _sharedState._nextColumnDataToRead) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) ||   // Or we're in sequential mode and we've read way past the column (i.e. it was not the last column we read)
                         (!_data[i].IsEmpty || _data[i].IsNull) ||                                                       // Or we should have data stored for the column (unless the column was null)
-                        (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or SqlClient: IsDBNull always returns false for timestamp datatype
-
+                        (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
+                                                                                                                        //    Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check
                         "Gone past column, be we have no data stored for it");
                     return TdsOperationStatus.Done;
                 }
@@ -4668,6 +4696,9 @@ namespace Microsoft.Data.SqlClient
             _tableNames = null;
             if (_metaData != null)
             {
+#if NETFRAMEWORK
+                _metaData.schemaTable = null;
+#endif
                 _data = SqlBuffer.CreateBufferArray(metaData.Length);
             }
 
@@ -4927,7 +4958,7 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.NextResultAsyncExecute | attempt retry {0}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.NextResultAsyncExecute | attempt retry {0}", context.Reader.ObjectID);
                 context.Reader.PrepareForAsyncContinuation();
             }
 
@@ -5675,6 +5706,7 @@ namespace Microsoft.Data.SqlClient
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
                     bool internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true) == TdsOperationStatus.Done;
+
                     if (internalReadSuccess)
                     {
                         return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
@@ -6049,7 +6081,6 @@ namespace Microsoft.Data.SqlClient
                 source.TrySetResult(task.Result);
             }
         }
-
 
         internal sealed class Snapshot
         {
