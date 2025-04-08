@@ -16,7 +16,6 @@
      We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
   <!--Generating Strong Name-->
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
@@ -889,7 +888,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\BufferWriterExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContext.cs" />
