@@ -30,7 +30,7 @@ steps:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       AuthAKVName: SqlClientDrivers
@@ -42,7 +42,7 @@ steps:
   - task: EsrpCodeSigning@5
     displayName: 'ESRP CodeSigning'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       AuthAKVName: SqlClientDrivers
@@ -94,7 +94,7 @@ steps:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       AuthAKVName: SqlClientDrivers
@@ -107,7 +107,7 @@ steps:
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
       inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       AuthAKVName: SqlClientDrivers
