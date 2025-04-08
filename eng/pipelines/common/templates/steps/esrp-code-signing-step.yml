@@ -46,6 +46,7 @@ steps:
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       CleanupTempStorage: 1
@@ -57,6 +58,7 @@ steps:
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       AuthAKVName: '${{parameters.AuthAKVName }}'
       AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.sourceRoot }}'
@@ -109,6 +111,7 @@ steps:
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
@@ -121,6 +124,7 @@ steps:
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       AuthAKVName: '${{parameters.AuthAKVName }}'
       AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.artifactDirectory }}'
