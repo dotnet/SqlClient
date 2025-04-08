@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal override void Startup()
         {
-            _ = WarmUp();
+            WarmUp();
         }
 
         internal override void Shutdown()
@@ -573,7 +573,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _idleConnectorWriter.TryWrite(null);
 
             // Ensure that we return to min pool size if closing this connector brought us below min pool size.
-            _ = WarmUp();
+            WarmUp();
         }
 
         /// <summary>
@@ -691,7 +691,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 while (await PruningTimer.WaitForNextTickAsync(_shutdownCT))
                 {
-                    await await PruneIdleConnections();
+                    await PruneIdleConnections();
                 }
             } catch (OperationCanceledException)
             {
@@ -705,14 +705,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// in place of ValueTask so that it cannot be recycled.
         /// </summary>
         /// <returns>A ValueTask containing a Task that represents the pruning operation.</returns>
-        internal async ValueTask<Task> PruneIdleConnections()
+        internal Task PruneIdleConnections()
         {
+            if (State is ShuttingDown)
+            {
+                return Task.CompletedTask;
+            }
+
             if (!PruningTask.IsCompleted)
             {
                 return PruningTask;
             }
 
-            await PruningLock.WaitAsync();
+            if (!PruningLock.Wait(0))
+            {
+                return PruningTask;
+            }
 
             try
             {
@@ -820,21 +828,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// in place of ValueTask so that it cannot be recycled.
         /// </summary>
         /// <returns>A ValueTask containing a Task that represents the warmup process.</returns>
-        internal async ValueTask<Task> WarmUp()
+        internal Task WarmUp()
         {
-            if (!IsWarmupEnabled)
+            if (State is ShuttingDown || !IsWarmupEnabled)
             {
                 return Task.CompletedTask;
             }
 
             // Avoid semaphore wait if task is still running
-            if (!_warmupTask.IsCompleted)
+            if (!_warmupTask.IsCompleted || !_warmupLock.Wait(0))
             {
                 return _warmupTask;
             }
-
-            // Prevent multiple threads from modifying the warmup task
-            await _warmupLock.WaitAsync();
 
             try
             {
@@ -905,7 +910,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _warmupTask);
 
             // Clean pool state
-            //TODO: close all open connections
+            Clear();
 
             // Handle disposable resources
             _shutdownCTS.Dispose();
