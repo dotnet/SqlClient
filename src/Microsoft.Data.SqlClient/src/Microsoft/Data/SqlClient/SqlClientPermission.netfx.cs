@@ -19,8 +19,17 @@ namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*' />
     [Serializable]
-    public sealed class SqlClientPermission : System.Data.Common.DBDataPermission
+    public sealed class SqlClientPermission : DBDataPermission
     {
+        #region Member Variables
+        
+        private NameValuePermission _keyvaluetree = NameValuePermission.Default;
+        private ArrayList _keyvalues;;
+        
+        #endregion
+        
+        #region Constructors
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*' />
         [Obsolete("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)] // MDAC 86034
         public SqlClientPermission() : this(PermissionState.None)
@@ -39,68 +48,45 @@ namespace Microsoft.Data.SqlClient
             AllowBlankPassword = allowBlankPassword;
         }
 
-        private SqlClientPermission(SqlClientPermission permission) : base(permission)
-        { // for Copy
-            // Explicitly copyFrom to clone the key value pairs
-            CopyFrom(permission);
-        }
-
         internal SqlClientPermission(SqlClientPermissionAttribute permissionAttribute) : base(permissionAttribute)
-        { // for CreatePermission
+        {
+            // Used by SqlClientPermissionAttribute.CreatePermission
         }
 
         internal SqlClientPermission(SqlConnectionString constr) : base(PermissionState.None)
-        { // for Open
+        {
+            // Used by SqlConnectionString.CreatePermissionSet
+            
             if (constr != null)
             {
                 AllowBlankPassword = constr.HasBlankPassword; // MDAC 84563
                 AddPermissionEntry(new DBConnectionString(constr));
             }
+            
             if (constr == null || constr.IsEmpty)
             {
                 base.Add("", "", KeyRestrictionBehavior.AllowOnly);
             }
         }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
-        public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
-        {
-            DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
-            AddPermissionEntry(constr);
+        
+        private SqlClientPermission(SqlClientPermission permission) : base(permission)
+        { 
+            // for Copy
+            // Explicitly copyFrom to clone the key value pairs
+            CopyFrom(permission);
         }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*' />
-        public override IPermission Copy()
-        {
-            return new SqlClientPermission(this);
-        }
-
-        // Modifications
-
-        private NameValuePermission _keyvaluetree = NameValuePermission.Default;
-        private /*DBConnectionString[]*/ArrayList _keyvalues; // = null;
-
-        internal void AddPermissionEntry(DBConnectionString entry)
-        {
-            if (_keyvaluetree == null)
-            {
-                _keyvaluetree = new NameValuePermission();
-            }
-            if (_keyvalues == null)
-            {
-                _keyvalues = new ArrayList();
-            }
-            NameValuePermission.AddEntry(_keyvaluetree, _keyvalues, entry);
-            _IsUnrestricted = false; // MDAC 84639
-        }
-
+        
+        #endregion
+        
+        #region Properties
+        
         private bool _IsUnrestricted
         {
             set
             {
                 // Use Reflection to access the base class _isUnrestricted. There is no other way to alter this externally.
                 FieldInfo fieldInfo = GetType().BaseType.GetField("_isUnrestricted", BindingFlags.Instance
-                | BindingFlags.NonPublic);
+                    | BindingFlags.NonPublic);
                 fieldInfo.SetValue(this, value);
             }
 
@@ -109,27 +95,91 @@ namespace Microsoft.Data.SqlClient
                 return base.IsUnrestricted();
             }
         }
+        
+        #endregion
 
-        // Modified CopyFrom to make sure that we copy the Name Value Pair
-        private void CopyFrom(SqlClientPermission permission)
+        #region Public/Internal Methods
+        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
+        public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
         {
+            DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
+            AddPermissionEntry(constr);
+        }
+        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*' />
+        public override IPermission Copy()
+        {
+            return new SqlClientPermission(this);
+        }
+        
+        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
+        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
+        // </IPermission>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/FromXml/*' />
+        public override void FromXml(SecurityElement securityElement)
+        {
+            // code derived from CodeAccessPermission.ValidateElement
+            if (securityElement == null)
+            {
+                throw ADP.ArgumentNull("securityElement");
+            }
+            
+            string tag = securityElement.Tag;
+            if (!tag.Equals(XmlStr._Permission) && !tag.Equals(XmlStr._IPermission))
+            {
+                throw ADP.NotAPermissionElement();
+            }
+            
+            string version = securityElement.Attribute(XmlStr._Version);
+            if (version != null && !version.Equals(XmlStr._VersionNumber))
+            {
+                throw ADP.InvalidXMLBadVersion();
+            }
+
+            string unrestrictedValue = securityElement.Attribute(XmlStr._Unrestricted);
+            _IsUnrestricted = unrestrictedValue != null && bool.Parse(unrestrictedValue);
+
+            Clear(); // MDAC 83105
             if (!_IsUnrestricted)
             {
-                if (permission._keyvalues != null)
-                {
-                    _keyvalues = (ArrayList)permission._keyvalues.Clone();
+                string allowNull = securityElement.Attribute(XmlStr._AllowBlankPassword);
+                AllowBlankPassword = allowNull != null && bool.Parse(allowNull);
 
-                    if (permission._keyvaluetree != null)
+                ArrayList children = securityElement.Children;
+                if (children != null)
+                {
+                    foreach (SecurityElement keyElement in children)
                     {
-                        _keyvaluetree = permission._keyvaluetree.CopyNameValue();
+                        tag = keyElement.Tag;
+                        if (XmlStr._add == tag || (tag != null && XmlStr._add == tag.ToLower(CultureInfo.InvariantCulture)))
+                        {
+                            string constr = keyElement.Attribute(XmlStr._ConnectionString);
+                            string restrt = keyElement.Attribute(XmlStr._KeyRestrictions);
+                            string behavr = keyElement.Attribute(XmlStr._KeyRestrictionBehavior);
+
+                            KeyRestrictionBehavior behavior = KeyRestrictionBehavior.AllowOnly;
+                            if (behavr != null)
+                            {
+                                behavior = (KeyRestrictionBehavior)Enum.Parse(typeof(KeyRestrictionBehavior), behavr, true);
+                            }
+                            constr = DecodeXmlValue(constr);
+                            restrt = DecodeXmlValue(restrt);
+                            Add(constr, restrt, behavior);
+                        }
                     }
                 }
             }
+            else
+            {
+                AllowBlankPassword = false;
+            }
         }
-
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Intersect/*' />
         public override IPermission Intersect(IPermission target)
-        { // used during Deny actions
+        { 
+            // used during Deny actions
             if (target == null)
             {
                 return null;
@@ -172,14 +222,7 @@ namespace Microsoft.Data.SqlClient
             }
             return newPermission;
         }
-
-        private bool IsEmpty()
-        { // MDAC 84804
-            ArrayList keyvalues = _keyvalues;
-            bool flag = !IsUnrestricted() && !AllowBlankPassword && (keyvalues == null || (0 == keyvalues.Count));
-            return flag;
-        }
-
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/IsSubsetOf/*' />
         public override bool IsSubsetOf(IPermission target)
         {
@@ -218,21 +261,77 @@ namespace Microsoft.Data.SqlClient
             }
             return subset;
         }
+        
+        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
+        //     <add ConnectionString="provider=x;data source=y;"/>
+        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
+        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
+        // </IPermission>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ToXml/*' />
+        public override SecurityElement ToXml()
+        {
+            Type type = GetType();
+            SecurityElement root = new SecurityElement(XmlStr._IPermission);
+            root.AddAttribute(XmlStr._class, type.AssemblyQualifiedName.Replace('\"', '\''));
+            root.AddAttribute(XmlStr._Version, XmlStr._VersionNumber);
 
+            if (IsUnrestricted())
+            {
+                root.AddAttribute(XmlStr._Unrestricted, XmlStr._true);
+            }
+            else
+            {
+                root.AddAttribute(XmlStr._AllowBlankPassword, AllowBlankPassword.ToString(CultureInfo.InvariantCulture));
+
+                if (_keyvalues != null)
+                {
+                    foreach (DBConnectionString value in _keyvalues)
+                    {
+                        SecurityElement valueElement = new SecurityElement(XmlStr._add);
+                        string tmp;
+
+                        tmp = value.ConnectionString;
+                        tmp = EncodeXmlValue(tmp);
+                        if (!ADP.IsEmpty(tmp))
+                        {
+                            valueElement.AddAttribute(XmlStr._ConnectionString, tmp);
+                        }
+                        
+                        tmp = value.Restrictions;
+                        tmp = EncodeXmlValue(tmp);
+                        if (tmp == null)
+                        {
+                            tmp = "";
+                        }
+                        
+                        valueElement.AddAttribute(XmlStr._KeyRestrictions, tmp);
+
+                        tmp = value.Behavior.ToString();
+                        valueElement.AddAttribute(XmlStr._KeyRestrictionBehavior, tmp);
+
+                        root.AddChild(valueElement);
+                    }
+                }
+            }
+            return root;
+        }
+        
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Union/*' />
         public override IPermission Union(IPermission target)
         {
             if (target == null)
             {
-                return this.Copy();
+                return Copy();
             }
-            if (target.GetType() != this.GetType())
+            
+            if (target.GetType() != GetType())
             {
                 throw ADP.PermissionTypeMismatch();
             }
+            
             if (IsUnrestricted())
-            { // MDAC 84803
-                return this.Copy();
+            {
+                return Copy();
             }
 
             SqlClientPermission newPermission = (SqlClientPermission)target.Copy();
@@ -248,9 +347,47 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            return (newPermission.IsEmpty() ? null : newPermission);
+            
+            return newPermission.IsEmpty() ? null : newPermission;
         }
+        
+        internal void AddPermissionEntry(DBConnectionString entry)
+        {
+            if (_keyvaluetree == null)
+            {
+                _keyvaluetree = new NameValuePermission();
+            }
+            
+            if (_keyvalues == null)
+            {
+                _keyvalues = new ArrayList();
+            }
+            
+            NameValuePermission.AddEntry(_keyvaluetree, _keyvalues, entry);
+            _IsUnrestricted = false;
+        }
+        
+        #endregion
+        
+        #region Private Methods
+        
+        // Modified CopyFrom to make sure that we copy the Name Value Pair
+        private void CopyFrom(SqlClientPermission permission)
+        {
+            if (!_IsUnrestricted)
+            {
+                if (permission._keyvalues != null)
+                {
+                    _keyvalues = (ArrayList)permission._keyvalues.Clone();
 
+                    if (permission._keyvaluetree != null)
+                    {
+                        _keyvaluetree = permission._keyvaluetree.CopyNameValue();
+                    }
+                }
+            }
+        }
+        
         private string DecodeXmlValue(string value)
         {
             if (value != null && (0 < value.Length))
@@ -278,138 +415,54 @@ namespace Microsoft.Data.SqlClient
             }
             return value;
         }
-
-        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
-        // </IPermission>
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/FromXml/*' />
-        public override void FromXml(SecurityElement securityElement)
+        
+        private bool IsEmpty()
         {
-            // code derived from CodeAccessPermission.ValidateElement
-            if (securityElement == null)
-            {
-                throw ADP.ArgumentNull("securityElement");
-            }
-            string tag = securityElement.Tag;
-            if (!tag.Equals(XmlStr._Permission) && !tag.Equals(XmlStr._IPermission))
-            {
-                throw ADP.NotAPermissionElement();
-            }
-            String version = securityElement.Attribute(XmlStr._Version);
-            if (version != null && !version.Equals(XmlStr._VersionNumber))
-            {
-                throw ADP.InvalidXMLBadVersion();
-            }
-
-            string unrestrictedValue = securityElement.Attribute(XmlStr._Unrestricted);
-            _IsUnrestricted = unrestrictedValue != null && Boolean.Parse(unrestrictedValue);
-
-            Clear(); // MDAC 83105
-            if (!_IsUnrestricted)
-            {
-                string allowNull = securityElement.Attribute(XmlStr._AllowBlankPassword);
-                AllowBlankPassword = allowNull != null && Boolean.Parse(allowNull);
-
-                ArrayList children = securityElement.Children;
-                if (children != null)
-                {
-                    foreach (SecurityElement keyElement in children)
-                    {
-                        tag = keyElement.Tag;
-                        if (XmlStr._add == tag || (tag != null && XmlStr._add == tag.ToLower(CultureInfo.InvariantCulture)))
-                        {
-                            string constr = keyElement.Attribute(XmlStr._ConnectionString);
-                            string restrt = keyElement.Attribute(XmlStr._KeyRestrictions);
-                            string behavr = keyElement.Attribute(XmlStr._KeyRestrictionBehavior);
-
-                            KeyRestrictionBehavior behavior = KeyRestrictionBehavior.AllowOnly;
-                            if (behavr != null)
-                            {
-                                behavior = (KeyRestrictionBehavior)Enum.Parse(typeof(KeyRestrictionBehavior), behavr, true);
-                            }
-                            constr = DecodeXmlValue(constr);
-                            restrt = DecodeXmlValue(restrt);
-                            Add(constr, restrt, behavior);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                AllowBlankPassword = false;
-            }
+            ArrayList keyvalues = _keyvalues;
+            bool flag = !IsUnrestricted() && !AllowBlankPassword && (keyvalues == null || (0 == keyvalues.Count));
+            return flag;
         }
+        
+        #endregion
 
-        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
-        //     <add ConnectionString="provider=x;data source=y;"/>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
-        // </IPermission>
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ToXml/*' />
-        public override SecurityElement ToXml()
+        private sealed class NameValuePermission : IComparable<NameValuePermission>
         {
-            Type type = this.GetType();
-            SecurityElement root = new SecurityElement(XmlStr._IPermission);
-            root.AddAttribute(XmlStr._class, type.AssemblyQualifiedName.Replace('\"', '\''));
-            root.AddAttribute(XmlStr._Version, XmlStr._VersionNumber);
-
-            if (IsUnrestricted())
-            {
-                root.AddAttribute(XmlStr._Unrestricted, XmlStr._true);
-            }
-            else
-            {
-                root.AddAttribute(XmlStr._AllowBlankPassword, AllowBlankPassword.ToString(CultureInfo.InvariantCulture));
-
-                if (_keyvalues != null)
-                {
-                    foreach (DBConnectionString value in _keyvalues)
-                    {
-                        SecurityElement valueElement = new SecurityElement(XmlStr._add);
-                        string tmp;
-
-                        tmp = value.ConnectionString; // WebData 97375
-                        tmp = EncodeXmlValue(tmp);
-                        if (!ADP.IsEmpty(tmp))
-                        {
-                            valueElement.AddAttribute(XmlStr._ConnectionString, tmp);
-                        }
-                        tmp = value.Restrictions;
-                        tmp = EncodeXmlValue(tmp);
-                        if (tmp == null)
-                        {
-                            tmp = "";
-                        }
-                        valueElement.AddAttribute(XmlStr._KeyRestrictions, tmp);
-
-                        tmp = value.Behavior.ToString();
-                        valueElement.AddAttribute(XmlStr._KeyRestrictionBehavior, tmp);
-
-                        root.AddChild(valueElement);
-                    }
-                }
-            }
-            return root;
-        }
-
-        private sealed class NameValuePermission : IComparable
-        {
-            // reused as both key and value nodes
-            // key nodes link to value nodes
-            // value nodes link to key nodes
-            private string _value;
+            // Reused as both key and value nodes:
+            // Key nodes link to value nodes.
+            // Value nodes link to key nodes.
+            private readonly string _value;
 
             // value node with (_restrictions != null) are allowed to match connection strings
             private DBConnectionString _entry;
 
             private NameValuePermission[] _tree; // with branches
 
-            static internal readonly NameValuePermission Default = null;// = new NameValuePermission(String.Empty, new string[] { "File Name" }, KeyRestrictionBehavior.AllowOnly);
+            internal static readonly NameValuePermission Default = null;
 
             internal NameValuePermission()
             { // root node
             }
 
+            private NameValuePermission(NameValuePermission permit)
+            { 
+                // deep-copy
+                _value = permit._value;
+                _entry = permit._entry;
+                _tree = permit._tree;
+                if (_tree != null)
+                {
+                    NameValuePermission[] tree = _tree.Clone() as NameValuePermission[];
+                    for (int i = 0; i < tree.Length; ++i)
+                    {
+                        if (tree[i] != null)
+                        { // WebData 98488
+                            tree[i] = tree[i].CopyNameValue(); // deep copy
+                        }
+                    }
+                    _tree = tree;
+                }
+            }
+            
             private NameValuePermission(string keyword)
             {
                 _value = keyword;
@@ -421,31 +474,12 @@ namespace Microsoft.Data.SqlClient
                 _entry = entry;
             }
 
-            private NameValuePermission(NameValuePermission permit)
-            { // deep-copy
-                _value = permit._value;
-                _entry = permit._entry;
-                _tree = permit._tree;
-                if (_tree != null)
-                {
-                    NameValuePermission[] tree = (_tree.Clone() as NameValuePermission[]);
-                    for (int i = 0; i < tree.Length; ++i)
-                    {
-                        if (tree[i] != null)
-                        { // WebData 98488
-                            tree[i] = tree[i].CopyNameValue(); // deep copy
-                        }
-                    }
-                    _tree = tree;
-                }
-            }
-
-            int IComparable.CompareTo(object a)
+            int IComparable<NameValuePermission>.CompareTo(NameValuePermission other)
             {
-                return StringComparer.Ordinal.Compare(_value, ((NameValuePermission)a)._value);
+                return StringComparer.Ordinal.Compare(_value, other._value);
             }
 
-            static internal void AddEntry(NameValuePermission kvtree, ArrayList entries, DBConnectionString entry)
+            internal static void AddEntry(NameValuePermission kvtree, ArrayList entries, DBConnectionString entry)
             {
                 Debug.Assert(entry != null, "null DBConnectionString");
 
@@ -453,14 +487,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     for (NameValuePair keychain = entry.KeyChain; keychain != null; keychain = keychain.Next)
                     {
-                        NameValuePermission kv;
-
-                        kv = kvtree.CheckKeyForValue(keychain.Name);
+                        NameValuePermission kv = kvtree.CheckKeyForValue(keychain.Name);
                         if (kv == null)
                         {
                             kv = new NameValuePermission(keychain.Name);
                             kvtree.Add(kv); // add directly into live tree
                         }
+                        
                         kvtree = kv;
 
                         kv = kvtree.CheckKeyForValue(keychain.Value);
@@ -475,7 +508,8 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                         else if (keychain.Next == null)
-                        { // shorter chain potential
+                        {
+                            // shorter chain potential
                             if (kv._entry != null)
                             {
                                 Debug.Assert(entries.Contains(kv._entry), "entries doesn't contain entry");
@@ -492,7 +526,8 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 else
-                { // global restrictions, MDAC 84443
+                {
+                    // global restrictions
                     DBConnectionString kentry = kvtree._entry;
                     if (kentry != null)
                     {
@@ -504,10 +539,85 @@ namespace Microsoft.Data.SqlClient
                     {
                         kvtree._entry = entry;
                     }
+                    
                     entries.Add(kvtree._entry);
                 }
             }
 
+            internal bool CheckValueForKeyPermit(DBConnectionString parsetable)
+            {
+                if (parsetable == null)
+                {
+                    return false;
+                }
+                
+                bool hasMatch = false;
+                NameValuePermission[] keytree = _tree; // _tree won't mutate but Add will replace it
+                if (keytree != null)
+                {
+                    hasMatch = parsetable.IsEmpty; // MDAC 86773
+                    if (!hasMatch)
+                    {
+                        // which key do we follow the key-value chain on
+                        foreach (var permitKey in keytree)
+                        {
+                            if (permitKey != null)
+                            {
+                                string keyword = permitKey._value;
+    
+                                Debug.Assert(permitKey._entry == null, "key member has no restrictions");
+                                if (parsetable.ContainsKey(keyword))
+                                {
+                                    string valueInQuestion = (string)parsetable[keyword];
+
+                                    // keyword is restricted to certain values
+                                    NameValuePermission permitValue = permitKey.CheckKeyForValue(valueInQuestion);
+                                    if (permitValue != null)
+                                    {
+                                        //value does match - continue the chain down that branch
+                                        if (permitValue.CheckValueForKeyPermit(parsetable))
+                                        {
+                                            hasMatch = true;
+                                            // adding a break statement is tempting, but wrong
+                                            // user can safely extend their restrictions for current rule to include missing keyword
+                                            // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
+                                            // i.e. Add("data provider=msdatashape;provider=sqloledb;integrated security=sspi", "", KeyRestrictionBehavior.AllowOnly);
+                                        }
+                                        else
+                                        { // failed branch checking
+                                            return false;
+                                        }
+                                    }
+                                    else
+                                    { // value doesn't match to expected values - fail here
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // partial chain match, either leaf-node by shorter chain or fail mid-chain if ( _restrictions == null)
+                }
+
+                DBConnectionString entry = _entry;
+                if (entry != null)
+                {
+                    // also checking !hasMatch is tempting, but wrong
+                    // user can safely extend their restrictions for current rule to include missing keyword
+                    // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
+                    // i.e. Add("provider=sqloledb;", "integrated security=;", KeyRestrictionBehavior.AllowOnly);
+                    hasMatch = entry.IsSupersetOf(parsetable);
+                }
+
+                // mid-chain failure
+                return hasMatch;
+            }
+
+            internal NameValuePermission CopyNameValue()
+            {
+                return new NameValuePermission(this);
+            }
+            
             internal void Intersect(ArrayList entries, NameValuePermission target)
             {
                 if (target == null)
@@ -564,7 +674,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-
+            
             private void Add(NameValuePermission permit)
             {
                 NameValuePermission[] tree = _tree;
@@ -578,87 +688,15 @@ namespace Microsoft.Data.SqlClient
                 Array.Sort(newtree);
                 _tree = newtree;
             }
-
-            internal bool CheckValueForKeyPermit(DBConnectionString parsetable)
-            {
-                if (parsetable == null)
-                {
-                    return false;
-                }
-                bool hasMatch = false;
-                NameValuePermission[] keytree = _tree; // _tree won't mutate but Add will replace it
-                if (keytree != null)
-                {
-                    hasMatch = parsetable.IsEmpty; // MDAC 86773
-                    if (!hasMatch)
-                    {
-
-                        // which key do we follow the key-value chain on
-                        for (int i = 0; i < keytree.Length; ++i)
-                        {
-                            NameValuePermission permitKey = keytree[i];
-                            if (permitKey != null)
-                            {
-                                string keyword = permitKey._value;
-    #if DEBUG
-                                Debug.Assert(permitKey._entry == null, "key member has no restrictions");
-    #endif
-                                if (parsetable.ContainsKey(keyword))
-                                {
-                                    string valueInQuestion = (string)parsetable[keyword];
-
-                                    // keyword is restricted to certain values
-                                    NameValuePermission permitValue = permitKey.CheckKeyForValue(valueInQuestion);
-                                    if (permitValue != null)
-                                    {
-                                        //value does match - continue the chain down that branch
-                                        if (permitValue.CheckValueForKeyPermit(parsetable))
-                                        {
-                                            hasMatch = true;
-                                            // adding a break statement is tempting, but wrong
-                                            // user can safely extend their restrictions for current rule to include missing keyword
-                                            // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
-                                            // i.e. Add("data provider=msdatashape;provider=sqloledb;integrated security=sspi", "", KeyRestrictionBehavior.AllowOnly);
-                                        }
-                                        else
-                                        { // failed branch checking
-                                            return false;
-                                        }
-                                    }
-                                    else
-                                    { // value doesn't match to expected values - fail here
-                                        return false;
-                                    }
-                                }
-                            }
-                            // else try next keyword
-                        }
-                    }
-                    // partial chain match, either leaf-node by shorter chain or fail mid-chain if ( _restrictions == null)
-                }
-
-                DBConnectionString entry = _entry;
-                if (entry != null)
-                {
-                    // also checking !hasMatch is tempting, but wrong
-                    // user can safely extend their restrictions for current rule to include missing keyword
-                    // i.e. Add("provider=sqloledb;integrated security=sspi", "data provider=", KeyRestrictionBehavior.AllowOnly);
-                    // i.e. Add("provider=sqloledb;", "integrated security=;", KeyRestrictionBehavior.AllowOnly);
-                    hasMatch = entry.IsSupersetOf(parsetable);
-                }
-
-                return hasMatch; // mid-chain failure
-            }
-
+            
             private NameValuePermission CheckKeyForValue(string keyInQuestion)
             {
                 NameValuePermission[] valuetree = _tree; // _tree won't mutate but Add will replace it
                 if (valuetree != null)
                 {
-                    for (int i = 0; i < valuetree.Length; ++i)
+                    foreach (var permitValue in valuetree)
                     {
-                        NameValuePermission permitValue = valuetree[i];
-                        if (String.Equals(keyInQuestion, permitValue._value, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(keyInQuestion, permitValue._value, StringComparison.OrdinalIgnoreCase))
                         {
                             return permitValue;
                         }
@@ -666,13 +704,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return null;
             }
-
-            internal NameValuePermission CopyNameValue()
-            {
-                return new NameValuePermission(this);
-            }
         } 
-        
         
         private static class XmlStr
         {
