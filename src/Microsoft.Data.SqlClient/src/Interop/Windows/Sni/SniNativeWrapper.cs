@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security;
 using Interop.Windows;
+using Microsoft.Data.SqlClient.Utilities;
 #endif
 
 namespace Microsoft.Data.SqlClient

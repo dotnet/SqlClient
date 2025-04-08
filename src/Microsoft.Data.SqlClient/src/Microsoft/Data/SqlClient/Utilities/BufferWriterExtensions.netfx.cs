@@ -8,7 +8,7 @@ using System;
 using System.Buffers;
 using System.Text;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Utilities
 {
     internal static class BufferWriterExtensions
     {

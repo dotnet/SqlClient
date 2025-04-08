@@ -9,7 +9,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Utilities
 {
     /// <summary>
     /// Internal implementation of <see cref="IBufferWriter{T}"/> for platforms that don't have it available.
@@ -137,6 +137,8 @@ namespace Microsoft.Data.SqlClient
             _index += count;
         }
 
+        
+        
         /// <summary>
         /// Returns a <see cref="Memory{T}"/> to write to that is at least the requested length (specified by <paramref name="sizeHint"/>).
         /// If no <paramref name="sizeHint"/> is provided (or it's equal to <code>0</code>), some non-empty buffer is returned.
