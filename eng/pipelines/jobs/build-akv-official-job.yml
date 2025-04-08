@@ -108,7 +108,7 @@ jobs:
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
-                connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
+                connectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
                 appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
                 EsrpClientId: '${{ parameters.EsrpClientId }}'
@@ -127,7 +127,7 @@ jobs:
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
-                connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
+                connectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
                 appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
                 EsrpClientId: '${{ parameters.EsrpClientId }}'
