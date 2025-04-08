@@ -411,22 +411,4 @@ namespace Microsoft.Data.SqlClient
 
 
     }
-
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/SqlClientPermissionAttribute/*' />
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
-    [Serializable]
-    public sealed class SqlClientPermissionAttribute : DBDataPermissionAttribute
-    {
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/ctor/*' />
-        public SqlClientPermissionAttribute(SecurityAction action) : base(action)
-        {
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/CreatePermission/*' />
-        override public IPermission CreatePermission()
-        {
-            return new SqlClientPermission(this);
-        }
-    }
 }

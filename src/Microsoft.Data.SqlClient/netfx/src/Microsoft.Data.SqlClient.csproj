@@ -642,6 +642,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientPermissionAttribute.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientPermissionAttribute.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
     </Compile>
