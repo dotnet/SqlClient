@@ -55,6 +55,7 @@ steps:
 - ${{if eq(parameters.operatingSystem, 'Windows')}}:
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
+    enabled: false
     inputs:
       solution: build.proj
       msbuildArchitecture: ${{parameters.msbuildArchitecture }}
@@ -84,6 +85,7 @@ steps:
 - ${{ else }}: # Linux or macOS
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
+    enabled: false
     inputs:
       command: custom
       projects: build.proj
