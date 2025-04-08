@@ -25,6 +25,18 @@ parameters:
     type: string
     default: $(appRegistrationTenantId)
 
+  - name: AuthAKVName
+    type: string
+    default: $(AuthAKVName)
+
+  - name: AuthSignCertName
+    type: string
+    default: $(AuthSignCertName)
+
+  - name: EsrpClientId
+    type: string
+    default: $(EsrpClientId)
+
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
   - task: EsrpMalwareScanning@5
@@ -33,8 +45,7 @@ steps:
       ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: AKV-SqlClientDriversProd
-      AuthCertName: 'SqlClientDriversProdSignInCert'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       CleanupTempStorage: 1
@@ -45,9 +56,9 @@ steps:
       ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: AKV-SqlClientDriversProd
-      AuthCertName: 'SqlClientDriversProdSignInCert'
-      AuthSignCertName: 'ESRP-Release-Sign2'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      AuthAKVName: '${{parameters.AuthAKVName }}'
+      AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       signConfigType: inlineSignParams
@@ -97,8 +108,7 @@ steps:
       ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: AKV-SqlClientDriversProd
-      AuthCertName: 'SqlClientDriversProdSignInCert'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
@@ -110,9 +120,9 @@ steps:
       ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: AKV-SqlClientDriversProd
-      AuthCertName: 'SqlClientDriversProdSignInCert'
-      AuthSignCertName: 'ESRP-Release-Sign2'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      AuthAKVName: '${{parameters.AuthAKVName }}'
+      AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       signConfigType: inlineSignParams
