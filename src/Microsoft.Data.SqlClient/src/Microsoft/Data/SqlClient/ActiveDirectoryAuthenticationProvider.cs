@@ -84,9 +84,7 @@ namespace Microsoft.Data.SqlClient
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated
-                #pragma warning disable 0618
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-                #pragma warning restore 0618
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
@@ -240,9 +238,7 @@ namespace Microsoft.Data.SqlClient
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
                 }
             }
-            #pragma warning disable 0618
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
-            #pragma warning restore 0618
             {
                 string pwCacheKey = GetAccountPwCacheKey(parameters);
                 object previousPw = s_accountPwCache.Get(pwCacheKey);
