@@ -5,6 +5,7 @@
 #if NET
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -96,7 +97,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 ThreadPool.QueueUserWorkItem(async (_) =>
                 {
-                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.Zero, false, CancellationToken.None).ConfigureAwait(false);
+                    //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
+                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None).ConfigureAwait(false);
+                    //TODO set transaction if necessary
+                    PrepareConnection(owningObject, connection, null);
                     taskCompletionSource.SetResult(connection);
                 });
                 connection = null;
@@ -104,8 +108,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } 
             else
             {
-                connection = GetInternalConnection(owningObject, userOptions, TimeSpan.Zero, false, CancellationToken.None).Result;
+                //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
+                connection = GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None).Result;
+                //TODO set transaction if necessary
+                PrepareConnection(owningObject, connection, null);
                 return connection is not null;
+            }
+        }
+
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction? transaction)
+        {
+            lock (obj)
+            {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
+                obj.PostPop(owningObject);
+            }
+            try
+            {
+                obj.ActivateConnection(transaction);
+            }
+            catch
+            {
+                // if Activate throws an exception
+                // put it back in the pool or have it properly disposed of
+                this.ReturnInternalConnection(obj, owningObject);
+                throw;
             }
         }
 
@@ -125,9 +151,40 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         }
 
-        internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
+        internal override void ReturnInternalConnection(DbConnectionInternal connector, object? owningObject)
         {
-            ReturnInternalConnection(obj);
+            // Once a connection is closing (which is the state that we're in at
+            // this point in time) you cannot delegate a transaction to or enlist
+            // a transaction in it, so we can correctly presume that if there was
+            // not a delegated or enlisted transaction to start with, that there
+            // will not be a delegated or enlisted transaction once we leave the
+            // lock.
+
+            lock (connector)
+            {
+                // Calling PrePush prevents the object from being reclaimed
+                // once we leave the lock, because it sets _pooledCount such
+                // that it won't appear to be out of the pool.  What that
+                // means, is that we're now responsible for this connection:
+                // it won't get reclaimed if it gets lost.
+                connector.PrePush(owningObject);
+
+                // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
+            }
+
+            //TODO: verify transaction state
+
+            if (!CheckConnector(connector))
+            {
+                return;
+            }
+
+            connector.DeactivateConnection();
+
+            // Statement order is important since we have synchronous completions on the channel.
+            Interlocked.Increment(ref _idleCount);
+            var written = _idleConnectorWriter.TryWrite(connector);
+            Debug.Assert(written);
         }
 
         internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
@@ -306,7 +363,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connector != null)
             {
                 // TODO: transactions
-                connector.ActivateConnection(null);
                 return connector;
             }
 
@@ -315,7 +371,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connector != null)
             {
                 // TODO: transactions
-                connector.ActivateConnection(null);
                 return connector;
             }
 
@@ -360,7 +415,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         if (CheckIdleConnector(connector))
                         {
                             // TODO: transactions
-                            connector.ActivateConnection(null);
                             return connector;
                         }
                     }
@@ -369,8 +423,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         cancellationToken.ThrowIfCancellationRequested();
                         Debug.Assert(finalToken.IsCancellationRequested);
 
-                        //TODO: exceptions from resource file
-                        throw new Exception("Pool exhausted", new TimeoutException());
+                        throw ADP.PooledOpenTimeout();
                     }
                     catch (ChannelClosedException)
                     {
@@ -588,6 +641,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
                         }
 
+                        newConnection.PrePush(null);
+
                         int i;
                         for (i = 0; i < state.Pool.MaxPoolSize; i++)
                         {
@@ -622,25 +677,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 return new ValueTask<DbConnectionInternal?>((DbConnectionInternal?)null);
             }
-        }
-
-        /// <inheritdoc/>
-        internal void ReturnInternalConnection(DbConnectionInternal connector)
-        {
-
-            //TODO: verify transaction state
-
-            if (!CheckConnector(connector))
-            {
-                return;
-            }
-
-            connector.DeactivateConnection();
-
-            // Statement order is important since we have synchronous completions on the channel.
-            Interlocked.Increment(ref _idleCount);
-            var written = _idleConnectorWriter.TryWrite(connector);
-            Debug.Assert(written);
         }
 
         /// <summary>
@@ -846,7 +882,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     // The connector has never been used, so it's safe to immediately return it to the
                     // pool without resetting it.
-                    ReturnInternalConnection(connector);
+                    ReturnInternalConnection(connector, null);
                 }
             }
         }
