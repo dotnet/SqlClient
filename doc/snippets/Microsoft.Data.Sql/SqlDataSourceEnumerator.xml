@@ -30,16 +30,11 @@ The table returned by this method contains the following columns, all of which c
 |**ServerName**|Name of the server.|  
 |**InstanceName**|Name of the server instance. Blank if the server is running as the default instance.|  
 |**IsClustered**|Indicates whether the server is part of a cluster.|  
-|**Version**|Version of the server:<br /><br />10.0.xx for SQL Server 2008<br />10.50.x for SQL Server 2008 R2<br />11.0.xx for SQL Server 2012<br />12.0.xx for SQL Server 2014<br />13.0.xx for SQL Server 2016<br />14.0.xx for SQL Server 2017|  
+|**Version**|Version of the server:<ul><li>10.0.xx for SQL Server 2008</li><li>10.50.x for SQL Server 2008 R2</li><li>11.0.xx for SQL Server 2012</li><li>12.0.xx for SQL Server 2014</li><li>13.0.xx for SQL Server 2016</li><li>14.0.xx for SQL Server 2017</li></ul>|  
   
 > [!NOTE]
 > Due to the nature of the mechanism used by <xref:Microsoft.Data.Sql.SqlDataSourceEnumerator> to locate data sources on a network, the method will not always return a complete list of the available servers, and the list might not be the same on every call. If you plan to use this function to let users select a server from a list, make sure that you always also supply an option to type in a name that is not in the list, in case the server enumeration does not return all the available servers. In addition, this method may take a significant amount of time to execute, so be careful about calling it when performance is critical.  
 
-## Examples  
- The following console application retrieves information about all the visible SQL Server instances and displays the information in the console window.  
-  
-[!code-csharp[SqlDataSourceEnumerator.Example#1](~/../sqlclient/doc/samples/SqlDataSourceEnumeratorExample.cs#1)]
-  
           ]]>
         </format>
       </remarks>
