@@ -17,6 +17,10 @@ parameters:
     type: string
     default: $(artifactDirectory)
 
+  - name: ESRPConnectedServiceName
+    type: string
+    default: $(ESRPConnectedServiceName)
+    
   - name: appRegistrationClientId
     type: string
     default: $(appRegistrationClientId)
@@ -42,7 +46,7 @@ steps:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning'
     inputs:
-      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
+      ConnectedServiceName: '{{parameters.ESRPConnectedServiceName}}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
@@ -54,7 +58,7 @@ steps:
   - task: EsrpCodeSigning@5
     displayName: 'ESRP CodeSigning'
     inputs:
-      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
+      ConnectedServiceName: '{{parameters.ESRPConnectedServiceName}}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
@@ -107,7 +111,7 @@ steps:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
-      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
+      ConnectedServiceName: '{{parameters.ESRPConnectedServiceName}}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'
@@ -120,7 +124,7 @@ steps:
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
       inputs:
-      ConnectedServiceName: 'ESRP Managed Identity federated auth - AME tenant'
+      ConnectedServiceName: '{{parameters.ESRPConnectedServiceName}}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
       EsrpClientId: '${{parameters.EsrpClientId }}'

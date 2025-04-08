@@ -6,6 +6,12 @@
 
 variables:
   - group: ESRP Federated Creds (AME)
+    # ESRPConnectedServiceName
+    # ESRPClientId
+    # AppRegistrationClientId
+    # AppRegistrationTenantId
+    # AuthAKVName
+    # AuthSignCertName
 
   - name: Configuration
     value: Release
