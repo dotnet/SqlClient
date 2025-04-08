@@ -9,6 +9,7 @@ using System.Collections;
 using System.Data;
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Reflection;
 using System.Security;
 using System.Security.Permissions;
@@ -23,8 +24,9 @@ namespace Microsoft.Data.SqlClient
     {
         #region Member Variables
         
+        // @TODO: Replace ArrayList with a typed list.
         private NameValuePermission _keyvaluetree = NameValuePermission.Default;
-        private ArrayList _keyvalues;;
+        private ArrayList _keyvalues;
         
         #endregion
         
@@ -82,17 +84,18 @@ namespace Microsoft.Data.SqlClient
         
         private bool _IsUnrestricted
         {
-            set
-            {
-                // Use Reflection to access the base class _isUnrestricted. There is no other way to alter this externally.
-                FieldInfo fieldInfo = GetType().BaseType.GetField("_isUnrestricted", BindingFlags.Instance
-                    | BindingFlags.NonPublic);
-                fieldInfo.SetValue(this, value);
-            }
-
             get
             {
                 return base.IsUnrestricted();
+            }
+            
+            set
+            {
+                // Use Reflection to access the base class _isUnrestricted. There is no other way to alter this externally.
+                FieldInfo fieldInfo = GetType().BaseType.GetField(
+                    "_isUnrestricted",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                fieldInfo.SetValue(this, value);
             }
         }
         
@@ -113,12 +116,14 @@ namespace Microsoft.Data.SqlClient
             return new SqlClientPermission(this);
         }
         
-        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
-        // </IPermission>
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/FromXml/*' />
         public override void FromXml(SecurityElement securityElement)
         {
+            // Reads an XML tree like:
+            // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
+            //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
+            // </IPermission>
+            
             // code derived from CodeAccessPermission.ValidateElement
             if (securityElement == null)
             {
@@ -163,8 +168,9 @@ namespace Microsoft.Data.SqlClient
                             {
                                 behavior = (KeyRestrictionBehavior)Enum.Parse(typeof(KeyRestrictionBehavior), behavr, true);
                             }
-                            constr = DecodeXmlValue(constr);
-                            restrt = DecodeXmlValue(restrt);
+                            
+                            constr = WebUtility.HtmlDecode(constr);
+                            restrt = WebUtility.HtmlDecode(restrt);
                             Add(constr, restrt, behavior);
                         }
                     }
@@ -262,14 +268,16 @@ namespace Microsoft.Data.SqlClient
             return subset;
         }
         
-        // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
-        //     <add ConnectionString="provider=x;data source=y;"/>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
-        //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
-        // </IPermission>
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ToXml/*' />
         public override SecurityElement ToXml()
         {
+            // Generates an XML tree like:
+            // <IPermission class="...Permission" version="1" AllowBlankPassword=false>
+            //     <add ConnectionString="provider=x;data source=y;"/>
+            //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="user id=;password=;" KeyRestrictionBehavior=AllowOnly/>
+            //     <add ConnectionString="provider=x;data source=y;" KeyRestrictions="address=;server=" KeyRestrictionBehavior=PreventUsage/>
+            // </IPermission>
+            
             Type type = GetType();
             SecurityElement root = new SecurityElement(XmlStr._IPermission);
             root.AddAttribute(XmlStr._class, type.AssemblyQualifiedName.Replace('\"', '\''));
@@ -290,20 +298,13 @@ namespace Microsoft.Data.SqlClient
                         SecurityElement valueElement = new SecurityElement(XmlStr._add);
                         string tmp;
 
-                        tmp = value.ConnectionString;
-                        tmp = EncodeXmlValue(tmp);
+                        tmp = SecurityElement.Escape(value.ConnectionString);
                         if (!ADP.IsEmpty(tmp))
                         {
                             valueElement.AddAttribute(XmlStr._ConnectionString, tmp);
                         }
                         
-                        tmp = value.Restrictions;
-                        tmp = EncodeXmlValue(tmp);
-                        if (tmp == null)
-                        {
-                            tmp = "";
-                        }
-                        
+                        tmp = SecurityElement.Escape(value.Restrictions) ?? "";
                         valueElement.AddAttribute(XmlStr._KeyRestrictions, tmp);
 
                         tmp = value.Behavior.ToString();
@@ -386,34 +387,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-        
-        private string DecodeXmlValue(string value)
-        {
-            if (value != null && (0 < value.Length))
-            {
-                value = value.Replace("&quot;", "\"");
-                value = value.Replace("&apos;", "\'");
-                value = value.Replace("&lt;", "<");
-                value = value.Replace("&gt;", ">");
-                value = value.Replace("&amp;", "&");
-            }
-            return value;
-        }
-
-        private string EncodeXmlValue(string value)
-        {
-            if (value != null && (0 < value.Length))
-            {
-                value = value.Replace('\0', ' '); // assumption that '\0' will only be at end of string
-                value = value.Trim();
-                value = value.Replace("&", "&amp;");
-                value = value.Replace(">", "&gt;");
-                value = value.Replace("<", "&lt;");
-                value = value.Replace("\'", "&apos;");
-                value = value.Replace("\"", "&quot;");
-            }
-            return value;
         }
         
         private bool IsEmpty()
