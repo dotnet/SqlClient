@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
         public SqlConnection(string connectionString, SqlCredential credential) : this()
         {
-            ConnectionString = connectionString;
+            ConnectionString = connectionString; // setting connection string first so that ConnectionOption is available
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
@@ -1881,6 +1881,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.Retry | Info | Object Id {0}", _parent?.ObjectID);
                 _registration.Dispose();
+
                 try
                 {
                     SqlStatistics statistics = null;

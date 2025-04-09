@@ -16,14 +16,12 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using System.Security.Principal;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.SqlServer.Server;
@@ -33,9 +31,6 @@ using Microsoft.SqlServer.Server;
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
-    using System.Diagnostics.Tracing;
-    using Microsoft.Data.Common;
-
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
     [DefaultEvent("InfoMessage")]
     [DesignerCategory("")]
@@ -162,11 +157,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
         public SqlConnection(string connectionString, SqlCredential credential) : this()
         {
-            ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
+            ConnectionString = connectionString; // setting connection string first so that ConnectionOption is available
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
-                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than Arguemtn exception
+                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than ArgumentException
                 //  Need to call setter on Credential property rather than setting _credential directly as pool groups need to be checked
                 SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
                 if (UsesClearUserIdOrPassword(connectionOptions))
@@ -178,43 +173,35 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
-
-                if (UsesContextConnection(connectionOptions))
+                else if (UsesContextConnection(connectionOptions))
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
                 }
-
-                if (UsesActiveDirectoryIntegrated(connectionOptions))
+                else if (UsesActiveDirectoryIntegrated(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
                 }
-
-                if (UsesActiveDirectoryInteractive(connectionOptions))
+                else if (UsesActiveDirectoryInteractive(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithInteractiveArgument();
                 }
-
-                if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithDeviceFlowArgument();
                 }
-
-                if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
                 }
-
-                if (UsesActiveDirectoryMSI(connectionOptions))
+                else if (UsesActiveDirectoryMSI(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
                 }
-
-                if (UsesActiveDirectoryDefault(connectionOptions))
+                else if (UsesActiveDirectoryDefault(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                 }
-
-                if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
                 }
@@ -2345,7 +2332,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
-                // Check for incompatible connection string value with SqlCredential
+                // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
                 {
                     throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
