@@ -43,31 +43,52 @@ namespace Microsoft.Data.SqlClient
     ]
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
-
-        internal bool ForceNewConnection
-        {
-            get;
-            set;
-        }
-
-        internal bool _suppressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
-
         static private readonly object EventInfoMessage = new object();
 
+        private bool _AsyncCommandInProgress;
+
+        // SQLStatistics support
+        internal SqlStatistics _statistics;
+        private bool _collectstats;
+
+        private bool _fireInfoMessageEventOnUserErrors; // False by default
+
+        // root task associated with current async invocation
+        private Tuple<TaskCompletionSource<DbConnectionInternal>, Task> _currentCompletion;
+
+        private SqlCredential _credential;
+        private string _connectionString;
+        private int _connectRetryCount;
+        private string _accessToken; // Access Token to be used for token based authentication
+
+        // connection resiliency
+        private object _reconnectLock = new object();
+        internal Task _currentReconnectionTask;
+        private Task _asyncWaitingForReconnection; // current async task waiting for reconnection in non-MARS connections
+        private Guid _originalConnectionId = Guid.Empty;
+        private CancellationTokenSource _reconnectionCancellationSource;
+        internal SessionData _recoverySessionData;
+        internal bool _suppressStateChangeForReconnection = false; // Do not use for anything else ! Value will be overwritten by CR process
+        internal WindowsIdentity _lastIdentity;
+        internal WindowsIdentity _impersonateIdentity;
+        private int _reconnectCount;
+
+        // Retry Logic
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
+
+        // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
+        // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
+        // using SqlConnection.Open() method.
+        internal bool _applyTransientFaultHandling = false;
+
         // System column encryption key store providers are added by default
-        private static Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
+        private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
             = new(capacity: 3, comparer: StringComparer.OrdinalIgnoreCase)
             {
                 { SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider() },
                 { SqlColumnEncryptionCngProvider.ProviderName, new SqlColumnEncryptionCngProvider() },
                 { SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider() }
             };
-
-        /// <summary>
-        /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
-        /// Global custom provider list can only be supplied once per application.
-        /// </summary>
-        private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
 
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
@@ -81,14 +102,26 @@ namespace Microsoft.Data.SqlClient
         private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new();
 
         /// <summary>
+        /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
+        /// Global custom provider list can only be supplied once per application.
+        /// </summary>
+        private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
+
+        /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
         /// Key to the dictionary is a SQL Server Name
         /// IList contains a list of trusted key paths.
         /// </summary>
-        static private readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
+        private static readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
             = new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                                                             capacity: 1,
                                                             comparer: StringComparer.OrdinalIgnoreCase);
+
+        internal bool ForceNewConnection
+        {
+            get;
+            set;
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
         [
@@ -121,22 +154,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Defines whether query metadata caching is enabled.
-        /// </summary>
-        static private TimeSpan _ColumnEncryptionKeyCacheTtl = TimeSpan.FromHours(2);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [
         DefaultValue(null),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl),
         ]
-        static public TimeSpan ColumnEncryptionKeyCacheTtl
-        {
-            get => _ColumnEncryptionKeyCacheTtl;
-            set => _ColumnEncryptionKeyCacheTtl = value;
-        }
+        public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set } = TimeSpan.FromHours(2);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
         static public void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
@@ -283,36 +307,6 @@ namespace Microsoft.Data.SqlClient
             return new List<string>(0);
         }
 
-        private bool _AsyncCommandInProgress;
-
-        // SQLStatistics support
-        internal SqlStatistics _statistics;
-        private bool _collectstats;
-
-        private bool _fireInfoMessageEventOnUserErrors; // False by default
-
-        // root task associated with current async invocation
-        Tuple<TaskCompletionSource<DbConnectionInternal>, Task> _currentCompletion;
-
-        private SqlCredential _credential; // SQL authentication password stored in SecureString
-        private string _connectionString;
-        private int _connectRetryCount;
-
-        private string _accessToken; // Access Token to be used for token based authententication
-
-        // connection resiliency
-        private object _reconnectLock = new object();
-        internal Task _currentReconnectionTask;
-        private Task _asyncWaitingForReconnection; // current async task waiting for reconnection in non-MARS connections
-        private Guid _originalConnectionId = Guid.Empty;
-        private CancellationTokenSource _reconnectionCancellationSource;
-        internal SessionData _recoverySessionData;
-        internal WindowsIdentity _lastIdentity;
-        internal WindowsIdentity _impersonateIdentity;
-        private int _reconnectCount;
-
-        // Retry Logic
-        private SqlRetryLogicBaseProvider _retryLogicProvider;
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
@@ -335,11 +329,6 @@ namespace Microsoft.Data.SqlClient
                 _retryLogicProvider = value;
             }
         }
-
-        // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
-        // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
-        // using SqlConnection.Open() method.
-        internal bool _applyTransientFaultHandling = false;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
         public SqlConnection(string connectionString) : this(connectionString, null)
@@ -1972,11 +1961,11 @@ namespace Microsoft.Data.SqlClient
 
         private class OpenAsyncRetry
         {
-            SqlConnection _parent;
-            TaskCompletionSource<DbConnectionInternal> _retry;
-            TaskCompletionSource<object> _result;
-            SqlConnectionOverrides _overrides;
-            CancellationTokenRegistration _registration;
+            private SqlConnection _parent;
+            private TaskCompletionSource<DbConnectionInternal> _retry;
+            private TaskCompletionSource<object> _result;
+            private SqlConnectionOverrides _overrides;
+            private CancellationTokenRegistration _registration;
 
             public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
             {
