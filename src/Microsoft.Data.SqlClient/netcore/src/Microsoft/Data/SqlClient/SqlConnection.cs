@@ -370,7 +370,6 @@ namespace Microsoft.Data.SqlClient
             foreach (string key in customProviders.Keys)
             {
                 // Validate the provider name
-                //
                 // Check for null or empty
                 if (string.IsNullOrWhiteSpace(key))
                 {
@@ -394,7 +393,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
-        internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+        internal string EnclaveAttestationUrl
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.EnclaveAttestationUrl;
+            }
+        }
 
         /// <summary>
         /// Get attestation protocol
@@ -1079,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
             }
 
-            if(_accessTokenCallback != null)
+            if (_accessTokenCallback != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
@@ -1101,7 +1107,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
             }
 
-            if(_accessToken != null)
+            if (_accessToken != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
@@ -1112,8 +1118,6 @@ namespace Microsoft.Data.SqlClient
         {
             get => SqlClientFactory.Instance;
         }
-
-        // SqlCredential: Pair User Id and password in SecureString which are to be used for SQL authentication
 
         //
         // PUBLIC EVENTS
@@ -1183,7 +1187,7 @@ namespace Microsoft.Data.SqlClient
             {
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
-                //   InnerConnection doesn't maintain a ref on the outer connection (this) and
+                // VSTFDEVDIV# 560355 - InnerConnection doesn't maintain a ref on the outer connection (this) and
                 //   subsequently leaves open the possibility that the outer connection could be GC'ed before the SqlTransaction
                 //   is fully hooked up (leaving a DbTransaction with a null connection property). Ensure that this is reachable
                 //   until the completion of BeginTransaction with KeepAlive
@@ -1286,7 +1290,6 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionFactory.SingletonInstance.ClearPool(connection);
             }
         }
-
 
         private void CloseInnerConnection()
         {
@@ -1625,6 +1628,7 @@ namespace Microsoft.Data.SqlClient
                                             _originalConnectionId = ClientConnectionId;
                                             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ValidateAndReconnect | Info | Connection Client Connection Id {0} is invalid, reconnecting", _originalConnectionId);
                                             _recoverySessionData = cData;
+
                                             if (beforeDisconnect != null)
                                             {
                                                 beforeDisconnect();
@@ -2099,7 +2103,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         //
         // INTERNAL METHODS
         //
@@ -2150,7 +2153,6 @@ namespace Microsoft.Data.SqlClient
         internal void OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
         {
             Debug.Assert(exception != null && exception.Errors.Count != 0, "SqlConnection: OnError called with null or empty exception!");
-
 
             if (breakConnection && (ConnectionState.Open == State))
             {
@@ -2482,6 +2484,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }
+
             try
             {
                 return Assembly.Load(asmRef);
@@ -2574,7 +2577,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlUdtInfo GetInfoFromType(Type t)
         {
-            Debug.Assert(t != null, "Type object cant be NULL");
+            Debug.Assert(t != null, "Type object can't be NULL");
             Type orig = t;
             do
             {
@@ -2583,10 +2586,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return attr;
                 }
-                else
-                {
-                    t = t.BaseType;
-                }
+
+                t = t.BaseType;
             }
             while (t != null);
 

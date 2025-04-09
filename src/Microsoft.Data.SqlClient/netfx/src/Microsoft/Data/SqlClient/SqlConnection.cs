@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt != null ? opt.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled : false;
+                return opt?.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled;
             }
         }
 
@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
                     }
-                    this._collectstats = value;
+                    _collectstats = value;
                 }
             }
         }
@@ -587,13 +587,13 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
         }
 
-        // Does this connection uses Integrated Security?
+        // Does this connection use Integrated Security?
         private bool UsesIntegratedSecurity(SqlConnectionString opt)
         {
             return opt != null && opt.IntegratedSecurity;
         }
 
-        // Does this connection uses old style of clear userID or Password in connection string?
+        // Does this connection use old style of clear userID or Password in connection string?
         private bool UsesClearUserIdOrPassword(SqlConnectionString opt)
         {
             bool result = false;
@@ -606,42 +606,22 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionString.TransactionBindingEnum TransactionBinding
         {
-            get
-            {
-                return ((SqlConnectionString)ConnectionOptions).TransactionBinding;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).TransactionBinding;
         }
 
         internal SqlConnectionString.TypeSystem TypeSystem
         {
-            get
-            {
-                return ((SqlConnectionString)ConnectionOptions).TypeSystemVersion;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).TypeSystemVersion;
         }
 
         internal Version TypeSystemAssemblyVersion
         {
-            get
-            {
-                return ((SqlConnectionString)ConnectionOptions).TypeSystemAssemblyVersion;
-            }
-        }
-
-        internal PoolBlockingPeriod PoolBlockingPeriod
-        {
-            get
-            {
-                return ((SqlConnectionString)ConnectionOptions).PoolBlockingPeriod;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).TypeSystemAssemblyVersion;
         }
 
         internal int ConnectRetryInterval
         {
-            get
-            {
-                return ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).ConnectRetryInterval;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
@@ -667,7 +647,7 @@ namespace Microsoft.Data.SqlClient
                     if (_credential != null)
                     {
                         // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
-                        // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI | ActiveDirectoryDefault. Since a different error string is used
+                        //  ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI | ActiveDirectoryDefault. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -755,12 +735,7 @@ namespace Microsoft.Data.SqlClient
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
                 SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
-                if (InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo)
-                {
-                    result = null;
-                }
-
-                return result;
+                return InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo ? null : _accessToken;
             }
             set
             {
@@ -1005,10 +980,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlStatistics Statistics
         {
-            get
-            {
-                return _statistics;
-            }
+            get => _statistics;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*' />
@@ -1123,7 +1095,7 @@ namespace Microsoft.Data.SqlClient
         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential: check if the usage of credential has any conflict
         //  with the keys used in connection string
         //  If there is any conflict, it throws InvalidOperationException
-        //  This is to be used setter of ConnectionString and Credential properties
+        //  This is used in the setter of ConnectionString and Credential properties.
         private void CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(SqlConnectionString connectionOptions)
         {
             if (UsesClearUserIdOrPassword(connectionOptions))
@@ -1300,9 +1272,6 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
 
-                // NOTE: we used to throw an exception if the transaction name was empty
-                // (see MDAC 50292) but that was incorrect because we have a BeginTransaction
-                // method that doesn't have a transactionName argument.
                 SqlTransaction transaction;
                 bool isFirstAttempt = true;
                 do
@@ -1313,7 +1282,7 @@ namespace Microsoft.Data.SqlClient
                 } while (transaction.InternalTransaction.ConnectionHasBeenRestored);
 
 
-                // SQLBU 503873  The GetOpenConnection line above doesn't keep a ref on the outer connection (this),
+                //  The GetOpenConnection line above doesn't keep a ref on the outer connection (this),
                 //  and it could be collected before the inner connection can hook it to the transaction, resulting in
                 //  a transaction with a null connection property.  Use GC.KeepAlive to ensure this doesn't happen.
                 GC.KeepAlive(this);
@@ -1328,7 +1297,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*' />
-        override public void ChangeDatabase(string database)
+        public override void ChangeDatabase(string database)
         {
             SqlStatistics statistics = null;
             RepairInnerConnection();
@@ -1365,14 +1334,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
-        static public void ClearAllPools()
+        public static void ClearAllPools()
         {
             (new SqlClientPermission(PermissionState.Unrestricted)).Demand();
             SqlConnectionFactory.SingletonInstance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
-        static public void ClearPool(SqlConnection connection)
+        public static void ClearPool(SqlConnection connection)
         {
             ADP.CheckArgumentNull(connection, "connection");
 
@@ -1388,19 +1357,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        void CloseInnerConnection()
+        private void CloseInnerConnection()
         {
             // CloseConnection() now handles the lock
 
             // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
-            // the command will no longer be cancelable.  It might be desirable to be able to cancel the close opperation, but this is
+            // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
             // outside of the scope of Whidbey RTM.  See (SqlCommand::Cancel) for other lock.
             _originalConnectionId = ClientConnectionId;
             InnerConnection.CloseConnection(this, ConnectionFactory);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
-        override public void Close()
+        public override void Close()
         {
             using (TryEventScope.Create("<sc.SqlConnection.Close|API> {0}", ObjectID))
             {
@@ -1509,7 +1478,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*' />
-        override public void Open()
+        public override void Open()
         {
             Open(SqlConnectionOverrides.None);
         }
@@ -1740,7 +1709,7 @@ namespace Microsoft.Data.SqlClient
             return runningReconnect;
         }
 
-        // this is straightforward, but expensive method to do connection resiliency - it take locks and all prepartions as for TDS request
+        // this is straightforward, but expensive method to do connection resiliency - it take locks and all preparations as for TDS request
         partial void RepairInnerConnection()
         {
             WaitForPendingReconnection();
@@ -1765,7 +1734,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        void CancelOpenAndWait()
+        private void CancelOpenAndWait()
         {
             // copy from member to avoid changes by background thread
             var completion = _currentCompletion;
@@ -2160,7 +2129,7 @@ namespace Microsoft.Data.SqlClient
         // Surround name in brackets and then escape any end bracket to protect against SQL Injection.
         // NOTE: if the user escapes it themselves it will not work, but this was the case in V1 as well
         // as native OleDb and Odbc.
-        static internal string FixupDatabaseTransactionName(string name)
+        internal static string FixupDatabaseTransactionName(string name)
         {
             if (!string.IsNullOrEmpty(name))
             {
@@ -2178,16 +2147,8 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(exception != null && exception.Errors.Count != 0, "SqlConnection: OnError called with null or empty exception!");
 
-            // Bug fix - MDAC 49022 - connection open after failure...  Problem was parser was passing
-            // Open as a state - because the parser's connection to the netlib was open.  We would
-            // then set the connection state to the parser's state - which is not correct.  The only
-            // time the connection state should change to what is passed in to this function is if
-            // the parser is broken, then we should be closed.  Changed to passing in
-            // TdsParserState, not ConnectionState.
-
             if (breakConnection && (ConnectionState.Open == State))
             {
-
                 if (wrapCloseInAction != null)
                 {
                     int capturedCloseCount = _closeCount;
@@ -2414,10 +2375,9 @@ namespace Microsoft.Data.SqlClient
 
         private static void ChangePassword(string connectionString, SqlConnectionString connectionOptions, SqlCredential credential, string newPassword, SecureString newSecurePassword)
         {
-            // note: This is the only case where we directly construt the internal connection, passing in the new password.
-            // Normally we would simply create a regular connectoin and open it but there is no other way to pass the
-            // new password down to the constructor. Also it would have an unwanted impact on the connection pool
-            //
+            // note: This is the only case where we directly construct the internal connection, passing in the new password.
+            // Normally we would simply create a regular connection and open it, but there is no other way to pass the
+            // new password down to the constructor. This would have an unwanted impact on the connection pool.
             SqlInternalConnectionTds con = null;
             try
             {
@@ -2570,7 +2530,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // TODO - move UDT code to separate file.
         internal void CheckGetExtendedUDTInfo(SqlMetaDataPriv metaData, bool fThrow)
         {
             if (metaData.udt?.Type == null)
@@ -2582,7 +2541,6 @@ namespace Microsoft.Data.SqlClient
 
                 if (fThrow && metaData.udt.Type == null)
                 {
-                    // TODO - BUG - UNDONE - Fix before Whidbey RTM - better message!
                     throw SQL.UDTUnexpectedResult(metaData.udt.AssemblyQualifiedName);
                 }
             }
@@ -2621,8 +2579,7 @@ namespace Microsoft.Data.SqlClient
         internal byte[] GetBytes(object o)
         {
             Format format = Format.Native;
-            int maxSize = 0;
-            return GetBytes(o, out format, out maxSize);
+            return GetBytes(o, out format, out int maxSize);
         }
 
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
@@ -2631,8 +2588,8 @@ namespace Microsoft.Data.SqlClient
             maxSize = attr.MaxByteSize;
             format = attr.SerializationFormat;
 
-            if (maxSize < -1 || maxSize >= UInt16.MaxValue)
-            { // Do we need this?  Is this the right place?
+            if (maxSize < -1 || maxSize >= ushort.MaxValue)
+            {
                 throw new InvalidOperationException(o.GetType() + ": invalid Size");
             }
 
@@ -2664,5 +2621,5 @@ namespace Microsoft.Data.SqlClient
 
             throw SQL.UDTInvalidSqlType(orig.AssemblyQualifiedName);
         }
-    } // SqlConnection
-} // Microsoft.Data.SqlClient namespace
+    }
+}
