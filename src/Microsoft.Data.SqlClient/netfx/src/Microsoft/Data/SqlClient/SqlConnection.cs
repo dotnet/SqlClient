@@ -1024,7 +1024,7 @@ namespace Microsoft.Data.SqlClient
                 // If a connection is connecting or is ever opened, user id/password cannot be set
                 if (!InnerConnection.AllowSetConnectionString)
                 {
-                    throw ADP.OpenConnectionPropertySet("Credential", InnerConnection.State);
+                    throw ADP.OpenConnectionPropertySet(nameof(Credential), InnerConnection.State);
                 }
 
                 // check if the usage of credential has any conflict with the keys used in connection string
@@ -1075,7 +1075,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback));
             }
         }
 
@@ -1330,7 +1330,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
         public static void ClearPool(SqlConnection connection)
         {
-            ADP.CheckArgumentNull(connection, "connection");
+            ADP.CheckArgumentNull(connection, nameof(connection));
 
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
@@ -1394,19 +1394,19 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
-                catch (System.OutOfMemoryException e)
+                catch (System.OutOfMemoryException ex)
                 {
-                    Abort(e);
+                    Abort(ex);
                     throw;
                 }
-                catch (System.StackOverflowException e)
+                catch (System.StackOverflowException ex)
                 {
-                    Abort(e);
+                    Abort(ex);
                     throw;
                 }
-                catch (System.Threading.ThreadAbortException e)
+                catch (System.Threading.ThreadAbortException ex)
                 {
-                    Abort(e);
+                    Abort(ex);
                     SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
                     throw;
                 }
@@ -2265,11 +2265,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (string.IsNullOrEmpty(newPassword))
                 {
-                    throw SQL.ChangePasswordArgumentMissing("newPassword");
+                    throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
                 }
                 if (TdsEnums.MAXLEN_NEWPASSWORD < newPassword.Length)
                 {
-                    throw ADP.InvalidArgumentLength("newPassword", TdsEnums.MAXLEN_NEWPASSWORD);
+                    throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
@@ -2304,28 +2304,28 @@ namespace Microsoft.Data.SqlClient
 
                 if (string.IsNullOrEmpty(connectionString))
                 {
-                    throw SQL.ChangePasswordArgumentMissing("connectionString");
+                    throw SQL.ChangePasswordArgumentMissing(nameof(connectionString));
                 }
 
                 // check credential; not necessary to check the length of password in credential as the check is done by SqlCredential class
                 if (credential == null)
                 {
-                    throw SQL.ChangePasswordArgumentMissing("credential");
+                    throw SQL.ChangePasswordArgumentMissing(nameof(credential));
                 }
 
                 if (newSecurePassword == null || newSecurePassword.Length == 0)
                 {
-                    throw SQL.ChangePasswordArgumentMissing("newSecurePassword");
+                    throw SQL.ChangePasswordArgumentMissing(nameof(newSecurePassword));
                 }
 
                 if (!newSecurePassword.IsReadOnly())
                 {
-                    throw ADP.MustBeReadOnly("newSecurePassword");
+                    throw ADP.MustBeReadOnly(nameof(newSecurePassword));
                 }
 
                 if (TdsEnums.MAXLEN_NEWPASSWORD < newSecurePassword.Length)
                 {
-                    throw ADP.InvalidArgumentLength("newSecurePassword", TdsEnums.MAXLEN_NEWPASSWORD);
+                    throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
@@ -2547,7 +2547,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Type t = metaData.udt?.Type;
                 Debug.Assert(t != null, "Unexpected null of udtType on GetUdtValue!");
-                o = t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, new Object[] { }, CultureInfo.InvariantCulture);
+                o = t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, Array.Empty<object>(), CultureInfo.InvariantCulture);
                 Debug.Assert(o != null);
                 return o;
             }

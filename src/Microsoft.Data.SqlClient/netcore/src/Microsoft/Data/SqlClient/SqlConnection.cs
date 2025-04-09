@@ -1159,11 +1159,11 @@ namespace Microsoft.Data.SqlClient
         new public SqlTransaction BeginTransaction()
         {
             // this is just a delegate. The actual method tracks executiontime
-            return BeginTransaction(System.Data.IsolationLevel.Unspecified, null);
+            return BeginTransaction(IsolationLevel.Unspecified, null);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*' />
-        new public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso)
+        new public SqlTransaction BeginTransaction(IsolationLevel iso)
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(iso, null);
@@ -1176,12 +1176,12 @@ namespace Microsoft.Data.SqlClient
             // BEGIN...COMMIT or BEGIN...ROLLBACK statements.  Transaction names
             // are ignored for nested BEGIN's.  The only way to rollback a nested
             // transaction is to have a save point from a SAVE TRANSACTION call.
-            return BeginTransaction(System.Data.IsolationLevel.Unspecified, transactionName);
+            return BeginTransaction(IsolationLevel.Unspecified, transactionName);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*' />
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
-        override protected DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
+        override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             using (TryEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
@@ -1198,7 +1198,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*' />
-        public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso, string transactionName)
+        public SqlTransaction BeginTransaction(IsolationLevel iso, string transactionName)
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
