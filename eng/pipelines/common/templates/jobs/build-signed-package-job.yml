@@ -46,6 +46,7 @@ jobs:
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
+      ESRPConnectedServiceName: '$(ESRPConnectedServiceName)'
       artifactType: dll
   
   - template: ../steps/generate-nuget-package-step.yml@self
@@ -54,6 +55,7 @@ jobs:
   
   - template: ../steps/esrp-code-signing-step.yml@self
     parameters:
+      ESRPConnectedServiceName: '${{ variables.ESRPConnectedServiceName}}'
       artifactType: pkg
   
   - template: ../steps/copy-dlls-for-test-step.yml@self
