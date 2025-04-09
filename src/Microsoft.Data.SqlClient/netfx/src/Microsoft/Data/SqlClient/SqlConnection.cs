@@ -2368,7 +2368,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnectionTds con = null;
             try
             {
-                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null);
+                con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false);
             }
             finally
             {
@@ -2491,7 +2491,7 @@ namespace Microsoft.Data.SqlClient
         private Assembly ResolveTypeAssembly(AssemblyName asmRef, bool throwOnError)
         {
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
-            if (string.Compare(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Equals(asmRef.Name, "Microsoft.SqlServer.Types", StringComparison.OrdinalIgnoreCase))
             {
                 if (asmRef.Version != TypeSystemAssemblyVersion && SqlClientEventSource.Log.IsTraceEnabled())
                 {
