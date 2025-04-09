@@ -1130,7 +1130,6 @@ namespace Microsoft.Data.SqlClient
         SqlPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
-        [Obsolete("ActiveDirectoryPassword is deprecated.")]
         ActiveDirectoryPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>
