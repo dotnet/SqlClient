@@ -6,11 +6,11 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Utilities
 {
     // this is a very simple threadsafe pool derived from the aspnet/extensions default pool implementation
     // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
-    internal sealed class SqlObjectPool<T> where T : class
+    internal sealed class ObjectPool<T> where T : class
     {
         private readonly ObjectWrapper[] _items;
         private readonly Action<T> _onReturned;
@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 
         private T _firstItem;
 
-        public SqlObjectPool(int maximumRetained, Func<T> onCreate = null, Action<T> onReturned = null)
+        public ObjectPool(int maximumRetained, Func<T> onCreate = null, Action<T> onReturned = null)
         {
             // -1 due to _firstItem
             _items = new ObjectWrapper[maximumRetained - 1];
