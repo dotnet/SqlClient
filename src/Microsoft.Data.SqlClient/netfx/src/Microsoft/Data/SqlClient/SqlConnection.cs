@@ -115,23 +115,26 @@ namespace Microsoft.Data.SqlClient
                                                             capacity: 1,
                                                             comparer: StringComparer.OrdinalIgnoreCase);
 
-        internal bool ForceNewConnection
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public SqlRetryLogicBaseProvider RetryLogicProvider
         {
-            get;
-            set;
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
+            }
         }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
-        [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
-        public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
-        [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled)]
-        public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         [DefaultValue(null)]
@@ -139,8 +142,187 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionKeyCacheTtl)]
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*' />
+        [DefaultValue(null)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled)]
+        public static bool ColumnEncryptionQueryMetadataCacheEnabled { get; set; } = true;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*' />
+        [DefaultValue(null)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_SqlConnection_TrustedColumnMasterKeyPaths)]
+        public static IDictionary<string, IList<string>> ColumnEncryptionTrustedMasterKeyPaths => _ColumnEncryptionTrustedMasterKeyPaths;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
+        public SqlConnection(string connectionString) : this(connectionString, null)
+        {
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
+        public SqlConnection(string connectionString, SqlCredential credential) : this()
+        {
+            ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
+            if (credential != null)
+            {
+                // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
+                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than Arguemtn exception
+                //  Need to call setter on Credential property rather than setting _credential directly as pool groups need to be checked
+                SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
+                if (UsesClearUserIdOrPassword(connectionOptions))
+                {
+                    throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
+                }
+
+                if (UsesIntegratedSecurity(connectionOptions))
+                {
+                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
+                }
+
+                if (UsesContextConnection(connectionOptions))
+                {
+                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
+                }
+
+                if (UsesActiveDirectoryIntegrated(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithIntegratedArgument();
+                }
+
+                if (UsesActiveDirectoryInteractive(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithInteractiveArgument();
+                }
+
+                if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithDeviceFlowArgument();
+                }
+
+                if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                }
+
+                if (UsesActiveDirectoryMSI(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                }
+
+                if (UsesActiveDirectoryDefault(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                }
+
+                if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                }
+
+                Credential = credential;
+            }
+            // else
+            //      credential == null:  we should not set "Credential" as this will do additional validation check and
+            //      checking pool groups which is not necessary. All necessary operation is already done by calling "ConnectionString = connectionString"
+        }
+
+        private SqlConnection(SqlConnection connection)
+        {
+            GC.SuppressFinalize(this);
+            CopyFrom(connection);
+            _connectionString = connection._connectionString;
+            if (connection._credential != null)
+            {
+                SecureString password = connection._credential.Password.Copy();
+                password.MakeReadOnly();
+                _credential = new SqlCredential(connection._credential.UserId, password);
+            }
+
+            _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
+            CacheConnectionStringProperties();
+        }
+
+        internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
+        {
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+        }
+
+        /// <summary>
+        /// This function walks through both instance-level and global custom column encryption key store providers and returns an object if found.
+        /// </summary>
+        /// <param name="providerName">Provider Name to be searched for.</param>
+        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
+        /// <returns>true if the provider is found, else returns false</returns>
+        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
+        {
+            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
+
+            if (HasColumnEncryptionKeyStoreProvidersRegistered)
+            {
+                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+            }
+
+            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
+            {
+                // If custom provider is not set, then return false
+                if (s_globalCustomColumnEncryptionKeyStoreProviders is null)
+                {
+                    columnKeyStoreProvider = null;
+                    return false;
+                }
+
+                // Search in the custom provider list
+                return s_globalCustomColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+            }
+        }
+
+        /// <summary>
+        /// This function returns a list of system providers currently supported by this driver.
+        /// </summary>
+        /// <returns>Combined list of provider names</returns>
+        internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
+        {
+            if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
+        }
+
+        /// <summary>
+        /// This function returns a list of the names of the custom providers currently registered. If the 
+        /// instance-level cache is not empty, that cache is used, else the global cache is used.
+        /// </summary>
+        /// <returns>Combined list of provider names</returns>
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
+        {
+            if (_customColumnEncryptionKeyStoreProviders is not null &&
+                _customColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+            }
+            if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
+            {
+                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
+        }
+
+        /// <summary>
+        /// Is this connection using column encryption ?
+        /// </summary>
+        internal bool IsColumnEncryptionSettingEnabled
+        {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt != null ? opt.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled : false;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
-        static public void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        public static void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             ValidateCustomProviders(customProviders);
 
@@ -218,179 +400,36 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
-        {
-            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
-        }
-
         /// <summary>
-        /// This function walks through both instance-level and global custom column encryption key store providers and returns an object if found.
+        /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
-        /// <param name="providerName">Provider Name to be searched for.</param>
-        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
-        /// <returns>true if the provider is found, else returns false</returns>
-        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
-        {
-            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
-
-            if (HasColumnEncryptionKeyStoreProvidersRegistered)
-            {
-                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
-            }
-
-            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
-            {
-                // If custom provider is not set, then return false
-                if (s_globalCustomColumnEncryptionKeyStoreProviders is null)
-                {
-                    columnKeyStoreProvider = null;
-                    return false;
-                }
-
-                // Search in the custom provider list
-                return s_globalCustomColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
-            }
-        }
-
-        /// <summary>
-        /// This function returns a list of system providers currently supported by this driver.
-        /// </summary>
-        /// <returns>Combined list of provider names</returns>
-        internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
-        {
-            if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
-            {
-                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
-            }
-            return new List<string>(0);
-        }
-
-        /// <summary>
-        /// This function returns a list of the names of the custom providers currently registered. If the 
-        /// instance-level cache is not empty, that cache is used, else the global cache is used.
-        /// </summary>
-        /// <returns>Combined list of provider names</returns>
-        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
-        {
-            if (_customColumnEncryptionKeyStoreProviders is not null &&
-                _customColumnEncryptionKeyStoreProviders.Count > 0)
-            {
-                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
-            }
-            if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
-            {
-                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
-            }
-            return new List<string>(0);
-        }
-
-        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SqlRetryLogicBaseProvider RetryLogicProvider
+        internal string EnclaveAttestationUrl
         {
             get
             {
-                if (_retryLogicProvider == null)
-                {
-                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
-                }
-                return _retryLogicProvider;
-            }
-            set
-            {
-                _retryLogicProvider = value;
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.EnclaveAttestationUrl;
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
-        public SqlConnection(string connectionString) : this(connectionString, null)
+        /// <summary>
+        /// Get attestation protocol
+        /// </summary>
+        internal SqlConnectionAttestationProtocol AttestationProtocol
         {
+            get
+            {
+                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
+                return opt.AttestationProtocol;
+            }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
-        public SqlConnection(string connectionString, SqlCredential credential) : this()
+        /// <summary>
+        /// Get IP address preference
+        /// </summary>
+        internal SqlConnectionIPAddressPreference iPAddressPreference
         {
-            ConnectionString = connectionString;    // setting connection string first so that ConnectionOption is available
-            if (credential != null)
-            {
-                // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
-                //  CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential it will throw InvalidOperationException rather than Arguemtn exception
-                //  Need to call setter on Credential property rather than setting _credential directly as pool groups need to be checked
-                SqlConnectionString connectionOptions = (SqlConnectionString)ConnectionOptions;
-                if (UsesClearUserIdOrPassword(connectionOptions))
-                {
-                    throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
-                }
-
-                if (UsesIntegratedSecurity(connectionOptions))
-                {
-                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
-                }
-
-                if (UsesContextConnection(connectionOptions))
-                {
-                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
-                }
-
-                if (UsesActiveDirectoryIntegrated(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithIntegratedArgument();
-                }
-
-                if (UsesActiveDirectoryInteractive(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithInteractiveArgument();
-                }
-
-                if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithDeviceFlowArgument();
-                }
-
-                if (UsesActiveDirectoryManagedIdentity(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
-                }
-
-                if (UsesActiveDirectoryMSI(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryMSIString);
-                }
-
-                if (UsesActiveDirectoryDefault(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
-                }
-
-                if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
-                {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
-                }
-
-                Credential = credential;
-            }
-            // else
-            //      credential == null:  we should not set "Credential" as this will do additional validation check and
-            //      checking pool groups which is not necessary. All necessary operation is already done by calling "ConnectionString = connectionString"
-        }
-
-        private SqlConnection(SqlConnection connection)
-        { // Clone
-            GC.SuppressFinalize(this);
-            CopyFrom(connection);
-            _connectionString = connection._connectionString;
-            if (connection._credential != null)
-            {
-                SecureString password = connection._credential.Password.Copy();
-                password.MakeReadOnly();
-                _credential = new SqlCredential(connection._credential.UserId, password);
-            }
-            _accessToken = connection._accessToken;
-            _accessTokenCallback = connection._accessTokenCallback;
-            CacheConnectionStringProperties();
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
         }
 
         // This method will be called once connection string is set or changed.
@@ -488,15 +527,9 @@ namespace Microsoft.Data.SqlClient
 
         internal bool AsyncCommandInProgress
         {
-            get
-            {
-                return (_AsyncCommandInProgress);
-            }
+            get => _AsyncCommandInProgress;
             [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-            set
-            {
-                _AsyncCommandInProgress = value;
-            }
+            set => _AsyncCommandInProgress = value;
         }
 
         internal bool IsContextConnection
@@ -506,50 +539,6 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
                 return UsesContextConnection(opt);
             }
-        }
-
-        /// <summary>
-        /// Is this connection using column encryption ?
-        /// </summary>
-        internal bool IsColumnEncryptionSettingEnabled
-        {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt != null ? opt.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled : false;
-            }
-        }
-
-        /// <summary>
-        /// Get enclave attestation url to be used with enclave based Always Encrypted
-        /// </summary>
-        internal string EnclaveAttestationUrl
-        {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.EnclaveAttestationUrl;
-            }
-        }
-
-        /// <summary>
-        /// Get attestation protocol
-        /// </summary>
-        internal SqlConnectionAttestationProtocol AttestationProtocol
-        {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.AttestationProtocol;
-            }
-        }
-
-        /// <summary>
-        /// Get IP address preference
-        /// </summary>
-        internal SqlConnectionIPAddressPreference iPAddressPreference
-        {
-            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
         }
 
         // Is this connection is a Context Connection?
@@ -655,92 +644,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
-        override protected DbProviderFactory DbProviderFactory
-        {
-            get
-            {
-                return SqlClientFactory.Instance;
-            }
-        }
-
-        // AccessToken: To be used for token based authentication
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*' />
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescription(StringsHelper.ResourceNames.SqlConnection_AccessToken)]
-        public string AccessToken
-        {
-            get
-            {
-                string result = _accessToken;
-                // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
-                // otherwise, return null
-                SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
-                if (InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo)
-                {
-                    result = null;
-                }
-
-                return result;
-            }
-            set
-            {
-                // If a connection is connecting or is ever opened, AccessToken cannot be set
-                if (!InnerConnection.AllowSetConnectionString)
-                {
-                    throw ADP.OpenConnectionPropertySet("AccessToken", InnerConnection.State);
-                }
-
-                if (value != null)
-                {
-                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
-                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
-                }
-
-                _accessToken = value;
-                // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null));
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
-        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
-        {
-            get { return _accessTokenCallback; }
-            set
-            {
-                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
-                if (!InnerConnection.AllowSetConnectionString)
-                {
-                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
-                }
-
-                if (value != null)
-                {
-                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
-                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
-                }
-
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
-                _accessTokenCallback = value;
-            }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
-        [
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout),
-        ]
-        public int CommandTimeout
-        {
-            get
-            {
-                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         [DefaultValue("")]
 #pragma warning disable 618 // ignore obsolete warning about RecommendedAsConfigurable to use SettingsBindableAttribute
@@ -827,8 +730,83 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
+        public int CommandTimeout
+        {
+            get
+            {
+                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
+                return constr != null ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*' />
+        // AccessToken: To be used for token based authentication
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResDescription(StringsHelper.ResourceNames.SqlConnection_AccessToken)]
+        public string AccessToken
+        {
+            get
+            {
+                string result = _accessToken;
+                // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
+                // otherwise, return null
+                SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
+                if (InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo)
+                {
+                    result = null;
+                }
+
+                return result;
+            }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet("AccessToken", InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
+                }
+
+                _accessToken = value;
+                // Need to call ConnectionString_Set to do proper pool group check
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null));
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
+        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
+                }
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
+                _accessTokenCallback = value;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_Database)]
+        [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
@@ -1224,6 +1202,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
+        protected override DbProviderFactory DbProviderFactory
+        {
+            get => SqlClientFactory.Instance;
+        }
+
         //
         // PUBLIC EVENTS
         //
@@ -1246,24 +1230,17 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*' />
         public bool FireInfoMessageEventOnUserErrors
         {
-            get
-            {
-                return _fireInfoMessageEventOnUserErrors;
-            }
-            set
-            {
-                _fireInfoMessageEventOnUserErrors = value;
-            }
+            get => _fireInfoMessageEventOnUserErrors;
+            set => _fireInfoMessageEventOnUserErrors = value;
         }
 
         // Approx. number of times that the internal connection has been reconnected
         internal int ReconnectCount
         {
-            get
-            {
-                return _reconnectCount;
-            }
+            get => _reconnectCount;
         }
+
+        internal bool ForceNewConnection { get; set; }
 
         //
         // PUBLIC METHODS
@@ -1409,13 +1386,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 SqlConnectionFactory.SingletonInstance.ClearPool(connection);
             }
-        }
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
-        object ICloneable.Clone()
-        {
-            SqlConnection clone = new SqlConnection(this);
-            return clone;
         }
 
         void CloseInnerConnection()
@@ -2567,10 +2537,10 @@ namespace Microsoft.Data.SqlClient
             return internalDictionary;
         }
 
-        //
-        // UDT SUPPORT
-        //
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
+        object ICloneable.Clone() => new SqlConnection(this);
 
+        // UDT SUPPORT
         private Assembly ResolveTypeAssembly(AssemblyName asmRef, bool throwOnError)
         {
             Debug.Assert(TypeSystemAssemblyVersion != null, "TypeSystemAssembly should be set !");
