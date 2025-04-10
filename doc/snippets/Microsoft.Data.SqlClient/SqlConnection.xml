@@ -1951,10 +1951,10 @@ You must set the value for this property before opening the connection to take e
 To apply the retry logic, do the following steps before opening the connection:
 1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.SqlRetryLogicOption> type.
 2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider%2A>  
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
 > [!NOTE]
@@ -1972,7 +1972,7 @@ The following sample tries to open a connection to an invalid database to simula
 [!code-csharp[SqlConfigurableRetryLogic_OpenConnection#1](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_OpenConnection.cs#1)]
 
 ]]></format>
-			</remarks>
+      </remarks>
     </RetryLogicProvider>
     <ResetStatistics>
       <summary>

@@ -30,7 +30,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.ColumnMapping#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMapping.cs#1)]
 
 ]]></format>
-			</example>
+      </example>
     </SqlBulkCopyColumnMapping>
     <ctor name="default">
       <summary>
@@ -74,7 +74,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 
 [!code-csharp[SqlBulkCopy.ColumnMappingOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingOrdinal.cs#1)]
 ]]></format>
-			</example>
+      </example>
     </ctor>
     <ctor name="sourceColumnOrdinalIntegerAndDestinationColumnString">
       <param name="sourceColumnOrdinal">
@@ -99,7 +99,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.ColumnMappingOrdinalName#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingOrdinalName.cs#1)]
 
 ]]></format>
-			</example>
+      </example>
     </ctor>
     <ctor name="sourceColumnStringAndDestinationOrdinalInteger">
       <param name="sourceColumn">
@@ -124,7 +124,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.ColumnMappingNameOrdinal#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnMappingNameOrdinal.cs#1)]
 
 ]]></format>
-			</example>
+      </example>
     </ctor>
     <ctor name="sourceColumnStringAndDestinationColumnString">
       <param name="sourceColumn">

@@ -6,7 +6,7 @@
       </summary>
       <remarks>
         Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -20,7 +20,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[BulkCopy.Single#1](~/../sqlclient/doc/samples/SqlBulkCopy_Single.cs#1)]
 
 ]]></format>
-			</example>
+      </example>
     </SqlBulkCopy>
     <ctor name="SqlConnectionParameter">
       <param name="connection">
@@ -31,7 +31,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         Because the connection is already open when the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is initialized, the connection remains open after the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance is closed. If the `connection` argument is null, an <see cref="T:System.ArgumentNullException" /> is thrown.
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -91,7 +91,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         The connection is automatically closed at the end of the bulk copy operation. If `connectionString` is null, an <see cref="T:System.ArgumentNullException" /> is thrown. If `connectionString` is an empty string, an <see cref="T:System.ArgumentException" /> is thrown.
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -125,7 +125,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         You can obtain detailed information about all the bulk copy options in the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> topic.
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -168,7 +168,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         <para>
           The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> property can be set at any time. If a bulk copy is already in progress, the current batch is sized according to the previous batch size. Subsequent batches use the new size. If the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" /> is initially zero and changed while a <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operation is already in progress, that operation loads the data as a single batch. Any subsequent <see cref="O:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer" /> operations on the same <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance use the new <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.BatchSize" />.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -195,7 +195,7 @@ it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to c
       </value>
       <remarks>
         If the operation does time out, the transaction is not committed and all copied rows are removed from the destination table.  
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -219,7 +219,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </summary>
       <remarks>
         After you call <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object, no other operation will succeed. Calls to the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> method will throw an <see cref="T:System.InvalidOperationException" />. Calling the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.Close" /> method from the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event causes an <see cref="T:System.InvalidOperationException" /> to be thrown. Note that open <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instances are closed implicitly at the end of a <c>using</c> block.
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -254,7 +254,7 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returne
 > The main advantage of enabling streaming is reducing memory usage during bulk copy of max data types.
 
 ]]></format>
-			</remarks>
+      </remarks>
     </EnableStreaming>
     <ColumnMappings>
       <summary>
@@ -300,7 +300,7 @@ the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> class loads all the data returne
         <para>
           You can bulk-copy data to a temporary table by using a value such as <c>tempdb..#table</c> or <c>tempdb.&lt;owner&gt;.#table</c> for the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.DestinationTableName" /> property.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -333,7 +333,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         <para>
           If <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.NotifyAfter" /> is set to a number less than zero, an <see cref="T:System.ArgumentOutOfRangeException" /> is thrown.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -368,7 +368,7 @@ statement to copy the data.
         <para>
           No action, such as transaction activity, is supported in the connection during the execution of the bulk copy operation, and it is recommended that you not use the same connection used during the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event. However, you can open a different connection.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -442,7 +442,7 @@ For more information, see [Cleaning Up Unmanaged Resources](https://learn.micros
 > Always call `Dispose` before you release your last reference to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy>. Otherwise, the resources it is using will not be freed until the garbage collector calls the <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object's `Finalize` method.
 
 ]]></format>
-			</remarks>
+      </remarks>
     </System.IDisposable.Dispose>
     <WriteToServer name="DbDataReaderParameter">
       <param name="reader">
@@ -475,7 +475,7 @@ For more information, see [Cleaning Up Unmanaged Resources](https://learn.micros
         <para>
           The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the data reader columns to the destination database table.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -512,7 +512,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
         <para>
           The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  
@@ -581,7 +581,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 [!code-csharp[SqlBulkCopy.DataRowState#1](~/../sqlclient/doc/samples/SqlBulkCopy_DataRowState.cs#1)]
 
 ]]></format>
-			</example>
+      </example>
       <exception cref="T:System.InvalidOperationException">
         A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.
       </exception>
@@ -600,7 +600,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         <para>
           The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataRow" /> columns to the destination database table.
         </para>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[  

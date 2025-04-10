@@ -43,7 +43,7 @@ Next, compile and execute the following:
 
 [!code-csharp[SqlCommand Example#2](~/../sqlclient/doc/samples/SqlCommand_Intro.cs#1)]
 ]]></format>
-			</remarks>
+      </remarks>
     </SqlCommand>
     <ctor name="default">
       <summary>
@@ -2187,7 +2187,7 @@ For example, with a 30 second time out, if <xref:Microsoft.Data.SqlClient.SqlDat
 
 [!code-csharp[SqlCommand CommandTimeout](~/../sqlclient/doc/samples/SqlCommand_CommandTimeout.cs)]
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.ArgumentException">
         The value set is less than 0.
       </exception>
@@ -2619,7 +2619,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 >  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
 
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
           <item>
@@ -2668,7 +2668,7 @@ For more information about asynchronous programming in the .NET Framework Data P
         A <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> object.
       </returns>
       <remarks>
-				<format type="text/markdown"><![CDATA[
+        <format type="text/markdown"><![CDATA[
 ## Remarks
 When the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandType%2A> property is set to `StoredProcedure`, the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> property should be set to the name of the stored procedure. The command executes this stored procedure when you call <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A>.
 
@@ -2684,7 +2684,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 
 [!code-csharp[SqlCommand_ExecuteReader](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader.cs)]
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
           <item>
@@ -2736,7 +2736,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
         A <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> object.
       </returns>
       <remarks>
-				<format type="text/markdown"><![CDATA[
+        <format type="text/markdown"><![CDATA[
 ## Remarks
 When the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandType%2A> property is set to `StoredProcedure`, the <xref:Microsoft.Data.SqlClient.SqlCommand.CommandText%2A> property should be set to the name of the stored procedure. The command executes this stored procedure when you call <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A>.
 
@@ -2752,7 +2752,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
 
 [!code-csharp[SqlCommand_ExecuteReader2](~/../sqlclient/doc/samples/SqlCommand_ExecuteReader2.cs#1)]
 ]]></format>
-			</remarks>
+      </remarks>
       <example>
         <para>
           The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, and then executes it by passing a string that is a Transact-SQL SELECT statement, and a string to use to connect to the data source. <see cref="T:System.Data.CommandBehavior" /> is set to <see cref="F:System.Data.CommandBehavior.CloseConnection" />.
@@ -2831,7 +2831,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 >  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
 
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
           <item>
@@ -3141,7 +3141,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 >  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalar%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
 
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
           <item>
@@ -3281,7 +3281,7 @@ For more information about asynchronous programming in the .NET Framework Data P
 >  For long running queries on the server, consider using <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteXmlReader%2A> due to a known issue with canceling queries via a cancellation token. Also, consider canceling execution using the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method.
 
 ]]></format>
-			</remarks>
+      </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
           <item>
@@ -3440,10 +3440,10 @@ You must set the value for this property before the command is executed for it t
 To apply the retry logic, do the following steps before executing the command:
 1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.SqlRetryLogicOption> type.
 2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider%2A>  
-	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider%2A>  
+  - <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider%2A>  
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
 > [!NOTE]
@@ -3484,7 +3484,7 @@ Besides assigning the provider to the command and executing the command, it's po
 > The Asynchronous Programming Model (APM) is a legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
 
 ]]></format>
-			</remarks>
+      </remarks>
     </RetryLogicProvider>
     <NotificationAutoEnlist>
       <summary>
@@ -3525,7 +3525,7 @@ The following example demonstrates how to create a <xref:Microsoft.Data.SqlClien
 
 [!code-csharp[SqlParameterCollection.AddWithValue#1](~/../sqlclient/doc/samples/SqlParameterCollection_AddWithValue.cs#1)]
 ]]></format>
-			</remarks>
+      </remarks>
       <example>
         <para>
           The following example demonstrates how to create a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and add parameters to the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
@@ -3613,7 +3613,7 @@ The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient
 
 [!code-csharp[SqlCommand.Prepare#1](~/../sqlclient/doc/samples/SqlCommand_Prepare.cs#1)]
 ]]></format>
-			</remarks>
+      </remarks>
     </Prepare>
     <ResetCommandTimeout>
       <summary>

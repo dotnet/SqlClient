@@ -20,7 +20,7 @@ If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection is 
 If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
 
 ]]></format>
-			</remarks>
+      </remarks>
       <example>
         <format type="text/markdown">
           <![CDATA[    
