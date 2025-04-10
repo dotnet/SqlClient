@@ -809,17 +809,29 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Receive a packet synchronously
+        /// Receives a packet synchronously.
         /// </summary>
-        /// <param name="packet">SNI packet</param>
-        /// <param name="timeoutInMilliseconds">Timeout in Milliseconds</param>
-        /// <returns>SNI error code</returns>
+        /// <param name="packet">The received SNI packet.</param>
+        /// <param name="timeoutInMilliseconds">
+        /// Timeout in milliseconds:
+        /// - If greater than 0, sets the socket's receive timeout to the specified value.
+        /// - If equal to -1, represents an infinite timeout (socket timeout is set to 0).
+        /// - If less than -1 or equal to 0, results in a timeout error.
+        /// </param>
+        /// <returns>SNI error code indicating the result of the operation.</returns>
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
             SNIPacket errorPacket;
             lock (this)
             {
                 packet = null;
+
+                if (_socket == null)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Socket is null.", args0: _connectionId);
+                    return ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_10);
+                }
+
                 try
                 {
                     if (timeoutInMilliseconds > 0)
@@ -884,7 +896,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 finally
                 {
-                    _socket.ReceiveTimeout = 0;
+                    // Reset the socket timeout to 0 (infinite) after the receive operation is done
+                    // to avoid blocking the thread in case of a timeout error.
+                    _socket.ReceiveTimeout = Timeout.Infinite;
                 }
             }
         }
