@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.Login7;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -523,6 +525,39 @@ namespace Microsoft.Data.SqlClient.Tests
             using SqlConnection conn = new SqlConnection(server.ConnectionString);
 
             Assert.Throws<InvalidOperationException>(() => conn.Open());
+        }
+
+        // Test that we send correct feature extension data for vector support
+        // in the LOGIN7 packet.
+        [Fact]
+        public void ConnectionOpenTestWithVectorFeatureExt()
+        {
+            byte expectedFeatureExtId = (byte)TDSFeatureID.VectorSupport;
+            byte expectedFeatureExtVersion = 0x01;
+
+            // Start the test TDS server.
+            using var server = TestTdsServer.StartTestServer();
+
+            byte actualFeatureExtId = 0; 
+            byte actualFeatureExtVersion = 0;
+
+            // Assign a delegate to save the feature extension token from
+            // the LOGIN7 packet.
+            server.OnLogin7VectorFeatureValidated = 
+                (TDSLogin7GenericOptionToken optionToken) =>
+                {
+                    actualFeatureExtId = (byte)optionToken.FeatureID;
+                    actualFeatureExtVersion = optionToken.Data[0];
+                };
+
+
+            // Connect to the test TDS server.
+            using SqlConnection connection = new(server.ConnectionString);
+            connection.Open();
+
+            // Verify that the expected value was sent in the LOGIN packet.
+            Assert.Equal(expectedFeatureExtId, actualFeatureExtId);
+            Assert.Equal(expectedFeatureExtVersion, actualFeatureExtVersion);
         }
     }
 }

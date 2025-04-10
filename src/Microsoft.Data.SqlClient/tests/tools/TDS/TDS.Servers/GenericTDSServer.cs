@@ -28,6 +28,16 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class GenericTDSServer : ITDSServer
     {
         /// <summary>
+        /// Delegate to be called when a LOGIN7 request has been received
+        /// and vector feature extension is present in the request.
+        /// This is called before any authentication work is done,
+        /// and before any response is sent.
+        /// </summary>
+        public delegate void OnLogin7VectorFeatureExtDelegate(
+            TDSLogin7GenericOptionToken login7FeatureOptTok);
+        public OnLogin7VectorFeatureExtDelegate OnLogin7VectorFeatureValidated { private get; set; }
+
+        /// <summary>
         /// Session counter
         /// </summary>
         private int _sessionCount = 0;
@@ -244,6 +254,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                             {
                                 // Enable Vector Support
                                 session.IsVectorSupportEnabled = true;
+                                OnLogin7VectorFeatureValidated?.Invoke((TDSLogin7GenericOptionToken)option);
                                 break;
                             }
 
