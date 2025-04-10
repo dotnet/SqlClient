@@ -4,13 +4,14 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlSequentialStream : System.IO.Stream
+    internal sealed class SqlSequentialStream : Stream
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
         private readonly int _columnIndex;       // The index of out column in the table
@@ -328,11 +329,24 @@ namespace Microsoft.Data.SqlClient
             return readTask.Result;
         }
 #else
-        public override IAsyncResult BeginRead(byte[] array, int offset, int count, AsyncCallback asyncCallback, object asyncState) =>
-            TaskToApm.Begin(ReadAsync(array, offset, count, CancellationToken.None), asyncCallback, asyncState);
+        public override IAsyncResult BeginRead(
+            byte[] array,
+            int offset,
+            int count,
+            AsyncCallback asyncCallback,
+            object asyncState)
+        {
+            Task<int> readTask = ReadAsync(array, offset, count, CancellationToken.None);
+            if (asyncCallback is not null)
+            {
+                readTask.ContinueWith(result => asyncCallback(result));
+            }
+
+            return readTask;
+        }
 
         public override int EndRead(IAsyncResult asyncResult) =>
-            TaskToApm.End<int>(asyncResult);
+            ((Task<int>)asyncResult).Result;
 #endif
     }
 }
