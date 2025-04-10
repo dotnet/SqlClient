@@ -841,7 +841,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     else if (timeoutInMilliseconds == -1)
                     {
                         // SqlClient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0
-                        _socket.ReceiveTimeout = 0;
+                        _socket.ReceiveTimeout = Timeout.Infinite;
                     }
                     else
                     {
@@ -896,7 +896,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 finally
                 {
-                    // Reset the socket timeout to 0 (infinite) after the receive operation is done
+                    // Reset the socket timeout to -1 (Timeout.Infinite) after the receive operation is done
                     // to avoid blocking the thread in case of a timeout error.
                     _socket.ReceiveTimeout = Timeout.Infinite;
                 }
