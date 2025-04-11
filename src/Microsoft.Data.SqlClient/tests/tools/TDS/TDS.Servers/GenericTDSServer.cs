@@ -38,20 +38,38 @@ namespace Microsoft.SqlServer.TDS.Servers
         public OnLogin7VectorFeatureExtDelegate OnLogin7VectorFeatureValidated { private get; set; }
 
         /// <summary>
-        /// Delegate to be called when a LOGIN7 request has been received
-        /// and vector feature extension is present in the request.
-        /// This is called before any authentication work is done,
-        /// and before any response is sent.
+        /// Delegate to be called when authentication is completed
+        /// and vector feature extension ack is sent to the client.
         /// </summary>
         public delegate void OnAuthenticationCompletedDelegate(
             TDSFeatureExtAckGenericOption vectorFeatExtAck);
         public OnAuthenticationCompletedDelegate OnAuthenticationVectorFeatAckValidated { private get; set; }
 
-
         /// <summary>
         /// Version for vector FeatureExtension
         /// </summary>
         public const byte MaxSupportedVectorFeatureExtVersion = 0x01;
+
+        /// <summary>
+        /// Server version for vector FeatureExtension
+        /// </summary>
+        private byte _serverSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
+        /// Client version for vector FeatureExtension
+        /// </summary>
+        private byte _clientSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
+        /// Sets the server supported vector feature extension version
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion
+        {
+            set
+            {
+                _serverSupportedVectorFeatureExtVersion = value;
+            }
+        }
 
         /// <summary>
         /// Session counter
@@ -270,6 +288,7 @@ namespace Microsoft.SqlServer.TDS.Servers
                             {
                                 // Enable Vector Support
                                 session.IsVectorSupportEnabled = true;
+                                _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
                                 OnLogin7VectorFeatureValidated?.Invoke((TDSLogin7GenericOptionToken)option);
                                 break;
                             }
@@ -617,7 +636,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 // Create ack data (1 byte: Version number)
                 byte[] data = new byte[1];
-                data[0] = MaxSupportedVectorFeatureExtVersion;
+                data[0] = _serverSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : _serverSupportedVectorFeatureExtVersion;
 
                 // Create vector support as a generic feature extension option
                 TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
