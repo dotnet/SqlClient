@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
@@ -47,6 +48,7 @@ namespace Microsoft.Data.Common
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
+        // @TODO: These are not necessary because the TPL has optimized commonly used task return values like true and false.
         private static Task<bool> s_trueTask;
         internal static Task<bool> TrueTask => s_trueTask ??= Task.FromResult(true);
 

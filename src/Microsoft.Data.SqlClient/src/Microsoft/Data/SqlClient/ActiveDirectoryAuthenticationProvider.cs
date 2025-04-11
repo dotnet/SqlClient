@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
@@ -549,7 +550,7 @@ namespace Microsoft.Data.SqlClient
             {
                 publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
                 .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                .WithClientName(DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(publicClientAppKey._redirectUri)
                 .WithParentActivityOrWindow(_iWin32WindowFunc)
@@ -560,7 +561,7 @@ namespace Microsoft.Data.SqlClient
             {
                 publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
                 .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                .WithClientName(DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
                 .WithRedirectUri(publicClientAppKey._redirectUri)
                 .Build();
