@@ -7,6 +7,20 @@
 variables:
   - group: Release Variables
 
+  # Update this after every release. This is used to generate the MDS NuGet package version.
+  - name: Major
+    value: '6'
+  - name: Minor
+    value: '1'
+  - name: Patch
+    value: '0'
+
+    # Update this for preview releases.
+  - name: Preview
+    value: '-preview'
+  - name: Revision
+    value: '1'
+
   - name: NugetPackageVersion
     value: $(Major).$(Minor).$(Patch)
   - name: PreviewNugetPackageVersion
