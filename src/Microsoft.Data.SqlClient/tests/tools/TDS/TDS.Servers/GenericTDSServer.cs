@@ -53,7 +53,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Server version for vector FeatureExtension
         /// </summary>
-        private byte _serverSupportedVectorFeatureExtVersion = 0;
+        private byte _serverSupportedVectorFeatureExtVersion = MaxSupportedVectorFeatureExtVersion;
 
         /// <summary>
         /// Client version for vector FeatureExtension
