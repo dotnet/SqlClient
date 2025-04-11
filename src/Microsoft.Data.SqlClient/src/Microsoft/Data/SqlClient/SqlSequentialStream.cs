@@ -300,12 +300,27 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ObjectDisposed(this);
             }
 
-            Task readTask = ReadAsync(buffer, offset, count, CancellationToken.None);
-            if (callback != null)
-            {
-                readTask.ContinueWith((t) => callback(t), TaskScheduler.Default);
-            }
-            return readTask;
+            var tcs = new TaskCompletionSource<int>(state);
+            ReadAsync(buffer, offset, count, CancellationToken.None)
+                .ContinueWith(task =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        tcs.TrySetException(task.Exception?.InnerException);
+                    }
+                    else if (task.IsCanceled)
+                    {
+                        tcs.TrySetCanceled();
+                    }
+                    else
+                    {
+                        tcs.TrySetResult(task.Result);
+                    }
+
+                    callback?.Invoke(tcs.Task);
+                }, TaskScheduler.Default);
+
+            return tcs.Task;
         }
 
         public override int EndRead(IAsyncResult asyncResult)
@@ -337,16 +352,11 @@ namespace Microsoft.Data.SqlClient
             object asyncState)
         {
             Task<int> readTask = ReadAsync(array, offset, count, CancellationToken.None);
-            if (asyncCallback is not null)
-            {
-                readTask.ContinueWith(result => asyncCallback(result));
-            }
-
-            return readTask;
+            return TaskToAsyncResult.Begin(readTask, asyncCallback, asyncState);
         }
 
         public override int EndRead(IAsyncResult asyncResult) =>
-            ((Task<int>)asyncResult).Result;
+            TaskToAsyncResult.End<int>(asyncResult);
 #endif
     }
 }
