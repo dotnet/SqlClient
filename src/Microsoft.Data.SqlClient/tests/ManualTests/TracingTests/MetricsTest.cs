@@ -346,7 +346,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         static SqlClientEventSourceProps()
         {
-            s_log = SqlClientEventSource.Metrics;
+            Type sqlClientEventSourceType =
+                Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientEventSource");
+            Debug.Assert(sqlClientEventSourceType != null);
+            FieldInfo metricsField = sqlClientEventSourceType.GetField("Metrics", BindingFlags.Static | BindingFlags.Public);
+            Debug.Assert(metricsField != null);
+            Type sqlClientMetricsType = metricsField.FieldType;
+            s_log = metricsField.GetValue(null);
 
 #if NETFRAMEWORK
             Func<long> notApplicableFunction = static () => -1;
