@@ -241,15 +241,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Update requires a connection..
-        /// </summary>
-        internal static string ADP_ConnecitonRequired_UpdateRows {
-            get {
-                return ResourceManager.GetString("ADP_ConnecitonRequired_UpdateRows", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection was not closed. {0}.
         /// </summary>
         internal static string ADP_ConnectionAlreadyOpen {
@@ -345,6 +336,15 @@ namespace System {
         internal static string ADP_ConnectionRequired_Update {
             get {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update requires a connection..
+        /// </summary>
+        internal static string ADP_ConnectionRequired_UpdateRows {
+            get {
+                return ResourceManager.GetString("ADP_ConnectionRequired_UpdateRows", resourceCulture);
             }
         }
         
@@ -2277,9 +2277,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Connection Resiliency.
         /// </summary>
-        internal static string DataCategory_ConnectionResilency {
+        internal static string DataCategory_ConnectionResiliency {
             get {
-                return ResourceManager.GetString("DataCategory_ConnectionResilency", resourceCulture);
+                return ResourceManager.GetString("DataCategory_ConnectionResiliency", resourceCulture);
             }
         }
         
@@ -2790,9 +2790,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Ordinal &apos;{0}&apos; exceeds the maximum number..
         /// </summary>
-        internal static string DataColumn_OrdinalExceedMaximun {
+        internal static string DataColumn_OrdinalExceedMaximum {
             get {
-                return ResourceManager.GetString("DataColumn_OrdinalExceedMaximun", resourceCulture);
+                return ResourceManager.GetString("DataColumn_OrdinalExceedMaximum", resourceCulture);
             }
         }
         
@@ -3663,9 +3663,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Relation {0} cannot be merged, because keys have mismatch columns..
         /// </summary>
-        internal static string DataMerge_ReltionKeyColumnsMismatch {
+        internal static string DataMerge_RelationKeyColumnsMismatch {
             get {
-                return ResourceManager.GetString("DataMerge_ReltionKeyColumnsMismatch", resourceCulture);
+                return ResourceManager.GetString("DataMerge_RelationKeyColumnsMismatch", resourceCulture);
             }
         }
         
@@ -6336,18 +6336,18 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert from {0} to {1}..
         /// </summary>
-        internal static string Expr_DatatypeConvertion {
+        internal static string Expr_DatatypeConversion {
             get {
-                return ResourceManager.GetString("Expr_DatatypeConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_DatatypeConversion", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert value &apos;{0}&apos; to Type: {1}..
         /// </summary>
-        internal static string Expr_DatavalueConvertion {
+        internal static string Expr_DatavalueConversion {
             get {
-                return ResourceManager.GetString("Expr_DatavalueConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_DatavalueConversion", resourceCulture);
             }
         }
         
@@ -6390,9 +6390,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Filter expression &apos;{0}&apos; does not evaluate to a Boolean term..
         /// </summary>
-        internal static string Expr_FilterConvertion {
+        internal static string Expr_FilterConversion {
             get {
-                return ResourceManager.GetString("Expr_FilterConvertion", resourceCulture);
+                return ResourceManager.GetString("Expr_FilterConversion", resourceCulture);
             }
         }
         
@@ -7164,9 +7164,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Simple type &apos;{0}&apos; has already be declared with different &apos;{1}&apos;..
         /// </summary>
-        internal static string NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration {
+        internal static string NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration {
             get {
-                return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration", resourceCulture);
+                return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDeclaration", resourceCulture);
             }
         }
         
@@ -8326,7 +8326,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to Socket is null.
         /// </summary>
         internal static string SNI_ERROR_10 {
             get {
@@ -9021,9 +9021,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server..
         /// </summary>
-        internal static string Snix_PreLoginBeforeSuccessfullWrite {
+        internal static string Snix_PreLoginBeforeSuccessfulWrite {
             get {
-                return ResourceManager.GetString("Snix_PreLoginBeforeSuccessfullWrite", resourceCulture);
+                return ResourceManager.GetString("Snix_PreLoginBeforeSuccessfulWrite", resourceCulture);
             }
         }
         
@@ -9467,18 +9467,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextConnectionIsInUse", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to Connecting to the context connection using Microsoft.Data.SqlClient is not supported..
         /// </summary>
-        internal static string SQL_ContextConnectionIsUnsupported
-        {
-            get
-            {
+        internal static string SQL_ContextConnectionIsUnsupported {
+            get {
                 return ResourceManager.GetString("SQL_ContextConnectionIsUnsupported", resourceCulture);
             }
         }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The requested operation requires a SqlClr context, which is only available when running in the Sql Server process..
         /// </summary>
@@ -9863,6 +9861,15 @@ namespace System {
         internal static string SQL_InvalidUdt3PartNameFormat {
             get {
                 return ResourceManager.GetString("SQL_InvalidUdt3PartNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json..
+        /// </summary>
+        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
             }
         }
         
@@ -10477,16 +10484,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamNotSupportOnColumnType", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///    Looks up a localized string similar to Invalid attempt to get JsonDocument on column &apos;{0}&apos;. JsonDocument is only supported for columns of type json.
-        /// </summary>
-        internal static string SQL_JsonDocumentNotSupportedOnColumnType {
-            get {
-                return ResourceManager.GetString("SQL_JsonDocumentNotSupportedOnColumnType", resourceCulture);
-            }
-        }
-
+        
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support reading..
         /// </summary>
@@ -10641,7 +10639,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  .
+        ///   Looks up a localized string similar to This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; .
         /// </summary>
         internal static string SQL_Timeout_RoutingDestinationInfo {
             get {
@@ -11093,9 +11091,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible..
         /// </summary>
-        internal static string SQLCR_TDSVestionNotPreserved {
+        internal static string SQLCR_TDSVersionNotPreserved {
             get {
-                return ResourceManager.GetString("SQLCR_TDSVestionNotPreserved", resourceCulture);
+                return ResourceManager.GetString("SQLCR_TDSVersionNotPreserved", resourceCulture);
             }
         }
         
@@ -11964,7 +11962,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Two or more redirections have occurred. Only one redirection per login is allowed..
+        ///   Looks up a localized string similar to Too many redirections have occurred. Only {0} redirections per login is allowed..
         /// </summary>
         internal static string SQLROR_RecursiveRoutingNotSupported {
             get {
@@ -12137,9 +12135,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to The type of field &apos;{0}&apos; is marked as explicit layout which is not allowed in Native format.
         /// </summary>
-        internal static string SqlUdtReason_NativeFormatExplictLayoutNotAllowed {
+        internal static string SqlUdtReason_NativeFormatExplicitLayoutNotAllowed {
             get {
-                return ResourceManager.GetString("SqlUdtReason_NativeFormatExplictLayoutNotAllowed", resourceCulture);
+                return ResourceManager.GetString("SqlUdtReason_NativeFormatExplicitLayoutNotAllowed", resourceCulture);
             }
         }
         
@@ -12272,18 +12270,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot get value because it is DBNull..
         /// </summary>
-        internal static string StrongTyping_CananotAccessDBNull {
+        internal static string StrongTyping_CannotAccessDBNull {
             get {
-                return ResourceManager.GetString("StrongTyping_CananotAccessDBNull", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
-        /// </summary>
-        internal static string StrongTyping_CananotRemoveRelation {
-            get {
-                return ResourceManager.GetString("StrongTyping_CananotRemoveRelation", resourceCulture);
+                return ResourceManager.GetString("StrongTyping_CannotAccessDBNull", resourceCulture);
             }
         }
         
@@ -12293,6 +12282,15 @@ namespace System {
         internal static string StrongTyping_CannotRemoveColumn {
             get {
                 return ResourceManager.GetString("StrongTyping_CannotRemoveColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
+        /// </summary>
+        internal static string StrongTyping_CannotRemoveRelation {
+            get {
+                return ResourceManager.GetString("StrongTyping_CannotRemoveRelation", resourceCulture);
             }
         }
         
@@ -13901,9 +13899,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot determine the DataSet Element. IsDataSet attribute exist more than once..
         /// </summary>
-        internal static string Xml_TooManyIsDataSetAtributeInSchema {
+        internal static string Xml_TooManyIsDataSetAttributeInSchema {
             get {
-                return ResourceManager.GetString("Xml_TooManyIsDataSetAtributeInSchema", resourceCulture);
+                return ResourceManager.GetString("Xml_TooManyIsDataSetAttributeInSchema", resourceCulture);
             }
         }
         
@@ -13926,4 +13924,3 @@ namespace System {
         }
     }
 }
-
