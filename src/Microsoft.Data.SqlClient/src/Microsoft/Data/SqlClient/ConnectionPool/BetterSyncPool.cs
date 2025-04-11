@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal bool IsWarmupEnabled { get; set; } = true;
 
 #if NETFRAMEWORK
-        internal override DbConnectionPoolCounters PerformanceCounters => throw new NotImplementedException();
+        internal override DbConnectionPoolCounters PerformanceCounters => _connectionFactory.PerformanceCounters;
 #endif
 #endregion
 
