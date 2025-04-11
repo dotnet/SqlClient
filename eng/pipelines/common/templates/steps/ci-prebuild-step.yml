@@ -53,3 +53,5 @@ steps:
 
 - ${{ else }}: # project
   - template: ci-project-build-step.yml@self
+    parameters:
+      build: allNoDocs

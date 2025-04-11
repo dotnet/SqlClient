@@ -5,186 +5,44 @@
         Represents a Transact-SQL transaction to be made in a SQL Server database. This class cannot be inherited.
       </summary>
       <remarks>
-        <para>
-          The application creates a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> object by calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object. All subsequent operations associated with the transaction (for example, committing or aborting the transaction), are performed on the <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> object.
-        </para>
-        <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when committing or rolling back a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. Both <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> generate an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
-        </note>
-        <para>
-          For more information on SQL Server transactions, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql">Explicit Transactions</see>
-        </para>
+        <format type="text/markdown"><![CDATA[  
+## Remarks  
+The application creates a <xref:Microsoft.Data.SqlClient.SqlTransaction> object by calling <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> on the <xref:Microsoft.Data.SqlClient.SqlConnection> object. All subsequent operations associated with the transaction (for example, committing or aborting the transaction), are performed on the <xref:Microsoft.Data.SqlClient.SqlTransaction> object.  
+  
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when committing or rolling back a <xref:Microsoft.Data.SqlClient.SqlTransaction>. Both <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> generate an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+  
+For more information on SQL Server transactions, see [Explicit Transactions](https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql)
+
+## Examples  
+ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error, or if it is disposed without first being committed. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+  
+ [!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+  
+ ]]></format>
       </remarks>
-      <example>
-        <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. It also demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />, <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" />, and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> methods. The transaction is rolled back on any error, or if it is disposed without first being committed. <c>Try</c> / <c>Catch</c> error handling is used to handle any errors when attempting to commit or roll back the transaction.
-        </para>
-        <!-- SqlConnection_BeginTransaction -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          namespace Transaction1CS
-          {
-              class Program
-              {
-                  static void Main()
-                  {
-                      string connectionString =
-                          "Persist Security Info=False;Integrated Security=SSPI;database=Northwind;server=(local)";
-                      ExecuteSqlTransaction(connectionString);
-                      Console.ReadLine();
-                  }
-                  
-                  private static void ExecuteSqlTransaction(string connectionString)
-                  {
-                      using (SqlConnection connection = new SqlConnection(connectionString))
-                      {
-                          connection.Open();
-          
-                          SqlCommand command = connection.CreateCommand();
-                          SqlTransaction transaction;
-          
-                          // Start a local transaction.
-                          transaction = connection.BeginTransaction();
-          
-                          // Must assign both transaction object and connection
-                          // to Command object for a pending local transaction
-                          command.Connection = connection;
-                          command.Transaction = transaction;
-          
-                          try
-                          {
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (100, 'Description')";
-                              command.ExecuteNonQuery();
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (101, 'Description')";
-                              command.ExecuteNonQuery();
-          
-                              // Attempt to commit the transaction.
-                              transaction.Commit();
-                              Console.WriteLine("Both records are written to database.");
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
-                              Console.WriteLine("  Message: {0}", ex.Message);
-          
-                              // Attempt to roll back the transaction.
-                              try
-                              {
-                                  transaction.Rollback();
-                              }
-                              catch (Exception ex2)
-                              {
-                                  // This catch block will handle any errors that may have occurred
-                                  // on the server that would cause the rollback to fail, such as
-                                  // a closed connection.
-                                  Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
-                                  Console.WriteLine("  Message: {0}", ex2.Message);
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-        </code>
-      </example>
     </SqlTransaction>
     <Commit>
       <summary>
         Commits the database transaction.
       </summary>
       <remarks>
-        <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> method is equivalent to the Transact-SQL COMMIT TRANSACTION statement. You cannot roll back a transaction once it has been committed, because all modifications have become a permanent part of the database. For more information, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/commit-transaction-transact-sql">COMMIT TRANSACTION (Transact-SQL)</see>.
-        </para>
-        <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when committing or rolling back a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. Both <b>Commit</b> and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
-        </note>
-        <para>
-          For more information on SQL Server transactions, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>. 
-        </para>
-      </remarks>
-      <example>
-        <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. It also demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" />, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />, and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> methods. The transaction is rolled back on any error. <c>Try</c> / <c>Catch</c> error handling is used to handle any errors when attempting to commit or roll back the transaction.
-        </para>
-        <!-- SqlConnection_BeginTransaction -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          namespace Transaction1CS
-          {
-              class Program
-              {
-                  static void Main()
-                  {
-                      string connectionString =
-                          "Persist Security Info=False;Integrated Security=SSPI;database=Northwind;server=(local)";
-                      ExecuteSqlTransaction(connectionString);
-                      Console.ReadLine();
-                  }
-                  
-                  private static void ExecuteSqlTransaction(string connectionString)
-                  {
-                      using (SqlConnection connection = new SqlConnection(connectionString))
-                      {
-                          connection.Open();
-          
-                          SqlCommand command = connection.CreateCommand();
-                          SqlTransaction transaction;
-          
-                          // Start a local transaction.
-                          transaction = connection.BeginTransaction();
-          
-                          // Must assign both transaction object and connection
-                          // to Command object for a pending local transaction
-                          command.Connection = connection;
-                          command.Transaction = transaction;
-          
-                          try
-                          {
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (100, 'Description')";
-                              command.ExecuteNonQuery();
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (101, 'Description')";
-                              command.ExecuteNonQuery();
-          
-                              // Attempt to commit the transaction.
-                              transaction.Commit();
-                              Console.WriteLine("Both records are written to database.");
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
-                              Console.WriteLine("  Message: {0}", ex.Message);
-          
-                              // Attempt to roll back the transaction.
-                              try
-                              {
-                                  transaction.Rollback();
-                              }
-                              catch (Exception ex2)
-                              {
-                                  // This catch block will handle any errors that may have occurred
-                                  // on the server that would cause the rollback to fail, such as
-                                  // a closed connection.
-                                  Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
-                                  Console.WriteLine("  Message: {0}", ex2.Message);
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-        </code>
-      </example>
+        <format type="text/markdown"><![CDATA[
+## Remarks  
+The <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> method is equivalent to the Transact-SQL COMMIT TRANSACTION statement. You cannot roll back a transaction once it has been committed, because all modifications have become a permanent part of the database. For more information, see [COMMIT TRANSACTION (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/commit-transaction-transact-sql).
+
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when committing or rolling back a <xref:Microsoft.Data.SqlClient.SqlTransaction>. Both `Commit` and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.
+
+For more information on SQL Server transactions, see [Transactions (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql).
+
+## Examples  
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+
+[!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+  
+ ]]></format>
+        </remarks>
       <exception cref="T:System.Exception">
         An error occurred while trying to commit the transaction.
       </exception>
@@ -259,96 +117,24 @@
         Rolls back a transaction from a pending state.
       </summary>
       <remarks>
-        <para>
-          The <b>Rollback</b> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/rollback-transaction-transact-sql">ROLLBACK TRANSACTION (Transact-SQL)</see>.
-        </para>
-        <para>
-          The transaction can only be rolled back from a pending state (after <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> has been called, but before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> is called). The transaction is rolled back in the event it is disposed before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> or <b>Rollback</b> is called.
-        </para>
-        <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when rolling back a transaction. A <b>Rollback</b> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
-        </note>
-        <para>
-          For more information on SQL Server transactions, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>.
-        </para>
+        <format type="text/markdown"><![CDATA[
+## Remarks  
+The <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see [ROLLBACK TRANSACTION (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/rollback-transaction-transact-sql).
+
+The transaction can only be rolled back from a pending state (after <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> has been called, but before <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> is called). The transaction is rolled back in the event it is disposed before `Commit` or `Rollback` is called.  
+
+> [!NOTE]
+>  `Try`/`Catch` exception handling should always be used when rolling back a transaction. A `Rollback` generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+
+For more information on SQL Server transactions, see [Transactions (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql).
+
+## Examples  
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+
+[!code-csharp[SqlConnection_BeginTransaction Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction.cs#1)]
+
+]]></format>
       </remarks>
-      <example>
-        <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. It also demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />, <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" />, and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> methods. The transaction is rolled back on any error. <c>Try</c> / <c>Catch</c> error handling is used to handle any errors when attempting to commit or roll back the transaction.
-        </para>
-        <!-- SqlConnection_BeginTransaction -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          namespace Transaction1CS
-          {
-              class Program
-              {
-                  static void Main()
-                  {
-                      string connectionString =
-                          "Persist Security Info=False;Integrated Security=SSPI;database=Northwind;server=(local)";
-                      ExecuteSqlTransaction(connectionString);
-                      Console.ReadLine();
-                  }
-                  
-                  private static void ExecuteSqlTransaction(string connectionString)
-                  {
-                      using (SqlConnection connection = new SqlConnection(connectionString))
-                      {
-                          connection.Open();
-          
-                          SqlCommand command = connection.CreateCommand();
-                          SqlTransaction transaction;
-          
-                          // Start a local transaction.
-                          transaction = connection.BeginTransaction();
-          
-                          // Must assign both transaction object and connection
-                          // to Command object for a pending local transaction
-                          command.Connection = connection;
-                          command.Transaction = transaction;
-          
-                          try
-                          {
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (100, 'Description')";
-                              command.ExecuteNonQuery();
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (101, 'Description')";
-                              command.ExecuteNonQuery();
-          
-                              // Attempt to commit the transaction.
-                              transaction.Commit();
-                              Console.WriteLine("Both records are written to database.");
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
-                              Console.WriteLine("  Message: {0}", ex.Message);
-          
-                              // Attempt to roll back the transaction.
-                              try
-                              {
-                                  transaction.Rollback();
-                              }
-                              catch (Exception ex2)
-                              {
-                                  // This catch block will handle any errors that may have occurred
-                                  // on the server that would cause the rollback to fail, such as
-                                  // a closed connection.
-                                  Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
-                                  Console.WriteLine("  Message: {0}", ex2.Message);
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-        </code>
-      </example>
       <exception cref="T:System.Exception">
         An error occurred while trying to commit the transaction.
       </exception>
@@ -367,96 +153,24 @@
         Rolls back a transaction from a pending state, and specifies the transaction or savepoint name.
       </summary>
       <remarks>
-        <para>
-          The <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>.
-        </para>
-        <para>
-          The transaction can only be rolled back from a pending state (after <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" /> has been called, but before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> is called). The transaction is rolled back if it is disposed before <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" /> or <c>Rollback</c> is called.
-        </para>
-        <note type="note">
-          <c>Try</c> / <c>Catch</c> exception handling should always be used when rolling back a transaction. A <c>Rollback</c> generates an <see cref="T:System.InvalidOperationException" /> if the connection is terminated or if the transaction has already been rolled back on the server.
-        </note>
-        <para>
-          For more information on SQL Server transactions, see <see href="https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql">Transactions (Transact-SQL)</see>.
-        </para>
-      </remarks>
-      <example>
-        <para>
-          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" />. It also demonstrates how to use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction" />, <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Commit" />, and <see cref="M:Microsoft.Data.SqlClient.SqlTransaction.Rollback" /> methods. The transaction is rolled back on any error. <c>Try</c> / <c>Catch</c> error handling is used to handle any errors when attempting to commit or roll back the transaction.
-        </para>
-        <!-- SqlConnection_BeginTransaction2 -->
-        <code language="c#">
-          using System;
-          using System.Data;
-          using Microsoft.Data.SqlClient;
-          
-          namespace Transaction1CS
-          {
-              class Program
-              {
-                  static void Main()
-                  {
-                      string connectionString =
-                          "Persist Security Info=False;Integrated Security=SSPI;database=Northwind;server=(local)";
-                      ExecuteSqlTransaction(connectionString);
-                      Console.ReadLine();
-                  }
+        <format type="text/markdown"><![CDATA[
+## Remarks  
+The <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> method is equivalent to the Transact-SQL ROLLBACK TRANSACTION statement. For more information, see [Transactions (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql).  
 
-                  private static void ExecuteSqlTransaction(string connectionString)
-                  {
-                      using (SqlConnection connection = new SqlConnection(connectionString))
-                      {
-                          connection.Open();
-          
-                          SqlCommand command = connection.CreateCommand();
-                          SqlTransaction transaction;
-          
-                          // Start a local transaction.
-                          transaction = connection.BeginTransaction("SampleTransaction");
-          
-                          // Must assign both transaction object and connection
-                          // to Command object for a pending local transaction
-                          command.Connection = connection;
-                          command.Transaction = transaction;
-          
-                          try
-                          {
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (100, 'Description')";
-                              command.ExecuteNonQuery();
-                              command.CommandText =
-                                  "Insert into Region (RegionID, RegionDescription) VALUES (101, 'Description')";
-                              command.ExecuteNonQuery();
-          
-                              // Attempt to commit the transaction.
-                              transaction.Commit();
-                              Console.WriteLine("Both records are written to database.");
-                          }
-                          catch (Exception ex)
-                          {
-                              Console.WriteLine("Commit Exception Type: {0}", ex.GetType());
-                              Console.WriteLine("  Message: {0}", ex.Message);
-          
-                              // Attempt to roll back the transaction.
-                              try
-                              {
-                                  transaction.Rollback("SampleTransaction");
-                              }
-                              catch (Exception ex2)
-                              {
-                                  // This catch block will handle any errors that may have occurred
-                                  // on the server that would cause the rollback to fail, such as
-                                  // a closed connection.
-                                  Console.WriteLine("Rollback Exception Type: {0}", ex2.GetType());
-                                  Console.WriteLine("  Message: {0}", ex2.Message);
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-        </code>
-      </example>
+The transaction can only be rolled back from a pending state (after <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A> has been called, but before <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A> is called). The transaction is rolled back if it is disposed before `Commit` or `Rollback` is called.  
+
+> [!NOTE]
+> `Try`/`Catch` exception handling should always be used when rolling back a transaction. A `Rollback` generates an <xref:System.InvalidOperationException> if the connection is terminated or if the transaction has already been rolled back on the server.  
+
+For more information on SQL Server transactions, see [Transactions (Transact-SQL)](https://learn.microsoft.com/sql/t-sql/language-elements/transactions-transact-sql).
+
+## Examples
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlTransaction>. It also demonstrates how to use the <xref:Microsoft.Data.SqlClient.SqlConnection.BeginTransaction%2A>, <xref:Microsoft.Data.SqlClient.SqlTransaction.Commit%2A>, and <xref:Microsoft.Data.SqlClient.SqlTransaction.Rollback%2A> methods. The transaction is rolled back on any error. `Try`/`Catch` error handling is used to handle any errors when attempting to commit or roll back the transaction.  
+
+[!code-csharp[SqlConnection_BeginTransaction2 Example#1](~/../sqlclient/doc/samples/SqlConnection_BeginTransaction2.cs#1)]
+
+]]></format>
+      </remarks>
       <exception cref="T:System.ArgumentException">
         No transaction name was specified.
       </exception>

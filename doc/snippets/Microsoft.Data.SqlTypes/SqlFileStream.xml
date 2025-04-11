@@ -5,24 +5,22 @@
         Exposes SQL Server data that is stored with the FILESTREAM column attribute as a sequence of bytes.
       </summary>
       <remarks>
-        <para>
-          The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class is used to work with VARBINARY(MAX) data stored with the FILESTREAM attribute in a SQL Server 2008 database. You must install the .NET Framework 3.5 SP1 (or later) to use <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> to work with FILESTREAM data.
-        </para>
-        <para>
-          Specifying the FILESTREAM attribute on a VARBINARY(MAX) column causes SQL Server to store the data in the local NTFS file system instead of in the database file. Transact-SQL statements provide data manipulation capabilities within the server, and Win32 file system interfaces provide streaming access to the data.
-        </para>
-        <note type="note">
-          Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.
-        </note>
-        <para>
-          The <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> class is derived from the <see cref="T:System.IO.Stream" /> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.
-        </para>
-        <para>
-          For conceptual documentation and code examples, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">FILESTREAM Data</see>.
-        </para>
-        <para>
-          For documentation about setting up and configuring FILESTREAM data on SQL Server, see <see href="https://go.microsoft.com/fwlink/?LinkId=121499">Designing and Implementing FILESTREAM Storage</see> in SQL Server 2008 Books Online.
-        </para>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:Microsoft.Data.SqlTypes.SqlFileStream> class is used to work with `varbinary(max)` data stored with the FILESTREAM attribute in a SQL Server 2008 database. You must install the .NET Framework 3.5 SP1 (or later) to use <xref:Microsoft.Data.SqlTypes.SqlFileStream> to work with FILESTREAM data.  
+
+Specifying the FILESTREAM attribute on a `varbinary(max)` column causes SQL Server to store the data in the local NTFS file system instead of in the database file. Transact-SQL statements provide data manipulation capabilities within the server, and Win32 file system interfaces provide streaming access to the data.  
+
+> [!NOTE]
+>  Individual files stored in a FILESTREAM column cannot be opened directly from the NTFS file system. Streaming FILESTREAM data works only in the context of a SQL Server transaction.  
+
+The <xref:Microsoft.Data.SqlTypes.SqlFileStream> class is derived from the <xref:System.IO.Stream> class, which represents an abstraction of a sequence of bytes from some arbitrary data source such as a file or a block of memory. You can read from a FILESTREAM by transferring data from a stream into a data structure such as an array of bytes. You can write to a FILESTREAM by transferring the data from a data structure into a stream. You can also seek within the stream, which allows you to query and modify data at the current position within the stream.  
+
+For conceptual documentation and code examples, see [FILESTREAM Data](https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data).  
+
+For documentation about setting up and configuring FILESTREAM data on SQL Server,  see [Designing and Implementing FILESTREAM Storage](https://go.microsoft.com/fwlink/?LinkId=121499) in SQL Server 2008 Books Online.  
+
+]]></format>
       </remarks>
       <seealso href="https://learn.microsoft.com/sql/connect/ado-net/sql/filestream-data">
         FILESTREAM Data in SQL Server 2008 (ADO.NET)
@@ -52,7 +50,7 @@
           When using <see cref="F:System.IO.FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.
         </para>
         <para>
-          When using <see cref="F:System.IO.FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
+          When using <see cref="F:System.IO.FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek(System.Int64,System.IO.SeekOrigin)" /> methods to move the handle position within the file to write or append new data.
         </para>         
       </param>
       <summary>
@@ -132,7 +130,7 @@
         The transaction context for the <see langword="SqlFileStream" /> object. When set to null, an implicit transaction will be used for the <see langword="SqlFileStream" /> object. Applications should return the byte array returned by calling the GET_FILESTREAM_TRANSACTION_CONTEXT method.
       </param>
       <param name="access">
-        The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />. When using <see langword="FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.  When using <see langword="FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.  When using <see langword="FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek" /> methods to move the handle position within the file to write or append new data.
+        The access mode to use when opening the file. Supported <see cref="T:System.IO.FileAccess" /> enumeration values are <see cref="F:System.IO.FileAccess.Read" />, <see cref="F:System.IO.FileAccess.Write" />, and <see cref="F:System.IO.FileAccess.ReadWrite" />. When using <see langword="FileAccess.Read" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> object can be used to read all the existing data.  When using <see langword="FileAccess.Write" />, <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a zero byte file. Existing data will be overwritten when the object is closed and the transaction is committed.  When using <see langword="FileAccess.ReadWrite" />, the <see cref="T:Microsoft.Data.SqlTypes.SqlFileStream" /> points to a file which has all the existing data in it. The handle is positioned at the beginning of the file. You can use one of the <see cref="M:System.IO.Stream.Seek(System.Int64,System.IO.SeekOrigin)" /> methods to move the handle position within the file to write or append new data.
       </param>
       <param name="options">
         Specifies the option to use while opening the file. Supported <see cref="T:System.IO.FileOptions" /> values are <see cref="F:System.IO.FileOptions.Asynchronous" />, <see cref="F:System.IO.FileOptions.WriteThrough" />, <see cref="F:System.IO.FileOptions.SequentialScan" />, and <see cref="F:System.IO.FileOptions.RandomAccess" />.

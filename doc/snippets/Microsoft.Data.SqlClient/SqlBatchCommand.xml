@@ -7,7 +7,7 @@
     </SqlBatchCommand>
     <ctor1>
       <summary>
-        Initializes a new <see cref="T:SqlBatchCommand" />.
+        Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
       </summary>
       <example>
         The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a SqlBatch, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> . The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
@@ -62,7 +62,7 @@
     </ctor1>
     <ctor2>
       <summary>
-        Initializes a new <see cref="T:SqlBatchCommand" />.
+        Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
       </summary>
       <param name="commandText">
         The text of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
