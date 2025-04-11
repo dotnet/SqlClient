@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,8 +36,8 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         /// <param name="isAsync">Whether this method should run asynchronously.</param>
         /// <param name="cancellationToken">Cancels outstanding requests.</param>
         /// <returns>Returns the result of the callback or the next rate limiter.</returns>
-        internal abstract ValueTask<TResult> Execute<State, TResult>(
-            AsyncFlagFunc<State, ValueTask<TResult>> callback,
+        internal abstract Task<TResult> Execute<State, TResult>(
+            AsyncFlagFunc<State, Task<TResult>> callback,
             State state,
             bool isAsync,
             CancellationToken cancellationToken = default);
@@ -46,4 +45,3 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         public abstract void Dispose();
     }
 }
-#endif

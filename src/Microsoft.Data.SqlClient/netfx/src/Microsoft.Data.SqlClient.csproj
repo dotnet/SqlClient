@@ -262,6 +262,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\BetterSyncPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\BetterSyncPool.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs</Link>
     </Compile>
@@ -309,6 +312,21 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\RateLimiter\AsyncFlagFunc.cs">
+      <Link>Microsoft\Data\SqlClient\RateLimiter\AsyncFlagFunc.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\RateLimiter\BlockingPeriodRateLimiter.cs">
+      <Link>Microsoft\Data\SqlClient\RateLimiter\BlockingPeriodRateLimiter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\RateLimiter\ConcurrencyRateLimiter.cs">
+      <Link>Microsoft\Data\SqlClient\RateLimiter\ConcurrencyRateLimiter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\RateLimiter\PassthroughRateLimiter.cs">
+      <Link>Microsoft\Data\SqlClient\RateLimiter\PassthroughRateLimiter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\RateLimiter\RateLimiterBase.cs">
+      <Link>Microsoft\Data\SqlClient\RateLimiter\RateLimiterBase.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
@@ -957,6 +975,7 @@
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+    <PackageReference Include="System.Threading.Channels" Version="$(SystemThreadingChannelsVersion)" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

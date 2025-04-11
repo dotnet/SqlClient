@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -78,6 +77,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 var count = _idleCount;
                 while (count > 0 && _idleConnectorReader.TryRead(out var connector))
                 {
+                    if (connector is null)
+                    {
+                        continue;
+                    }
                     if (CheckIdleConnector(connector))
                     {
                         CloseConnector(connector);
@@ -260,13 +263,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private Task _warmupTask;
         private readonly SemaphoreSlim _warmupLock;
 
+
+        private readonly Timer _pruningTimer;
+        private readonly Timer _minIdleCountTimer;
+        private readonly SemaphoreSlim _pruningLock;
+
         internal int _minIdleCount;
-        internal PeriodicTimer PruningTimer { get; init; }
-        internal PeriodicTimer MinIdleCountTimer { get; init; }
-        internal ValueTask PruningTimerListener { get; init; }
+        internal Timer PruningTimer => _pruningTimer;
+        internal Timer MinIdleCountTimer => _minIdleCountTimer;
         internal Task PruningTask { get; set; }
-        internal ValueTask UpdateMinIdleCountTask { get; init; }
-        internal SemaphoreSlim PruningLock { get; init; }
+        internal SemaphoreSlim PruningLock => _pruningLock;
         #endregion
 
         // Counts the total number of open connectors tracked by the pool.
@@ -322,18 +328,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _warmupTask = Task.CompletedTask;
             _warmupLock = new SemaphoreSlim(1);
 
-            var pruningTimer = new PeriodicTimer(DefaultPruningPeriod);
+            _pruningTimer = new Timer(PruneIdleConnections, this, DefaultPruningPeriod, DefaultPruningPeriod);
 
             _minIdleCount = int.MaxValue;
 
             // TODO: make these private readonly if possible
             // TODO: base pruning timer on a user provided param?
-            PruningTimer = pruningTimer;
-            MinIdleCountTimer = new PeriodicTimer(MinIdleCountPeriod);
-            PruningLock = new SemaphoreSlim(1);
-            PruningTimerListener = InitiatePruningTimerListener();
+            _minIdleCountTimer = new Timer(UpdateMinIdleCount, this, MinIdleCountPeriod, MinIdleCountPeriod);
+            _pruningLock = new SemaphoreSlim(1);
             PruningTask = Task.CompletedTask;
-            UpdateMinIdleCountTask = UpdateMinIdleCount();
 
             State = Running;
         }
@@ -343,21 +346,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal int ObjectID => _objectID;
         internal bool IsWarmupEnabled { get; set; } = true;
 
-
-        internal (int Total, int Idle, int Busy) Statistics
-        {
-            get
-            {
-                var numConnectors = _numConnectors;
-                var idleCount = _idleCount;
-                return (numConnectors, idleCount, numConnectors - idleCount);
-            }
-        }
-        #endregion
+#if NETFRAMEWORK
+        internal override DbConnectionPoolCounters PerformanceCounters => throw new NotImplementedException();
+#endif
+#endregion
 
 
         /// <inheritdoc/>
-        internal async ValueTask<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal async Task<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             DbConnectionInternal? connector = GetIdleConnector();
             if (connector != null)
@@ -412,7 +408,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
                         }
 
-                        if (CheckIdleConnector(connector))
+                        if (connector != null && CheckIdleConnector(connector))
                         {
                             // TODO: transactions
                             return connector;
@@ -486,7 +482,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
         /// TODO: profile the inlining to see if it's necessary
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CheckIdleConnector([NotNullWhen(true)] DbConnectionInternal? connector)
+        private bool CheckIdleConnector(DbConnectionInternal? connector)
         {
             if (connector is null)
             {
@@ -581,30 +577,41 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal readonly struct OpenInternalConnectionState
         {
-            internal BetterSyncPool Pool { get; init; }
-            internal DbConnection? OwningConnection { get; init; }
-            internal DbConnectionOptions UserOptions { get; init; }
-            internal TimeSpan Timeout { get; init; }
+            internal OpenInternalConnectionState(
+                BetterSyncPool pool,
+                DbConnection? owningConnection,
+                DbConnectionOptions userOptions,
+                TimeSpan timeout)
+            {
+                Pool = pool;
+                OwningConnection = owningConnection;
+                UserOptions = userOptions;
+                Timeout = timeout;
+            }
+
+            internal readonly BetterSyncPool Pool;
+            internal readonly DbConnection? OwningConnection;
+            internal readonly DbConnectionOptions UserOptions;
+            internal readonly TimeSpan Timeout;
         }
 
         /// <inheritdoc/>
-        internal ValueTask<DbConnectionInternal?> OpenNewInternalConnection(DbConnection? owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        internal Task<DbConnectionInternal?> OpenNewInternalConnection(DbConnection? owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             return _connectionRateLimiter.Execute(
                 RateLimitedOpen,
-                new OpenInternalConnectionState
-                {
-                    Pool = this,
-                    OwningConnection = owningConnection,
-                    UserOptions = userOptions,
-                    Timeout = timeout,
-                },
+                new OpenInternalConnectionState(
+                    pool: this,
+                    owningConnection: owningConnection,
+                    userOptions: userOptions,
+                    timeout: timeout
+                ),
                 async,
                 cancellationToken
             );
 
 
-            static ValueTask<DbConnectionInternal?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
+            static Task<DbConnectionInternal?> RateLimitedOpen(OpenInternalConnectionState state, bool async, CancellationToken cancellationToken)
             {
                 // As long as we're under max capacity, attempt to increase the connector count and open a new connection.
                 for (var numConnectors = state.Pool._numConnectors; numConnectors < state.Pool.MaxPoolSize; numConnectors = state.Pool._numConnectors)
@@ -659,7 +666,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             throw new Exception($"Could not find free slot in {state.Pool._connectors} when opening. Please report a bug.");
                         }
 
-                        return new ValueTask<DbConnectionInternal?>(newConnection);
+                        return Task.FromResult<DbConnectionInternal?>(newConnection);
                     }
                     catch
                     {
@@ -675,51 +682,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     }
                 }
 
-                return new ValueTask<DbConnectionInternal?>((DbConnectionInternal?)null);
+                return Task.FromResult<DbConnectionInternal?>(null);
             }
         }
 
         /// <summary>
-        /// Initiates a task to wait on the pruning timer. Spins off child tasks to perform pruning
-        /// each time the timer ticks.
+        /// Initiates a task to prune idle connections from the pool.
         /// </summary>
-        internal async ValueTask InitiatePruningTimerListener()
+        internal void PruneIdleConnections(object? state)
         {
             _shutdownCT.ThrowIfCancellationRequested();
 
-            try
+            if (State is ShuttingDown || !PruningTask.IsCompleted || !PruningLock.Wait(0))
             {
-                while (await PruningTimer.WaitForNextTickAsync(_shutdownCT))
-                {
-                    await PruneIdleConnections();
-                }
-            } catch (OperationCanceledException)
-            {
-                //TODO: log something here?
-            }
-        }
-
-        /// <summary>
-        /// Prunes idle connections from the pool.
-        /// We may await this operation multiple times, so we need to use Task
-        /// in place of ValueTask so that it cannot be recycled.
-        /// </summary>
-        /// <returns>A ValueTask containing a Task that represents the pruning operation.</returns>
-        internal Task PruneIdleConnections()
-        {
-            if (State is ShuttingDown)
-            {
-                return Task.CompletedTask;
-            }
-
-            if (!PruningTask.IsCompleted)
-            {
-                return PruningTask;
-            }
-
-            if (!PruningLock.Wait(0))
-            {
-                return PruningTask;
+                return;
             }
 
             try
@@ -734,7 +710,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 PruningLock.Release();
             }
 
-            return PruningTask;
+            return;
 
             async Task _PruneIdleConnections()
             {
@@ -784,37 +760,34 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// cancellation token.
         /// </summary>
         /// <returns>A ValueTask tracking this operation.</returns>
-        internal async ValueTask UpdateMinIdleCount()
+        internal void UpdateMinIdleCount(object? state)
         {
             _shutdownCT.ThrowIfCancellationRequested();
 
             try
             {
-                while (await MinIdleCountTimer.WaitForNextTickAsync(_shutdownCT))
+                if (State is not Running)
                 {
-                    if (State is not Running)
+                    return;
+                }
+                try
+                {
+                    int currentMinIdle;
+                    int currentIdle;
+                    do
                     {
-                        continue;
-                    }
-                    try
-                    {
-                        int currentMinIdle;
-                        int currentIdle;
-                        do
+                        currentMinIdle = _minIdleCount;
+                        currentIdle = _idleCount;
+                        if (currentIdle >= currentMinIdle)
                         {
-                            currentMinIdle = _minIdleCount;
-                            currentIdle = _idleCount;
-                            if (currentIdle >= currentMinIdle)
-                            {
-                                break;
-                            }
+                            break;
                         }
-                        while (Interlocked.CompareExchange(ref _minIdleCount, currentIdle, currentMinIdle) != currentMinIdle);
                     }
-                    catch
-                    {
-                        // TODO: log exception
-                    }
+                    while (Interlocked.CompareExchange(ref _minIdleCount, currentIdle, currentMinIdle) != currentMinIdle);
+                }
+                catch
+                {
+                    // TODO: log exception
                 }
             } catch (OperationCanceledException)
             {
@@ -895,7 +868,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Shutsdown the pool and disposes pool resources.
         /// </summary>
-        internal async ValueTask ShutdownAsync()
+        internal async Task ShutdownAsync()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", ObjectID);
 
@@ -904,9 +877,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Cancel background tasks
             _shutdownCTS.Cancel();
             await Task.WhenAll(
-                PruningTimerListener.AsTask(),
                 PruningTask,
-                UpdateMinIdleCountTask.AsTask(),
                 _warmupTask);
 
             // Clean pool state
@@ -924,4 +895,3 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         #endregion
     }
 }
-#endif

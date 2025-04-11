@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,7 +28,11 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         }
 
         /// <inheritdoc/>
-        internal sealed override async ValueTask<TResult> Execute<State, TResult>(AsyncFlagFunc<State, ValueTask<TResult>> callback, State state, bool isAsync, CancellationToken cancellationToken = default)
+        internal sealed override async Task<TResult> Execute<State, TResult>(
+            AsyncFlagFunc<State, Task<TResult>> callback, 
+            State state, 
+            bool isAsync, 
+            CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -68,4 +71,3 @@ namespace Microsoft.Data.SqlClient.RateLimiter
         }
     }
 }
-#endif

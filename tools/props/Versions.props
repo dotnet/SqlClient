@@ -29,6 +29,7 @@
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
     <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
     <SystemDataCommonVersion>4.3.0</SystemDataCommonVersion>
+    <SystemThreadingChannelsVersion>9.0.4</SystemThreadingChannelsVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
