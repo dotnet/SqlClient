@@ -4,20 +4,20 @@
 
 #if NETFRAMEWORK
 
-using System;
-using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace Microsoft.Data.SqlClient
+namespace System.Buffers
 {
     /// <summary>
     /// Internal implementation of <see cref="IBufferWriter{T}"/> for platforms that don't have it available.
     ///
     /// NOTE: This file should not be edited as it is copied from dotnet/runtime and has no tests in this repo.
+    /// It is only included for netfx version of the driver because this class was not introduced
+    /// until netstandard 2.1.
     /// </summary>
     /// <seealso href="https://github.com/dotnet/runtime/blob/bc2bd2bd77ecd7a7979a3ef815e3ff36881a1b94/src/libraries/Common/src/System/Buffers/ArrayBufferWriter.cs"/>
-    sealed class ArrayBufferWriter<T> : IBufferWriter<T>
+    internal sealed class ArrayBufferWriter<T> : IBufferWriter<T>
     {
         // Copy of Array.MaxLength.
         // Used by projects targeting .NET Framework.
@@ -137,6 +137,8 @@ namespace Microsoft.Data.SqlClient
             _index += count;
         }
 
+        
+        
         /// <summary>
         /// Returns a <see cref="Memory{T}"/> to write to that is at least the requested length (specified by <paramref name="sizeHint"/>).
         /// If no <paramref name="sizeHint"/> is provided (or it's equal to <code>0</code>), some non-empty buffer is returned.
