@@ -9,18 +9,19 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    /// <summary>
-    /// This unit test is just valid for .NetCore 3.0 and above
-    /// </summary>
-    public class EventCounterTest
+    public class MetricsTest
     {
-        public EventCounterTest()
+#if NETFRAMEWORK
+        private readonly static TraceSwitch s_perfCtrSwitch = new TraceSwitch("ConnectionPoolPerformanceCounterDetail", "level of detail to track with connection pool performance counters");
+#endif
+
+        public MetricsTest()
         {
             ClearConnectionPools();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void EventCounter_HardConnectionsCounters_Functional()
+        public void NonPooledConnectionsCounters_Functional()
         {
             //create a non-pooled connection
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false };
@@ -30,30 +31,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (var conn = new SqlConnection(stringBuilder.ToString()))
             {
-                //initially we have no open physical connections
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                if (SupportsActiveConnectionCounters)
+                {
+                    //initially we have no open physical connections
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                }
 
                 conn.Open();
 
                 //when the connection gets opened, the real physical connection appears
-                Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                if (SupportsActiveConnectionCounters)
+                {
+                    Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                }
                 Assert.Equal(npc + 1, SqlClientEventSourceProps.NonPooledConnections);
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
 
                 conn.Close();
 
                 //when the connection gets closed, the real physical connection is also closed
-                Assert.Equal(ahc, SqlClientEventSourceProps.ActiveHardConnections);
+                if (SupportsActiveConnectionCounters)
+                {
+                    Assert.Equal(ahc, SqlClientEventSourceProps.ActiveHardConnections);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                }
                 Assert.Equal(npc, SqlClientEventSourceProps.NonPooledConnections);
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void EventCounter_SoftConnectionsCounters_Functional()
+        public void PooledConnectionsCounters_Functional()
         {
             //create a pooled connection
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
@@ -68,42 +78,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (var conn = new SqlConnection(stringBuilder.ToString()))
             {
-                //initially we have no open physical connections
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
-                Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
-                    SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                if (SupportsActiveConnectionCounters)
+                {
+                    //initially we have no open physical connections
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
+                        SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                }
 
                 conn.Open();
 
                 //when the connection gets opened, the real physical connection appears
                 //and the appropriate pooling infrastructure gets deployed
-                Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
-                Assert.Equal(asc + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+                if (SupportsActiveConnectionCounters)
+                {
+                    Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                    Assert.Equal(asc + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
+                        SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                }
                 Assert.Equal(pc + 1, SqlClientEventSourceProps.PooledConnections);
                 Assert.Equal(npc, SqlClientEventSourceProps.NonPooledConnections);
                 Assert.Equal(acp + 1, SqlClientEventSourceProps.ActiveConnectionPools);
-                Assert.Equal(ac + 1, SqlClientEventSourceProps.ActiveConnections);
-                Assert.Equal(fc, SqlClientEventSourceProps.FreeConnections);
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
-                Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
-                    SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                if (VerboseActiveConnectionCountersEnabled)
+                {
+                    Assert.Equal(ac + 1, SqlClientEventSourceProps.ActiveConnections);
+                    Assert.Equal(fc, SqlClientEventSourceProps.FreeConnections);
+                }
 
                 conn.Close();
 
                 //when the connection gets closed, the real physical connection gets returned to the pool
-                Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
-                Assert.Equal(asc, SqlClientEventSourceProps.ActiveSoftConnections);
+                if (SupportsActiveConnectionCounters)
+                {
+                    Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                    Assert.Equal(asc, SqlClientEventSourceProps.ActiveSoftConnections);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
+                        SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                }
                 Assert.Equal(pc + 1, SqlClientEventSourceProps.PooledConnections);
                 Assert.Equal(npc, SqlClientEventSourceProps.NonPooledConnections);
                 Assert.Equal(acp + 1, SqlClientEventSourceProps.ActiveConnectionPools);
-                Assert.Equal(ac, SqlClientEventSourceProps.ActiveConnections);
-                Assert.Equal(fc + 1, SqlClientEventSourceProps.FreeConnections);
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
-                Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
-                    SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                if (VerboseActiveConnectionCountersEnabled)
+                {
+                    Assert.Equal(ac, SqlClientEventSourceProps.ActiveConnections);
+                    Assert.Equal(fc + 1, SqlClientEventSourceProps.FreeConnections);
+                }
             }
 
             using (var conn2 = new SqlConnection(stringBuilder.ToString()))
@@ -111,22 +136,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 conn2.Open();
 
                 //the next open connection will reuse the underlying physical connection
-                Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
-                Assert.Equal(asc + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+                if (SupportsActiveConnectionCounters)
+                {
+                    Assert.Equal(ahc + 1, SqlClientEventSourceProps.ActiveHardConnections);
+                    Assert.Equal(asc + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
+                        SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
+                    Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
+                        SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                }
                 Assert.Equal(pc + 1, SqlClientEventSourceProps.PooledConnections);
                 Assert.Equal(npc, SqlClientEventSourceProps.NonPooledConnections);
                 Assert.Equal(acp + 1, SqlClientEventSourceProps.ActiveConnectionPools);
-                Assert.Equal(ac + 1, SqlClientEventSourceProps.ActiveConnections);
-                Assert.Equal(fc, SqlClientEventSourceProps.FreeConnections);
-                Assert.Equal(SqlClientEventSourceProps.ActiveHardConnections,
-                    SqlClientEventSourceProps.HardConnects - SqlClientEventSourceProps.HardDisconnects);
-                Assert.Equal(SqlClientEventSourceProps.ActiveSoftConnections,
-                    SqlClientEventSourceProps.SoftConnects - SqlClientEventSourceProps.SoftDisconnects);
+                if (VerboseActiveConnectionCountersEnabled)
+                {
+                    Assert.Equal(ac + 1, SqlClientEventSourceProps.ActiveConnections);
+                    Assert.Equal(fc, SqlClientEventSourceProps.FreeConnections);
+                }
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void EventCounter_StasisCounters_Functional()
+        public void StasisCounters_Functional()
         {
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false, Enlist = false };
 
@@ -148,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void EventCounter_ReclaimedConnectionsCounter_Functional()
+        public void ReclaimedConnectionsCounter_Functional()
         {
             // clean pools and pool groups
             ClearConnectionPools();
@@ -180,7 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void EventCounter_ConnectionPoolGroupsCounter_Functional()
+        public void ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();
 
@@ -264,123 +295,139 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static FieldInfo GetConnectionFactoryField()
         {
+#if NET
             FieldInfo connectionFactoryField =
                 typeof(SqlConnection).GetField("s_connectionFactory", BindingFlags.Static | BindingFlags.NonPublic);
+#else
+            FieldInfo connectionFactoryField =
+                typeof(SqlConnection).GetField("_connectionFactory", BindingFlags.Static | BindingFlags.NonPublic);
+#endif
             Debug.Assert(connectionFactoryField != null);
             return connectionFactoryField;
         }
+
+        // Only the .NET Core build supports the active-hard-connections and active-soft-connects counters. The .NET Framework
+        // build doesn't have comparable performance counters.
+        private static bool SupportsActiveConnectionCounters =>
+#if NET
+            true;
+#else
+            false;
+#endif
+
+        private static bool VerboseActiveConnectionCountersEnabled =>
+            SupportsActiveConnectionCounters ||
+#if NET
+            true;
+#else
+            s_perfCtrSwitch.Level == TraceLevel.Verbose;
+#endif
     }
 
     internal static class SqlClientEventSourceProps
     {
         private static readonly object s_log;
-        private static readonly FieldInfo _activeHardConnectionsCounter;
-        private static readonly FieldInfo _hardConnectsCounter;
-        private static readonly FieldInfo _hardDisconnectsCounter;
-        private static readonly FieldInfo _activeSoftConnectionsCounter;
-        private static readonly FieldInfo _softConnectsCounter;
-        private static readonly FieldInfo _softDisconnectsCounter;
-        private static readonly FieldInfo _nonPooledConnectionsCounter;
-        private static readonly FieldInfo _pooledConnectionsCounter;
-        private static readonly FieldInfo _activeConnectionPoolGroupsCounter;
-        private static readonly FieldInfo _inactiveConnectionPoolGroupsCounter;
-        private static readonly FieldInfo _activeConnectionPoolsCounter;
-        private static readonly FieldInfo _inactiveConnectionPoolsCounter;
-        private static readonly FieldInfo _activeConnectionsCounter;
-        private static readonly FieldInfo _freeConnectionsCounter;
-        private static readonly FieldInfo _stasisConnectionsCounter;
-        private static readonly FieldInfo _reclaimedConnectionsCounter;
+        private static readonly Func<long> s_getActiveHardConnections;
+        private static readonly Func<long> s_getHardConnects;
+        private static readonly Func<long> s_getHardDisconnects;
+        private static readonly Func<long> s_getActiveSoftConnections;
+        private static readonly Func<long> s_getSoftConnects;
+        private static readonly Func<long> s_getSoftDisconnects;
+        private static readonly Func<long> s_getNonPooledConnections;
+        private static readonly Func<long> s_getPooledConnections;
+        private static readonly Func<long> s_getActiveConnectionPoolGroups;
+        private static readonly Func<long> s_getInactiveConnectionPoolGroups;
+        private static readonly Func<long> s_getActiveConnectionPools;
+        private static readonly Func<long> s_getInactiveConnectionPools;
+        private static readonly Func<long> s_getActiveConnections;
+        private static readonly Func<long> s_getFreeConnections;
+        private static readonly Func<long> s_getStasisConnections;
+        private static readonly Func<long> s_getReclaimedConnections;
 
         static SqlClientEventSourceProps()
         {
             Type sqlClientEventSourceType =
                 Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientEventSource");
             Debug.Assert(sqlClientEventSourceType != null);
-            FieldInfo logField = sqlClientEventSourceType.GetField("Log", BindingFlags.Static | BindingFlags.NonPublic);
-            Debug.Assert(logField != null);
-            s_log = logField.GetValue(null);
+            FieldInfo metricsField = sqlClientEventSourceType.GetField("Metrics", BindingFlags.Static | BindingFlags.Public);
+            Debug.Assert(metricsField != null);
+            Type sqlClientMetricsType = metricsField.FieldType;
+            s_log = metricsField.GetValue(null);
 
-            BindingFlags _bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-            _activeHardConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_activeHardConnectionsCounter), _bindingFlags);
-            Debug.Assert(_activeHardConnectionsCounter != null);
-            _hardConnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(_hardConnectsCounter), _bindingFlags);
-            Debug.Assert(_hardConnectsCounter != null);
-            _hardDisconnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(_hardDisconnectsCounter), _bindingFlags);
-            Debug.Assert(_hardDisconnectsCounter != null);
-            _activeSoftConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_activeSoftConnectionsCounter), _bindingFlags);
-            Debug.Assert(_activeSoftConnectionsCounter != null);
-            _softConnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(_softConnectsCounter), _bindingFlags);
-            Debug.Assert(_softConnectsCounter != null);
-            _softDisconnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(_softDisconnectsCounter), _bindingFlags);
-            Debug.Assert(_softDisconnectsCounter != null);
-            _nonPooledConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_nonPooledConnectionsCounter), _bindingFlags);
-            Debug.Assert(_nonPooledConnectionsCounter != null);
-            _pooledConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_pooledConnectionsCounter), _bindingFlags);
-            Debug.Assert(_pooledConnectionsCounter != null);
-            _activeConnectionPoolGroupsCounter =
-                sqlClientEventSourceType.GetField(nameof(_activeConnectionPoolGroupsCounter), _bindingFlags);
-            Debug.Assert(_activeConnectionPoolGroupsCounter != null);
-            _inactiveConnectionPoolGroupsCounter =
-                sqlClientEventSourceType.GetField(nameof(_inactiveConnectionPoolGroupsCounter), _bindingFlags);
-            Debug.Assert(_inactiveConnectionPoolGroupsCounter != null);
-            _activeConnectionPoolsCounter =
-                sqlClientEventSourceType.GetField(nameof(_activeConnectionPoolsCounter), _bindingFlags);
-            Debug.Assert(_activeConnectionPoolsCounter != null);
-            _inactiveConnectionPoolsCounter =
-                sqlClientEventSourceType.GetField(nameof(_inactiveConnectionPoolsCounter), _bindingFlags);
-            Debug.Assert(_inactiveConnectionPoolsCounter != null);
-            _activeConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_activeConnectionsCounter), _bindingFlags);
-            Debug.Assert(_activeConnectionsCounter != null);
-            _freeConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_freeConnectionsCounter), _bindingFlags);
-            Debug.Assert(_freeConnectionsCounter != null);
-            _stasisConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_stasisConnectionsCounter), _bindingFlags);
-            Debug.Assert(_stasisConnectionsCounter != null);
-            _reclaimedConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(_reclaimedConnectionsCounter), _bindingFlags);
-            Debug.Assert(_reclaimedConnectionsCounter != null);
+#if NETFRAMEWORK
+            Func<long> notApplicableFunction = static () => -1;
+
+            // .NET Framework doesn't have performance counters for the number of hard and soft connections.
+            s_getActiveHardConnections = notApplicableFunction;
+            s_getActiveSoftConnections = notApplicableFunction;
+#endif
+            s_getActiveHardConnections = GenerateFieldGetter("_activeHardConnections");
+            s_getHardConnects = GenerateFieldGetter("_hardConnectsRate");
+            s_getHardDisconnects = GenerateFieldGetter("_hardDisconnectsRate");
+            s_getActiveSoftConnections = GenerateFieldGetter("_activeSoftConnections");
+            s_getSoftConnects = GenerateFieldGetter("_softConnectsRate");
+            s_getSoftDisconnects = GenerateFieldGetter("_softDisconnectsRate");
+            s_getNonPooledConnections = GenerateFieldGetter("_nonPooledConnections");
+            s_getPooledConnections = GenerateFieldGetter("_pooledConnections");
+            s_getActiveConnectionPoolGroups = GenerateFieldGetter("_activeConnectionPoolGroups");
+            s_getInactiveConnectionPoolGroups = GenerateFieldGetter("_inactiveConnectionPoolGroups");
+            s_getActiveConnectionPools = GenerateFieldGetter("_activeConnectionPools");
+            s_getInactiveConnectionPools = GenerateFieldGetter("_inactiveConnectionPools");
+            s_getActiveConnections = GenerateFieldGetter("_activeConnections");
+            s_getFreeConnections = GenerateFieldGetter("_freeConnections");
+            s_getStasisConnections = GenerateFieldGetter("_stasisConnections");
+            s_getReclaimedConnections = GenerateFieldGetter("_reclaimedConnections");
+
+#if NET
+            static Func<long> GenerateFieldGetter(string fieldName)
+            {
+                FieldInfo counterField = s_log.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+
+                Debug.Assert(counterField != null);
+                return () => (long)counterField.GetValue(s_log)!;
+            }
+#else
+            static Func<long> GenerateFieldGetter(string fieldName)
+            {
+                FieldInfo counterField = s_log.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+                Debug.Assert(counterField != null);
+
+                PerformanceCounter counter = counterField?.GetValue(s_log) as PerformanceCounter;
+                return () => counter is null ? -1 : counter.RawValue;
+            }
+#endif
         }
 
-        public static long ActiveHardConnections => (long)_activeHardConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveHardConnections => s_getActiveHardConnections();
 
-        public static long HardConnects => (long)_hardConnectsCounter.GetValue(s_log)!;
+        public static long HardConnects => s_getHardConnects();
 
-        public static long HardDisconnects => (long)_hardDisconnectsCounter.GetValue(s_log)!;
+        public static long HardDisconnects => s_getHardDisconnects();
 
-        public static long ActiveSoftConnections => (long)_activeSoftConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveSoftConnections => s_getActiveSoftConnections();
 
-        public static long SoftConnects => (long)_softConnectsCounter.GetValue(s_log)!;
+        public static long SoftConnects => s_getSoftConnects();
 
-        public static long SoftDisconnects => (long)_softDisconnectsCounter.GetValue(s_log)!;
+        public static long SoftDisconnects => s_getSoftDisconnects();
 
-        public static long NonPooledConnections => (long)_nonPooledConnectionsCounter.GetValue(s_log)!;
+        public static long NonPooledConnections => s_getNonPooledConnections();
 
-        public static long PooledConnections => (long)_pooledConnectionsCounter.GetValue(s_log)!;
+        public static long PooledConnections => s_getPooledConnections();
 
-        public static long ActiveConnectionPoolGroups => (long)_activeConnectionPoolGroupsCounter.GetValue(s_log)!;
+        public static long ActiveConnectionPoolGroups => s_getActiveConnectionPoolGroups();
 
-        public static long InactiveConnectionPoolGroups => (long)_inactiveConnectionPoolGroupsCounter.GetValue(s_log)!;
+        public static long InactiveConnectionPoolGroups => s_getInactiveConnectionPoolGroups();
 
-        public static long ActiveConnectionPools => (long)_activeConnectionPoolsCounter.GetValue(s_log)!;
+        public static long ActiveConnectionPools => s_getActiveConnectionPools();
 
-        public static long InactiveConnectionPools => (long)_inactiveConnectionPoolsCounter.GetValue(s_log)!;
+        public static long InactiveConnectionPools => s_getInactiveConnectionPools();
 
-        public static long ActiveConnections => (long)_activeConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveConnections => s_getActiveConnections();
 
-        public static long FreeConnections => (long)_freeConnectionsCounter.GetValue(s_log)!;
+        public static long FreeConnections => s_getFreeConnections();
 
-        public static long StasisConnections => (long)_stasisConnectionsCounter.GetValue(s_log)!;
+        public static long StasisConnections => s_getStasisConnections();
 
-        public static long ReclaimedConnections => (long)_reclaimedConnectionsCounter.GetValue(s_log)!;
+        public static long ReclaimedConnections => s_getReclaimedConnections();
     }
 }

@@ -34,25 +34,6 @@ namespace Microsoft.Data.ProviderBase
         private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled = new Task<DbConnectionInternal>[Environment.ProcessorCount];
         private static Task<DbConnectionInternal> s_completedTask;
 
-#if NETFRAMEWORK
-        private readonly DbConnectionPoolCounters _performanceCounters;
-
-        protected DbConnectionFactory() : this(DbConnectionPoolCountersNoCounters.SingletonInstance) { }
-
-        protected DbConnectionFactory(DbConnectionPoolCounters performanceCounters)
-        {
-            _performanceCounters = performanceCounters;
-            _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
-            _poolsToRelease = new List<DbConnectionPool>();
-            _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
-            _pruningTimer = CreatePruningTimer();
-        }
-
-        internal DbConnectionPoolCounters PerformanceCounters
-        {
-            get { return _performanceCounters; }
-        }
-#else
         protected DbConnectionFactory()
         {
             _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
@@ -60,7 +41,6 @@ namespace Microsoft.Data.ProviderBase
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
             _pruningTimer = CreatePruningTimer();
         }
-#endif
 
         public abstract DbProviderFactory ProviderFactory
         {
@@ -135,13 +115,8 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionInternal newConnection = CreateConnection(connectionOptions, poolKey, poolGroupProviderInfo, null, owningConnection, userOptions);
             if (newConnection != null)
             {
-#if NETFRAMEWORK
-                PerformanceCounters.HardConnectsPerSecond.Increment();
-                newConnection.MakeNonPooledObject(owningConnection, PerformanceCounters);
-#else
-                SqlClientEventSource.Log.HardConnectRequest();
+                SqlClientEventSource.Metrics.HardConnectRequest();
                 newConnection.MakeNonPooledObject(owningConnection);
-#endif
             }
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}, Non-pooled database connection created.", ObjectID);
             return newConnection;
@@ -155,11 +130,8 @@ namespace Microsoft.Data.ProviderBase
 
             if (newConnection != null)
             {
-#if NETFRAMEWORK
-                PerformanceCounters.HardConnectsPerSecond.Increment();
-#else
-                SqlClientEventSource.Log.HardConnectRequest();
-#endif
+                SqlClientEventSource.Metrics.HardConnectRequest();
+
                 newConnection.MakePooledConnection(pool);
             }
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectID);
@@ -289,11 +261,8 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
-#if NETFRAMEWORK
-                    PerformanceCounters.NumberOfNonPooledConnections.Increment();
-#else
-                    SqlClientEventSource.Log.EnterNonPooledConnection();
-#endif
+
+                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
                 }
                 else
                 {
@@ -397,11 +366,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-#if NETFRAMEWORK
-                    PerformanceCounters.NumberOfNonPooledConnections.Increment();
-#else
-                    SqlClientEventSource.Log.EnterNonPooledConnection();
-#endif
+                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
                 }
             }
         }
@@ -510,11 +475,8 @@ namespace Microsoft.Data.ProviderBase
 
                         // lock prevents race condition with PruneConnectionPoolGroups
                         newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
-#if NETFRAMEWORK
-                        PerformanceCounters.NumberOfActiveConnectionPoolGroups.Increment();
-#else
-                        SqlClientEventSource.Log.EnterActiveConnectionPoolGroup();
-#endif
+
+                        SqlClientEventSource.Metrics.EnterActiveConnectionPoolGroup();
                         connectionPoolGroup = newConnectionPoolGroup;
                         _connectionPoolGroups = newConnectionPoolGroups;
                     }
@@ -579,11 +541,8 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolsToRelease.Remove(pool);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectId);
-#if NETFRAMEWORK
-                                PerformanceCounters.NumberOfInactiveConnectionPools.Decrement();
-#else
-                                SqlClientEventSource.Log.ExitInactiveConnectionPool();
-#endif
+
+                                SqlClientEventSource.Metrics.ExitInactiveConnectionPool();
                             }
                         }
                     }
@@ -608,11 +567,8 @@ namespace Microsoft.Data.ProviderBase
                             {
                                 _poolGroupsToRelease.Remove(poolGroup);
                                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectID, poolGroup.ObjectID);
-#if NETFRAMEWORK
-                                PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Decrement();
-#else
-                                SqlClientEventSource.Log.ExitInactiveConnectionPoolGroup();
-#endif
+
+                                SqlClientEventSource.Metrics.ExitInactiveConnectionPoolGroup();
                             }
                         }
                     }
@@ -639,9 +595,6 @@ namespace Microsoft.Data.ProviderBase
                         if (entry.Value.Prune())
                         {
                             // may add entries to _poolsToRelease
-#if NETFRAMEWORK
-                            PerformanceCounters.NumberOfActiveConnectionPoolGroups.Decrement();
-#endif
                             QueuePoolGroupForRelease(entry.Value);
                         }
                         else
@@ -674,12 +627,8 @@ namespace Microsoft.Data.ProviderBase
                 }
                 _poolsToRelease.Add(pool);
             }
-#if NETFRAMEWORK
-            PerformanceCounters.NumberOfInactiveConnectionPools.Increment();
-#else
-            SqlClientEventSource.Log.EnterInactiveConnectionPool();
-            SqlClientEventSource.Log.ExitActiveConnectionPool();
-#endif
+            SqlClientEventSource.Metrics.EnterInactiveConnectionPool();
+            SqlClientEventSource.Metrics.ExitActiveConnectionPool();
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -691,12 +640,9 @@ namespace Microsoft.Data.ProviderBase
             {
                 _poolGroupsToRelease.Add(poolGroup);
             }
-#if NETFRAMEWORK
-            PerformanceCounters.NumberOfInactiveConnectionPoolGroups.Increment();
-#else
-            SqlClientEventSource.Log.EnterInactiveConnectionPoolGroup();
-            SqlClientEventSource.Log.ExitActiveConnectionPoolGroup();
-#endif
+
+            SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
+            SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
         }
 
         virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
