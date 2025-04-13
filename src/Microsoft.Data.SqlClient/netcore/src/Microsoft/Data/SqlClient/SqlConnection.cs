@@ -395,11 +395,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal string EnclaveAttestationUrl
         {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.EnclaveAttestationUrl;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
         }
 
         /// <summary>
@@ -407,11 +403,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlConnectionAttestationProtocol AttestationProtocol
         {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.AttestationProtocol;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).AttestationProtocol;
         }
 
         /// <summary>
