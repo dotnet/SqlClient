@@ -664,6 +664,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
         [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override int ConnectionTimeout
         {
             get
@@ -746,6 +747,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
         [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
             // if the connection is open, we need to ask the inner connection what it's
@@ -772,6 +774,7 @@ namespace Microsoft.Data.SqlClient
         ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching. This property is for internal testing only.
         ///
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedState
         {
             get
@@ -795,6 +798,7 @@ namespace Microsoft.Data.SqlClient
         ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching before redirection. This property is for internal testing only.
         ///
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedStateBeforeRedirect
         {
             get
