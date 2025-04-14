@@ -710,7 +710,6 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                string result = _accessToken;
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
                 SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
@@ -2553,12 +2552,6 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;
             }
-        }
-
-        internal byte[] GetBytes(object o)
-        {
-            Format format = Format.Native;
-            return GetBytes(o, out format, out int maxSize);
         }
 
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
