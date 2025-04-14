@@ -3808,7 +3808,7 @@
     <value>Associazione della porta al meccanismo di completamento I/O non riuscita</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Errore di timeout</value>

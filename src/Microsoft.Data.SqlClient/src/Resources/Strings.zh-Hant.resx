@@ -3808,7 +3808,7 @@
     <value>關聯連接埠與 I/O 完成機制失敗</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>逾時錯誤</value>

@@ -3808,7 +3808,7 @@
     <value>Zuordnung des Anschlusses mit E/A-Abschlussmechanismus fehlgeschlagen</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Timeoutfehler</value>
