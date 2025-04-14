@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -528,112 +529,91 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
 
-        // Test that we send correct feature extension data for vector support
-        // in the LOGIN7 packet and validate that the same is received in the ack.
-        [Fact]
-        public void ConnectionOpenTestWithVectorFeatureExt()
-        {
-            // Start the test TDS server.
-            using var server = TestTdsServer.StartTestServer();
-            server.ServerSupportedVectorFeatureExtVersion = GenericTDSServer.MaxSupportedVectorFeatureExtVersion;
-
-            //Expected Feature identifier and feature data for vector feature extension
-            byte expectedFeatureExtId = (byte)TDSFeatureID.VectorSupport;
-            byte expectedFeatureExtVersion = GenericTDSServer.MaxSupportedVectorFeatureExtVersion;
-
-            byte actualFeatureExtId = 0; 
-            byte actualFeatureExtVersion = 0;
-
-            // Assign a delegate to save the feature extension token.
-            server.OnLogin7VectorFeatureValidated = 
-                (TDSLogin7GenericOptionToken optionToken) =>
-                {
-                    actualFeatureExtId = (byte)optionToken.FeatureID;
-                    actualFeatureExtVersion = optionToken.Data[0];
-                };
-
-            byte actualFeatureExtAckId = 0;
-            byte actualFeatureExtAckVersion = 0;
-
-            // Assign a delegate to save the feature extension ack token.
-            server.OnAuthenticationVectorFeatAckValidated =
-            (TDSFeatureExtAckGenericOption ackToken) =>
-            {
-                actualFeatureExtAckId = (byte)ackToken.FeatureID;
-                actualFeatureExtAckVersion = ackToken.FeatureAckData[0];
-            };
-
-            // Connect to the test TDS server.
-            using SqlConnection connection = new(server.ConnectionString);
-            connection.Open();
-
-            // Verify that the expected value was sent in the LOGIN packet.
-            Assert.Equal(expectedFeatureExtId, actualFeatureExtId);
-            Assert.Equal(expectedFeatureExtVersion, actualFeatureExtVersion);
-
-            //Verify that the expected values were received in the feature extension ack.
-            Assert.Equal(expectedFeatureExtId, actualFeatureExtAckId);
-            Assert.Equal(expectedFeatureExtVersion, actualFeatureExtAckVersion);
-        }
 
         // Test to verify that the server and client negotiate
         // the common feature extension version.
+        // MDS currently supports vector feature ext version 0x1.
         [Theory]
-        [InlineData(0x2, 0x1)] 
-        [InlineData(0x0, 0x0)] 
-        [InlineData(0x1, 0x1)] 
-        public void TestVectorFeatExtVersionNegotiation(byte serverVersion, byte expectedVersion)
+        [InlineData(true, 0x2, 0x1)]
+        [InlineData(false, 0x0, 0x0)]
+        [InlineData(true, 0x1, 0x1)]
+        [InlineData(true, 0xFF, 0x0)]
+        public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
             // Start the test TDS server.
-            using var server = TestTdsServer.StartTestServer();
-            
-            //Expected Feature identifier and feature data for vector feature extension
-            byte expectedFeatureExtId = (byte)TDSFeatureID.VectorSupport;
-            byte expectedFeatureExtVersion = GenericTDSServer.MaxSupportedVectorFeatureExtVersion;
+            using (var server = TestTdsServer.StartTestServer())
+            {
+                server.ServerSupportedVectorFeatureExtVersion = serverVersion;
 
-            byte actualFeatureExtId = 0;
-            byte actualFeatureExtVersion = 0;
+                byte expectedLoginReqFeatureExtId = (byte)TDSFeatureID.VectorSupport;
+                byte expectedLoginReqFeatureExtVersion = 0x1;
+                byte actualLoginReqFeatureExtId = 0;
+                byte actualLoginReqFeatureExtVersion = 0;
+                byte actualFeatureExtAckId = 0;
+                byte actualFeatureExtAckVersion = 0;
 
-            // Assign a delegate to save the feature extension token.
-            server.OnLogin7VectorFeatureValidated =
-                (TDSLogin7GenericOptionToken optionToken) =>
+                server.OnLogin7Validated = loginToken =>
                 {
-                    actualFeatureExtId = (byte)optionToken.FeatureID;
-                    actualFeatureExtVersion = optionToken.Data[0];
+                    if (loginToken.FeatureExt != null)
+                    {
+                        var optionToken = loginToken.FeatureExt
+                        .OfType<TDSLogin7GenericOptionToken>()
+                        .FirstOrDefault(token => token.FeatureID == TDSFeatureID.VectorSupport);
+
+                        if (optionToken != null)
+                        {
+                            actualLoginReqFeatureExtId = (byte)optionToken.FeatureID;
+                            actualLoginReqFeatureExtVersion = optionToken.Data[0];
+                        }
+                    }
                 };
 
-            byte actualFeatureExtAckId = 0;
-            byte actualFeatureExtAckVersion = 0;
+                server.OnAuthenticationResponseCompleted = response =>
+                {
+                    var featureExtAckToken = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault();
 
-            // Assign a delegate to save the feature extension ack token.
-            server.OnAuthenticationVectorFeatAckValidated =
-            (TDSFeatureExtAckGenericOption ackToken) =>
-            {
-                actualFeatureExtAckId = (byte)ackToken.FeatureID;
-                actualFeatureExtAckVersion = ackToken.FeatureAckData[0];
-            };
+                    if (featureExtAckToken != null)
+                    {
+                        var featureExtensionOption = featureExtAckToken.Options
+                        .OfType<TDSFeatureExtAckGenericOption>()
+                        .FirstOrDefault(option => option.FeatureID == TDSFeatureID.VectorSupport);
 
-            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
-            byte expectedFeatureExtAckVersion = expectedVersion;
+                        if (featureExtensionOption != null)
+                        {
+                            actualFeatureExtAckId = (byte)featureExtensionOption.FeatureID;
+                            actualFeatureExtAckVersion = featureExtensionOption.FeatureAckData[0];
+                        }
+                    }
+                };
 
-            // Connect to the test TDS server.
-            using SqlConnection connection = new(server.ConnectionString);
-
-            if (expectedVersion != 0)
-            {
-                connection.Open();
-
-                // Verify that the expected value was sent in the LOGIN packet.
-                Assert.Equal(expectedFeatureExtId, actualFeatureExtId);
-                Assert.Equal(expectedFeatureExtVersion, actualFeatureExtVersion);
-
-                //Verify that the expected values were received in the feature extension ack.
-                Assert.Equal(expectedFeatureExtId, actualFeatureExtAckId);
-                Assert.Equal(expectedFeatureExtAckVersion, actualFeatureExtAckVersion);
-            }
-            else
-            {
-                Assert.Throws<InvalidOperationException>(() => connection.Open());
+                // Connect to the test TDS server.
+                using (var connection = new SqlConnection(server.ConnectionString))
+                {
+                    if (expectedConnectionResult)
+                    {
+                        connection.Open();
+                        // Verify that the expected value was sent in the LOGIN packet.
+                        Assert.Equal(expectedLoginReqFeatureExtId, actualLoginReqFeatureExtId);
+                        Assert.Equal(expectedLoginReqFeatureExtVersion, actualLoginReqFeatureExtVersion);
+                        // Verify that the expected values were received in the TDS response.
+                        if (server.ServerSupportedVectorFeatureExtVersion != GenericTDSServer.FeatureExtDisabled)
+                        {
+                            Assert.Equal(expectedLoginReqFeatureExtId, actualFeatureExtAckId);
+                            Assert.Equal(expectedNegotiatedVersion, actualFeatureExtAckVersion);
+                        }
+                        else
+                        {
+                            Assert.Equal(0x0, actualFeatureExtAckId);
+                            Assert.Equal(0x0, actualFeatureExtAckVersion);
+                        }
+                    }
+                    else
+                    {
+                        Assert.Throws<InvalidOperationException>(() => connection.Open());
+                    }
+                }
             }
         }
     }
