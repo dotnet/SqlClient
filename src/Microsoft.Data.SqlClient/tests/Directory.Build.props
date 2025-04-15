@@ -16,25 +16,34 @@
     <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
-  <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
-    <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == '' AND '$(TF)' != ''">$(TF)</TargetNetFxVersion>
-    <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == '' AND '$(TF)' != ''">$(TF)</TargetNetCoreVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
+    <NetFxTargets>net462</NetFxTargets>
+    <NetTargets>net8.0;net9.0</NetTargets>
   </PropertyGroup>
 
-  <!--
-    When building via build.proj, the build targets imply either .NET or .NET
-    Framework (never both), so restrict the target frameworks accordingly.
-  -->
-  <PropertyGroup Condition="'$(BuildProj)' == 'true'">
-    <TargetFrameworks Condition="'$(TargetsNetFx)' == 'true'">$(TargetNetFxVersion)</TargetFrameworks>
-    <TargetFrameworks Condition="'$(TargetsNetFx)' != 'true'">$(TargetNetCoreVersion)</TargetFrameworks>
-  </PropertyGroup>
-  <!-- Otherwise, allow all target frameworks. -->
-  <PropertyGroup Condition="'$(BuildProj)' != 'true'">
-    <TargetFrameworks>$(TargetNetCoreVersion);$(TargetNetFxVersion)</TargetFrameworks>
-  </PropertyGroup>
+  <Choose>
+    <!-- If the $TF property is set, use it as the target frameworks. -->
+    <When Condition="'$(TF)' != ''">
+      <PropertyGroup>
+        <TargetFrameworks>$(TF)</TargetFrameworks>
+      </PropertyGroup>
+    </When>
+    <!--
+      When building via build.proj, the build targets imply either .NET or .NET
+      Framework (never both), so restrict the target frameworks accordingly.
+    -->
+    <When Condition="'$(BuildProj)' == 'true'">
+      <PropertyGroup>
+        <TargetFrameworks>$(NetTargets)</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsNetFx)' == 'true'">$(NetFxTargets)</TargetFrameworks>
+      </PropertyGroup>
+    </When>
+    <!-- Otherwise, use all default targets. -->
+    <Otherwise>
+      <PropertyGroup>
+        <TargetFrameworks>$(NetFxTargets);$(NetTargets)</TargetFrameworks>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
 
 </Project>

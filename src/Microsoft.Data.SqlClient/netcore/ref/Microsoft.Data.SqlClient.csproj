@@ -7,7 +7,6 @@
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <Product>Core $(BaseProduct)</Product>
     <Configurations>Debug;Release;</Configurations>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
    <!--Generating Strong Name-->

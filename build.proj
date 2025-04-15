@@ -179,10 +179,12 @@
   <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
 
   <!-- Run all Functional tests applicable to the host OS. -->
-  <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindowsNetFx;RunFunctionalTestsWindows;RunFunctionalTestsUnix"/>
+  <Target
+    Name="RunFunctionalTests"
+    DependsOnTargets="RunFunctionalTestsWindowsNetFx;RunFunctionalTestsWindows;RunFunctionalTestsUnix"/>
 
   <!-- Run all Functional tests applicable to Windows on .NET Framework. -->
-  <Target Name="RunFunctionalTestsWindowsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RunFunctionalTestsWindowsNetFx" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
@@ -205,7 +207,7 @@
   </Target>
 
   <!-- Run all Functional tests applicable to Windows on .NET. -->
-  <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RunFunctionalTestsWindows" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
@@ -227,7 +229,7 @@
   </Target>
 
   <!-- Run all Functional tests applicable to Unix on .NET. -->
-  <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+  <Target Name="RunFunctionalTestsUnix" Condition="'$(OS)' != 'WIndows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
@@ -249,43 +251,66 @@
   </Target>
 
   <!-- Run all Manual tests applicable to the host OS. -->
-  <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix"/>
+  <Target
+    Name="RunManualTests"
+    DependsOnTargets="RunManualTestsWindowsNetFx;RunManualTestsWindows;RunManualTestsUnix"/>
 
-  <!-- Run all Manual tests applicable to Windows. -->
-  <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+  <!-- Run all Manual tests applicable to Windows on .NET Framework. -->
+  <Target Name="RunManualTestsWindowsNetFx" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:Target$(TFGroup)Version=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TargetsNetFx=true
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Windows$(TargetGroup)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
-        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
-        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+        --filter "category!=nonnetfxtests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Manual-Windowsnetfx-$(TestSet)"
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)"/>
+    <Message Text=">>> Running Manual test for Windows on .NET Framework via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
-  <!-- Run all Manual tests applicable to Unix. -->
-  <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+  <!-- Run all Manual tests applicable to Windows on .NET. -->
+  <Target Name="RunManualTestsWindows" Condition="'$(OS)' == 'Windows_NT'">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(ManualTestsProj)"
         --no-build
         -v n
         -p:Configuration=$(Configuration)
-        -p:TargetNetCoreVersion=$(TF)
-        -p:ReferenceType=$(ReferenceType)
+        -p:TF=$(TF)
         -p:TestSet=$(TestSet)
-        -p:TestTargetOS=Unixnetcoreapp
+        -p:ReferenceType=$(ReferenceType)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Manual-Windowsnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Windows on .NET via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all Manual tests applicable to Unix on .NET. -->
+  <Target Name="RunManualTestsUnix" Condition="'$(OS)' != 'Windows_NT'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TF=$(TF)
+        -p:TestSet=$(TestSet)
+        -p:ReferenceType=$(ReferenceType)
         --collect "Code coverage"
         --results-directory $(ResultsDirectory)
         --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
@@ -293,7 +318,7 @@
       </TestCommand>
       <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
     </PropertyGroup>
-    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)"/>
+    <Message Text=">>> Running Manual test for Unix on .NET via command: $(TestCommand)"/>
     <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
@@ -306,7 +331,8 @@
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
   </Target>
 
-  <!-- AKV Targets ========================================================= -->
+  <!-- Modern AKV Targets ================================================= -->
+  
   <Target Name="BuildAkv">
     <Message Text=">>> Restoring AKV project" />
     <MSBuild Projects="@(AKVProvider)" Targets="Restore"/>
@@ -333,6 +359,95 @@
       <BuildAkvProperties>$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
     </PropertyGroup>
     <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
+  </Target>
+
+  <!-- Legacy AKV Targets ================================================= -->
+
+  <!-- Build AKV for .NET Framework. -->
+  <Target Name="BuildAKVNetFx">
+    <!-- Restore -->
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    
+    <!-- Build for Project reference type for platform AnyCPU. -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties);TargetsNetFx=true</BuildAkvProperties>
+    </PropertyGroup>
+    <Message
+      Text=">>> Building AKV project for .NET Framework via project ref [$(BuildAkvProperties)]"
+      Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Properties="$(BuildAkvProperties)"
+      Condition="!$(ReferenceType.Contains('Package'))"/>
+
+    <!-- Build for Package reference type for $(Platform). -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=$(Platform);$(ProjectProperties);$(NugetPackProperties);TargetsNetFx=true</BuildAkvProperties>
+    </PropertyGroup>
+    <Message
+      Text=">>> Building AKV project for .NET Framework via package ref [$(BuildAkvProperties)]"
+      Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Properties="$(BuildAkvProperties)"
+      Condition="$(ReferenceType.Contains('Package'))"/>
+  </Target>
+
+  <!-- Build AKV for .NET. -->
+  <Target Name="BuildAKVNetCore">
+    <!-- Restore -->
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    
+    <!-- Build for Project reference type for platform AnyCPU. -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message
+      Text=">>> Building AKV project for .NET via project ref [$(BuildAkvProperties)]"
+      Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Properties="$(BuildAkvProperties)"
+      Condition="!$(ReferenceType.Contains('Package'))"/>
+
+    <!-- Build for Package reference type for $(Platform). -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=$(Platform);$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message
+      Text=">>> Building AKV project for .NET via package ref [$(BuildAkvProperties)]"
+      Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Properties="$(BuildAkvProperties)"
+      Condition="$(ReferenceType.Contains('Package'))"/>
+  </Target>
+
+  <!-- Build AKV for .NET for all OS types. -->
+  <Target Name="BuildAKVNetCoreAllOS">
+    <!-- Restore -->
+    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    
+    <!-- Build for Windows_NT. -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;OSGroup=Windows_NT;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for Windows_NT [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
+    
+    <!-- Build for Unix. -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;OSGroup=Unix;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for Unix [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
+    
+    <!-- Build for AnyOS. -->
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);Platform=AnyCPU;OSGroup=AnyOS;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for .NET for AnyOS [$(BuildAkvProperties)]" />
     <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" />
   </Target>
 
