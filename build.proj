@@ -367,7 +367,13 @@
   <!-- Build AKV for .NET Framework. -->
   <Target Name="BuildAKVNetFx">
     <!-- Restore -->
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    <PropertyGroup>
+      <BuildAkvProperties>$(ProjectProperties);TargetsNetFx=true</BuildAkvProperties>
+    </PropertyGroup>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Targets="restore"
+      Properties="$(BuildAkvProperties)" />
     
     <!-- Build for Project reference type for platform AnyCPU. -->
     <PropertyGroup>
@@ -397,7 +403,13 @@
   <!-- Build AKV for .NET. -->
   <Target Name="BuildAKVNetCore">
     <!-- Restore -->
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    <PropertyGroup>
+      <BuildAkvProperties>$(ProjectProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Targets="restore"
+      Properties="$(BuildAkvProperties)" />
     
     <!-- Build for Project reference type for platform AnyCPU. -->
     <PropertyGroup>
@@ -427,7 +439,13 @@
   <!-- Build AKV for .NET for all OS types. -->
   <Target Name="BuildAKVNetCoreAllOS">
     <!-- Restore -->
-    <MSBuild Projects="@(AKVProvider)" Targets="restore" />
+    <PropertyGroup>
+      <BuildAkvProperties>$(ProjectProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <MSBuild
+      Projects="@(AKVProvider)"
+      Targets="restore"
+      Properties="$(BuildAkvProperties)" />
     
     <!-- Build for Windows_NT. -->
     <PropertyGroup>
