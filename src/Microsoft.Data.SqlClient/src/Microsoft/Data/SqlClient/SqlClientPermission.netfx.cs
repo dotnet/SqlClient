@@ -398,7 +398,8 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
-        private sealed class NameValuePermission : IComparable<NameValuePermission>
+        [Serializable]
+        private sealed class NameValuePermission : IComparable
         {
             // Reused as both key and value nodes:
             // Key nodes link to value nodes.
@@ -447,10 +448,8 @@ namespace Microsoft.Data.SqlClient
                 _entry = entry;
             }
 
-            int IComparable<NameValuePermission>.CompareTo(NameValuePermission other)
-            {
-                return StringComparer.Ordinal.Compare(_value, other._value);
-            }
+            int IComparable.CompareTo(object other) =>
+                string.CompareOrdinal(_value, ((NameValuePermission)other)._value);
 
             internal static void AddEntry(NameValuePermission kvtree, ArrayList entries, DBConnectionString entry)
             {
