@@ -33,9 +33,6 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="ManualTests" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>  
@@ -512,6 +509,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDataReader.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDataReader.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDbColumn.cs">
       <Link>Microsoft\Data\SqlClient\SqlDbColumn.cs</Link>
     </Compile>  
@@ -584,12 +584,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlNotificationType.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPool.cs">
-      <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPools.cs">
-      <Link>Microsoft\Data\SqlClient\SqlObjectPools.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlParameter.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameter.cs</Link>
     </Compile>
@@ -647,6 +641,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPools.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ObjectPools.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsEnums.cs">
       <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
     </Compile>
@@ -683,6 +683,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
+      <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SQLResource.cs">
       <Link>Microsoft\Data\SQLTypes\SQLResource.cs</Link>
     </Compile>
@@ -699,10 +702,7 @@
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
-      <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlDbTypeExtensions.cs">
-      <Link>Microsoft\Data\SqlDbTypeExtensions.cs</Link>
+      <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
@@ -733,7 +733,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.netcore.cs" />

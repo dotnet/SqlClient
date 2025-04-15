@@ -3805,7 +3805,7 @@
     <value>端口与 I/O 关联的完成机制失败</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>超时错误</value>

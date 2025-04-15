@@ -3805,7 +3805,7 @@
     <value>Сбой при сопоставлении порта механизму завершения ввода-вывода</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Ошибка времени ожидания</value>
