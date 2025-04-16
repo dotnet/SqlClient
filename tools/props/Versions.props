@@ -33,6 +33,7 @@
     <MicrosoftIdentityModelJsonWebTokensVersion>6.35.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
