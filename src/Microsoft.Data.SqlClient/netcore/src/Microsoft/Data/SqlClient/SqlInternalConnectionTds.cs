@@ -207,6 +207,9 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // Vector Support Flag
+        internal bool IsVectorSupportEnabled = false;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1425,6 +1428,7 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching and JSON features are implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -3008,6 +3012,24 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError();
                         }
                         IsJsonSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_VECTORSUPPORT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for VECTORSUPPORT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for VECTORSUPPORT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte vectorSupportVersion = data[0];
+                        if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number {1} for VECTORSUPPORT, Max supported version is {2}", ObjectID, vectorSupportVersion, TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            throw SQL.ParsingError();
+                        }
+                        IsVectorSupportEnabled = true;
                         break;
                     }
 
