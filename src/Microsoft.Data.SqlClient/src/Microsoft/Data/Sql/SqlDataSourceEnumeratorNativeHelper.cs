@@ -158,7 +158,7 @@ namespace Microsoft.Data.Sql
 
                 string query = "ServerName='" + serverName + "'";
 
-                if (!ADP.IsEmpty(instanceName))
+                if (!string.IsNullOrEmpty(instanceName))
                 { // SQL BU DT 20006584: only append instanceName if present.
                     query += " AND InstanceName='" + instanceName + "'";
                 }

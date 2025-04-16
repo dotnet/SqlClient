@@ -1340,7 +1340,6 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
         #endregion
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only

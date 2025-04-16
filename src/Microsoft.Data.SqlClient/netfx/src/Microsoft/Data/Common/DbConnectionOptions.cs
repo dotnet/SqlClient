@@ -35,17 +35,17 @@ namespace Microsoft.Data.Common
                 {
                     if (_parsetable.ContainsKey(KEY.Password))
                     {
-                        return ADP.IsEmpty(_parsetable[KEY.Password]);
+                        return string.IsNullOrEmpty(_parsetable[KEY.Password]);
                     }
                     else
                     if (_parsetable.ContainsKey(SYNONYM.Pwd))
                     {
-                        return ADP.IsEmpty(_parsetable[SYNONYM.Pwd]); // MDAC 83097
+                        return string.IsNullOrEmpty(_parsetable[SYNONYM.Pwd]); // MDAC 83097
                     }
                     else
                     {
-                        return (_parsetable.ContainsKey(KEY.User_ID) && !ADP.IsEmpty(_parsetable[KEY.User_ID])) || 
-                               (_parsetable.ContainsKey(SYNONYM.UID) && !ADP.IsEmpty(_parsetable[SYNONYM.UID]));
+                        return (_parsetable.ContainsKey(KEY.User_ID) && !string.IsNullOrEmpty(_parsetable[KEY.User_ID])) || 
+                               (_parsetable.ContainsKey(SYNONYM.UID) && !string.IsNullOrEmpty(_parsetable[SYNONYM.UID]));
                     }
                 }
                 return false;
@@ -179,7 +179,7 @@ namespace Microsoft.Data.Common
                     {
                         throw ADP.InvalidDataDirectory();
                     }
-                    else if (ADP.IsEmpty(rootFolderPath))
+                    else if (string.IsNullOrEmpty(rootFolderPath))
                     {
                         rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
                     }
