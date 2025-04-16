@@ -8529,6 +8529,36 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        /// <summary>
+        /// Writes the Vector Support feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, and version number.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// </remarks>
+        internal int WriteVectorSupportFeatureRequest(bool write)
+        {
+            const int len = 6;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_VECTORSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,
@@ -8850,6 +8880,11 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
                 {
                     length += WriteJsonSupportFeatureRequest(write);
+                }
+
+                if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
+                {
+                    length += WriteVectorSupportFeatureRequest(write);
                 }
 
                 length++; // for terminator
