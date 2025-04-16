@@ -388,22 +388,22 @@ namespace Microsoft.Data.SqlClient
 
                 if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                 }
 
                 if (UsesActiveDirectoryMSI(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                 }
 
                 if (UsesActiveDirectoryDefault(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                 }
 
                 if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                 }
 
                 Credential = credential;
@@ -648,7 +648,7 @@ namespace Microsoft.Data.SqlClient
             bool result = false;
             if (opt != null)
             {
-                result = (!ADP.IsEmpty(opt.UserID) || !ADP.IsEmpty(opt.Password));
+                result = (!string.IsNullOrEmpty(opt.UserID) || !string.IsNullOrEmpty(opt.Password));
             }
             return result;
         }
@@ -823,19 +823,19 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                         }
                         else if (UsesActiveDirectoryMSI(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                         }
                         else if (UsesActiveDirectoryDefault(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                         }
                         else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -1176,19 +1176,19 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                     }
                     else if (UsesActiveDirectoryMSI(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                     }
                     else if (UsesActiveDirectoryDefault(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                     }
                     else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -2258,7 +2258,7 @@ namespace Microsoft.Data.SqlClient
         // as native OleDb and Odbc.
         static internal string FixupDatabaseTransactionName(string name)
         {
-            if (!ADP.IsEmpty(name))
+            if (!string.IsNullOrEmpty(name))
             {
                 return SqlServerEscapeHelper.EscapeIdentifier(name);
             }
@@ -2407,11 +2407,11 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 
-                if (ADP.IsEmpty(connectionString))
+                if (string.IsNullOrEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing("connectionString");
                 }
-                if (ADP.IsEmpty(newPassword))
+                if (string.IsNullOrEmpty(newPassword))
                 {
                     throw SQL.ChangePasswordArgumentMissing("newPassword");
                 }
@@ -2427,7 +2427,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
                 }
-                if (!ADP.IsEmpty(connectionOptions.AttachDBFilename))
+                if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
                     throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
                 }
@@ -2450,7 +2450,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
 
-                if (ADP.IsEmpty(connectionString))
+                if (string.IsNullOrEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing("connectionString");
                 }
@@ -2481,7 +2481,7 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
                 // Check for incompatible connection string value with SqlCredential
-                if (!ADP.IsEmpty(connectionOptions.UserID) || !ADP.IsEmpty(connectionOptions.Password))
+                if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
                 {
                     throw ADP.InvalidMixedArgumentOfSecureAndClearCredential();
                 }
@@ -2491,7 +2491,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordConflictsWithSSPI();
                 }
 
-                if (!ADP.IsEmpty(connectionOptions.AttachDBFilename))
+                if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
                     throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
                 }
@@ -2671,7 +2671,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (metaData.udt?.Type == null)
             { // If null, we have not obtained extended info.
-                Debug.Assert(!ADP.IsEmpty(metaData.udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
+                Debug.Assert(!string.IsNullOrEmpty(metaData.udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
                 // Parameter throwOnError determines whether exception from Assembly.Load is thrown.
                 metaData.udt.Type =
                     Type.GetType(typeName: metaData.udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);

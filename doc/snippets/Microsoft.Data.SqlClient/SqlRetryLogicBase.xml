@@ -48,12 +48,14 @@
         Returns <see langword="true" /> if the sender is authorized to retry the operation.
       </returns>
       <remarks>
-        <note type="important">
-          Operations that are part of a <b>Transaction</b> are not safe to retry without specific knowledge of business logic. Due to this complexity, retry logic should be managed at the application level.
-        </note>
-        <note type="note">
-          The <b>RetryCondition</b> is an extra condition that checks before executing the <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> and the default condition always returns <see langword="true" />.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!IMPORTANT]
+> Operations that are part of a **Transaction** are not safe to retry without specific knowledge of business logic. Due to this complexity, retry logic should be managed at the application level.  
+
+> [!NOTE]
+> The `RetryCondition` is an extra condition that checks before executing the `TransientPredicate` and the default condition always returns **true**.
+]]></format>
       </remarks>
     </RetryCondition>
     <TryNextInterval>

@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     try
                     {
-                        if (!ADP.IsEmpty(categoryName) && !ADP.IsEmpty(instanceName))
+                        if (!string.IsNullOrEmpty(categoryName) && !string.IsNullOrEmpty(instanceName))
                         {
                             PerformanceCounter instance = new PerformanceCounter();
                             instance.CategoryName = categoryName;
@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             string instanceName = null;
 
-            if (!ADP.IsEmpty(categoryName))
+            if (!string.IsNullOrEmpty(categoryName))
             {
                 if (ADP.s_isPlatformNT5)
                 {
@@ -209,7 +209,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // level 4: expensive stuff
             string verboseCategoryName = null;
-            if (!ADP.IsEmpty(categoryName))
+            if (!string.IsNullOrEmpty(categoryName))
             {
                 // don't load TraceSwitch if no categoryName so that Odbc/OleDb have a chance of not loading TraceSwitch
                 // which are also used by System.Diagnostics.PerformanceCounter.ctor & System.Transactions.get_Current
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             string instanceName = GetAssemblyName(); // instance perfcounter name
 
-            if (ADP.IsEmpty(instanceName))
+            if (string.IsNullOrEmpty(instanceName))
             {
                 AppDomain appDomain = AppDomain.CurrentDomain;
                 if (appDomain != null)
