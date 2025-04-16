@@ -32,6 +32,7 @@ parameters:
       - MDS
       - AKV
       - all
+      - allNoDocs
 
 steps:
 - task: UseDotNet@2
@@ -47,7 +48,7 @@ steps:
     version: '8.x'
 
 - ${{ if or(eq(parameters.operatingSystem, 'Windows'), eq(parameters.operatingSystem, 'deferedToRuntime')) }}:
-  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
+  - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
       displayName: 'Restore nugets [Win]'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
@@ -57,18 +58,31 @@ steps:
         msbuildArguments: '-t:restore'
       retryCountOnTaskFailure: 1
 
-    - task: MSBuild@1
-      displayName: 'Build Driver [Win]'
-      condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-      inputs:
-        solution: build.proj
-        msbuildArchitecture: x64
-        platform: '${{ parameters.platform }}'
-        configuration: '${{ parameters.configuration }}'
-        msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
-        clean: true
+    - ${{ if eq(parameters.build, 'allNoDocs') }}:
+      - task: MSBuild@1
+        displayName: 'Build Driver [Win]'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+        inputs:
+          solution: build.proj
+          msbuildArchitecture: x64
+          platform: '${{ parameters.platform }}'
+          configuration: '${{ parameters.configuration }}'
+          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateDocumentationFile=false -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
+          clean: true
 
-  - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all')) }}:
+    - ${{ if or(eq(parameters.build, 'MDS'), eq(parameters.build, 'all')) }}:
+      - task: MSBuild@1
+        displayName: 'Build Driver [Win]'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+        inputs:
+          solution: build.proj
+          msbuildArchitecture: x64
+          platform: '${{ parameters.platform }}'
+          configuration: '${{ parameters.configuration }}'
+          msbuildArguments: '-t:BuildAllConfigurations -p:GenerateNuGet=false -p:BuildNumber=${{ parameters.buildNumber }}'
+          clean: true
+
+  - ${{ if or(eq(parameters.build, 'AKV'), eq(parameters.build, 'all'), eq(parameters.build, 'allNoDocs')) }}:
     - task: MSBuild@1
       displayName: 'Build AKV Provider NetFx [Win]'
       condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))

@@ -6,7 +6,7 @@
       </summary>
       <remarks>
         <para>
-          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised before an <see cref="E:System.Data.Common.DbDataAdapter.Update" /> to a row.
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised before an <see cref="E:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to a row.
         </para>
         <para>
           When you are using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur for each data row updated. The order of execution is as follows:

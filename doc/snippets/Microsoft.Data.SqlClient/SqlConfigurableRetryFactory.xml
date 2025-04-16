@@ -127,9 +127,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the <paramref name="retryLogicOption" /> parameter was null.
@@ -166,9 +167,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the <paramref name="retryLogicOption" /> parameter was null.
@@ -205,9 +207,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
+        </format>
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         If the `retryLogicOption` parameter was null.
@@ -241,9 +244,10 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.
       </returns>
       <remarks>
-        <note type="note">
-          The returned provider of this function performs a single execution without any retry logic.
-        </note>
+        <format type="text/markdown">
+> [!NOTE]
+> The returned provider of this function performs a single execution without any retry logic.
+        </format>
       </remarks>
     </CreateNoneRetryProvider>
   </members>

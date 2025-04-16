@@ -47,4 +47,6 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
+
+  <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />
 </Project>
