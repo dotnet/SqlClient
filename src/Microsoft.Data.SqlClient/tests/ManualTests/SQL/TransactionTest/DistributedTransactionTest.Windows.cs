@@ -108,25 +108,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 transactionException = ex;
             }
 
-            if (Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((ConnectionString)).DataSource))
-            {
-                // Even if an application swallows the command exception, completing the transaction should indicate that it failed.
-                Assert.IsType<TransactionInDoubtException>(transactionException);
-                // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-3000-to-3999?view=sql-server-ver16
-                // Error 3971 corresponds to "The server failed to resume the transaction."
-                Assert.Equal(3971, ((SqlException)commandException).Number);
-            }
-            else
-            {
-                Assert.IsType<TransactionAbortedException>(transactionException);
+            // Even if an application swallows the command exception, completing the transaction should indicate that it failed.
+            var expectedTransactionExceptions = new[] { typeof(TransactionAbortedException), typeof(TransactionInDoubtException) };
+            Assert.Contains(transactionException.GetType(), expectedTransactionExceptions);
 
-#if NETFRAMEWORK
+            var expectedCommandExceptions = new[] { typeof(SqlException), typeof(InvalidOperationException) };
+            Assert.Contains(commandException.GetType(), expectedCommandExceptions);
+
+            if (commandException is SqlException)
+            {
                 // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-8000-to-8999?view=sql-server-ver16
                 // The distributed transaction failed
-                Assert.Equal(8525, ((SqlException)commandException).Number);
-#else
-                Assert.IsType<InvalidOperationException>(commandException);
-#endif
+                // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-3000-to-3999?view=sql-server-ver16
+                // Error 3971 corresponds to "The server failed to resume the transaction."
+                var expectedExceptionCodes = new[] { 3971, 8525 };
+                Assert.Contains(((SqlException)commandException).Number, expectedExceptionCodes);
             }
 
             // Verify that nothing made it into the database

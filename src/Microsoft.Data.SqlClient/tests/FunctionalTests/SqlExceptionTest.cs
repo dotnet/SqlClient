@@ -15,52 +15,24 @@ namespace Microsoft.Data.SqlClient.Tests
         private const string badServer = "92B96911A0BD43E8ADA4451031F7E7CF";
 
         [Fact]
-        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
         public void SerializationTest()
         {
             SqlException e = CreateException();
             string json = JsonConvert.SerializeObject(e);
 
-            var settings = new JsonSerializerSettings()
-            {
-                TypeNameHandling = TypeNameHandling.All,
-            };
-
-            // TODO: Deserialization fails on Unix with "Member 'ClassName' was not found."
+            var settings = new JsonSerializerSettings();
             var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
 
             Assert.Equal(e.ClientConnectionId, sqlEx.ClientConnectionId);
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
-#if NETFRAMEWORK
-        [Fact]
-        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
-        public static void SqlExcpetionSerializationTest()
-        {
-            var formatter = new BinaryFormatter();
-            SqlException e = CreateException();
-            using (var stream = new MemoryStream())
-            {
-                try
-                {
-                    formatter.Serialize(stream, e);
-                    stream.Position = 0;
-                    var e2 = (SqlException)formatter.Deserialize(stream);
-                }
-                catch (Exception ex)
-                {
-                    Assert.Fail($"Unexpected Exception occurred: {ex.Message}");
-                }
-            }
-        }
-#endif
-
         [Fact]
         public void JSONSerializationTest()
         {
             string clientConnectionId = "90cdab4d-2145-4c24-a354-c8ccff903542";
-            string json = @"{""ClassName"":""Microsoft.Data.SqlClient.SqlException"","
+            string json = @"{"
+                        + @"""ClassName"":""Microsoft.Data.SqlClient.SqlException"","
                         + @"""Message"":""A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. (provider: TCP Provider, error: 40 - Could not open a connection to SQL Server)"","
                         + @"""Data"":{""HelpLink.ProdName"":""Microsoft SQL Server"","
                         + @"""HelpLink.EvtSrc"":""MSSQLServer"","
@@ -79,13 +51,10 @@ namespace Microsoft.Data.SqlClient.Tests
                         + @"""Source"":""Core .Net SqlClient Data Provider"","
                         + @"""WatsonBuckets"":null,"
                         + @"""Errors"":null,"
-                        + @"""ClientConnectionId"":""90cdab4d-2145-4c24-a354-c8ccff903542""}";
+                        + @"""ClientConnectionId"":""90cdab4d-2145-4c24-a354-c8ccff903542"""
+                        + @"}";
 
-            var settings = new JsonSerializerSettings()
-            {
-                TypeNameHandling = TypeNameHandling.All,
-            };
-
+            var settings = new JsonSerializerSettings();
             var sqlEx = JsonConvert.DeserializeObject<SqlException>(json, settings);
             Assert.IsType<SqlException>(sqlEx);
             Assert.Equal(clientConnectionId, sqlEx.ClientConnectionId.ToString());

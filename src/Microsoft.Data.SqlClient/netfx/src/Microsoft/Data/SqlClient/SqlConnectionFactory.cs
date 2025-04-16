@@ -11,6 +11,7 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -151,7 +152,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
         {
-            Debug.Assert(!ADP.IsEmpty(connectionString), "empty connectionString");
+            Debug.Assert(!string.IsNullOrEmpty(connectionString), "empty connectionString");
             SqlConnectionString result = new SqlConnectionString(connectionString);
             return result;
         }

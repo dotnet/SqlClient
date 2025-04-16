@@ -9,6 +9,8 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
+using System.Globalization;
+
 #if !NETFRAMEWORK
 using Microsoft.SqlServer.Types;
 using Microsoft.Data.SqlClient.Server;
@@ -442,6 +444,75 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.DropUserDefinedType(connection, tableTypeName);
             }
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
+        {
+            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlySqlDataRecordTVP");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlySqlDataRecordTVP");
+            SqlConnection connection = new(s_connString);
+            try
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
+                    cmd.ExecuteNonQuery();
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = spName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlMetaData[] metadata = new SqlMetaData[]
+                    {
+                        new SqlMetaData("DateColumn", SqlDbType.Date),
+                        new SqlMetaData("TimeColumn", SqlDbType.Time)
+                    };
+
+                    SqlDataRecord record1 = new SqlDataRecord(metadata);
+                    record1.SetValues(new DateOnly(2023, 11, 15), new TimeOnly(12, 30, 45));
+
+                    SqlDataRecord record2 = new SqlDataRecord(metadata);
+                    record2.SetValues(new DateOnly(2025, 11, 15), new TimeOnly(13, 31, 46));
+
+                    IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+                    {
+                        record1,
+                        record2,
+                    };
+
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@dates",
+                        SqlDbType = SqlDbType.Structured,
+                        TypeName = tableTypeName,
+                        Value = featureInserts,
+                    });
+
+                    using var reader = cmd.ExecuteReader();
+
+                    Assert.True(reader.HasRows);
+
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        Assert.NotNull(reader[0]);
+                        count++;
+                    }
+
+                    Assert.Equal(1, count);
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropStoredProcedure(connection, spName);
+                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+            }
+        }
 #endif
 
         #region Scaled Decimal Parameter & TVP Test
@@ -471,8 +542,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.Connection = cnn;
             using SqlDataReader rdr = cmd.ExecuteReader();
             Assert.True(rdr.Read(), "SqlDataReader must have a value");
-            decimal retrunValue = rdr.GetDecimal(0);
-            Assert.Equal(expectedDecimalValue, retrunValue.ToString());
+            decimal returnValue = rdr.GetDecimal(0);
+            Assert.Equal(expectedDecimalValue, returnValue.ToString(CultureInfo.InvariantCulture));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

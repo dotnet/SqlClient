@@ -80,7 +80,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectData))]
+        [MemberData(
+            nameof(ConversionSmallerToLargerInsertAndSelectData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void ConversionSmallerToLargerInsertAndSelect(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
@@ -160,7 +169,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectBulkData))]
+        [MemberData(
+            nameof(ConversionSmallerToLargerInsertAndSelectBulkData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void ConversionSmallerToLargerInsertAndSelectBulk(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
@@ -249,7 +263,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(TestOutOfRangeValuesData))]
+        [MemberData(
+            nameof(TestOutOfRangeValuesData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestOutOfRangeValues(string connString, SqlDbType currentDbType)
         {
             ColumnMetaData currentColumnInfo = new ColumnMetaData(currentDbType, 0, 1, 1, false);
@@ -563,7 +582,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 try
                 {
                     sqlCmd.ExecuteNonQuery();
-                    Assert.Fail("We should have gotten an error but passed instead.");
+                    StringBuilder builder = new(
+                        "We should have gotten an error but passed instead; " +
+                        $"command: {sqlCmd.CommandText}; parameters: ");
+                    foreach (SqlParameter param in sqlCmd.Parameters)
+                    {
+                        builder.Append('(');
+                        builder.Append(param.ParameterName);
+                        builder.Append(' ');
+                        builder.Append(param.SqlDbType);
+                        builder.Append(' ');
+                        builder.Append(param.Value);
+                        builder.Append(") ");
+                    }
+                    Assert.Fail(builder.ToString());
                 }
                 catch (Exception e)
                 {
@@ -1334,11 +1366,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
-    }
 
-    public class ConversionSmallerToLargerInsertAndSelectData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> ConversionSmallerToLargerInsertAndSelectData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1372,12 +1401,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real };
             }
         }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
 
-    public class ConversionSmallerToLargerInsertAndSelectBulkData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> ConversionSmallerToLargerInsertAndSelectBulkData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1412,13 +1437,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-
-    public class TestOutOfRangeValuesData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> TestOutOfRangeValuesData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1447,7 +1466,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, SqlDbType.VarChar };
             }
         }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

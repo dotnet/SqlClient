@@ -1,0 +1,154 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+    - name: apiScanDllPath
+      type: string
+      
+    - name: apiScanPdbPath
+      type: string
+    
+    - name: assemblyFileVersion
+      type: string
+
+    - name: buildConfiguration
+      type: string
+
+    - name: nugetPackageVersion
+      type: string
+
+    - name: mdsPackageVersion
+      type: string
+
+    - name: publishSymbols
+      type: boolean
+
+    - name: ESRPConnectedServiceName
+      type: string
+
+    - name: AppRegistrationClientId
+      type: string
+
+    - name: AppRegistrationTenantId
+      type: string
+
+    - name: EsrpClientId
+      type: string
+
+    - name: AuthAkvName
+      type: string
+
+    - name: AuthSignCertName
+      type: string
+
+    - name: symbolsAzureSubscription
+      type: string
+
+    - name: symbolsPublishProjectName
+      type: string
+
+    - name: symbolsPublishServer
+      type: string
+
+    - name: symbolsPublishTokenUri
+      type: string
+
+    - name: symbolsUploadAccount
+      type: string
+      
+    # @TODO: This should be determined from build output, or at a higher level
+    - # Note: not intended to be passed in, is only used for copying files for ApiScan.
+      # This is only defined as a parameter since ADO pipelines do not support array variables.
+      name: targetFrameworks
+      type: object
+      default:
+          - net462
+          - net8.0
+          - net9.0
+
+jobs:
+    - job: buildSignedAkvPackage
+      displayName: 'Build Signed AKV Package'
+      pool:
+          type: windows
+
+      variables:
+          ob_outputDirectory: '$(ARTIFACT_PATH)'
+
+      steps:
+          - template: ../steps/script-output-environment-variables-step.yml@self
+
+          - powershell: |
+                $jsonParams = '${{ convertToJson(parameters) }}' -replace '\\', '\\'
+                $jsonParams | ConvertFrom-Json | Format-List
+            displayName: 'Output Job Parameters'
+
+          - template: ../steps/compound-build-akv-step.yml@self
+            parameters:
+                assemblyFileVersion: '${{ parameters.assemblyFileVersion }}'
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+                
+          - ${{ each targetFramework in parameters.targetFrameworks }}:  
+              - template: ../steps/compound-extract-akv-apiscan-files-step.yml
+                parameters:
+                    buildConfiguration: '${{ parameters.buildConfiguration }}'
+                    dllPath: '${{ parameters.apiScanDllPath }}'
+                    pdbPath: '${{ parameters.apiScanPdbPath }}'
+                    referenceType: Package
+                    targetFramework: '${{ targetFramework }}'
+
+          - template: ../steps/roslyn-analyzers-akv-step.yml@self
+            parameters:
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                mdsPackageVersion: '${{ parameters.mdsPackageVersion }}'
+
+          - template: ../steps/compound-esrp-code-signing-step.yml@self
+            parameters:
+                ESRPConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
+                EsrpClientId: '${{ parameters.EsrpClientId }}'
+                AuthAkvName: '${{ parameters.AuthAkvName }}'
+                AuthSignCertName: '${{ parameters.AuthSignCertName }}'
+                artifactType: 'dll'
+
+          - template: ../steps/compound-nuget-pack-step.yml@self
+            parameters:
+                buildConfiguration: '${{ parameters.buildConfiguration }}'
+                generateSymbolsPackage: true    # Always generate symbols, even if they are not published
+                packageVersion: '${{ parameters.nugetPackageVersion }}'
+                nuspecPath: '$(REPO_ROOT)/tools/specs/add-ons/$(PACKAGE_NAME).nuspec'
+                outputDirectory: '$(ARTIFACT_PATH)'
+                referenceType: 'Package'
+
+          - template: ../steps/compound-esrp-code-signing-step.yml@self
+            parameters:
+                ESRPConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+                appRegistrationClientId: '${{ parameters.AppRegistrationClientId }}'
+                appRegistrationTenantId: '${{ parameters.AppRegistrationTenantId }}'
+                EsrpClientId: '${{ parameters.EsrpClientId }}'
+                AuthAkvName: '${{ parameters.AuthAkvName }}'
+                AuthSignCertName: '${{ parameters.AuthSignCertName }}'
+                artifactType: 'pkg'
+
+          - ${{ if parameters.publishSymbols }}:
+            - template: ../steps/compound-publish-symbols-step.yml@self
+              parameters:
+                  artifactName: 'akv_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.nugetPackageVersion }}_$(System.TimelineId)'
+                  azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+                  publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
+                  packageName: '$(PACKAGE_NAME)'
+                  publishServer: '${{ parameters.symbolsPublishServer }}'
+                  publishToInternal: true
+                  publishToPublic: true
+                  publishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
+                  referenceType: 'Package'
+                  searchPattern: |
+                      Windows_NT/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
+                      AnyOS/${{ parameters.buildConfiguration }}.AnyCPU/AzureKeyVaultProvider/**/$(PACKAGE_NAME).pdb
+                  uploadAccount: '${{ parameters.symbolsUploadAccount }}'
+                  version: '${{ parameters.nugetPackageVersion }}'

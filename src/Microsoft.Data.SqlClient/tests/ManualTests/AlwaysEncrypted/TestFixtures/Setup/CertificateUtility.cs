@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
             // The rest of the parameters may be invalid for exception handling test cases
 
-#if NET9_0
+#if NET9_0_OR_GREATER
             X509Certificate2 x509 = X509CertificateLoader.LoadPkcs12(rsaPfx, @"P@zzw0rD!SqlvN3x+");
 #else
             X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             Debug.Assert(rsaPfx != null && rsaPfx.Length > 0);
 
-#if NET9_0
+#if NET9_0_OR_GREATER
             X509Certificate2 x509 = X509CertificateLoader.LoadPkcs12(rsaPfx, @"P@zzw0rD!SqlvN3x+");
 #else
             X509Certificate2 x509 = new(rsaPfx, @"P@zzw0rD!SqlvN3x+");

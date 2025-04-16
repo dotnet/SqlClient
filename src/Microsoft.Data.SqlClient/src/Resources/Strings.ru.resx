@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Не поддающееся преобразованию несоответствие типов между SourceColumn "{0}" из {1} и DataColumn "{2}" из {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Отсутствует DataColumn "{0}" для данного SourceColumn "{2}".</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>В DataTable "{1}" отсутствует DataColumn "{0}" для данного SourceColumn "{2}".</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Сбой при сопоставлении порта механизму завершения ввода-вывода</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Ошибка времени ожидания</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Задает поведение периода блокировки для пула подключений.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Определяет, включено ли кэширование метаданных запросов.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Недопустимая попытка получить JsonDocument для столбца "{0}". JsonDocument поддерживается только для столбцов типа JSON.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Буфер расширен чрезмерно {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Превышен максимальный размер буфера: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>Отсутствует DataColumn "{0}" для данного SourceColumn "{2}".</value>
   </data>
 </root>

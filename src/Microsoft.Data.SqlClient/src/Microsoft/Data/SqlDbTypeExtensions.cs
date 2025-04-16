@@ -10,7 +10,7 @@ namespace Microsoft.Data
     public static class SqlDbTypeExtensions
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
-#if NET9_0
+#if NET9_0_OR_GREATER
         public const SqlDbType Json = SqlDbType.Json;
 #else
         public const SqlDbType Json = (SqlDbType)35;

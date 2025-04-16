@@ -146,6 +146,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
@@ -244,11 +245,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>data.xml</Link>
     </Content>
-    <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>MultipleResultsTest.bsl</Link>
-    </Content>
-    <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />

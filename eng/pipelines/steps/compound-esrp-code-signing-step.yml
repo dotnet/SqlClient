@@ -1,0 +1,144 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+    - name: ESRPConnectedServiceName
+      type: string
+
+    - name: appRegistrationClientId
+      type: string
+
+    - name: appRegistrationTenantId
+      type: string
+
+    - name: EsrpClientId
+      type: string
+
+    - # Name of the Azure Key Vault to retrieve ESRP Code Signing certificate from.
+      name: AuthAkvName
+      type: string
+
+    - name: authSignCertName
+      type: string
+
+    - name: artifactType
+      type: string
+      values:
+          - dll
+          - pkg
+
+steps:
+    - ${{ if eq(parameters.artifactType, 'dll') }}:
+        - task: EsrpMalwareScanning@5
+          displayName: 'ESRP Malware Scanning Code'
+          inputs:
+              ConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              EsrpClientId: '${{ parameters.EsrpClientId }}'
+              UseMSIAuthentication: true
+              CleanupTempStorage: 1
+              FolderPath: '$(BUILD_OUTPUT)'
+              Pattern: '*.dll'
+              VerboseLogin: 1
+
+        - task: EsrpCodeSigning@5
+          displayName: 'ESRP Signing Code'
+          inputs:
+              ConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              EsrpClientId: '${{ parameters.EsrpClientId }}'
+              UseMSIAuthentication: true
+              AuthAKVName: '${{ parameters.akvName }}'
+              AuthSignCertName: '${{ parameters.AuthSignCertName }}'
+              FolderPath: '$(BUILD_OUTPUT)'
+              Pattern: '*.dll'
+              signConfigType: 'inlineSignParams'
+              inlineOperation: |
+                  [ 
+                      {
+                          "keyCode": "CP-230012",
+                          "operationSetCode": "SigntoolSign",
+                          "parameters": 
+                              [
+                                  {
+                                      "parameterName": "OpusName",
+                                      "parameterValue": "Microsoft Data SqlClient Data Provider for SQL Server"
+                                  },
+                                  {
+                                      "parameterName": "OpusInfo",
+                                      "parameterValue": "http://www.microsoft.com"
+                                  },
+                                  {
+                                      "parameterName": "FileDigest",
+                                      "parameterValue": "/fd \"SHA256\""
+                                  },
+                                  {
+                                      "parameterName": "PageHash",
+                                      "parameterValue": "/NPH"
+                                  },
+                                  {
+                                      "parameterName": "TimeStamp",
+                                      "parameterValue": "/tr \"http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer\" /td sha256"
+                                  }
+                              ],
+                          "toolName": "sign",
+                          "toolVersion": "1.0"
+                      },
+                      {
+                          "keyCode": "CP-230012",
+                          "operationSetCode": "SigntoolVerify",
+                          "parameters": [ ],
+                          "toolName": "sign",
+                          "toolVersion": "1.0"
+                      }
+                  ]
+
+    - ${{ else }}:
+        - task: EsrpMalwareScanning@5
+          displayName: 'ESRP Malware Scanning NuGet Package'
+          inputs:
+              ConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+              AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+              AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+              EsrpClientId: '${{ parameters.EsrpClientId }}'
+              UseMSIAuthentication: true
+              CleanupTempStorage: 1
+              FolderPath: '$(ARTIFACT_PATH)'
+              Pattern: '*.*nupkg'
+              VerboseLogin: 1
+
+        - task: EsrpCodeSigning@5
+          displayName: 'ESRP Signing NuGet Package'
+          inputs:
+            ConnectedServiceName: '${{ parameters.ESRPConnectedServiceName }}'
+            AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
+            AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
+            EsrpClientId: '${{ parameters.EsrpClientId }}'
+            UseMSIAuthentication: true
+            AuthAKVName: '${{ parameters.akvName }}'
+            AuthSignCertName: '${{ parameters.AuthSignCertName }}'
+            FolderPath: '$(ARTIFACT_PATH)'
+            Pattern: '*.*nupkg'
+            signConfigType: 'inlineSignParams'
+            inlineOperation: |
+                [ 
+                    { 
+                        "keyCode": "CP-401405", 
+                        "operationSetCode": "NuGetSign", 
+                        "parameters": [ ], 
+                        "toolName": "sign", 
+                        "toolVersion": "1.0" 
+                    },
+                    { 
+                        "keyCode": "CP-401405", 
+                        "operationSetCode": "NuGetVerify", 
+                        "parameters": [ ], 
+                        "toolName": "sign", 
+                        "toolVersion": "1.0" 
+                    } 
+                ]

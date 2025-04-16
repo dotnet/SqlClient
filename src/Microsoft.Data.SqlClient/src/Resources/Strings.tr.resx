@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>'{1}' / {0} öğesine ait SourceColumn ile '{3}' / {2} öğesine ait DataColumn arasında dönüştürülemez tür uyuşmazlığı.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>SourceColumn '{2}' için DataColumn '{0}' eksik.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>SourceColumn '{2}' için DataTable '{1}' içinde DataColumn '{0}' eksik.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Bağlantı noktasını G/Ç tamamlama mekanizması ile ilişkilendirme hatası</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Zaman aşımı hatası</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Bir bağlantı havuzundaki bağlantılar için engelleme dönemi davranışını tanımlar.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Sorgu meta verilerini önbelleğe almanın etkin olup olmadığını tanımlar.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>'{0}' sütununda JsonDocument alma denemesi geçersiz. JsonDocument yalnızca json türündeki sütunlar için desteklenir.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Arabellek çok fazla ilerledi {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Arabellek boyut üst sınırı aşıldı: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>SourceColumn '{2}' için DataColumn '{0}' eksik.</value>
   </data>
 </root>

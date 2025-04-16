@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
@@ -52,7 +53,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
-#if NET9_0
+#if NET9_0_OR_GREATER
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = CreateRSA(forceCsp);
@@ -124,8 +125,6 @@ catch [Exception]
 
             string sanString = string.Empty;
             bool hasSans = false;
-            string formattedCommand = null;
-            string commandOutput = null;
 
             foreach (string dnsName in dnsNames)
             {
@@ -140,22 +139,46 @@ catch [Exception]
 
             sanString = hasSans ? "\"2.5.29.17={text}" + sanString.Substring(0, sanString.Length - 1) + "\"" : string.Empty;
 
-            formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password, CspProviderName);
+            string formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password, CspProviderName);
 
-            using (Process psProcess = new Process()
+            ProcessStartInfo startInfo = new()
             {
-                StartInfo = new ProcessStartInfo()
-                {
-                    FileName = "powershell.exe",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    // Pass the Base64-encoded command to remove the need to escape quote marks
-                    Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
-                    Verb = "runas"
-                }
-            })
+                FileName = "powershell.exe",
+                RedirectStandardOutput = true,
+                RedirectStandardError = false,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                // Pass the Base64-encoded command to remove the need to escape quote marks
+                Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
+                // Run as Administrator, since we're manipulating the system
+                // certificate store.
+                Verb = "RunAs",
+                LoadUserProfile = true
+            };
+
+            // This command sometimes fails with:
+            //
+            //   Access is denied. 0x80070005 (WIN32: 5 ERROR_ACCESS_DENIED)
+            //
+            // We will retry it a few times with a short delay to avoid spurious
+            // failures in CI pipeline runs.
+            //
+            // See ADO issue for more details:
+            //
+            //  Issue 34304: #3223 Fix Functional test failures in CI
+            //
+            //  https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/34304
+            //
+            // Delay 5 seconds between retries, and retry 3 times.
+            const int delay = 5;
+            const int retries = 3;
+
+            string commandOutput = string.Empty;
+
+            for (int attempt = 1; attempt <= retries; ++attempt)
             {
+                using Process psProcess = new() { StartInfo = startInfo };
+            
                 psProcess.Start();
                 commandOutput = psProcess.StandardOutput.ReadToEnd();
 
@@ -166,15 +189,23 @@ catch [Exception]
                 }
 
                 // Process completed successfully if it had an exit code of zero, the command output will be the base64-encoded certificate
-                if (psProcess.ExitCode == 0)
+                var code = psProcess.ExitCode;
+                if (code == 0)
                 {
                     return new X509Certificate2(Convert.FromBase64String(commandOutput), password, X509KeyStorageFlags.Exportable);
                 }
-                else
-                {
-                    throw new Exception($"PowerShell command raised exception: {commandOutput}");
-                }
+                
+                Console.WriteLine(
+                    $"PowerShell command failed with exit code {code} on " +
+                    $"attempt {attempt} of {retries}; " +
+                    $"retrying in {delay} seconds...");
+                
+                Thread.Sleep(TimeSpan.FromSeconds(delay));
             }
+                
+            throw new Exception(
+                "PowerShell command raised exception: " +
+                $"{commandOutput}; command was: {formattedCommand}");
 #endif
         }
 

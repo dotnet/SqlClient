@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Impossibile eseguire la conversione. Il tipo della proprietà SourceColumn "{0}" di {1} non corrisponde a quello della proprietà DataColumn "{2}" di {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>DataColumn '{0}' mancante per la SourceColumn '{2}'.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>DataColumn '{0}' mancante nella DataTable '{1}' per la SourceColumn '{2}'.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Associazione della porta al meccanismo di completamento I/O non riuscita</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Errore di timeout</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Consente di definire il comportamento del periodo di blocco per un pool di connessioni.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Consente di definire se la memorizzazione nella cache dei metadati della query è abilitata.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativo non valido di ottenere JsonDocument nella colonna '{0}'. JsonDocument è supportato solo per colonne di tipo JSON.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Buffer avanzato troppo {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Superata la dimensione massima del buffer: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>DataColumn '{0}' mancante per la SourceColumn '{2}'.</value>
   </data>
 </root>

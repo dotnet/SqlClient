@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="inBuff">Destination byte array where data packets are copied to</param>
         /// <param name="dataSize">Length of data packets</param>
         /// <returns>SNI error status</returns>
-        protected override uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
+        protected override uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
         {
             int dataSizeInt = 0;
             packet.ManagedPacket.GetData(inBuff, ref dataSizeInt);
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref byte[][] spnBuffer,
+            ref string[] spns,
             bool flushCache,
             bool async,
             bool parallel,
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spnBuffer, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 

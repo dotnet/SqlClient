@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>{1}의 SourceColumn '{0}'과(와) {3}의 DataColumn '{2}'의 유형이 일치하지 않습니다.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>SourceColumn '{2}'에 DataColumn '{0}'이(가) 없습니다.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>SourceColumn '{2}'의 DataTable '{1}'에 DataColumn '{0}'이(가) 없습니다.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>포트와 입/출력 완료 메커니즘의 연결이 실패했습니다.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>시간 초과 오류입니다.</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>연결 풀에 대한 차단 기간 동작을 정의합니다.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>쿼리 메타데이터 캐싱을 사용하는지를 정의합니다.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>열 '{0}'의 JsonDocument를 가져오려는 시도가 잘못되었습니다. JsonDocument는 json 형식의 열에 대해서만 지원됩니다.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>버퍼가 너무 멉니다. {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>버퍼 최대 크기 초과: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>SourceColumn '{2}'에 DataColumn '{0}'이(가) 없습니다.</value>
   </data>
 </root>
