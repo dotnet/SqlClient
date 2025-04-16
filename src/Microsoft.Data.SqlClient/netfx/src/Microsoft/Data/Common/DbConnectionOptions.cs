@@ -6,6 +6,7 @@ using System;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.Common
 {
