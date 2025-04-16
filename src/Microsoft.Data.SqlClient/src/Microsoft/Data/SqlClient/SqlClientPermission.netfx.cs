@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient
                         string tmp;
 
                         tmp = SecurityElement.Escape(value.ConnectionString);
-                        if (!ADP.IsEmpty(tmp))
+                        if (!string.IsNullOrEmpty(tmp))
                         {
                             valueElement.AddAttribute(XmlStr._ConnectionString, tmp);
                         }
