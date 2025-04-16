@@ -300,27 +300,12 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ObjectDisposed(this);
             }
 
-            var tcs = new TaskCompletionSource<int>(state);
-            ReadAsync(buffer, offset, count, CancellationToken.None)
-                .ContinueWith(task =>
-                {
-                    if (task.IsFaulted)
-                    {
-                        tcs.TrySetException(task.Exception?.InnerException);
-                    }
-                    else if (task.IsCanceled)
-                    {
-                        tcs.TrySetCanceled();
-                    }
-                    else
-                    {
-                        tcs.TrySetResult(task.Result);
-                    }
-
-                    callback?.Invoke(tcs.Task);
-                }, TaskScheduler.Default);
-
-            return tcs.Task;
+            Task readTask = ReadAsync(buffer, offset, count, CancellationToken.None);
+            if (callback != null)
+            {
+                readTask.ContinueWith(t => callback(t), TaskScheduler.Default);
+            }
+            return readTask;
         }
 
         public override int EndRead(IAsyncResult asyncResult)
