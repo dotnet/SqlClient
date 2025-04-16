@@ -47,17 +47,17 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// Default feature extension version supported on the server for vector support.
         /// </summary>
-        public const byte MaxSupportedVectorFeatureExtVersion = 0x01;
-
-        /// <summary>
-        /// Constant to indicate feature extension shouldn't be enabled by server in response.
-        /// </summary>
-        public const byte FeatureExtDisabled = 0xFF;
+        public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
 
         /// <summary>
         /// Property for setting server version for vector feature extension.
         /// </summary>
-        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = MaxSupportedVectorFeatureExtVersion;
+        public bool EnableVectorFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
         /// <summary>
         /// Client version for vector FeatureExtension.
@@ -279,7 +279,7 @@ namespace Microsoft.SqlServer.TDS.Servers
 
                         case TDSFeatureID.VectorSupport:
                             {
-                                if (ServerSupportedVectorFeatureExtVersion != 0xFF)
+                                if (EnableVectorFeatureExt)
                                 {
                                     // Enable Vector Support
                                     session.IsVectorSupportEnabled = true;
