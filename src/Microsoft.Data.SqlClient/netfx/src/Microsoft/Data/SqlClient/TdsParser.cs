@@ -1588,7 +1588,7 @@ namespace Microsoft.Data.SqlClient
              * !=null       | == 0     | replace text left of errorMessage
             */
 
-            Debug.Assert(!ADP.IsEmpty(errorMessage), "Empty error message received from SNI");
+            Debug.Assert(!string.IsNullOrEmpty(errorMessage), "Empty error message received from SNI");
 
             string sqlContextInfo = StringsHelper.GetString(Enum.GetName(typeof(SniContext), stateObj.SniContext));
             string providerRid = string.Format("SNI_PN{0}", (int)details.provider);
@@ -4863,7 +4863,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
 
-                if (ADP.IsEmpty(col.column))
+                if (string.IsNullOrEmpty(col.column))
                 {
                     // create column name from op
                     switch (col.op)

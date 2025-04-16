@@ -234,8 +234,26 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\BitConverterCompatible.cs">
       <Link>Microsoft\Data\Common\BitConverterCompatible.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionStringCommon.cs">
-      <Link>Microsoft\Data\Common\DbConnectionStringCommon.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringKeywords.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringKeywords.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\IpAddressPreferenceUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\IpAddressPreferenceUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
@@ -351,12 +369,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPool.cs">
-      <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlObjectPools.cs">
-      <Link>Microsoft\Data\SqlClient\SqlObjectPools.cs</Link>
-    </Compile>
 	  <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AAsyncCallContext.cs">
       <Link>Microsoft\Data\SqlClient\AAsyncCallContext.cs</Link>
     </Compile>
@@ -380,9 +392,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ArrayBufferWriter.cs">
-      <Link>Microsoft\Data\SqlClient\ArrayBufferWriter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
@@ -840,6 +849,15 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPools.cs">
+      <Link>Microsoft\Data\SqlClient\Utilities\ObjectPools.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
     </Compile>
@@ -864,6 +882,9 @@
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)System\Buffers\ArrayBufferWriter.netfx.cs">
+      <Link>System\Buffers\ArrayBufferWriter.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
@@ -872,7 +893,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\BufferWriterExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContextFactory.cs" />

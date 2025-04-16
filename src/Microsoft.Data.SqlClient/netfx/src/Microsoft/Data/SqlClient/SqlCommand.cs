@@ -3388,7 +3388,7 @@ namespace Microsoft.Data.SqlClient
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
-            if (parsedSProc[3] == null || ADP.IsEmpty(parsedSProc[3]))
+            if (parsedSProc[3] == null || string.IsNullOrEmpty(parsedSProc[3]))
             {
                 throw ADP.NoStoredProcedureExists(CommandText);
             }
@@ -3402,14 +3402,14 @@ namespace Microsoft.Data.SqlClient
             // [user server, if provided].[user catalog, else current database].[sys if 2005, else blank].[sp_procedure_params_rowset]
 
             // Server - pass only if user provided.
-            if (!ADP.IsEmpty(parsedSProc[0]))
+            if (!string.IsNullOrEmpty(parsedSProc[0]))
             {
                 SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[0]);
                 cmdText.Append(".");
             }
 
             // Catalog - pass user provided, otherwise use current database.
-            if (ADP.IsEmpty(parsedSProc[1]))
+            if (string.IsNullOrEmpty(parsedSProc[1]))
             {
                 parsedSProc[1] = Connection.Database;
             }
@@ -3459,7 +3459,7 @@ namespace Microsoft.Data.SqlClient
                 param.Value = groupNumber;
             }
 
-            if (!ADP.IsEmpty(parsedSProc[2]))
+            if (!string.IsNullOrEmpty(parsedSProc[2]))
             { // SchemaName is 3rd element in parsed array
                 SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@procedure_schema", SqlDbType.NVarChar, 255));
                 param.Value = UnquoteProcedurePart(parsedSProc[2]);
@@ -3672,7 +3672,7 @@ namespace Microsoft.Data.SqlClient
             if (NotificationAutoEnlist)
             {
                 string notifyContext = SqlNotificationContext();
-                if (!ADP.IsEmpty(notifyContext))
+                if (!string.IsNullOrEmpty(notifyContext))
                 {
                     // Map to dependency by ID set in context data.
                     SqlDependency dependency = SqlDependencyPerAppDomainDispatcher.SingletonInstance.LookupDependencyEntry(notifyContext);
@@ -5777,7 +5777,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.TransactionConnectionMismatch();
             }
 
-            if (ADP.IsEmpty(this.CommandText))
+            if (string.IsNullOrEmpty(this.CommandText))
             {
                 throw ADP.CommandTextRequired(method);
             }
@@ -6772,7 +6772,7 @@ namespace Microsoft.Data.SqlClient
                 if (mt.SqlDbType == SqlDbType.Udt)
                 {
                     string fullTypeName = sqlParam.UdtTypeName;
-                    if (ADP.IsEmpty(fullTypeName))
+                    if (string.IsNullOrEmpty(fullTypeName))
                         throw SQL.MustSetUdtTypeNameForUdtParams();
 
                     paramList.Append(ParseAndQuoteIdentifier(fullTypeName, true /* is UdtTypeName */));
@@ -6780,7 +6780,7 @@ namespace Microsoft.Data.SqlClient
                 else if (mt.SqlDbType == SqlDbType.Structured)
                 {
                     string typeName = sqlParam.TypeName;
-                    if (ADP.IsEmpty(typeName))
+                    if (string.IsNullOrEmpty(typeName))
                     {
                         throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.GetPrefixedParameterName());
                     }
