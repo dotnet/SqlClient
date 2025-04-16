@@ -240,6 +240,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
         public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
+        public const byte FEATUREEXT_VECTORSUPPORT = 0x0E;
 
         [Flags]
         public enum FeatureExtension : uint
@@ -253,7 +254,8 @@ namespace Microsoft.Data.SqlClient
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
             SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1),
-            JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1)
+            JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1),
+            VectorSupport = 1 << (TdsEnums.FEATUREEXT_VECTORSUPPORT -1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -977,6 +979,9 @@ namespace Microsoft.Data.SqlClient
 
         // JSON Support constants
         internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
+
+        // Vector Support constants
+        internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version

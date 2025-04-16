@@ -28,6 +28,43 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class GenericTDSServer : ITDSServer
     {
         /// <summary>
+        /// Delegate to be called when a LOGIN7 request has been received and is
+        /// validated.  This is called before any authentication work is done,
+        /// and before any response is sent.
+        /// </summary>
+        public delegate void OnLogin7ValidatedDelegate(
+            TDSLogin7Token login7Token);
+        public OnLogin7ValidatedDelegate OnLogin7Validated { private get; set; }
+
+        /// <summary>
+        /// Delegate to be called when authentication is completed and TDSResponse
+        /// message is sent to the client.
+        /// </summary>
+        public delegate void OnAuthenticationCompletedDelegate(
+            TDSMessage response);
+        public OnAuthenticationCompletedDelegate OnAuthenticationResponseCompleted { private get; set; }
+
+        /// <summary>
+        /// Default feature extension version supported on the server for vector support.
+        /// </summary>
+        public const byte DefaultSupportedVectorFeatureExtVersion = 0x01;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public bool EnableVectorFeatureExt { get; set; } = false;
+
+        /// <summary>
+        /// Property for setting server version for vector feature extension.
+        /// </summary>
+        public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        /// <summary>
+        /// Client version for vector FeatureExtension.
+        /// </summary>
+        private byte _clientSupportedVectorFeatureExtVersion = 0;
+
+        /// <summary>
         /// Session counter
         /// </summary>
         private int _sessionCount = 0;
@@ -239,6 +276,18 @@ namespace Microsoft.SqlServer.TDS.Servers
                                 session.IsJsonSupportEnabled = true;
                                 break;
                             }
+
+                        case TDSFeatureID.VectorSupport:
+                            {
+                                if (EnableVectorFeatureExt)
+                                {
+                                    // Enable Vector Support
+                                    session.IsVectorSupportEnabled = true;
+                                    _clientSupportedVectorFeatureExtVersion = ((TDSLogin7GenericOptionToken)option).Data[0];
+                                }
+                                break;
+                            }
+
                         default:
                             {
                                 // Do nothing
@@ -247,6 +296,8 @@ namespace Microsoft.SqlServer.TDS.Servers
                     }
                 }
             }
+
+            OnLogin7Validated?.Invoke(loginRequest);
 
             // Check if SSPI authentication is requested
             if (loginRequest.OptionalFlags2.IntegratedSecurity == TDSLogin7OptionalFlags2IntSecurity.On)
@@ -577,6 +628,32 @@ namespace Microsoft.SqlServer.TDS.Servers
                 }
             }
 
+            // Check if Vector is supported
+            if (session.IsVectorSupportEnabled)
+            {
+                // Create ack data (1 byte: Version number)
+                byte[] data = new byte[1];
+                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+
+                // Create vector support as a generic feature extension option
+                TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
+
+                // Look for feature extension token
+                TDSFeatureExtAckToken featureExtAckToken = (TDSFeatureExtAckToken)responseMessage.Where(t => t is TDSFeatureExtAckToken).FirstOrDefault();
+
+                if (featureExtAckToken == null)
+                {
+                    // Create feature extension ack token
+                    featureExtAckToken = new TDSFeatureExtAckToken(vectorSupportOption);
+                    responseMessage.Add(featureExtAckToken);
+                }
+                else
+                {
+                    // Update the existing token
+                    featureExtAckToken.Options.Add(vectorSupportOption);
+                }
+            }
+
             // Create DONE token
             TDSDoneToken doneToken = new TDSDoneToken(TDSDoneTokenStatusType.Final);
 
@@ -585,6 +662,9 @@ namespace Microsoft.SqlServer.TDS.Servers
 
             // Serialize DONE token into the response packet
             responseMessage.Add(doneToken);
+
+            // Invoke delegate for response validation
+            OnAuthenticationResponseCompleted?.Invoke(responseMessage);
 
             // Wrap a single message in a collection
             return new TDSMessageCollection(responseMessage);
