@@ -92,15 +92,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region NamedPipeTests
 
-        [Fact]
-        [ActiveIssue("20245")] //pending pipeline configuration
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
-        [Fact]
-        [ActiveIssue("20245")] //pending pipeline configuration
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBNamedPipeEncryptionNotSupportedTest()
         {
             // Encryption is not supported by SQL Local DB.
@@ -108,8 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
         }
 
-        [Fact]
-        [ActiveIssue("20245")] //pending pipeline configuration
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBNamepipeMarsTest()
         {
             ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
