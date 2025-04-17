@@ -3808,7 +3808,7 @@
     <value>Échec de l'association du port avec le mécanisme de terminaison d'E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>Le socket est nul</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Erreur de délai d'attente</value>

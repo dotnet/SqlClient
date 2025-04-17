@@ -3808,7 +3808,7 @@
     <value>ポートと I/O 完了メカニズムの関連付けに失敗しました</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>ソケットは null です</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>タイムアウト エラー</value>

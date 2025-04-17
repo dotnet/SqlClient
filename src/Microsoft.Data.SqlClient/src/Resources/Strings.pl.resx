@@ -3808,7 +3808,7 @@
     <value>Tworzenie skojarzenia portu z mechanizmem zakończenia We/Wy I/O nie powiodło się</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>Gniazdo ma wartość null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Błąd limitu czasu</value>
