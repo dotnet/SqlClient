@@ -3805,7 +3805,7 @@
     <value>Nezdařilo se asociování portu se vstupně-výstupním (I/O) mechanismem dokončení.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>Soket má hodnotu null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Chyba časového limitu</value>

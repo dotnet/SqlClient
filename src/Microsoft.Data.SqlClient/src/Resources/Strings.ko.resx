@@ -3805,7 +3805,7 @@
     <value>포트와 입/출력 완료 메커니즘의 연결이 실패했습니다.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>소켓이 null입니다.</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>시간 초과 오류입니다.</value>
