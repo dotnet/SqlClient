@@ -7,7 +7,8 @@
 # @TODO: These seem to only really apply to official builds. Name should probably be adjusted to match.
 
 variables:
-      # @TODO: Rename to something more appropriate for symbols
+    # @TODO: If symbols variables are indeed shared between projects and not expected to change
+    #    then they can be removed from this variable group.
     - group: 'akv-variables-v2'
       # SymbolsAzureSubscription
       # SymbolsPublishProjectName
