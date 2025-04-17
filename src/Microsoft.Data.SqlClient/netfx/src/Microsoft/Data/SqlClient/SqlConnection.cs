@@ -191,19 +191,19 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                 }
                 else if (UsesActiveDirectoryMSI(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                 }
                 else if (UsesActiveDirectoryDefault(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
                 }
                 else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                 }
 
                 Credential = credential;
