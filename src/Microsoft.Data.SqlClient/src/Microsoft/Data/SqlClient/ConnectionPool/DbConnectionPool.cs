@@ -33,9 +33,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal abstract bool IsRunning { get; }
 
-#if NETFRAMEWORK
-        internal abstract DbConnectionPoolCounters PerformanceCounters { get; }
-#endif
         internal abstract DbConnectionPoolGroup PoolGroup { get; }
 
         internal abstract DbConnectionPoolGroupOptions PoolGroupOptions { get; }

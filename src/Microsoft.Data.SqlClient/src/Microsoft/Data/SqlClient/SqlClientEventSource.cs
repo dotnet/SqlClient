@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Diagnostics;
 using System;
 using System.Diagnostics.Tracing;
 using System.Text;
@@ -9,77 +10,33 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SqlClientEventSourceBase : EventSource
-    {
-        protected override void OnEventCommand(EventCommandEventArgs command)
-        {
-            base.OnEventCommand(command);
-            EventCommandMethodCall(command);
-        }
-
-        protected virtual void EventCommandMethodCall(EventCommandEventArgs command) { }
-
-        #region not implemented for .Net core 2.1, .Net standard 2.0 and lower
-        internal virtual void HardConnectRequest() { /*no-op*/ }
-
-        internal virtual void HardDisconnectRequest() { /*no-op*/ }
-
-        internal virtual void SoftConnectRequest() { /*no-op*/ }
-
-        internal virtual void SoftDisconnectRequest() { /*no-op*/ }
-
-        internal virtual void EnterNonPooledConnection() { /*no-op*/ }
-
-        internal virtual void ExitNonPooledConnection() { /*no-op*/ }
-
-        internal virtual void EnterPooledConnection() { /*no-op*/ }
-
-        internal virtual void ExitPooledConnection() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void EnterInactiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void ExitInactiveConnectionPoolGroup() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void EnterInactiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void ExitInactiveConnectionPool() { /*no-op*/ }
-
-        internal virtual void EnterActiveConnection() { /*no-op*/ }
-
-        internal virtual void ExitActiveConnection() { /*no-op*/ }
-
-        internal virtual void EnterFreeConnection() { /*no-op*/ }
-
-        internal virtual void ExitFreeConnection() { /*no-op*/ }
-
-        internal virtual void EnterStasisConnection() { /*no-op*/ }
-
-        internal virtual void ExitStasisConnection() { /*no-op*/ }
-
-        internal virtual void ReclaimedConnectionRequest() { /*no-op*/ }
-        #endregion
-    }
-
     // Any changes to event writers might be considered as a breaking change.
     // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : SqlClientEventSourceBase
+    internal partial class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
-        internal static readonly SqlClientEventSource Log = new();
+        public static readonly SqlClientEventSource Log = new();
+
+        // Provides access to metrics.
+        public static readonly SqlClientMetrics Metrics = new SqlClientMetrics(Log);
 
         private SqlClientEventSource() { }
 
         private const string NullStr = "null";
         private const string SqlCommand_ClassName = nameof(SqlCommand);
+
+#if NET
+        protected override void OnEventCommand(EventCommandEventArgs command)
+        {
+            base.OnEventCommand(command);
+
+            if (command.Command == EventCommand.Enable)
+            {
+                Metrics.EnableEventCounters();
+            }
+        }
+#endif
 
         #region Event IDs
         // Initialized static Scope IDs
