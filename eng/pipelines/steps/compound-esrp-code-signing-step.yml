@@ -120,7 +120,7 @@ steps:
             AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
             ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
             EsrpClientId: '${{ parameters.esrpClientId }}'
-            AuthAKVName: '${{ parameters.akvName }}'
+            AuthAKVName: '${{ parameters.authAkvName }}'
             AuthSignCertName: '${{ parameters.authSignCertName }}'
             FolderPath: '$(ARTIFACT_PATH)'
             Pattern: '*.*nupkg'
