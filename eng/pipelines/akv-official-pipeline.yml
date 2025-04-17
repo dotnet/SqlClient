@@ -139,7 +139,7 @@ extends:
                         signingAuthAkvName: '$(SigningAuthAkvName)'
                         signingAuthSignCertName: '$(SigningAuthSignCertName)'
                         signingEsrpClientId: '$(SigningEsrpClientId)'
-                        signingEsrpConnectedServiceName: '$(SigningConnectedServiceName)'
+                        signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
                         symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
                         symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
                         symbolsPublishServer: '$(SymbolsPublishServer)'
