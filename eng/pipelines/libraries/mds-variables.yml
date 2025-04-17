@@ -6,12 +6,3 @@
 
 variables:
   - group: Release Variables
-
-  - name: NugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)
-  - name: PreviewNugetPackageVersion
-    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
-  - name: AssemblyFileVersion
-    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
-  - name: nuspecPath
-    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'
