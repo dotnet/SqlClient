@@ -46,7 +46,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 - name: MDS_PackageRef_Version
   displayName: 'MDS package version of AKV Provider (build AKV)'
   type: string
-  default: 3.0.0
+  default: 5.1.2
 
 - name: CurrentNetFxVersion
   displayName: 'Lowest supported .NET Framework version (MDS validation)'

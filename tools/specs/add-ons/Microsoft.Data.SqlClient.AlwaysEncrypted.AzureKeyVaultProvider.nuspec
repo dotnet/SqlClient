@@ -25,25 +25,25 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
+        <dependency id="Microsoft.Data.SqlClient" version="[5.1.3,5.2.0)" />
         <dependency id="Azure.Core" version="[1.38.0,2.0.0)" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.4.0,5.0.0)" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.3" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
+        <dependency id="Microsoft.Data.SqlClient" version="[5.1.3,5.2.0)" />
         <dependency id="Azure.Core" version="[1.38.0,2.0.0)" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.4.0,5.0.0)" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.3" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
+        <dependency id="Microsoft.Data.SqlClient" version="[5.1.3,5.2.0)" />
         <dependency id="Azure.Core" version="[1.38.0,2.0.0)" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
+        <dependency id="System.Text.Encodings.Web" version="6.0.1" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.4.0,5.0.0)" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.1" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="6.0.3" />
       </group>
     </dependencies>
     <frameworkAssemblies>
