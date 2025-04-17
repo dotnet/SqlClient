@@ -32,7 +32,7 @@
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.35.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>6.35.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextEncodingsWebVersion>6.0.1</SystemTextEncodingsWebVersion>
     <SystemTextJsonVersion>6.0.11</SystemTextJsonVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
