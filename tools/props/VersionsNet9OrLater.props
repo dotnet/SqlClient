@@ -2,9 +2,9 @@
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- NET 9 target framework dependencies -->
   <PropertyGroup>
-    <MicrosoftBclCryptographyVersion>9.0.0</MicrosoftBclCryptographyVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>9.0.0</MicrosoftExtensionsCachingMemoryVersion>
-    <SystemSecurityCryptographyPkcsVersion>9.0.0</SystemSecurityCryptographyPkcsVersion>
-    <SystemConfigurationConfigurationManagerVersion>9.0.0</SystemConfigurationConfigurationManagerVersion>
+    <MicrosoftBclCryptographyVersion>9.0.4</MicrosoftBclCryptographyVersion>
+    <MicrosoftExtensionsCachingMemoryVersion>9.0.4</MicrosoftExtensionsCachingMemoryVersion>
+    <SystemSecurityCryptographyPkcsVersion>9.0.4</SystemSecurityCryptographyPkcsVersion>
+    <SystemConfigurationConfigurationManagerVersion>9.0.4</SystemConfigurationConfigurationManagerVersion>
   </PropertyGroup>
 </Project>
