@@ -10,7 +10,7 @@ class Program
         try
         {
             string connectString =
-                "Server=(local);Database=AdventureWorks;UID=ab;Pwd= a!Pass@@";
+                "Server=(local);Database=AdventureWorks;UID=ab;Pwd=********";
             Console.WriteLine("Original: " + connectString);
             SqlConnectionStringBuilder builder =
                 new SqlConnectionStringBuilder(connectString);
