@@ -3805,7 +3805,7 @@
     <value>Associating port with I/O completion mechanism failed</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Timeout error</value>
