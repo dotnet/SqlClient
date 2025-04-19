@@ -1273,7 +1273,7 @@ The following example converts an existing connection string from using Windows 
 The example displays the following text in the console window:  
 
 ```  
-Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password= a1Pass@@11  
+Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password=********  
 Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
 Database = AdventureWorks  
 ```  
