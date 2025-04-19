@@ -851,7 +851,7 @@ Connections are considered the same if they have the same connection string. Dif
  The example displays the following text in the console window:  
   
 ```  
-Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password= a1Pass@@11  
+Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password=********  
 Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
 Database = AdventureWorks  
 ```  
