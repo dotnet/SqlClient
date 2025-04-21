@@ -249,8 +249,10 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
+    <Compile Include="TracingTests\MetricsTest.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="TracingTests\EventCounterTest.cs" />
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>

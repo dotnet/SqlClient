@@ -227,6 +227,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientConnectionOpenError.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientTransactionCommitAfter.netcore.cs</Link>
     </Compile>
@@ -745,7 +748,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />

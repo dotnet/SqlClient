@@ -288,9 +288,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolCounters.netfx.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolCounters.netfx.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroup.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolGroup.cs</Link>
     </Compile>
@@ -326,6 +323,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs">
+      <Link>Microsoft\Data\SqlClient\Diagnostics\SqlClientMetrics.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
