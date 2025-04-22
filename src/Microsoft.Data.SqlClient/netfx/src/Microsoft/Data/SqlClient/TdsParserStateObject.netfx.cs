@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -89,8 +89,6 @@ namespace Microsoft.Data.SqlClient
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
-
-        internal SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
 
         ////////////////
         // Properties //
