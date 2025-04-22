@@ -31,11 +31,10 @@ namespace Microsoft.Data.SqlClient
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
         internal SqlCommand.ExecuteXmlReaderAsyncCallContext CachedCommandExecuteXmlReaderAsyncContext;
-
+#endif
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
-#endif
 
         // if connection is not open: null
         // if connection is open: currently active database
@@ -198,19 +197,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
 
-#if NETFRAMEWORK
-
-        abstract internal bool Is2000
-        {
-            get;
-        }
-
-
-        abstract internal bool Is2005OrNewer
-        {
-            get;
-        }
-#endif
         internal bool IsAzureSQLConnection
         {
             get
@@ -231,15 +217,13 @@ namespace Microsoft.Data.SqlClient
         virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
         {
             SqlStatistics statistics = null;
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
-                #if NETFRAMEWORK
                 bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
-                #endif
 
                 statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
@@ -280,7 +264,7 @@ namespace Microsoft.Data.SqlClient
                 Connection.Abort(e);
 #if NETFRAMEWORK
                 BestEffortCleanup(bestEffortCleanupTarget);
-#endif // NETFRAMEWORK
+#endif
                 throw;
             }
             finally
@@ -321,17 +305,15 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
 #endif
             try
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
 
-                #if NETFRAMEWORK
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
-                #endif
 
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (referenceCollection != null)
@@ -644,20 +626,15 @@ namespace Microsoft.Data.SqlClient
             // enlist in the user specified distributed transaction.  This
             // behavior matches OLEDB and ODBC.
 
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-            try
+#endif // NETFRAMEWORK
+           try
             {
                 bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
                 Enlist(transaction);
             }
-#else
-            try
-            {
-                Enlist(transaction);
-            }
-#endif // NETFRAMEWORK
             catch (OutOfMemoryException e)
             {
                 Connection.Abort(e);
@@ -733,7 +710,6 @@ namespace Microsoft.Data.SqlClient
 
         abstract internal void ValidateConnectionForExecute(SqlCommand command);
 
-#if NETFRAMEWORK
         static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
         {
             if (connection != null)
@@ -748,6 +724,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
+#if NETFRAMEWORK
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         static internal void BestEffortCleanup(TdsParser target)
         {

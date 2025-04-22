@@ -112,14 +112,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {
-        private enum TableNameComponents
-        {
-            Server = 0,
-            Catalog,
-            Owner,
-            TableName,
-        }
-
         private enum ValueSourceType
         {
             Unspecified = 0,
@@ -160,10 +152,6 @@ namespace Microsoft.Data.SqlClient
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
-
-        private const int TranCountResultId = 0;
-        private const int TranCountRowId = 0;
-        private const int TranCountValueId = 0;
 
         private const int MetaDataResultId = 1;
 
@@ -432,73 +420,67 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, e);
             }
-            if (ADP.IsEmpty(parts[MultipartIdentifier.TableIndex]))
+            if (string.IsNullOrEmpty(parts[MultipartIdentifier.TableIndex]))
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, null);
             }
             string TDSCommand;
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
-            if (_connection.Is2000)
+
+            // If its a temp DB then try to connect
+
+            string TableCollationsStoredProc;
+            if (_connection.Is2008OrNewer)
             {
-                // If its a temp DB then try to connect
+                TableCollationsStoredProc = "sp_tablecollations_100";
+            }
+            else
+            {
+                TableCollationsStoredProc = "sp_tablecollations_90";
+            }
 
-                string TableCollationsStoredProc;
-                if (_connection.Is2008OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_100";
-                }
-                else if (_connection.Is2005OrNewer)
-                {
-                    TableCollationsStoredProc = "sp_tablecollations_90";
-                }
-                else
-                {
-                    TableCollationsStoredProc = "sp_tablecollations";
-                }
+            string TableName = parts[MultipartIdentifier.TableIndex];
+            bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
+            if (!string.IsNullOrEmpty(TableName))
+            {
+                // Escape table name to be put inside TSQL literal block (within N'').
+                TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
+                // VSDD 581951 - escape the table name
+                TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
+            }
 
-                string TableName = parts[MultipartIdentifier.TableIndex];
-                bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
-                if (!ADP.IsEmpty(TableName))
-                {
-                    // Escape table name to be put inside TSQL literal block (within N'').
-                    TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
-                    // VSDD 581951 - escape the table name
-                    TableName = SqlServerEscapeHelper.EscapeIdentifier(TableName);
-                }
+            string SchemaName = parts[MultipartIdentifier.SchemaIndex];
+            if (!string.IsNullOrEmpty(SchemaName))
+            {
+                // Escape schema name to be put inside TSQL literal block (within N'').
+                SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
+                // VSDD 581951 - escape the schema name
+                SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+            }
 
-                string SchemaName = parts[MultipartIdentifier.SchemaIndex];
-                if (!ADP.IsEmpty(SchemaName))
+            string CatalogName = parts[MultipartIdentifier.CatalogIndex];
+            if (isTempTable && string.IsNullOrEmpty(CatalogName))
+            {
+                TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
+            }
+            else
+            {
+                // VSDD 581951 - escape the catalog name
+                if (!string.IsNullOrEmpty(CatalogName))
                 {
-                    // Escape schema name to be put inside TSQL literal block (within N'').
-                    SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
-                    // VSDD 581951 - escape the schema name
-                    SchemaName = SqlServerEscapeHelper.EscapeIdentifier(SchemaName);
+                    CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                 }
-
-                string CatalogName = parts[MultipartIdentifier.CatalogIndex];
-                if (isTempTable && ADP.IsEmpty(CatalogName))
-                {
-                    TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
-                else
-                {
-                    // VSDD 581951 - escape the catalog name
-                    if (!ADP.IsEmpty(CatalogName))
-                    {
-                        CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
-                    }
-                    TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
-                        CatalogName,
-                        TableCollationsStoredProc,
-                        SchemaName,
-                        TableName
-                    );
-                }
+                TDSCommand += string.Format("exec {0}..{1} N'{2}.{3}'",
+                    CatalogName,
+                    TableCollationsStoredProc,
+                    SchemaName,
+                    TableName
+                );
             }
             return TDSCommand;
         }
@@ -549,212 +531,225 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
+            if (0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
             }
 
             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
-            int nmatched = 0;  // Number of columns that match and are accepted
-            int nrejected = 0; // Number of columns that match but were rejected
-            bool rejectColumn; // True if a column is rejected because of an excluded type
-
-            bool isInTransaction;
-
-            if (_parser.Is2005OrNewer)
-            {
-                isInTransaction = _connection.HasLocalTransaction;
-            }
-            else
-            {
-                isInTransaction = (bool)(0 < (SqlInt32)(internalResults[TranCountResultId][TranCountRowId][TranCountValueId]));
-            }
 
             // Throw if there is a transaction but no flag is set
-            if (isInTransaction &&
-                _externalTransaction == null &&
-                _internalTransaction == null &&
-                (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
+            if (_connection.HasLocalTransaction
+                && _externalTransaction == null
+                && _internalTransaction == null
+                && _connection.Parser != null
+                && _connection.Parser.CurrentTransaction != null
+                && _connection.Parser.CurrentTransaction.IsLocal)
             {
                 throw SQL.BulkLoadExistingTransaction();
             }
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
-            // Loop over the metadata for each column
+            // Keep track of any result columns that we don't have a local
+            // mapping for.
+            HashSet<string> unmatchedColumns = new();
+
+            // Start by assuming all locally mapped Destination columns will be
+            // unmatched.
+            for (int i = 0; i < _localColumnMappings.Count; ++i)
+            {
+                unmatchedColumns.Add(_localColumnMappings[i].DestinationColumn);
+            }
+
+            // Flag to remember whether or not we need to append a comma before
+            // the next column in the command text.
+            bool appendComma = false;
+
+            // Loop over the metadata for each result column.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
                 _SqlMetaData metadata = metaDataSet[i];
-                rejectColumn = false;
 
-                // Check for excluded types
-                if ((metadata.type == SqlDbType.Timestamp)
-                    || ((metadata.IsIdentity) && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
+                bool matched = false;
+                bool rejected = false;
+                
+                // Look for a local match for the remote column.
+                for (int j = 0; j < _localColumnMappings.Count; ++j)
                 {
-                    // Remove metadata for excluded columns
-                    metaDataSet[i] = null;
-                    rejectColumn = true;
-                    // We still need to find a matching column association
-                }
+                    var localColumn = _localColumnMappings[j];
 
-                // Find out if this column is associated
-                int assocId;
-                for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
-                {
-                    if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
-                        (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
+                    // Are we missing a mapping between the result column and
+                    // this local column (by ordinal or name)?
+                    if (localColumn._destinationColumnOrdinal != metadata.ordinal
+                        && UnquotedName(localColumn._destinationColumnName) != metadata.column)
                     {
-                        if (rejectColumn)
-                        {
-                            nrejected++; // Count matched columns only
-                            break;
-                        }
+                        // Yes, so move on to the next local column.
+                        continue;
+                    }
 
-                        _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
-                        destColumnNames.Add(metadata.column);
-                        nmatched++;
+                    // Ok, we found a matching local column.
+                    matched = true;
 
-                        if (nmatched > 1)
-                        {
-                            updateBulkCommandText.Append(", "); // A leading comma for all but the first one
-                        }
-
-                        // Some datatypes need special handling ...
-                        if (metadata.type == SqlDbType.Variant)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
-                        }
-                        else if (metadata.type == SqlDbType.Udt)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
-                        }
-                        else if (metadata.type == SqlDbTypeExtensions.Json)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
-                        }
-                        else
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, typeof(SqlDbType).GetEnumName(metadata.type));
-                        }
-
-                        switch (metadata.metaType.NullableType)
-                        {
-                            case TdsEnums.SQLNUMERICN:
-                            case TdsEnums.SQLDECIMALN:
-                                // Decimal and numeric need to include precision and scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata.precision, metadata.scale);
-                                break;
-                            case TdsEnums.SQLUDT:
-                                {
-                                    if (metadata.IsLargeUdt)
-                                    {
-                                        updateBulkCommandText.Append("(max)");
-                                    }
-                                    else
-                                    {
-                                        int size = metadata.length;
-                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
-                                    }
-                                    break;
-                                }
-                            case TdsEnums.SQLTIME:
-                            case TdsEnums.SQLDATETIME2:
-                            case TdsEnums.SQLDATETIMEOFFSET:
-                                // date, dateime2, and datetimeoffset need to include scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata.scale);
-                                break;
-                            default:
-                                {
-                                    // For non-long non-fixed types we need to add the Size
-                                    if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
-                                    {
-                                        int size = metadata.length;
-                                        switch (metadata.metaType.NullableType)
-                                        {
-                                            case TdsEnums.SQLNCHAR:
-                                            case TdsEnums.SQLNVARCHAR:
-                                            case TdsEnums.SQLNTEXT:
-                                                size /= 2;
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
-                                    }
-                                    else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
-                                    {
-                                        // Partial length column prefix (max)
-                                        updateBulkCommandText.Append("(max)");
-                                    }
-                                    break;
-                                }
-                        }
-
-                        if (_connection.Is2000)
-                        {
-                            // 2000 or above!
-                            // get collation for column i
-
-                            Result rowset = internalResults[CollationResultId];
-                            object rowvalue = rowset[i][CollationId];
-
-                            bool shouldSendCollation;
-                            switch (metadata.type)
-                            {
-                                case SqlDbType.Char:
-                                case SqlDbType.NChar:
-                                case SqlDbType.VarChar:
-                                case SqlDbType.NVarChar:
-                                case SqlDbType.Text:
-                                case SqlDbType.NText:
-                                    shouldSendCollation = true;
-                                    break;
-
-                                default:
-                                    shouldSendCollation = false;
-                                    break;
-                            }
-
-                            if (rowvalue != null && shouldSendCollation)
-                            {
-                                Debug.Assert(rowvalue is SqlString);
-                                SqlString collation_name = (SqlString)rowvalue;
-
-                                if (!collation_name.IsNull)
-                                {
-                                    updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
-                                    // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
-                                    if (_sqlDataReaderRowSource != null && metadata.collation != null)
-                                    {
-                                        // On SqlDataReader we can verify the sourcecolumn collation!
-                                        int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
-                                        int destinationLcid = metadata.collation.LCID;
-                                        int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
-                                        if (sourceLcid != destinationLcid)
-                                        {
-                                            throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    // Remove it from our unmatched set.
+                    unmatchedColumns.Remove(localColumn.DestinationColumn);
+                    
+                    // Check for column types that we refuse to bulk load, even
+                    // though we found a match.
+                    //
+                    // We will not process timestamp or identity columns.
+                    //
+                    if (metadata.type == SqlDbType.Timestamp
+                        || (metadata.IsIdentity && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
+                    {
+                        rejected = true;
                         break;
                     }
+
+                    _sortedColumnMappings.Add(new _ColumnMapping(localColumn._internalSourceColumnOrdinal, metadata));
+                    destColumnNames.Add(metadata.column);
+
+                    // Append a comma for each subsequent column.
+                    if (appendComma)
+                    {
+                        updateBulkCommandText.Append(", ");
+                    }
+                    else
+                    {
+                        appendComma = true;
+                    }
+
+                    // Some datatypes need special handling ...
+                    if (metadata.type == SqlDbType.Variant)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
+                    }
+                    else if (metadata.type == SqlDbType.Udt)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
+                    }
+                    else if (metadata.type == SqlDbTypeExtensions.Json)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
+                    }
+                    else
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, typeof(SqlDbType).GetEnumName(metadata.type));
+                    }
+
+                    switch (metadata.metaType.NullableType)
+                    {
+                        case TdsEnums.SQLNUMERICN:
+                        case TdsEnums.SQLDECIMALN:
+                            // Decimal and numeric need to include precision and scale
+                            updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata.precision, metadata.scale);
+                            break;
+                        case TdsEnums.SQLUDT:
+                            {
+                                if (metadata.IsLargeUdt)
+                                {
+                                    updateBulkCommandText.Append("(max)");
+                                }
+                                else
+                                {
+                                    int size = metadata.length;
+                                    updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                                }
+                                break;
+                            }
+                        case TdsEnums.SQLTIME:
+                        case TdsEnums.SQLDATETIME2:
+                        case TdsEnums.SQLDATETIMEOFFSET:
+                            // date, dateime2, and datetimeoffset need to include scale
+                            updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata.scale);
+                            break;
+                        default:
+                            {
+                                // For non-long non-fixed types we need to add the Size
+                                if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
+                                {
+                                    int size = metadata.length;
+                                    switch (metadata.metaType.NullableType)
+                                    {
+                                        case TdsEnums.SQLNCHAR:
+                                        case TdsEnums.SQLNVARCHAR:
+                                        case TdsEnums.SQLNTEXT:
+                                            size /= 2;
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                    updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                                }
+                                else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
+                                {
+                                    // Partial length column prefix (max)
+                                    updateBulkCommandText.Append("(max)");
+                                }
+                                break;
+                            }
+                    }
+
+                    // Get collation for column i
+                    Result rowset = internalResults[CollationResultId];
+                    object rowvalue = rowset[i][CollationId];
+
+                    bool shouldSendCollation;
+                    switch (metadata.type)
+                    {
+                        case SqlDbType.Char:
+                        case SqlDbType.NChar:
+                        case SqlDbType.VarChar:
+                        case SqlDbType.NVarChar:
+                        case SqlDbType.Text:
+                        case SqlDbType.NText:
+                            shouldSendCollation = true;
+                            break;
+
+                        default:
+                            shouldSendCollation = false;
+                            break;
+                    }
+
+                    if (rowvalue != null && shouldSendCollation)
+                    {
+                        Debug.Assert(rowvalue is SqlString);
+                        SqlString collation_name = (SqlString)rowvalue;
+
+                        if (!collation_name.IsNull)
+                        {
+                            updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
+                            // VSTFDEVDIV 461426: compare collations only if the collation value was set on the metadata
+                            if (_sqlDataReaderRowSource != null && metadata.collation != null)
+                            {
+                                // On SqlDataReader we can verify the sourcecolumn collation!
+                                int sourceColumnId = localColumn._internalSourceColumnOrdinal;
+                                int destinationLcid = metadata.collation.LCID;
+                                int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
+                                if (sourceLcid != destinationLcid)
+                                {
+                                    throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
+                                }
+                            }
+                        }
+                    }
+                    break;
                 }
-                if (assocId == _localColumnMappings.Count)
+
+                // Remove metadata for unmatched and rejected columns.
+                if (! matched || rejected)
                 {
-                    // Remove metadata for unmatched columns
                     metaDataSet[i] = null;
                 }
             }
 
-            // All columnmappings should have matched up
-            if (nmatched + nrejected != _localColumnMappings.Count)
+            // Do we have any unmatched columns?
+            if (unmatchedColumns.Count > 0)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                throw SQL.BulkLoadNonMatchingColumnNames(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
@@ -1442,7 +1437,7 @@ namespace Microsoft.Data.SqlClient
 
         private string UnquotedName(string name)
         {
-            if (ADP.IsEmpty(name))
+            if (string.IsNullOrEmpty(name))
                 return null;
             if (name[0] == '[')
             {
@@ -1639,7 +1634,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value);
+                            value = _connection.GetBytes(value, out _, out _);
                             typeChanged = true;
                         }
                         break;
@@ -2032,7 +2027,8 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs, tcs,
+                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                state: tcs,
                                 onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
@@ -2684,9 +2680,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
-,
-                        connectionToDoom: _connection.GetOpenTdsConnection());
+                        onCancellation: (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
+                    );
 
                     return source.Task;
                 }
@@ -3014,7 +3010,10 @@ namespace Microsoft.Data.SqlClient
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection
                         AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
                                 () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTaskWithState(cancellableReconnectTS.Task, source, regReconnectCancel,
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task,
+                            completion: source,
+                            state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
                                 ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
@@ -3061,7 +3060,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _stateObj = _parser.GetSession(this);
                     _stateObj._bulkCopyOpperationInProgress = true;
-                    _stateObj.StartSession(ObjectID);
+                    _stateObj.StartSession(this);
                 }
                 finally
                 {

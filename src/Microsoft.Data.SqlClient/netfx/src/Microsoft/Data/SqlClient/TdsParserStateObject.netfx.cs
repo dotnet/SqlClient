@@ -49,11 +49,8 @@ namespace Microsoft.Data.SqlClient
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
-        // This variable is used to prevent sending an attention by another thread that is not the
-        // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
-        // the code but does not remember either.  At some point, we need to research killing this
-        // logic.
-        private volatile int _allowObjectID;
+        // Timeout variables
+        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -137,8 +134,11 @@ namespace Microsoft.Data.SqlClient
 
         // This method is only called by the command or datareader as a result of a user initiated
         // cancel request.
-        internal void Cancel(int objectID)
+        internal void Cancel(object caller)
         {
+            Debug.Assert(caller != null, "Null caller for Cancel!");
+            Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
+
             bool hasLock = false;
             try
             {
@@ -150,9 +150,8 @@ namespace Microsoft.Data.SqlClient
                     { // Lock for the time being - since we need to synchronize the attention send.
                       // This lock is also protecting against concurrent close and async continuations
 
-                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
-                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
-                        if ((!_cancelled) && (objectID == _allowObjectID) && (objectID != -1))
+                        // Ensure that, once we have the lock, that we are still the owner
+                        if ((!_cancelled) && (_cancellationOwner.Target == caller))
                         {
                             _cancelled = true;
 
@@ -206,7 +205,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Reset cancel state.
                 _cancelled = false;
-                _allowObjectID = -1;
+                _cancellationOwner.Target = null;
 
                 if (_attentionSent)
                 {
@@ -242,7 +241,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            byte[] spnBuffer,
+            ref string spn,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -259,7 +258,7 @@ namespace Microsoft.Data.SqlClient
 
             _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, timeout.MillisecondsRemainingInt,
+            _sessionHandle = new SNIHandle(myInfo, serverName, ref spn, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
@@ -270,20 +269,20 @@ namespace Microsoft.Data.SqlClient
         {
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
             PacketHandle readPacket = default;
-            error = SniNativeWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacket, timeoutRemaining);
             return readPacket;
         }
 
         internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             PacketHandle readPacket = default;
-            error = SniNativeWrapper.SNIReadAsync(handle.NativeHandle, ref readPacket);
+            error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacket);
             return readPacket;
         }
 
-        internal uint CheckConnection() => SniNativeWrapper.SNICheckConnection(Handle);
+        internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        internal void ReleasePacket(PacketHandle syncReadPacket) => SniNativeWrapper.SNIPacketRelease(syncReadPacket);
+        internal void ReleasePacket(PacketHandle syncReadPacket) => SniNativeWrapper.SniPacketRelease(syncReadPacket);
         
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
@@ -370,9 +369,9 @@ namespace Microsoft.Data.SqlClient
             return remaining;
         }
 
-        internal void StartSession(int objectID)
+        internal void StartSession(object cancellationOwner)
         {
-            _allowObjectID = objectID;
+            _cancellationOwner.Target = cancellationOwner;
         }
 
         /// <summary>
@@ -401,7 +400,7 @@ namespace Microsoft.Data.SqlClient
                 SNIHandle handle = Handle;
                 if (handle != null)
                 {
-                    error = SniNativeWrapper.SNICheckConnection(handle);
+                    error = SniNativeWrapper.SniCheckConnection(handle);
                 }
             }
             finally
@@ -518,7 +517,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SniNativeWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+            return SniNativeWrapper.SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private void ChangeNetworkPacketTimeout(int dueTime, int period)
@@ -868,102 +867,6 @@ namespace Microsoft.Data.SqlClient
             _outBuff[_outBytesUsed++] = b;
         }
 
-        internal Task WriteByteArray(byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
-        {
-            try
-            {
-                bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
-                Debug.Assert(async || _asyncWriteCount == 0);
-                // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?
-                // would prefer to do something like:
-                //
-                // if (len > what we have room for || len > out buf)
-                //   flush buffer
-                //   UnsafeNativeMethods.Write(b)
-                //
-
-                int offset = offsetBuffer;
-
-                Debug.Assert(b.Length >= len, "Invalid length sent to WriteByteArray()!");
-
-                // loop through and write the entire array
-                do
-                {
-                    if ((_outBytesUsed + len) > _outBuff.Length)
-                    {
-                        // If the remainder of the data won't fit into the buffer, then we have to put
-                        // whatever we can into the buffer, and flush that so we can then put more into
-                        // the buffer on the next loop of the while.
-
-                        int remainder = _outBuff.Length - _outBytesUsed;
-
-                        // write the remainder
-                        Buffer.BlockCopy(b, offset, _outBuff, _outBytesUsed, remainder);
-
-                        // handle counters
-                        offset += remainder;
-                        _outBytesUsed += remainder;
-                        len -= remainder;
-
-                        Task packetTask = WritePacket(TdsEnums.SOFTFLUSH, canAccumulate);
-
-                        if (packetTask != null)
-                        {
-                            Task task = null;
-                            Debug.Assert(async, "Returned task in sync mode");
-                            if (completion == null)
-                            {
-                                completion = new TaskCompletionSource<object>();
-                                task = completion.Task; // we only care about return from topmost call, so do not access Task property in other cases
-                            }
-                            WriteByteArraySetupContinuation(b, len, completion, offset, packetTask);
-                            return task;
-                        }
-
-                    }
-                    else
-                    {
-                        //((stateObj._outBytesUsed + len) <= stateObj._outBuff.Length )
-                        // Else the remainder of the string will fit into the buffer, so copy it into the
-                        // buffer and then break out of the loop.
-
-                        Buffer.BlockCopy(b, offset, _outBuff, _outBytesUsed, len);
-
-                        // handle out buffer bytes used counter
-                        _outBytesUsed += len;
-                        break;
-                    }
-                } while (len > 0);
-
-                if (completion != null)
-                {
-                    completion.SetResult(null);
-                }
-                return null;
-            }
-            catch (Exception e)
-            {
-                if (completion != null)
-                {
-                    completion.SetException(e);
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        // This is in its own method to avoid always allocating the lambda in WriteByteArray
-        private void WriteByteArraySetupContinuation(byte[] b, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
-        {
-            AsyncHelper.ContinueTask(packetTask, completion,
-                () => WriteByteArray(b, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion),
-                connectionToDoom: _parser.Connection
-            );
-        }
-
         // Dumps contents of buffer to SNI for network write.
         internal Task WritePacket(byte flushMode, bool canAccumulate = false)
         {
@@ -1103,7 +1006,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                sniError = SniNativeWrapper.SNIWritePacket(handle, packet, sync);
+                sniError = SniNativeWrapper.SniWritePacket(handle, packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -1215,7 +1118,7 @@ namespace Microsoft.Data.SqlClient
                 SNIPacket attnPacket = new SNIPacket(Handle);
                 _sniAsyncAttnPacket = attnPacket;
 
-                SniNativeWrapper.SNIPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
+                SniNativeWrapper.SniPacketSetData(attnPacket, SQL.AttentionHeader, TdsEnums.HEADER_LEN, null, null);
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -1279,7 +1182,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Prepare packet, and write to packet.
             SNIPacket packet = GetResetWritePacket();
-            SniNativeWrapper.SNIPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
+            SniNativeWrapper.SniPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
             Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
@@ -1334,7 +1237,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_sniPacket != null)
             {
-                SniNativeWrapper.SNIPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
+                SniNativeWrapper.SniPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

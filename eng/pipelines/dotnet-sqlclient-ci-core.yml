@@ -41,6 +41,18 @@ parameters:
   type: object
   default: [false, true]
 
+- name: SNIVersion
+  displayName: |
+    SNI Version Override
+  type: string
+  default: ''
+
+- name: SNIValidationFeed
+  displayName: |
+    SNI Version Override Nuget Feed
+  type: string
+  default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
+
 - name: codeCovTargetFrameworks
   displayName: 'Code Coverage Target Frameworks'
   type: object
@@ -59,7 +71,7 @@ parameters:
 
 variables:
   - template: libraries/ci-build-variables.yml@self
-
+  
   - name: artifactName
     value: Artifacts
 
@@ -73,6 +85,12 @@ stages:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         artifactName: $(artifactName)
+        ${{if ne(parameters.SNIVersion, '')}}:
+          prebuildSteps:
+            - template: common/templates/steps/override-sni-version.yml@self
+              parameters:
+                SNIVersion: ${{parameters.SNIVersion}}
+                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
@@ -81,12 +99,24 @@ stages:
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
-      prebuildSteps: # steps to run prior to building and running tests on each job
-      - template: common/templates/steps/ci-prebuild-step.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          artifactName: $(artifactName)
-          buildType: ${{ parameters.buildType }}
+      ${{if ne(parameters.SNIVersion, '')}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/override-sni-version.yml@self
+            parameters:
+              SNIVersion: ${{parameters.SNIVersion}}
+              SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
+      ${{else}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done

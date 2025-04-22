@@ -178,27 +178,148 @@
   </Target>
 
   <!-- Tests -->
+
+  <!-- Run all unit tests applicable to the host OS. -->
   <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
-  <Target Name="RunFunctionalTests">
-    <!-- Windows -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
-    <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -v n -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --collect &quot;Code coverage&quot; --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+
+  <!-- Run all Functional tests applicable to the host OS. -->
+  <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix"/>
+
+  <!-- Run all Functional tests applicable to Windows. -->
+  <Target Name="RunFunctionalTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Functional-Windows$(TargetGroup)-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Windows via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
-  <Target Name="RunManualTests">
-    <!-- Windows -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
-    <!-- Unix -->
-    <Exec ConsoleToMsBuild="true" Command="$(DotnetPath)dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) -p:ReferenceType=$(ReferenceType) --no-build -l &quot;console;verbosity=normal&quot; --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
+  <!-- Run all Functional tests applicable to Unix. -->
+  <Target Name="RunFunctionalTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(FunctionalTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Unixnetcoreapp
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --logger:"trx;LogFilePrefix=Functional-Unixnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Functional test for Unix via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
   </Target>
 
+  <!-- Run all Manual tests applicable to the host OS. -->
+  <Target Name="RunManualTests" DependsOnTargets="RunManualTestsWindows;RunManualTestsUnix"/>
+
+  <!-- Run all Manual tests applicable to Windows. -->
+  <Target Name="RunManualTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Manual-Windows$(TargetGroup)-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Windows via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all Manual tests applicable to Unix. -->
+  <Target Name="RunManualTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(ManualTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Unixnetcoreapp
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --logger:"trx;LogFilePrefix=Manual-Unixnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running Manual test for Unix via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Clean -->
   <Target Name="Clean">
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","artifacts", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","bin", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","obj", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".","packages", SearchOption.AllDirectories))' />
     <RemoveDir Directories='$([System.IO.Directory]::GetDirectories(".",".nuget", SearchOption.AllDirectories))' />
+  </Target>
+
+  <!-- AKV Targets ========================================================= -->
+  <Target Name="BuildAkv">
+    <!-- @TODO: TestTargetOS for restore poisons the project.assets.json file... We should remove it. -->
+    <!-- @TODO: TestTargetOS makes this far more complicated than it needs to be. We should remove it. -->
+    <!-- @TODO: RemoveProperties shouldn't be necessary -->
+    <Message Text=">>> Restoring AKV project" />
+    <MSBuild Projects="@(AKVProvider)" Targets="Restore"/>
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netfx;Platform=AnyCPU;$(ProjectProperties);$(NugetPackProperties)</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netfx [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/unix [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
+
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/windows [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties);" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    
+    <PropertyGroup>
+      <BuildAkvProperties>$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;</BuildAkvProperties>
+    </PropertyGroup>
+    <Message Text=">>> Building AKV project for netcore/anyos [$(BuildAkvProperties)]" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(BuildAkvProperties)" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true'">

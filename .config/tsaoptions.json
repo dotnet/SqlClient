@@ -7,7 +7,7 @@
     "repositoryName": "SqlClient",
     "codebaseName": "SqlClient",
     "allTools": true,
-    "template": "MSDATA_RevolutionR",
+    "template": "MSDATA_RevolutionR_Overloaded0",
     "language": "csharp",
     "includePathPatterns": "src/Microsoft.Data.SqlClient/*, src/Microsoft.SqlServer.Server/*, tools/*",
     "excludePathPatterns": "src/Microsoft.Data.SqlClient/tests/*"

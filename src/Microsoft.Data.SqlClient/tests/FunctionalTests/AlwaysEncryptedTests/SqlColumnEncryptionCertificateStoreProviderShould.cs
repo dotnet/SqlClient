@@ -230,7 +230,16 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [CEKEncryptionReversalParameters]
+        [MemberData(
+            nameof(CEKEncryptionReversalData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCEKEncryptionReversal(StoreLocation certificateStoreLocation, String certificateStoreNameAndLocation)
         {
@@ -381,8 +390,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
+        [MemberData(
+            nameof(ValidCertificatePathsData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         [PlatformSpecific(TestPlatforms.Windows)]
-        [ValidCertificatePathsParameters]
         public void TestValidCertificatePaths(string certificateStoreNameAndLocation, object location)
         {
             StoreLocation certificateStoreLocation;
@@ -505,33 +519,25 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
-        public class CEKEncryptionReversalParameters : DataAttribute
+        public static IEnumerable<object[]> CEKEncryptionReversalData()
         {
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
+            // use localmachine cert path only when current user is Admin.
+            if (ColumnEncryptionCertificateFixture.IsAdmin)
             {
-                yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
-                // use localmachine cert path only when current user is Admin.
-                if (ColumnEncryptionCertificateFixture.IsAdmin)
-                {
-                    yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
-                }
+                yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
             }
         }
 
-
-        public class ValidCertificatePathsParameters : DataAttribute
+        public static IEnumerable<object[]> ValidCertificatePathsData()
         {
-
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
+            // use localmachine cert path (or an incomplete path, which defaults to localmachine) only when current user is Admin.
+            if (ColumnEncryptionCertificateFixture.IsAdmin)
             {
-                yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
-                // use localmachine cert path (or an incomplete path, which defaults to localmachine) only when current user is Admin.
-                if (ColumnEncryptionCertificateFixture.IsAdmin)
-                {
-                    yield return new object[2] { MyPathPrefix, StoreLocation.LocalMachine };
-                    yield return new object[2] { @"", StoreLocation.LocalMachine };
-                    yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
-                }
+                yield return new object[2] { MyPathPrefix, StoreLocation.LocalMachine };
+                yield return new object[2] { @"", StoreLocation.LocalMachine };
+                yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
             }
         }
 

@@ -13,6 +13,8 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -22,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
+        // @TODO: Remove this in favor of using DbConnectionStringDefaults??
         internal static class DEFAULT
         {
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
@@ -70,6 +73,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor of DbConnectionStringKeywords
         // SqlConnection ConnectionString Options
         internal static class KEY
         {
@@ -125,6 +129,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor DbConnectionStringSynonyms
         // Constant for the number of duplicate options in the connection string
         private static class SYNONYM
         {
@@ -325,7 +330,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
             _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
@@ -574,22 +579,22 @@ namespace Microsoft.Data.SqlClient
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryMSIString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
             }
         }
 
@@ -627,7 +632,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = connectionOptions._contextConnection;
             _currentLanguage = connectionOptions._currentLanguage;
             _dataSource = dataSource;
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = connectionOptions._failoverPartner;
             _initialCatalog = connectionOptions._initialCatalog;
             _password = connectionOptions._password;
@@ -940,7 +945,7 @@ namespace Microsoft.Data.SqlClient
             // wrap Format and Overflow exceptions with Argument one, to be consistent with rest of the keyword types (like int and bool)
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
+                return DbConnectionStringUtilities.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
             }
             catch (FormatException e)
             {
@@ -972,7 +977,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(KEY.Authentication, value);
+                return DbConnectionStringUtilities.ConvertToAuthenticationType(KEY.Authentication, value);
             }
             catch (FormatException e)
             {
@@ -997,7 +1002,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
+                return DbConnectionStringUtilities.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
             }
             catch (FormatException e)
             {
@@ -1022,7 +1027,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
+                return AttestationProtocolUtilities.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
             }
             catch (FormatException e)
             {
@@ -1047,7 +1052,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
+                return IpAddressPreferenceUtilities.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
             }
             catch (FormatException e)
             {
@@ -1068,7 +1073,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
+                return PoolBlockingUtilities.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
             }
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
@@ -1085,7 +1090,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
+                return AttestationProtocolUtilities.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
             }
             catch (FormatException e)
             {

@@ -27,4 +27,4 @@ steps:
   displayName: 'Start SQLBrowser'
 
 - task: NuGetToolInstaller@1
-  displayName: 'Use NuGet '
+  displayName: 'Use NuGet'

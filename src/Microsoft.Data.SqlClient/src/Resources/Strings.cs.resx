@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Neshodné typy SourceColumn {0} z(e) {1} a DataColumn {2} z(e) {3} nelze převést.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>V objektu DataTable {1} pro vlastnost SourceColumn {2} chybí objekt DataColumn {0}.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Nezdařilo se asociování portu se vstupně-výstupním (I/O) mechanismem dokončení.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Soket má hodnotu null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Chyba časového limitu</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definuje chování v období blokování pro fond připojení.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Definuje, zda je povolené ukládání metadat dotazu do mezipaměti.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Neplatný pokus o získání třídy JsonDocument ve sloupci {0}. Třída JsonDocument se podporuje jenom pro sloupce typu json.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Velikost vyrovnávací paměti se příliš zvýšila {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Byla překročena maximální velikost vyrovnávací paměti: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
   </data>
 </root>

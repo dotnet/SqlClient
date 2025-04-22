@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public async Task TransientFaultTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTestAsync(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TransientFaultDisabledTest(uint errorCode)
         {
-            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, errorCode);
+            using TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, false, errorCode);
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + server.Port,

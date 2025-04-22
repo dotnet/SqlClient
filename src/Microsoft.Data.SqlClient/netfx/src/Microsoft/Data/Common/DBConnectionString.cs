@@ -2,16 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Text;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient;
+
 namespace Microsoft.Data.Common
 {
-
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Diagnostics;
-    using System.Text;
-    using Microsoft.Data.SqlClient;
-
     [Serializable] // MDAC 83147
     internal sealed class DBConnectionString
     {
@@ -19,6 +19,7 @@ namespace Microsoft.Data.Common
         // used by permission classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
+        // @TODO: Remove in favor of DbConnectionStringKeywords
         private static class KEY
         {
             internal const string Password = DbConnectionStringKeywords.Password;
@@ -113,7 +114,7 @@ namespace Microsoft.Data.Common
                 _keychain = connectionOptions.ReplacePasswordPwd(out _encryptedUsersConnectionString, true);
             }
 
-            if (!ADP.IsEmpty(restrictions))
+            if (!string.IsNullOrEmpty(restrictions))
             {
                 _restrictionValues = ParseRestrictions(restrictions, synonyms);
                 _restrictions = restrictions;
@@ -168,7 +169,7 @@ namespace Microsoft.Data.Common
                         StringBuilder builder = new StringBuilder();
                         for (int i = 0; i < restrictionValues.Length; ++i)
                         {
-                            if (!ADP.IsEmpty(restrictionValues[i]))
+                            if (!string.IsNullOrEmpty(restrictionValues[i]))
                             {
                                 builder.Append(restrictionValues[i]);
                                 builder.Append("=;");
@@ -496,13 +497,13 @@ namespace Microsoft.Data.Common
 
                 string keyname; // since parsing restrictions ignores values, it doesn't matter if we use ODBC rules or OLEDB rules
                 nextStartPosition = DbConnectionOptions.GetKeyValuePair(restrictions, startPosition, buffer, false, out keyname, out _);
-                if (!ADP.IsEmpty(keyname))
+                if (!string.IsNullOrEmpty(keyname))
                 {
 #if DEBUG
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> KeyName='{0}'", keyname);
 #endif
                     string realkeyname = synonyms != null ? (string)synonyms[keyname] : keyname; // MDAC 85144
-                    if (ADP.IsEmpty(realkeyname))
+                    if (string.IsNullOrEmpty(realkeyname))
                     {
                         throw ADP.KeywordNotSupported(keyname);
                     }
@@ -559,8 +560,8 @@ namespace Microsoft.Data.Common
             {
                 for (int i = 1; i < restrictionValues.Length; ++i)
                 {
-                    Debug.Assert(!ADP.IsEmpty(restrictionValues[i - 1]), "empty restriction");
-                    Debug.Assert(!ADP.IsEmpty(restrictionValues[i]), "empty restriction");
+                    Debug.Assert(!string.IsNullOrEmpty(restrictionValues[i - 1]), "empty restriction");
+                    Debug.Assert(!string.IsNullOrEmpty(restrictionValues[i]), "empty restriction");
                     Debug.Assert(0 >= StringComparer.Ordinal.Compare(restrictionValues[i - 1], restrictionValues[i]));
                 }
             }

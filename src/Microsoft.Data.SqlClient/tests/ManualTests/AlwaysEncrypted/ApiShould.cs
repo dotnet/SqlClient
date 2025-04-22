@@ -425,7 +425,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithSchemaType),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
             CleanUpTable(connection, _tableName);
@@ -744,7 +754,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet1),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestExecuteReaderWithCommandBehavior(string connection, CommandBehavior commandBehavior)
         {
             string[] columnNames = new string[3] { "CustomerId", "FirstName", "LastName" };
@@ -1141,7 +1157,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet2),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
             CleanUpTable(connection, _tableName);
@@ -1828,7 +1850,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet2),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
             CleanUpTable(connection, _tableName);
@@ -1913,7 +1941,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ActiveIssue("10620")] // Randomly hangs the process.
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
+        [MemberData(
+            nameof(DataHelpers.AEConnectionStringProviderWithCommandBehaviorSet1),
+            MemberType = typeof(DataHelpers)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestBeginAndEndExecuteReaderWithAsyncCallback(string connection, CommandBehavior commandbehavior)
         {
             CleanUpTable(connection, _tableName);

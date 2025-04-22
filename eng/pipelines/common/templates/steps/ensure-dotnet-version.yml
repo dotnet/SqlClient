@@ -71,7 +71,7 @@ steps:
           echo "version= $version"
           
           # Install dotnet ###########################################
-          Invoke-WebRequest -Uri "https://dot.net/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
+          Invoke-WebRequest -Uri "https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1" -OutFile "dotnet-install.ps1"
           
           $installDir = If ($installDir) { $installDir } Else { $agentToolsDir } 
           $installParams = @{

@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref byte[][] spnBuffer,
+            ref string[] spns,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -229,7 +229,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void ReleasePacket(PacketHandle syncReadPacket);
 
-        protected abstract uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
+        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient
 
         private uint GetSniPacket(PacketHandle packet, ref uint dataSize)
         {
-            return SNIPacketGetData(packet, _inBuff, ref dataSize);
+            return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         private void ChangeNetworkPacketTimeout(int dueTime, int period)
@@ -791,143 +791,6 @@ namespace Microsoft.Data.SqlClient
             }
             // set byte in buffer and increment the counter for number of bytes used in the out buffer
             _outBuff[_outBytesUsed++] = b;
-        }
-
-        internal Task WriteByteSpan(ReadOnlySpan<byte> span, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
-        {
-            return WriteBytes(span, span.Length, 0, canAccumulate, completion);
-        }
-
-        internal Task WriteByteArray(byte[] b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null)
-        {
-            return WriteBytes(ReadOnlySpan<byte>.Empty, len, offsetBuffer, canAccumulate, completion, b);
-        }
-
-        //
-        // Takes a span or a byte array and writes it to the buffer
-        // If you pass in a span and a null array then the span wil be used.
-        // If you pass in a non-null array then the array will be used and the span is ignored.
-        // if the span cannot be written into the current packet then the remaining contents of the span are copied to a
-        //  new heap allocated array that will used to callback into the method to continue the write operation.
-        private Task WriteBytes(ReadOnlySpan<byte> b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null, byte[] array = null)
-        {
-            if (array != null)
-            {
-                b = new ReadOnlySpan<byte>(array, offsetBuffer, len);
-            }
-            try
-            {
-                bool async = _parser._asyncWrite;  // NOTE: We are capturing this now for the assert after the Task is returned, since WritePacket will turn off async if there is an exception
-                Debug.Assert(async || _asyncWriteCount == 0);
-                // Do we have to send out in packet size chunks, or can we rely on netlib layer to break it up?
-                // would prefer to do something like:
-                //
-                // if (len > what we have room for || len > out buf)
-                //   flush buffer
-                //   UnsafeNativeMethods.Write(b)
-                //
-
-                int offset = offsetBuffer;
-
-                Debug.Assert(b.Length >= len, "Invalid length sent to WriteBytes()!");
-
-                // loop through and write the entire array
-                do
-                {
-                    if ((_outBytesUsed + len) > _outBuff.Length)
-                    {
-                        // If the remainder of the data won't fit into the buffer, then we have to put
-                        // whatever we can into the buffer, and flush that so we can then put more into
-                        // the buffer on the next loop of the while.
-
-                        int remainder = _outBuff.Length - _outBytesUsed;
-
-                        // write the remainder
-                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, remainder);
-                        ReadOnlySpan<byte> copyFrom = b.Slice(0, remainder);
-
-                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length{copyFrom.Length:D} should be the same");
-
-                        copyFrom.CopyTo(copyTo);
-
-                        offset += remainder;
-                        _outBytesUsed += remainder;
-                        len -= remainder;
-                        b = b.Slice(remainder, len);
-
-                        Task packetTask = WritePacket(TdsEnums.SOFTFLUSH, canAccumulate);
-
-                        if (packetTask != null)
-                        {
-                            Task task = null;
-                            Debug.Assert(async, "Returned task in sync mode");
-                            if (completion == null)
-                            {
-                                completion = new TaskCompletionSource<object>();
-                                task = completion.Task; // we only care about return from topmost call, so do not access Task property in other cases
-                            }
-
-                            if (array == null)
-                            {
-                                byte[] tempArray = new byte[len];
-                                Span<byte> copyTempTo = tempArray.AsSpan();
-
-                                Debug.Assert(copyTempTo.Length == b.Length, $"copyTempTo.Length:{copyTempTo.Length} and copyTempFrom.Length:{b.Length:D} should be the same");
-
-                                b.CopyTo(copyTempTo);
-                                array = tempArray;
-                                offset = 0;
-                            }
-
-                            WriteBytesSetupContinuation(array, len, completion, offset, packetTask);
-                            return task;
-                        }
-                    }
-                    else
-                    {
-                        //((stateObj._outBytesUsed + len) <= stateObj._outBuff.Length )
-                        // Else the remainder of the string will fit into the buffer, so copy it into the
-                        // buffer and then break out of the loop.
-
-                        Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, len);
-                        ReadOnlySpan<byte> copyFrom = b.Slice(0, len);
-
-                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length:{copyFrom.Length:D} should be the same");
-
-                        copyFrom.CopyTo(copyTo);
-
-                        // handle out buffer bytes used counter
-                        _outBytesUsed += len;
-                        break;
-                    }
-                } while (len > 0);
-
-                if (completion != null)
-                {
-                    completion.SetResult(null);
-                }
-                return null;
-            }
-            catch (Exception e)
-            {
-                if (completion != null)
-                {
-                    completion.SetException(e);
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-        }
-
-        // This is in its own method to avoid always allocating the lambda in WriteBytes
-        private void WriteBytesSetupContinuation(byte[] array, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
-        {
-            AsyncHelper.ContinueTask(packetTask, completion,
-               onSuccess: () => WriteBytes(ReadOnlySpan<byte>.Empty, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion, array)
-           );
         }
 
         // Dumps contents of buffer to SNI for network write.

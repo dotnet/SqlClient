@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Incompatibilité de type ne pouvant pas être converti entre SourceColumn '{0}' de {1} et DataColumn '{2}' de {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>DataColumn '{0}' manquant pour SourceColumn '{2}'.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>DataColumn '{0}' manquant dans DataTable '{1}' pour SourceColumn '{2}'.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Échec de l'association du port avec le mécanisme de terminaison d'E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Le socket est nul</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Erreur de délai d'attente</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Définit le comportement de la période de blocage pour un pool de connexions.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Définit si la mise en cache des métadonnées de requête est activée.</value>
   </data>
@@ -4745,5 +4730,14 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentative non valide d’obtention de JsonDocument sur la colonne « {0} ». JsonDocument est uniquement pris en charge pour les colonnes de type JSON.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Mémoire tampon avancée trop loin {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Taille maximale de la mémoire tampon dépassée : {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>DataColumn '{0}' manquant pour SourceColumn '{2}'.</value>
   </data>
 </root>

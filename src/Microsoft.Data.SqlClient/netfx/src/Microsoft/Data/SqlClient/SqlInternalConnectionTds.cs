@@ -17,6 +17,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Identity.Client;
 using System.Transactions;
 
@@ -714,22 +715,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2000
-        {
-            get
-            {
-                return _loginAck.isVersion8;
-            }
-        }
-
-        override internal bool Is2005OrNewer
-        {
-            get
-            {
-                return _parser.Is2005OrNewer;
-            }
-        }
-
         override internal bool Is2008OrNewer
         {
             get
@@ -1033,39 +1018,11 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against 2000, or we are not enlisted in a
-                // distributed transaction - otherwise don't reset!
-                if (Is2000)
-                {
-                    // Pooled connections that are enlisted in a transaction must have their transaction
-                    // preserved when reseting the connection state. Otherwise, future uses of the connection
-                    // from the pool will execute outside of the transaction, in auto-commit mode.
-                    // https://github.com/dotnet/SqlClient/issues/2970
-                    _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
-                }
-                else if (!IsEnlistedInTransaction)
-                {
-                    // If not 2000, we are going against 7.0.  On 7.0, we
-                    // may only reset if not enlisted in a distributed transaction.
-                    try
-                    {
-                        // execute sp
-                        System.Threading.Tasks.Task executeTask = _parser.TdsExecuteSQLBatch("sp_reset_connection", 30, null, _parser._physicalStateObj, sync: true);
-                        Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-                        _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
-                    }
-                    catch (Exception e)
-                    {
-                        // UNDONE - should not be catching all exceptions!!!
-                        if (!ADP.IsCatchableExceptionType(e))
-                        {
-                            throw;
-                        }
-
-                        DoomThisConnection();
-                        ADP.TraceExceptionWithoutRethrow(e);
-                    }
-                }
+                // Pooled connections that are enlisted in a transaction must have their transaction
+                // preserved when reseting the connection state. Otherwise, future uses of the connection
+                // from the pool will execute outside of the transaction, in auto-commit mode.
+                // https://github.com/dotnet/SqlClient/issues/2970
+                _parser.PrepareResetConnection(EnlistedTransaction is not null && Pool is not null);
 
                 // Reset hashtable values, since calling reset will not send us env_changes.
                 CurrentDatabase = _originalDatabase;
@@ -1128,103 +1085,7 @@ namespace Microsoft.Data.SqlClient
 
             string transactionName = name == null ? string.Empty : name;
 
-            if (!_parser.Is2005OrNewer)
-            {
-                ExecuteTransactionPre2005(transactionRequest, transactionName, iso, internalTransaction);
-            }
-            else
-            {
-                ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
-            }
-        }
-
-        // This function will not handle idle connection resiliency, as older servers will not support it
-        internal void ExecuteTransactionPre2005(
-                    TransactionRequest transactionRequest,
-                    string transactionName,
-                    System.Data.IsolationLevel iso,
-                    SqlInternalTransaction internalTransaction)
-        {
-            StringBuilder sqlBatch = new StringBuilder();
-
-            switch (iso)
-            {
-                case System.Data.IsolationLevel.Unspecified:
-                    break;
-                case System.Data.IsolationLevel.ReadCommitted:
-                    sqlBatch.Append(TdsEnums.TRANS_READ_COMMITTED);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.ReadUncommitted:
-                    sqlBatch.Append(TdsEnums.TRANS_READ_UNCOMMITTED);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.RepeatableRead:
-                    sqlBatch.Append(TdsEnums.TRANS_REPEATABLE_READ);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.Serializable:
-                    sqlBatch.Append(TdsEnums.TRANS_SERIALIZABLE);
-                    sqlBatch.Append(";");
-                    break;
-                case System.Data.IsolationLevel.Snapshot:
-                    throw SQL.SnapshotNotSupported(System.Data.IsolationLevel.Snapshot);
-
-                case System.Data.IsolationLevel.Chaos:
-                    throw SQL.NotSupportedIsolationLevel(iso);
-
-                default:
-                    throw ADP.InvalidIsolationLevel(iso);
-            }
-
-            if (!ADP.IsEmpty(transactionName))
-            {
-                transactionName = " " + SqlConnection.FixupDatabaseTransactionName(transactionName);
-            }
-
-            switch (transactionRequest)
-            {
-                case TransactionRequest.Begin:
-                    sqlBatch.Append(TdsEnums.TRANS_BEGIN);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Promote:
-                    Debug.Assert(false, "Promote called with transaction name or on pre-2005!");
-                    break;
-                case TransactionRequest.Commit:
-                    sqlBatch.Append(TdsEnums.TRANS_COMMIT);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Rollback:
-                    sqlBatch.Append(TdsEnums.TRANS_ROLLBACK);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.IfRollback:
-                    sqlBatch.Append(TdsEnums.TRANS_IF_ROLLBACK);
-                    sqlBatch.Append(transactionName);
-                    break;
-                case TransactionRequest.Save:
-                    sqlBatch.Append(TdsEnums.TRANS_SAVE);
-                    sqlBatch.Append(transactionName);
-                    break;
-                default:
-                    Debug.Fail("Unknown transaction type");
-                    break;
-            }
-
-            System.Threading.Tasks.Task executeTask = _parser.TdsExecuteSQLBatch(sqlBatch.ToString(), ConnectionOptions.ConnectTimeout, null, _parser._physicalStateObj, sync: true);
-            Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
-            _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
-
-            // Prior to 2005, we didn't have any transaction tokens to manage,
-            // or any feedback to know when one was created, so we just presume
-            // that successful execution of the request caused the transaction
-            // to be created, and we set that on the parser.
-            if (TransactionRequest.Begin == transactionRequest)
-            {
-                Debug.Assert(internalTransaction != null, "Begin Transaction request without internal transaction");
-                _parser.CurrentTransaction = internalTransaction;
-            }
+            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
 
@@ -1633,7 +1494,7 @@ namespace Microsoft.Data.SqlClient
 
             _timeoutErrorInternal.SetInternalSourceType(useFailoverPartner ? SqlConnectionInternalSourceType.Failover : SqlConnectionInternalSourceType.Principle);
 
-            bool hasFailoverPartner = !ADP.IsEmpty(failoverPartner);
+            bool hasFailoverPartner = !string.IsNullOrEmpty(failoverPartner);
 
             // Open the connection and Login
             try
@@ -3331,7 +3192,7 @@ namespace Microsoft.Data.SqlClient
             // when using the Dbnetlib dll.  If the protocol is not specified, the netlib will
             // try all protocols in the order listed in the Client Network Utility.  Connect will
             // then fail if all protocols fail.
-            if (!ADP.IsEmpty(protocol))
+            if (!string.IsNullOrEmpty(protocol))
             {
                 ExtendedServerName = protocol + ":" + serverName;
             }
