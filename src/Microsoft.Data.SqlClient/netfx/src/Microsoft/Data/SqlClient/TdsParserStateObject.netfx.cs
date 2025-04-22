@@ -30,14 +30,6 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class TdsParserStateObject
     {
-        private static class TdsParserStateObjectFactory
-        {
-            /// <summary>
-            /// Always false in case of netfx. Only needed for merging with netcore codebase.
-            /// </summary>
-            internal const bool UseManagedSNI = false;
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.

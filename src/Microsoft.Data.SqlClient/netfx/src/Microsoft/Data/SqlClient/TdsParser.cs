@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        private bool ClientOSEncryptionSupport => SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+        private bool ClientOSEncryptionSupport => TdsParserStateObjectFactory.Singleton.ClientOSEncryptionSupport;
 
         // Default state object for parser
         internal TdsParserStateObject _physicalStateObj = null; // Default stateObj and connection for Dbnetlib and non-MARS SNI.
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
-        private static EncryptionOptions s_sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
+        private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
 
         private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
 
-            _physicalStateObj = new TdsParserStateObject(this);
+            _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            uint sniStatus = SNILoadHandle.SingletonInstance.Status;
+            uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
@@ -737,7 +737,7 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParserStateObject CreateSession()
         {
-            TdsParserStateObject session = new TdsParserStateObject(this, (SNIHandle)_pMarsPhysicalConObj.Handle, true);
+            TdsParserStateObject session = TdsParserStateObjectFactory.Singleton.CreateSessionObject(this, _pMarsPhysicalConObj, true);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.CreateSession|ADV> {0} created session {1}", ObjectID, session.ObjectID);
             return session;
         }
