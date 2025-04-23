@@ -691,7 +691,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal void PruneIdleConnections(object? state)
         {
-            _shutdownCT.ThrowIfCancellationRequested();
+            // Important not to throw here. We're not in an async function, so there's no task to automatically
+            // propagate the exception to. If we throw, we'll crash the process.
+            if (_shutdownCT.IsCancellationRequested)
+            {
+                return;
+            }
 
             if (State is ShuttingDown || !PruningTask.IsCompleted || !PruningLock.Wait(0))
             {
@@ -762,7 +767,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>A ValueTask tracking this operation.</returns>
         internal void UpdateMinIdleCount(object? state)
         {
-            _shutdownCT.ThrowIfCancellationRequested();
+            // Important not to throw here. We're not in an async function, so there's no task to automatically
+            // propagate the exception to. If we throw, we'll crash the process.
+            if (_shutdownCT.IsCancellationRequested)
+            {
+                return;
+            }
 
             try
             {
@@ -858,9 +868,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         return;
                     }
 
-                    // The connector has never been used, so it's safe to immediately return it to the
+                    // The connector has never been used, so it's safe to immediately add it to the
                     // pool without resetting it.
-                    ReturnInternalConnection(connector, null);
+                    Interlocked.Increment(ref _idleCount);
+                    var written = _idleConnectorWriter.TryWrite(connector);
+                    Debug.Assert(written);
                 }
             }
         }
