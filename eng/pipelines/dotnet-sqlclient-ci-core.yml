@@ -71,7 +71,7 @@ parameters:
 
 variables:
   - template: libraries/ci-build-variables.yml@self
-
+  
   - name: artifactName
     value: Artifacts
 

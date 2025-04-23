@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
@@ -47,6 +48,7 @@ namespace Microsoft.Data.Common
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
+        // @TODO: These are not necessary because the TPL has optimized commonly used task return values like true and false.
         private static Task<bool> s_trueTask;
         internal static Task<bool> TrueTask => s_trueTask ??= Task.FromResult(true);
 
@@ -750,16 +752,31 @@ namespace Microsoft.Data.Common
 
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
+        private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE3 = ".pbidedicated.windows.net";
+        private const string AZURE_SQL = ".database.windows.net";
+        private const string AZURE_SQL_GERMANY = ".database.cloudapi.de";
+        private const string AZURE_SQL_USGOV = ".database.usgovcloudapi.net";
+        private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
+        private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+            return IsEndpoint(dataSource, ONDEMAND_PREFIX)
+                || dataSource.Contains(AZURE_SYNAPSE)
+                || dataSource.Contains(FABRIC_DATAWAREHOUSE)
+                || dataSource.Contains(PBI_DATAWAREHOUSE)
+                || dataSource.Contains(PBI_DATAWAREHOUSE2)
+                || dataSource.Contains(PBI_DATAWAREHOUSE3);
         }
 
-        internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
+        internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
+                                                                        AZURE_SQL_GERMANY,
+                                                                        AZURE_SQL_USGOV,
+                                                                        AZURE_SQL_CHINA,
+                                                                        AZURE_SQL_FABRIC };
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
@@ -777,8 +794,19 @@ namespace Microsoft.Data.Common
                 length = foundIndex;
             }
 
-            // check for the instance name
-            foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            // Safeguard LastIndexOf call to avoid ArgumentOutOfRangeException when length is 0
+            if (length > 0)
+            {
+                // check for the instance name
+                foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            }
+            else
+            {
+                foundIndex = -1;
+            }
+
+
+  
             if (foundIndex > 0)
             {
                 length = foundIndex;
@@ -1312,7 +1340,6 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
         #endregion
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only

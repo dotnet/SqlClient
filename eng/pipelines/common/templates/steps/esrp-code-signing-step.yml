@@ -17,6 +17,10 @@ parameters:
     type: string
     default: $(artifactDirectory)
 
+  - name: ESRPConnectedServiceName
+    type: string
+    default: $(ESRPConnectedServiceName)
+
   - name: appRegistrationClientId
     type: string
     default: $(appRegistrationClientId)
@@ -25,16 +29,28 @@ parameters:
     type: string
     default: $(appRegistrationTenantId)
 
+  - name: AuthAKVName
+    type: string
+    default: $(AuthAKVName)
+
+  - name: AuthSignCertName
+    type: string
+    default: $(AuthSignCertName)
+
+  - name: EsrpClientId
+    type: string
+    default: $(EsrpClientId)
+
 steps:
 - ${{ if eq(parameters.artifactType, 'dll') }}:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: SqlClientDrivers
-      AuthCertName: 'ESRP-Release-Auth'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       CleanupTempStorage: 1
@@ -42,12 +58,13 @@ steps:
   - task: EsrpCodeSigning@5
     displayName: 'ESRP CodeSigning'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: SqlClientDrivers
-      AuthCertName: 'ESRP-Release-Auth'
-      AuthSignCertName: 'ESRP-Release-Sign2'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
+      AuthAKVName: '${{parameters.AuthAKVName }}'
+      AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.sourceRoot }}'
       Pattern: '*.dll'
       signConfigType: inlineSignParams
@@ -94,11 +111,11 @@ steps:
   - task: EsrpMalwareScanning@5
     displayName: 'ESRP MalwareScanning Nuget Package'
     inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: SqlClientDrivers
-      AuthCertName: 'ESRP-Release-Auth'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       CleanupTempStorage: 1
@@ -107,12 +124,13 @@ steps:
     displayName: 'ESRP CodeSigning Nuget Package'
     inputs:
       inputs:
-      ConnectedServiceName: 'ESRP Workload Identity federation service-ADO.Net'
+      ConnectedServiceName: '${{parameters.ESRPConnectedServiceName }}'
       AppRegistrationClientId: '${{parameters.appRegistrationClientId }}'
       AppRegistrationTenantId: '${{parameters.appRegistrationTenantId }}'
-      AuthAKVName: SqlClientDrivers
-      AuthCertName: 'ESRP-Release-Auth'
-      AuthSignCertName: 'ESRP-Release-Sign2'
+      EsrpClientId: '${{parameters.EsrpClientId }}'
+      UseMSIAuthentication: true
+      AuthAKVName: '${{parameters.AuthAKVName }}'
+      AuthSignCertName: '${{parameters.AuthSignCertName }}'
       FolderPath: '${{parameters.artifactDirectory }}'
       Pattern: '*.*nupkg'
       signConfigType: inlineSignParams

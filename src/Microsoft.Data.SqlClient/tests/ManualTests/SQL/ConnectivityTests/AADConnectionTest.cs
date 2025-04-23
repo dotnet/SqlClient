@@ -51,9 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
             {
-                #pragma warning disable 0618
                 return authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryPassword);
-                #pragma warning restore 0618
             }
         }
 
@@ -260,9 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void TestCustomProviderAuthentication()
         {
-            #pragma warning disable 0618
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
-            #pragma warning restore 0618
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
@@ -280,9 +276,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             // Reset to driver internal provider.
-            #pragma warning disable 0618
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
-            #pragma warning restore 0618
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]

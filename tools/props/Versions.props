@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>6.0.0</MdsVersionDefault>
+    <MdsVersionDefault>6.1.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
@@ -53,7 +53,7 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
+    <BenchmarkDotNetVersion>0.14.0</BenchmarkDotNetVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftDotNetRemoteExecutorVersion>10.0.0-beta.25164.6</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftDotNetXUnitExtensionsVersion>10.0.0-beta.25164.6</MicrosoftDotNetXUnitExtensionsVersion>
