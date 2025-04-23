@@ -52,7 +52,7 @@ parameters: # parameters are shown up in ADO UI in a build queue time
 
 - name: oneBranchType
   displayName: 'Select OneBranch template'
-  default: Official
+  default: NonOfficial
   values:
   - NonOfficial
   - Official
