@@ -9730,15 +9730,7 @@ namespace Microsoft.Data.SqlClient
                         // If this is not the last RPC we are sending, add the batch flag
                         if (ii < (rpcArray.Count - 1))
                         {
-                            if (_is2005)
-                            {
-                                stateObj.WriteByte(TdsEnums.SQL2005_RPCBATCHFLAG);
-
-                            }
-                            else
-                            {
-                                stateObj.WriteByte(TdsEnums.SQL2000_RPCBATCHFLAG);
-                            }
+                            stateObj.WriteByte(TdsEnums.SQL2005_RPCBATCHFLAG);
                         }
                     } // rpc for loop
 
