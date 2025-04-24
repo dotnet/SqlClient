@@ -3805,7 +3805,7 @@
     <value>Error al completar el mecanismo de asociación de puerto con E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>El socket es null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Error de tiempo de espera</value>
