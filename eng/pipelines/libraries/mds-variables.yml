@@ -12,7 +12,7 @@ variables:
   - name: Minor
     value: 1
   - name: Patch
-    value: 6
+    value: 7
   - name: Packaging.EnableSBOMSigning
     value: true
   
