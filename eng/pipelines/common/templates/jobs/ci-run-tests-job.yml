@@ -258,12 +258,13 @@ jobs:
             set TrimmedFrameworkVersion=%FrameworkVersion:~3%
             echo %TrimmedFrameworkVersion%
             echo ##vso[task.setvariable variable=netVersionX86]%TrimmedFrameworkVersion%
+          displayName: "Trim dotnet version"
         - template: ../steps/ensure-dotnet-version.yml
           parameters:
             installDir: "$(dotnetx86RootPath)"
             packageType: "sdk"
             usePreview: "false"
-            version: "$[variables.netVersionX86]"
+            version: $(netVersionX86)
 
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
