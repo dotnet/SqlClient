@@ -3808,7 +3808,7 @@
     <value>Сбой при сопоставлении порта механизму завершения ввода-вывода</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Сокет имеет значение NULL</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Ошибка времени ожидания</value>
