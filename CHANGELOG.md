@@ -370,8 +370,6 @@ This update brings the following changes since the 5.1.6 release:
 
 ### Changed
 
-- Replaced sample passwords with `********` to avoid triggering security scanners (PR [#3289](https://github.com/dotnet/SqlClient/pull/3289))
-- Removed stray double-quote in `BuildTools` target (PR [#2728](https://github.com/dotnet/SqlClient/pull/2728))
 - Updated the following dependencies:
   - [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/5.1.2) 5.1.1 to 5.1.2 for .NET Framework on Windows (PR [#3294](https://github.com/dotnet/SqlClient/pull/3294))
   - [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/5.1.2) 5.1.1 to 5.1.2 for .NET on Windows (PR [#3294](https://github.com/dotnet/SqlClient/pull/3294))
@@ -380,7 +378,6 @@ This update brings the following changes since the 5.1.6 release:
   - [System.Private.Uri](https://www.nuget.org/packages/System.Private.Uri) 4.3.2 - Avoid transitive [CVE-2019-0820](https://msrc.microsoft.com/update-guide/en-US/advisory/CVE-2019-0820) (PR [#3077](https://github.com/dotnet/SqlClient/pull/3077))
   - [System.Text.Encodings.Web](https://www.nuget.org/packages/System.Text.Encodings.Web/6.0.1) 6.0.0 to 6.0.1 - Avoid transitive downgrade for .NET Framework targets (PR [#3279](https://github.com/dotnet/SqlClient/pull/3279))
   - [System.Text.Json](https://www.nuget.org/packages/System.Text.Json/6.0.11) 6.0.11 - Avoid transitive dependencies on older vulnerable versions for .NET Framework targets (PR [#3279](https://github.com/dotnet/SqlClient/pull/3279))
-- Fixed incorrect [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) dependency versions in [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider](https://www.nuget.org/packages/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider) NuGet specification to address Dependabot [#13](https://github.com/dotnet/SqlClient/security/dependabot/13) (PR [#3279](https://github.com/dotnet/SqlClient/pull/3279))
 
 ## [Stable release 5.1.6] - 2024-08-27
 
