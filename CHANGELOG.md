@@ -6,14 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
-## [Stable release 6.0.2] - 2025-04-16
+## [Stable release 6.0.2] - 2025-04-24
 
 This update brings the below changes over the previous release:
 
 ### Fixed
 
+- Fixed possible `NullPointerException` during socket receive [#3283](https://github.com/dotnet/SqlClient/pull/3283)
 - Fixed reference assembly definitions for SqlJson APIs [#3169](https://github.com/dotnet/SqlClient/pull/3169)
 - Fixed an error reading the output parameter of type JSON while executing stored procedure [#3173](https://github.com/dotnet/SqlClient/pull/3173)
+
+### Changed
+- Updated the below dependencies:
+    - Updated [Microsoft.Bcl.Cryptography](https://www.nuget.org/packages/Microsoft.Bcl.Cryptography/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+    - Updated [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+    - Updated [System.Configuration.ConfigurationManager](https://www.nuget.org/packages/System.Configuration.ConfigurationManager/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+    - Updated [System.Security.Cryptography.Pkcs](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
 
 ## [Stable release 6.0.1] - 2025-01-23
 
