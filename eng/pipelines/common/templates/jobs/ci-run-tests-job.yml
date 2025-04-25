@@ -231,26 +231,41 @@ jobs:
         referenceType: ${{ parameters.buildType }}
         testSet: ${{ parameters.testSet }}
         operatingSystem: ${{ parameters.operatingSystem }}
-  
-  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}: # run x86 tests
-    - powershell: |
-        dotnet --info
-        
-        Invoke-WebRequest https://builds.dotnet.microsoft.com/dotnet/scripts/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-        
-        # install .net x86
-        $version = "LTS"
-        if (!"${{parameters.targetFramework }}".StartsWith("net4"))
-        {
-            $version = "${{parameters.targetFramework }}".Substring(3, "${{parameters.targetFramework }}".Length-3)
-        }
-        
-        .\dotnet-install.ps1 -Channel $version -Architecture x86 -InstallDir "$(dotnetx86RootPath)"
-        
-        $(dotnetx86RootPath)dotnet.exe --info
-      displayName: 'Install .NET x86 '
-      condition: ne(variables['dotnetx86RootPath'], '')
-  
+
+  - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
+    # Set up for x86 tests by manually installing dotnet for x86 to an alternative location. This
+    # is only used to execute the test runtime (framework to test is specified in build params), so
+    # it should be acceptable to just install a specific version in all cases.
+    # @TODO: This setup is very confusing. Ideally we should just be utilizing the dotnet installation
+    #    earlier in the job. There has to be a cleaner way of doing this.
+    #    As it stands now, we install dotnet LTS if we're running netfx tests, and the appropriate netX
+    #    version if we're running netcore tests. Technically LTS is not supported by the UseDotNet task
+    #    but we know we're using install-dotnet since we're on windows (for now ... this will not work
+    #    forever and needs a serious rethinking).
+    - ${{ if ne(variables['dotnetx86RootPath'], '') }}:
+      - ${{ if startswith(parameters.targetFramework, 'net4')}}:
+        - template: ../steps/ensure-dotnet-version.yml
+          parameters:
+            installDir: "$(dotnetx86RootPath)"
+            packageType: "sdk"
+            usePreview: "false"
+            version: "LTS"
+            windowsArchitecture: "x86"
+      - ${{ else }}:
+        - script: |
+            set FrameworkVersion=${{ parameters.targetFramework }}
+            echo %FrameworkVersion%
+            set TrimmedFrameworkVersion=%FrameworkVersion:~3%
+            echo %TrimmedFrameworkVersion%
+            echo ##vso[task.setvariable variable=netVersionX86]%TrimmedFrameworkVersion%
+          displayName: "Trim dotnet version"
+        - template: ../steps/ensure-dotnet-version.yml
+          parameters:
+            installDir: "$(dotnetx86RootPath)"
+            packageType: "sdk"
+            usePreview: "false"
+            version: $(netVersionX86)
+
     - template: ../steps/run-all-tests-step.yml@self
       parameters:
         debug: ${{ parameters.debug }}
