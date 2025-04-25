@@ -2,35 +2,25 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Provides implementation similar to certificate store provider.
-    /// A CEK encrypted with certificate provider should be decryptable by this provider and vice versa.
-    /// 
-    /// Envolope Format for the encrypted column encryption key  
-    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
-    /// version: A single byte indicating the format version.
-    /// keyPathLength: Length of the keyPath.
-    /// ciphertextLength: ciphertext length
-    /// keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
-    /// ciphertext: Encrypted column encryption key
-    /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
-    /// </summary>
-    public class SqlColumnEncryptionCngProvider : SqlColumnEncryptionKeyStoreProvider
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*' />
+    public class SqlColumnEncryptionCertificateStoreProvider : SqlColumnEncryptionKeyStoreProvider
     {
         /// <summary>
-        /// Name for the CNG key store provider.
+        /// Name for the certificate key store provider.
         /// </summary>
-        public const string ProviderName = @"MSSQL_CNG_STORE";
+        public const string ProviderName = @"MSSQL_CERTIFICATE_STORE";
 
         /// <summary>
-        /// This function uses the asymmetric key specified by the key path
+        /// This function uses a certificate specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in CNG</param>
+        /// <param name="masterKeyPath">Complete path of a certificate</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
         /// <returns>Plain text column encryption key</returns>
@@ -40,10 +30,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// This function uses the asymmetric key specified by the key path
+        /// This function uses a certificate specified by the key path
         /// and encrypts CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in AKV</param>
+        /// <param name="masterKeyPath">Complete path of a certificate</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">The plaintext column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>
@@ -53,18 +43,20 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Throws NotSupportedException. In this version of .NET Framework this provider does not support signing column master key metadata.
+        /// This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path
+        /// and sign the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
         /// </summary>
         /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
         /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
-        /// <returns>Encrypted column encryption key</returns>
+        /// <returns>Signature for master key metadata</returns>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
             throw new PlatformNotSupportedException();
         }
 
         /// <summary>
-        /// Throws NotSupportedException. In this version of .NET Framework this provider does not support verifying signatures of column master key metadata.
+        /// This function must be implemented by the corresponding Key Store providers. This function should use an asymmetric key identified by a key path
+        /// and verify the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
         /// </summary>
         /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
         /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
@@ -76,3 +68,5 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+
+#endif
