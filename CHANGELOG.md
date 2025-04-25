@@ -359,6 +359,26 @@ This update brings the below changes over the previous release:
 - Added Microsoft.SqlServer.Types to verify support for SqlHierarchyId and Spatial for .NET Core. [#1848](https://github.com/dotnet/SqlClient/pull/1848)
 - Code health improvements:[#1943](https://github.com/dotnet/SqlClient/pull/1943)[#1949](https://github.com/dotnet/SqlClient/pull/1949)[#1198](https://github.com/dotnet/SqlClient/pull/1198)[#1829](https://github.com/dotnet/SqlClient/pull/1829)
 
+## [Stable release 5.1.7] - 2025-04-25
+
+This update brings the following changes since the 5.1.6 release:
+
+### Fixed
+
+- Fixed possible `NullPointerException` during socket receive (PR [#3285](https://github.com/dotnet/SqlClient/pull/3285))
+- Fixed inconsistencies between source and reference projects (PR [#3180](https://github.com/dotnet/SqlClient/pull/3180))
+
+### Changed
+
+- Updated the following dependencies:
+  - [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI/5.1.2) 5.1.1 to 5.1.2 for .NET Framework on Windows (PR [#3294](https://github.com/dotnet/SqlClient/pull/3294))
+  - [Microsoft.Data.SqlClient.SNI.runtime](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI.runtime/5.1.2) 5.1.1 to 5.1.2 for .NET on Windows (PR [#3294](https://github.com/dotnet/SqlClient/pull/3294))
+  - [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/6.0.3) 6.0.1 to 6.0.3 - Avoid [CVE-2024-43483](https://github.com/advisories/GHSA-qj66-m88j-hmgj) (PR [#3068](https://github.com/dotnet/SqlClient/pull/3068))
+  - [Microsoft.Extensions.Hosting](https://www.nuget.org/packages/Microsoft.Extensions.Hosting/6.0.1) 6.0.0 to 6.0.1 - Avoid transitive dependency on vulnerable [System.Text.Json](https://www.nuget.org/packages/System.Text.Json/6.0.0) 6.0.0 (PR [#3207](https://github.com/dotnet/SqlClient/pull/3207))
+  - [System.Private.Uri](https://www.nuget.org/packages/System.Private.Uri) 4.3.2 - Avoid transitive [CVE-2019-0820](https://msrc.microsoft.com/update-guide/en-US/advisory/CVE-2019-0820) (PR [#3077](https://github.com/dotnet/SqlClient/pull/3077))
+  - [System.Text.Encodings.Web](https://www.nuget.org/packages/System.Text.Encodings.Web/6.0.1) 6.0.0 to 6.0.1 - Avoid transitive downgrade for .NET Framework targets (PR [#3279](https://github.com/dotnet/SqlClient/pull/3279))
+  - [System.Text.Json](https://www.nuget.org/packages/System.Text.Json/6.0.11) 6.0.11 - Avoid transitive dependencies on older vulnerable versions for .NET Framework targets (PR [#3279](https://github.com/dotnet/SqlClient/pull/3279))
+
 ## [Stable release 5.1.6] - 2024-08-27
 
 ### Fixed
