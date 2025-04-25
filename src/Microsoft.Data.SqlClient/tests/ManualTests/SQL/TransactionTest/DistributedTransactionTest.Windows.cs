@@ -71,15 +71,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand command = rootConnection.CreateCommand())
                     {
                         command.CommandText = $"INSERT INTO {TestTableName} VALUES ({InputCol1}, '{InputCol2}')";
-                        await command.ExecuteNonQueryAsync();
+                        command.ExecuteNonQuery();
                     }
 
                     // Closing and reopening cycles the connection through the pool.
                     // We want to verify that the transaction state is preserved through this cycle.
                     SqlConnection enlistedConnection = new SqlConnection(ConnectionString);
-                    await enlistedConnection.OpenAsync();
+                    enlistedConnection.Open();
                     enlistedConnection.Close();
-                    await enlistedConnection.OpenAsync();
+                    enlistedConnection.Open();
 
                     // Forcibly kill the root connection to mimic gateway's behavior when using the proxy connection policy
                     // https://techcommunity.microsoft.com/blog/azuredbsupport/azure-sql-database-idle-sessions-are-killed-after-about-30-minutes-when-proxy-co/3268601
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command.CommandText = $"INSERT INTO {TestTableName} VALUES ({InputCol1}, '{InputCol2}')";
                         try
                         {
-                            await command.ExecuteNonQueryAsync();
+                            command.ExecuteNonQuery();
                         }
                         catch (Exception ex)
                         {
