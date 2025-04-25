@@ -3805,7 +3805,7 @@
     <value>Falha ao associar porta e mecanismo de conclusão de E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>O soquete é nulo</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Erro de tempo limite</value>
