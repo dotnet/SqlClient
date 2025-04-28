@@ -104,6 +104,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
 
+                Assert.True(descriptor.Converter.GetStandardValuesSupported());
+                Assert.False(descriptor.Converter.GetStandardValuesExclusive());
+
                 // GetStandardValues of this converter calls GetSchema("DATABASES")
                 var dbNames = descriptor.Converter.GetStandardValues(new DescriptorContext(descriptor, builder));
                 HashSet<string> searchSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
