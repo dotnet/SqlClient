@@ -925,8 +925,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlFileStream.netcore.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\SqlFileStream.netcore.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
 
     <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
