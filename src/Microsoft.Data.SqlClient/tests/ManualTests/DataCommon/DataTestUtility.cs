@@ -467,11 +467,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
         }
 
-        public static bool IsNotNamedInstance()
-        {
-            return !AreConnStringsSetup() || !new SqlConnectionStringBuilder(TCPConnectionString).DataSource.Contains(@"\");
-        }
-
         public static bool IsLocalHost()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
