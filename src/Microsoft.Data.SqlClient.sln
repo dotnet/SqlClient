@@ -289,6 +289,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{
 		..\eng\pipelines\variables\akv-official-variables.yml = ..\eng\pipelines\variables\akv-official-variables.yml
 		..\eng\pipelines\variables\common-variables.yml = ..\eng\pipelines\variables\common-variables.yml
 		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
+		..\eng\pipelines\variables\esrp-signing-variables.yml = ..\eng\pipelines\variables\esrp-signing-variables.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
