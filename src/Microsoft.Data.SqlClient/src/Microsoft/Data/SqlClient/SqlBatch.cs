@@ -223,6 +223,10 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ConnectionRequired(nameof(SetupBatchCommandExecute));
             }
+            if (_commands is null) 
+            {
+                throw ADP.ArgumentNull(nameof(_commands));
+            }
             _batchCommand.Connection = Connection;
             _batchCommand.Transaction = Transaction;
             _batchCommand.SetBatchRPCMode(true, _commands.Count);
