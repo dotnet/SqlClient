@@ -155,13 +155,13 @@ This update brings the following changes since the 5.2.2 release:
 
 - Fixed possible `NullPointerException` during socket receive (PR [#3284](https://github.com/dotnet/SqlClient/pull/3284))
 - Fixed inconsistencies between source and reference projects (PR [#3124](https://github.com/dotnet/SqlClient/pull/3124))
-- Adjusted retry logic to allow errors with negative numbers to be considered transient [#3185](https://github.com/dotnet/SqlClient/pull/3185)
+- Adjusted retry logic to allow errors with negative numbers to be considered transient (PR [#3185](https://github.com/dotnet/SqlClient/pull/3185))
 
 ### Changed
 
 - Updated the following dependencies:
   - [System.Private.Uri](https://www.nuget.org/packages/System.Private.Uri) 4.3.2 - Avoid transitive [CVE-2019-0820](https://msrc.microsoft.com/update-guide/en-US/advisory/CVE-2019-0820) (PR [#3076](https://github.com/dotnet/SqlClient/pull/3076))
-  - [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/6.0.3) 6.0.1 to 6.0.3 - Avoid [CVE-2024-43483](https://github.com/advisories/GHSA-qj66-m88j-hmgj) (PR [#3280](https://github.com/dotnet/SqlClient/
+  - [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/6.0.3) 6.0.1 to 6.0.3 - Avoid [CVE-2024-43483](https://github.com/advisories/GHSA-qj66-m88j-hmgj) (PR [#3280](https://github.com/dotnet/SqlClient/pull/3280))
 
 ## [Stable release 5.2.2] - 2024-08-27
 
