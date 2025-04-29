@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestEncryptDecryptWithAKV()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void ForcedColumnDecryptErrorTestShouldFail()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringHGSVBS)
             {
                 ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
