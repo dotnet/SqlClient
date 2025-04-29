@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (_commands is null) 
             {
-                throw ADP.ArgumentNull(nameof(_commands));
+                throw ADP.InvalidOperation("SqlBatchCommand list has not been initialized.");
             }
             _batchCommand.Connection = Connection;
             _batchCommand.Transaction = Transaction;
