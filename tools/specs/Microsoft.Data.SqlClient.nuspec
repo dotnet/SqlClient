@@ -30,23 +30,23 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <dependencies>
       <group targetFramework="net462">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="6.0.2" />
-        <dependency id="Azure.Identity" version="1.11.4" />
+        <dependency id="Azure.Identity" version="1.13.2" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
         <dependency id="System.Buffers" version="4.5.1" />
-        <dependency id="System.Text.Encodings.Web" version="6.0.0" />
-        <dependency id="System.Text.Json" version="6.0.10" />
+        <dependency id="System.Text.Encodings.Web" version="8.0.0" />
+        <dependency id="System.Text.Json" version="8.0.5" />
         <dependency id="System.Data.Common" version="4.3.0" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
         <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0"/>
       </group>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.11.4" />
+        <dependency id="Azure.Identity" version="1.13.2" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1"/>
@@ -54,10 +54,10 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       </group>
       <group targetFramework="net9.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="6.0.2" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.11.4" />
+        <dependency id="Azure.Identity" version="1.13.2" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.4" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.5.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.5.0" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="7.7.1" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="7.7.1" />
         <dependency id="Microsoft.SqlServer.Server" version="1.0.0"/>
         <dependency id="System.Configuration.ConfigurationManager" version="9.0.4" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="9.0.4"/>
