@@ -107,12 +107,13 @@ namespace Microsoft.Data.SqlClient
         // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
         internal const int MsalHttpRetryStatusCode = 429;
 
-        // Connection re-route limit
-        internal const int _maxNumberOfRedirectRoute = 10;
-
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
         private TdsParser _parser;
+
+        // Connection re-route limit
+        internal const int _maxNumberOfRedirectRoute = 10;
+
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
         private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
@@ -126,7 +127,6 @@ namespace Microsoft.Data.SqlClient
         // Federated Authentication
         // Response obtained from the server for FEDAUTHREQUIRED prelogin option.
         internal bool _fedAuthRequired;
-
         internal bool _federatedAuthenticationRequested;
         internal bool _federatedAuthenticationAcknowledged;
         internal bool _federatedAuthenticationInfoRequested; // Keep this distinct from _federatedAuthenticationRequested, since some fedauth library types may not need more info
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
-        internal readonly Func<SqlAuthenticationParameters, CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
+        internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
@@ -250,8 +250,6 @@ namespace Microsoft.Data.SqlClient
         // The timespan defining the minimum amount of time the authentication context needs to be valid for re-using the cached context.
         // If the context is expiring within the next 10 mins, then create a new context, irrespective of if another thread is trying to do the same.
         private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan = new TimeSpan(hours: 0, minutes: 10, seconds: 00);
-
-        private readonly TimeoutTimer _timeout;
 
         private static HashSet<int> transientErrors = new HashSet<int>();
 
@@ -405,6 +403,7 @@ namespace Microsoft.Data.SqlClient
         RoutingInfo _routingInfo = null;
         private Guid _originalClientConnectionId = Guid.Empty;
         private string _routingDestination = null;
+        private readonly TimeoutTimer _timeout;
 
         static SqlInternalConnectionTds()
         {
