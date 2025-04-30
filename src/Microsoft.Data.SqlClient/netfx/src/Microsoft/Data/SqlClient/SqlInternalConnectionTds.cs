@@ -399,7 +399,6 @@ namespace Microsoft.Data.SqlClient
         internal Guid _clientConnectionId = Guid.Empty;
 
         // Routing information (ROR)
-        RoutingInfo _routingInfo = null;
         private Guid _originalClientConnectionId = Guid.Empty;
         private string _routingDestination = null;
         private readonly TimeoutTimer _timeout;
@@ -645,13 +644,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal RoutingInfo RoutingInfo
-        {
-            get
-            {
-                return _routingInfo;
-            }
-        }
+        internal RoutingInfo RoutingInfo { get; private set; } = null;
 
         internal override SqlInternalTransaction CurrentTransaction
         {
@@ -1259,7 +1252,7 @@ namespace Microsoft.Data.SqlClient
         {
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            if (_routingInfo == null)
+            if (RoutingInfo == null)
             {
                 // ROR should not affect state of connection recovery
                 if (_federatedAuthenticationRequested && !_federatedAuthenticationAcknowledged)
@@ -1311,7 +1304,7 @@ namespace Microsoft.Data.SqlClient
 
             // for non-pooled connections, enlist in a distributed transaction
             // if present - and user specified to enlist
-            if (enlistOK && ConnectionOptions.Enlist && _routingInfo == null)
+            if (enlistOK && ConnectionOptions.Enlist && RoutingInfo == null)
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
@@ -1687,7 +1680,7 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
                     }
 
-                    if (_routingInfo != null)
+                    if (RoutingInfo != null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
                         if (routingAttempts > _maxNumberOfRedirectRoute)
@@ -1700,7 +1693,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_TimeoutAfterRoutingInfo(this);
                         }
 
-                        serverInfo = new ServerInfo(ConnectionOptions, _routingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
+                        serverInfo = new ServerInfo(ConnectionOptions, RoutingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = serverInfo.UserServerName;
@@ -1955,7 +1948,7 @@ namespace Microsoft.Data.SqlClient
                             );
 
                     int routingAttempts = 0;
-                    while (_routingInfo != null)
+                    while (RoutingInfo != null)
                     {
                         if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
@@ -1963,7 +1956,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         routingAttempts++;
 
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", _routingInfo.ServerName);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
 
                         if (_parser != null)
                         {
@@ -1973,7 +1966,7 @@ namespace Microsoft.Data.SqlClient
                         _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
-                        currentServerInfo = new ServerInfo(ConnectionOptions, _routingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
+                        currentServerInfo = new ServerInfo(ConnectionOptions, RoutingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = currentServerInfo.UserServerName;
@@ -2112,7 +2105,7 @@ namespace Microsoft.Data.SqlClient
                                     bool disableTnir = false)
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
-            _routingInfo = null; // forget routing information
+            RoutingInfo = null; // forget routing information
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
@@ -2248,7 +2241,7 @@ namespace Microsoft.Data.SqlClient
         { // true if we are only draining environment change tokens, used by TdsParser
             get
             {
-                return _routingInfo != null; // connection was routed, ignore rest of env change
+                return RoutingInfo != null; // connection was routed, ignore rest of env change
             }
         }
 
@@ -2343,7 +2336,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
                     }
-                    _routingInfo = rec._newRoutingInfo;
+                    RoutingInfo = rec._newRoutingInfo;
                     break;
 
                 default:
@@ -2772,12 +2765,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (_routingInfo != null)
+            if (RoutingInfo != null && TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
             {
-                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
-                {
-                    return;
-                }
+                return;
             }
 
             switch (featureId)
@@ -3008,7 +2998,7 @@ namespace Microsoft.Data.SqlClient
                             IsSQLDNSCachingSupported = true;
                             _cleanSQLDNSCaching = false;
 
-                            if (_routingInfo != null)
+                            if (RoutingInfo != null)
                             {
                                 IsDNSCachingBeforeRedirectSupported = true;
                             }
