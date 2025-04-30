@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool DNSCachingBeforeRedirect = false;
+        private bool _DNSCachingBeforeRedirect = false;
 
         /// <summary>
         /// Get or set if the control ring send redirect token and SQLDNSCaching FeatureExtAck with true
@@ -195,11 +195,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return DNSCachingBeforeRedirect;
+                return _DNSCachingBeforeRedirect;
             }
             set
             {
-                DNSCachingBeforeRedirect = value;
+                _DNSCachingBeforeRedirect = value;
             }
         }
 
@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient
         // If the context is expiring within the next 10 mins, then create a new context, irrespective of if another thread is trying to do the same.
         private static readonly TimeSpan _dbAuthenticationContextUnLockedRefreshTimeSpan = new TimeSpan(hours: 0, minutes: 10, seconds: 00);
 
-        private static HashSet<int> transientErrors = new HashSet<int>();
+        private static HashSet<int> s_transientErrors = new HashSet<int>();
 
         internal SessionData CurrentSessionData
         {
@@ -297,21 +297,21 @@ namespace Microsoft.Data.SqlClient
         // 6. Reading ThreadHasParserLockForClose is thread-safe
         internal class SyncAsyncLock
         {
-            private SemaphoreSlim semaphore = new SemaphoreSlim(1);
+            private SemaphoreSlim _semaphore = new SemaphoreSlim(1);
 
             internal void Wait(bool canReleaseFromAnyThread)
             {
-                Monitor.Enter(semaphore); // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
-                if (canReleaseFromAnyThread || semaphore.CurrentCount == 0)
+                Monitor.Enter(_semaphore); // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
+                if (canReleaseFromAnyThread || _semaphore.CurrentCount == 0)
                 {
-                    semaphore.Wait();
+                    _semaphore.Wait();
                     if (canReleaseFromAnyThread)
                     {
-                        Monitor.Exit(semaphore);
+                        Monitor.Exit(_semaphore);
                     }
                     else
                     {
-                        semaphore.Release();
+                        _semaphore.Release();
                     }
                 }
             }
@@ -322,21 +322,21 @@ namespace Microsoft.Data.SqlClient
                 bool hasMonitor = false;
                 try
                 {
-                    Monitor.TryEnter(semaphore, timeout, ref hasMonitor); // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
+                    Monitor.TryEnter(_semaphore, timeout, ref hasMonitor); // semaphore is used as lock object, no relation to SemaphoreSlim.Wait/Release methods
                     if (hasMonitor)
                     {
-                        if ((canReleaseFromAnyThread) || (semaphore.CurrentCount == 0))
+                        if ((canReleaseFromAnyThread) || (_semaphore.CurrentCount == 0))
                         {
-                            if (semaphore.Wait(timeout))
+                            if (_semaphore.Wait(timeout))
                             {
                                 if (canReleaseFromAnyThread)
                                 {
-                                    Monitor.Exit(semaphore);
+                                    Monitor.Exit(_semaphore);
                                     hasMonitor = false;
                                 }
                                 else
                                 {
-                                    semaphore.Release();
+                                    _semaphore.Release();
                                 }
                                 lockTaken = true;
                             }
@@ -351,20 +351,20 @@ namespace Microsoft.Data.SqlClient
                 {
                     if ((!lockTaken) && (hasMonitor))
                     {
-                        Monitor.Exit(semaphore);
+                        Monitor.Exit(_semaphore);
                     }
                 }
             }
 
             internal void Release()
             {
-                if (semaphore.CurrentCount == 0)
+                if (_semaphore.CurrentCount == 0)
                 {  //  semaphore methods were used for locking
-                    semaphore.Release();
+                    _semaphore.Release();
                 }
                 else
                 {
-                    Monitor.Exit(semaphore);
+                    Monitor.Exit(_semaphore);
                 }
             }
 
@@ -373,14 +373,14 @@ namespace Microsoft.Data.SqlClient
             {
                 get
                 {
-                    return semaphore.CurrentCount == 0;
+                    return _semaphore.CurrentCount == 0;
                 }
             }
 
             // Necessary but not sufficient condition for thread to have lock (since sempahore may be obtained by any thread)
             internal bool ThreadMayHaveLock()
             {
-                return Monitor.IsEntered(semaphore) || semaphore.CurrentCount == 0;
+                return Monitor.IsEntered(_semaphore) || _semaphore.CurrentCount == 0;
             }
         }
 
@@ -567,36 +567,36 @@ namespace Microsoft.Data.SqlClient
         {
             // SQL Error Code: 4060
             // Cannot open database "%.*ls" requested by the login. The login failed.
-            transientErrors.Add(4060);
+            s_transientErrors.Add(4060);
             // SQL Error Code: 10928
             // Resource ID: %d. The %s limit for the database is %d and has been reached.
-            transientErrors.Add(10928);
+            s_transientErrors.Add(10928);
             // SQL Error Code: 10929
             // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d.
             // However, the server is currently too busy to support requests greater than %d for this database.
-            transientErrors.Add(10929);
+            s_transientErrors.Add(10929);
             // SQL Error Code: 40197
             // You will receive this error, when the service is down due to software or hardware upgrades, hardware failures,
             // or any other failover problems. The error code (%d) embedded within the message of error 40197 provides
             // additional information about the kind of failure or failover that occurred. Some examples of the error codes are
             // embedded within the message of error 40197 are 40020, 40143, 40166, and 40540.
-            transientErrors.Add(40197);
-            transientErrors.Add(40020);
-            transientErrors.Add(40143);
-            transientErrors.Add(40166);
+            s_transientErrors.Add(40197);
+            s_transientErrors.Add(40020);
+            s_transientErrors.Add(40143);
+            s_transientErrors.Add(40166);
             // The service has encountered an error processing your request. Please try again.
-            transientErrors.Add(40540);
+            s_transientErrors.Add(40540);
             // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.
-            transientErrors.Add(40501);
+            s_transientErrors.Add(40501);
             // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later.
             // If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
-            transientErrors.Add(40613);
+            s_transientErrors.Add(40613);
 
             // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
-            transientErrors.Add(42108);
+            s_transientErrors.Add(42108);
 
             // The SQL pool is warming up. Please try again.
-            transientErrors.Add(42109);
+            s_transientErrors.Add(42109);
             // Do federation errors deserve to be here ?
             // Note: Federation errors 10053 and 10054 might also deserve inclusion in your retry logic.
             //transientErrors.Add(10053);
@@ -613,7 +613,7 @@ namespace Microsoft.Data.SqlClient
             }
             foreach (SqlError error in exc.Errors)
             {
-                if (transientErrors.Contains(error.Number))
+                if (s_transientErrors.Contains(error.Number))
                 {
                     // When server timeouts, connection is doomed. Reset here to allow reconnect.
                     UnDoomThisConnection();
@@ -3118,14 +3118,14 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return m_userServerName;
+                return _userServerName;
             }
             private set
             {
-                m_userServerName = value;
+                _userServerName = value;
             }
         }
-        private string m_userServerName;
+        private string _userServerName;
 
         internal readonly string PreRoutingServerName;
 

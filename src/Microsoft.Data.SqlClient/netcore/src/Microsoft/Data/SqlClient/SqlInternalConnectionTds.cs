@@ -1817,14 +1817,14 @@ namespace Microsoft.Data.SqlClient
                             intervalTimer,
                             withFailover: true
                             );
-                    int routingAttemps = 0;
+                    int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
-                        if (routingAttemps > _maxNumberOfRedirectRoute)
+                        if (routingAttempts > _maxNumberOfRedirectRoute)
                         {
                             throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
                         }
-                        routingAttemps++;
+                        routingAttempts++;
 
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
 
