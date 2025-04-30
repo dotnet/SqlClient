@@ -25,15 +25,15 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SessionStateRecord
     {
         internal bool _recoverable;
-        internal UInt32 _version;
-        internal Int32 _dataLength;
+        internal uint _version;
+        internal int _dataLength;
         internal byte[] _data;
     }
 
     internal sealed class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
-        internal UInt32 _tdsVersion;
+        internal uint _tdsVersion;
         internal bool _encrypted;
 
         internal string _database;
