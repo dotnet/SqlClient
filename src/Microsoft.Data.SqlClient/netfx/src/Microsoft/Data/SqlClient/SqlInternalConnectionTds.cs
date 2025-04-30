@@ -22,7 +22,7 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SessionStateRecord
+    internal sealed class SessionStateRecord
     {
         internal bool _recoverable;
         internal UInt32 _version;
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _data;
     }
 
-    internal class SessionData
+    internal sealed class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
         internal UInt32 _tdsVersion;
