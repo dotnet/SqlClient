@@ -463,6 +463,26 @@ namespace Microsoft.Data.SqlClient
             {
                 reconnectSessionData._debugReconnectDataApplied = true;
             }
+#if NETFRAMEWORK
+            try
+            {
+                // use this to help validate this object is only created after the following permission has been previously demanded in the current codepath
+                if (userConnectionOptions != null)
+                {
+                    // As mentioned above, userConnectionOptions may be different to connectionOptions, so we need to demand on the correct connection string
+                    userConnectionOptions.DemandPermission();
+                }
+                else
+                {
+                    connectionOptions.DemandPermission();
+                }
+            }
+            catch (System.Security.SecurityException)
+            {
+                System.Diagnostics.Debug.Assert(false, "unexpected SecurityException for current codepath");
+                throw;
+            }
+#endif
 #endif
             Debug.Assert(reconnectSessionData == null || connectionOptions.ConnectRetryCount > 0, "Reconnect data supplied with CR turned off");
 
@@ -906,6 +926,10 @@ namespace Microsoft.Data.SqlClient
 
         protected override void Activate(Transaction transaction)
         {
+#if NETFRAMEWORK
+            FailoverPermissionDemand(); // Demand for unspecified failover pooled connections
+#endif
+
             // When we're required to automatically enlist in transactions and
             // there is one we enlist in it. On the other hand, if there isn't a
             // transaction and we are currently enlisted in one, then we
@@ -1799,6 +1823,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Initialize loop variables
+            bool failoverDemandDone = false; // have we demanded for partner information yet (as necessary)?
             int attemptNumber = 0;
 
             // Only three ways out of this loop:
@@ -1833,6 +1858,14 @@ namespace Microsoft.Data.SqlClient
                 ServerInfo currentServerInfo;
                 if (useFailoverHost)
                 {
+                    if (!failoverDemandDone)
+                    {
+#if NETFRAMEWORK
+                        FailoverPermissionDemand();
+#endif
+                        failoverDemandDone = true;
+                    }
+
                     // Primary server may give us a different failover partner than the connection string indicates.  Update it
                     if (ServerProvidedFailOverPartner != null && failoverServerInfo.ResolvedServerName != ServerProvidedFailOverPartner)
                     {
@@ -2039,6 +2072,16 @@ namespace Microsoft.Data.SqlClient
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
         }
+
+#if NETFRAMEWORK
+        internal void FailoverPermissionDemand()
+        {
+            if (PoolGroupProviderInfo != null)
+            {
+                PoolGroupProviderInfo.FailoverPermissionDemand();
+            }
+        }
+#endif
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // PREPARED COMMAND METHODS
@@ -2828,7 +2871,6 @@ namespace Microsoft.Data.SqlClient
                             }
 #endif
                         }
-
                         break;
                     }
                 case TdsEnums.FEATUREEXT_TCE:
@@ -2949,7 +2991,6 @@ namespace Microsoft.Data.SqlClient
                         // get IPv4 + IPv6 + Port number
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
-
                         break;
                     }
 

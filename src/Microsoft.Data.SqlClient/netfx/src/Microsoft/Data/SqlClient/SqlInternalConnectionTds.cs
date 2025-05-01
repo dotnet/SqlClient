@@ -475,7 +475,8 @@ namespace Microsoft.Data.SqlClient
                 reconnectSessionData._debugReconnectDataApplied = true;
             }
             try
-            { // use this to help validate this object is only created after the following permission has been previously demanded in the current codepath
+            {
+                // use this to help validate this object is only created after the following permission has been previously demanded in the current codepath
                 if (userConnectionOptions != null)
                 {
                     // As mentioned above, userConnectionOptions may be different to connectionOptions, so we need to demand on the correct connection string
@@ -2907,7 +2908,6 @@ namespace Microsoft.Data.SqlClient
                             }
 #endif
                         }
-
                         break;
                     }
                 case TdsEnums.FEATUREEXT_TCE:
@@ -2937,7 +2937,6 @@ namespace Microsoft.Data.SqlClient
                             // Extract the type of enclave being used by the server.
                             _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
                         }
-
                         break;
                     }
 
@@ -3029,7 +3028,6 @@ namespace Microsoft.Data.SqlClient
                         // get IPv4 + IPv6 + Port number
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
-
                         break;
                     }
 
