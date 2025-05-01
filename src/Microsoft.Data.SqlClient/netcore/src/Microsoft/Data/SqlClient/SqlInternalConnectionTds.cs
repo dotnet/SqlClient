@@ -2435,10 +2435,13 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     var authParamsBuilder = new SqlAuthenticationParameters.Builder(
-                        connection: this,
-                        resource: fedAuthInfo.spn,
-                        authority: fedAuthInfo.stsurl);
-
+                            authenticationMethod: ConnectionOptions.Authentication,
+                            resource: fedAuthInfo.spn,
+                            authority: fedAuthInfo.stsurl,
+                            serverName: ConnectionOptions.DataSource,
+                            databaseName: ConnectionOptions.InitialCatalog)
+                        .WithConnectionId(_clientConnectionId)
+                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
