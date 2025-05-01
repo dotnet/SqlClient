@@ -567,6 +567,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiSettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiSettersStream.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiStream.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiStream.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs</Link>
     </Compile>
@@ -917,7 +920,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
