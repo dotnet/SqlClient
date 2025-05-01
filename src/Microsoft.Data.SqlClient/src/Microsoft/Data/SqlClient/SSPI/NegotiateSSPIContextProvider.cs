@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.ServerName });
+            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
             // Log session id, status code and the actual SPN used in the negotiation

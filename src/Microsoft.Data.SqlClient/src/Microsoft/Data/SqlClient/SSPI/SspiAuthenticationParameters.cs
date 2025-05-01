@@ -4,10 +4,12 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class SspiAuthenticationParameters
     {
-        public SspiAuthenticationParameters(string serverName)
+        public SspiAuthenticationParameters(string serverName, string resource)
         {
             ServerName = serverName;
         }
+
+        public string Resource { get; }
 
         public string ServerName { get; }
 

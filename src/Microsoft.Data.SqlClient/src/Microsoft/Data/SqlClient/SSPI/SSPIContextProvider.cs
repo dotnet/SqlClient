@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
         private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
         {
             var options = _parser.Connection.ConnectionOptions;
-            var authParams = new SspiAuthenticationParameters(serverSpn)
+            var authParams = new SspiAuthenticationParameters(options.DataSource, serverSpn)
             {
                 DatabaseName = options.InitialCatalog,
                 UserId = options.UserID,
