@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal abstract class SSPIContextProvider
+    internal abstract class SspiContextProvider
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
         {
-            using var _ = TrySNIEventScope.Create(nameof(SSPIContextProvider));
+            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
             if (!RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
             {
@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
         {
-            using var _ = TrySNIEventScope.Create(nameof(SSPIContextProvider));
+            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
             foreach (var serverSpn in serverSpns)
             {

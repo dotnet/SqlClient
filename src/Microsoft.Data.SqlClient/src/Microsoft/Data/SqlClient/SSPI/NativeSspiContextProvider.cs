@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class NativeSSPIContextProvider : SSPIContextProvider
+    internal sealed class NativeSspiContextProvider : SspiContextProvider
     {
         private static readonly object s_tdsParserLock = new();
 

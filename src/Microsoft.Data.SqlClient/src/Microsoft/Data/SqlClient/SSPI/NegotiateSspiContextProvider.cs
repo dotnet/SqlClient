@@ -8,7 +8,7 @@ using System.Net.Security;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class NegotiateSSPIContextProvider : SSPIContextProvider
+    internal sealed class NegotiateSspiContextProvider : SspiContextProvider
     {
         private NegotiateAuthentication? _negotiateAuth = null;
 
@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
             // Log session id, status code and the actual SPN used in the negotiation
-            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSSPIContextProvider),
+            SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | Session Id {2}, StatusCode={3}, SPN={4}", nameof(NegotiateSspiContextProvider),
                 nameof(GenerateSspiClientContext), _physicalStateObj.SessionId, statusCode, _negotiateAuth.TargetName);
 
             if (statusCode == NegotiateAuthenticationStatusCode.Completed || statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded)
