@@ -463,9 +463,9 @@ namespace Microsoft.Data.SqlClient
                 bool redirectedUserInstance,
                 SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
                 SessionData reconnectSessionData = null,
-                DbConnectionPool pool = null,
-                string accessToken = null,
                 bool applyTransientFaultHandling = false,
+                string accessToken = null,
+                DbConnectionPool pool = null,
                 Func<SqlAuthenticationParameters, CancellationToken,
                 Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
         {
