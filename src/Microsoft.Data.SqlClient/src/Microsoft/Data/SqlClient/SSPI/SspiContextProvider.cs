@@ -13,6 +13,11 @@ namespace Microsoft.Data.SqlClient
         private ServerInfo _serverInfo = null!;
         private protected TdsParserStateObject _physicalStateObj = null!;
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SspiContextProvider.xml' path='docs/members[@name="SspiContextProvider"]/SspiContextProvider/*'/>
+        protected SspiContextProvider()
+        {
+        }
+
         internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
         {
             _parser = parser;

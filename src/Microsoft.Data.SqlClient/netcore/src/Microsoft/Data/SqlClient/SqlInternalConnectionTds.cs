@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
         internal readonly Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
-        internal readonly Func<SspiContextProvider> _sspiContextProviderFactory;
+        internal readonly SspiContextProvider _sspiContextProvider;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
 
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient
             string accessToken = null,
             DbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
-            Func<SspiContextProvider> sspiContextProviderFactory = null) : base(connectionOptions)
+            SspiContextProvider sspiContextProvider = null) : base(connectionOptions)
 
         {
 #if DEBUG
@@ -490,7 +490,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessTokenCallback = accessTokenCallback;
-            _sspiContextProviderFactory = sspiContextProviderFactory;
+            _sspiContextProvider = sspiContextProvider;
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
 
