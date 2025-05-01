@@ -15,6 +15,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -274,34 +275,35 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((KeywordsCount + SqlConnectionString.SynonymCount) == pairs.Count, "initial expected size is incorrect");
             return pairs;
         }
+        
+        // @TODO These methods are completely unnecessary.
 
-        private static bool ConvertToBoolean(object value) => DbConnectionStringBuilderUtil.ConvertToBoolean(value);
+        private static bool ConvertToBoolean(object value) => DbConnectionStringUtilities.ConvertToBoolean(value);
 
-        private static int ConvertToInt32(object value) => DbConnectionStringBuilderUtil.ConvertToInt32(value);
+        private static int ConvertToInt32(object value) => DbConnectionStringUtilities.ConvertToInt32(value);
 
-        private static bool ConvertToIntegratedSecurity(object value) => DbConnectionStringBuilderUtil.ConvertToIntegratedSecurity(value);
+        private static bool ConvertToIntegratedSecurity(object value) => DbConnectionStringUtilities.ConvertToIntegratedSecurity(value);
 
-        private static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value) => DbConnectionStringBuilderUtil.ConvertToAuthenticationType(keyword, value);
+        private static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value) => DbConnectionStringUtilities.ConvertToAuthenticationType(keyword, value);
 
-        private static string ConvertToString(object value) => DbConnectionStringBuilderUtil.ConvertToString(value);
+        private static string ConvertToString(object value) => DbConnectionStringUtilities.ConvertToString(value);
 
-        private static ApplicationIntent ConvertToApplicationIntent(string keyword, object value) => DbConnectionStringBuilderUtil.ConvertToApplicationIntent(keyword, value);
+        private static ApplicationIntent ConvertToApplicationIntent(string keyword, object value) => DbConnectionStringUtilities.ConvertToApplicationIntent(keyword, value);
 
         private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
-            => DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
+            => DbConnectionStringUtilities.ConvertToColumnEncryptionSetting(keyword, value);
 
         private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
-            => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
+            => AttestationProtocolUtilities.ConvertToAttestationProtocol(keyword, value);
 
         private static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
-           => DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(keyword, value);
-
+           => AttestationProtocolUtilities.ConvertToSqlConnectionEncryptOption(keyword, value);
 
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
-            => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
+            => IpAddressPreferenceUtilities.ConvertToIPAddressPreference(keyword, value);
 
         private static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
-            => DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(keyword, value);
+            => PoolBlockingUtilities.ConvertToPoolBlockingPeriod(keyword, value);
 
         private object GetAt(Keywords index)
         {
@@ -559,6 +561,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: These methods can be inlined with the property setters.
+        
         private void SetValue(string keyword, bool value) => base[keyword] = value.ToString();
 
         private void SetValue(string keyword, int value) => base[keyword] = value.ToString((System.IFormatProvider)null);
@@ -571,20 +575,20 @@ namespace Microsoft.Data.SqlClient
 
         private void SetApplicationIntentValue(ApplicationIntent value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value), "invalid value for ApplicationIntent");
-            base[DbConnectionStringKeywords.ApplicationIntent] = DbConnectionStringBuilderUtil.ApplicationIntentToString(value);
+            Debug.Assert(DbConnectionStringUtilities.IsValidApplicationIntentValue(value), "invalid value for ApplicationIntent");
+            base[DbConnectionStringKeywords.ApplicationIntent] = DbConnectionStringUtilities.ApplicationIntentToString(value);
         }
 
         private void SetColumnEncryptionSettingValue(SqlConnectionColumnEncryptionSetting value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
-            base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringBuilderUtil.ColumnEncryptionSettingToString(value);
+            Debug.Assert(DbConnectionStringUtilities.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
+            base[DbConnectionStringKeywords.ColumnEncryptionSetting] = DbConnectionStringUtilities.ColumnEncryptionSettingToString(value);
         }
 
         private void SetAttestationProtocolValue(SqlConnectionAttestationProtocol value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
-            base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
+            Debug.Assert(AttestationProtocolUtilities.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
+            base[DbConnectionStringKeywords.AttestationProtocol] = AttestationProtocolUtilities.AttestationProtocolToString(value);
         }
 
         private void SetSqlConnectionEncryptionValue(SqlConnectionEncryptOption value)
@@ -594,20 +598,20 @@ namespace Microsoft.Data.SqlClient
 
         private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value), "Invalid value for SqlConnectionIPAddressPreference");
-            base[DbConnectionStringKeywords.IPAddressPreference] = DbConnectionStringBuilderUtil.IPAddressPreferenceToString(value);
+            Debug.Assert(IpAddressPreferenceUtilities.IsValidIPAddressPreference(value), "Invalid value for SqlConnectionIPAddressPreference");
+            base[DbConnectionStringKeywords.IPAddressPreference] = IpAddressPreferenceUtilities.IPAddressPreferenceToString(value);
         }
 
         private void SetAuthenticationValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value), "Invalid value for AuthenticationType");
-            base[DbConnectionStringKeywords.Authentication] = DbConnectionStringBuilderUtil.AuthenticationTypeToString(value);
+            Debug.Assert(DbConnectionStringUtilities.IsValidAuthenticationTypeValue(value), "Invalid value for AuthenticationType");
+            base[DbConnectionStringKeywords.Authentication] = DbConnectionStringUtilities.AuthenticationTypeToString(value);
         }
 
         private void SetPoolBlockingPeriodValue(PoolBlockingPeriod value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value), "Invalid value for PoolBlockingPeriod");
-            base[DbConnectionStringKeywords.PoolBlockingPeriod] = DbConnectionStringBuilderUtil.PoolBlockingPeriodToString(value);
+            Debug.Assert(PoolBlockingUtilities.IsValidPoolBlockingPeriodValue(value), "Invalid value for PoolBlockingPeriod");
+            base[DbConnectionStringKeywords.PoolBlockingPeriod] = PoolBlockingUtilities.PoolBlockingPeriodToString(value);
         }
 
         private Exception UnsupportedKeyword(string keyword)
@@ -745,7 +749,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
         private sealed class SqlDataSourceConverter : StringConverter
         {
             private StandardValuesCollection _standardValues;
@@ -764,10 +767,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Get the sources rowset for the SQLOLEDB enumerator
                     DataTable table = SqlClientFactory.Instance.CreateDataSourceEnumerator().GetDataSources();
-                    string ServerName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("ServerName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
-                    string InstanceName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("InstanceName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
-                    DataColumn serverName = table.Columns[ServerName];
-                    DataColumn instanceName = table.Columns[InstanceName];
+                    DataColumn serverName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil.ServerNameCol];
+                    DataColumn instanceName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil.InstanceNameCol];
                     DataRowCollection rows = table.Rows;
 
                     string[] serverNames = new string[rows.Count];
@@ -885,7 +886,7 @@ namespace Microsoft.Data.SqlClient
                 return standardValues;
             }
         }
-#else    
+#if NET
         private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.TransactionBinding,
@@ -1091,7 +1092,7 @@ namespace Microsoft.Data.SqlClient
             get => _applicationIntent;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value))
+                if (!DbConnectionStringUtilities.IsValidApplicationIntentValue(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(ApplicationIntent), (int)value);
                 }
@@ -1190,9 +1191,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
         [RefreshProperties(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter")]
         public string DataSource
         {
             get => _dataSource;
@@ -1274,7 +1273,7 @@ namespace Microsoft.Data.SqlClient
             get => _columnEncryptionSetting;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value))
+                if (!DbConnectionStringUtilities.IsValidColumnEncryptionSetting(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)value);
                 }
@@ -1309,7 +1308,7 @@ namespace Microsoft.Data.SqlClient
             get => _attestationProtocol;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
+                if (!AttestationProtocolUtilities.IsValidAttestationProtocol(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
                 }
@@ -1329,7 +1328,7 @@ namespace Microsoft.Data.SqlClient
             get => _ipAddressPreference;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value))
+                if (!IpAddressPreferenceUtilities.IsValidIPAddressPreference(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(SqlConnectionIPAddressPreference), (int)value);
                 }
@@ -1374,9 +1373,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
         [RefreshProperties(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter")]
         public string FailoverPartner
         {
             get => _failoverPartner;
@@ -1443,7 +1440,7 @@ namespace Microsoft.Data.SqlClient
             get => _authentication;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value))
+                if (!DbConnectionStringUtilities.IsValidAuthenticationTypeValue(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(SqlAuthenticationMethod), (int)value);
                 }
@@ -1640,7 +1637,7 @@ namespace Microsoft.Data.SqlClient
             get => _poolBlockingPeriod;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value))
+                if (!PoolBlockingUtilities.IsValidPoolBlockingPeriodValue(value))
                 {
                     throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)value);
                 }

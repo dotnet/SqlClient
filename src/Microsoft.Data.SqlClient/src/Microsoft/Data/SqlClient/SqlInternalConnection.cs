@@ -31,11 +31,10 @@ namespace Microsoft.Data.SqlClient
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlCommand.ExecuteNonQueryAsyncCallContext CachedCommandExecuteNonQueryAsyncContext;
         internal SqlCommand.ExecuteXmlReaderAsyncCallContext CachedCommandExecuteXmlReaderAsyncContext;
-
+#endif
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
-#endif
 
         // if connection is not open: null
         // if connection is open: currently active database
@@ -198,19 +197,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
 
-#if NETFRAMEWORK
-
-        abstract internal bool Is2000
-        {
-            get;
-        }
-
-
-        abstract internal bool Is2005OrNewer
-        {
-            get;
-        }
-#endif
         internal bool IsAzureSQLConnection
         {
             get

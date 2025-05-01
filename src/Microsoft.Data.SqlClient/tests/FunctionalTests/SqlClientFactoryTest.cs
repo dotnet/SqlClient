@@ -31,7 +31,12 @@ namespace Microsoft.Data.SqlClient.Tests
         };
 
         [Theory]
-        [MemberData(nameof(FactoryMethodTestData))]
+        [MemberData(
+            nameof(FactoryMethodTestData),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         public void FactoryMethodTest(Func<object> factory, Type expectedType, bool singleton)
         {
             object value1 = factory();

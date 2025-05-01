@@ -5,6 +5,14 @@
 #################################################################################
 
 variables:
+  - group: ESRP Federated Creds (AME)
+    # ESRPConnectedServiceName
+    # ESRPClientId
+    # AppRegistrationClientId
+    # AppRegistrationTenantId
+    # AuthAKVName
+    # AuthSignCertName
+
   - name: Configuration
     value: Release
   - name: CommitHead
@@ -17,7 +25,26 @@ variables:
     value: $(REPOROOT)/symbols
   - name: artifactDirectory
     value: '$(REPOROOT)/packages'
-  - name: appRegistrationClientId
-    value: 'a0d18a38-fde1-4ba7-92e1-15be16cb6a8e'
-  - name: appRegistrationTenantId
-    value: '72f988bf-86f1-41af-91ab-2d7cd011db47'
+
+  # Update this after every release. This is used to generate the MDS NuGet package version.
+  - name: Major
+    value: '6'
+  - name: Minor
+    value: '1'
+  - name: Patch
+    value: '0'
+
+    # Update this for preview releases.
+  - name: Preview
+    value: '-preview'
+  - name: Revision
+    value: '1'
+
+  - name: NugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)
+  - name: PreviewNugetPackageVersion
+    value: $(Major).$(Minor).$(Patch)$(Preview)$(Revision).$(Build.BuildNumber)
+  - name: AssemblyFileVersion
+    value: '$(Major).$(Minor)$(Patch).$(Build.BuildNumber)'
+  - name: nuspecPath
+    value: '$(REPOROOT)/tools/specs/Microsoft.Data.SqlClient.nuspec'

@@ -1,6 +1,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Utilities;
 
 #nullable enable
 
@@ -29,7 +30,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // allocate send buffer and initialize length
-                var writer = SqlObjectPools.BufferWriter.Rent();
+                var writer = ObjectPools.BufferWriter.Rent();
 
                 try
                 {
@@ -42,7 +43,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    SqlObjectPools.BufferWriter.Return(writer);
+                    ObjectPools.BufferWriter.Return(writer);
                 }
             }
             finally
@@ -132,10 +133,11 @@ namespace Microsoft.Data.SqlClient
             // length in bytes
             int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
-            // Obtain the client interface name.
-            string clientInterfaceName = ClientInterface.Name;
+            string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
+            Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
 
             // add up variable-len portions (multiply by 2 for byte len of char strings)
+            //
             checked
             {
                 length += (rec.hostName.Length + rec.applicationName.Length +
@@ -166,7 +168,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (rec.useSSPI)
                     {
-                        sspiWriter = SqlObjectPools.BufferWriter.Rent();
+                        sspiWriter = ObjectPools.BufferWriter.Rent();
 
                         // Call helper function for SSPI data and actual length.
                         // Since we don't have SSPI data from the server, send null for the
@@ -208,7 +210,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sspiWriter is not null)
                 {
-                    SqlObjectPools.BufferWriter.Return(sspiWriter);
+                    ObjectPools.BufferWriter.Return(sspiWriter);
                 }
             }
 

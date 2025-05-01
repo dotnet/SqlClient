@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>{1} 的 SourceColumn '{0}' 與 {3} 的 DataColumn '{2}' 之間發生不可轉換類型不符的問題。</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>在 DataTable '{1}' 中遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>關聯連接埠與 I/O 完成機制失敗</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>通訊端為 null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>逾時錯誤</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>為連接集區定義封鎖期間行為。</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>定義是否啟用查詢中繼資料快取。</value>
   </data>
@@ -4751,5 +4736,8 @@
   </data>
   <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
     <value>已超過緩衝區大小上限: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>遺漏 SourceColumn '{2}' 的 DataColumn '{0}'。</value>
   </data>
 </root>

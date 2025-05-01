@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
@@ -259,7 +260,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // We have a value of the SPN, so we marshal that and send it to the native layer
-                        var writer = SqlObjectPools.BufferWriter.Rent();
+                        var writer = ObjectPools.BufferWriter.Rent();
 
                         try
                         {
@@ -277,7 +278,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         finally
                         {
-                            SqlObjectPools.BufferWriter.Return(writer);
+                            ObjectPools.BufferWriter.Return(writer);
                         }
                     }
                 }
@@ -445,7 +446,7 @@ namespace Microsoft.Data.SqlClient
             ref uint sendLength,
             string serverUserName)
         {
-            var serverWriter = SqlObjectPools.BufferWriter.Rent();
+            var serverWriter = ObjectPools.BufferWriter.Rent();
 
             try
             {
@@ -470,7 +471,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlObjectPools.BufferWriter.Return(serverWriter);
+                ObjectPools.BufferWriter.Return(serverWriter);
             }
         }
         

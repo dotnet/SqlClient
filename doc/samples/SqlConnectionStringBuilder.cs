@@ -21,12 +21,12 @@ class Program
         // connection string, and you can retrieve and
         // modify any of the elements.
         builder.ConnectionString = "server=(local);user id=ab;" +
-            "password= a!Pass113;initial catalog=AdventureWorks";
+            "password=********;initial catalog=AdventureWorks";
 
         // Now that the connection string has been parsed,
         // you can work with individual items.
         Console.WriteLine(builder.Password);
-        builder.Password = "new@1Password";
+        builder.Password = "********";
 
         // You can refer to connection keys using strings, 
         // as well. When you use this technique (the default

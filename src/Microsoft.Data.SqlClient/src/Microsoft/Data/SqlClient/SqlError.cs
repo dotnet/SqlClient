@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlError
     {
         // bug fix - MDAC 48965 - missing source of exception
-        private readonly string _source = Common.DbConnectionStringDefaults.ApplicationName;
+        private readonly string _source = TdsEnums.SQL_PROVIDER_NAME;
         private readonly int _number;
         private readonly byte _state;
         private readonly byte _errorClass;
