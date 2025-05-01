@@ -512,6 +512,9 @@ namespace Microsoft.Data.SqlClient
             _parserLock.Wait(canReleaseFromAnyThread: false);
             ThreadHasParserLockForClose = true;   // In case of error, let ourselves know that we already own the parser lock
 
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 _timeout = TimeoutTimer.StartSecondsTimeout(connectionOptions.ConnectTimeout);
@@ -542,6 +545,21 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
+            }
+            catch (System.OutOfMemoryException)
+            {
+                DoomThisConnection();
+                throw;
+            }
+            catch (System.StackOverflowException)
+            {
+                DoomThisConnection();
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                DoomThisConnection();
+                throw;
             }
             finally
             {
@@ -2050,18 +2068,39 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                Task reconnectTask = parent.ValidateAndReconnect(() =>
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+                try
                 {
-                    ThreadHasParserLockForClose = false;
-                    _parserLock.Release();
-                    releaseConnectionLock = false;
-                }, timeout);
-                if (reconnectTask != null)
-                {
-                    AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                    return true;
+                    Task reconnectTask = parent.ValidateAndReconnect(() =>
+                    {
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                        releaseConnectionLock = false;
+                    }, timeout);
+                    if (reconnectTask != null)
+                    {
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
+                catch (System.OutOfMemoryException)
+                {
+                    DoomThisConnection();
+                    throw;
+                }
+                catch (System.StackOverflowException)
+                {
+                    DoomThisConnection();
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException)
+                {
+                    DoomThisConnection();
+                    throw;
+                }
             }
             finally
             {

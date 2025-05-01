@@ -545,6 +545,7 @@ namespace Microsoft.Data.SqlClient
 
             _parserLock.Wait(canReleaseFromAnyThread: false);
             ThreadHasParserLockForClose = true;   // In case of error, let ourselves know that we already own the parser lock
+
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
