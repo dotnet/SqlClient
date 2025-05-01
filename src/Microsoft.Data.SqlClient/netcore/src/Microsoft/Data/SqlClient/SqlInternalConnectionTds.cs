@@ -2759,6 +2759,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
+
                         if (data.Length < 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for GlobalTransactions", ObjectID);
@@ -2772,6 +2773,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     }
+
                 case TdsEnums.FEATUREEXT_FEDAUTH:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for federated authentication", ObjectID);

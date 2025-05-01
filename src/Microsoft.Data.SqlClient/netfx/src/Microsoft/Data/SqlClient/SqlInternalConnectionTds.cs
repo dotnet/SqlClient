@@ -2834,6 +2834,25 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     }
+
+                case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for GlobalTransactions", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        IsGlobalTransaction = true;
+                        if (1 == data[0])
+                        {
+                            IsGlobalTransactionsEnabledForServer = true;
+                        }
+                        break;
+                    }
+
                 case TdsEnums.FEATUREEXT_FEDAUTH:
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for federated authentication", ObjectID);
@@ -2919,24 +2938,6 @@ namespace Microsoft.Data.SqlClient
                             _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
                         }
 
-                        break;
-                    }
-
-                case TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS:
-                    {
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for GlobalTransactions", ObjectID);
-
-                        if (data.Length < 1)
-                        {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown version number for GlobalTransactions", ObjectID);
-                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
-                        }
-
-                        IsGlobalTransaction = true;
-                        if (1 == data[0])
-                        {
-                            IsGlobalTransactionsEnabledForServer = true;
-                        }
                         break;
                     }
 
