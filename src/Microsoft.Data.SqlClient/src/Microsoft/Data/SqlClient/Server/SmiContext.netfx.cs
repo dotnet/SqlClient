@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+
 using System;
 using System.Data;
 using System.Data.SqlTypes;
@@ -40,8 +42,6 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink eventSink
         );
 
-        // TODO: Consider making ContextConnection, TransactionId and TriggerInfo simply objects you get from the context.
-
         internal abstract object GetContextValue(int key);
 
         internal abstract void GetTriggerInfo(
@@ -75,3 +75,4 @@ namespace Microsoft.Data.SqlClient.Server
     }
 }
 
+#endif
