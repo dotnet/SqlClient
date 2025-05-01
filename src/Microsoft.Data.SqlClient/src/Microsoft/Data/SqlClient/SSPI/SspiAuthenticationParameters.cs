@@ -7,6 +7,7 @@ namespace Microsoft.Data.SqlClient
         public SspiAuthenticationParameters(string serverName, string resource)
         {
             ServerName = serverName;
+            Resource = resource;
         }
 
         public string Resource { get; }
