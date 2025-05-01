@@ -799,7 +799,7 @@ namespace Microsoft.Data.SqlClient
         {
             // MDAC 73598 - add brackets around database
             database = SqlConnection.FixupDatabaseTransactionName(database);
-            System.Threading.Tasks.Task executeTask = _parser.TdsExecuteSQLBatch("use " + database, ConnectionOptions.ConnectTimeout, null, _parser._physicalStateObj, sync: true);
+            Task executeTask = _parser.TdsExecuteSQLBatch("use " + database, ConnectionOptions.ConnectTimeout, null, _parser._physicalStateObj, sync: true);
             Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
         }
@@ -1389,8 +1389,8 @@ namespace Microsoft.Data.SqlClient
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
@@ -1424,9 +1424,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
-            requestedFeatures |= TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.GlobalTransactions;
-
-            requestedFeatures |= TdsEnums.FeatureExtension.UTF8Support;
+            requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
 
             // The AzureSQLSupport feature is implicitly set for ReadOnly login
             if (ConnectionOptions.ApplicationIntent == ApplicationIntent.ReadOnly)
@@ -1653,7 +1651,7 @@ namespace Microsoft.Data.SqlClient
                     _parser.Disconnect();
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                 try
                 {
@@ -1909,7 +1907,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
-                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, string.Format((IFormatProvider)null, "SniContext should be Undefined; actual Value: {0}", Parser._physicalStateObj.SniContext));
+                Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                 ServerInfo currentServerInfo;
                 if (useFailoverHost)
@@ -2370,11 +2368,11 @@ namespace Microsoft.Data.SqlClient
                          || _credential != null
                          || _accessTokenCallback != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
-                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2745,7 +2743,21 @@ namespace Microsoft.Data.SqlClient
                 // All other exceptions from MSAL/Azure Identity APIs
                 catch (Exception e)
                 {
-                    throw SqlException.CreateException(new() { new(0, (byte)0x00, (byte)TdsEnums.FATAL_ERROR_CLASS, ConnectionOptions.DataSource, e.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0) }, "", this, e);
+                    throw SqlException.CreateException(
+                        new()
+                        {
+                            new(
+                                0,
+                                (byte)0x00,
+                                (byte)TdsEnums.FATAL_ERROR_CLASS,
+                                ConnectionOptions.DataSource,
+                                e.Message,
+                                ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName,
+                                0)
+                        },
+                        "",
+                        this,
+                        e);
                 }
             }
 
@@ -2901,6 +2913,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (data.Length > 1)
                         {
+                            // Extract the type of enclave being used by the server.
                             _parser.EnclaveType = Encoding.Unicode.GetString(data, 2, (data.Length - 2));
                         }
 

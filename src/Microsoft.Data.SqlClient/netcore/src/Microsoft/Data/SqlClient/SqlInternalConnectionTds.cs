@@ -879,12 +879,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool IsConnectionAlive(bool throwOnException)
-        {
-            bool isAlive = false;
-            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
-            return isAlive;
-        }
+        internal override bool IsConnectionAlive(bool throwOnException) =>
+            _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
         ////////////////////////////////////////////////////////////////////////////////////////
         // POOLING METHODS
