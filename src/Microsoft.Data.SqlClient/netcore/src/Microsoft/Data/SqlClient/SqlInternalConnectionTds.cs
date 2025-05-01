@@ -2118,7 +2118,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void BreakConnection()
         {
-            var connection = Connection;
+            SqlConnection connection = Connection;
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.BreakConnection|RES|CPOOL> {0}, Breaking connection.", ObjectID);
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
             if (connection != null)
@@ -2470,7 +2470,7 @@ namespace Microsoft.Data.SqlClient
             // Username to use in error messages.
             string username = null;
 
-            var authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
+            SqlAuthenticationProvider authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 

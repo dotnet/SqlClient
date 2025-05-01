@@ -1961,7 +1961,8 @@ namespace Microsoft.Data.SqlClient
                             _parser.Disconnect();
                         }
 
-                        _parser = new TdsParser(ConnectionOptions.MARS, ConnectionOptions.Asynchronous);
+                        _parser = new TdsParser(ConnectionOptions.MARS, connectionOptions.Asynchronous);
+
                         Debug.Assert(SniContext.Undefined == Parser._physicalStateObj.SniContext, $"SniContext should be Undefined; actual Value: {Parser._physicalStateObj.SniContext}");
 
                         currentServerInfo = new ServerInfo(ConnectionOptions, RoutingInfo, currentServerInfo.ResolvedServerName, currentServerInfo.ServerSPN);
@@ -1970,9 +1971,9 @@ namespace Microsoft.Data.SqlClient
                         _routingDestination = currentServerInfo.UserServerName;
 
                         // restore properties that could be changed by the environment tokens
-                        _currentPacketSize = ConnectionOptions.PacketSize;
+                        _currentPacketSize = connectionOptions.PacketSize;
                         _currentLanguage = _originalLanguage = ConnectionOptions.CurrentLanguage;
-                        CurrentDatabase = _originalDatabase = ConnectionOptions.InitialCatalog;
+                        CurrentDatabase = _originalDatabase = connectionOptions.InitialCatalog;
                         _currentFailoverPartner = null;
                         _instanceName = string.Empty;
 
