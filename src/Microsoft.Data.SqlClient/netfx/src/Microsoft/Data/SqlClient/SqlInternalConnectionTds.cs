@@ -1582,16 +1582,16 @@ namespace Microsoft.Data.SqlClient
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
 
-            Boolean disableTnir = ShouldDisableTnir(connectionOptions);
+            bool disableTnir = ShouldDisableTnir(connectionOptions);
 
             long timeoutUnitInterval = 0;
 
-            Boolean isParallel = connectionOptions.MultiSubnetFailover || (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
-
+            bool isParallel = connectionOptions.MultiSubnetFailover || (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
 
             if (isParallel)
             {
                 float failoverTimeoutStep = connectionOptions.MultiSubnetFailover ? ADP.FailoverTimeoutStep : ADP.FailoverTimeoutStepForTnir;
+
                 // Determine unit interval
                 if (timeout.IsInfinite)
                 {
@@ -1613,8 +1613,8 @@ namespace Microsoft.Data.SqlClient
             //  back into the parser for the error cases.
             int attemptNumber = 0;
             TimeoutTimer intervalTimer = null;
-
             TimeoutTimer attemptOneLoginTimeout = timeout;
+
             while (true)
             {
                 Boolean isFirstTransparentAttempt = connectionOptions.TransparentNetworkIPResolution && !disableTnir && attemptNumber == 1;

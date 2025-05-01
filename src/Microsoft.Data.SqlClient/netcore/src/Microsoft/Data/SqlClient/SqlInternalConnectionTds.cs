@@ -1550,16 +1550,20 @@ namespace Microsoft.Data.SqlClient
 
             long timeoutUnitInterval = 0;
 
-            if (connectionOptions.MultiSubnetFailover)
+            bool isParallel = connectionOptions.MultiSubnetFailover;
+
+            if (isParallel)
             {
+                float failoverTimeoutStep = ADP.FailoverTimeoutStep;
+
                 // Determine unit interval
                 if (timeout.IsInfinite)
                 {
-                    timeoutUnitInterval = checked((long)(ADP.FailoverTimeoutStep * (1000L * ADP.DefaultConnectionTimeout)));
+                    timeoutUnitInterval = checked((long)(failoverTimeoutStep * (1000L * ADP.DefaultConnectionTimeout)));
                 }
                 else
                 {
-                    timeoutUnitInterval = checked((long)(ADP.FailoverTimeoutStep * timeout.MillisecondsRemaining));
+                    timeoutUnitInterval = checked((long)(failoverTimeoutStep * timeout.MillisecondsRemaining));
                 }
             }
             // Only three ways out of this loop:
@@ -1573,14 +1577,18 @@ namespace Microsoft.Data.SqlClient
             //  back into the parser for the error cases.
             int attemptNumber = 0;
             TimeoutTimer intervalTimer = null;
+            TimeoutTimer attemptOneLoginTimeout = timeout;
+
             while (true)
             {
-                if (connectionOptions.MultiSubnetFailover)
+                if (isParallel)
                 {
-                    attemptNumber++;
+                    int multiplier = ++attemptNumber;
+
                     // Set timeout for this attempt, but don't exceed original timer
-                    long nextTimeoutInterval = checked(timeoutUnitInterval * attemptNumber);
+                    long nextTimeoutInterval = checked(timeoutUnitInterval * multiplier);
                     long milliseconds = timeout.MillisecondsRemaining;
+
                     if (nextTimeoutInterval > milliseconds)
                     {
                         nextTimeoutInterval = milliseconds;
@@ -1598,10 +1606,15 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
+                    if (isParallel)
+                    {
+                        attemptOneLoginTimeout = intervalTimer;
+                    }
+
                     AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
-                                    connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
+                                    attemptOneLoginTimeout);
 
                     if (connectionOptions.MultiSubnetFailover && ServerProvidedFailOverPartner != null)
                     {
