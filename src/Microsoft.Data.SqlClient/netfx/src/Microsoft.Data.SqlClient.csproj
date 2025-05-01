@@ -543,11 +543,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventStream.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventStream.netfx.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiExecuteType.netfx.cs">
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiExecuteType.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiExecuteType.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiGettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiGettersStream.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiLink.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiLink.netfx.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
@@ -911,7 +914,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiLink.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
