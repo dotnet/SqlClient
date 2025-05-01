@@ -525,6 +525,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiContext.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiContext.netfx.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiContextFactory.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiContextFactory.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
     </Compile>
@@ -899,7 +902,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiContextFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_DeferedProcessing.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiExecuteType.cs" />
