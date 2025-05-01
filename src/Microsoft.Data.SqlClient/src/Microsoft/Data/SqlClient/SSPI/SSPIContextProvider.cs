@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
-using Microsoft.Data.Common;
 
 #nullable enable
 
@@ -26,7 +25,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SqlAuthenticationParameters authParams);
+        protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
         {
@@ -57,7 +56,13 @@ namespace Microsoft.Data.SqlClient
 
         private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
         {
-            var authParams = CreateSqlAuthParams(_parser.Connection, serverSpn);
+            var options = _parser.Connection.ConnectionOptions;
+            var authParams = new SspiAuthenticationParameters(serverSpn)
+            {
+                DatabaseName = options.InitialCatalog,
+                UserId = options.UserID,
+                Password = options.Password,
+            };
 
             try
             {
@@ -70,27 +75,6 @@ namespace Microsoft.Data.SqlClient
                 SSPIError(e.Message + Environment.NewLine + e.StackTrace, TdsEnums.GEN_CLIENT_CONTEXT);
                 return false;
             }
-        }
-
-        private static SqlAuthenticationParameters CreateSqlAuthParams(SqlInternalConnectionTds connection, string serverSpn)
-        {
-            var auth = new SqlAuthenticationParameters.Builder(
-                connection: connection,
-                resource: serverSpn,
-                authority: null);
-
-
-            if (connection.ConnectionOptions.UserID is { } userId)
-            {
-                auth.WithUserId(userId);
-            }
-
-            if (connection.ConnectionOptions.Password is { } password)
-            {
-                auth.WithPassword(password);
-            }
-
-            return auth;
         }
 
         protected void SSPIError(string error, string procedure)

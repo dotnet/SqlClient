@@ -662,6 +662,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
     </Compile>
