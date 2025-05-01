@@ -1634,7 +1634,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value);
+                            value = _connection.GetBytes(value, out _, out _);
                             typeChanged = true;
                         }
                         break;
