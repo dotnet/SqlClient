@@ -7,4 +7,8 @@
     <SystemSecurityCryptographyPkcsVersion>9.0.4</SystemSecurityCryptographyPkcsVersion>
     <SystemConfigurationConfigurationManagerVersion>9.0.4</SystemConfigurationConfigurationManagerVersion>
   </PropertyGroup>
+  <!-- Test Project dependencies-->
+  <PropertyGroup>
+    <MicrosoftExtensionsHosting>9.0.3</MicrosoftExtensionsHosting>
+  </PropertyGroup>
 </Project>
