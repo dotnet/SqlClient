@@ -1246,7 +1246,7 @@ namespace Microsoft.Data.SqlClient
                     _currentSessionData._initialCollation = _currentSessionData._collation;
                     _currentSessionData._initialLanguage = _currentLanguage;
                 }
-                bool isEncrypted = _parser.EncryptionOptions == EncryptionOptions.ON;
+                bool isEncrypted = (_parser.EncryptionOptions & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.ON;
                 if (_recoverySessionData != null)
                 {
                     if (_recoverySessionData._encrypted != isEncrypted)
