@@ -15,9 +15,9 @@ namespace Microsoft.Data.SqlClient.Server
     // NOTE: connection, transaction and context pipe operations could be 
     //       encapsulated in their own classes, and should if they get complex 
     //       (transaction is borderline at this point).
+    // @TODO: This doesn't seem to be inherited from anymore...
     internal abstract class SmiContext
     {
-
         internal abstract event EventHandler OutOfScope;
 
         internal abstract SmiConnection ContextConnection { get; }
@@ -42,9 +42,6 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink eventSink
         );
 
-        // @TODO: No longer used -- delete
-        internal abstract object GetContextValue(int key);
-
         internal abstract void GetTriggerInfo(
             SmiEventSink eventSink,
             out bool[] columnsUpdated,
@@ -59,9 +56,6 @@ namespace Microsoft.Data.SqlClient.Server
         internal abstract void SendResultsRowToPipe(SmiRecordBuffer recordBuffer, SmiEventSink eventSink);
 
         internal abstract void SendResultsEndToPipe(SmiRecordBuffer recordBuffer, SmiEventSink eventSink);
-
-        // @TODO: No longer used -- delete
-        internal abstract void SetContextValue(int key, object value);
 
         // Scratch LOB storage region
         internal virtual SmiStream GetScratchStream(SmiEventSink sink)
