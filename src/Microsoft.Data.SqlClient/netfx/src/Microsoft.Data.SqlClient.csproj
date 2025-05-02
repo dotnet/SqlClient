@@ -573,8 +573,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccess.Common.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccess.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs</Link>
