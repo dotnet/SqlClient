@@ -42,6 +42,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink eventSink
         );
 
+        // @TODO: No longer used -- delete
         internal abstract object GetContextValue(int key);
 
         internal abstract void GetTriggerInfo(
@@ -59,6 +60,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal abstract void SendResultsEndToPipe(SmiRecordBuffer recordBuffer, SmiEventSink eventSink);
 
+        // @TODO: No longer used -- delete
         internal abstract void SetContextValue(int key, object value);
 
         // Scratch LOB storage region
