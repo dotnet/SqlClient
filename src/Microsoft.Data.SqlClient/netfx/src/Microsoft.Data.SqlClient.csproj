@@ -594,6 +594,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\TriggerAction.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\Server\TriggerAction.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
@@ -920,7 +923,6 @@
     <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />
