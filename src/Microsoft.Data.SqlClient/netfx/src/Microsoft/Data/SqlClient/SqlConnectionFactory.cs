@@ -253,30 +253,6 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions;
         }
 
-        // @TODO: Should never be called
-        private SqlInternalConnectionSmi GetContextConnection(SqlConnectionString options, object providerInfo)
-        {
-            SmiContext smiContext = SmiContextFactory.Instance.GetCurrentContext();
-
-            SqlInternalConnectionSmi result = (SqlInternalConnectionSmi)smiContext.GetContextValue((int)SmiContextFactory.ContextKey.Connection);
-
-            // context connections are automatically re-useable if they exist unless they've been doomed.
-            if (result == null || result.IsConnectionDoomed)
-            {
-                if (result != null)
-                {
-                    result.Dispose();   // A doomed connection is a messy thing.  Dispose of it promptly in nearest receptacle.
-                }
-
-                result = new SqlInternalConnectionSmi(options, smiContext);
-                smiContext.SetContextValue((int)SmiContextFactory.ContextKey.Connection, result);
-            }
-
-            result.Activate();
-
-            return result;
-        }
-
         override internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
