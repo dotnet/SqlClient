@@ -35,14 +35,6 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink eventSink
         );
 
-        // @TODO: No longer being used - delete!
-        internal abstract SmiRequestExecutor CreateRequestExecutor(
-            string commandText,
-            CommandType commandType,
-            SmiParameterMetaData[] parameterMetaData,
-            SmiEventSink eventSink
-        );
-
         internal abstract void GetTriggerInfo(
             SmiEventSink eventSink,
             out bool[] columnsUpdated,
