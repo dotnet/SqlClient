@@ -40,7 +40,6 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
-            SqlInternalConnection result = null;
             SessionData recoverySessionData = null;
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
             bool applyTransientFaultHandling = sqlOwningConnection != null ? sqlOwningConnection._applyTransientFaultHandling : false;
@@ -59,93 +58,102 @@ namespace Microsoft.Data.SqlClient
             {
                 recoverySessionData = sqlOwningConnection._recoverySessionData;
             }
+            
+            bool redirectedUserInstance = false;
+            DbConnectionPoolIdentity identity = null;
 
-            if (opt.ContextConnection)
+            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
+            // Used by notifications.
+            if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                result = GetContextConnection(opt, poolGroupProviderInfo);
-            }
-            else
-            {
-                bool redirectedUserInstance = false;
-                DbConnectionPoolIdentity identity = null;
-
-                // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
-                // Used by notifications.
-                if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+                if (pool != null)
                 {
-                    if (pool != null)
-                    {
-                        identity = pool.Identity;
-                    }
-                    else
-                    {
-                        identity = DbConnectionPoolIdentity.GetCurrent();
-                    }
+                    identity = pool.Identity;
                 }
-
-                // FOLLOWING IF BLOCK IS ENTIRELY FOR SSE USER INSTANCES
-                // If "user instance=true" is in the connection string, we're using SSE user instances
-                if (opt.UserInstance)
+                else
                 {
-                    // opt.DataSource is used to create the SSE connection
-                    redirectedUserInstance = true;
-                    string instanceName;
+                    identity = DbConnectionPoolIdentity.GetCurrent();
+                }
+            }
 
-                    if (pool == null || (pool != null && pool.Count <= 0))
-                    { // Non-pooled or pooled and no connections in the pool.
+            // FOLLOWING IF BLOCK IS ENTIRELY FOR SSE USER INSTANCES
+            // If "user instance=true" is in the connection string, we're using SSE user instances
+            if (opt.UserInstance)
+            {
+                // opt.DataSource is used to create the SSE connection
+                redirectedUserInstance = true;
+                string instanceName;
 
-                        SqlInternalConnectionTds sseConnection = null;
-                        try
+                if (pool == null || (pool != null && pool.Count <= 0))
+                { // Non-pooled or pooled and no connections in the pool.
+
+                    SqlInternalConnectionTds sseConnection = null;
+                    try
+                    {
+                        // What about a failure - throw?  YES!
+                        // BUG (VSTFDevDiv) 479687: Using TransactionScope with Linq2SQL against user instances fails with "connection has been broken" message
+                        // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
+                        //       This first connection is established to SqlExpress to get the instance name 
+                        //       of the UserInstance.
+                        SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, true /* user instance=true */, false /* set Enlist = false */);
+                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling);
+                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
+                        instanceName = sseConnection.InstanceName;
+
+                        // Set future transient fault handling based on connection options
+                        sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+
+                        if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
                         {
-                            // What about a failure - throw?  YES!
-                            // BUG (VSTFDevDiv) 479687: Using TransactionScope with Linq2SQL against user instances fails with "connection has been broken" message
-                            // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
-                            //       This first connection is established to SqlExpress to get the instance name 
-                            //       of the UserInstance.
-                            SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, true /* user instance=true */, false /* set Enlist = false */);
-                            sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling);
-                            // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
-                            instanceName = sseConnection.InstanceName;
-
-                            // Set future transient fault handling based on connection options
-                            sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
-
-                            if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
-                            {
-                                throw SQL.NonLocalSSEInstance();
-                            }
-
-                            if (pool != null)
-                            { // Pooled connection - cache result
-                                SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
-                                // No lock since we are already in creation mutex
-                                providerInfo.InstanceName = instanceName;
-                            }
+                            throw SQL.NonLocalSSEInstance();
                         }
-                        finally
-                        {
-                            if (sseConnection != null)
-                            {
-                                sseConnection.Dispose();
-                            }
+
+                        if (pool != null)
+                        { // Pooled connection - cache result
+                            SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+                            // No lock since we are already in creation mutex
+                            providerInfo.InstanceName = instanceName;
                         }
                     }
-                    else
-                    { // Cached info from pool.
-                        SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
-                        // No lock since we are already in creation mutex
-                        instanceName = providerInfo.InstanceName;
+                    finally
+                    {
+                        if (sseConnection != null)
+                        {
+                            sseConnection.Dispose();
+                        }
                     }
-
-                    // NOTE: Here connection option opt is cloned to set 'instanceName=<UserInstanceName>' that was
-                    //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
-                    // options immutable - stored in global hash - don't modify
-                    opt = new SqlConnectionString(opt, instanceName, false /* user instance=false */, null /* do not modify the Enlist value */);
-                    poolGroupProviderInfo = null; // null so we do not pass to constructor below...
                 }
-                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
+                else
+                { // Cached info from pool.
+                    SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+                    // No lock since we are already in creation mutex
+                    instanceName = providerInfo.InstanceName;
+                }
+
+                // NOTE: Here connection option opt is cloned to set 'instanceName=<UserInstanceName>' that was
+                //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
+                // options immutable - stored in global hash - don't modify
+                opt = new SqlConnectionString(
+                    opt,
+                    instanceName,
+                    userInstance: false,
+                    setEnlistValue: null); // Do not modify the enlist value
             }
-            return result;
+
+            return new SqlInternalConnectionTds(
+                identity,
+                opt,
+                key.Credential,
+                providerInfo: null,
+                newPassword: string.Empty,
+                newSecurePassword: null,
+                redirectedUserInstance,
+                userOpt,
+                recoverySessionData,
+                applyTransientFaultHandling,
+                key.AccessToken,
+                pool,
+                key.AccessTokenCallback);
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
@@ -167,20 +175,24 @@ namespace Microsoft.Data.SqlClient
             return providerInfo;
         }
 
-        override protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
+        protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)connectionOptions;
 
             DbConnectionPoolGroupOptions poolingOptions = null;
 
-            if (!opt.ContextConnection && opt.Pooling)
+            if (opt.Pooling)
             {    // never pool context connections.
                 int connectionTimeout = opt.ConnectTimeout;
 
-                if ((0 < connectionTimeout) && (connectionTimeout < Int32.MaxValue / 1000))
+                if (connectionTimeout > 0 && connectionTimeout < int.MaxValue / 1000)
+                {
                     connectionTimeout *= 1000;
-                else if (connectionTimeout >= Int32.MaxValue / 1000)
-                    connectionTimeout = Int32.MaxValue;
+                }
+                else if (connectionTimeout >= int.MaxValue / 1000)
+                {
+                    connectionTimeout = int.MaxValue;
+                }
 
                 if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive)
                 {
@@ -241,6 +253,7 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions;
         }
 
+        // @TODO: Should never be called
         private SqlInternalConnectionSmi GetContextConnection(SqlConnectionString options, object providerInfo)
         {
             SmiContext smiContext = SmiContextFactory.Instance.GetCurrentContext();

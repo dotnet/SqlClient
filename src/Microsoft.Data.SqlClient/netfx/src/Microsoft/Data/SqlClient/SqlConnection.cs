@@ -522,9 +522,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Is this connection is a Context Connection?
+        // @TODO: WILL ALWAYS BE FALSE DELETE!
         private bool UsesContextConnection(SqlConnectionString opt)
         {
-            return opt != null && opt.ContextConnection;
+            return false;
         }
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
@@ -2275,12 +2276,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
                 }
-                if (connectionOptions.ContextConnection)
-                {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.Context_Connection);
-                }
 
-                System.Security.PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
+                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
                 permissionSet.Demand();
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2340,12 +2337,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
                 }
 
-                if (connectionOptions.ContextConnection)
-                {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.Context_Connection);
-                }
-
-                System.Security.PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
+                PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
                 permissionSet.Demand();
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
