@@ -1072,29 +1072,18 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            // Context connection's prepare is a no-op
-            if (_activeConnection != null && _activeConnection.IsContextConnection)
-            {
-                return;
-            }
-
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlCommand.Prepare|API> {0}", ObjectID))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-                statistics = SqlStatistics.StartTimer(Statistics);
+                SqlStatistics statistics = SqlStatistics.StartTimer(Statistics);
 
                 // only prepare if batch with parameters
                 // MDAC BUG #'s 73776 & 72101
                 if (
-                    this.IsPrepared && !this.IsDirty
-                    || (this.CommandType == CommandType.StoredProcedure)
-                    || (
-                            (System.Data.CommandType.Text == this.CommandType)
-                            && (0 == GetParameterCount(_parameters))
-                        )
-
+                    IsPrepared && !IsDirty
+                    || CommandType == CommandType.StoredProcedure
+                    || (CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
                 )
                 {
                     if (Statistics != null)
@@ -1203,12 +1192,6 @@ namespace Microsoft.Data.SqlClient
         // SqlInternalConnectionTds needs to be able to unprepare a statement
         internal void Unprepare()
         {
-            // Context connection's prepare is a no-op
-            if (_activeConnection.IsContextConnection)
-            {
-                return;
-            }
-
             Debug.Assert(true == IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
             Debug.Assert(_activeConnection != null, "must have an open connection to UnPrepare");
             Debug.Assert(false == _inPrepare, "_inPrepare should be false!");
@@ -2041,25 +2024,14 @@ namespace Microsoft.Data.SqlClient
 
                 Task task = null;
 
-                // only send over SQL Batch command if we are not a stored proc and have no parameters and not in batch RPC mode
-                if (_activeConnection.IsContextConnection)
-                {
-                    if (statistics != null)
-                    {
-                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
-                    }
-
-                    RunExecuteNonQuerySmi(sendToPipe);
-                }
-
                 //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
                 //We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-                else if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
+                if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
                 {
                     Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
                     if (statistics != null)
                     {
-                        if (!this.IsDirty && this.IsPrepared)
+                        if (!IsDirty && IsPrepared)
                         {
                             statistics.SafeIncrement(ref statistics._preparedExecs);
                         }
@@ -4045,6 +4017,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
+        // @TODO: This is no longer used - DELETE!
         // Smi-specific logic for ExecuteNonQuery
         private void RunExecuteNonQuerySmi(bool sendToPipe)
         {
@@ -5160,11 +5133,7 @@ namespace Microsoft.Data.SqlClient
                 // Reset the encryption related state of the command and its parameters.
                 ResetEncryptionState();
 
-                if (_activeConnection.IsContextConnection)
-                {
-                    return RunExecuteReaderSmi(cmdBehavior, runBehavior, returnStream);
-                }
-                else if (IsColumnEncryptionEnabled)
+                if (IsColumnEncryptionEnabled)
                 {
                     Task returnTask = null;
                     PrepareForTransparentEncryption(cmdBehavior, returnStream, async, timeout, completion, out returnTask, asyncWrite && async, out usedCache, inRetry);
@@ -5635,6 +5604,7 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
+        // @TODO: No longer being used -- DELETE
         private SqlDataReader RunExecuteReaderSmi(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream)
         {
             SqlInternalConnectionSmi innerConnection = InternalSmiConnection;
@@ -5984,12 +5954,6 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrEmpty(this.CommandText))
             {
                 throw ADP.CommandTextRequired(method);
-            }
-
-            if ((async) && (_activeConnection.IsContextConnection))
-            {
-                // Async not supported on Context Connections
-                throw SQL.NotAvailableOnContextConnection();
             }
         }
 
