@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient.Server
         // SmiRequestExecutor and it's subclasses should NOT override Getters from SmiTypedGetterSetter
         //  Calls against those methods on a Request Executor are not allowed.
 
+        // @TODO: No longer used -- delete!
         // Set DEFAULT bit for parameter
         internal abstract void SetDefault(int ordinal);
 

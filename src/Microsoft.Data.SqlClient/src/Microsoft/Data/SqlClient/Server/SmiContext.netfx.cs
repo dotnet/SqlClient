@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink eventSink
         );
 
+        // @TODO: No longer being used - delete!
         internal abstract SmiRequestExecutor CreateRequestExecutor(
             string commandText,
             CommandType commandType,
