@@ -213,41 +213,9 @@ namespace Microsoft.Data.SqlClient
             set;
         }
 
-        private Transaction InternalEnlistedTransaction
-        {
-            get
-            {
-                // Workaround to access context transaction without rewriting connection pool & internalconnections properly.
-                // This SHOULD be a simple wrapper around EnlistedTransaction.
-                //   This works for now only because we can't unenlist from the context transaction
-                Transaction tx = EnlistedTransaction;
-
-                if (tx == null)
-                {
-                    tx = ContextTransaction;
-                }
-
-                return tx;
-            }
-        }
-
         override protected void Activate(Transaction transaction)
         {
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
-        }
-
-        // @TODO: No longer used -- delete
-        internal void Activate()
-        {
-            int wasInUse = System.Threading.Interlocked.Exchange(ref _isInUse, 1);
-            if (0 != wasInUse)
-            {
-                throw SQL.ContextConnectionIsInUse();
-            }
-
-            CurrentDatabase = _smiConnection.GetCurrentDatabase(_smiEventSink);
-
-            _smiEventSink.ProcessMessagesAndThrow();
         }
 
         internal void AutomaticEnlistment()
@@ -424,22 +392,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return whereAbouts;
-        }
-
-        // @TODO: No longer used -- delete!
-        internal void GetCurrentTransactionPair(out long transactionId, out Transaction transaction)
-        {
-            // SQLBU 214740: Transaction state could change between obtaining tranid and transaction
-            //  due to background SqlDelegatedTransaction processing. Lock the connection to prevent that.
-            lock (this)
-            {
-                transactionId = CurrentTransaction != null ? CurrentTransaction.TransactionId : 0;
-                transaction = null;
-                if (0 != transactionId)
-                {
-                    transaction = InternalEnlistedTransaction;
-                }
-            }
         }
 
         private void OnOutOfScope(object s, EventArgs e)
