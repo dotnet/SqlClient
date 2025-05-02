@@ -426,6 +426,7 @@ namespace Microsoft.Data.SqlClient
             return whereAbouts;
         }
 
+        // @TODO: No longer used -- delete!
         internal void GetCurrentTransactionPair(out long transactionId, out Transaction transaction)
         {
             // SQLBU 214740: Transaction state could change between obtaining tranid and transaction

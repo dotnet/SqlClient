@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.Server
             throw Common.ADP.InternalError(Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
         
+        // @TODO: No longer used -- delete!
         internal virtual SmiEventStream Execute(
             SmiConnection connection,            // Assigned connection
             long transactionId,                  // Assigned transaction
@@ -39,6 +40,7 @@ namespace Microsoft.Data.SqlClient.Server
             throw Common.ADP.InternalError(Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
         
+        // @TODO: No longer used -- delete!
         internal virtual SmiEventStream Execute(
             SmiConnection connection,                     // Assigned connection
             long transactionId,                  // Assigned transaction

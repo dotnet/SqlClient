@@ -5526,90 +5526,6 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
-        // @TODO: No longer being used -- DELETE
-        private SqlDataReader RunExecuteReaderSmi(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream)
-        {
-            SqlInternalConnectionSmi innerConnection = InternalSmiConnection;
-
-            SmiEventStream eventStream = null;
-            SqlDataReader ds = null;
-            SmiRequestExecutor requestExecutor = null;
-            try
-            {
-                // Set it up, process all of the events, and we're done!
-                requestExecutor = SetUpSmiRequest(innerConnection);
-
-                long transactionId;
-                Transaction transaction;
-                innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
-
-                if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)
-                {
-                    eventStream = requestExecutor.Execute(
-                                                    innerConnection.SmiConnection,
-                                                    transactionId,
-                                                    transaction,
-                                                    cmdBehavior,
-                                                    SmiExecuteType.Reader
-                                                    );
-                }
-                else
-                {
-                    eventStream = requestExecutor.Execute(
-                                                    innerConnection.SmiConnection,
-                                                    transactionId,
-                                                    cmdBehavior,
-                                                    SmiExecuteType.Reader
-                                                    );
-                }
-
-                if ((runBehavior & RunBehavior.UntilDone) != 0)
-                {
-
-                    // Consume the results
-                    while (eventStream.HasEvents)
-                    {
-                        eventStream.ProcessEvent(EventSink);
-                    }
-                    eventStream.Close(EventSink);
-                }
-
-                if (returnStream)
-                {
-                    ds = new SqlDataReaderSmi(eventStream, this, cmdBehavior, innerConnection, EventSink, requestExecutor);
-                    ds.NextResult();    // Position on first set of results
-                    _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
-                }
-
-                EventSink.ProcessMessagesAndThrow();
-            }
-            catch (Exception e)
-            {
-                // VSTS 159716 - we do not want to handle ThreadAbort, OutOfMemory or similar critical exceptions
-                // because the state of used objects might remain invalid in this case
-                if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                {
-                    throw;
-                }
-
-                if (eventStream != null)
-                {
-                    eventStream.Close(EventSink);     // UNDONE: should cancel instead!
-                }
-
-                if (requestExecutor != null)
-                {
-                    requestExecutor.Close(EventSink);
-                    EventSink.ProcessMessagesAndThrow(ignoreNonFatalMessages: true);
-                }
-
-                throw;
-            }
-
-            return ds;
-        }
-
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
             SqlDataReader ds = cachedAsyncState.CachedAsyncReader; // should not be null
@@ -7310,6 +7226,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+        // @TODO: No longer being used -- delete!
         // Allocates and initializes a new SmiRequestExecutor based on the current command state
         private SmiRequestExecutor SetUpSmiRequest(SqlInternalConnectionSmi innerConnection)
         {
