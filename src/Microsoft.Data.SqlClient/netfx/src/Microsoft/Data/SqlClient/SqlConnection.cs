@@ -173,10 +173,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
-                else if (UsesContextConnection(connectionOptions))
-                {
-                    throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
-                }
                 else if (UsesActiveDirectoryIntegrated(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
@@ -511,20 +507,14 @@ namespace Microsoft.Data.SqlClient
             set => _AsyncCommandInProgress = value;
         }
 
+        // @TODO: WILL ALWAYS BE FALSE, DELETE!
         internal bool IsContextConnection
         {
             get
             {
                 SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return UsesContextConnection(opt);
+                return false;
             }
-        }
-
-        // Is this connection is a Context Connection?
-        // @TODO: WILL ALWAYS BE FALSE DELETE!
-        private bool UsesContextConnection(SqlConnectionString opt)
-        {
-            return false;
         }
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
@@ -1086,11 +1076,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity();
             }
-
-            if (UsesContextConnection(connectionOptions))
-            {
-                throw ADP.InvalidMixedArgumentOfSecureCredentialAndContextConnection();
-            }
         }
 
         // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken: check if the usage of AccessToken has any conflict
@@ -1107,11 +1092,6 @@ namespace Microsoft.Data.SqlClient
             if (UsesIntegratedSecurity(connectionOptions))
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndIntegratedSecurity();
-            }
-
-            if (UsesContextConnection(connectionOptions))
-            {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndContextConnection();
             }
 
             if (UsesAuthentication(connectionOptions))
