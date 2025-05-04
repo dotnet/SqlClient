@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
         {
             buffer = null;
 
-            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            (bool isAvailable, bool isStarting, _) = stateObj.GetSnapshotStatuses();
 
             List<byte[]> cachedBytes = null;
             if (isAvailable)
@@ -55,7 +55,6 @@ namespace Microsoft.Data.SqlClient
             {
                 cachedBytes = new List<byte[]>();
             }
-
 
             // the very first length is already read.
             TdsOperationStatus result = parser.TryPlpBytesLeft(stateObj, out ulong plplength);
