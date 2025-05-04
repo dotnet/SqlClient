@@ -45,9 +45,9 @@ namespace Microsoft.Data.SqlClient
             if (isAvailable)
             {
                 cachedBytes = stateObj.TryTakeSnapshotStorage() as List<byte[]>;
-                if (cachedBytes != null && !isStarting && !isContinuing) 
+                if (isStarting)
                 {
-                    stateObj.SetSnapshotStorage(null);
+                    cachedBytes = null;
                 }
             }
  
@@ -63,7 +63,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-
 
             // For now we  only handle Plp data from the parser directly.
             Debug.Assert(metadata.metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
@@ -105,10 +104,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (returnAfterAdd)
                     {
-                        if (isStarting || isContinuing)
-                        {
-                            stateObj.SetSnapshotStorage(cachedBytes);
-                        }
+                        stateObj.SetSnapshotStorage(cachedBytes);
                         return result;
                     }
 
