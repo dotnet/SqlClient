@@ -91,14 +91,22 @@ extends:
     featureFlags:
       WindowsHostVersion: 1ESWindows2022
     globalSdl: # https://aka.ms/obpipelines/sdl
+      tsa:
+        # The OneBranch template will set 'break' to false for the other SDL
+        # tools when TSA is enabled.  This allows TSA to gather the results
+        # and publish them for downstream analysis.
+        enabled: ${{parameters.enableAllSdlTools }}
       apiscan:
-        enabled: ${{ not(parameters['isPreview']) }}
+        enabled: ${{parameters.enableAllSdlTools }}
+        # For non-official builds, the OneBranch template seems to set APIScan's
+        # 'break' to true even when TSA is enabled.  We don't want APIScan to
+        # break non-official builds, so we explicitly set 'break' to false here.
+        ${{ if ne(parameters.oneBranchType, 'Official') }}:
+          break: false
         softwareFolder: $(softwareFolder)
         symbolsFolder: $(symbolsFolder)
         softwarename: Microsoft.Data.SqlClient
         versionNumber: $(AssemblyFileVersion)
-      tsa:
-        enabled: ${{ not(parameters['isPreview']) }} # onebranch publish all sdl results to TSA. If TSA is disabled all SDL tools will forced into 'break' build mode.
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
