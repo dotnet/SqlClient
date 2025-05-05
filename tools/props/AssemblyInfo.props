@@ -6,5 +6,6 @@
     <Company>Microsoft Corporation</Company>
     <BaseProduct>Microsoft SqlClient Data Provider</BaseProduct>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 </Project>
