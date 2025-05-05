@@ -4,6 +4,7 @@
 
 #if NET
 
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -225,7 +226,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (_commands is null) 
             {
-                throw ADP.InvalidOperation("SqlBatchCommand list has not been initialized.");
+                throw ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_NoSqlBatchCommandList));
             }
             _batchCommand.Connection = Connection;
             _batchCommand.Transaction = Transaction;
