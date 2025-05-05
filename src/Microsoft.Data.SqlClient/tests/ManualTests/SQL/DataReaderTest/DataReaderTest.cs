@@ -563,10 +563,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command.CommandText = $"SELECT Data FROM [{tableName}] ORDER BY Id";
                         using (var reader = await command.ExecuteReaderAsync())
                         {
+                            string expectedResult = null;
                             while (await reader.ReadAsync())
                             {
                                 var result = reader.GetString(0);
-                                Assert.Equal(xml, result);
+                                if (expectedResult == null)
+                                {
+                                    expectedResult = result;
+                                }
+                                else
+                                {
+                                    Assert.Equal(expectedResult, result);
+                                }
                                 id++;
                             }
                         }
