@@ -1303,7 +1303,7 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to SqlBatchCommands list has not been initialized..
+        ///   Looks up a localized string similar to SqlBatchCommand list has not been initialized..
         /// </summary>
         internal static string ADP_NoSqlBatchCommandList
         {
