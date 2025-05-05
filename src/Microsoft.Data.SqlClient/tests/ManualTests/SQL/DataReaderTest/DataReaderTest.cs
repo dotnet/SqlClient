@@ -525,7 +525,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string tableName = DataTestUtility.GenerateObjectName();
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.PersistSecurityInfo = true;
+            builder.PacketSize = 3096; // should reproduce failure that this tests for in <100 reads
+
+            using (var connection = new SqlConnection(builder.ToString()))
             {
                 await connection.OpenAsync();
 
@@ -544,7 +548,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         createCommand.ExecuteNonQuery();
                     }
 
-                    for (var i = 0; i < 1000; i++)
+                    for (var i = 0; i < 100; i++)
                     {
                         using (var insertCommand = connection.CreateCommand())
                         {
