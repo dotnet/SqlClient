@@ -651,6 +651,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientPermission.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientPermission.netfx.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientPermissionAttribute.netfx.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientPermissionAttribute.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
     </Compile>
@@ -890,7 +896,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Common\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
@@ -905,7 +910,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
