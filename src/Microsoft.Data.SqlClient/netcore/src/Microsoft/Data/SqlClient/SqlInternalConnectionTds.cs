@@ -106,13 +106,12 @@ namespace Microsoft.Data.SqlClient
     {
         // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
         internal const int MsalHttpRetryStatusCode = 429;
+        // Connection re-route limit
+        internal const int MaxNumberOfRedirectRoute = 10;
 
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
         private TdsParser _parser;
-
-        // Connection re-route limit
-        internal const int _maxNumberOfRedirectRoute = 10;
 
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
@@ -186,7 +185,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool _DNSCachingBeforeRedirect = false;
+        private bool _dnsCachingBeforeRedirect = false;
 
         /// <summary>
         /// Get or set if the control ring send redirect token and feature ext ack with true for DNSCaching
@@ -195,11 +194,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return _DNSCachingBeforeRedirect;
+                return _dnsCachingBeforeRedirect;
             }
             set
             {
-                _DNSCachingBeforeRedirect = value;
+                _dnsCachingBeforeRedirect = value;
             }
         }
 
@@ -1649,9 +1648,9 @@ namespace Microsoft.Data.SqlClient
                     if (RoutingInfo != null)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover> Routed to {0}", serverInfo.ExtendedServerName);
-                        if (routingAttempts > _maxNumberOfRedirectRoute)
+                        if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
                         }
 
                         if (timeout.IsExpired)
@@ -1895,9 +1894,9 @@ namespace Microsoft.Data.SqlClient
                     int routingAttempts = 0;
                     while (RoutingInfo != null)
                     {
-                        if (routingAttempts > _maxNumberOfRedirectRoute)
+                        if (routingAttempts > MaxNumberOfRedirectRoute)
                         {
-                            throw SQL.ROR_RecursiveRoutingNotSupported(this, _maxNumberOfRedirectRoute);
+                            throw SQL.ROR_RecursiveRoutingNotSupported(this, MaxNumberOfRedirectRoute);
                         }
                         routingAttempts++;
 
@@ -2742,7 +2741,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null && TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
+            if (RoutingInfo != null && featureId != TdsEnums.FEATUREEXT_SQLDNSCACHING)
             {
                 return;
             }

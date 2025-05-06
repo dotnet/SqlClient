@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
                     opt = new SqlConnectionString(opt, instanceName, false /* user instance=false */, null /* do not modify the Enlist value */);
                     poolGroupProviderInfo = null; // null so we do not pass to constructor below...
                 }
-                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
+                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
             }
             return result;
         }
