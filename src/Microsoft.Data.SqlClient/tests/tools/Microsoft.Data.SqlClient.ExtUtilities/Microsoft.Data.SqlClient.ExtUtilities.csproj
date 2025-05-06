@@ -4,8 +4,8 @@
     <StartupObject>Microsoft.Data.SqlClient.ExtUtilities.Runner</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
-    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="$(MicrosoftSqlServerSqlManagementObjectsVersion)" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" />
     <ProjectReference Include="../Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 </Project>
