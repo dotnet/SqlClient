@@ -152,8 +152,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs">
-      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.netcore.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
@@ -865,14 +865,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
@@ -913,6 +913,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.netcore.Unix.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.netcore.Unix.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs</Link>
     </Compile>
@@ -937,8 +940,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
