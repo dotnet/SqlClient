@@ -39,7 +39,7 @@
         <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25164.6" />
         <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25164.6" />
         <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-        <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+        <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(TargetFramework.StartsWith('net4'))" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
         <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.52.0" />
         <PackageVersion Include="Microsoft.SqlServer.Types" Version="10.50.1600.1" Condition="$(TargetFramework.StartsWith('net4'))" />
