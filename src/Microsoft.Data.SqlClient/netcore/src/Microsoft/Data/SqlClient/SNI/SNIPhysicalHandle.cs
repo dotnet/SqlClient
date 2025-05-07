@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -16,11 +17,11 @@ namespace Microsoft.Data.SqlClient.SNI
 #if DEBUG
         private static int s_packetId;
 #endif
-        private SqlObjectPool<SNIPacket> _pool;
+        private ObjectPool<SNIPacket> _pool;
 
         protected SNIPhysicalHandle(int poolSize = DefaultPoolSize)
         {
-            _pool = new SqlObjectPool<SNIPacket>(poolSize);
+            _pool = new ObjectPool<SNIPacket>(poolSize);
         }
 
         public override SNIPacket RentPacket(int headerSize, int dataSize)

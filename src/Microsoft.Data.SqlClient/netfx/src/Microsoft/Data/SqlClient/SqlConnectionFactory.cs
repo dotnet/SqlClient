@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlConnectionFactory : DbConnectionFactory
     {
-        private SqlConnectionFactory() : base(SqlPerformanceCounters.SingletonInstance)
+        private SqlConnectionFactory() : base()
         {
         }
 
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
         {
-            Debug.Assert(!ADP.IsEmpty(connectionString), "empty connectionString");
+            Debug.Assert(!string.IsNullOrEmpty(connectionString), "empty connectionString");
             SqlConnectionString result = new SqlConnectionString(connectionString);
             return result;
         }
@@ -342,20 +342,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-    }
-
-    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-    sealed internal class SqlPerformanceCounters : DbConnectionPoolCounters
-    {
-        private const string CategoryName = ".NET Data Provider for SqlServer";
-        private const string CategoryHelp = "Counters for Microsoft.Data.SqlClient";
-
-        public static readonly SqlPerformanceCounters SingletonInstance = new SqlPerformanceCounters();
-
-        [System.Diagnostics.PerformanceCounterPermissionAttribute(System.Security.Permissions.SecurityAction.Assert, PermissionAccess = PerformanceCounterPermissionAccess.Write, MachineName = ".", CategoryName = CategoryName)]
-        private SqlPerformanceCounters() : base(CategoryName, CategoryHelp)
-        {
-        }
     }
 }
 

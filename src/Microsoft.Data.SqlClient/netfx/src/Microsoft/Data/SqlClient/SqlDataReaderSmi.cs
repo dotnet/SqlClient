@@ -736,32 +736,32 @@ namespace Microsoft.Data.SqlClient
                         schemaRow[IsRowVersion] = false;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.ColumnName))
+                    if (!string.IsNullOrEmpty(colMetaData.ColumnName))
                     {
                         schemaRow[BaseColumnName] = colMetaData.ColumnName;
                     }
-                    else if (!ADP.IsEmpty(colMetaData.Name))
+                    else if (!string.IsNullOrEmpty(colMetaData.Name))
                     {
                         // Use projection name if base column name is not present
                         schemaRow[BaseColumnName] = colMetaData.Name;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.TableName))
+                    if (!string.IsNullOrEmpty(colMetaData.TableName))
                     {
                         schemaRow[BaseTableName] = colMetaData.TableName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.SchemaName))
+                    if (!string.IsNullOrEmpty(colMetaData.SchemaName))
                     {
                         schemaRow[BaseSchemaName] = colMetaData.SchemaName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.CatalogName))
+                    if (!string.IsNullOrEmpty(colMetaData.CatalogName))
                     {
                         schemaRow[BaseCatalogName] = colMetaData.CatalogName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.ServerName))
+                    if (!string.IsNullOrEmpty(colMetaData.ServerName))
                     {
                         schemaRow[BaseServerName] = colMetaData.ServerName;
                     }

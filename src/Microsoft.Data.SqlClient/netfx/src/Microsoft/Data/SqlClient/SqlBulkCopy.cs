@@ -420,7 +420,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, e);
             }
-            if (ADP.IsEmpty(parts[MultipartIdentifier.TableIndex]))
+            if (string.IsNullOrEmpty(parts[MultipartIdentifier.TableIndex]))
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, null);
             }
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient
 
             string TableName = parts[MultipartIdentifier.TableIndex];
             bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
-            if (!ADP.IsEmpty(TableName))
+            if (!string.IsNullOrEmpty(TableName))
             {
                 // Escape table name to be put inside TSQL literal block (within N'').
                 TableName = SqlServerEscapeHelper.EscapeStringAsLiteral(TableName);
@@ -451,7 +451,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             string SchemaName = parts[MultipartIdentifier.SchemaIndex];
-            if (!ADP.IsEmpty(SchemaName))
+            if (!string.IsNullOrEmpty(SchemaName))
             {
                 // Escape schema name to be put inside TSQL literal block (within N'').
                 SchemaName = SqlServerEscapeHelper.EscapeStringAsLiteral(SchemaName);
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             string CatalogName = parts[MultipartIdentifier.CatalogIndex];
-            if (isTempTable && ADP.IsEmpty(CatalogName))
+            if (isTempTable && string.IsNullOrEmpty(CatalogName))
             {
                 TDSCommand += string.Format("exec tempdb..{0} N'{1}.{2}'",
                     TableCollationsStoredProc,
@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // VSDD 581951 - escape the catalog name
-                if (!ADP.IsEmpty(CatalogName))
+                if (!string.IsNullOrEmpty(CatalogName))
                 {
                     CatalogName = SqlServerEscapeHelper.EscapeIdentifier(CatalogName);
                 }
@@ -1437,7 +1437,7 @@ namespace Microsoft.Data.SqlClient
 
         private string UnquotedName(string name)
         {
-            if (ADP.IsEmpty(name))
+            if (string.IsNullOrEmpty(name))
                 return null;
             if (name[0] == '[')
             {
@@ -1634,7 +1634,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value);
+                            value = _connection.GetBytes(value, out _, out _);
                             typeChanged = true;
                         }
                         break;
@@ -3060,7 +3060,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _stateObj = _parser.GetSession(this);
                     _stateObj._bulkCopyOpperationInProgress = true;
-                    _stateObj.StartSession(ObjectID);
+                    _stateObj.StartSession(this);
                 }
                 finally
                 {

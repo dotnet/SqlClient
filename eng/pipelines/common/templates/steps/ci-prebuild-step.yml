@@ -20,17 +20,17 @@ parameters:
       - Package
 
 steps:
-- task: UseDotNet@2
-  displayName: 'Use .NET 9.x sdk'
-  inputs:
+- template: ensure-dotnet-version.yml
+  parameters:
     packageType: sdk
-    version: '9.x'
+    usePreview: false
+    version: 9.0
 
-- task: UseDotNet@2
-  displayName: 'Install .NET 8.x runtime'
-  inputs:
+- template: ensure-dotnet-version.yml
+  parameters:
     packageType: runtime
-    version: '8.x'
+    usePreview: false
+    version: 8.0
 
 - ${{if eq(parameters.debug, true)}}:
   - powershell: |
@@ -53,3 +53,5 @@ steps:
 
 - ${{ else }}: # project
   - template: ci-project-build-step.yml@self
+    parameters:
+      build: allNoDocs

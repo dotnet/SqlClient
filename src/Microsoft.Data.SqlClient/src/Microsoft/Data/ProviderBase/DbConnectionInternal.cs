@@ -325,10 +325,6 @@ namespace Microsoft.Data.ProviderBase
             get => _owningObject.TryGetTarget(out DbConnection connection) ? connection : null;
         }
 
-        #if NETFRAMEWORK
-        protected DbConnectionPoolCounters PerformanceCounters { get; private set; }
-        #endif
-
         protected virtual bool ReadyToPrepareTransaction
         {
             get => true;
@@ -369,11 +365,7 @@ namespace Microsoft.Data.ProviderBase
 
             Activate(transaction);
 
-            #if NETFRAMEWORK
-            PerformanceCounters.NumberOfActiveConnections.Increment();
-            #else
-            SqlClientEventSource.Log.EnterActiveConnection();
-            #endif
+            SqlClientEventSource.Metrics.EnterActiveConnection();
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -486,11 +478,7 @@ namespace Microsoft.Data.ProviderBase
                             // and transactions may not get cleaned up...
                             Deactivate();
 
-                            #if NETFRAMEWORK
-                            PerformanceCounters.HardDisconnectsPerSecond.Increment();
-                            #else
-                            SqlClientEventSource.Log.HardDisconnectRequest();
-                            #endif
+                            SqlClientEventSource.Metrics.HardDisconnectRequest();
 
                             // To prevent an endless recursion, we need to clear the owning object
                             // before we call dispose so that we can't get here a second time...
@@ -505,16 +493,8 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                #if NETFRAMEWORK
-                                PerformanceCounters.NumberOfNonPooledConnections.Decrement();
-                                if (this is not SqlInternalConnectionSmi)
-                                {
-                                    Dispose();
-                                }
-                                #else
-                                SqlClientEventSource.Log.ExitNonPooledConnection();
+                                SqlClientEventSource.Metrics.ExitNonPooledConnection();
                                 Dispose();
-                                #endif
                             }
                         }
                     }
@@ -544,15 +524,7 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(activateCount == 0, "activated multiple times?");
             #endif
 
-            #if NETFRAMEWORK
-            if (PerformanceCounters is not null)
-            {
-                // Pool.Clear will DestroyObject that will clean performanceCounters before going here
-                PerformanceCounters.NumberOfActiveConnections.Decrement();
-            }
-            #else
-            SqlClientEventSource.Log.ExitActiveConnection();
-            #endif
+            SqlClientEventSource.Metrics.ExitActiveConnection();
 
             if (!IsConnectionDoomed && Pool.UseLoadBalancing)
             {
@@ -612,11 +584,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks
                 // in.
-                #if NETFRAMEWORK
-                PerformanceCounters.NumberOfNonPooledConnections.Decrement();
-                #else
-                SqlClientEventSource.Log.ExitNonPooledConnection();
-                #endif
+                SqlClientEventSource.Metrics.ExitNonPooledConnection();
 
                 Dispose();
             }
@@ -691,10 +659,6 @@ namespace Microsoft.Data.ProviderBase
             IsConnectionDoomed = true;
             _enlistedTransactionOriginal = null; // should not be disposed
 
-            #if NETFRAMEWORK
-            PerformanceCounters = null;
-            #endif
-
             // Dispose of the _enlistedTransaction since it is a clone of the original reference.
             // VSDD 780271 - _enlistedTransaction can be changed by another thread (TX end event)
             Transaction enlistedTransaction = Interlocked.Exchange(ref _enlistedTransaction, null);
@@ -724,16 +688,8 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// Used by DbConnectionFactory to indicate that this object IS NOT part of a connection pool.
         /// </summary>
-        #if NETFRAMEWORK
-        internal void MakeNonPooledObject(DbConnection owningObject, DbConnectionPoolCounters performanceCounters)
-        #else
         internal void MakeNonPooledObject(DbConnection owningObject)
-        #endif
         {
-            #if NETFRAMEWORK
-            PerformanceCounters = performanceCounters;
-            #endif
-
             Pool = null;
             _owningObject.SetTarget(owningObject);
             _pooledCount = -1;
@@ -747,10 +703,6 @@ namespace Microsoft.Data.ProviderBase
         {
             _createTime = DateTime.UtcNow;
             Pool = connectionPool;
-
-            #if NETFRAMEWORK
-            PerformanceCounters = connectionPool.PerformanceCounters;
-            #endif
         }
 
         internal void NotifyWeakReference(int message) =>
@@ -850,11 +802,7 @@ namespace Microsoft.Data.ProviderBase
             IsTxRootWaitingForTxEnd = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
 
-            #if NETFRAMEWORK
-            PerformanceCounters.NumberOfStasisConnections.Increment();
-            #else
-            SqlClientEventSource.Log.EnterStasisConnection();
-            #endif
+            SqlClientEventSource.Metrics.EnterStasisConnection();
         }
 
         /// <remarks>
@@ -1006,11 +954,7 @@ namespace Microsoft.Data.ProviderBase
                 : "Delegated Transaction has ended, connection is closed/leaked.  Disposing.";
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, {1}", ObjectID, message);
 
-            #if NETFRAMEWORK
-            PerformanceCounters.NumberOfStasisConnections.Decrement();
-            #else
-            SqlClientEventSource.Log.ExitStasisConnection();
-            #endif
+            SqlClientEventSource.Metrics.ExitStasisConnection();
 
             IsTxRootWaitingForTxEnd = false;
         }

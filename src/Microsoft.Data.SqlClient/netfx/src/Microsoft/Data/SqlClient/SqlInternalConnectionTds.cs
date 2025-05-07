@@ -1402,9 +1402,7 @@ namespace Microsoft.Data.SqlClient
             // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
-            #pragma warning disable 0618
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
-            #pragma warning restore 0618
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
@@ -1496,7 +1494,7 @@ namespace Microsoft.Data.SqlClient
 
             _timeoutErrorInternal.SetInternalSourceType(useFailoverPartner ? SqlConnectionInternalSourceType.Failover : SqlConnectionInternalSourceType.Principle);
 
-            bool hasFailoverPartner = !ADP.IsEmpty(failoverPartner);
+            bool hasFailoverPartner = !string.IsNullOrEmpty(failoverPartner);
 
             // Open the connection and Login
             try
@@ -1806,9 +1804,7 @@ namespace Microsoft.Data.SqlClient
             Boolean isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
             Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
-                                       #pragma warning disable 0618
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
-                                       #pragma warning restore 0618
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
@@ -2649,9 +2645,7 @@ namespace Microsoft.Data.SqlClient
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
-                        #pragma warning disable 0618
                         case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        #pragma warning restore 0618
                         case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
@@ -3198,7 +3192,7 @@ namespace Microsoft.Data.SqlClient
             // when using the Dbnetlib dll.  If the protocol is not specified, the netlib will
             // try all protocols in the order listed in the Client Network Utility.  Connect will
             // then fail if all protocols fail.
-            if (!ADP.IsEmpty(protocol))
+            if (!string.IsNullOrEmpty(protocol))
             {
                 ExtendedServerName = protocol + ":" + serverName;
             }
