@@ -2,6 +2,7 @@
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+        <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     </PropertyGroup>
     <!-- NetFx project dependencies -->
     <ItemGroup>
