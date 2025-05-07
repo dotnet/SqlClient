@@ -8,8 +8,7 @@
     <Product>Framework $(BaseProduct)</Product>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
-  <!--Generating
-  Strong Name-->
+  <!--Generating Strong Name-->
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
