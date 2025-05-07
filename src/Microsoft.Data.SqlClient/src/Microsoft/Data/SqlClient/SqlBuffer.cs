@@ -107,11 +107,19 @@ namespace Microsoft.Data.SqlClient
             internal DateTimeOffsetInfo _dateTimeOffsetInfo;
         }
 
-        private bool _isNull;
-        private StorageType _type;
+        #region Member Variables
+        
+        // These variables store pre-boxed bool values to be used when returning a boolean
+        // in an object typed location, if these are not used a new value is boxed each time
+        // one is needed which leads to a lot of garbage which needs to be collected
+        private static readonly object s_cachedTrueObject = true;
+        private static readonly object s_cachedFalseObject = false;
+
         private Storage _value;
         private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
 
+        #endregion
+        
         internal SqlBuffer()
         {
         }
@@ -119,92 +127,300 @@ namespace Microsoft.Data.SqlClient
         private SqlBuffer(SqlBuffer value)
         { // Clone
             // value types
-            _isNull = value._isNull;
-            _type = value._type;
+            IsNull = value.IsNull;
+            VariantInternalStorageType = value.VariantInternalStorageType;
             // ref types - should also be read only unless at some point we allow this data
             // to be mutable, then we will need to copy
             _value = value._value;
             _object = value._object;
         }
 
-        internal bool IsEmpty => _type == StorageType.Empty;
-
-        internal bool IsNull => _isNull;
-
-        internal StorageType VariantInternalStorageType => _type;
+        #region Type Conversion Properties
 
         internal bool Boolean
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Boolean == _type)
-                {
-                    return _value._boolean;
-                }
-                return (bool)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._boolean = value;
-                _type = StorageType.Boolean;
-                _isNull = false;
-            }
+            get => GetValue(StorageType.Boolean, _value._boolean);
+            set => SetValue(StorageType.Boolean, ref _value._boolean, value);
         }
 
         internal byte Byte
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Byte == _type)
-                {
-                    return _value._byte;
-                }
-                return (byte)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._byte = value;
-                _type = StorageType.Byte;
-                _isNull = false;
-            }
+            get => GetValue(StorageType.Byte, _value._byte);
+            set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
 
         internal byte[] ByteArray
         {
             get
             {
-                ThrowIfNull();
+                ThrowIfNull(); // Must be checked here because SqlBinary allows null.
                 return SqlBinary.Value;
             }
         }
 
+        #if NET
+        internal DateOnly DateOnly
+        {
+            get
+            {
+                ThrowIfNull();
+                return VariantInternalStorageType == StorageType.Date
+                    ? DateOnly.MinValue.AddDays(_value._int32)
+                    : (DateOnly)Value;
+            }
+        }
+        #endif
+        
         internal DateTime DateTime
         {
             get
             {
                 ThrowIfNull();
-
-                if (StorageType.Date == _type)
+                switch (VariantInternalStorageType)
                 {
-                    return DateTime.MinValue.AddDays(_value._int32);
+                    case StorageType.Date:
+                        return DateTime.MinValue.AddDays(_value._int32);
+                    case StorageType.DateTime:
+                        // @TODO: Move SqlDateTimeToDateTime into this class
+                        return SqlTypeWorkarounds.SqlDateTimeToDateTime(
+                            _value._dateTimeInfo._daypart,
+                            _value._dateTimeInfo._timepart);
+                    case StorageType.DateTime2:
+                        // @TODO: Make ticks calculation be part of the DateTime2Info struct
+                        return new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info));
+                    default:
+                        return (DateTime)Value;
                 }
-                if (StorageType.DateTime2 == _type)
-                {
-                    return new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info));
-                }
-                if (StorageType.DateTime == _type)
-                {
-                    return SqlTypeWorkarounds.SqlDateTimeToDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart);
-                }
-                return (DateTime)Value; // anything else we haven't thought of goes through boxing.
             }
         }
+
+        internal DateTimeOffset DateTimeOffset
+        {
+            get
+            {
+                ThrowIfNull();
+                if (VariantInternalStorageType == StorageType.DateTimeOffset)
+                {
+                    // @TODO Make ticks calculation be part of the DateTime2Info struct
+                    TimeSpan offset = new TimeSpan(0, _value._dateTimeOffsetInfo._offset, 0);
+                    long ticks = GetTicksFromDateTime2Info(_value._dateTimeOffsetInfo._dateTime2Info) + offset.Ticks;
+                    return new DateTimeOffset(ticks, offset);
+                }
+
+                return (DateTimeOffset)Value;
+            }
+        }
+        
+        internal double Double
+        {
+            get => GetValue(StorageType.Double, _value._double);
+            set => SetValue(StorageType.Double, ref _value._double, value);
+        }
+
+        internal Guid Guid
+        {
+            get
+            {
+                ThrowIfNull();
+                return VariantInternalStorageType switch
+                {
+                    StorageType.Guid => _value._guid,
+                    StorageType.SqlGuid => ((SqlGuid)_object).Value,
+                    _ => (Guid)Value
+                };
+            }
+            set => SetValue(StorageType.Guid, ref _value._guid, value);
+        }
+
+        internal short Int16
+        {
+            get => GetValue(StorageType.Int16, _value._int16);
+            set => SetValue(StorageType.Int16, ref _value._int16, value);
+        }
+
+        internal int Int32
+        {
+            get => GetValue(StorageType.Int32, _value._int32);
+            set => SetValue(StorageType.Int32, ref _value._int32, value);
+        }
+
+        internal long Int64
+        {
+            get => GetValue(StorageType.Int64, _value._int64);
+            set => SetValue(StorageType.Int64, ref _value._int64, value);
+        }
+
+        internal float Single
+        {
+            get => GetValue(StorageType.Single, _value._single);
+            set => SetValue(StorageType.Single, ref _value._single, value);
+        }
+        
+        internal SqlBinary SqlBinary
+        {
+            get => VariantInternalStorageType == StorageType.SqlBinary
+                ? IsNull ? SqlBinary.Null : (SqlBinary)_object
+                : (SqlBinary)SqlValue;
+            set => SetObject(StorageType.SqlBinary, value);
+        }
+
+        internal SqlBoolean SqlBoolean
+        {
+            get => VariantInternalStorageType == StorageType.Boolean
+                ? IsNull ? SqlBoolean.Null : new SqlBoolean(_value._boolean)
+                : (SqlBoolean)SqlValue;
+        }
+
+        internal SqlByte SqlByte
+        {
+            get => VariantInternalStorageType == StorageType.Byte
+                ? IsNull ? SqlByte.Null : new SqlByte(_value._byte)
+                : (SqlByte)SqlValue;
+        }
+        
+        internal SqlCachedBuffer SqlCachedBuffer
+        {
+            get => VariantInternalStorageType == StorageType.SqlCachedBuffer
+                ? IsNull ? SqlCachedBuffer.Null : (SqlCachedBuffer)_object
+                : (SqlCachedBuffer)SqlValue;
+            set => SetObject(StorageType.SqlCachedBuffer, value);
+        }
+
+        internal SqlDateTime SqlDateTime
+        {
+            get => VariantInternalStorageType == StorageType.DateTime
+                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart)
+                : (SqlDateTime)SqlValue;
+        }
+
+        internal SqlDouble SqlDouble
+        {
+            get => VariantInternalStorageType == StorageType.Double
+                ? IsNull ? SqlDouble.Null : new SqlDouble(_value._double)
+                : (SqlDouble)SqlValue;
+        }
+        
+        internal SqlGuid SqlGuid
+        {
+            get => VariantInternalStorageType switch
+            {
+                StorageType.Guid => IsNull ? SqlGuid.Null : new SqlGuid(_value._guid),
+                StorageType.SqlGuid => IsNull ? SqlGuid.Null : (SqlGuid)_object,
+                _ => (SqlGuid)SqlValue
+            };
+            set => SetObject(StorageType.SqlGuid, value);
+        }
+
+        internal SqlInt16 SqlInt16
+        {
+            get => VariantInternalStorageType == StorageType.Int16
+                ? IsNull ? SqlInt16.Null : new SqlInt16(_value._int16)
+                : (SqlInt16)SqlValue;
+        }
+
+        internal SqlInt32 SqlInt32
+        {
+            get => VariantInternalStorageType == StorageType.Int32
+                ? IsNull ? SqlInt32.Null : new SqlInt32(_value._int32)
+                : (SqlInt32)SqlValue;
+        }
+
+        internal SqlInt64 SqlInt64
+        {
+            get => VariantInternalStorageType == StorageType.Int64
+                ? IsNull ? SqlInt64.Null : new SqlInt64(_value._int64)
+                : (SqlInt64)SqlValue;
+        }
+
+        internal SqlJson SqlJson
+        {
+            get => VariantInternalStorageType == StorageType.Json
+                ? IsNull ? SqlJson.Null : new SqlJson((string)_object)
+                : (SqlJson)SqlValue;
+        }
+
+        internal SqlMoney SqlMoney
+        {
+            get => VariantInternalStorageType == StorageType.Money
+                ? IsNull ? SqlMoney.Null : GetSqlMoneyFromLong(_value._int64)
+                : (SqlMoney)SqlValue;
+        }
+
+        internal SqlSingle SqlSingle
+        {
+            get => VariantInternalStorageType == StorageType.Single
+                ? IsNull ? SqlSingle.Null : new SqlSingle(_value._single)
+                : (SqlSingle)SqlValue;
+        }
+
+        internal SqlString SqlString
+        {
+            get => VariantInternalStorageType switch
+            {
+                StorageType.Json => IsNull ? SqlString.Null : new SqlString((string)_object),
+                StorageType.SqlCachedBuffer => IsNull ? SqlString.Null : ((SqlCachedBuffer)_object).ToSqlString(),
+                StorageType.String => IsNull ? SqlString.Null : new SqlString((string)_object),
+                _ => (SqlString)SqlValue
+            };
+        }
+        
+        internal SqlXml SqlXml
+        {
+            get => VariantInternalStorageType == StorageType.SqlXml
+                ? IsNull ? SqlXml.Null : (SqlXml)_object
+                : (SqlXml)SqlValue;
+            set => SetObject(StorageType.SqlXml, value);
+        }
+
+        internal string String
+        {
+            get
+            {
+                ThrowIfNull();
+                switch (VariantInternalStorageType)
+                {
+                    case StorageType.Json:
+                    case StorageType.String:
+                        return (string)_object;
+                    case StorageType.SqlCachedBuffer:
+                        return ((SqlCachedBuffer)_object).ToString();
+                    default:
+                        return (string)Value;
+                }
+            }
+        }
+
+        internal TimeSpan Time
+        {
+            get
+            {
+                ThrowIfNull();
+                return VariantInternalStorageType == StorageType.Time
+                    ? new TimeSpan(_value._timeInfo._ticks)
+                    : (TimeSpan)Value;
+            }
+        }
+        
+        #if NET
+        internal TimeOnly TimeOnly
+        {
+            get
+            {
+                ThrowIfNull();
+                return VariantInternalStorageType == StorageType.Time
+                    ? new TimeOnly(_value._timeInfo._ticks)
+                    : (TimeOnly)Value;
+            }
+        }
+        #endif
+        
+        #endregion
+        
+        internal bool IsEmpty => VariantInternalStorageType == StorageType.Empty;
+
+        internal bool IsNull { get; private set; }
+
+        internal StorageType VariantInternalStorageType { get; private set; }
 
         #region Decimal
         internal decimal Decimal
@@ -213,7 +429,7 @@ namespace Microsoft.Data.SqlClient
             {
                 ThrowIfNull();
 
-                if (StorageType.Decimal == _type)
+                if (StorageType.Decimal == VariantInternalStorageType)
                 {
                     if (_value._numericInfo._data4 != 0 || _value._numericInfo._scale > 28)
                     {
@@ -258,7 +474,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
                 }
-                if (StorageType.Money == _type)
+                if (StorageType.Money == VariantInternalStorageType)
                 {
                     long l = _value._int64;
                     bool isNegative = false;
@@ -352,153 +568,6 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
-        internal double Double
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Double == _type)
-                {
-                    return _value._double;
-                }
-                return (double)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._double = value;
-                _type = StorageType.Double;
-                _isNull = false;
-            }
-        }
-
-        internal Guid Guid
-        {
-            get
-            {
-                ThrowIfNull();
-                if (StorageType.Guid == _type)
-                {
-                    return _value._guid;
-                }
-                else if (StorageType.SqlGuid == _type)
-                {
-                    return ((SqlGuid)_object).Value;
-                }
-                return (Guid)Value;
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _type = StorageType.Guid;
-                _value._guid = value;
-                _isNull = false;
-            }
-        }
-
-        internal short Int16
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int16 == _type)
-                {
-                    return _value._int16;
-                }
-                return (short)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int16 = value;
-                _type = StorageType.Int16;
-                _isNull = false;
-            }
-        }
-
-        internal int Int32
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int32 == _type)
-                {
-                    return _value._int32;
-                }
-                return (int)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int32 = value;
-                _type = StorageType.Int32;
-                _isNull = false;
-            }
-        }
-
-        internal long Int64
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int64 == _type)
-                {
-                    return _value._int64;
-                }
-                return (long)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int64 = value;
-                _type = StorageType.Int64;
-                _isNull = false;
-            }
-        }
-
-        internal float Single
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Single == _type)
-                {
-                    return _value._single;
-                }
-                return (float)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._single = value;
-                _type = StorageType.Single;
-                _isNull = false;
-            }
-        }
-
-        internal string String
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.String == _type || StorageType.Json == _type)
-                {
-                    return (string)_object;
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    return ((SqlCachedBuffer)(_object)).ToString();
-                }
-                return (string)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
         // use static list of format strings indexed by scale for perf
         private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
@@ -539,21 +608,21 @@ namespace Microsoft.Data.SqlClient
             {
                 ThrowIfNull();
 
-                if (StorageType.Date == _type)
+                if (StorageType.Date == VariantInternalStorageType)
                 {
                     return DateTime.ToString("yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo);
                 }
-                if (StorageType.Time == _type)
+                if (StorageType.Time == VariantInternalStorageType)
                 {
                     byte scale = _value._timeInfo._scale;
                     return new DateTime(_value._timeInfo._ticks).ToString(s_sql2008TimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
-                if (StorageType.DateTime2 == _type)
+                if (StorageType.DateTime2 == VariantInternalStorageType)
                 {
                     byte scale = _value._dateTime2Info._timeInfo._scale;
                     return DateTime.ToString(s_sql2008DateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
-                if (StorageType.DateTimeOffset == _type)
+                if (StorageType.DateTimeOffset == VariantInternalStorageType)
                 {
                     DateTimeOffset dto = DateTimeOffset;
                     byte scale = _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale;
@@ -567,10 +636,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.Date == _type ||
-                    StorageType.Time == _type ||
-                    StorageType.DateTime2 == _type ||
-                    StorageType.DateTimeOffset == _type)
+                if (StorageType.Date == VariantInternalStorageType ||
+                    StorageType.Time == VariantInternalStorageType ||
+                    StorageType.DateTime2 == VariantInternalStorageType ||
+                    StorageType.DateTimeOffset == VariantInternalStorageType)
                 {
                     if (IsNull)
                     {
@@ -582,196 +651,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal TimeSpan Time
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Time == _type)
-                {
-                    return new TimeSpan(_value._timeInfo._ticks);
-                }
-
-                return (TimeSpan)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-#if NET
-        internal TimeOnly TimeOnly
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Time == _type)
-                {
-                    return new TimeOnly(_value._timeInfo._ticks);
-                }
-
-                return (TimeOnly)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal DateOnly DateOnly
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Date == _type)
-                {
-                    return DateOnly.MinValue.AddDays(_value._int32);
-                }
-                return (DateOnly)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-#endif
-
-        internal DateTimeOffset DateTimeOffset
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.DateTimeOffset == _type)
-                {
-                    TimeSpan offset = new TimeSpan(0, _value._dateTimeOffsetInfo._offset, 0);
-                    // datetime part presents time in UTC
-                    return new DateTimeOffset(GetTicksFromDateTime2Info(_value._dateTimeOffsetInfo._dateTime2Info) + offset.Ticks, offset);
-                }
-
-                return (DateTimeOffset)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
         private static long GetTicksFromDateTime2Info(DateTime2Info dateTime2Info)
         {
             return (dateTime2Info._date * TimeSpan.TicksPerDay + dateTime2Info._timeInfo._ticks);
-        }
-
-        internal SqlBinary SqlBinary
-        {
-            get
-            {
-                if (StorageType.SqlBinary == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlBinary.Null;
-                    }
-                    return (SqlBinary)_object;
-                }
-                return (SqlBinary)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlBinary;
-                _isNull = value.IsNull;
-            }
-        }
-
-        internal SqlBoolean SqlBoolean
-        {
-            get
-            {
-                if (StorageType.Boolean == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlBoolean.Null;
-                    }
-                    return new SqlBoolean(_value._boolean);
-                }
-                return (SqlBoolean)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlByte SqlByte
-        {
-            get
-            {
-                if (StorageType.Byte == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlByte.Null;
-                    }
-                    return new SqlByte(_value._byte);
-                }
-                return (SqlByte)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlCachedBuffer SqlCachedBuffer
-        {
-            get
-            {
-                if (StorageType.SqlCachedBuffer == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlCachedBuffer.Null;
-                    }
-                    return (SqlCachedBuffer)_object;
-                }
-                return (SqlCachedBuffer)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlCachedBuffer;
-                _isNull = value.IsNull;
-            }
-        }
-
-        internal SqlXml SqlXml
-        {
-            get
-            {
-                if (StorageType.SqlXml == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlXml.Null;
-                    }
-                    return (SqlXml)_object;
-                }
-                return (SqlXml)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlXml;
-                _isNull = value.IsNull;
-            }
-        }
-
-        internal SqlDateTime SqlDateTime
-        {
-            get
-            {
-                if (StorageType.DateTime == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlDateTime.Null;
-                    }
-                    return new SqlDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart);
-                }
-                return (SqlDateTime)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
         }
 
         internal SqlDecimal SqlDecimal
         {
             get
             {
-                if (StorageType.Decimal == _type)
+                if (StorageType.Decimal == VariantInternalStorageType)
                 {
                     if (IsNull)
                     {
@@ -790,162 +679,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDouble SqlDouble
-        {
-            get
-            {
-                if (StorageType.Double == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlDouble.Null;
-                    }
-                    return new SqlDouble(_value._double);
-                }
-                return (SqlDouble)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlGuid SqlGuid
-        {
-            get
-            {
-                if (StorageType.Guid == _type)
-                {
-                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
-                }
-                else if (StorageType.SqlGuid == _type)
-                {
-                    return IsNull ? SqlGuid.Null : (SqlGuid)_object;
-                }
-                return (SqlGuid)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlGuid;
-                _isNull = value.IsNull;
-            }
-        }
-
-        internal SqlInt16 SqlInt16
-        {
-            get
-            {
-                if (StorageType.Int16 == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlInt16.Null;
-                    }
-                    return new SqlInt16(_value._int16);
-                }
-                return (SqlInt16)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlInt32 SqlInt32
-        {
-            get
-            {
-                if (StorageType.Int32 == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlInt32.Null;
-                    }
-                    return new SqlInt32(_value._int32);
-                }
-                return (SqlInt32)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlInt64 SqlInt64
-        {
-            get
-            {
-                if (StorageType.Int64 == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlInt64.Null;
-                    }
-                    return new SqlInt64(_value._int64);
-                }
-                return (SqlInt64)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlMoney SqlMoney
-        {
-            get
-            {
-                if (StorageType.Money == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlMoney.Null;
-                    }
-#if NET
-                    return SqlMoney.FromTdsValue(_value._int64);
-#else
-                    return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
-#endif
-                }
-                return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlSingle SqlSingle
-        {
-            get
-            {
-                if (StorageType.Single == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlSingle.Null;
-                    }
-                    return new SqlSingle(_value._single);
-                }
-                return (SqlSingle)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlString SqlString
-        {
-            get
-            {
-                // String and Json storage type are both strings.
-                if (StorageType.String == _type || StorageType.Json == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return new SqlString((string)_object);
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    SqlCachedBuffer data = (SqlCachedBuffer)(_object);
-                    if (data.IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return data.ToSqlString();
-                }
-                return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
-
         internal object SqlValue
         {
             get
             {
-                switch (_type)
+                switch (VariantInternalStorageType)
                 {
                     case StorageType.Empty:
                         return DBNull.Value;
@@ -990,7 +728,7 @@ namespace Microsoft.Data.SqlClient
                         return _object;
 
                     case StorageType.SqlXml:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return SqlXml.Null;
                         }
@@ -999,21 +737,21 @@ namespace Microsoft.Data.SqlClient
 
                     case StorageType.Date:
                     case StorageType.DateTime2:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
                         return DateTime;
 
                     case StorageType.DateTimeOffset:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
                         return DateTimeOffset;
 
                     case StorageType.Time:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
@@ -1023,13 +761,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
-        // these variables store pre-boxed bool values to be used when returning a boolean
-        // in a object typed location, if these are not used a new value is boxed each time
-        // one is needed which leads to a lot of garbage which needs to be collected
-        private static readonly object s_cachedTrueObject = true;
-        private static readonly object s_cachedFalseObject = false;
-
         internal object Value
         {
             get
@@ -1038,7 +769,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return DBNull.Value;
                 }
-                switch (_type)
+                switch (VariantInternalStorageType)
                 {
                     case StorageType.Empty:
                         return DBNull.Value;
@@ -1103,7 +834,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (isSqlType)
             {
-                switch (_type)
+                switch (VariantInternalStorageType)
                 {
                     case StorageType.Empty:
                         return null;
@@ -1146,7 +877,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             { //Is CLR Type
-                switch (_type)
+                switch (VariantInternalStorageType)
                 {
                     case StorageType.Empty:
                         return null;
@@ -1233,8 +964,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            _isNull = false;
-            _type = StorageType.Empty;
+            IsNull = false;
+            VariantInternalStorageType = StorageType.Empty;
             _object = null;
         }
 
@@ -1243,8 +974,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._dateTimeInfo._daypart = daypart;
             _value._dateTimeInfo._timepart = timepart;
-            _type = StorageType.DateTime;
-            _isNull = false;
+            VariantInternalStorageType = StorageType.DateTime;
+            IsNull = false;
         }
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
@@ -1257,23 +988,23 @@ namespace Microsoft.Data.SqlClient
             _value._numericInfo._data2 = bits[1];
             _value._numericInfo._data3 = bits[2];
             _value._numericInfo._data4 = bits[3];
-            _type = StorageType.Decimal;
-            _isNull = false;
+            VariantInternalStorageType = StorageType.Decimal;
+            IsNull = false;
         }
 
         internal void SetToMoney(long value)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._int64 = value;
-            _type = StorageType.Money;
-            _isNull = false;
+            VariantInternalStorageType = StorageType.Money;
+            IsNull = false;
         }
 
         internal void SetToNullOfType(StorageType storageType)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
-            _type = storageType;
-            _isNull = true;
+            VariantInternalStorageType = storageType;
+            IsNull = true;
             _object = null;
         }
 
@@ -1281,16 +1012,16 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
-            _type = StorageType.String;
-            _isNull = false;
+            VariantInternalStorageType = StorageType.String;
+            IsNull = false;
         }
 
         internal void SetToJson(string value)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
-            _type = StorageType.Json;
-            _isNull = false;
+            VariantInternalStorageType = StorageType.Json;
+            IsNull = false;
         }
 
         #if NETFRAMEWORK
@@ -1298,9 +1029,9 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.Date;
+            VariantInternalStorageType = StorageType.Date;
             _value._int32 = date.Subtract(DateTime.MinValue).Days;
-            _isNull = false;
+            IsNull = false;
         }
         #endif
         
@@ -1308,9 +1039,9 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.Date;
+            VariantInternalStorageType = StorageType.Date;
             _value._int32 = GetDateFromByteArray(bytes);
-            _isNull = false;
+            IsNull = false;
         }
         
 
@@ -1318,19 +1049,19 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.Time;
+            VariantInternalStorageType = StorageType.Time;
             FillInTimeInfo(ref _value._timeInfo, bytes, scale, denormalizedScale);
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToTime(TimeSpan timeSpan, byte scale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.Time;
+            VariantInternalStorageType = StorageType.Time;
             _value._timeInfo._ticks = timeSpan.Ticks;
             _value._timeInfo._scale = scale;
-            _isNull = false;
+            IsNull = false;
         }
 
         #if NETFRAMEWORK
@@ -1338,11 +1069,11 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.DateTime2;
+            VariantInternalStorageType = StorageType.DateTime2;
             _value._dateTime2Info._timeInfo._ticks = dateTime.TimeOfDay.Ticks;
             _value._dateTime2Info._timeInfo._scale = scale;
             _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
-            _isNull = false;
+            IsNull = false;
         }
         #endif
         
@@ -1350,34 +1081,34 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             int length = bytes.Length;
-            _type = StorageType.DateTime2;
+            VariantInternalStorageType = StorageType.DateTime2;
             FillInTimeInfo(ref _value._dateTime2Info._timeInfo, bytes.Slice(0, length - 3), scale, denormalizedScale); // remaining 3 bytes is for date
             _value._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 3)); // 3 bytes for date
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             int length = bytes.Length;
-            _type = StorageType.DateTimeOffset;
+            VariantInternalStorageType = StorageType.DateTimeOffset;
             FillInTimeInfo(ref _value._dateTimeOffsetInfo._dateTime2Info._timeInfo, bytes.Slice(0, length - 5), scale, denormalizedScale); // remaining 5 bytes are for date and offset
             _value._dateTimeOffsetInfo._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 5)); // 3 bytes for date
             _value._dateTimeOffsetInfo._offset = (short)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDateTimeOffset(DateTimeOffset dateTimeOffset, byte scale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
-            _type = StorageType.DateTimeOffset;
+            VariantInternalStorageType = StorageType.DateTimeOffset;
             DateTime utcDateTime = dateTimeOffset.UtcDateTime; // timeInfo stores the utc datetime of a datatimeoffset
             _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._ticks = utcDateTime.TimeOfDay.Ticks;
             _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale = scale;
             _value._dateTimeOffsetInfo._dateTime2Info._date = utcDateTime.Subtract(DateTime.MinValue).Days;
             _value._dateTimeOffsetInfo._offset = (short)dateTimeOffset.Offset.TotalMinutes;
-            _isNull = false;
+            IsNull = false;
         }
 
         private static void FillInTimeInfo(ref TimeInfo timeInfo, ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
@@ -1471,5 +1202,47 @@ namespace Microsoft.Data.SqlClient
             ThrowIfNull();
             return (T)(object)_value._single;
         }
+        
+        #region Private Methods
+
+        private static SqlMoney GetSqlMoneyFromLong(long value)
+        {
+            #if NET
+            return SqlMoney.FromTdsValue(value);
+            #else
+            // @TODO: Inline workaround here
+            return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1 /*ignored*/);
+            #endif
+        }
+        
+        private T GetValue<T>(StorageType storageType, T value)
+        {
+            ThrowIfNull();
+
+            return VariantInternalStorageType == storageType
+                ? value
+                : (T)Value; // Types we haven't considered simple conversion of go through boxing.
+        }
+
+        private void SetObject<T>(StorageType storageType, T value)
+            where T : INullable
+        {
+            Debug.Assert(IsEmpty, "Value is being set a second time.");
+
+            _object = value;
+            VariantInternalStorageType = storageType;
+            IsNull = value.IsNull;
+        }
+
+        private void SetValue<T>(StorageType storageType, ref T field, T value)
+        {
+            Debug.Assert(IsEmpty, "Value is being set a second time.");
+
+            field = value;
+            VariantInternalStorageType = storageType;
+            IsNull = false;
+        }
+
+        #endregion
     }
 }
