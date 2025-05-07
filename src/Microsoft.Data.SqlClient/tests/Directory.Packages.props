@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="..\Directory.Packages.props" />
+  <!-- Test Project Dependencies for NetFx only -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+  </ItemGroup>
+</Project>

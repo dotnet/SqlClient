@@ -2,8 +2,6 @@
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
-        <!-- We need to reference Microsoft.NETFramework.ReferenceAssemblies in our test projects -->
-        <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     </PropertyGroup>
     <!-- NetFx project dependencies -->
     <ItemGroup>
@@ -26,8 +24,8 @@
     </ItemGroup>
     <!-- NetCore project dependencies -->
     <ItemGroup>
-        <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
         <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+        <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
         <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
     </ItemGroup>
     <!-- AKV Provider project dependencies -->
@@ -55,9 +53,5 @@
         <PackageVersion Include="xunit" Version="2.9.2" />
         <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
         <PackageVersion Include="xunit.runner.console" Version="2.9.2" />
-    </ItemGroup>
-    <!-- Test Project Dependencies for NetFx only -->
-    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-        <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     </ItemGroup>
 </Project>
