@@ -2,6 +2,7 @@
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
         <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+        <!-- We need to reference Microsoft.NETFramework.ReferenceAssemblies in our test projects -->
         <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     </PropertyGroup>
     <!-- NetFx project dependencies -->
@@ -41,7 +42,6 @@
         <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25164.6" />
         <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25164.6" />
         <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
-        <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" Condition="$(TargetFramework.StartsWith('net4'))" />
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
         <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.52.0" />
         <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
@@ -55,5 +55,9 @@
         <PackageVersion Include="xunit" Version="2.9.2" />
         <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
         <PackageVersion Include="xunit.runner.console" Version="2.9.2" />
+    </ItemGroup>
+    <!-- Test Project Dependencies for NetFx only -->
+    <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+        <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
     </ItemGroup>
 </Project>
