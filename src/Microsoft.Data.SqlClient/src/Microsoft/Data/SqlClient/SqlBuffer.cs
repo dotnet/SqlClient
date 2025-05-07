@@ -11,7 +11,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlBuffer
+    internal sealed class SqlBuffer
     {
         internal enum StorageType
         {
@@ -1293,6 +1293,17 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
+        #if NETFRAMEWORK
+        internal void SetToDate(DateTime date)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.Date;
+            _value._int32 = date.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+        #endif
+        
         internal void SetToDate(ReadOnlySpan<byte> bytes)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
@@ -1301,6 +1312,7 @@ namespace Microsoft.Data.SqlClient
             _value._int32 = GetDateFromByteArray(bytes);
             _isNull = false;
         }
+        
 
         internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
@@ -1321,6 +1333,19 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
+        #if NETFRAMEWORK
+        internal void SetToDateTime2(DateTime dateTime, byte scale)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.DateTime2;
+            _value._dateTime2Info._timeInfo._ticks = dateTime.TimeOfDay.Ticks;
+            _value._dateTime2Info._timeInfo._scale = scale;
+            _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+        #endif
+        
         internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");

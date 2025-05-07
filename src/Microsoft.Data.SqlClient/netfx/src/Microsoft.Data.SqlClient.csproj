@@ -908,7 +908,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
