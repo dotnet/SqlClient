@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
                         PreserveKeyName = true
                     });
                 #else
-                return X509Certificate2(
+                return new X509Certificate2(
                     ephemeral.Export(X509ContentType.Pkcs12, password),
                     password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
