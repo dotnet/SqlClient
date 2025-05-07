@@ -340,7 +340,7 @@ jobs:
     displayName: 'Modify TestMicrosoftDataSqlClientVersion'
 
   - powershell: |
-      #Change TestMicrosoftDataSqlClientVersion
+      #Check AssemblyFileVersion
 
       [Xml] $versionprops = Get-Content -Path "tools/props/Versions.props" 
       $AssemblyFileVersion =  $versionprops.Project.PropertyGroup[0].AssemblyFileVersion
