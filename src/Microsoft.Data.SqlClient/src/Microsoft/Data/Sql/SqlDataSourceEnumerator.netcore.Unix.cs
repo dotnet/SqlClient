@@ -10,7 +10,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.Sql
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
     public sealed partial class SqlDataSourceEnumerator : DbDataSourceEnumerator
     {
         private partial DataTable GetDataSourcesInternal() => SqlDataSourceEnumeratorManagedHelper.GetDataSources();
