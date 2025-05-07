@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.SNI
         [MethodImpl(MethodImplOptions.NoInlining)] // this forces the exception throwing code not to be inlined for performance
         private void ThrowClosedConnection() => throw ADP.ClosedConnectionError();
 
-        internal override SSPIContextProvider CreateSSPIContextProvider()
-            => new NegotiateSSPIContextProvider();
+        internal override SspiContextProvider CreateSspiContextProvider()
+            => new NegotiateSspiContextProvider();
     }
 }
