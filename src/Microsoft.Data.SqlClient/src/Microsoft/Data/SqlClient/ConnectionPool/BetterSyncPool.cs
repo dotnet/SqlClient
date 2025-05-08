@@ -345,10 +345,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal TimeSpan ConnectionLifetime => PoolGroupOptions.LoadBalanceTimeout;
         internal int ObjectID => _objectID;
         internal bool IsWarmupEnabled { get; set; } = true;
-
-#if NETFRAMEWORK
-        internal override DbConnectionPoolCounters PerformanceCounters => _connectionFactory.PerformanceCounters;
-#endif
 #endregion
 
 
