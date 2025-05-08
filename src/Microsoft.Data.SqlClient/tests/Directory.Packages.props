@@ -4,4 +4,7 @@
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+  </ItemGroup>
 </Project>
