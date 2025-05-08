@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
@@ -10,8 +10,8 @@
     <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
-   <!--Generating Strong Name-->
-   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
+  <!--Generating Strong Name-->
+  <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
     <SignAssembly>true</SignAssembly>
     <KeyFile>$(SigningKeyPath)</KeyFile>
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
@@ -19,10 +19,12 @@
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
     <Compile Include="Microsoft.Data.SqlClient.Manual.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetGroup) == 'netcoreapp'">
     <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.cs" />
     <Compile Include="..\..\ref\Microsoft.Data.SqlClient.Batch.NetCoreApp.cs" />
   </ItemGroup>
@@ -38,5 +40,7 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
 
+  <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
+  <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />
 </Project>

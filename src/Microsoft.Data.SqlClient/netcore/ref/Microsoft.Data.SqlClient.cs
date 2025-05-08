@@ -454,12 +454,14 @@ namespace Microsoft.Data.SqlClient
         public override System.Data.Common.DbParameter CreateParameter() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
         public override System.Data.Common.DbDataSourceEnumerator CreateDataSourceEnumerator() { throw null; }
+#if NET
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateBatch/*'/>
         public override bool CanCreateBatch { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatch/*'/>
         public override System.Data.Common.DbBatch CreateBatch() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateBatchCommand/*'/>
         public override System.Data.Common.DbBatchCommand CreateBatchCommand() { throw null; }
+#endif
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
     public partial class SqlClientLogger
@@ -1495,7 +1497,9 @@ namespace Microsoft.Data.SqlClient
         public byte State { get { throw null; } }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*'/>
+#if NET
         [System.Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
         public override void GetObjectData(System.Runtime.Serialization.SerializationInfo si, System.Runtime.Serialization.StreamingContext context) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*'/>
         public override string ToString() { throw null; }
@@ -1827,11 +1831,13 @@ namespace Microsoft.Data.SqlClient
         protected override void Dispose(bool disposing) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback1/*'/>
         public override void Rollback() { }
+#if NET
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*'/>
         public override void Rollback(string transactionName) { }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*'/>
         public override void Save(string savePointName) { }
+#endif
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
     public sealed class SqlRetryingEventArgs : System.EventArgs
