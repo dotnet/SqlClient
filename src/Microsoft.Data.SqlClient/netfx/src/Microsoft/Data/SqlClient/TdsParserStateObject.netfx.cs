@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
 
-        internal SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
+        internal SspiContextProvider CreateSspiContextProvider() => new NativeSspiContextProvider();
 
         ////////////////
         // Properties //

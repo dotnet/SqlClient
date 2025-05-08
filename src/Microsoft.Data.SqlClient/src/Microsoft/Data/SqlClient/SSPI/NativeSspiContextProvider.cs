@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class NativeSSPIContextProvider : SSPIContextProvider
+    internal sealed class NativeSspiContextProvider : SspiContextProvider
     {
         private static readonly object s_tdsParserLock = new();
 
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override void GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
+        protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
 #if NETFRAMEWORK
             SNIHandle handle = _physicalStateObj.Handle;
@@ -62,9 +62,9 @@ namespace Microsoft.Data.SqlClient
             var sendLength = s_maxSSPILength;
             var outBuff = outgoingBlobWriter.GetSpan((int)sendLength);
 
-            if (0 != SniNativeWrapper.SniSecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, serverSpns[0]))
+            if (0 != SniNativeWrapper.SniSecGenClientContext(handle, incomingBlob, outBuff, ref sendLength, authParams.Resource))
             {
-                throw new InvalidOperationException(SQLMessage.SSPIGenerateError());
+                return false;
             }
 
             if (sendLength > int.MaxValue)
@@ -73,6 +73,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             outgoingBlobWriter.Advance((int)sendLength);
+
+            return true;
         }
     }
 }

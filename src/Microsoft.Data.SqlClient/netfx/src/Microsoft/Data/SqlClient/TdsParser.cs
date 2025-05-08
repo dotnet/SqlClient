@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
-        private SSPIContextProvider _authenticationProvider;
+        private SspiContextProvider _authenticationProvider;
 
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+                _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
 
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
