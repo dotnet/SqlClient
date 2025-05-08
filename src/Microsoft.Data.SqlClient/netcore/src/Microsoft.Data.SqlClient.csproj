@@ -803,7 +803,7 @@
       <Link>Interop\Windows\NtDll\NtDll.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
-      <Link>Interop\Windows\NtDll\ObjectAttributesFlags.cs</Link>
+      <Link>Interop\Windows\NtDll\ObjectAttributeFlags.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
       <Link>Interop\Windows\NtDll\ObjectAttributes.cs</Link>
