@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
