@@ -243,21 +243,22 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
       <remarks>
         <para>
           The AccessToken is a part of the connection pool key.  Supplying a
-          refreshed token to a new connection, with all other properties the
-          same as other existing connections, will place that new connection
+          refreshed access token to a new connection, with all other properties
+          the same as other existing connections, will place that new connection
           into a new pool.  Care should be taken when using this property to
           manage your own access token.  Consider using the
           <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
-          property instead, which will not consider refreshed tokens as distinct
-          for the purposes of connection pooling.
+          property instead, which will not consider refreshed access tokens as
+          distinct for the purposes of connection pooling.
         </para>
         <para>
-          The application is responsible for knowing when the token expires and
-          connections from the pool should no longer be used. If you set a
-          minimum pool size &gt; 0 along with AccessToken, you must call
+          The application is responsible for knowing when the access token
+          expires and the connections from the pool should no longer be used. If
+          you set a minimum pool size &gt; 0 along with an AccessToken, you must
+          call
           <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)" />
-          after the access token expires to ensure the connection pool
-          doesn't maintain those connections indefinitely.
+          after the access token expires to ensure the connection pool doesn't
+          maintain the physical connections (created by the pool) indefinitely.
         </para>
         <para>
           This property is mutually exclusive with the
@@ -346,11 +347,11 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
       <remarks>
         <para>
           The AccessTokenCallback function itself is a part of the connection
-          pool key.  The same callback function should always provide an access
-          token of the same security context given the same
-          SqlAuthenticationParameters.  Multiple connections using the same
-          callback function, all other configuration being the same, will be
-          placed into the same connection pool.
+          pool key.  The same callback function should always provide a valid
+          access token of the same security context given the same
+          SqlAuthenticationParameters.  When multiple connections use the same
+          callback function, and all other properties that comprise the pool key
+          are the same, they will be grouped into the same connection pool.
         </para>
         <para>
           When using a token callback function, the connection manages
