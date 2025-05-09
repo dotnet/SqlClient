@@ -813,6 +813,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
+
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Handles\SafeLibraryHandle.netcore.cs">
@@ -959,9 +960,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
+    
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
+
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
@@ -1000,8 +1003,10 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
+
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
+
   <!-- Resources -->
   <ItemGroup>
     <Compile Include="$(CommonSourceRoot)Resources\StringsHelper.cs">
@@ -1029,6 +1034,7 @@
       <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
     </EmbeddedResource>
   </ItemGroup>
+
   <!-- Package References Etc -->
   <ItemGroup>
     <PackageReference Include="Azure.Identity" />

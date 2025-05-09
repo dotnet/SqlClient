@@ -573,7 +573,7 @@ namespace Microsoft.Data.Common.ConnectionString
             constr = builder.ToString();
             return head;
         }
-
+        
         // SxS notes:
         // * this method queries "DataDirectory" value from the current AppDomain.
         //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
@@ -644,7 +644,7 @@ namespace Microsoft.Data.Common.ConnectionString
         
         #endif
         #endregion
-
+        
         #region NetFx Methods
         #if NETFRAMEWORK
         
@@ -770,6 +770,5 @@ namespace Microsoft.Data.Common.ConnectionString
         }
         #endif
         #endregion
-        
     }
 }
