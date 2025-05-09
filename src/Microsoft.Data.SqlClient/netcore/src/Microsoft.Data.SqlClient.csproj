@@ -782,34 +782,34 @@
       <Link>Interop\Windows\Kernel32\Kernel32.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\CreateDisposition.cs</Link>
+      <Link>Interop\Windows\NtDll\CreateDisposition.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\CreateOptions.cs</Link>
+      <Link>Interop\Windows\NtDll\CreateOptions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\DesiredAccess.cs</Link>
+      <Link>Interop\Windows\NtDll\DesiredAccess.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
+      <Link>Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
-      <Link>Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
+      <Link>Interop\Windows\NtDll\ImpersonationLevel.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\IoStatusBlock.cs">
       <Link>Interop\Windows\NtDll\IoStatusBlock.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
+      <Link>Interop\Windows\NtDll\NtDll.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+      <Link>Interop\Windows\NtDll\ObjectAttributeFlags.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+      <Link>Interop\Windows\NtDll\ObjectAttributes.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
+      <Link>Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
       <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
