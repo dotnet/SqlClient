@@ -2,29 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// Stream-like object that uses SmiEventSink for server-side errors.
+#if NETFRAMEWORK
 
 using System.IO;
 
 namespace Microsoft.Data.SqlClient.Server
 {
+    // Stream-like object that uses SmiEventSink for server-side errors.
     internal abstract class SmiStream
     {
-        public abstract bool CanRead
-        {
-            get;
-        }
+        public abstract bool CanRead { get; }
 
         // If CanSeek is false, Position, Seek, Length, and SetLength should throw.
-        public abstract bool CanSeek
-        {
-            get;
-        }
+        public abstract bool CanSeek { get; }
 
-        public abstract bool CanWrite
-        {
-            get;
-        }
+        public abstract bool CanWrite { get; }
 
         public abstract long GetLength(SmiEventSink sink);
 
@@ -45,3 +37,5 @@ namespace Microsoft.Data.SqlClient.Server
     }
 
 }
+
+#endif

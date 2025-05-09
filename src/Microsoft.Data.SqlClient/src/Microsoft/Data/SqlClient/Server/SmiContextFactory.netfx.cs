@@ -2,21 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+
 using System;
 using System.Diagnostics;
+using System.Security.Permissions;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
-    sealed internal class SmiContextFactory
+    internal sealed class SmiContextFactory
     {
         public static readonly SmiContextFactory Instance = new SmiContextFactory();
 
         private readonly SmiLink _smiLink;
         private readonly ulong _negotiatedSmiVersion;
-        private readonly byte _majorVersion;
-        private readonly byte _minorVersion;
-        private readonly short _buildNum;
         private readonly string _serverVersion;
         private readonly SmiEventSink_Default _eventSinkForGetCurrentContext;
 
@@ -24,7 +23,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal const ulong Sql2008Version = 210;
         internal const ulong LatestVersion = Sql2008Version;
 
-        private readonly ulong[] __supportedSmiVersions = new ulong[] { Sql2005Version, Sql2008Version };
+        private readonly ulong[] _supportedSmiVersions = { Sql2005Version, Sql2008Version };
 
         // Used as the key for SmiContext.GetContextValue()
         internal enum ContextKey
@@ -32,7 +31,6 @@ namespace Microsoft.Data.SqlClient.Server
             Connection = 0,
             SqlContext = 1
         }
-
 
         private SmiContextFactory()
         {
@@ -60,22 +58,23 @@ namespace Microsoft.Data.SqlClient.Server
                 System.Reflection.FieldInfo buildVersionField = GetStaticField(smiLinkType, "BuildVersion");
                 if (buildVersionField != null)
                 {
-                    UInt32 buildVersion = (UInt32)GetValue(buildVersionField);
+                    uint buildVersion = (uint)GetValue(buildVersionField);
 
-                    _majorVersion = (byte)(buildVersion >> 24);
-                    _minorVersion = (byte)((buildVersion >> 16) & 0xff);
-                    _buildNum = (short)(buildVersion & 0xffff);
-                    _serverVersion = (String.Format((IFormatProvider)null, "{0:00}.{1:00}.{2:0000}", _majorVersion, (short)_minorVersion, _buildNum));
+                    byte majorVersion = (byte)(buildVersion >> 24);
+                    byte minorVersion = (byte)((buildVersion >> 16) & 0xff);
+                    short buildNum = (short)(buildVersion & 0xffff);
+                    _serverVersion = string.Format(null, "{0:00}.{1:00}.{2:0000}", majorVersion, (short)minorVersion, buildNum);
                 }
                 else
                 {
-                    _serverVersion = String.Empty;  // default value if nothing exists.
+                    _serverVersion = string.Empty;  // default value if nothing exists.
                 }
+                
                 _negotiatedSmiVersion = _smiLink.NegotiateVersion(SmiLink.InterfaceVersion);
                 bool isSupportedVersion = false;
-                for (int i = 0; !isSupportedVersion && i < __supportedSmiVersions.Length; i++)
+                for (int i = 0; !isSupportedVersion && i < _supportedSmiVersions.Length; i++)
                 {
-                    if (__supportedSmiVersions[i] == _negotiatedSmiVersion)
+                    if (_supportedSmiVersions[i] == _negotiatedSmiVersion)
                     {
                         isSupportedVersion = true;
                     }
@@ -132,24 +131,24 @@ namespace Microsoft.Data.SqlClient.Server
                 throw SQL.ContextUnavailableWhileInProc();
             }
 
-            Debug.Assert(typeof(SmiContext).IsInstanceOfType(result), "didn't get SmiContext from GetCurrentContext?");
+            Debug.Assert(result is SmiContext, "didn't get SmiContext from GetCurrentContext?");
             return (SmiContext)result;
         }
 
-        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
+        [ReflectionPermission(SecurityAction.Assert, MemberAccess = true)]
         private object GetValue(System.Reflection.FieldInfo fieldInfo)
         {
             object result = fieldInfo.GetValue(null);
             return result;
         }
 
-        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
+        [ReflectionPermission(SecurityAction.Assert, MemberAccess = true)]
         private System.Reflection.FieldInfo GetStaticField(Type aType, string fieldName)
         {
             System.Reflection.FieldInfo result = aType.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.GetField);
             return result;
         }
-
     }
 }
 
+#endif
