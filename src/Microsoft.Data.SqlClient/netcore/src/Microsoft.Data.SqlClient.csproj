@@ -794,7 +794,7 @@
       <Link>Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
-      <Link>Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
+      <Link>Interop\Windows\NtDll\ImpersonationLevel.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\IoStatusBlock.cs">
       <Link>Interop\Windows\NtDll\IoStatusBlock.cs</Link>
