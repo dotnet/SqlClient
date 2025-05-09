@@ -13,31 +13,12 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup Condition="'$(TestSet)' == '' or '$(TestSet)' == 'AE'">
-    <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
-    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
-    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaseline.txt</Link>
-    </Content>
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaselineRsa.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaselineRsa.txt</Link>
-    </Content>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
-    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
+    <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
+    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionTestAKVStore.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
@@ -57,6 +38,8 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyAEErrorMessageTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\BulkCopyTruncationTables.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnDecryptErrorTestTable.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DateOnlyTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlNullValuesTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\SqlParameterPropertiesTable.cs" />
@@ -70,6 +53,21 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
+    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TCECryptoNativeBaseline.txt</Link>
+    </Content>
+    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaselineRsa.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TCECryptoNativeBaselineRsa.txt</Link>
+    </Content>
+    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
+    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\DateOnlyReadTests.cs" />
@@ -79,7 +77,6 @@
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">
@@ -174,15 +171,21 @@
     <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
     <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
     <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
+    <Compile Include="Json\SqlJsonTest.cs" />
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
+    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
+    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
     <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
+    <Compile Include="SQL\JsonTest\JsonTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
     <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
     <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
@@ -194,6 +197,7 @@
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
     <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
@@ -279,7 +283,6 @@
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
-    <Compile Include="Json\SqlJsonTest.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
     <Compile Include="SQL\Common\InternalConnectionWrapper.cs" />
@@ -291,12 +294,6 @@
     <Compile Include="SQL\Common\SystemDataInternals\FedAuthTokenHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTest.cs" />
-    <Compile Include="SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs" />
-    <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
-    <Compile Include="SQL\JsonTest\JsonTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>
