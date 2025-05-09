@@ -56,6 +56,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
     </Compile>

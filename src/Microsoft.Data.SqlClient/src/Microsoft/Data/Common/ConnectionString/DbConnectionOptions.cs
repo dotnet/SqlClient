@@ -9,7 +9,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Microsoft.Data.Common
+namespace Microsoft.Data.Common.ConnectionString
 {
     internal partial class DbConnectionOptions
     {

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 
@@ -122,6 +123,7 @@ namespace Microsoft.Data.Common.ConnectionString
                 Debug.Fail("ParseInternal code threw exception vs regex mismatch");
             }
         }
+        
         
         private static Dictionary<string, string> SplitConnectionString(string connectionString, Dictionary<string, string> synonyms, bool firstKey)
         {

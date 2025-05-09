@@ -8,7 +8,7 @@ using System.Security;
 using System.Text;
 using Microsoft.Data.Common.ConnectionString;
 
-namespace Microsoft.Data.Common
+namespace Microsoft.Data.Common.ConnectionString
 {
     internal partial class DbConnectionOptions
     {
