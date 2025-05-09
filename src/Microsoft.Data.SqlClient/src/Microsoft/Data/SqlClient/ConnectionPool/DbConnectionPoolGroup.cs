@@ -3,12 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.RateLimiter;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -185,7 +186,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
                                 DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
-                                DbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                DbConnectionPool newPool;
+                                if (LocalAppContextSwitches.UseLegacyConnectionPool)
+                                {
+                                    newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                }
+                                else
+                                {
+                                    newPool = new BetterSyncPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo, new PassthroughRateLimiter());
+                                }
 
                                 if (MarkPoolGroupAsActive())
                                 {
