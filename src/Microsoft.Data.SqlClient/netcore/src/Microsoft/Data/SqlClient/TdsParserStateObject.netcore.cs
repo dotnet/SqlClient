@@ -73,11 +73,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////
         // Properties //
         ////////////////
-        internal abstract uint DisableSsl();
-
-        internal abstract SSPIContextProvider CreateSSPIContextProvider();
-
-        internal abstract uint EnableMars(ref uint info);
 
         internal abstract uint Status
         {
@@ -201,8 +196,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
-        internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
-
         internal abstract bool IsFailedHandle();
 
         protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
@@ -224,8 +217,6 @@ namespace Microsoft.Data.SqlClient
         internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
 
         internal abstract uint CheckConnection();
-
-        internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
         internal abstract void ReleasePacket(PacketHandle syncReadPacket);
 
