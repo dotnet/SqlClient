@@ -20,9 +20,9 @@ namespace Microsoft.Data.Common.ConnectionString
             + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)" // allow any visible character for keyname except '=' which must quoted as '=='
             + "\\s*=(?!=)\\s*"                                         // the equal sign divides the key and value parts
             + "(?<value>"
-            + "(\"([^\"\u0000]|\"\")*\")"                              // double quoted string, " must be quoted as ""
+            + "(\"([^\"\u0000]|\"\")*\")"                              // double-quoted string, " must be quoted as ""
             + "|"
-            + "('([^'\u0000]|'')*')"                                   // single quoted string, ' must be quoted as ''
+            + "('([^'\u0000]|'')*')"                                   // single-quoted string, ' must be quoted as ''
             + "|"
             + "((?![\"'\\s])"                                          // unquoted value must not start with " or ' or space, would also like = but too late to change
             + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                   // control characters must be quoted
@@ -73,18 +73,24 @@ namespace Microsoft.Data.Common.ConnectionString
             }
         }
         
-        private static void ParseComparison(Dictionary<string, string> parsetable, string connectionString, Dictionary<string, string> synonyms, bool firstKey, Exception e)
+        #if DEBUG
+        private static void ParseComparison(
+            Dictionary<string, string> parseTable,
+            string connectionString,
+            Dictionary<string, string> synonyms,
+            bool firstKey,
+            Exception e)
         {
             try
             {
-                var parsedvalues = SplitConnectionString(connectionString, synonyms, firstKey);
-                foreach (var entry in parsedvalues)
+                var parsedValues = SplitConnectionString(connectionString, synonyms, firstKey);
+                foreach (var parsedValue in parsedValues)
                 {
-                    string keyname = entry.Key;
-                    string value1 = entry.Value;
-                    string value2;
-                    bool parsetableContainsKey = parsetable.TryGetValue(keyname, out value2);
-                    Debug.Assert(parsetableContainsKey, $"{nameof(ParseInternal)} code vs. regex mismatch keyname <{keyname}>");
+                    string key = parsedValue.Key;
+                    string value1 = parsedValue.Value; 
+                    
+                    bool parseTableContainsKey = parseTable.TryGetValue(key, out string value2);
+                    Debug.Assert(parseTableContainsKey, $"{nameof(ParseInternal)} code vs. regex mismatch keyname <{key}>");
                     Debug.Assert(value1 == value2, $"{nameof(ParseInternal)} code vs. regex mismatch keyvalue <{value1}> <{value2}>");
                 }
             }
@@ -97,38 +103,46 @@ namespace Microsoft.Data.Common.ConnectionString
 
                     const string KeywordNotSupportedMessagePrefix = "Keyword not supported:";
                     const string WrongFormatMessagePrefix = "Format of the initialization string";
-                    bool isEquivalent = (msg1 == msg2);
+                    bool isEquivalent = msg1 == msg2;
                     if (!isEquivalent)
                     {
                         // We also accept cases were Regex parser (debug only) reports "wrong format" and 
                         // retail parsing code reports format exception in different location or "keyword not supported"
                         if (msg2.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
                         {
-                            if (msg1.StartsWith(KeywordNotSupportedMessagePrefix, StringComparison.Ordinal) || msg1.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
+                            if (msg1.StartsWith(KeywordNotSupportedMessagePrefix, StringComparison.Ordinal) || 
+                                msg1.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
                             {
                                 isEquivalent = true;
                             }
                         }
                     }
+                    
                     Debug.Assert(isEquivalent, "ParseInternal code vs regex message mismatch: <" + msg1 + "> <" + msg2 + ">");
                 }
                 else
                 {
                     Debug.Fail("ParseInternal code vs regex throw mismatch " + f.Message);
                 }
+                
                 e = null;
             }
+            
             if (e != null)
             {
                 Debug.Fail("ParseInternal code threw exception vs regex mismatch");
             }
         }
-        
-        
-        private static Dictionary<string, string> SplitConnectionString(string connectionString, Dictionary<string, string> synonyms, bool firstKey)
+        #endif
+
+        #if DEBUG
+        private static Dictionary<string, string> SplitConnectionString(
+            string connectionString,
+            Dictionary<string, string> synonyms,
+            bool firstKey)
         {
-            var parsetable = new Dictionary<string, string>();
-            Regex parser = (firstKey ? s_connectionStringRegexOdbc : s_connectionStringRegex);
+            var parseTable = new Dictionary<string, string>();
+            Regex parser = firstKey ? ConnectionStringRegexOdbc : ConnectionStringRegex;
 
             const int KeyIndex = 1, ValueIndex = 2;
             Debug.Assert(KeyIndex == parser.GroupNumberFromName("key"), "wrong key index");
@@ -137,27 +151,28 @@ namespace Microsoft.Data.Common.ConnectionString
             if (connectionString != null)
             {
                 Match match = parser.Match(connectionString);
-                if (!match.Success || (match.Length != connectionString.Length))
+                if (!match.Success || match.Length != connectionString.Length)
                 {
                     throw ADP.ConnectionStringSyntax(match.Length);
                 }
+                
                 int indexValue = 0;
-                CaptureCollection keyvalues = match.Groups[ValueIndex].Captures;
+                CaptureCollection keyValues = match.Groups[ValueIndex].Captures;
                 foreach (Capture keypair in match.Groups[KeyIndex].Captures)
                 {
-                    string keyname = (firstKey ? keypair.Value : keypair.Value.Replace("==", "=")).ToLower(CultureInfo.InvariantCulture);
-                    string keyvalue = keyvalues[indexValue++].Value;
-                    if (0 < keyvalue.Length)
+                    string keyName = (firstKey ? keypair.Value : keypair.Value.Replace("==", "=")).ToLower(CultureInfo.InvariantCulture);
+                    string keyValue = keyValues[indexValue++].Value;
+                    if (0 < keyValue.Length)
                     {
                         if (!firstKey)
                         {
-                            switch (keyvalue[0])
+                            switch (keyValue[0])
                             {
                                 case '\"':
-                                    keyvalue = keyvalue.Substring(1, keyvalue.Length - 2).Replace("\"\"", "\"");
+                                    keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\"\"", "\"");
                                     break;
                                 case '\'':
-                                    keyvalue = keyvalue.Substring(1, keyvalue.Length - 2).Replace("\'\'", "\'");
+                                    keyValue = keyValue.Substring(1, keyValue.Length - 2).Replace("\'\'", "\'");
                                     break;
                                 default:
                                     break;
@@ -166,25 +181,28 @@ namespace Microsoft.Data.Common.ConnectionString
                     }
                     else
                     {
-                        keyvalue = null;
+                        keyValue = null;
                     }
-                    DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
-                    string synonym;
-                    string realkeyname = synonyms != null
-                        ? (synonyms.TryGetValue(keyname, out synonym) ? synonym : null)
-                        : keyname;
+                    
+                    DebugTraceKeyValuePair(keyName, keyValue, synonyms);
+                    string realKeyName = synonyms != null
+                        ? synonyms.TryGetValue(keyName, out string synonym) ? synonym : null
+                        : keyName;
 
-                    if (!IsKeyNameValid(realkeyname))
+                    if (!IsKeyNameValid(realKeyName))
                     {
-                        throw ADP.KeywordNotSupported(keyname);
+                        throw ADP.KeywordNotSupported(keyName);
                     }
-                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
+                    
+                    if (!firstKey || !parseTable.ContainsKey(realKeyName))
                     {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
+                        parseTable[realKeyName] = keyValue; // last key-value pair wins (or first)
                     }
                 }
             }
-            return parsetable;
+            
+            return parseTable;
         }
+        #endif
     }
 }
