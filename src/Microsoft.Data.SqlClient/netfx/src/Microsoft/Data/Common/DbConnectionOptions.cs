@@ -33,20 +33,18 @@ namespace Microsoft.Data.Common
             {
                 if (!ConvertValueToIntegratedSecurity())
                 {
-                    if (_parsetable.ContainsKey(KEY.Password))
+                    if (_parsetable.TryGetValue(DbConnectionStringKeywords.Password, out string value))
                     {
-                        return string.IsNullOrEmpty(_parsetable[KEY.Password]);
+                        return string.IsNullOrEmpty(value);
                     }
-                    else
-                    if (_parsetable.ContainsKey(SYNONYM.Pwd))
+                    
+                    if (_parsetable.TryGetValue(DbConnectionStringSynonyms.Pwd, out value))
                     {
-                        return string.IsNullOrEmpty(_parsetable[SYNONYM.Pwd]); // MDAC 83097
+                        return string.IsNullOrEmpty(value); // MDAC 83097
                     }
-                    else
-                    {
-                        return (_parsetable.ContainsKey(KEY.User_ID) && !string.IsNullOrEmpty(_parsetable[KEY.User_ID])) || 
-                               (_parsetable.ContainsKey(SYNONYM.UID) && !string.IsNullOrEmpty(_parsetable[SYNONYM.UID]));
-                    }
+
+                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserID, out value) && !string.IsNullOrEmpty(value)) || 
+                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.UID, out value) && !string.IsNullOrEmpty(value));
                 }
                 return false;
             }

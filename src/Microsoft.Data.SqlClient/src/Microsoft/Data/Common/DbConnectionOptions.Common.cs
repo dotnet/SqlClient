@@ -13,78 +13,44 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-    partial class DbConnectionOptions
+    internal partial class DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
-
-        // connection string common keywords
-        private static class KEY
-        {
-            internal const string Integrated_Security = DbConnectionStringKeywords.IntegratedSecurity;
-            internal const string Password = DbConnectionStringKeywords.Password;
-            internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
-            internal const string User_ID = DbConnectionStringKeywords.UserID;
-            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
-        }
-
-        // known connection string common synonyms
-        private static class SYNONYM
-        {
-            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
-            internal const string UID = DbConnectionStringSynonyms.UID;
-        }
-
-#if DEBUG
-        /*private const string ConnectionStringPatternV1 =
-             "[\\s;]*"
-            +"(?<key>([^=\\s]|\\s+[^=\\s]|\\s+==|==)+)"
-            +   "\\s*=(?!=)\\s*"
-            +"(?<value>("
-            +   "(" + "\"" + "([^\"]|\"\")*" + "\"" + ")"
-            +   "|"
-            +   "(" + "'" + "([^']|'')*" + "'" + ")"
-            +   "|"
-            +   "(" + "(?![\"'])" + "([^\\s;]|\\s+[^\\s;])*" + "(?<![\"'])" + ")"
-            + "))"
-            + "[\\s;]*"
-        ;*/
-        private const string ConnectionStringPattern =                  // may not contain embedded null except trailing last value
-                "([\\s;]*"                                                  // leading whitespace and extra semicolons
-                + "(?![\\s;])"                                              // key does not start with space or semicolon
-                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)"  // allow any visible character for keyname except '=' which must quoted as '=='
-                + "\\s*=(?!=)\\s*"                                          // the equal sign divides the key and value parts
+        
+        #if DEBUG
+        private const string ConnectionStringPattern =                     // may not contain embedded null except trailing last value
+                "([\\s;]*"                                                 // leading whitespace and extra semicolons
+                + "(?![\\s;])"                                             // key does not start with space or semicolon
+                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)" // allow any visible character for keyname except '=' which must quoted as '=='
+                + "\\s*=(?!=)\\s*"                                         // the equal sign divides the key and value parts
                 + "(?<value>"
                 + "(\"([^\"\u0000]|\"\")*\")"                              // double quoted string, " must be quoted as ""
                 + "|"
                 + "('([^'\u0000]|'')*')"                                   // single quoted string, ' must be quoted as ''
                 + "|"
                 + "((?![\"'\\s])"                                          // unquoted value must not start with " or ' or space, would also like = but too late to change
-                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                  // control characters must be quoted
+                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                   // control characters must be quoted
                 + "(?<![\"']))"                                            // unquoted value must not stop with " or '
-                + ")(\\s*)(;|[\u0000\\s]*$)"                                // whitespace after value up to semicolon or end-of-line
-                + ")*"                                                      // repeat the key-value pair
-                + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-            ;
+                + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
+                + ")*"                                                     // repeat the key-value pair
+                + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
 
-        private const string ConnectionStringPatternOdbc =              // may not contain embedded null except trailing last value
-                "([\\s;]*"                                                  // leading whitespace and extra semicolons
-                + "(?![\\s;])"                                              // key does not start with space or semicolon
-                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}])+)"            // allow any visible character for keyname except '='
-                + "\\s*=\\s*"                                               // the equal sign divides the key and value parts
+        private const string ConnectionStringPatternOdbc =                 // may not contain embedded null except trailing last value
+                "([\\s;]*"                                                 // leading whitespace and extra semicolons
+                + "(?![\\s;])"                                             // key does not start with space or semicolon
+                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}])+)"           // allow any visible character for keyname except '='
+                + "\\s*=\\s*"                                              // the equal sign divides the key and value parts
                 + "(?<value>"
                 + "(\\{([^\\}\u0000]|\\}\\})*\\})"                         // quoted string, starts with { and ends with }
                 + "|"
                 + "((?![\\{\\s])"                                          // unquoted value must not start with { or space, would also like = but too late to change
-                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                  // control characters must be quoted
-
-                + ")" // although the spec does not allow {}
-                      // embedded within a value, the retail code does.
+                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                   // control characters must be quoted
+                + ")"                                                      // although the spec does not allow {} embedded within a value, the retail code does.
                 + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
-                + ")*"                                                      // repeat the key-value pair
-                + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-            ;
+                + ")*"                                                     // repeat the key-value pair
+                + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
 
         private static readonly Regex s_connectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         private static readonly Regex s_connectionStringRegexOdbc = new Regex(ConnectionStringPatternOdbc, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
@@ -114,14 +80,16 @@ namespace Microsoft.Data.Common
         public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            _usersConnectionString = connectionString != null ? connectionString : "";
+            _usersConnectionString = connectionString ?? "";
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length)
+            if (_usersConnectionString.Length > 0)
             {
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
-                _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
-                _hasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
+                _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
+                                      _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
+                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserID) ||
+                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
             }
         }
 
@@ -139,29 +107,35 @@ namespace Microsoft.Data.Common
         // same as Boolean, but with SSPI thrown in as valid yes
         public bool ConvertValueToIntegratedSecurity()
         {
-            return _parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
-                   ConvertValueToIntegratedSecurityInternal(value) :
-                   false;
+            return _parsetable.TryGetValue(DbConnectionStringKeywords.IntegratedSecurity, out string value) && value != null
+                ? ConvertValueToIntegratedSecurityInternal(value)
+                : false;
         }
 
         internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
-                return true;
-            else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
-                return false;
-            else
             {
-                string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
-                if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
-                    return true;
-                else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
-                    return false;
-                else
-                {
-                    throw ADP.InvalidConnectionOptionValue(KEY.Integrated_Security);
-                }
+                return true;
             }
+            
+            if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
+            {
+                return false;
+            }
+
+            string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
+            if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
+            {
+                return true;
+            }
+
+            if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
+            {
+                return false;
+            }
+
+            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IntegratedSecurity);
         }
 
         public int ConvertValueToInt32(string keyName, int defaultValue)
@@ -208,9 +182,9 @@ namespace Microsoft.Data.Common
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => _hasPasswordKeyword ?
-            ConvertValueToBoolean(KEY.Persist_Security_Info, DbConnectionStringDefaults.PersistSecurityInfo) :
-            true; // no password means persistable password so we don't have to munge
+        internal bool HasPersistablePassword => _hasPasswordKeyword
+            ? ConvertValueToBoolean(DbConnectionStringKeywords.PersistSecurityInfo, DbConnectionStringDefaults.PersistSecurityInfo)
+            : true; // no password means persistable password so we don't have to munge
 
         public bool ConvertValueToBoolean(string keyName, bool defaultValue)
         {
@@ -243,7 +217,7 @@ namespace Microsoft.Data.Common
         private static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
-        [System.Diagnostics.Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
         {
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
@@ -251,8 +225,8 @@ namespace Microsoft.Data.Common
                 Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
                 string realkeyname = synonyms != null ? synonyms[keyname] : keyname;
 
-                if (!string.Equals(KEY.Password, realkeyname, StringComparison.InvariantCultureIgnoreCase) &&
-                   !string.Equals(SYNONYM.Pwd, realkeyname, StringComparison.InvariantCultureIgnoreCase))
+                if (!CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, realkeyname) &&
+                    !CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, realkeyname))
                 {
                     // don't trace passwords ever!
                     if (keyvalue != null)
@@ -728,8 +702,8 @@ namespace Microsoft.Data.Common
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
-                if (!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
-                   !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (!CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, current.Name) &&
+                    !CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, current.Name))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
                     if (fakePassword)
