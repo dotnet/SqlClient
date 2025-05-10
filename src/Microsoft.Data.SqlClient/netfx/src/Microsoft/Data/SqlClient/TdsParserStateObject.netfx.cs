@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -40,9 +41,6 @@ namespace Microsoft.Data.SqlClient
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
-
-        // Timeout variables
-        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -451,7 +449,7 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
+                // synchronously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync(asyncClose: true);
@@ -485,7 +483,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => source.TrySetResult(null), null);
+                            ExecutionContext.Run(_executionContext, s_readAsyncCallbackComplete, source);
                         }
                         else
                         {
@@ -496,7 +494,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => ReadAsyncCallbackCaptureException(source), null);
+                            ExecutionContext.Run(_executionContext, state => ReadAsyncCallbackCaptureException((TaskCompletionSource<object>)state), source);
                         }
                         else
                         {
@@ -616,7 +614,8 @@ namespace Microsoft.Data.SqlClient
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn
                     && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
-                    && _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
+                    && _outBytesUsed == (_outputHeaderLen +
+                    BinaryPrimitives.ReadInt32LittleEndian(_outBuff.AsSpan(_outputHeaderLen)))
                     && _outputPacketCount == 0
                     || _outBytesUsed == _outputHeaderLen
                     && _outputPacketCount == 0)
@@ -669,7 +668,11 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 // If we have been canceled, then ensure that we write the ATTN packet as well
+#if NET
+                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+#else
                 task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket, _parser.Connection);
+#endif
             }
 
             return task;
@@ -677,7 +680,7 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
+        private Task SNIWritePacket(SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
             Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -719,7 +722,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                sniError = SniNativeWrapper.SniWritePacket(handle, packet, sync);
+                sniError = SniNativeWrapper.SniWritePacket(Handle, packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -861,7 +864,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             _parser._asyncWrite = false; // stop async write
-                            SNIWritePacket(Handle, attnPacket, out _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
+                            SNIWritePacket(attnPacket, out _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Sent Attention.", _objectID);
                         }
                         finally
@@ -898,7 +901,7 @@ namespace Microsoft.Data.SqlClient
             SniNativeWrapper.SniPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
-            Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
+            Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.
             if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())

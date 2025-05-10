@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
@@ -26,13 +26,6 @@ namespace Microsoft.Data.SqlClient
             {
             }
         }
-
-        private static readonly ContextCallback s_readAsyncCallbackComplete = ReadAsyncCallbackComplete;
-
-        // Timeout variables
-        private readonly WeakReference _cancellationOwner = new WeakReference(null);
-
-        // Async
 
         //////////////////
         // Constructors //
@@ -252,6 +245,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
                                 {
+                                    // Be sure to release packet, otherwise it will be leaked by native.
                                     ReleasePacket(syncReadPacket);
                                 }
                             }
@@ -434,12 +428,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static void ReadAsyncCallbackComplete(object state)
-        {
-            TaskCompletionSource<object> source = (TaskCompletionSource<object>)state;
-            source.TrySetResult(null);
-        }
-
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
 
         public void WriteAsyncCallback(PacketHandle packet, uint sniError) =>
@@ -602,7 +590,11 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 // If we have been canceled, then ensure that we write the ATTN packet as well
+#if NET
                 task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+#else
+                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket, _parser.Connection);
+#endif
             }
 
             return task;

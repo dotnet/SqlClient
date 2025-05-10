@@ -37,6 +37,8 @@ namespace Microsoft.Data.SqlClient
 
     internal abstract partial class TdsParserStateObject
     {
+        private static readonly ContextCallback s_readAsyncCallbackComplete = ReadAsyncCallbackComplete;
+
         private static int s_objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
@@ -158,6 +160,7 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
         private readonly TimerCallback _onTimeoutAsync;
+        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
@@ -2474,6 +2477,12 @@ namespace Microsoft.Data.SqlClient
             {
                 ThrowExceptionAndWarning();
             }
+        }
+
+        private static void ReadAsyncCallbackComplete(object state)
+        {
+            TaskCompletionSource<object> source = (TaskCompletionSource<object>)state;
+            source.TrySetResult(null);
         }
 
         /////////////////////////////////////////
