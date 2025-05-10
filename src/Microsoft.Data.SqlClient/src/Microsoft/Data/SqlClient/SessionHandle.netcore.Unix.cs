@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient
         public const int NativeHandleType = 1;
         public const int ManagedHandleType = 2;
 
-        public readonly SNI.SNIHandle ManagedHandle;
         public readonly int Type;
+        public readonly SNI.SNIHandle ManagedHandle;
 
         public SessionHandle(SNI.SNIHandle managedHandle, int type)
         {
