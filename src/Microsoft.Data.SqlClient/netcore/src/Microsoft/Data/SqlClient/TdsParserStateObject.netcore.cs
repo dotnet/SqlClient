@@ -63,22 +63,6 @@ namespace Microsoft.Data.SqlClient
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
-
-        internal abstract uint Status
-        {
-            get;
-        }
-
-        internal abstract Guid? SessionId { get; }
-
-        internal abstract SessionHandle SessionHandle
-        {
-            get;
-        }
-
         /////////////////////
         // General methods //
         /////////////////////

@@ -472,6 +472,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        ////////////////
+        // Properties //
+        ////////////////
+
+        internal abstract uint Status { get; }
+
+        internal abstract Guid? SessionId { get; }
+
+        internal abstract SessionHandle SessionHandle { get; }
+
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
         internal abstract uint DisableSsl();

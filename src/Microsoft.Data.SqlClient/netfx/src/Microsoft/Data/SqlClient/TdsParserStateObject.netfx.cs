@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class TdsParserStateObject
     {
-        private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
+        protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -89,23 +89,6 @@ namespace Microsoft.Data.SqlClient
                 return _sessionHandle;
             }
         }
-
-        internal uint Status
-        {
-            get
-            {
-                if (_sessionHandle != null)
-                {
-                    return _sessionHandle.Status;
-                }
-                else
-                { // SQL BU DT 395431.
-                    return TdsEnums.SNI_UNINITIALIZED;
-                }
-            }
-        }
-
-        internal SessionHandle SessionHandle => SessionHandle.FromNativeHandle(Handle);
 
         /////////////////////
         // General methods //
