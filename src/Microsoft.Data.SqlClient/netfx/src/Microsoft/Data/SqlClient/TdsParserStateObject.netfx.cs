@@ -30,14 +30,6 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class TdsParserStateObject
     {
-        private static class TdsParserStateObjectFactory
-        {
-            /// <summary>
-            /// Always false in case of netfx. Only needed for merging with netcore codebase.
-            /// </summary>
-            internal const bool UseManagedSNI = false;
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
@@ -49,11 +41,8 @@ namespace Microsoft.Data.SqlClient
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
-        // This variable is used to prevent sending an attention by another thread that is not the
-        // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
-        // the code but does not remember either.  At some point, we need to research killing this
-        // logic.
-        private volatile int _allowObjectID;
+        // Timeout variables
+        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -65,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -101,8 +90,6 @@ namespace Microsoft.Data.SqlClient
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
 
-        internal SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
-
         ////////////////
         // Properties //
         ////////////////
@@ -137,8 +124,11 @@ namespace Microsoft.Data.SqlClient
 
         // This method is only called by the command or datareader as a result of a user initiated
         // cancel request.
-        internal void Cancel(int objectID)
+        internal void Cancel(object caller)
         {
+            Debug.Assert(caller != null, "Null caller for Cancel!");
+            Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
+
             bool hasLock = false;
             try
             {
@@ -150,9 +140,8 @@ namespace Microsoft.Data.SqlClient
                     { // Lock for the time being - since we need to synchronize the attention send.
                       // This lock is also protecting against concurrent close and async continuations
 
-                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
-                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
-                        if ((!_cancelled) && (objectID == _allowObjectID) && (objectID != -1))
+                        // Ensure that, once we have the lock, that we are still the owner
+                        if ((!_cancelled) && (_cancellationOwner.Target == caller))
                         {
                             _cancelled = true;
 
@@ -206,7 +195,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Reset cancel state.
                 _cancelled = false;
-                _allowObjectID = -1;
+                _cancellationOwner.Target = null;
 
                 if (_attentionSent)
                 {
@@ -370,9 +359,9 @@ namespace Microsoft.Data.SqlClient
             return remaining;
         }
 
-        internal void StartSession(int objectID)
+        internal void StartSession(object cancellationOwner)
         {
-            _allowObjectID = objectID;
+            _cancellationOwner.Target = cancellationOwner;
         }
 
         /// <summary>

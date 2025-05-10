@@ -3805,7 +3805,7 @@
     <value>포트와 입/출력 완료 메커니즘의 연결이 실패했습니다.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>소켓이 null입니다.</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>시간 초과 오류입니다.</value>
@@ -4739,5 +4739,8 @@
   </data>
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>SourceColumn '{2}'에 DataColumn '{0}'이(가) 없습니다.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand list has not been initialized.</value>
   </data>
 </root>

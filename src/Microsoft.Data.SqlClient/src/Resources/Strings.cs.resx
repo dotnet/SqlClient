@@ -3805,7 +3805,7 @@
     <value>Nezdařilo se asociování portu se vstupně-výstupním (I/O) mechanismem dokončení.</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Soket má hodnotu null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Chyba časového limitu</value>
@@ -4739,5 +4739,8 @@
   </data>
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand list has not been initialized.</value>
   </data>
 </root>

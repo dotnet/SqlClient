@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
         static internal Exception InvalidCertAuth()
         {
@@ -1524,7 +1524,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVersionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
@@ -2659,7 +2659,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escapes the name with [], also escapes the last close bracket with double-bracket</returns>
         internal static string EscapeIdentifier(string name)
         {
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
             return "[" + name.Replace("]", "]]") + "]";
         }
 
@@ -2669,7 +2669,7 @@ namespace Microsoft.Data.SqlClient
         internal static void EscapeIdentifier(StringBuilder builder, string name)
         {
             Debug.Assert(builder != null, "builder cannot be null");
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
 
             builder.Append("[");
             builder.Append(name.Replace("]", "]]"));
@@ -2694,7 +2694,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escaped and quoted literal string</returns>
         internal static string MakeStringLiteral(string input)
         {
-            if (ADP.IsEmpty(input))
+            if (string.IsNullOrEmpty(input))
             {
                 return "''";
             }

@@ -5,15 +5,18 @@
 #################################################################################
 
 parameters:
-    - # Name of the Azure Key Vault to retrieve certificates from.
-      # note: This has nothing to do with the AKV provider package.
-      name: akvName
-      type: string
-
     - name: appRegistrationClientId
       type: string
 
     - name: appRegistrationTenantId
+      type: string
+
+    - # Name of the Azure Key Vault to retrieve certificates from.
+      # note: This has nothing to do with the AKV provider package.
+      name: authAkvName
+      type: string
+
+    - name: authSignCertName
       type: string
 
     - name: artifactType
@@ -22,13 +25,10 @@ parameters:
           - dll
           - pkg
 
-    - name: authCertName
+    - name: esrpConnectedServiceName
       type: string
 
-    - name: connectedServiceName
-      type: string
-
-    - name: signingCertName
+    - name: esrpClientId
       type: string
 
 steps:
@@ -39,11 +39,11 @@ steps:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
               AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
               CleanupTempStorage: 1
-              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
-              AuthAKVName: '${{ parameters.akvName }}'
-              AuthCertName: '${{ parameters.authCertName }}'
+              ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+              EsrpClientId: '${{ parameters.esrpClientId }}'
               FolderPath: '$(BUILD_OUTPUT)'
               Pattern: '*.dll'
+              UseMSIAuthentication: true
               VerboseLogin: 1
 
         - task: EsrpCodeSigning@5
@@ -51,13 +51,14 @@ steps:
           inputs:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
               AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-              AuthAKVName: '${{ parameters.akvName }}'
-              AuthCertName: '${{ parameters.authCertName }}'
-              AuthSignCertName: '${{ parameters.signingCertName }}'
-              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+              AuthAKVName: '${{ parameters.authAkvName }}'
+              AuthSignCertName: '${{ parameters.authSignCertName }}'
+              ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+              EsrpClientId: '${{ parameters.esrpClientId }}'
               FolderPath: '$(BUILD_OUTPUT)'
               Pattern: '*.dll'
               signConfigType: 'inlineSignParams'
+              UseMSIAuthentication: true
               inlineOperation: |
                   [ 
                       {
@@ -105,11 +106,11 @@ steps:
               AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
               AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
               CleanupTempStorage: 1
-              ConnectedServiceName: '${{ parameters.connectedServiceName }}'
-              AuthAKVName: '${{ parameters.akvName }}'
-              AuthCertName: '${{ parameters.authCertName }}'
+              ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+              EsrpClientId: '${{ parameters.esrpClientId }}'
               FolderPath: '$(ARTIFACT_PATH)'
               Pattern: '*.*nupkg'
+              UseMSIAuthentication: true
               VerboseLogin: 1
 
         - task: EsrpCodeSigning@5
@@ -117,13 +118,14 @@ steps:
           inputs:
             AppRegistrationClientId: '${{ parameters.appRegistrationClientId }}'
             AppRegistrationTenantId: '${{ parameters.appRegistrationTenantId }}'
-            AuthAKVName: '${{ parameters.akvName }}'
-            AuthCertName: '${{ parameters.authCertName }}'
-            AuthSignCertName: '${{ parameters.signingCertName }}'
-            ConnectedServiceName: '${{ parameters.connectedServiceName }}'
+            ConnectedServiceName: '${{ parameters.esrpConnectedServiceName }}'
+            EsrpClientId: '${{ parameters.esrpClientId }}'
+            AuthAKVName: '${{ parameters.authAkvName }}'
+            AuthSignCertName: '${{ parameters.authSignCertName }}'
             FolderPath: '$(ARTIFACT_PATH)'
             Pattern: '*.*nupkg'
             signConfigType: 'inlineSignParams'
+            UseMSIAuthentication: true
             inlineOperation: |
                 [ 
                     { 

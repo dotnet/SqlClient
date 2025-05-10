@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -14,7 +15,7 @@ namespace Microsoft.Data.SqlClient
         // internal tdsparser constants
 
 
-        public const string SQL_PROVIDER_NAME = Common.DbConnectionStringDefaults.ApplicationName;
+        public const string SQL_PROVIDER_NAME = DbConnectionStringDefaults.ApplicationName;
 
         public static readonly decimal SQL_SMALL_MONEY_MIN = new(-214748.3648);
         public static readonly decimal SQL_SMALL_MONEY_MAX = new(214748.3647);
@@ -1130,7 +1131,6 @@ namespace Microsoft.Data.SqlClient
         SqlPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
-        [Obsolete("ActiveDirectoryPassword is deprecated.")]
         ActiveDirectoryPassword,
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>

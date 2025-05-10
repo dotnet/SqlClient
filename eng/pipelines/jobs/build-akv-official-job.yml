@@ -32,16 +32,16 @@ parameters:
     - name: signingAppRegistrationTenantId
       type: string
 
-    - name: signingAkvName
+    - name: signingAuthAkvName
       type: string
 
-    - name: signingAuthCertName
+    - name: signingAuthSignCertName
       type: string
 
-    - name: signingConnectedServiceName
+    - name: signingEsrpClientId
       type: string
 
-    - name: signingSignCertName
+    - name: signingEsrpConnectedServiceName
       type: string
 
     - name: symbolsAzureSubscription
@@ -108,13 +108,13 @@ jobs:
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
-                akvName: '${{ parameters.signingAkvName }}'
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
                 artifactType: 'dll'
-                authCertName: '${{ parameters.signingAuthCertName }}'
-                connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
-                signingCertName: '${{ parameters.signingSignCertName }}'
+                authAkvName: '${{ parameters.signingAuthAkvName }}'
+                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+                esrpClientId: '${{ parameters.signingEsrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
           - template: ../steps/compound-nuget-pack-step.yml@self
             parameters:
@@ -127,13 +127,13 @@ jobs:
 
           - template: ../steps/compound-esrp-code-signing-step.yml@self
             parameters:
-                akvName: '${{ parameters.signingAkvName }}'
                 appRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
                 appRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
                 artifactType: 'pkg'
-                authCertName: '${{ parameters.signingAuthCertName }}'
-                connectedServiceName: '${{ parameters.signingConnectedServiceName }}'
-                signingCertName: '${{ parameters.signingSignCertName }}'
+                authAkvName: '${{ parameters.signingAuthAkvName }}'
+                authSignCertName: '${{ parameters.signingAuthSignCertName }}'
+                esrpClientId: '${{ parameters.signingEsrpClientId }}'
+                esrpConnectedServiceName: '${{ parameters.signingEsrpConnectedServiceName }}'
 
           - ${{ if parameters.publishSymbols }}:
             - template: ../steps/compound-publish-symbols-step.yml@self

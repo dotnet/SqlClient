@@ -26,6 +26,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task MissingCommandsThrows()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var batch = new SqlBatch { Connection = connection })
+            {
+                connection.Open();
+                await Assert.ThrowsAsync<InvalidOperationException>(() => batch.ExecuteReaderAsync());
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MissingConnectionThrows()
         {
             using (var batch = new SqlBatch { BatchCommands = { new SqlBatchCommand("SELECT @@SPID") } })

@@ -38,6 +38,7 @@ parameters:
 variables:
     - template: /eng/pipelines/variables/common-variables.yml@self
     - template: /eng/pipelines/variables/onebranch-variables.yml@self
+    - template: /eng/pipelines/variables/esrp-signing-variables.yml@self
     - template: /eng/pipelines/variables/akv-official-variables.yml@self
 
 resources:
@@ -135,10 +136,10 @@ extends:
                         publishSymbols: '${{ parameters.publishSymbols }}'
                         signingAppRegistrationClientId: '$(SigningAppRegistrationClientId)'
                         signingAppRegistrationTenantId: '$(SigningAppRegistrationTenantId)'
-                        signingAkvName: '$(SigningAkvName)'
-                        signingAuthCertName: '$(SigningAuthCertName)'
-                        signingConnectedServiceName: '$(SigningConnectedServiceName)'
-                        signingSignCertName: '$(SigningSignCertName)'
+                        signingAuthAkvName: '$(SigningAuthAkvName)'
+                        signingAuthSignCertName: '$(SigningAuthSignCertName)'
+                        signingEsrpClientId: '$(SigningEsrpClientId)'
+                        signingEsrpConnectedServiceName: '$(SigningEsrpConnectedServiceName)'
                         symbolsAzureSubscription: '$(SymbolsAzureSubscription)'
                         symbolsPublishProjectName: '$(SymbolsPublishProjectName)'
                         symbolsPublishServer: '$(SymbolsPublishServer)'

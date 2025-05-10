@@ -12,7 +12,7 @@
       <value>1</value>
     </SqlPassword>
     <ActiveDirectoryPassword>
-      <summary>The authentication method uses Active Directory Password. Use Active Directory Password to connect to a SQL Database using a Microsoft Entra principal name and password. This authentication method is now deprecated, and will be removed in a future release.</summary>
+      <summary>The authentication method uses Active Directory Password. Use Active Directory Password to connect to a SQL Database using a Microsoft Entra principal name and password.</summary>
       <value>2</value>
     </ActiveDirectoryPassword>
     <ActiveDirectoryIntegrated>

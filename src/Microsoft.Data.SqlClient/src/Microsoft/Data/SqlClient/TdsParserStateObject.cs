@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
         InvalidData = 2
     }
 
-    partial class TdsParserStateObject
+    internal abstract partial class TdsParserStateObject
     {
         private static int s_objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser)
+        protected TdsParserStateObject(TdsParser parser)
         {
             // Construct a physical connection
             Debug.Assert(parser != null, "no parser?");
@@ -465,6 +465,16 @@ namespace Microsoft.Data.SqlClient
                 _timeoutTime = value;
             }
         }
+
+        internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
+
+        internal abstract uint DisableSsl();
+
+        internal abstract SSPIContextProvider CreateSSPIContextProvider();
+
+        internal abstract uint EnableMars(ref uint info);
+
+        internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
         internal int GetTimeoutRemaining()
         {
