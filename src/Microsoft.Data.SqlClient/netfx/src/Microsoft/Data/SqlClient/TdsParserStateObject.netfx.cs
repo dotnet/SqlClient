@@ -20,15 +20,6 @@ namespace Microsoft.Data.SqlClient
 {
     using PacketHandle = IntPtr;
 
-    internal readonly ref struct SessionHandle
-    {
-        public readonly SNIHandle NativeHandle;
-
-        public SessionHandle(SNIHandle nativeHandle) => NativeHandle = nativeHandle;
-
-        public bool IsNull => NativeHandle is null;
-    }
-
     internal partial class TdsParserStateObject
     {
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
@@ -114,7 +105,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SessionHandle SessionHandle => new SessionHandle(Handle);
+        internal SessionHandle SessionHandle => SessionHandle.FromNativeHandle(Handle);
 
         /////////////////////
         // General methods //
