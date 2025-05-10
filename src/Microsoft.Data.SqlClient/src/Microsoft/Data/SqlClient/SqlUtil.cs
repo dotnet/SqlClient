@@ -2429,10 +2429,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotAvailableOnContextConnection));
         }
-        static internal Exception NotificationsNotAvailableOnContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
-        }
 
         static internal Exception UserInstanceNotAvailableInProc()
         {
