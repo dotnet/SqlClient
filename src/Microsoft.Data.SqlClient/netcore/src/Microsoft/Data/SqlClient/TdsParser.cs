@@ -13096,9 +13096,9 @@ namespace Microsoft.Data.SqlClient
             // If total length is known up front, the length isn't specified as unknown 
             // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
             // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && len < (int.MaxValue >> 1))
+            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && len < 1073741824) // 1 Gib
+                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
                 {
                     buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
                     rentedBuff = true;
