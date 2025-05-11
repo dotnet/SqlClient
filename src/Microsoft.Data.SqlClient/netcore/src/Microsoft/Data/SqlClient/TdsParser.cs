@@ -13088,7 +13088,7 @@ namespace Microsoft.Data.SqlClient
                 ||
                 (buff.Length >= offst + len)
                 ||
-                (buff.Length == (startOffsetByteCount >> 1) + 1),
+                (buff.Length >= (startOffsetByteCount >> 1) + 1),
                 "Invalid length sent to ReadPlpUnicodeChars()!"
             );
             charsLeft = len;
@@ -13152,7 +13152,10 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            newbuf = new char[offst + charsRead];
+                            // grow by an arbitrary number of packets to avoid needing to reallocate
+                            //  the newbuf on each loop iteration of long packet sequences which causes
+                            //  a performance problem as we spend large amounts of time copying and in gc
+                            newbuf = new char[offst + charsRead + (stateObj.GetPacketSize() * 8)];
                             rentedBuff = false;
                         }
 
