@@ -4741,6 +4741,6 @@
     <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
-    <value>SqlBatchCommand list has not been initialized.</value>
+    <value>Seznam SqlBatchCommand nebyl inicializován.</value>
   </data>
 </root>

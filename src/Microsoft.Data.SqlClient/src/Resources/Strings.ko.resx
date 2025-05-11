@@ -4741,6 +4741,6 @@
     <value>SourceColumn '{2}'에 DataColumn '{0}'이(가) 없습니다.</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
-    <value>SqlBatchCommand list has not been initialized.</value>
+    <value>SqlBatchCommand 목록이 초기화되지 않았습니다.</value>
   </data>
 </root>

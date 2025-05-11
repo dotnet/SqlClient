@@ -4741,6 +4741,6 @@
     <value>Falta DataColumn '{0}' para SourceColumn '{2}'.</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
-    <value>SqlBatchCommand list has not been initialized.</value>
+    <value>No se ha inicializado la lista SqlBatchCommand.</value>
   </data>
 </root>

@@ -4741,6 +4741,6 @@
     <value>Отсутствует DataColumn "{0}" для данного SourceColumn "{2}".</value>
   </data>
   <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
-    <value>SqlBatchCommand list has not been initialized.</value>
+    <value>Список SqlBatchCommand не инициализирован.</value>
   </data>
 </root>
