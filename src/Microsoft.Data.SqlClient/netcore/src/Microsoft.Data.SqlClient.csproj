@@ -33,9 +33,6 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="ManualTests" />
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>  
@@ -747,7 +744,7 @@
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
-      <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
+      <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
 
     <Compile Include="Common\System\NotImplemented.cs" />
