@@ -98,11 +98,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             if (taskCompletionSource is not null)
             {
-                ThreadPool.QueueUserWorkItem(async (_) =>
+                Task.Run(async () =>
                 {
                     //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
-                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), true, CancellationToken.None).ConfigureAwait(false);
-                    taskCompletionSource.SetResult(connection);
+                    try
+                    {
+                        var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), true, CancellationToken.None).ConfigureAwait(false);
+                        taskCompletionSource.SetResult(connection);
+                    } catch (Exception e)
+                    {
+                        taskCompletionSource.SetException(e);
+                    }
                 });
                 connection = null;
                 return false;
@@ -110,7 +116,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             else
             {
                 //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
-                connection = GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None).Result;
+                var task = GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None);
+                //TODO: move sync over async limit to this spot?
+                connection = task.GetAwaiter().GetResult();
                 return connection is not null;
             }
         }
