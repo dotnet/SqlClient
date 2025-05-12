@@ -141,7 +141,7 @@
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
+      <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\FieldNameLookup.cs">
       <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
@@ -725,8 +725,6 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-
-    <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
