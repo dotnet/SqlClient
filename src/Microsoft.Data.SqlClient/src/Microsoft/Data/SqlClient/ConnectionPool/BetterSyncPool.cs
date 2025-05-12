@@ -101,20 +101,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 ThreadPool.QueueUserWorkItem(async (_) =>
                 {
                     //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
-                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None).ConfigureAwait(false);
-                    //TODO set transaction if necessary
-                    PrepareConnection(owningObject, connection, null);
+                    var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), true, CancellationToken.None).ConfigureAwait(false);
                     taskCompletionSource.SetResult(connection);
                 });
                 connection = null;
                 return false;
-            } 
+            }
             else
             {
                 //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
                 connection = GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None).Result;
-                //TODO set transaction if necessary
-                PrepareConnection(owningObject, connection, null);
                 return connection is not null;
             }
         }
@@ -145,12 +141,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="userOptions">Options used to create the new connection</param>
         /// <param name="oldConnection">Inner connection that will be replaced</param>
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
-        internal override DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        internal override DbConnectionInternal? ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
-            //TODO
-#pragma warning disable CS8603 // Possible null reference return.
-            return null;
-#pragma warning restore CS8603 // Possible null reference return.
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", ObjectId);
+            DbConnectionInternal? newConnection = OpenNewInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, default).Result;
+
+            if (newConnection != null)
+            {
+                SqlClientEventSource.Metrics.SoftConnectRequest();
+                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                oldConnection.PrepareForReplaceConnection();
+                oldConnection.DeactivateConnection();
+                oldConnection.Dispose();
+            }
+
+            return newConnection;
 
         }
 
@@ -175,24 +180,169 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
             }
 
-            //TODO: verify transaction state
-
             if (!CheckConnector(connector))
             {
                 return;
             }
 
-            connector.DeactivateConnection();
+            DeactivateObject(connector);
+        }
 
-            // Statement order is important since we have synchronous completions on the channel.
-            Interlocked.Increment(ref _idleCount);
-            var written = _idleConnectorWriter.TryWrite(connector);
-            Debug.Assert(written);
+        private void DeactivateObject(DbConnectionInternal obj)
+        {
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.", ObjectId, obj.ObjectID);
+            obj.DeactivateConnection();
+
+            bool returnToGeneralPool = false;
+            bool destroyObject = false;
+            bool rootTxn = false;
+
+            if (obj.IsConnectionDoomed)
+            {
+                // the object is not fit for reuse -- just dispose of it.
+                destroyObject = true;
+            }
+            else
+            {
+                lock (obj)
+                {
+                    // A connection with a delegated transaction cannot currently
+                    // be returned to a different customer until the transaction
+                    // actually completes, so we send it into Stasis -- the SysTx
+                    // transaction object will ensure that it is owned (not lost),
+                    // and it will be certain to put it back into the pool.                    
+
+                    if (State is ShuttingDown)
+                    {
+                        if (obj.IsTransactionRoot)
+                        {
+                            // SQLHotfix# 50003503 - connections that are affiliated with a 
+                            //   root transaction and that also happen to be in a connection 
+                            //   pool that is being shutdown need to be put in stasis so that 
+                            //   the root transaction isn't effectively orphaned with no 
+                            //   means to promote itself to a full delegated transaction or
+                            //   Commit or Rollback
+                            obj.SetInStasis();
+                            rootTxn = true;
+                        }
+                        else
+                        {
+                            // connection is being closed and the pool has been marked as shutting
+                            //   down, so destroy this object.
+                            destroyObject = true;
+                        }
+                    }
+                    else
+                    {
+                        if (obj.IsNonPoolableTransactionRoot)
+                        {
+                            obj.SetInStasis();
+                            rootTxn = true;
+                        }
+                        else if (obj.CanBePooled)
+                        {
+                            // We must put this connection into the transacted pool
+                            // while inside a lock to prevent a race condition with
+                            // the transaction asynchronously completing on a second
+                            // thread.
+
+                            Transaction transaction = obj.EnlistedTransaction;
+                            if (transaction != null)
+                            {
+                                // NOTE: we're not locking on _state, so it's possible that its
+                                //   value could change between the conditional check and here.
+                                //   Although perhaps not ideal, this is OK because the 
+                                //   DelegatedTransactionEnded event will clean up the
+                                //   connection appropriately regardless of the pool state.
+                                _transactedConnectionPool.PutTransactedObject(transaction, obj);
+                                rootTxn = true;
+                            }
+                            else
+                            {
+                                // return to general pool
+                                returnToGeneralPool = true;
+                            }
+                        }
+                        else
+                        {
+                            if (obj.IsTransactionRoot && !obj.IsConnectionDoomed)
+                            {
+                                // SQLHotfix# 50003503 - if the object cannot be pooled but is a transaction
+                                //   root, then we must have hit one of two race conditions:
+                                //       1) PruneConnectionPoolGroups shutdown the pool and marked this connection 
+                                //          as non-poolable while we were processing within this lock
+                                //       2) The LoadBalancingTimeout expired on this connection and marked this
+                                //          connection as DoNotPool.
+                                //
+                                //   This connection needs to be put in stasis so that the root transaction isn't
+                                //   effectively orphaned with no means to promote itself to a full delegated 
+                                //   transaction or Commit or Rollback
+                                obj.SetInStasis();
+                                rootTxn = true;
+                            }
+                            else
+                            {
+                                // object is not fit for reuse -- just dispose of it
+                                destroyObject = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (returnToGeneralPool)
+            {
+                // Only push the connection into the general pool if we didn't
+                //   already push it onto the transacted pool, put it into stasis,
+                //   or want to destroy it.
+                Debug.Assert(destroyObject == false);
+                // Statement order is important since we have synchronous completions on the channel.
+                Interlocked.Increment(ref _idleCount);
+                var written = _idleConnectorWriter.TryWrite(obj);
+                Debug.Assert(written);
+            }
+            else if (destroyObject)
+            {
+                // Connections that have been marked as no longer 
+                // poolable (e.g. exceeded their connection lifetime) are not, in fact,
+                // returned to the general pool
+                CloseConnector(obj);
+            }
+
+            //-------------------------------------------------------------------------------------
+            // postcondition
+
+            // ensure that the connection was processed
+            Debug.Assert(rootTxn == true || returnToGeneralPool == true || destroyObject == true);
         }
 
         internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
         {
-            //TODO
+            Debug.Assert(obj != null, "null pooledObject?");
+            Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
+
+            obj.DeactivateConnection();
+
+            // called by the transacted connection pool , once it's removed the
+            // connection from it's list.  We put the connection back in general
+            // circulation.
+
+            // NOTE: there is no locking required here because if we're in this
+            // method, we can safely presume that the caller is the only person
+            // that is using the connection, and that all pre-push logic has been
+            // done and all transactions are ended.
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", ObjectId, obj.ObjectID);
+
+            if (State is Running && obj.CanBePooled)
+            {
+                Interlocked.Increment(ref _idleCount);
+                var written = _idleConnectorWriter.TryWrite(obj);
+                Debug.Assert(written);
+            }
+            else
+            {
+                CloseConnector(obj);
+            }
         }
 
         internal override void Startup()
@@ -203,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal override void Shutdown()
         {
             // NOTE: this occupies a thread for the whole duration of the shutdown process.
-            var shutdownTask = new Task(async () => await ShutdownAsync());
+            var shutdownTask = new Task(async () => await ShutdownAsync().ConfigureAwait(false));
             shutdownTask.RunSynchronously();
         }
 
@@ -213,7 +363,58 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         //   other objects is unnecessary (hence the asymmetry of Ended but no Begin)
         internal override void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
-            //TODO
+            Debug.Assert(transaction != null, "null transaction?");
+            Debug.Assert(transactedObject != null, "null transactedObject?");
+
+            // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.          
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectId, transaction.GetHashCode(), transactedObject.ObjectID);
+
+            // called by the internal connection when it get's told that the
+            // transaction is completed.  We tell the transacted pool to remove
+            // the connection from it's list, then we put the connection back in
+            // general circulation.
+            _transactedConnectionPool.TransactionEnded(transaction, transactedObject);
+        }
+
+        private DbConnectionInternal? GetFromTransactedPool(out Transaction? transaction)
+        {
+            transaction = ADP.GetCurrentTransaction();
+            if (transaction == null)
+            {
+                return null;
+            }
+
+
+            DbConnectionInternal? obj = _transactedConnectionPool.GetTransactedObject(transaction);
+            if (obj == null)
+            {
+                return null;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", ObjectId, obj.ObjectID);
+            SqlClientEventSource.Metrics.ExitFreeConnection();
+
+            if (obj.IsTransactionRoot)
+            {
+                try
+                {
+                    obj.IsConnectionAlive(true);
+                }
+                catch
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectId, obj.ObjectID);
+                    CloseConnector(obj);
+                    throw;
+                }
+            }
+            else if (!obj.IsConnectionAlive())
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectId, obj.ObjectID);
+                CloseConnector(obj);
+                obj = null;
+            }
+            
+            return obj;
         }
         #endregion
 
@@ -230,9 +431,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private readonly ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> _pooledDbAuthenticationContexts;
 
-        // Prevents synchronous operations from blocking on all available threads,
-        // which would stop async tasks from being scheduled and cause deadlocks.
-        // Use ProcessorCount/2 as a balance between sync and async tasks.
+        // Prevents synchronous operations which depend on async operations on managed
+        // threads from blocking on all available threads, which would stop async tasks
+        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
+        // between sync and async tasks.
         private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
 
         private static int _objectTypeCount; // EventSource counter
@@ -249,6 +451,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Only updated rarely - when physical connections are opened/closed - but is read in perf-sensitive contexts.
         /// </summary>
         private readonly DbConnectionInternal?[] _connectors;
+
+        /// <summary>
+        /// Tracks all connectors currently managed by this pool that are in a transaction.
+        /// </summary>
+        private readonly TransactedConnectionPool _transactedConnectionPool;
 
         /// <summary>
         /// Reader side for the idle connector channel. Contains nulls in order to release waiting attempts after
@@ -314,6 +521,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     capacity: 2);
 
             _connectors = new DbConnectionInternal[MaxPoolSize];
+            _transactedConnectionPool = new TransactedConnectionPool(this);
 
             // We enforce Max Pool Size, so no need to to create a bounded channel (which is less efficient)
             // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
@@ -345,24 +553,27 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal TimeSpan ConnectionLifetime => PoolGroupOptions.LoadBalanceTimeout;
         internal int ObjectID => _objectID;
         internal bool IsWarmupEnabled { get; set; } = true;
-#endregion
+        #endregion
 
 
         /// <inheritdoc/>
         internal async Task<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
-            DbConnectionInternal? connector = GetIdleConnector();
-            if (connector != null)
+            DbConnectionInternal? connector = null;
+            Transaction? transaction = null;
+
+            if (HasTransactionAffinity)
             {
-                // TODO: transactions
-                return connector;
+                connector ??= GetFromTransactedPool(out transaction);
             }
 
-            // First, try to open a new physical connector. This will fail if we're at max capacity.
-            connector = await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
+            connector ??= GetIdleConnector();
+
+            connector ??= await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
+
             if (connector != null)
             {
-                // TODO: transactions
+                PrepareConnection(owningConnection, connector, transaction);
                 return connector;
             }
 
@@ -389,6 +600,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             SyncOverAsyncSemaphore.Wait(finalToken);
                             try
                             {
+                                // If there are no connections in the channel, then this call will block until one is available.
+                                // Because this call uses the managed thread pool, we need to limit the number of
+                                // threads allowed to block here to avoid a deadlock.
                                 ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
                                     _idleConnectorReader.ReadAsync(finalToken).ConfigureAwait(false).GetAwaiter();
                                 using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
@@ -406,7 +620,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                         if (connector != null && CheckIdleConnector(connector))
                         {
-                            // TODO: transactions
+                            PrepareConnection(owningConnection, connector, transaction);
                             return connector;
                         }
                     }
@@ -426,20 +640,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we're here, our waiting attempt on the idle connector channel was released with a null
                     // (or bad connector), or we're in sync mode. Check again if a new idle connector has appeared since we last checked.
                     connector = GetIdleConnector();
-                    if (connector != null)
-                    {
-                        // TODO: transactions
-                        connector.ActivateConnection(null);
-                        return connector;
-                    }
 
                     // We might have closed a connector in the meantime and no longer be at max capacity
                     // so try to open a new connector and if that fails, loop again.
-                    connector = await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
+                    connector ??= await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
+                    
                     if (connector != null)
                     {
-                        // TODO: transactions
-                        connector.ActivateConnection(null);
+                        PrepareConnection(owningConnection, connector, transaction);
                         return connector;
                     }
                 }
@@ -751,7 +959,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 // Min pool size check above is best effort and may over prune.
                 // Ensure warmup runs to bring us back up to min pool size if necessary.
-                await WarmUp();
+                await WarmUp().ConfigureAwait(false);
             }
         }
 
@@ -886,7 +1094,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _shutdownCTS.Cancel();
             await Task.WhenAll(
                 PruningTask,
-                _warmupTask);
+                _warmupTask).ConfigureAwait(false);
 
             // Clean pool state
             Clear();
