@@ -4740,4 +4740,7 @@
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>SourceColumn '{2}' の DataColumn '{0}' が見つかりません。</value>
   </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand リストが初期化されていません。</value>
+  </data>
 </root>

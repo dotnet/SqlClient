@@ -30,14 +30,6 @@ namespace Microsoft.Data.SqlClient
 
     internal partial class TdsParserStateObject
     {
-        private static class TdsParserStateObjectFactory
-        {
-            /// <summary>
-            /// Always false in case of netfx. Only needed for merging with netcore codebase.
-            /// </summary>
-            internal const bool UseManagedSNI = false;
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
@@ -62,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -97,8 +89,6 @@ namespace Microsoft.Data.SqlClient
             IncrementPendingCallbacks();
             _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
         }
-
-        internal SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
 
         ////////////////
         // Properties //
