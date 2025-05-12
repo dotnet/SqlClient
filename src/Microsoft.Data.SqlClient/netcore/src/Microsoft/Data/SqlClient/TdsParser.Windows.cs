@@ -5,7 +5,7 @@
 using System;
 using System.Diagnostics;
 using Interop.Windows.Sni;
-using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClient.ManagedSni;
 
 namespace Microsoft.Data.SqlClient
 {

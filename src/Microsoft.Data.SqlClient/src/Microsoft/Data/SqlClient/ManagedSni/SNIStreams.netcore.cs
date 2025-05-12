@@ -6,7 +6,7 @@ using System.Net.Security;
 using System.IO;
 using System.Net.Sockets;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// This class extends SslStream to customize stream behavior for Managed SNI implementation.

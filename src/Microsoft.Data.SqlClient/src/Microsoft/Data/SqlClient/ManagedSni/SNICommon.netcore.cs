@@ -10,11 +10,9 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Microsoft.Data.Common;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// SNI Asynchronous callback

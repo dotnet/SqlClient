@@ -7,15 +7,14 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Net.Security;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+// @TODO: If this is in the manages SNI namespace, it should be in the managed SNI folder
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {

@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal class LocalDB
     {

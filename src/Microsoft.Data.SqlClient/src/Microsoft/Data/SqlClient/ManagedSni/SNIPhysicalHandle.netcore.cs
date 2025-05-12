@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.SqlClient.Utilities;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal abstract class SNIPhysicalHandle : SNIHandle
     {

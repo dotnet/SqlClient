@@ -4,7 +4,7 @@
 
 using System.Threading;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// Global SNI settings and status

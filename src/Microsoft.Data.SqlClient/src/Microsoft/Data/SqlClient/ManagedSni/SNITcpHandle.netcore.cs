@@ -15,7 +15,7 @@ using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// TCP connection handle

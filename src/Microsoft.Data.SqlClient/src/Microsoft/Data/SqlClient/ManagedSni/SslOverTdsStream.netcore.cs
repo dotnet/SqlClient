@@ -6,7 +6,7 @@ using System;
 using System.IO;
 using System.IO.Pipes;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// SSL encapsulated over TDS transport. During SSL handshake, SSL packets are

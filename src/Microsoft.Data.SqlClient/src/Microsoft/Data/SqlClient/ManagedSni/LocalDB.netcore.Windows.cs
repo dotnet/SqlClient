@@ -9,8 +9,7 @@ using Interop.Windows.Handles;
 using Interop.Windows.Kernel32;
 using Microsoft.Win32;
 
-
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal sealed class LocalDB
     {
