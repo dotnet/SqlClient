@@ -316,10 +316,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Debug.Assert(rootTxn == true || returnToGeneralPool == true || destroyObject == true);
         }
 
-        internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
+        internal override void PutObjectFromTransactedPool(DbConnectionInternal? obj)
         {
             Debug.Assert(obj != null, "null pooledObject?");
-            Debug.Assert(obj.EnlistedTransaction == null, "pooledObject is still enlisted?");
+            Debug.Assert(obj!.EnlistedTransaction == null, "pooledObject is still enlisted?");
 
             obj.DeactivateConnection();
 
@@ -361,13 +361,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         //   that is implemented inside DbConnectionPool. This method's counterpart (PutTransactedObject) should
         //   only be called from DbConnectionPool.DeactivateObject and thus the plumbing to provide access to 
         //   other objects is unnecessary (hence the asymmetry of Ended but no Begin)
-        internal override void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
+        internal override void TransactionEnded(Transaction? transaction, DbConnectionInternal? transactedObject)
         {
             Debug.Assert(transaction != null, "null transaction?");
             Debug.Assert(transactedObject != null, "null transactedObject?");
 
             // Note: connection may still be associated with transaction due to Explicit Unbinding requirement.          
-            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectId, transaction.GetHashCode(), transactedObject.ObjectID);
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.TransactionEnded|RES|CPOOL> {0}, Transaction {1}, Connection {2}, Transaction Completed", ObjectId, transaction?.GetHashCode(), transactedObject?.ObjectID);
 
             // called by the internal connection when it get's told that the
             // transaction is completed.  We tell the transacted pool to remove

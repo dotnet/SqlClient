@@ -1175,6 +1175,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return obj;
         }
 
+        private DbConnectionInternal GetFromTransactedPool(out Transaction transaction)
+        {
+            transaction = ADP.GetCurrentTransaction();
+            DbConnectionInternal obj = null;
+
+            if (transaction != null && _transactedConnectionPool != null)
+            {
+                obj = _transactedConnectionPool.GetTransactedObject(transaction);
+
+                if (obj != null)
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Popped from transacted pool.", ObjectId, obj.ObjectID);
+
+                    SqlClientEventSource.Metrics.ExitFreeConnection();
+
+                    if (obj.IsTransactionRoot)
+                    {
+                        try
+                        {
+                            obj.IsConnectionAlive(true);
+                        }
+                        catch
+                        {
+                            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectId, obj.ObjectID);
+                            DestroyObject(obj);
+                            throw;
+                        }
+                    }
+                    else if (!obj.IsConnectionAlive())
+                    {
+                        SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetFromTransactedPool|RES|CPOOL> {0}, Connection {1}, found dead and removed.", ObjectId, obj.ObjectID);
+                        DestroyObject(obj);
+                        obj = null;
+                    }
+                }
+            }
+            return obj;
+        }
+
 #if NETFRAMEWORK
         [ResourceExposure(ResourceScope.None)] // SxS: this method does not expose resources
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
