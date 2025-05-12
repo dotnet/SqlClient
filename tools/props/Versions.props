@@ -71,7 +71,7 @@
     <SystemServiceProcessServiceControllerVersion>8.0.1</SystemServiceProcessServiceControllerVersion>
     <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
     <XunitVersion>2.9.2</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.8.2</XunitrunnervisualstudioVersion>
+    <XunitRunnerVisualStudioVersion>2.8.2</XunitRunnerVisualStudioVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
