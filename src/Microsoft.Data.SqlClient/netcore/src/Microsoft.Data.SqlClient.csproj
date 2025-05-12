@@ -53,11 +53,29 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\BitConverterCompatible.cs">
       <Link>Microsoft\Data\Common\BitConverterCompatible.cs</Link>
     </Compile>
+        <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringKeywords.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringKeywords.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\IpAddressPreferenceUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\IpAddressPreferenceUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionStringCommon.cs">
-      <Link>Microsoft\Data\Common\DbConnectionStringCommon.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\MultipartIdentifier.cs">
       <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
@@ -977,6 +995,7 @@
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
+    <Compile Remove="C:\Users\mdaigle\SqlClient\src\..\src\Microsoft.Data.SqlClient\src\Microsoft\Data\Common\DbConnectionStringCommon.cs" />
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
     </EmbeddedResource>
