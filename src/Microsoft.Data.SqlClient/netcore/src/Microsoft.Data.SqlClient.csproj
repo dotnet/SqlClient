@@ -141,7 +141,7 @@
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
+      <Link>Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\FieldNameLookup.cs">
       <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
@@ -152,8 +152,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs">
-      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.netcore.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
@@ -380,8 +380,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs</Link>
@@ -656,11 +656,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSSPIContextProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NegotiateSspiContextProvider.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\SSPIContextProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SspiContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SspiContextProvider.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPool.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\ObjectPool.cs</Link>
@@ -725,8 +728,6 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-
-    <Compile Include="Common\System\NotImplemented.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
@@ -782,34 +783,34 @@
       <Link>Interop\Windows\Kernel32\Kernel32.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateDisposition.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\CreateDisposition.cs</Link>
+      <Link>Interop\Windows\NtDll\CreateDisposition.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\CreateOptions.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\CreateOptions.cs</Link>
+      <Link>Interop\Windows\NtDll\CreateOptions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\DesiredAccess.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\DesiredAccess.cs</Link>
+      <Link>Interop\Windows\NtDll\DesiredAccess.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\FileFullEaInformation.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
+      <Link>Interop\Windows\NtDll\FileFullEaInformation.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ImpersonationLevel.cs">
-      <Link>Interop\Windows\NtDll\ImpersonaltionLevel.cs</Link>
+      <Link>Interop\Windows\NtDll\ImpersonationLevel.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\IoStatusBlock.cs">
       <Link>Interop\Windows\NtDll\IoStatusBlock.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\NtDll.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\NtDll.cs</Link>
+      <Link>Interop\Windows\NtDll\NtDll.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributeFlags.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+      <Link>Interop\Windows\NtDll\ObjectAttributeFlags.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\ObjectAttributes.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\ObjectAttributes.cs</Link>
+      <Link>Interop\Windows\NtDll\ObjectAttributes.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\NtDll\SecurityQualityOfService.cs">
-      <Link>Interop\Windows\NtDll\Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
+      <Link>Interop\Windows\NtDll\SecurityQualityOfService.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)\Interop\Windows\Sni\AuthProviderInfo.cs">
       <Link>Interop\Windows\Sni\AuthProviderInfo.cs</Link>
@@ -865,14 +866,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Windows.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
@@ -889,8 +890,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs">
-      <Link>Microsoft\Data\SqlClient\SSPI\NativeSSPIContextProvider.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs">
+      <Link>Microsoft\Data\SqlClient\SSPI\NativeSspiContextProvider.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
@@ -914,6 +915,9 @@
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\AdapterUtil.Unix.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.netcore.Unix.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolIdentity.Unix.cs</Link>
@@ -942,8 +946,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
-
-    <Compile Include="Microsoft\Data\Sql\SqlDataSourceEnumerator.Unix.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>

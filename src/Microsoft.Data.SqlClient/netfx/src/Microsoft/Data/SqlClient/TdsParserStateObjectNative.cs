@@ -31,6 +31,6 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
+        internal override SspiContextProvider CreateSspiContextProvider() => new NativeSspiContextProvider();
     }
 }
