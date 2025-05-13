@@ -9,9 +9,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// Global SNI settings and status
     /// </summary>
-    internal class SNILoadHandle
+    internal class SniLoadHandle
     {
-        public static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
+        public static readonly SniLoadHandle SingletonInstance = new SniLoadHandle();
 
         public readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
         public ThreadLocal<SniError> _lastError = new ThreadLocal<SniError>(static () => new SniError(SNIProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty));

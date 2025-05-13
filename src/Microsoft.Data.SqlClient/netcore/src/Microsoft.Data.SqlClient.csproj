@@ -284,8 +284,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNILoadHandle.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SNILoadHandle.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIMarsConnection.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SNIMarsConnection.netcore.cs</Link>

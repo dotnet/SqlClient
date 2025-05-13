@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns></returns>
         internal static uint ReportSNIError(SniError error)
         {
-            SNILoadHandle.SingletonInstance.LastError = error;
+            SniLoadHandle.SingletonInstance.LastError = error;
             return TdsEnums.SNI_ERROR;
         }
     }
