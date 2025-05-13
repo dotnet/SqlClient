@@ -449,7 +449,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override SSPIContextProvider CreateSSPIContextProvider() => new NativeSSPIContextProvider();
+        internal override SspiContextProvider CreateSspiContextProvider() => new NativeSspiContextProvider();
 
         internal sealed class WritePacketCache : IDisposable
         {
