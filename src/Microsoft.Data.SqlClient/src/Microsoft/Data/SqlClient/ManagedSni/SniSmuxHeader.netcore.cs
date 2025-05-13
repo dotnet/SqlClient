@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// SMUX packet header
     /// </summary>
-    internal sealed class SNISMUXHeader
+    internal sealed class SniSmuxHeader
     {
         public const int HEADER_LENGTH = 16;
 
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             flags = bytes[1];
             Span<byte> span = bytes.AsSpan();
             sessionId = BinaryPrimitives.ReadUInt16LittleEndian(span.Slice(2));
-            length = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4)) - SNISMUXHeader.HEADER_LENGTH;
+            length = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(4)) - SniSmuxHeader.HEADER_LENGTH;
             sequenceNumber = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(8));
             highwater = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(12));
         }

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private readonly Guid _connectionId;
         private readonly Dictionary<int, SniMarsHandle> _sessions;
         private readonly byte[] _headerBytes;
-        private readonly SNISMUXHeader _currentHeader;
+        private readonly SniSmuxHeader _currentHeader;
         private readonly object _sync;
         private SniHandle _lowerHandle;
         private ushort _nextSessionId;
@@ -45,8 +45,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _sync = new object();
             _connectionId = Guid.NewGuid();
             _sessions = new Dictionary<int, SniMarsHandle>();
-            _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
-            _currentHeader = new SNISMUXHeader();
+            _headerBytes = new byte[SniSmuxHeader.HEADER_LENGTH];
+            _currentHeader = new SniSmuxHeader();
             _nextSessionId = 0;
             _currentHeaderByteCount = 0;
             _dataBytesLeft = 0;
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                SNISMUXHeader currentHeader = null;
+                SniSmuxHeader currentHeader = null;
                 SniPacket currentPacket = null;
                 SniMarsHandle currentSession = null;
 
@@ -224,15 +224,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     lock (DemuxerSync)
                     {
-                        if (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
+                        if (_currentHeaderByteCount != SniSmuxHeader.HEADER_LENGTH)
                         {
                             currentHeader = null;
                             currentPacket = null;
                             currentSession = null;
 
-                            while (_currentHeaderByteCount != SNISMUXHeader.HEADER_LENGTH)
+                            while (_currentHeaderByteCount != SniSmuxHeader.HEADER_LENGTH)
                             {
-                                int bytesTaken = packet.TakeData(_headerBytes, _currentHeaderByteCount, SNISMUXHeader.HEADER_LENGTH - _currentHeaderByteCount);
+                                int bytesTaken = packet.TakeData(_headerBytes, _currentHeaderByteCount, SniSmuxHeader.HEADER_LENGTH - _currentHeaderByteCount);
                                 _currentHeaderByteCount += bytesTaken;
 
                                 if (bytesTaken == 0)
