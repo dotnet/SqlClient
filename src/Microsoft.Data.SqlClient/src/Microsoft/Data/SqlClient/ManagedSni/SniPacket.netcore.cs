@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private int _headerLength; // the amount of space at the start of the array reserved for the smux header, this is zeroed in SetHeader
                                    // _headerOffset is not needed because it is always 0
         private byte[] _data;
-        private SNIAsyncCallback _asyncIOCompletionCallback;
+        private SniAsyncCallback _asyncIOCompletionCallback;
 #if DEBUG
         internal readonly int _id;  // in debug mode every packet is assigned a unique id so that the entire lifetime can be tracked when debugging
         /// refcount = 0 means that a packet should only exist in the pool
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Set async receive callback
         /// </summary>
         /// <param name="asyncIOCompletionCallback">Completion callback</param>
-        public void SetAsyncIOCompletionCallback(SNIAsyncCallback asyncIOCompletionCallback) => _asyncIOCompletionCallback = asyncIOCompletionCallback;
+        public void SetAsyncIOCompletionCallback(SniAsyncCallback asyncIOCompletionCallback) => _asyncIOCompletionCallback = asyncIOCompletionCallback;
 
         /// <summary>
         /// Invoke the receive callback
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="stream">Stream to write to</param>
         /// <param name="callback">SNI Asynchronous Callback</param>
         /// <param name="provider">SNI provider identifier</param>
-        public async void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider)
+        public async void WriteToStreamAsync(Stream stream, SniAsyncCallback callback, SNIProviders provider)
         {
             uint status = TdsEnums.SNI_SUCCESS;
             try

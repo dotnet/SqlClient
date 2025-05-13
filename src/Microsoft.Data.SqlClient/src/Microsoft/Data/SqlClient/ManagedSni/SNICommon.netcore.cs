@@ -15,13 +15,6 @@ using Microsoft.Data.ProviderBase;
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
-    /// SNI Asynchronous callback
-    /// </summary>
-    /// <param name="packet">SNI packet</param>
-    /// <param name="sniErrorCode">SNI error code</param>
-    internal delegate void SNIAsyncCallback(SniPacket packet, uint sniErrorCode);
-
-    /// <summary>
     /// SNI provider identifiers
     /// </summary>
     internal enum SNIProviders

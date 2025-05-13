@@ -32,8 +32,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private SslOverTdsStream _sslOverTdsStream;
 
         private SslStream _sslStream;
-        private SNIAsyncCallback _receiveCallback;
-        private SNIAsyncCallback _sendCallback;
+        private SniAsyncCallback _receiveCallback;
+        private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback)
+        public override void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback)
         {
             _receiveCallback = receiveCallback;
             _sendCallback = sendCallback;

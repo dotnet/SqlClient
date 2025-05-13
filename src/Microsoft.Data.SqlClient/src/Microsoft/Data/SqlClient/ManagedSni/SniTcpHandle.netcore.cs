@@ -33,8 +33,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private Stream _stream;
         private SslStream _sslStream;
         private SslOverTdsStream _sslOverTdsStream;
-        private SNIAsyncCallback _receiveCallback;
-        private SNIAsyncCallback _sendCallback;
+        private SniAsyncCallback _receiveCallback;
+        private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
@@ -907,7 +907,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="receiveCallback">Receive callback</param>
         /// <param name="sendCallback">Send callback</param>
-        public override void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback)
+        public override void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback)
         {
             _receiveCallback = receiveCallback;
             _sendCallback = sendCallback;

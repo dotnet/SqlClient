@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private readonly ManualResetEventSlim _packetEvent = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _ackEvent = new ManualResetEventSlim(false);
         private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
-        private readonly SNIAsyncCallback _handleSendCompleteCallback;
+        private readonly SniAsyncCallback _handleSendCompleteCallback;
 
         private uint _sendHighwater = 4;
         private int _asyncReceives = 0;
@@ -539,7 +539,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="receiveCallback">Receive callback</param>
         /// <param name="sendCallback">Send callback</param>
-        public override void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback)
+        public override void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback)
         {
         }
 

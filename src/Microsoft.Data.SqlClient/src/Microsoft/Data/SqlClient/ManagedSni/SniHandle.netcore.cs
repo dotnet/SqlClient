@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="receiveCallback">Receive callback</param>
         /// <param name="sendCallback">Send callback</param>
-        public abstract void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback);
+        public abstract void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback);
 
         /// <summary>
         /// Set buffer size
