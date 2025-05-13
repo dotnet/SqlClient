@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        internal SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
+        internal SniMarsHandle CreateMarsSession(object callbackObject, bool async)
         {
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreateMarsSession | Info | State Object Id {0}, Session Id {1}, Async = {2}", _objectID, _sessionHandle?.ConnectionId, async);
             if (_marsConnection is null)

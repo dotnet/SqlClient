@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal class SniMarsConnection
     {
         private readonly Guid _connectionId;
-        private readonly Dictionary<int, SNIMarsHandle> _sessions;
+        private readonly Dictionary<int, SniMarsHandle> _sessions;
         private readonly byte[] _headerBytes;
         private readonly SNISMUXHeader _currentHeader;
         private readonly object _sync;
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             _sync = new object();
             _connectionId = Guid.NewGuid();
-            _sessions = new Dictionary<int, SNIMarsHandle>();
+            _sessions = new Dictionary<int, SniMarsHandle>();
             _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
             _currentHeader = new SNISMUXHeader();
             _nextSessionId = 0;
@@ -53,12 +53,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _lowerHandle.SetAsyncCallbacks(HandleReceiveComplete, HandleSendComplete);
         }
 
-        public SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
+        public SniMarsHandle CreateMarsSession(object callbackObject, bool async)
         {
             lock (DemuxerSync)
             {
                 ushort sessionId = _nextSessionId++;
-                SNIMarsHandle handle = new SNIMarsHandle(this, sessionId, callbackObject, async);
+                SniMarsHandle handle = new SniMarsHandle(this, sessionId, callbackObject, async);
                 _sessions.Add(sessionId, handle);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, SNI MARS Handle Id {1}, created new MARS Session {2}", args0: ConnectionId, args1: handle?.ConnectionId, args2: sessionId);
                 return handle;
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public void HandleReceiveError(SNIPacket packet)
         {
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
-            foreach (SNIMarsHandle handle in _sessions.Values)
+            foreach (SniMarsHandle handle in _sessions.Values)
             {
                 if (packet.HasAsyncIOCompletionCallback)
                 {
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 SNISMUXHeader currentHeader = null;
                 SNIPacket currentPacket = null;
-                SNIMarsHandle currentSession = null;
+                SniMarsHandle currentSession = null;
 
                 if (sniErrorCode != TdsEnums.SNI_SUCCESS)
                 {
