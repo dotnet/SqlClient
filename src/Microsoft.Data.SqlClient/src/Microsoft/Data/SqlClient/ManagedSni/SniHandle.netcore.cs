@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Net.Security;
@@ -120,11 +122,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
         public virtual int ProtocolVersion { get; } = 0;
-#if DEBUG
+
+        #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection
         /// </summary>
         public abstract void KillConnection();
-#endif
+        #endif
     }
 }
+
+#endif

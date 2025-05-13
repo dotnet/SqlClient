@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -560,7 +562,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public override void ReturnPacket(SniPacket packet) => _connection.ReturnPacket(packet);
 
 
-#if DEBUG
+        #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection
         /// </summary>
@@ -568,6 +570,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             _connection.KillConnection();
         }
-#endif
+        #endif
     }
 }
+
+#endif

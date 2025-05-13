@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Buffers;
 using System.Threading;
@@ -11,17 +13,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal sealed partial class SslOverTdsStream
     {
-        public override int Read(byte[] buffer, int offset, int count)
-            => Read(buffer.AsSpan(offset, count));
+        public override int Read(byte[] buffer, int offset, int count) =>
+            Read(buffer.AsSpan(offset, count));
 
-        public override void Write(byte[] buffer, int offset, int count)
-            => Write(buffer.AsSpan(offset, count));
+        public override void Write(byte[] buffer, int offset, int count) =>
+            Write(buffer.AsSpan(offset, count));
 
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            => ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
 
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            => WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
 
         public override int Read(Span<byte> buffer)
         {
@@ -293,3 +295,5 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
     }
 }
+
+#endif

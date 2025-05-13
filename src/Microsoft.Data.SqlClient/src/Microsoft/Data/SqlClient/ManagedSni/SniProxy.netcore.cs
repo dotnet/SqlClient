@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -702,7 +704,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return false;
         }
 
-        private static bool IsLocalHost(string serverName)
-            => ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
+        private static bool IsLocalHost(string serverName) =>
+            ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
     }
 }
+
+#endif

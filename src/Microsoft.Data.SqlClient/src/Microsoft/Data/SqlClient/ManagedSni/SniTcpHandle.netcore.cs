@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -1020,7 +1022,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return ReportTcpSNIError(nativeError, sniError, errorMessage);
         }
 
-#if DEBUG
+        #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection
         /// </summary>
@@ -1028,7 +1030,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             _socket.Shutdown(SocketShutdown.Both);
         }
-#endif
+        #endif
 
         internal static void SetKeepAliveValues(ref Socket socket)
         {
@@ -1038,3 +1040,5 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
     }
 }
+
+#endif

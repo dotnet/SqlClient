@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Net.Sockets;
 using System.Threading;
@@ -12,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// This class extends NetworkStream to customize stream behavior for Managed SNI implementation.
     /// </summary>
-    internal sealed partial class SniNetworkStream : NetworkStream
+    internal sealed class SniNetworkStream : NetworkStream
     {
         private readonly ConcurrentQueueSemaphore _writeAsyncSemaphore;
         private readonly ConcurrentQueueSemaphore _readAsyncSemaphore;
@@ -71,3 +73,5 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
     }
 }
+
+#endif
