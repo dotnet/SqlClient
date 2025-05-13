@@ -47,8 +47,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.Fail("Expected to use custom SSPI context provider");
             }
-            catch (SspiTestException)
+            catch (SspiTestException sspi)
             {
+                var builder = new SqlConnectionStringBuilder(connectionStr);
+
+                Assert.Equal(sspi.AuthParams.ServerName, builder.DataSource);
+                Assert.Equal(sspi.AuthParams.DatabaseName, builder.InitialCatalog);
+                Assert.Equal(sspi.AuthParams.UserId, builder.UserID);
+                Assert.Equal(sspi.AuthParams.Password, builder.Password);
             }
         }
 
@@ -56,12 +62,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             protected override bool GenerateContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
             {
-                throw new SspiTestException();
+                throw new SspiTestException(authParams);
             }
         }
 
         private sealed class SspiTestException : Exception
         {
+            public SspiTestException(SspiAuthenticationParameters authParams)
+            {
+                AuthParams = authParams;
+            }
+
+            public SspiAuthenticationParameters AuthParams { get; }
         }
     }
 
