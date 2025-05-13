@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal static uint ReportSNIError(SNIProviders provider, uint nativeError, uint sniError, string errorMessage)
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Provider = {0}, native Error = {1}, SNI Error = {2}, Error Message = {3}", args0: provider, args1: nativeError, args2: sniError, args3: errorMessage);
-            return ReportSNIError(new SNIError(provider, nativeError, sniError, errorMessage));
+            return ReportSNIError(new SniError(provider, nativeError, sniError, errorMessage));
         }
 
         /// <summary>
@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException, uint nativeErrorCode = 0)
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNICommon), EventType.ERR, "Provider = {0}, SNI Error = {1}, Exception = {2}", args0: provider, args1: sniError, args2: sniException?.Message);
-            return ReportSNIError(new SNIError(provider, sniError, sniException, nativeErrorCode));
+            return ReportSNIError(new SniError(provider, sniError, sniException, nativeErrorCode));
         }
 
         /// <summary>
@@ -307,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="error">SNI error</param>
         /// <returns></returns>
-        internal static uint ReportSNIError(SNIError error)
+        internal static uint ReportSNIError(SniError error)
         {
             SNILoadHandle.SingletonInstance.LastError = error;
             return TdsEnums.SNI_ERROR;

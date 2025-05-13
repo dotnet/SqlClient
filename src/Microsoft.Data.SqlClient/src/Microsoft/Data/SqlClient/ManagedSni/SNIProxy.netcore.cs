@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (Exception e)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
+                    SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
                 }
             }
 
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+                SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (SocketException se)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
+                    SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Get last SNI error on this thread
         /// </summary>
         /// <returns></returns>
-        internal SNIError GetLastError()
+        internal SniError GetLastError()
         {
             return SNILoadHandle.SingletonInstance.LastError;
         }
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (index > 0)
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
                 error = true;
             }
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
             }
@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private void ReportSNIError(SNIProviders provider)
         {
-            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+            SNILoadHandle.SingletonInstance.LastError = new SniError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 

@@ -275,8 +275,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIError.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SNIError.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNICommon.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SNICommon.netcore.cs</Link>

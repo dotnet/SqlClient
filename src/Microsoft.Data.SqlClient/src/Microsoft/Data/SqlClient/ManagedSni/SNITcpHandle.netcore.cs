@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 catch (AuthenticationException aue)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                    return ReportTcpSNIError(aue, SNIError.CertificateValidationErrorCode);
+                    return ReportTcpSNIError(aue, SniError.CertificateValidationErrorCode);
                 }
                 catch (InvalidOperationException ioe)
                 {

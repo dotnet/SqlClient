@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                         if (!_sessions.ContainsKey(_currentHeader.sessionId))
                         {
-                            SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
+                            SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _currentHeader?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
                             _lowerHandle.Dispose();

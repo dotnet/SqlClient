@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private uint _receiveHighwater = 4;
         private uint _receiveHighwaterLastAck = 4;
         private uint _sequenceNumber;
-        private SNIError _connectionError;
+        private SniError _connectionError;
 
         /// <summary>
         /// Connection ID
@@ -517,7 +517,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, Waiting for packet event.", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
                     if (!_packetEvent.Wait(timeoutInMilliseconds))
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
+                        SNILoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, _packetEvent wait timed out.", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
