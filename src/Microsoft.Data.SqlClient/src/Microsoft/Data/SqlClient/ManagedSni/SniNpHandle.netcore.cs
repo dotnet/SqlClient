@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// Named Pipe connection handle
     /// </summary>
-    internal sealed class SniNpHandle : SNIPhysicalHandle
+    internal sealed class SniNpHandle : SniPhysicalHandle
     {
         internal const string DefaultPipePath = @"sql\query"; // e.g. \\HOSTNAME\pipe\sql\query
         // private const int MAX_PIPE_INSTANCES = 255; // TODO: Investigate pipe instance limit.

@@ -10,7 +10,7 @@ using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    internal abstract class SNIPhysicalHandle : SniHandle
+    internal abstract class SniPhysicalHandle : SniHandle
     {
         protected const int DefaultPoolSize = 4;
 
@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
         private ObjectPool<SniPacket> _pool;
 
-        protected SNIPhysicalHandle(int poolSize = DefaultPoolSize)
+        protected SniPhysicalHandle(int poolSize = DefaultPoolSize)
         {
             _pool = new ObjectPool<SniPacket>(poolSize);
         }

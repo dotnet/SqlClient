@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// TCP connection handle
     /// </summary>
-    internal sealed class SNITCPHandle : SNIPhysicalHandle
+    internal sealed class SNITCPHandle : SniPhysicalHandle
     {
         private readonly string _targetServer;
         private readonly object _sendSync;
