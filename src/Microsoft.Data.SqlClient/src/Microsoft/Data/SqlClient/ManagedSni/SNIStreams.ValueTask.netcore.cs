@@ -8,7 +8,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    internal sealed partial class SNISslStream
+    internal sealed partial class SniSslStream
     {
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniSslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
                 throw;
             }
             finally
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniSslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
                 throw;
             }
             finally
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniSslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
                 throw;
             }
             finally
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniSslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
                 throw;
             }
             finally

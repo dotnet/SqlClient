@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     _sslOverTdsStream = new SslOverTdsStream(_pipeStream, _connectionId);
                     stream = _sslOverTdsStream;
                 }
-                _sslStream = new SNISslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                _sslStream = new SniSslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
