@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (Exception e)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
                 }
             }
 
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (SocketException se)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (parallel)
             {
                 // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
+                SNICommon.ReportSNIError(SniProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
             return new SniNpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
@@ -382,11 +382,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (_dataSourceAfterTrimmingProtocol.Contains(Slash)) // Pipe paths only allow back slashes
             {
                 if (ResolvedProtocol == Protocol.None)
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                 else if (ResolvedProtocol == Protocol.NP)
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                 else if (ResolvedProtocol == Protocol.TCP)
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
             }
         }
 
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (index > 0)
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
                 error = true;
             }
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 else
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
             }
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // Bad Data Source like "server, "
                 if (string.IsNullOrEmpty(parameter))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
@@ -537,21 +537,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 else if (ResolvedProtocol != Protocol.TCP)
                 {
                     // Parameter has been specified for non-TCP protocol. This is not allowed.
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
                 int port;
                 if (!int.TryParse(parameter, out port))
                 {
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
                     return false;
                 }
 
                 // If the user explicitly specified a invalid port in the connection string.
                 if (port < 1)
                 {
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
                     return false;
                 }
 
@@ -565,13 +565,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (string.IsNullOrWhiteSpace(InstanceName))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
                 if (DefaultSqlServerInstanceName.Equals(InstanceName))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
@@ -583,7 +583,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return true;
         }
 
-        private void ReportSNIError(SNIProviders provider)
+        private void ReportSNIError(SniProviders provider)
         {
             SniLoadHandle.SingletonInstance.LastError = new SniError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         }
                         else
                         {
-                            ReportSNIError(SNIProviders.NP_PROV);
+                            ReportSNIError(SniProviders.NP_PROV);
                             return false;
                         }
                     }
@@ -635,7 +635,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     // Another valid Sql named pipe for an named instance is \\.\pipe\MSSQL$MYINSTANCE\sql\query
                     if (tokensByBackSlash.Length < 6)
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
@@ -643,14 +643,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                     if (string.IsNullOrEmpty(host))
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
                     //Check if the "pipe" keyword is the first part of path
                     if (!PipeToken.Equals(tokensByBackSlash[3]))
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
@@ -682,7 +682,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (UriFormatException)
                 {
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                     return false;
                 }
 
@@ -694,7 +694,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 else if (ResolvedProtocol != Protocol.NP)
                 {
                     // In case the path began with a "\\" and protocol was not Named Pipes
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                     return false;
                 }
                 return true;

@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "MARS Session Id {0}, Connection not usable.", args0: ConnectionId);
-                return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
+                return SNICommon.ReportSNIError(SniProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
             }
         }
 
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                         if (!_sessions.ContainsKey(_currentHeader.sessionId))
                         {
-                            SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
+                            SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _currentHeader?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
                             _lowerHandle.Dispose();
@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         catch (Exception e)
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
-                            SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                            SNICommon.ReportSNIError(SniProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                         }
 #if DEBUG
                         Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");

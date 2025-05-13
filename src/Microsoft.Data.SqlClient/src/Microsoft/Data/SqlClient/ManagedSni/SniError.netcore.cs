@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         // Error numbers from native SNI implementation
         internal const uint CertificateValidationErrorCode = 2148074277;
 
-        public readonly SNIProviders provider;
+        public readonly SniProviders provider;
         public readonly string errorMessage;
         public readonly uint nativeError;
         public readonly uint sniError;
@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public readonly uint lineNumber;
         public readonly Exception exception;
 
-        public SniError(SNIProviders provider, uint nativeError, uint sniErrorCode, string errorMessage)
+        public SniError(SniProviders provider, uint nativeError, uint sniErrorCode, string errorMessage)
         {
             lineNumber = 0;
             function = string.Empty;
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             exception = null;
         }
 
-        public SniError(SNIProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
+        public SniError(SniProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
         {
             lineNumber = 0;
             function = string.Empty;

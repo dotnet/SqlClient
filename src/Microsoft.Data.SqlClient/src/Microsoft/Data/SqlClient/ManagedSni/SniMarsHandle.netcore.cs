@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 catch (Exception e)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.ERR, "MARS Session Id {0}, Internal exception error = {1}, Member Name={2}", args0: ConnectionId, args1: e?.Message, args2: e?.GetType()?.Name);
-                    SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                    SNICommon.ReportSNIError(SniProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                 }
             }
         }
@@ -517,7 +517,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, Waiting for packet event.", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
                     if (!_packetEvent.Wait(timeoutInMilliseconds))
                     {
-                        SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
+                        SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, _packetEvent wait timed out.", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }

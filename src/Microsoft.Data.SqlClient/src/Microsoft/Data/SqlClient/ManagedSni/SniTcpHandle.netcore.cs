@@ -922,7 +922,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniTcpHandle)))
             {
-                packet.WriteToStreamAsync(_stream, _sendCallback, SNIProviders.TCP_PROV);
+                packet.WriteToStreamAsync(_stream, _sendCallback, SniProviders.TCP_PROV);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data sent to stream asynchronously", args0: _connectionId);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
@@ -993,13 +993,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private uint ReportTcpSNIError(Exception sniException, uint nativeErrorCode = 0)
         {
             _status = TdsEnums.SNI_ERROR;
-            return SNICommon.ReportSNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, sniException, nativeErrorCode);
+            return SNICommon.ReportSNIError(SniProviders.TCP_PROV, SNICommon.InternalExceptionError, sniException, nativeErrorCode);
         }
 
         private uint ReportTcpSNIError(uint nativeError, uint sniError, string errorMessage)
         {
             _status = TdsEnums.SNI_ERROR;
-            return SNICommon.ReportSNIError(SNIProviders.TCP_PROV, nativeError, sniError, errorMessage);
+            return SNICommon.ReportSNIError(SniProviders.TCP_PROV, nativeError, sniError, errorMessage);
         }
 
         private uint ReportErrorAndReleasePacket(SniPacket packet, Exception sniException)

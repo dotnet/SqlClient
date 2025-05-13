@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             catch (Exception e)
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1}", sessionHandle.ConnectionId, e.Message);
-                return SNICommon.ReportSNIError(SNIProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
+                return SNICommon.ReportSNIError(SniProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
             }
         }
 

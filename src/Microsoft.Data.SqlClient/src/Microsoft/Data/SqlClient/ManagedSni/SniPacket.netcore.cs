@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             Exception e = task.Exception?.InnerException;
             if (e != null)
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
 #endif
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
                 if (packet._dataLength == 0)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
 #if DEBUG
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
 #endif
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="stream">Stream to write to</param>
         /// <param name="callback">SNI Asynchronous Callback</param>
         /// <param name="provider">SNI provider identifier</param>
-        public async void WriteToStreamAsync(Stream stream, SniAsyncCallback callback, SNIProviders provider)
+        public async void WriteToStreamAsync(Stream stream, SniAsyncCallback callback, SniProviders provider)
         {
             uint status = TdsEnums.SNI_SUCCESS;
             try

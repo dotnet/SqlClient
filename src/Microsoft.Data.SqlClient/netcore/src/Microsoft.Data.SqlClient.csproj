@@ -305,6 +305,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs</Link>
     </Compile>
