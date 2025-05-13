@@ -296,6 +296,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs</Link>
     </Compile>
@@ -319,9 +322,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIStreams.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SNIStream.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIStreams.ValueTask.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SNIStreams.ValueTask.netcore.cs</Link>

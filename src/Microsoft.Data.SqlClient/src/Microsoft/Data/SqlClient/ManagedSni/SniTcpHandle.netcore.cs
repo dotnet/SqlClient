@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
 
                     _socket.NoDelay = true;
-                    _tcpStream = new SNINetworkStream(_socket, true);
+                    _tcpStream = new SniNetworkStream(_socket, true);
 
                     Stream stream = _tcpStream;
                     if (!_tlsFirst)
