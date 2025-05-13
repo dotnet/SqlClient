@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 try
                 {
-                    SendControlPacket(SNISMUXFlags.SMUX_FIN);
+                    SendControlPacket(SniSmuxFlags.SMUX_FIN);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, Sent SMUX_FIN packet to terminate session.", args0: ConnectionId);
                 }
                 catch (Exception e)
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _connectionId = connection.ConnectionId;
             _callbackObject = callbackObject;
             _handleSendCompleteCallback = HandleSendComplete;
-            SendControlPacket(SNISMUXFlags.SMUX_SYN);
+            SendControlPacket(SniSmuxFlags.SMUX_SYN);
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, Sent SMUX_SYN packet to start a new session, session Id {1}", args0: ConnectionId, args1: _sessionId);
             _status = TdsEnums.SNI_SUCCESS;
         }
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Send control packet
         /// </summary>
         /// <param name="flags">SMUX header flags</param>
-        private void SendControlPacket(SNISMUXFlags flags)
+        private void SendControlPacket(SniSmuxFlags flags)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        private void SetupSMUXHeader(int length, SNISMUXFlags flags)
+        private void SetupSMUXHeader(int length, SniSmuxFlags flags)
         {
             Debug.Assert(Monitor.IsEntered(this), "must take lock on self before updating smux header");
 
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _currentHeader.flags = (byte)flags;
             _currentHeader.sessionId = _sessionId;
             _currentHeader.length = (uint)SNISMUXHeader.HEADER_LENGTH + (uint)length;
-            _currentHeader.sequenceNumber = ((flags == SNISMUXFlags.SMUX_FIN) || (flags == SNISMUXFlags.SMUX_ACK)) ? _sequenceNumber - 1 : _sequenceNumber++;
+            _currentHeader.sequenceNumber = ((flags == SniSmuxFlags.SMUX_FIN) || (flags == SniSmuxFlags.SMUX_ACK)) ? _sequenceNumber - 1 : _sequenceNumber++;
             _currentHeader.highwater = _receiveHighwater;
             _receiveHighwaterLastAck = _currentHeader.highwater;
         }
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to smux packet without smux reservation");
 
-            SetupSMUXHeader(packet.Length, SNISMUXFlags.SMUX_DATA);
+            SetupSMUXHeader(packet.Length, SniSmuxFlags.SMUX_DATA);
             _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
             packet.SetHeaderActive();
 #if DEBUG
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
             if (receiveHighwater - receiveHighwaterLastAck > ACK_THRESHOLD)
             {
-                SendControlPacket(SNISMUXFlags.SMUX_ACK);
+                SendControlPacket(SniSmuxFlags.SMUX_ACK);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4} Sending acknowledgment ACK_THRESHOLD {5}", args0: ConnectionId, args1: _asyncReceives, args2: _receiveHighwater, args3: _sendHighwater, args4: _receiveHighwaterLastAck, args5: ACK_THRESHOLD);
             }
         }

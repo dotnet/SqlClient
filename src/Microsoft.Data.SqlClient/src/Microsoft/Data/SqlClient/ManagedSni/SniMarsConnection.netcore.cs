@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         currentHeader = _currentHeader;
                         currentPacket = _currentPacket;
 
-                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                        if (_currentHeader.flags == (byte)SniSmuxFlags.SMUX_DATA)
                         {
                             if (_dataBytesLeft > 0)
                             {
@@ -296,7 +296,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             return;
                         }
 
-                        if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_FIN)
+                        if (_currentHeader.flags == (byte)SniSmuxFlags.SMUX_FIN)
                         {
                             _sessions.Remove(_currentHeader.sessionId);
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "SMUX_FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
@@ -308,13 +308,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         }
                     }
 
-                    if (currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
+                    if (currentHeader.flags == (byte)SniSmuxFlags.SMUX_DATA)
                     {
                         currentSession.HandleReceiveComplete(currentPacket, currentHeader);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
                     }
 
-                    if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
+                    if (_currentHeader.flags == (byte)SniSmuxFlags.SMUX_ACK)
                     {
                         try
                         {

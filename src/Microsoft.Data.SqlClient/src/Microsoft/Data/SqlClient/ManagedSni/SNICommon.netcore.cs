@@ -13,18 +13,6 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    /// <summary>
-    /// SMUX packet flags
-    /// </summary>
-    [Flags]
-    internal enum SNISMUXFlags
-    {
-        SMUX_SYN = 1,       // Begin SMUX connection
-        SMUX_ACK = 2,       // Acknowledge SMUX packets
-        SMUX_FIN = 4,       // End SMUX connection
-        SMUX_DATA = 8       // SMUX data packet
-    }
-
     internal class SNICommon
     {
         // Each error number maps to SNI_ERROR_* in String.resx
