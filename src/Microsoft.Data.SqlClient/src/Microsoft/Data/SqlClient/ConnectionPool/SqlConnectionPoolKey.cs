@@ -40,8 +40,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlCredential credential,
             string accessToken,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback,
-            SspiContextProvider sspiContextProvider
-            ) : base(connectionString)
+            SspiContextProvider sspiContextProvider) : base(connectionString)
         {
             Debug.Assert(credential == null || accessToken == null || accessTokenCallback == null, "Credential, AccessToken, and Callback can't have a value at the same time.");
             _credential = credential;
