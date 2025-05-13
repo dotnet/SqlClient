@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (Exception e)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, SniCommon.ErrorSpnLookup, e);
                 }
             }
 
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 catch (SocketException se)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             if (parallel)
             {
                 // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
-                SNICommon.ReportSNIError(SniProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
+                SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
             return new SniNpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             else if (index > 0)
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SniCommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
                 error = true;
             }
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 else
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SniCommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
             }
@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private void ReportSNIError(SniProviders provider)
         {
-            SniLoadHandle.SingletonInstance.LastError = new SniError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+            SniLoadHandle.SingletonInstance.LastError = new SniError(provider, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 

@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         if (reportError)
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0} could not be opened, exception occurred: {1}", args0: _connectionId, args1: Strings.SNI_ERROR_40);
-                            ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
+                            ReportTcpSNIError(0, SniCommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                         }
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0} Socket could not be opened.", args0: _connectionId);
                         return;
@@ -303,15 +303,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 bool isInfiniteTimeOut = timeout.IsInfinite;
 
                 IPAddress[] serverAddresses = isInfiniteTimeOut
-                        ? SNICommon.GetDnsIpAddresses(hostName)
-                        : SNICommon.GetDnsIpAddresses(hostName, timeout);
+                        ? SniCommon.GetDnsIpAddresses(hostName)
+                        : SniCommon.GetDnsIpAddresses(hostName, timeout);
 
                 if (serverAddresses.Length > MaxParallelIpAddresses)
                 {
                     // Fail if above 64 to match legacy behavior
                     callerReportError = false;
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0} serverAddresses.Length {1} Exception: {2}", args0: _connectionId, args1: serverAddresses.Length, args2: Strings.SNI_ERROR_47);
-                    ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
+                    ReportTcpSNIError(0, SniCommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
                     return availableSocket;
                 }
 
@@ -735,7 +735,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
 
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
+            return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
         }
 
         /// <summary>
@@ -829,7 +829,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 if (_socket == null)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Socket is null.", args0: _connectionId);
-                    return ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_10);
+                    return ReportTcpSNIError(0, SniCommon.ConnOpenFailedError, Strings.SNI_ERROR_10);
                 }
 
                 try
@@ -846,7 +846,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     {
                         // otherwise it is timeout for 0 or less than -1
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, Error 258, Timeout error occurred.", args0: _connectionId);
-                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
+                        ReportTcpSNIError(0, SniCommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
@@ -993,13 +993,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private uint ReportTcpSNIError(Exception sniException, uint nativeErrorCode = 0)
         {
             _status = TdsEnums.SNI_ERROR;
-            return SNICommon.ReportSNIError(SniProviders.TCP_PROV, SNICommon.InternalExceptionError, sniException, nativeErrorCode);
+            return SniCommon.ReportSNIError(SniProviders.TCP_PROV, SniCommon.InternalExceptionError, sniException, nativeErrorCode);
         }
 
         private uint ReportTcpSNIError(uint nativeError, uint sniError, string errorMessage)
         {
             _status = TdsEnums.SNI_ERROR;
-            return SNICommon.ReportSNIError(SniProviders.TCP_PROV, nativeError, sniError, errorMessage);
+            return SniCommon.ReportSNIError(SniProviders.TCP_PROV, nativeError, sniError, errorMessage);
         }
 
         private uint ReportErrorAndReleasePacket(SniPacket packet, Exception sniException)

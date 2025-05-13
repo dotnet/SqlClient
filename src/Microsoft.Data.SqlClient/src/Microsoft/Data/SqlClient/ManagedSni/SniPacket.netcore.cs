@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             Exception e = task.Exception?.InnerException;
             if (e != null)
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.InternalExceptionError, e);
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
 #endif
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
                 if (packet._dataLength == 0)
                 {
-                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SniCommon.ConnTerminatedError, Strings.SNI_ERROR_2);
 #if DEBUG
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
 #endif
@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
             catch (Exception e)
             {
-                SniLoadHandle.SingletonInstance.LastError = new SniError(provider, SNICommon.InternalExceptionError, e);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(provider, SniCommon.InternalExceptionError, e);
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while writing data: {1}", args0: _owner?.ConnectionId, args1: e?.Message);
 #endif

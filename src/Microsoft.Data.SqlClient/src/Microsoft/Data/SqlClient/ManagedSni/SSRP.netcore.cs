@@ -188,8 +188,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
 
                 IPAddress[] ipAddresses = timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(browserHostname)
-                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout);
+                    ? SniCommon.GetDnsIpAddresses(browserHostname)
+                    : SniCommon.GetDnsIpAddresses(browserHostname, timeout);
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
                 IPAddress[] ipv4Addresses = null;
