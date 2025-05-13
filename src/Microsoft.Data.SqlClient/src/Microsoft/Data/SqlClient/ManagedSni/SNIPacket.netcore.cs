@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// refcount = 1 means that a packet is active
         /// refcount > 1 means that a packet has been reused in some way and is a serious error
         internal int _refCount;
-        internal readonly SNIHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
+        internal readonly SniHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
         internal string _traceTag; // used in debug builds to assist tracing what steps the packet has been through
 
 #if TRACE_HISTORY
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public bool IsActive => _refCount == 1;
 
-        public SNIPacket(SNIHandle owner, int id)
+        public SNIPacket(SniHandle owner, int id)
             : this()
         {
 #if TRACE_HISTORY

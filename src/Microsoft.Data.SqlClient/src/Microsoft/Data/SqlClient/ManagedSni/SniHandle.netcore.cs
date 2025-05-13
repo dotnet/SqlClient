@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// SNI connection handle
     /// </summary>
-    internal abstract class SNIHandle
+    internal abstract class SniHandle
     {
         protected static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 

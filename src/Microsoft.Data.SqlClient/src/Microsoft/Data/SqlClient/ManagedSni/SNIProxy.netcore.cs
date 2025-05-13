@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="hostNameInCertificate">Used for the HostName in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(
+        internal static SniHandle CreateConnectionHandle(
             string fullServerName,
             TimeoutTimer timeout,
             out byte[] instanceName,
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 return null;
             }
 
-            SNIHandle sniHandle = null;
+            SniHandle sniHandle = null;
             switch (details.ResolvedProtocol)
             {
                 case DataSource.Protocol.Admin:

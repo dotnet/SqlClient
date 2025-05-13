@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private readonly byte[] _headerBytes;
         private readonly SNISMUXHeader _currentHeader;
         private readonly object _sync;
-        private SNIHandle _lowerHandle;
+        private SniHandle _lowerHandle;
         private ushort _nextSessionId;
         private int _currentHeaderByteCount;
         private int _dataBytesLeft;
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Constructor
         /// </summary>
         /// <param name="lowerHandle">Lower handle</param>
-        public SNIMarsConnection(SNIHandle lowerHandle)
+        public SNIMarsConnection(SniHandle lowerHandle)
         {
             _sync = new object();
             _connectionId = Guid.NewGuid();

@@ -19,10 +19,10 @@ namespace Microsoft.Data.SqlClient
         public const int NativeHandleType = 1;
         public const int ManagedHandleType = 2;
 
-        public readonly ManagedSni.SNIHandle ManagedHandle;
+        public readonly ManagedSni.SniHandle ManagedHandle;
         public readonly int Type;
 
-        public SessionHandle(ManagedSni.SNIHandle managedHandle, int type)
+        public SessionHandle(ManagedSni.SniHandle managedHandle, int type)
         {
             Type = type;
             ManagedHandle = managedHandle;
@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNull => ManagedHandle is null;
 
-        public static SessionHandle FromManagedSession(ManagedSni.SNIHandle managedSessionHandle) =>
+        public static SessionHandle FromManagedSession(ManagedSni.SniHandle managedSessionHandle) =>
             new SessionHandle(managedSessionHandle, ManagedHandleType);
     }
 }

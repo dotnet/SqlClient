@@ -10,7 +10,7 @@ using Microsoft.Data.SqlClient.Utilities;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    internal abstract class SNIPhysicalHandle : SNIHandle
+    internal abstract class SNIPhysicalHandle : SniHandle
     {
         protected const int DefaultPoolSize = 4;
 

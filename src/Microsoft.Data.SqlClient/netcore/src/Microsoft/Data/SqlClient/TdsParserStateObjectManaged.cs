@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
         private SNIMarsConnection? _marsConnection;
-        private SNIHandle? _sessionHandle;
+        private SniHandle? _sessionHandle;
 
         public TdsParserStateObjectManaged(TdsParser parser) : base(parser) { }
 
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
+            SniHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 
@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal void ReadAsyncCallback(SNIPacket packet, uint error)
         {
-            SNIHandle? sessionHandle = _sessionHandle;
+            SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
             {
                 ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
         {
-            SNIHandle? sessionHandle = _sessionHandle;
+            SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
             {
                 WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override void Dispose()
         {
-            SNIHandle? sessionHandle = Interlocked.Exchange(ref _sessionHandle, null);
+            SniHandle? sessionHandle = Interlocked.Exchange(ref _sessionHandle, null);
             if (sessionHandle is not null)
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, Session Id {1}, Disposing session Handle and counters.", _objectID, sessionHandle.ConnectionId);
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override bool IsFailedHandle()
         {
-            SNIHandle? sessionHandle = _sessionHandle;
+            SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
             {
                 return sessionHandle.Status != TdsEnums.SNI_SUCCESS;
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
         {
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
 
             error = sessionHandle.Receive(out SNIPacket packet, timeoutRemaining);
 
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
             if (packet is not null)
             {
-                SNIHandle? sessionHandle = _sessionHandle;
+                SniHandle? sessionHandle = _sessionHandle;
                 if (sessionHandle is not null)
                 {
                     sessionHandle.ReturnPacket(packet);
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override uint CheckConnection()
         {
-            SNIHandle? handle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle? handle = GetSessionSNIHandleHandleOrThrow();
             return handle is null ? TdsEnums.SNI_SUCCESS : handle.CheckConnection();
         }
 
@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override uint WritePacket(PacketHandle packetHandle, bool sync)
         {
             uint result = TdsEnums.SNI_UNINITIALIZED;
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             SNIPacket? packet = packetHandle.ManagedPacket;
 
             if (sync)
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override PacketHandle GetResetWritePacket(int dataSize)
         {
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             SNIPacket packet = sessionHandle.RentPacket(headerSize: sessionHandle.ReserveHeaderSize, dataSize: dataSize);
 #if DEBUG
             Debug.Assert(packet.IsActive, "packet is not active, a serious pooling error may have occurred");
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override uint DisableSsl()
         {
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.DisableSsl | Info | Session Id {0}", sessionHandle.ConnectionId);
             sessionHandle.DisableSsl();
             return TdsEnums.SNI_SUCCESS;
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override uint EnableMars(ref uint info)
         {
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             _marsConnection = new SNIMarsConnection(sessionHandle);
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableMars | Info | State Object Id {0}, Session Id {1}", _objectID, sessionHandle.ConnectionId);
 
@@ -367,7 +367,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename)
         {
-            SNIHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
+            SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
             try
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", sessionHandle.ConnectionId);
@@ -392,9 +392,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return 0;
         }
 
-        private SNIHandle GetSessionSNIHandleHandleOrThrow()
+        private SniHandle GetSessionSNIHandleHandleOrThrow()
         {
-            SNIHandle? sessionHandle = _sessionHandle;
+            SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is null)
             {
                 ThrowClosedConnection();

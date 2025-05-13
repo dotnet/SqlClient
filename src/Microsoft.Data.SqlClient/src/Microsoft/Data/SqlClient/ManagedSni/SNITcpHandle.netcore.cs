@@ -666,7 +666,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public override uint EnableSsl(uint options)
         {
-            using (TrySNIEventScope.Create(nameof(SNIHandle)))
+            using (TrySNIEventScope.Create(nameof(SniHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
 

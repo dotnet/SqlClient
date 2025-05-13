@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// MARS handle
     /// </summary>
-    internal sealed class SNIMarsHandle : SNIHandle
+    internal sealed class SNIMarsHandle : SniHandle
     {
         private const uint ACK_THRESHOLD = 2;
 
