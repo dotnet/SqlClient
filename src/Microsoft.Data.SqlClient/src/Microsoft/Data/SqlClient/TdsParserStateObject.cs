@@ -470,7 +470,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint DisableSsl();
 
-        internal abstract SSPIContextProvider CreateSSPIContextProvider();
+        internal abstract SspiContextProvider CreateSspiContextProvider();
 
         internal abstract uint EnableMars(ref uint info);
 
