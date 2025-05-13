@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
-        private SNIMarsConnection? _marsConnection;
+        private SniMarsConnection? _marsConnection;
         private SniHandle? _sessionHandle;
 
         public TdsParserStateObjectManaged(TdsParser parser) : base(parser) { }
@@ -354,7 +354,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override uint EnableMars(ref uint info)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
-            _marsConnection = new SNIMarsConnection(sessionHandle);
+            _marsConnection = new SniMarsConnection(sessionHandle);
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableMars | Info | State Object Id {0}, Session Id {1}", _objectID, sessionHandle.ConnectionId);
 
             if (_marsConnection.StartReceive() == TdsEnums.SNI_SUCCESS_IO_PENDING)

@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     {
         private const uint ACK_THRESHOLD = 2;
 
-        private readonly SNIMarsConnection _connection;
+        private readonly SniMarsConnection _connection;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private readonly Queue<SNIPacket> _receivedPacketQueue = new Queue<SNIPacket>();
         private readonly Queue<SNIPacket> _sendPacketQueue = new Queue<SNIPacket>();
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="sessionId">MARS session ID</param>
         /// <param name="callbackObject">Callback object</param>
         /// <param name="async">true if connection is asynchronous</param>
-        public SNIMarsHandle(SNIMarsConnection connection, ushort sessionId, object callbackObject, bool async)
+        public SNIMarsHandle(SniMarsConnection connection, ushort sessionId, object callbackObject, bool async)
         {
             _sessionId = sessionId;
             _connection = connection;
