@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 }
                                 else
                                 {
-                                    newPool = new BetterSyncPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo, new PassthroughRateLimiter());
+                                    newPool = new ChannelDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo, new PassthroughRateLimiter());
                                 }
 
                                 if (MarkPoolGroupAsActive())

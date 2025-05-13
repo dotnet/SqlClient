@@ -24,7 +24,7 @@ using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
-    internal sealed class BetterSyncPool : DbConnectionPool
+    internal sealed class ChannelDbConnectionPool : DbConnectionPool
     {
         #region Interface
         internal override int Count => _numConnectors;
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Initializes a new PoolingDataSource.
         /// </summary>
         //TODO: support auth contexts and provider info
-        internal BetterSyncPool(
+        internal ChannelDbConnectionPool(
             DbConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
             DbConnectionPoolIdentity identity,
@@ -790,7 +790,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal readonly struct OpenInternalConnectionState
         {
             internal OpenInternalConnectionState(
-                BetterSyncPool pool,
+                ChannelDbConnectionPool pool,
                 DbConnection? owningConnection,
                 DbConnectionOptions userOptions,
                 TimeSpan timeout)
@@ -801,7 +801,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Timeout = timeout;
             }
 
-            internal readonly BetterSyncPool Pool;
+            internal readonly ChannelDbConnectionPool Pool;
             internal readonly DbConnection? OwningConnection;
             internal readonly DbConnectionOptions UserOptions;
             internal readonly TimeSpan Timeout;
