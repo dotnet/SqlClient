@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SniHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
+            SniHandle? sessionHandle = SniProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 

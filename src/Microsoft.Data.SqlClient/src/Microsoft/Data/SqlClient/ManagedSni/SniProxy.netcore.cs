@@ -15,15 +15,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// Managed SNI proxy implementation. Contains many SNI entry points used by SqlClient.
     /// </summary>
-    internal class SNIProxy
+    internal class SniProxy
     {
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
 
-        private static readonly SNIProxy s_singleton = new SNIProxy();
+        private static readonly SniProxy s_singleton = new SniProxy();
 
-        internal static SNIProxy Instance => s_singleton;
+        internal static SniProxy Instance => s_singleton;
 
         /// <summary>
         /// Create a SNI connection handle
@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             else if (index > 0)
             {
                 SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
                 error = true;
             }
             else if (index == 0)
