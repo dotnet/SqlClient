@@ -311,8 +311,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIStreams.ValueTask.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SNIStreams.ValueTask.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNITcpHandle.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SNITcpHandle.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs</Link>

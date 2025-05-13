@@ -187,7 +187,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="hostNameInCertificate">Host name in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNITCPHandle</returns>
-        private static SNITCPHandle CreateTcpHandle(
+        private static SniTcpHandle CreateTcpHandle(
             DataSource details,
             TimeoutTimer timeout,
             bool parallel,
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+            return new SniTcpHandle(hostName, port, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                 tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 

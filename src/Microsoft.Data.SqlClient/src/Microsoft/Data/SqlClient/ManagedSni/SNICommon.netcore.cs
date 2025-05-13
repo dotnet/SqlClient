@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     catch (Exception e)
                     {
                         // if this fails, then fall back to the HostNameInCertificate or TargetServer validation.
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Exception occurred loading specified ServerCertificate: {1}, treating it as if ServerCertificate has not been specified.", args0: connectionId, args1: e.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Exception occurred loading specified ServerCertificate: {1}, treating it as if ServerCertificate has not been specified.", args0: connectionId, args1: e.Message);
                     }
                 }
 
