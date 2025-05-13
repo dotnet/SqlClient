@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="hostNameInCertificate">Host name in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, TimeoutTimer timeout, bool parallel, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
+        private static SniNpHandle CreateNpHandle(DataSource details, TimeoutTimer timeout, bool parallel, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
         {
             if (parallel)
             {
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
+            return new SniNpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
         /// <summary>
@@ -619,7 +619,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     else
                     {
                         PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
-                        PipeName = SNINpHandle.DefaultPipePath;
+                        PipeName = SniNpHandle.DefaultPipePath;
                     }
 
                     InferLocalServerName();
