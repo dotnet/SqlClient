@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         protected override bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source)
         {
-            SNIPacket p = packet.ManagedPacket;
+            SniPacket p = packet.ManagedPacket;
             return p.IsInvalid || source != null;
         }
 
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             // No-op
         }
 
-        internal void ReadAsyncCallback(SNIPacket packet, uint error)
+        internal void ReadAsyncCallback(SniPacket packet, uint error)
         {
             SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
+        internal void WriteAsyncCallback(SniPacket packet, uint sniError)
         {
             SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
 
-            error = sessionHandle.Receive(out SNIPacket packet, timeoutRemaining);
+            error = sessionHandle.Receive(out SniPacket packet, timeoutRemaining);
 
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | Info | State Object Id {0}, Session Id {1}", _objectID, sessionHandle.ConnectionId);
 #if DEBUG
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override void ReleasePacket(PacketHandle syncReadPacket)
         {
-            SNIPacket packet = syncReadPacket.ManagedPacket;
+            SniPacket packet = syncReadPacket.ManagedPacket;
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReleasePacket | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReleasePacket | TRC | State Object Id {0}, Session Id {1}, Packet {2} will be released, Packet Owner Id {3}, Packet dataLeft {4}", _objectID, _sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
-            SNIPacket? packet = null;
+            SniPacket? packet = null;
             error = handle.ManagedHandle.ReceiveAsync(ref packet);
 
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsync | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
@@ -286,7 +286,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             uint result = TdsEnums.SNI_UNINITIALIZED;
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
-            SNIPacket? packet = packetHandle.ManagedPacket;
+            SniPacket? packet = packetHandle.ManagedPacket;
 
             if (sync)
             {
@@ -318,7 +318,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override PacketHandle GetResetWritePacket(int dataSize)
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
-            SNIPacket packet = sessionHandle.RentPacket(headerSize: sessionHandle.ReserveHeaderSize, dataSize: dataSize);
+            SniPacket packet = sessionHandle.RentPacket(headerSize: sessionHandle.ReserveHeaderSize, dataSize: dataSize);
 #if DEBUG
             Debug.Assert(packet.IsActive, "packet is not active, a serious pooling error may have occurred");
 #endif

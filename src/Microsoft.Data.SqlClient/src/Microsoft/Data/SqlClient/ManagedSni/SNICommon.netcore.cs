@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// </summary>
     /// <param name="packet">SNI packet</param>
     /// <param name="sniErrorCode">SNI error code</param>
-    internal delegate void SNIAsyncCallback(SNIPacket packet, uint sniErrorCode);
+    internal delegate void SNIAsyncCallback(SniPacket packet, uint sniErrorCode);
 
     /// <summary>
     /// SNI provider identifiers

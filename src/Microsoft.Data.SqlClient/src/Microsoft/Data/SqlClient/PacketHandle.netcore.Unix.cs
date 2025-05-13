@@ -22,16 +22,16 @@ namespace Microsoft.Data.SqlClient
         public const int NativePacketType = 2;
         public const int ManagedPacketType = 3;
 
-        public readonly ManagedSni.SNIPacket ManagedPacket;
+        public readonly ManagedSni.SniPacket ManagedPacket;
         public readonly int Type;
 
-        private PacketHandle(ManagedSni.SNIPacket managedPacket, int type)
+        private PacketHandle(ManagedSni.SniPacket managedPacket, int type)
         {
             Type = type;
             ManagedPacket = managedPacket;
         }
 
-        public static PacketHandle FromManagedPacket(ManagedSni.SNIPacket managedPacket) =>
+        public static PacketHandle FromManagedPacket(ManagedSni.SniPacket managedPacket) =>
             new PacketHandle(managedPacket, ManagedPacketType);
     }
 }

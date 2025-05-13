@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     /// <summary>
     /// SNI Packet
     /// </summary>
-    internal sealed class SNIPacket
+    internal sealed class SniPacket
     {
         private static readonly Action<Task<int>, object> s_readCallback = ReadFromStreamAsyncContinuation;
         private int _dataLength; // the length of the data in the data segment, advanced by Append-ing data, does not include smux header length
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public bool IsActive => _refCount == 1;
 
-        public SNIPacket(SniHandle owner, int id)
+        public SniPacket(SniHandle owner, int id)
             : this()
         {
 #if TRACE_HISTORY
@@ -67,22 +67,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
             _id = id;
             _owner = owner;
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} instantiated,", args0: _owner?.ConnectionId, args1: _id);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} instantiated,", args0: _owner?.ConnectionId, args1: _id);
         }
 
         // the finalizer is only included in debug builds and is used to ensure that all packets are correctly recycled
         // it is not an error if a packet is dropped but it is undesirable so all efforts should be made to make sure we
         // do not drop them for the GC to pick up
-        ~SNIPacket()
+        ~SniPacket()
         {
             if (_data != null)
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Finalizer called for unreleased SNIPacket, Connection Id {0}, Packet Id {1}, _refCount {2}, DataLeft {3}, tag {4}", args0: _owner?.ConnectionId, args1: _id, args2: _refCount, args3: DataLeft, args4: _traceTag);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Finalizer called for unreleased SNIPacket, Connection Id {0}, Packet Id {1}, _refCount {2}, DataLeft {3}, tag {4}", args0: _owner?.ConnectionId, args1: _id, args2: _refCount, args3: DataLeft, args4: _traceTag);
             }
         }
 
 #endif
-        public SNIPacket()
+        public SniPacket()
         {
         }
 
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _dataOffset = 0;
             _headerLength = headerLength;
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} allocated with _headerLength {2}, _dataCapacity {3}", args0: _owner?.ConnectionId, args1: _id, args2: _headerLength, args3: _dataCapacity);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} allocated with _headerLength {2}, _dataCapacity {3}", args0: _owner?.ConnectionId, args1: _id, args2: _headerLength, args3: _dataCapacity);
 #endif
         }
 
@@ -156,12 +156,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="packet">Packet</param>
         /// <param name="size">Data to take</param>
         /// <returns>Amount of data taken</returns>
-        public int TakeData(SNIPacket packet, int size)
+        public int TakeData(SniPacket packet, int size)
         {
             int dataSize = TakeData(packet._data, packet._headerLength + packet._dataLength, size);
             packet._dataLength += dataSize;
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} took data from Packet Id {2} dataSize {3}, _dataLength {4}", args0: _owner?.ConnectionId, args1: _id, args2: packet?._id, args3: dataSize, args4: packet._dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} took data from Packet Id {2} dataSize {3}, _dataLength {4}", args0: _owner?.ConnectionId, args1: _id, args2: packet?._id, args3: dataSize, args4: packet._dataLength);
 #endif
             return dataSize;
         }
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             Buffer.BlockCopy(data, 0, _data, _headerLength + _dataLength, size);
             _dataLength += size;
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} was appended with size {2}, _dataLength {3}", args0: _owner?.ConnectionId, args1: _id, args2: size, args3: _dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} was appended with size {2}, _dataLength {3}", args0: _owner?.ConnectionId, args1: _id, args2: size, args3: _dataLength);
 #endif
         }
 
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             Buffer.BlockCopy(_data, _headerLength + _dataOffset, buffer, dataOffset, size);
             _dataOffset += size;
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} took data size {2}, _dataLength {3}, _dataOffset {4}", args0: _owner?.ConnectionId, args1: _id, args2: size, args3: _dataLength, args4: _dataOffset);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} took data size {2}, _dataLength {3}, _dataOffset {4}", args0: _owner?.ConnectionId, args1: _id, args2: size, args3: _dataLength, args4: _dataOffset);
 #endif
             return size;
         }
@@ -222,7 +222,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _dataLength += _headerLength;
             _headerLength = 0;
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} header set to active.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} header set to active.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
         }
 
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 _dataCapacity = 0;
             }
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _headerLength {2} and _dataLength {3} released.", args0: _owner?.ConnectionId, args1: _id, args2: _headerLength, args3: _dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _headerLength {2} and _dataLength {3} released.", args0: _owner?.ConnectionId, args1: _id, args2: _headerLength, args3: _dataLength);
 #endif
             _dataLength = 0;
             _dataOffset = 0;
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             _dataLength = stream.Read(_data, _headerLength, _dataCapacity);
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
         }
 
@@ -279,14 +279,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private static void ReadFromStreamAsyncContinuation(Task<int> task, object state)
         {
-            SNIPacket packet = (SNIPacket)state;
+            SniPacket packet = (SniPacket)state;
             bool error = false;
             Exception e = task.Exception?.InnerException;
             if (e != null)
             {
                 SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, e);
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while reading data: {1}", args0: packet._owner?.ConnectionId, args1: e?.Message);
 #endif
                 error = true;
             }
@@ -294,13 +294,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 packet._dataLength = task.Result;
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: packet._owner?.ConnectionId, args1: packet._id, args2: packet._dataLength);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: packet._owner?.ConnectionId, args1: packet._id, args2: packet._dataLength);
 #endif
                 if (packet._dataLength == 0)
                 {
                     SniLoadHandle.SingletonInstance.LastError = new SniError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, No data read from stream, connection was terminated.", args0: packet._owner?.ConnectionId);
 #endif
                     error = true;
                 }
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             stream.Write(_data, _headerLength, _dataLength);
 #if DEBUG
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} written to stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} written to stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
         }
 
@@ -334,14 +334,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 await stream.WriteAsync(_data, 0, _dataLength, CancellationToken.None).ConfigureAwait(false);
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} written to stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} written to stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
             }
             catch (Exception e)
             {
                 SniLoadHandle.SingletonInstance.LastError = new SniError(provider, SNICommon.InternalExceptionError, e);
 #if DEBUG
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while writing data: {1}", args0: _owner?.ConnectionId, args1: e?.Message);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniPacket), EventType.ERR, "Connection Id {0}, Internal Exception occurred while writing data: {1}", args0: _owner?.ConnectionId, args1: e?.Message);
 #endif
                 status = TdsEnums.SNI_ERROR;
             }

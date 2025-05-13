@@ -24,12 +24,12 @@ namespace Microsoft.Data.SqlClient
         public const int NativePacketType = 2;
         public const int ManagedPacketType = 3;
 
-        public readonly ManagedSni.SNIPacket ManagedPacket;
+        public readonly ManagedSni.SniPacket ManagedPacket;
         public readonly SNIPacket NativePacket;
         public readonly IntPtr NativePointer;
         public readonly int Type;
 
-        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, ManagedSni.SNIPacket managedPacket, int type)
+        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, ManagedSni.SniPacket managedPacket, int type)
         {
             Type = type;
             ManagedPacket = managedPacket;
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient
             NativePacket = nativePacket;
         }
 
-        public static PacketHandle FromManagedPacket(ManagedSni.SNIPacket managedPacket) =>
+        public static PacketHandle FromManagedPacket(ManagedSni.SniPacket managedPacket) =>
             new PacketHandle(default, default, managedPacket, ManagedPacketType);
 
         public static PacketHandle FromNativePointer(IntPtr nativePointer) =>

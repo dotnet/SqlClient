@@ -17,21 +17,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #if DEBUG
         private static int s_packetId;
 #endif
-        private ObjectPool<SNIPacket> _pool;
+        private ObjectPool<SniPacket> _pool;
 
         protected SNIPhysicalHandle(int poolSize = DefaultPoolSize)
         {
-            _pool = new ObjectPool<SNIPacket>(poolSize);
+            _pool = new ObjectPool<SniPacket>(poolSize);
         }
 
-        public override SNIPacket RentPacket(int headerSize, int dataSize)
+        public override SniPacket RentPacket(int headerSize, int dataSize)
         {
-            SNIPacket packet;
+            SniPacket packet;
             if (!_pool.TryGet(out packet))
             {
 #if DEBUG
                 int id = Interlocked.Increment(ref s_packetId);
-                packet = new SNIPacket(this, id);
+                packet = new SniPacket(this, id);
 #else
                 packet = new SNIPacket();
 #endif
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return packet;
         }
 
-        public override void ReturnPacket(SNIPacket packet)
+        public override void ReturnPacket(SniPacket packet)
         {
 #if DEBUG
             Debug.Assert(packet != null, "releasing null SNIPacket");

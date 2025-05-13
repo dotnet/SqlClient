@@ -296,8 +296,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIPacket.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SNIPacket.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SNIPhysicalHandle.netcore.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SNIPhysicalHandle.netcore.cs</Link>

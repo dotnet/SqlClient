@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private ushort _nextSessionId;
         private int _currentHeaderByteCount;
         private int _dataBytesLeft;
-        private SNIPacket _currentPacket;
+        private SniPacket _currentPacket;
 
         /// <summary>
         /// Connection ID
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                SNIPacket packet = null;
+                SniPacket packet = null;
 
                 if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public uint Send(SNIPacket packet)
+        public uint Send(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public uint SendAsync(SNIPacket packet)
+        public uint SendAsync(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public uint ReceiveAsync(ref SNIPacket packet)
+        public uint ReceiveAsync(ref SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Process a receive error
         /// </summary>
-        public void HandleReceiveError(SNIPacket packet)
+        public void HandleReceiveError(SniPacket packet)
         {
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
             foreach (SniMarsHandle handle in _sessions.Values)
@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <param name="sniErrorCode">SNI error code</param>
-        public void HandleSendComplete(SNIPacket packet, uint sniErrorCode)
+        public void HandleSendComplete(SniPacket packet, uint sniErrorCode)
         {
             packet.InvokeAsyncIOCompletionCallback(sniErrorCode);
         }
@@ -200,12 +200,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <param name="sniErrorCode">SNI error code</param>
-        public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
+        public void HandleReceiveComplete(SniPacket packet, uint sniErrorCode)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
                 SNISMUXHeader currentHeader = null;
-                SNIPacket currentPacket = null;
+                SniPacket currentPacket = null;
                 SniMarsHandle currentSession = null;
 
                 if (sniErrorCode != TdsEnums.SNI_SUCCESS)
@@ -377,12 +377,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public SNIPacket RentPacket(int headerSize, int dataSize)
+        public SniPacket RentPacket(int headerSize, int dataSize)
         {
             return _lowerHandle.RentPacket(headerSize, dataSize);
         }
 
-        public void ReturnPacket(SNIPacket packet)
+        public void ReturnPacket(SniPacket packet)
         {
             _lowerHandle.ReturnPacket(packet);
         }

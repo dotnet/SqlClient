@@ -60,14 +60,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint Send(SNIPacket packet);
+        public abstract uint Send(SniPacket packet);
 
         /// <summary>
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint SendAsync(SNIPacket packet);
+        public abstract uint SendAsync(SniPacket packet);
 
         /// <summary>
         /// Receive a packet synchronously
@@ -75,14 +75,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="packet">SNI packet</param>
         /// <param name="timeoutInMilliseconds">Timeout in Milliseconds</param>
         /// <returns>SNI error code</returns>
-        public abstract uint Receive(out SNIPacket packet, int timeoutInMilliseconds);
+        public abstract uint Receive(out SniPacket packet, int timeoutInMilliseconds);
 
         /// <summary>
         /// Receive a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint ReceiveAsync(ref SNIPacket packet);
+        public abstract uint ReceiveAsync(ref SniPacket packet);
 
         /// <summary>
         /// Enable SSL
@@ -112,9 +112,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public virtual int ReserveHeaderSize => 0;
 
-        public abstract SNIPacket RentPacket(int headerSize, int dataSize);
+        public abstract SniPacket RentPacket(int headerSize, int dataSize);
 
-        public abstract void ReturnPacket(SNIPacket packet);
+        public abstract void ReturnPacket(SniPacket packet);
 
         /// <summary>
         /// Gets a value that indicates the security protocol used to authenticate this connection.

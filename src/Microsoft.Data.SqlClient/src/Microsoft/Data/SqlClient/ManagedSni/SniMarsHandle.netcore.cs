@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private readonly SniMarsConnection _connection;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
-        private readonly Queue<SNIPacket> _receivedPacketQueue = new Queue<SNIPacket>();
-        private readonly Queue<SNIPacket> _sendPacketQueue = new Queue<SNIPacket>();
+        private readonly Queue<SniPacket> _receivedPacketQueue = new Queue<SniPacket>();
+        private readonly Queue<SniPacket> _sendPacketQueue = new Queue<SniPacket>();
         private readonly object _callbackObject;
         private readonly Guid _connectionId;
         private readonly ushort _sessionId;
@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
-                SNIPacket packet = RentPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
+                SniPacket packet = RentPacket(headerSize: SNISMUXHeader.HEADER_LENGTH, dataSize: 0);
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, Packet rented {1}, packet dataLeft {2}", args0: ConnectionId, args1: packet?._id, args2: packet?.DataLeft);
 #endif
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>The packet with the SMUx header set.</returns>
-        private SNIPacket SetPacketSMUXHeader(SNIPacket packet)
+        private SniPacket SetPacketSMUXHeader(SniPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to smux packet without smux reservation");
 
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public override uint Send(SNIPacket packet)
+        public override uint Send(SniPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without smux reservation in Send");
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                 }
 
-                SNIPacket muxedPacket = null;
+                SniPacket muxedPacket = null;
                 lock (this)
                 {
                     muxedPacket = SetPacketSMUXHeader(packet);
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        private uint InternalSendAsync(SNIPacket packet)
+        private uint InternalSendAsync(SniPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without smux reservation in InternalSendAsync");
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         return TdsEnums.SNI_QUEUE_FULL;
                     }
 
-                    SNIPacket muxedPacket = SetPacketSMUXHeader(packet);
+                    SniPacket muxedPacket = SetPacketSMUXHeader(packet);
                     muxedPacket.SetAsyncIOCompletionCallback(_handleSendCompleteCallback);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, Sending packet", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
                     return _connection.SendAsync(muxedPacket);
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
-                SNIPacket packet = null;
+                SniPacket packet = null;
 
                 while (true)
                 {
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet)
+        public override uint SendAsync(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -286,7 +286,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public override uint ReceiveAsync(ref SNIPacket packet)
+        public override uint ReceiveAsync(ref SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Handle receive error
         /// </summary>
-        public void HandleReceiveError(SNIPacket packet)
+        public void HandleReceiveError(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <param name="sniErrorCode">SNI error code</param>
-        public void HandleSendComplete(SNIPacket packet, uint sniErrorCode)
+        public void HandleSendComplete(SniPacket packet, uint sniErrorCode)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <param name="header">SMUX header</param>
-        public void HandleReceiveComplete(SNIPacket packet, SNISMUXHeader header)
+        public void HandleReceiveComplete(SniPacket packet, SNISMUXHeader header)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -467,7 +467,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="packet">SNI packet</param>
         /// <param name="timeoutInMilliseconds">Timeout in Milliseconds</param>
         /// <returns>SNI error code</returns>
-        public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
+        public override uint Receive(out SniPacket packet, int timeoutInMilliseconds)
         {
             using (TrySNIEventScope.Create(nameof(SniMarsHandle)))
             {
@@ -555,9 +555,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override void DisableSsl() => _connection.DisableSsl();
 
-        public override SNIPacket RentPacket(int headerSize, int dataSize) => _connection.RentPacket(headerSize, dataSize);
+        public override SniPacket RentPacket(int headerSize, int dataSize) => _connection.RentPacket(headerSize, dataSize);
 
-        public override void ReturnPacket(SNIPacket packet) => _connection.ReturnPacket(packet);
+        public override void ReturnPacket(SniPacket packet) => _connection.ReturnPacket(packet);
 
 
 #if DEBUG

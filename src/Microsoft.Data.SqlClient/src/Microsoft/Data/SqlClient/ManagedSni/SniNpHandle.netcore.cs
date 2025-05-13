@@ -181,11 +181,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override uint Receive(out SNIPacket packet, int timeout)
+        public override uint Receive(out SniPacket packet, int timeout)
         {
             using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SNIPacket errorPacket;
+                SniPacket errorPacket;
                 lock (this)
                 {
                     packet = null;
@@ -223,11 +223,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override uint ReceiveAsync(ref SNIPacket packet)
+        public override uint ReceiveAsync(ref SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SNIPacket errorPacket;
+                SniPacket errorPacket;
                 packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                 packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override uint Send(SNIPacket packet)
+        public override uint Send(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
@@ -307,7 +307,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
-        public override uint SendAsync(SNIPacket packet)
+        public override uint SendAsync(SniPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _bufferSize = bufferSize;
         }
 
-        private uint ReportErrorAndReleasePacket(SNIPacket packet, Exception sniException)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, Exception sniException)
         {
             if (packet != null)
             {
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, sniException);
         }
 
-        private uint ReportErrorAndReleasePacket(SNIPacket packet, uint nativeError, uint sniError, string errorMessage)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, uint nativeError, uint sniError, string errorMessage)
         {
             if (packet != null)
             {
