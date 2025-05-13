@@ -6,7 +6,6 @@
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
 [assembly: System.CLSCompliant(true)]
-[assembly: System.Resources.NeutralResourcesLanguageAttribute("en-US")]
 namespace Microsoft.Data
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />

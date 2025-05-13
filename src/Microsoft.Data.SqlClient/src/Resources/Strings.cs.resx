@@ -4740,4 +4740,7 @@
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>Nebyl nalezen objekt DataColumn {0} pro SourceColumn {2}.</value>
   </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>Seznam SqlBatchCommand nebyl inicializován.</value>
+  </data>
 </root>

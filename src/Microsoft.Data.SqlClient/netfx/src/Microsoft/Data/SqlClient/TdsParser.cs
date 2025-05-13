@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        private bool ClientOSEncryptionSupport => SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+        private bool ClientOSEncryptionSupport => TdsParserStateObjectFactory.Singleton.ClientOSEncryptionSupport;
 
         // Default state object for parser
         internal TdsParserStateObject _physicalStateObj = null; // Default stateObj and connection for Dbnetlib and non-MARS SNI.
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         internal Encoding _defaultEncoding = null;                  // for sql character data
 
-        private static EncryptionOptions s_sniSupportedEncryptionOption = SNILoadHandle.SingletonInstance.Options;
+        private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
 
         private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
         {
             _fMARS = MARS; // may change during Connect to pre 2005 servers
 
-            _physicalStateObj = new TdsParserStateObject(this);
+            _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            uint sniStatus = SNILoadHandle.SingletonInstance.Status;
+            uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
@@ -555,7 +555,7 @@ namespace Microsoft.Data.SqlClient
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.InitializeConnection);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
 
-            uint result = SniNativeWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
+            uint result = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
 
             // for DNS Caching phase 1
@@ -621,7 +621,7 @@ namespace Microsoft.Data.SqlClient
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
 
-                uint retCode = SniNativeWrapper.SniGetConnectionId(_physicalStateObj.Handle, ref _connHandler._clientConnectionId);
+                uint retCode = _physicalStateObj.SniGetConnectionId(ref _connHandler._clientConnectionId);
                 Debug.Assert(retCode == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionId");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
 
@@ -664,10 +664,8 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert((_encryptionOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.LOGIN, "Invalid encryption option state");
 
-            uint error = 0;
+            uint error = _physicalStateObj.DisableSsl();
 
-            // Remove SSL (Encryption) SNI provider since we only wanted to encrypt login.
-            error = SniNativeWrapper.SniRemoveProvider(_physicalStateObj.Handle, Provider.SSL_PROV);
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -690,11 +688,8 @@ namespace Microsoft.Data.SqlClient
                 // Cache physical stateObj and connection.
                 _pMarsPhysicalConObj = _physicalStateObj;
 
-                uint error = 0;
                 uint info = 0;
-
-                // Add SMUX (MARS) SNI provider.
-                error = SniNativeWrapper.SniAddProvider(_pMarsPhysicalConObj.Handle, Provider.SMUX_PROV, ref info);
+                uint error = _pMarsPhysicalConObj.EnableMars(ref info);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -737,7 +732,7 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParserStateObject CreateSession()
         {
-            TdsParserStateObject session = new TdsParserStateObject(this, (SNIHandle)_pMarsPhysicalConObj.Handle, true);
+            TdsParserStateObject session = TdsParserStateObjectFactory.Singleton.CreateSessionObject(this, _pMarsPhysicalConObj, true);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.CreateSession|ADV> {0} created session {1}", ObjectID, session.ObjectID);
             return session;
         }
@@ -2836,7 +2831,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
-                            uint bufferSizeResult = SniNativeWrapper.SniSetInfo(_physicalStateObj.Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+                            uint bufferSizeResult = _physicalStateObj.SetConnectionBufferSize(ref unsignedPacketSize);
 
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
