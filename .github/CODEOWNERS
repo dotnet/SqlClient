@@ -17,7 +17,7 @@
 #
 # https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging
 #
-# There should be no other owners specified the the repo.
+# There should be no other owners specified in the repo.
 #
 * @dotnet/sqlclientdevteam
 
