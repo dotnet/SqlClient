@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Linq;
 
 #nullable enable
 
@@ -10,14 +11,34 @@ namespace Microsoft.Data.SqlClient
     {
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
+
+        // This is used to store either a single or multiple SspiAuthenticationParameters. Since we initially have potential
+        // multiple SPNs, we'll start with that. However, once we've succeeded creating an SSPI context, we'll consider that
+        // to be the correct SPN going forward
+        private object? _authParams;
+
         private protected TdsParserStateObject _physicalStateObj = null!;
 
-        internal void Initialize(ServerInfo serverInfo, TdsParserStateObject physicalStateObj, TdsParser parser)
+        internal void Initialize(
+            ServerInfo serverInfo,
+            TdsParserStateObject physicalStateObj,
+            TdsParser parser,
+#if NETFRAMEWORK
+            string serverSpn
+#else
+            string[] serverSpns
+#endif
+            )
         {
             _parser = parser;
             _physicalStateObj = physicalStateObj;
             _serverInfo = serverInfo;
 
+#if NETFRAMEWORK
+            _authParams = CreateAuthParams(serverSpn);
+#else
+            _authParams = serverSpns.Select(CreateAuthParams).ToArray();
+#endif
             Initialize();
         }
 
@@ -27,26 +48,25 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
+        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
-            if (!RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
+            if (_authParams is SspiAuthenticationParameters authParam)
             {
-                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
-                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+                RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, authParam);
+                return;
             }
-        }
-
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
-        {
-            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
-
-            foreach (var serverSpn in serverSpns)
+            else if (_authParams is SspiAuthenticationParameters[] authParams)
             {
-                if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
+                foreach (var p in authParams)
                 {
-                    return;
+                    if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, p))
+                    {
+                        // Reset the _authParams to only have a single one going forward to always call the context with that one
+                        _authParams = p;
+                        return;
+                    }
                 }
             }
 
@@ -54,19 +74,23 @@ namespace Microsoft.Data.SqlClient
             SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
         }
 
-        private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
+        private SspiAuthenticationParameters CreateAuthParams(string serverSpn)
         {
             var options = _parser.Connection.ConnectionOptions;
-            var authParams = new SspiAuthenticationParameters(options.DataSource, serverSpn)
+
+            return new SspiAuthenticationParameters(options.DataSource, serverSpn)
             {
                 DatabaseName = options.InitialCatalog,
                 UserId = options.UserID,
                 Password = options.Password,
             };
+        }
 
+        private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
+        {
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), serverSpn);
+                SqlClientEventSource.Log.TryTraceEvent("{0}.{1} | Info | SPN={1}", GetType().FullName, nameof(GenerateSspiClientContext), authParams.Resource);
 
                 return GenerateSspiClientContext(incomingBlob, outgoingBlobWriter, authParams);
             }

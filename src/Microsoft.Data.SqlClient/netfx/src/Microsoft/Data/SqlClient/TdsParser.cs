@@ -518,7 +518,7 @@ namespace Microsoft.Data.SqlClient
                 FQDNforDNSCache,
                 hostNameInCertificate);
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ResolvedServerName,
                     hostNameInCertificate);
 
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {

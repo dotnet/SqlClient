@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient
                 hostNameInCertificate,
                 serverCertificateFilename);
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient
                     hostNameInCertificate,
                     serverCertificateFilename);
 
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
+                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {

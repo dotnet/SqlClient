@@ -2,6 +2,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Net.Security;
 
 #nullable enable
@@ -17,6 +18,9 @@ namespace Microsoft.Data.SqlClient
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
             _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
+
+            Debug.Assert(_negotiateAuth.TargetName == authParams.Resource, "SSPI resource does not match TargetName");
+
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
             // Log session id, status code and the actual SPN used in the negotiation
@@ -29,6 +33,8 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
+            // Reset _negotiateAuth to be generated again for next SPN.
+            _negotiateAuth = null;
             return false;
         }
     }
