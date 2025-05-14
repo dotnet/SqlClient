@@ -729,7 +729,7 @@
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs" />
+    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
