@@ -12,6 +12,10 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
+    /// <summary>
+    /// A base class for implementing database connection pools.
+    /// Responsible for managing the lifecycle of connections and providing access to database connections.
+    /// </summary>
     internal abstract class DbConnectionPool
     {
         private static int _objectTypeCount;

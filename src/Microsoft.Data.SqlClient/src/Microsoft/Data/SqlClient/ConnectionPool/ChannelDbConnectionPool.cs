@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+using System;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -10,6 +13,10 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
+    /// <summary>
+    /// A connection pool implementation based on the channel data structure.
+    /// Provides methods to manage the pool of connections, including acquiring and releasing connections.
+    /// </summary>
     internal sealed class ChannelDbConnectionPool : DbConnectionPool
     {
         internal override int Count => throw new NotImplementedException();
@@ -39,27 +46,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             throw new NotImplementedException();
         }
 
-        internal override void DestroyObject(DbConnectionInternal obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal override void PutNewObject(DbConnectionInternal obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal override void PutObject(DbConnectionInternal obj, object owningObject)
-        {
-            throw new NotImplementedException();
-        }
-
         internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
         {
             throw new NotImplementedException();
         }
 
         internal override DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
             throw new NotImplementedException();
         }
