@@ -459,8 +459,6 @@ namespace Microsoft.Data.SqlClient
                 hostNameInCertificate,
                 serverCertificateFilename);
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
-
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -559,8 +557,6 @@ namespace Microsoft.Data.SqlClient
                     hostNameInCertificate,
                     serverCertificateFilename);
 
-                _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
-
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -598,6 +594,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
+
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
 
             if (_fMARS && marsCapable)
             {
@@ -744,7 +742,7 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - need to do some length verification to ensure packet does not
             // get too big!!!  Not beyond it's max length!
-            
+
             for (int option = (int)PreLoginOptions.VERSION; option < (int)PreLoginOptions.NUMOPT; option++)
             {
                 int optionDataSize = 0;
@@ -935,7 +933,7 @@ namespace Microsoft.Data.SqlClient
             string serverCertificateFilename)
         {
             // Assign default values
-            marsCapable = _fMARS; 
+            marsCapable = _fMARS;
             fedAuthRequired = false;
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             TdsOperationStatus result = _physicalStateObj.TryReadNetworkPacket();
@@ -2181,7 +2179,7 @@ namespace Microsoft.Data.SqlClient
                                 dataStream.BrowseModeInfoConsumed = true;
                             }
                             else
-                            { 
+                            {
                                 // no dataStream
                                 result = stateObj.TrySkipBytes(tokenLength);
                                 if (result != TdsOperationStatus.Done)
@@ -2195,7 +2193,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLDONE:
                     case TdsEnums.SQLDONEPROC:
                     case TdsEnums.SQLDONEINPROC:
-                       {
+                        {
                             // RunBehavior can be modified - see SQL BU DT 269516 & 290090
                             result = TryProcessDone(cmdHandler, dataStream, ref runBehavior, stateObj);
                             if (result != TdsOperationStatus.Done)
@@ -4122,7 +4120,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return result;
             }
-            
+
             byte len;
             result = stateObj.TryReadByte(out len);
             if (result != TdsOperationStatus.Done)
@@ -4321,7 +4319,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-            
+
                 if (rec.collation.IsUTF8)
                 { // UTF8 collation
                     rec.encoding = Encoding.UTF8;
@@ -4776,13 +4774,13 @@ namespace Microsoft.Data.SqlClient
             {
                 // internal meta data class
                 _SqlMetaData col = altMetaDataSet[i];
-                
+
                 result = stateObj.TryReadByte(out _);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
                 }
-                
+
                 result = stateObj.TryReadUInt16(out _);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -5466,7 +5464,7 @@ namespace Microsoft.Data.SqlClient
             for (int i = 0; i < columns.Length; i++)
             {
                 _SqlMetaData col = columns[i];
-                
+
                 TdsOperationStatus result = stateObj.TryReadByte(out _);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -7386,7 +7384,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteSqlMoney(SqlMoney value, int length, TdsParserStateObject stateObj)
         {
-        	// UNDONE: can I use SqlMoney.ToInt64()?
+            // UNDONE: can I use SqlMoney.ToInt64()?
             int[] bits = decimal.GetBits(value.Value);
 
             // this decimal should be scaled by 10000 (regardless of what the incoming decimal was scaled by)
@@ -9906,7 +9904,7 @@ namespace Microsoft.Data.SqlClient
 
                     WriteUDTMetaData(value, names[0], names[1], names[2], stateObj);
 
-                                    // UNDONE - re-org to use code below to write value!
+                    // UNDONE - re-org to use code below to write value!
                     if (!isNull)
                     {
                         WriteUnsignedLong((ulong)udtVal.Length, stateObj); // PLP length
@@ -12340,7 +12338,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLNTEXT:
                 case TdsEnums.SQLXMLTYPE:
-                case TdsEnums.SQLJSON: 
+                case TdsEnums.SQLJSON:
                     {
                         Debug.Assert(!isDataFeed || (value is TextDataFeed || value is XmlDataFeed), "Value must be a TextReader or XmlReader");
                         Debug.Assert(isDataFeed || (value is string || value is byte[]), "Value is a byte array or string");
