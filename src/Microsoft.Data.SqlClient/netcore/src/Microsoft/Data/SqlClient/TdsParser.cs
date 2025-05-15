@@ -121,8 +121,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string[] _serverSpn = null;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -386,6 +384,8 @@ namespace Microsoft.Data.SqlClient
 
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
+            string[] serverSpn = null;
+
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _serverSpn = null;
+                serverSpn = null;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
             }
 
-            _serverSpn = null;
+            serverSpn = null;
             _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _serverSpn,
+                ref serverSpn,
                 false,
                 true,
                 fParallel,
@@ -544,7 +544,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref _serverSpn,
+                    ref serverSpn,
                     true,
                     true,
                     fParallel,
@@ -595,7 +595,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
 
             if (_fMARS && marsCapable)
             {
@@ -13585,7 +13585,6 @@ namespace Microsoft.Data.SqlClient
                            _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                            _fMARS ? bool.TrueString : bool.FalseString,
                            _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                           _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),

@@ -121,8 +121,6 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2022 = false;
 
-        private string _serverSpn = null;
-
         // SqlStatistics
         private SqlStatistics _statistics = null;
 
@@ -396,6 +394,8 @@ namespace Microsoft.Data.SqlClient
                 Debug.Fail("SNI returned status != success, but no error thrown?");
             }
 
+            string serverSpn = null;
+
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
             {
@@ -415,13 +415,13 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
                 {
-                    _serverSpn = serverInfo.ServerSPN;
+                    serverSpn = serverInfo.ServerSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
                 }
                 else
                 {
                     // Empty signifies to interop layer that SPN needs to be generated
-                    _serverSpn = string.Empty;
+                    serverSpn = string.Empty;
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
@@ -429,7 +429,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _authenticationProvider = null;
-                _serverSpn = null;
+                serverSpn = null;
 
                 switch (authType)
                 {
@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref _serverSpn,
+                ref serverSpn,
                 false,
                 true,
                 fParallel,
@@ -600,7 +600,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref _serverSpn,
+                    ref serverSpn,
                     true,
                     true,
                     fParallel,
@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, _serverSpn);
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
 
             if (_fMARS && marsCapable)
             {
@@ -13698,7 +13698,6 @@ namespace Microsoft.Data.SqlClient
                             _connHandler == null ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                             _fMARS ? bool.TrueString : bool.FalseString,
                             _sessionPool == null ? "(null)" : _sessionPool.TraceString(),
-                            _serverSpn == null ? "(null)" : _serverSpn.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.PreAttentionErrorCount.ToString((IFormatProvider)null),
