@@ -53,9 +53,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             IsAKVProviderRegistered = true;
         }
 
+        private static RSA CopyKey(RSA rsa)
+        {
+#if NET8_0
+            // In .NET Framework, the key is exportable in plaintext. In .NET 9.0+, we use X509CertificateLoader2 to maintain this functionality.
+            // We need to manually handle this in .NET 8.0 with an non-plaintext export.
+            RSA replacementKey = RSA.Create(rsa.KeySize);
+            Span<byte> passwordBytes = stackalloc byte[32];
+            PbeParameters pbeParameters = new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 10000);
+
+            Random.Shared.NextBytes(passwordBytes);
+
+            replacementKey.ImportEncryptedPkcs8PrivateKey(
+                passwordBytes,
+                rsa.ExportEncryptedPkcs8PrivateKey(passwordBytes, pbeParameters),
+                out _);
+            return replacementKey;
+#else
+            return rsa;
+#endif
+        }
+        
         private void SetupAzureKeyVault()
         {
-            JsonWebKey rsaImport = new JsonWebKey(ColumnMasterKeyCertificate.GetRSAPrivateKey(), true);
+            RSA rsaCopy = CopyKey(ColumnMasterKeyCertificate.GetRSAPrivateKey());
+            JsonWebKey rsaImport = new JsonWebKey(rsaCopy, true);
             string akvKeyName = $"AE-{ColumnMasterKeyCertificate.Thumbprint}";
 
             _keyClient.ImportKey(akvKeyName, rsaImport);
