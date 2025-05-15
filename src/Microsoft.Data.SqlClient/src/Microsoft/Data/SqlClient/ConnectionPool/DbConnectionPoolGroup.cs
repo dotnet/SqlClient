@@ -185,7 +185,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
                                 DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
-                                DbConnectionPool newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+
+                                DbConnectionPool newPool;
+                                if (LocalAppContextSwitches.UseConnectionPoolV2)
+                                {
+                                    newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                }
+                                else
+                                {
+                                    newPool = new ChannelDbConnectionPool();
+                                    }
 
                                 if (MarkPoolGroupAsActive())
                                 {
