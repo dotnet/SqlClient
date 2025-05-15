@@ -429,7 +429,6 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _authenticationProvider = null;
-                serverSpn = null;
 
                 switch (authType)
                 {

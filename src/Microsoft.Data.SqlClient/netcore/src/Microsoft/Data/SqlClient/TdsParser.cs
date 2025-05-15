@@ -384,8 +384,6 @@ namespace Microsoft.Data.SqlClient
 
             uint sniStatus = TdsParserStateObjectFactory.Singleton.SNIStatus;
 
-            string[] serverSpn = null;
-
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -395,7 +393,6 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                serverSpn = null;
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler.ObjectID,
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
@@ -407,7 +404,6 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
             }
 
-            serverSpn = null;
             _authenticationProvider = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -440,6 +436,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             _connHandler.pendingSQLDNSObject = null;
+
+            string[] serverSpn = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
