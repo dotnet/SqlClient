@@ -27,7 +27,7 @@ implementation with the specification and ask questions, to get clarity.
   checked by the compiler.
 - Document all exceptions that may be thrown from an API.
 - Do not let undocumented exceptions escape from an API.
-- Be permissive in what you accept, and strict it what you produce.
+- Be permissive with what you accept, and strict with what you produce.
 
 ## Async, Concurrency & Thread Safety (if applicable)
 
