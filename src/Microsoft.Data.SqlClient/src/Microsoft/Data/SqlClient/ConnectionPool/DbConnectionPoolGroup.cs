@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 else
                                 {
                                     newPool = new ChannelDbConnectionPool();
-                                    }
+                                }
 
                                 if (MarkPoolGroupAsActive())
                                 {

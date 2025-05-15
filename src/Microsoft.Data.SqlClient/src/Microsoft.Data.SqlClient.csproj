@@ -17,7 +17,4 @@
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
   </ItemGroup>
-	<ItemGroup>
-	  <Folder Include="microsoft.data.sqlclient\src\microsoft\data\sqlclient\connectionpool\" />
-	</ItemGroup>
 </Project>

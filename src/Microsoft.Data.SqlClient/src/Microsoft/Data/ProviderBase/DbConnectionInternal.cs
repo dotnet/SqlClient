@@ -814,7 +814,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
             DbConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> taskCompletionSource,
+            TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionOptions userOptions)
         {
             throw ADP.ConnectionAlreadyOpen(State);
@@ -823,7 +823,7 @@ namespace Microsoft.Data.ProviderBase
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
             DbConnectionFactory connectionFactory,
-            TaskCompletionSource<DbConnectionInternal> taskCompletionSource,
+            TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionOptions userOptions)
         {
             throw ADP.MethodNotImplemented();
@@ -900,7 +900,7 @@ namespace Microsoft.Data.ProviderBase
             // No additional locks in default implementation
         }
 
-        protected bool TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions)
+        protected bool TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))
@@ -909,7 +909,7 @@ namespace Microsoft.Data.ProviderBase
                 try
                 {
                     connectionFactory.PermissionDemand(outerConnection);
-                    if (!connectionFactory.TryGetConnection(outerConnection, taskCompletionSource, userOptions, this, out openConnection))
+                    if (!connectionFactory.TryGetConnection(outerConnection, retry, userOptions, this, out openConnection))
                     {
                         return false;
                     }
