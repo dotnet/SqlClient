@@ -934,7 +934,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Debug.Assert(rootTxn == true || returnToGeneralPool == true || destroyObject == true);
         }
 
-        internal override void DestroyObject(DbConnectionInternal obj)
+        private void DestroyObject(DbConnectionInternal obj)
         {
             // A connection with a delegated transaction cannot be disposed of
             // until the delegated transaction has actually completed.  Instead,
@@ -1093,7 +1093,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             if (!next.Completion.TrySetResult(connection))
                             {
                                 // if the completion was cancelled, lets try and get this connection back for the next try
-                                PutObject(connection, next.Owner);
+                                ReturnInternalConnection(connection, next.Owner);
                             }
                         }
                     }
@@ -1108,12 +1108,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             } while (_pendingOpens.TryPeek(out next));
         }
 
-        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
-            if (retry == null)
+            if (taskCompletionSource == null)
             {
                 waitForMultipleObjectsTimeout = (uint)CreationTimeout;
 
@@ -1136,7 +1136,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 return true;
             }
-            else if (retry == null)
+            else if (taskCompletionSource == null)
             {
                 // timed out on a sync call
                 return true;
@@ -1146,7 +1146,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 new PendingGetConnection(
                     CreationTimeout == 0 ? Timeout.Infinite : ADP.TimerCurrent() + ADP.TimerFromSeconds(CreationTimeout / 1000),
                     owningObject,
-                    retry,
+                    taskCompletionSource,
                     userOptions);
             _pendingOpens.Enqueue(pendingGetConnection);
 
@@ -1376,7 +1376,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // if Activate throws an exception
                 // put it back in the pool or have it properly disposed of
-                this.PutObject(obj, owningObject);
+                this.ReturnInternalConnection(obj, owningObject);
                 throw;
             }
         }
@@ -1613,7 +1613,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal override void PutNewObject(DbConnectionInternal obj)
+        private void PutNewObject(DbConnectionInternal obj)
         {
             Debug.Assert(obj != null, "why are we adding a null object to the pool?");
 
@@ -1626,7 +1626,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         }
 
-        internal override void PutObject(DbConnectionInternal obj, object owningObject)
+        internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
             Debug.Assert(obj != null, "null obj?");
 
