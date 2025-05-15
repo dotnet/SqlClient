@@ -13554,15 +13554,14 @@ namespace Microsoft.Data.SqlClient
                                        + "         _connHandler = {14}\n\t"
                                        + "         _fMARS = {15}\n\t"
                                        + "         _sessionPool = {16}\n\t"
-                                       + "         _sniSpnBuffer = {17}\n\t"
-                                       + "         _errors = {18}\n\t"
-                                       + "         _warnings = {19}\n\t"
-                                       + "         _attentionErrors = {20}\n\t"
-                                       + "         _attentionWarnings = {21}\n\t"
-                                       + "         _statistics = {22}\n\t"
-                                       + "         _statisticsIsInTransaction = {23}\n\t"
-                                       + "         _fPreserveTransaction = {24}"
-                                       + "         _fParallel = {25}"
+                                       + "         _errors = {17}\n\t"
+                                       + "         _warnings = {18}\n\t"
+                                       + "         _attentionErrors = {19}\n\t"
+                                       + "         _attentionWarnings = {20}\n\t"
+                                       + "         _statistics = {21}\n\t"
+                                       + "         _statisticsIsInTransaction = {22}\n\t"
+                                       + "         _fPreserveTransaction = {23}"
+                                       + "         _fParallel = {24}"
                                        ;
         internal string TraceString()
         {
