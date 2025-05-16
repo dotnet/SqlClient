@@ -7,13 +7,16 @@ and the codebase evolves.
 ## Correctness & Business Logic
 
 - Validate if the code adheres to what it is supposed to do. Compare the
-implementation with the specification and ask questions, to get clarity.
+  implementation with the specification and ask questions, to get clarity.
+- Employ `Debug.Assert()` statements to validate program state, but never
+  rely on them to control program flow.  For example, `Debug.Assert()` must
+  never be used to validate input.
 
 ## Memory / Resource Management
 
-- C# – Rent large buffers from ArrayPool&lt;T&gt; and return them promptly to cut down
-  on heap allocations and improve throughput. Have the buffers been returned to
-  the pool?
+- C# – Rent large buffers from ArrayPool&lt;T&gt; and return them promptly to
+  cut down on heap allocations and improve throughput. Have the buffers been
+  returned to the pool?  Will they be returned if an exception is thrown?
 - Prefer Span&lt;T&gt; for stack allocated buffers.
 - Double check the depth of the call stack if using async/await. Stack depth of
   unwinding async/await state-machines of more than 3 calls can cause
@@ -24,10 +27,16 @@ implementation with the specification and ask questions, to get clarity.
 ## Error Handling & Reliability  
 
 - Prefer return values to throwing exceptions.  Returns are strongly typed and
-  checked by the compiler.
+  checked by the compiler.  Consider patterns like
+  `bool TryXYZ(..., out Result result)` instead of `Result XYZ(...)`.
+- Exceptions should be reserved for exceptional circumstances, like constructor
+  failure or out-of-memory, where the calling code stands little chance of
+  recovering.  Routine, expected error conditions should not be expressed as
+  exceptions.
 - Document all exceptions that may be thrown from an API.
 - Do not let undocumented exceptions escape from an API.
 - Be permissive with what you accept, and strict with what you produce.
+- Consider Constrained Execution Regions for .NET Framework implementations.
 
 ## Async, Concurrency & Thread Safety (if applicable)
 

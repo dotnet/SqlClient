@@ -14,8 +14,8 @@ High quality descriptions will lead to a smoother review experience.
 
 ## Issues
 
-Link to any relevant issues, bugs, or discussions (e.g., "Closes #123", "Fixes
-issue #456")  
+Link to any relevant issues, bugs, or discussions (e.g., "Closes \#123", "Fixes
+issue \#456").
 
 ## Testing
 
