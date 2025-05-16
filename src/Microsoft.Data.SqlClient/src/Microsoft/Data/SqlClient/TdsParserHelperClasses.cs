@@ -30,8 +30,8 @@ namespace Microsoft.Data.SqlClient
         NOT_SUP,
         REQ,
         LOGIN,
-#if NETFRAMEWORK
         OPTIONS_MASK = 0x3f,
+#if NETFRAMEWORK
         CTAIP = 0x40,
         CLIENT_CERT = 0x80,
 #endif
