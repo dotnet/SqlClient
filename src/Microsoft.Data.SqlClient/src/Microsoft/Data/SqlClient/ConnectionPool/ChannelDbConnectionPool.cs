@@ -17,66 +17,70 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// A connection pool implementation based on the channel data structure.
     /// Provides methods to manage the pool of connections, including acquiring and releasing connections.
     /// </summary>
-    internal sealed class ChannelDbConnectionPool : DbConnectionPool
+    internal sealed class ChannelDbConnectionPool : IDbConnectionPool
     {
-        internal override int Count => throw new NotImplementedException();
+        public int ObjectId => throw new NotImplementedException();
 
-        internal override DbConnectionFactory ConnectionFactory => throw new NotImplementedException();
+        public DbConnectionPoolState State { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        internal override bool ErrorOccurred => throw new NotImplementedException();
+        public int Count => throw new NotImplementedException();
 
-        internal override TimeSpan LoadBalanceTimeout => throw new NotImplementedException();
+        public DbConnectionFactory ConnectionFactory => throw new NotImplementedException();
 
-        internal override DbConnectionPoolIdentity Identity => throw new NotImplementedException();
+        public bool ErrorOccurred => throw new NotImplementedException();
 
-        internal override bool IsRunning => throw new NotImplementedException();
+        public TimeSpan LoadBalanceTimeout => throw new NotImplementedException();
 
-        internal override DbConnectionPoolGroup PoolGroup => throw new NotImplementedException();
+        public DbConnectionPoolIdentity Identity => throw new NotImplementedException();
 
-        internal override DbConnectionPoolGroupOptions PoolGroupOptions => throw new NotImplementedException();
+        public bool IsRunning => throw new NotImplementedException();
 
-        internal override DbConnectionPoolProviderInfo ProviderInfo => throw new NotImplementedException();
+        public DbConnectionPoolGroup PoolGroup => throw new NotImplementedException();
 
-        internal override ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts => throw new NotImplementedException();
+        public DbConnectionPoolGroupOptions PoolGroupOptions => throw new NotImplementedException();
 
-        internal override bool UseLoadBalancing => throw new NotImplementedException();
+        public DbConnectionPoolProviderInfo ProviderInfo => throw new NotImplementedException();
 
-        internal override void Clear()
+        public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts => throw new NotImplementedException();
+
+        public bool UseLoadBalancing => throw new NotImplementedException();
+
+        public void Clear()
         {
             throw new NotImplementedException();
         }
 
-        internal override void PutObjectFromTransactedPool(DbConnectionInternal obj)
+        public void PutObjectFromTransactedPool(DbConnectionInternal obj)
         {
             throw new NotImplementedException();
         }
 
-        internal override DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
+        public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection)
         {
             throw new NotImplementedException();
         }
 
-        internal override void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
             throw new NotImplementedException();
         }
 
-        internal override void Shutdown()
+        public void Shutdown()
         {
             throw new NotImplementedException();
         }
 
-        internal override void Startup()
+        public void Startup()
         {
             throw new NotImplementedException();
         }
 
-        internal override void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
+        public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
             throw new NotImplementedException();
         }
 
-        internal override bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             throw new NotImplementedException();
         }

@@ -282,9 +282,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
@@ -314,6 +311,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\IDbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\IDbConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs</Link>

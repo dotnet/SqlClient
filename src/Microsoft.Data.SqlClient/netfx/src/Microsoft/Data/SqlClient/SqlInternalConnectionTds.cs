@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient
         internal byte _tceVersionSupported;
 
         // The pool that this connection is associated with, if at all it is.
-        private DbConnectionPool _dbConnectionPool;
+        private IDbConnectionPool _dbConnectionPool;
 
         // This is used to preserve the authentication context object if we decide to cache it for subsequent connections in the same pool.
         // This will finally end up in _dbConnectionPool.AuthenticationContexts, but only after 1 successful login to SQL Server using this context.
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient
                 bool redirectedUserInstance,
                 SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
                 SessionData reconnectSessionData = null,
-                DbConnectionPool pool = null,
+                IDbConnectionPool pool = null,
                 string accessToken = null,
                 bool applyTransientFaultHandling = false,
                 Func<SqlAuthenticationParameters, CancellationToken,
