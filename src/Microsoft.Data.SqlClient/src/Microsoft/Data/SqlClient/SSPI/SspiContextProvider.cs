@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient
         // This is used to store either a single or multiple SspiAuthenticationParameters. Since we initially have potential
         // multiple SPNs, we'll start with that. However, once we've succeeded creating an SSPI context, we'll consider that
         // to be the correct SPN going forward
-        private object? _authParams;
+        private object? _authParamValue;
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
@@ -35,9 +35,9 @@ namespace Microsoft.Data.SqlClient
             _serverInfo = serverInfo;
 
 #if NETFRAMEWORK
-            _authParams = CreateAuthParams(serverSpn);
+            _authParamValue = CreateAuthParams(serverSpn);
 #else
-            _authParams = serverSpns.Select(CreateAuthParams).ToArray();
+            _authParamValue = serverSpns.Select(CreateAuthParams).ToArray();
 #endif
             Initialize();
         }
@@ -48,23 +48,22 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
+        internal void WriteSSPIContext(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
-            if (_authParams is SspiAuthenticationParameters authParam)
+            if (_authParamValue is SspiAuthenticationParameters authParam && RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, authParam))
             {
-                RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, authParam);
                 return;
             }
-            else if (_authParams is SspiAuthenticationParameters[] authParams)
+            else if (_authParamValue is SspiAuthenticationParameters[] authParams)
             {
                 foreach (var p in authParams)
                 {
                     if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, p))
                     {
                         // Reset the _authParams to only have a single one going forward to always call the context with that one
-                        _authParams = p;
+                        _authParamValue = p;
                         return;
                     }
                 }

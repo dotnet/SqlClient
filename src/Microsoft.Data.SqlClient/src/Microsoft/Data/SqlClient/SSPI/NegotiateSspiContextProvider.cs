@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSspiContextProvider : SspiContextProvider
     {
-        private NegotiateAuthentication? _negotiateAuth = null;
+        private NegotiateAuthentication? _negotiateAuth;
 
         protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
