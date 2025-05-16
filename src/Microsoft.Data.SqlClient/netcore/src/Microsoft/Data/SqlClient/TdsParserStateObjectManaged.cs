@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out string resolvedSpn,
             bool flushCache,
             bool async,
             bool parallel,
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostNameInCertificate,
             string serverCertificateFilename)
         {
-            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, ref spns, serverSPN,
+            SNIHandle? sessionHandle = SNIProxy.CreateConnectionHandle(serverName, timeout, out instanceName, out resolvedSpn, serverSPN,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
                 hostNameInCertificate, serverCertificateFilename);
 

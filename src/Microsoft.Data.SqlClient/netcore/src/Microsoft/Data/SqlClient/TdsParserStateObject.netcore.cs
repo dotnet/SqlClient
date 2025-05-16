@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
             }
-                       
+
             // we post a callback that represents the call to dispose; once the
             // object is disposed, the next callback will cause the GC Handle to
             // be released.
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out string resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,

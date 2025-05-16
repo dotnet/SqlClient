@@ -437,14 +437,12 @@ namespace Microsoft.Data.SqlClient
 
             _connHandler.pendingSQLDNSObject = null;
 
-            string[] serverSpns = null;
-
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             _physicalStateObj.CreatePhysicalSNIHandle(
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                ref serverSpns,
+                out var serverSpn,
                 false,
                 true,
                 fParallel,
@@ -542,7 +540,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    ref serverSpns,
+                    out serverSpn,
                     true,
                     true,
                     fParallel,
@@ -593,10 +591,10 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
-            // We need to initialize the authentication provider with the server SPN
-            // This array will either be a single entry with the SPN or two entries with the second
-            // one being including a default port.
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpns[^1]);
+            if (_authenticationProvider is { } && serverSpn is { })
+            {
+                _authenticationProvider.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
+            }
 
             if (_fMARS && marsCapable)
             {
