@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
-        private SSPIContextProvider _authenticationProvider;
+        private SspiContextProvider _authenticationProvider;
 
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
@@ -413,7 +413,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+                _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
@@ -2781,6 +2781,7 @@ namespace Microsoft.Data.SqlClient
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
                             uint bufferSizeResult = _physicalStateObj.SetConnectionBufferSize(ref unsignedPacketSize);
+
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
 

@@ -4740,4 +4740,7 @@
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>DataColumn '{0}' manquant pour SourceColumn '{2}'.</value>
   </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>La liste SqlBatchCommand n'a pas été initialisée.</value>
+  </data>
 </root>

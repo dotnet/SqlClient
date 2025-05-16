@@ -2,13 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Provides implementation similar to certificate store provider.
-    /// A CEK encrypted with certificate store provider should be decryptable by this provider and vice versa.
+    /// A CEK encrypted with certificate provider should be decryptable by this provider and vice versa.
     /// 
     /// Envolope Format for the encrypted column encryption key  
     ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
@@ -19,23 +21,22 @@ namespace Microsoft.Data.SqlClient
     /// ciphertext: Encrypted column encryption key
     /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
     /// </summary>
-    public class SqlColumnEncryptionCspProvider : SqlColumnEncryptionKeyStoreProvider
+    public class SqlColumnEncryptionCngProvider : SqlColumnEncryptionKeyStoreProvider
     {
         /// <summary>
-        /// Name for the CSP key store provider.
+        /// Name for the CNG key store provider.
         /// </summary>
-        public const string ProviderName = @"MSSQL_CSP_PROVIDER";
+        public const string ProviderName = @"MSSQL_CNG_STORE";
 
         /// <summary>
         /// This function uses the asymmetric key specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in CSP</param>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key in CNG</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
         /// <returns>Plain text column encryption key</returns>
-        public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm,
-            byte[] encryptedColumnEncryptionKey)
+        public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             throw new PlatformNotSupportedException();
         }
@@ -48,8 +49,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">The plaintext column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>
-        public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm,
-            byte[] columnEncryptionKey)
+        public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
             throw new PlatformNotSupportedException();
         }
@@ -78,3 +78,5 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
+
+#endif

@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
                     ValidateIssuer = true,
-                    ValidateAudience = false,
+                    ValidateAudience = false, // CodeQL [SM04387] Required for an external standard: Microsoft Azure Attestation does not support the audience claim.
                     RequireSignedTokens = true,
                     ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
                     IssuerSigningKeys = issuerSigningKeys

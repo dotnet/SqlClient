@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 namespace Microsoft.Data.SqlClient
 {
     // this structure is used for transporting packet handle references between the TdsParserStateObject
@@ -16,14 +14,16 @@ namespace Microsoft.Data.SqlClient
 
     internal readonly ref struct SessionHandle
     {
+#if NET
         public const int NativeHandleType = 1;
         public const int ManagedHandleType = 2;
 
+        public readonly int Type;
         public readonly SNI.SNIHandle ManagedHandle;
+#endif
         public readonly SNIHandle NativeHandle;
 
-        public readonly int Type;
-
+#if NET
         public SessionHandle(SNI.SNIHandle managedHandle, SNIHandle nativeHandle, int type)
         {
             Type = type;
@@ -36,7 +36,15 @@ namespace Microsoft.Data.SqlClient
         public static SessionHandle FromManagedSession(SNI.SNIHandle managedSessionHandle) => new SessionHandle(managedSessionHandle, default, ManagedHandleType);
 
         public static SessionHandle FromNativeHandle(SNIHandle nativeSessionHandle) => new SessionHandle(default, nativeSessionHandle, NativeHandleType);
+#else
+        public SessionHandle(SNIHandle nativeHandle)
+        {
+            NativeHandle = nativeHandle;
+        }
+
+        public bool IsNull => NativeHandle is null;
+
+        public static SessionHandle FromNativeHandle(SNIHandle nativeSessionHandle) => new SessionHandle(nativeSessionHandle);
+#endif
     }
 }
-
-#endif
