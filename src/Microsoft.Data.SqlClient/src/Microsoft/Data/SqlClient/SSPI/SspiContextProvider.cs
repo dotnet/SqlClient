@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -12,10 +13,8 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
 
-        // This is used to store either a single or multiple SspiAuthenticationParameters. Since we initially have potentially
-        // multiple SPNs, we'll start with that. However, once we've succeeded creating an SSPI context, we'll consider that
-        // to be the correct SPN going forward
-        private object? _authParamValue;
+        private List<SspiAuthenticationParameters>? _authParams;
+        private SspiAuthenticationParameters? _authParam;
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
@@ -35,9 +34,9 @@ namespace Microsoft.Data.SqlClient
             _serverInfo = serverInfo;
 
 #if NETFRAMEWORK
-            _authParamValue = CreateAuthParams(serverSpn);
+            _authParam = CreateAuthParams(serverSpn);
 #else
-            _authParamValue = serverSpns.Select(CreateAuthParams).ToArray();
+            _authParams = [.. serverSpns.Select(CreateAuthParams)];
 #endif
             Initialize();
         }
@@ -52,25 +51,41 @@ namespace Microsoft.Data.SqlClient
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
-            if (_authParamValue is SspiAuthenticationParameters authParam && RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, authParam))
+            if (TryRunSingle(receivedBuff, outgoingBlobWriter) || TryRunMultiple(receivedBuff, outgoingBlobWriter))
             {
-                return;
+                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
             }
-            else if (_authParamValue is SspiAuthenticationParameters[] authParams)
+        }
+
+        /// <summary>
+        /// If we only have a single auth param, we know it's the correct one to use.
+        /// </summary>
+        private bool TryRunSingle(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
+        {
+            return _authParam is { } && RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, _authParam);
+        }
+
+        /// <summary>
+        /// If we have multiple, we need to loop through them, and then identify the correct one for future use.
+        /// </summary>
+        private bool TryRunMultiple(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter)
+        {
+            if (_authParams is { })
             {
-                foreach (var p in authParams)
+                foreach (var authParam in _authParams)
                 {
-                    if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, p))
+                    if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, authParam))
                     {
                         // Reset the _authParams to only have a single one going forward to always call the context with that one
-                        _authParamValue = p;
-                        return;
+                        _authParam = authParam;
+                        _authParams = null;
+                        return true;
                     }
                 }
             }
 
-            // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
-            SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+            return false;
         }
 
         private SspiAuthenticationParameters CreateAuthParams(string serverSpn)

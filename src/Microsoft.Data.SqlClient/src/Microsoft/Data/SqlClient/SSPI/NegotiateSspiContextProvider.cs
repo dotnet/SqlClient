@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
 
             _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
 
-            Debug.Assert(_negotiateAuth.TargetName == authParams.Resource, "SSPI resource does not match TargetName");
+            Debug.Assert(_negotiateAuth.TargetName == authParams.Resource, "SSPI resource does not match TargetName. SspiContextProvider should ensure that once a target is established it will only call with that.");
 
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
