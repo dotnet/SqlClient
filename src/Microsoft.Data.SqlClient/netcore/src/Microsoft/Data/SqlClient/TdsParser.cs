@@ -593,7 +593,10 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
-            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpns);
+            // We need to initialize the authentication provider with the server SPN
+            // This array will either be a single entry with the SPN or two entries with the second
+            // one being including a default port.
+            _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this, serverSpns[^1]);
 
             if (_fMARS && marsCapable)
             {
