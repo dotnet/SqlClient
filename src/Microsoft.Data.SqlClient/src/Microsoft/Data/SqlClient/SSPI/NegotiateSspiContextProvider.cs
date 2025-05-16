@@ -2,6 +2,7 @@
 
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Net.Security;
 
 #nullable enable
@@ -10,13 +11,14 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class NegotiateSspiContextProvider : SspiContextProvider
     {
-        private NegotiateAuthentication? _negotiateAuth = null;
+        private NegotiateAuthentication? _negotiateAuth;
 
         protected override bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
             _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
+
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
             // Log session id, status code and the actual SPN used in the negotiation
@@ -28,6 +30,9 @@ namespace Microsoft.Data.SqlClient
                 outgoingBlobWriter.Write(sendBuff);
                 return true;
             }
+
+            _negotiateAuth.Dispose();
+            _negotiateAuth = null;
 
             return false;
         }

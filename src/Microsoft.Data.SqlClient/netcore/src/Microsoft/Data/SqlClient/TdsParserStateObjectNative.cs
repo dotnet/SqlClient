@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string[] spns,
+            out string resolvedSpn,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
                 flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
-            spns = new[] { serverSPN.TrimEnd() };
+            resolvedSpn = serverSPN.TrimEnd();
         }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
@@ -423,7 +423,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_CLIENT) || nativeProtocol.HasFlag(NativeProtocols.SP_PROT_SSL3_SERVER))
             {
-// SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
+                // SSL 2.0 and 3.0 are only referenced to log a warning, not explicitly used for connections
 #pragma warning disable CS0618, CA5397
                 protocolVersion = (int)SslProtocols.Ssl3;
             }
