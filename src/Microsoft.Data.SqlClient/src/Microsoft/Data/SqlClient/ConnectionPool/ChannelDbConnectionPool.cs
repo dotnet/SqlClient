@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             throw new NotImplementedException();
         }
 
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, out DbConnectionInternal connection)
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection)
         {
             throw new NotImplementedException();
         }

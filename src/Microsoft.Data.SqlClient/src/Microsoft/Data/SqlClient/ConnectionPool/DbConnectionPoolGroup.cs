@@ -189,12 +189,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 IDbConnectionPool newPool;
                                 if (LocalAppContextSwitches.UseConnectionPoolV2)
                                 {
-                                    // ChannelDbConnectionPool is the new pool implementation
+                                    // ChannelDbConnectionPool is the v2 pool implementation
                                     newPool = new ChannelDbConnectionPool();
                                 }
                                 else
                                 {
-                                    // WaitHandleDbConnectionPool is the old pool implementation, and used by default if UseConnectionPoolV2 is off
+                                    // WaitHandleDbConnectionPool is the v1 pool implementation, and used by default if UseConnectionPoolV2 is off
                                     newPool = new WaitHandleDbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
                                 }
 
