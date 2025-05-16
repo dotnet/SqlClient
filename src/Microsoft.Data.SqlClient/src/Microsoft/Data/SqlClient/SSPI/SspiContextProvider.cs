@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
-            if (TryRunSingle(receivedBuff, outgoingBlobWriter) || TryRunMultiple(receivedBuff, outgoingBlobWriter))
+            if (!TryRunSingle(receivedBuff, outgoingBlobWriter) && !TryRunMultiple(receivedBuff, outgoingBlobWriter))
             {
                 // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
                 SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
