@@ -19,6 +19,33 @@ using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
+    /// <summary>
+    /// A concrete implementation of <see cref="IDbConnectionPool"/> used by <c>Microsoft.Data.SqlClient</c>
+    /// to efficiently manage a pool of reusable <see cref="DbConnectionInternal"/> objects backing ADO.NET <c>SqlConnection</c> instances.
+    /// 
+    /// <para><b>Primary Responsibilities:</b></para>
+    /// <list type="bullet">
+    ///   <item><description><b>Connection Reuse and Pooling:</b> Uses two stacks (<c>_stackNew</c> and <c>_stackOld</c>) to manage idle connections. Ensures efficient reuse and limits new connection creation.</description></item>
+    ///   <item><description><b>Transaction-Aware Pooling:</b> Tracks connections enlisted in <see cref="System.Transactions.Transaction"/> using <c>TransactedConnectionPool</c> and <c>TransactedConnectionList</c>, ensuring proper context reuse.</description></item>
+    ///   <item><description><b>Concurrency and Synchronization:</b> Uses wait handles and semaphores via <c>PoolWaitHandles</c> to coordinate safe multi-threaded access.</description></item>
+    ///   <item><description><b>Connection Lifecycle Management:</b> Manages creation (<c>CreateObject</c>), deactivation (<c>DeactivateObject</c>), destruction (<c>DestroyObject</c>), and reclamation (<c>ReclaimEmancipatedObjects</c>) of internal connections.</description></item>
+    ///   <item><description><b>Error Handling and Resilience:</b> Implements retry and exponential backoff in <c>TryGetConnection</c> and handles transient errors using <c>_errorWait</c>.</description></item>
+    ///   <item><description><b>Minimum Pool Size Enforcement:</b> Maintains the <c>MinPoolSize</c> by spawning background tasks to create new connections when needed.</description></item>
+    ///   <item><description><b>Load Balancing Support:</b> Honors <c>LoadBalanceTimeout</c> to clean up idle connections and distribute load evenly.</description></item>
+    ///   <item><description><b>Telemetry and Tracing:</b> Uses <c>SqlClientEventSource</c> for extensive diagnostic tracing of connection lifecycle events.</description></item>
+    ///   <item><description><b>Pending Request Queue:</b> Queues unresolved connection requests in <c>_pendingOpens</c> and processes them using background threads.</description></item>
+    ///   <item><description><b>Identity and Authentication Context:</b> Manages identity-based reuse via a dictionary of <c>DbConnectionPoolAuthenticationContext</c> keyed by user identity.</description></item>
+    /// </list>
+    /// 
+    /// <para><b>Key Concepts in Design:</b></para>
+    /// <list type="bullet">
+    ///   <item><description>Stacks and queues for free and pending connections</description></item>
+    ///   <item><description>Synchronization via <c>WaitHandle</c>, <c>Semaphore</c>, and <c>ManualResetEvent</c></description></item>
+    ///   <item><description>Support for transaction enlistment and affinity</description></item>
+    ///   <item><description>Timer-based cleanup to prune idle or expired connections</description></item>
+    ///   <item><description>Background thread spawning for servicing deferred requests and replenishing the pool</description></item>
+    /// </list>
+    /// </summary>
     internal sealed class WaitHandleDbConnectionPool : IDbConnectionPool
     {
 
