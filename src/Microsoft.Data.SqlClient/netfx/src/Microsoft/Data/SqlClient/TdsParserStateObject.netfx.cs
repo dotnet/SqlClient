@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -19,18 +20,9 @@ namespace Microsoft.Data.SqlClient
 {
     using PacketHandle = IntPtr;
 
-    internal readonly ref struct SessionHandle
-    {
-        public readonly SNIHandle NativeHandle;
-
-        public SessionHandle(SNIHandle nativeHandle) => NativeHandle = nativeHandle;
-
-        public bool IsNull => NativeHandle is null;
-    }
-
     internal partial class TdsParserStateObject
     {
-        private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
+        protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
@@ -40,9 +32,6 @@ namespace Microsoft.Data.SqlClient
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
-
-        // Timeout variables
-        private readonly WeakReference _cancellationOwner = new WeakReference(null);
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -101,113 +90,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal uint Status
-        {
-            get
-            {
-                if (_sessionHandle != null)
-                {
-                    return _sessionHandle.Status;
-                }
-                else
-                { // SQL BU DT 395431.
-                    return TdsEnums.SNI_UNINITIALIZED;
-                }
-            }
-        }
-
-        internal SessionHandle SessionHandle => new SessionHandle(Handle);
-
         /////////////////////
         // General methods //
         /////////////////////
-
-        // This method is only called by the command or datareader as a result of a user initiated
-        // cancel request.
-        internal void Cancel(object caller)
-        {
-            Debug.Assert(caller != null, "Null caller for Cancel!");
-            Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
-
-            bool hasLock = false;
-            try
-            {
-                // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
-                while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
-                {
-                    Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);
-                    if (hasLock)
-                    { // Lock for the time being - since we need to synchronize the attention send.
-                      // This lock is also protecting against concurrent close and async continuations
-
-                        // Ensure that, once we have the lock, that we are still the owner
-                        if ((!_cancelled) && (_cancellationOwner.Target == caller))
-                        {
-                            _cancelled = true;
-
-                            if (HasPendingData && !_attentionSent)
-                            {
-                                bool hasParserLock = false;
-                                // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
-                                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
-                                {
-                                    try
-                                    {
-                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
-                                        if (hasParserLock)
-                                        {
-                                            _parser.Connection.ThreadHasParserLockForClose = true;
-                                            SendAttention();
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        if (hasParserLock)
-                                        {
-                                            if (_parser.Connection.ThreadHasParserLockForClose)
-                                            {
-                                                _parser.Connection.ThreadHasParserLockForClose = false;
-                                            }
-                                            _parser.Connection._parserLock.Release();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                if (hasLock)
-                {
-                    Monitor.Exit(this);
-                }
-            }
-        }
-
-        private void ResetCancelAndProcessAttention()
-        {
-            // This method is shared by CloseSession initiated by DataReader.Close or completed
-            // command execution, as well as the session reclamation code for cases where the
-            // DataReader is opened and then GC'ed.
-            lock (this)
-            {
-                // Reset cancel state.
-                _cancelled = false;
-                _cancellationOwner.Target = null;
-
-                if (_attentionSent)
-                {
-                    // Make sure we're cleaning up the AttentionAck if Cancel happened before taking the lock.
-                    // We serialize Cancel/CloseSession to prevent a race condition between these two states.
-                    // The problem is that both sending and receiving attentions are time taking
-                    // operations.
-                    Parser.ProcessPendingAck(this);
-                }
-                SetTimeoutStateStopped();
-            }
-        }
 
         private ConsumerInfo CreateConsumerInfo(bool async)
         {
@@ -347,21 +232,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal int IncrementPendingCallbacks()
-        {
-            int remaining = Interlocked.Increment(ref _pendingCallbacks);
-
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
-            Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
-            return remaining;
-        }
-
-        internal void StartSession(object cancellationOwner)
-        {
-            _cancellationOwner.Target = cancellationOwner;
         }
 
         /// <summary>
@@ -510,23 +380,6 @@ namespace Microsoft.Data.SqlClient
             return SniNativeWrapper.SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
-        private void ChangeNetworkPacketTimeout(int dueTime, int period)
-        {
-            Timer networkPacketTimeout = _networkPacketTimeout;
-            if (networkPacketTimeout != null)
-            {
-                try
-                {
-                    networkPacketTimeout.Change(dueTime, period);
-                }
-                catch (ObjectDisposedException)
-                {
-                    // _networkPacketTimeout is set to null before Disposing, but there is still a slight chance
-                    // that object was disposed after we took a copy
-                }
-            }
-        }
-
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
@@ -570,7 +423,7 @@ namespace Microsoft.Data.SqlClient
 
                 // The timer thread may be unreliable under high contention scenarios. It cannot be
                 // assumed that the timeout has happened on the timer thread callback. Check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
+                // synchronously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync(asyncClose: true);
@@ -604,7 +457,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => source.TrySetResult(null), null);
+                            ExecutionContext.Run(_executionContext, s_readAsyncCallbackComplete, source);
                         }
                         else
                         {
@@ -615,7 +468,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => ReadAsyncCallbackCaptureException(source), null);
+                            ExecutionContext.Run(_executionContext, state => ReadAsyncCallbackCaptureException((TaskCompletionSource<object>)state), source);
                         }
                         else
                         {
@@ -625,48 +478,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
-            }
-        }
-
-        private void ReadAsyncCallbackCaptureException(TaskCompletionSource<object> source)
-        {
-            bool captureSuccess = false;
-            try
-            {
-                if (_hasErrorOrWarning)
-                {
-                    // Do the close on another thread, since we don't want to block the callback thread
-                    ThrowExceptionAndWarning(asyncClose: true);
-                }
-                else if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
-                {
-                    // Connection was closed by another thread before we parsed the packet, so no error was added to the collection
-                    throw ADP.ClosedConnectionError();
-                }
-            }
-            catch (Exception ex)
-            {
-                if (source.TrySetException(ex))
-                {
-                    // There was an exception, and it was successfully stored in the task
-                    captureSuccess = true;
-                }
-            }
-
-            if (!captureSuccess)
-            {
-                // Either there was no exception, or the task was already completed
-                // This is unusual, but possible if a fatal timeout occurred on another thread (which should mean that the connection is now broken)
-                Debug.Assert(_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed || _parser.Connection.IsConnectionDoomed, "Failed to capture exception while the connection was still healthy");
-
-                // The safest thing to do is to ensure that the connection is broken and attempt to cancel the task
-                // This must be done from another thread to not block the callback thread
-                Task.Factory.StartNew(() =>
-                {
-                    _parser.State = TdsParserState.Broken;
-                    _parser.Connection.BreakConnection();
-                    source.TrySetCanceled();
-                });
             }
         }
 
@@ -761,102 +572,6 @@ namespace Microsoft.Data.SqlClient
         // Network/Packet Writing & Processing //
         /////////////////////////////////////////
 
-        //
-        // Takes a secure string and offsets and saves them for a write latter when the information is written out to SNI Packet
-        //  This method is provided to better handle the life cycle of the clear text of the secure string
-        //  This method also ensures that the clear text is not held in the unpined managed buffer so that it avoids getting moved around by CLR garbage collector
-        //  TdsParserStaticMethods.EncryptPassword operation is also done in the unmanaged buffer for the clear text later
-        //
-        internal void WriteSecureString(SecureString secureString)
-        {
-            Debug.Assert(_securePasswords[0] == null || _securePasswords[1] == null, "There are more than two secure passwords");
-
-            int index = _securePasswords[0] != null ? 1 : 0;
-
-            _securePasswords[index] = secureString;
-            _securePasswordOffsetsInBuffer[index] = _outBytesUsed;
-
-            // loop through and write the entire array
-            int lengthInBytes = secureString.Length * 2;
-
-            // It is guaranteed both secure password and secure change password should fit into the first packet
-            // Given current TDS format and implementation it is not possible that one of secure string is the last item and exactly fill up the output buffer
-            //  if this ever happens and it is correct situation, the packet needs to be written out after _outBytesUsed is update
-            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be split into two different packet or the last item which fully fill up _outBuff!!!");
-
-            _outBytesUsed += lengthInBytes;
-        }
-
-        internal void ResetSecurePasswordsInformation()
-        {
-            for (int i = 0; i < _securePasswords.Length; ++i)
-            {
-                _securePasswords[i] = null;
-                _securePasswordOffsetsInBuffer[i] = 0;
-            }
-        }
-
-        internal Task WaitForAccumulatedWrites()
-        {
-            // Checked for stored exceptions
-#pragma warning disable 420 // A reference to a volatile field will not be treated as volatile - Disabling since the Interlocked APIs are volatile aware
-            Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
-            if (delayedException != null)
-            {
-                throw delayedException;
-            }
-#pragma warning restore 420
-
-            if (_asyncWriteCount == 0)
-            {
-                return null;
-            }
-
-            _writeCompletionSource = new TaskCompletionSource<object>();
-            Task task = _writeCompletionSource.Task;
-
-            // Ensure that _writeCompletionSource is set before checking state
-            Interlocked.MemoryBarrier();
-
-            // Now that we have set _writeCompletionSource, check if parser is closed or broken
-            if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
-            {
-                throw ADP.ClosedConnectionError();
-            }
-
-            // Check for stored exceptions
-#pragma warning disable 420 // A reference to a volatile field will not be treated as volatile - Disabling since the Interlocked APIs are volatile aware
-            delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
-            if (delayedException != null)
-            {
-                throw delayedException;
-            }
-#pragma warning restore 420 
-
-            // If there are no outstanding writes, see if we can shortcut and return null
-            if ((_asyncWriteCount == 0) && ((!task.IsCompleted) || (task.Exception == null)))
-            {
-                task = null;
-            }
-
-            return task;
-        }
-
-        // Takes in a single byte and writes it to the buffer.  If the buffer is full, it is flushed
-        // and then the buffer is re-initialized in flush() and then the byte is put in the buffer.
-        internal void WriteByte(byte b)
-        {
-            Debug.Assert(_outBytesUsed <= _outBuff.Length, "ERROR - TDSParser: _outBytesUsed > _outBuff.Length");
-
-            // check to make sure we haven't used the full amount of space available in the buffer, if so, flush it
-            if (_outBytesUsed == _outBuff.Length)
-            {
-                WritePacket(TdsEnums.SOFTFLUSH, canAccumulate: true);
-            }
-            // set byte in buffer and increment the counter for number of bytes used in the out buffer
-            _outBuff[_outBytesUsed++] = b;
-        }
-
         // Dumps contents of buffer to SNI for network write.
         internal Task WritePacket(byte flushMode, bool canAccumulate = false)
         {
@@ -873,7 +588,8 @@ namespace Microsoft.Data.SqlClient
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn
                     && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
-                    && _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen))
+                    && _outBytesUsed == (_outputHeaderLen +
+                    BinaryPrimitives.ReadInt32LittleEndian(_outBuff.AsSpan(_outputHeaderLen)))
                     && _outputPacketCount == 0
                     || _outBytesUsed == _outputHeaderLen
                     && _outputPacketCount == 0)
@@ -926,35 +642,19 @@ namespace Microsoft.Data.SqlClient
             if (willCancel)
             {
                 // If we have been canceled, then ensure that we write the ATTN packet as well
+#if NET
+                task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket);
+#else
                 task = AsyncHelper.CreateContinuationTask(task, CancelWritePacket, _parser.Connection);
+#endif
             }
 
             return task;
         }
 
-        private void CancelWritePacket()
-        {
-            Debug.Assert(_cancelled, "Should not call CancelWritePacket if _cancelled is not set");
-
-            _parser.Connection.ThreadHasParserLockForClose = true;      // In case of error, let the connection know that we are holding the lock
-            try
-            {
-                // Send the attention and wait for the ATTN_ACK
-                SendAttention();
-                ResetCancelAndProcessAttention();
-
-                // Let the caller know that we've given up
-                throw SQL.OperationCancelled();
-            }
-            finally
-            {
-                _parser.Connection.ThreadHasParserLockForClose = false;
-            }
-        }
-
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
-        private Task SNIWritePacket(SNIHandle handle, SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
+        private Task SNIWritePacket(SNIPacket packet, out uint sniError, bool canAccumulate, bool callerHasConnectionLock, bool asyncClose = false)
         {
             // Check for a stored exception
             Exception delayedException = Interlocked.Exchange(ref _delayedWriteAsyncCallbackException, null);
@@ -996,7 +696,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                sniError = SniNativeWrapper.SniWritePacket(handle, packet, sync);
+                sniError = SniNativeWrapper.SniWritePacket(Handle, packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -1138,7 +838,7 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             _parser._asyncWrite = false; // stop async write
-                            SNIWritePacket(Handle, attnPacket, out _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
+                            SNIWritePacket(attnPacket, out _, canAccumulate: false, callerHasConnectionLock: false, asyncClose);
                             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Sent Attention.", _objectID);
                         }
                         finally
@@ -1175,7 +875,7 @@ namespace Microsoft.Data.SqlClient
             SniNativeWrapper.SniPacketSetData(packet, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
             Debug.Assert(Parser.Connection._parserLock.ThreadMayHaveLock(), "Thread is writing without taking the connection lock");
-            Task task = SNIWritePacket(Handle, packet, out _, canAccumulate, callerHasConnectionLock: true);
+            Task task = SNIWritePacket(packet, out _, canAccumulate, callerHasConnectionLock: true);
 
             // Check to see if the timeout has occurred.  This time out code is special case code to allow BCP writes to timeout. Eventually we should make all writes timeout.
             if (_bulkCopyOpperationInProgress && 0 == GetTimeoutRemaining())
@@ -1291,22 +991,6 @@ namespace Microsoft.Data.SqlClient
         // Statistics, Tracing, and related methods //
         //////////////////////////////////////////////
 
-        private void SniReadStatisticsAndTracing()
-        {
-            SqlStatistics statistics = Parser.Statistics;
-            if (statistics != null)
-            {
-                if (statistics.WaitForReply)
-                {
-                    statistics.SafeIncrement(ref statistics._serverRoundtrips);
-                    statistics.ReleaseAndUpdateNetworkServerTimer();
-                }
-
-                statistics.SafeAdd(ref statistics._bytesReceived, _inBytesRead);
-                statistics.SafeIncrement(ref statistics._buffersReceived);
-            }
-        }
-
         private void SniWriteStatisticsAndTracing()
         {
             SqlStatistics statistics = _parser.Statistics;
@@ -1349,355 +1033,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, _outBytesUsed);
         }
 
-        [Conditional("DEBUG")]
-        private void AssertValidState()
-        {
-            if (_inBytesUsed < 0 || _inBytesRead < 0)
-            {
-                Debug.Fail($"Invalid TDS Parser State: either _inBytesUsed or _inBytesRead is negative: {_inBytesUsed}, {_inBytesRead}");
-            }
-            else if (_inBytesUsed > _inBytesRead)
-            {
-                Debug.Fail($"Invalid TDS Parser State: _inBytesUsed > _inBytesRead: {_inBytesUsed} > {_inBytesRead}");
-            }
-
-            Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
-        }
-
-
-        //////////////////////////////////////////////
-        // Errors and Warnings                      //
-        //////////////////////////////////////////////
-
-        /// <summary>
-        /// True if there is at least one error or warning (not counting the pre-attention errors\warnings)
-        /// </summary>
-        internal bool HasErrorOrWarning
-        {
-            get
-            {
-                return _hasErrorOrWarning;
-            }
-        }
-
-        /// <summary>
-        /// Adds an error to the error collection
-        /// </summary>
-        /// <param name="error"></param>
-        internal void AddError(SqlError error)
-        {
-            Debug.Assert(error != null, "Trying to add a null error");
-
-            // Switch to sync once we see an error
-            _syncOverAsync = true;
-
-            lock (_errorAndWarningsLock)
-            {
-                _hasErrorOrWarning = true;
-                if (_errors == null)
-                {
-                    _errors = new SqlErrorCollection();
-                }
-                _errors.Add(error);
-            }
-        }
-
-        /// <summary>
-        /// Gets the number of errors currently in the error collection
-        /// </summary>
-        internal int ErrorCount
-        {
-            get
-            {
-                int count = 0;
-                lock (_errorAndWarningsLock)
-                {
-                    if (_errors != null)
-                    {
-                        count = _errors.Count;
-                    }
-                }
-                return count;
-            }
-        }
-
-        /// <summary>
-        /// Adds an warning to the warning collection
-        /// </summary>
-        /// <param name="error"></param>
-        internal void AddWarning(SqlError error)
-        {
-            Debug.Assert(error != null, "Trying to add a null error");
-
-            // Switch to sync once we see a warning
-            _syncOverAsync = true;
-
-            lock (_errorAndWarningsLock)
-            {
-                _hasErrorOrWarning = true;
-                if (_warnings == null)
-                {
-                    _warnings = new SqlErrorCollection();
-                }
-                _warnings.Add(error);
-            }
-        }
-
-        /// <summary>
-        /// Gets the number of warnings currently in the warning collection
-        /// </summary>
-        internal int WarningCount
-        {
-            get
-            {
-                int count = 0;
-                lock (_errorAndWarningsLock)
-                {
-                    if (_warnings != null)
-                    {
-                        count = _warnings.Count;
-                    }
-                }
-                return count;
-            }
-        }
-
         protected PacketHandle EmptyReadPacket => default;
-
-        internal int PreAttentionErrorCount
-        {
-            get
-            {
-                int count = 0;
-                lock (_errorAndWarningsLock)
-                {
-                    if (_preAttentionErrors != null)
-                    {
-                        count = _preAttentionErrors.Count;
-                    }
-                }
-                return count;
-            }
-        }
-
-        /// <summary>
-        /// Gets the number of errors currently in the pre-attention warning collection
-        /// </summary>
-        internal int PreAttentionWarningCount
-        {
-            get
-            {
-                int count = 0;
-                lock (_errorAndWarningsLock)
-                {
-                    if (_preAttentionWarnings != null)
-                    {
-                        count = _preAttentionWarnings.Count;
-                    }
-                }
-                return count;
-            }
-        }
-
-        /// <summary>
-        /// Gets the full list of errors and warnings (including the pre-attention ones), then wipes all error and warning lists
-        /// </summary>
-        /// <param name="broken">If true, the connection should be broken</param>
-        /// <returns>An array containing all of the errors and warnings</returns>
-        internal SqlErrorCollection GetFullErrorAndWarningCollection(out bool broken)
-        {
-            SqlErrorCollection allErrors = new SqlErrorCollection();
-            broken = false;
-
-            lock (_errorAndWarningsLock)
-            {
-                _hasErrorOrWarning = false;
-
-                // Merge all error lists, then reset them
-                AddErrorsToCollection(_errors, ref allErrors, ref broken);
-                AddErrorsToCollection(_warnings, ref allErrors, ref broken);
-                _errors = null;
-                _warnings = null;
-
-                // We also process the pre-attention error lists here since, if we are here and they are populated, then an error occurred while sending attention so we should show the errors now (otherwise they'd be lost)
-                AddErrorsToCollection(_preAttentionErrors, ref allErrors, ref broken);
-                AddErrorsToCollection(_preAttentionWarnings, ref allErrors, ref broken);
-                _preAttentionErrors = null;
-                _preAttentionWarnings = null;
-            }
-
-            return allErrors;
-        }
-
-        private void AddErrorsToCollection(SqlErrorCollection inCollection, ref SqlErrorCollection collectionToAddTo, ref bool broken)
-        {
-            if (inCollection != null)
-            {
-                foreach (SqlError error in inCollection)
-                {
-                    collectionToAddTo.Add(error);
-                    broken |= (error.Class >= TdsEnums.FATAL_ERROR_CLASS);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Stores away current errors and warnings so that an attention can be processed
-        /// </summary>
-        internal void StoreErrorAndWarningForAttention()
-        {
-            lock (_errorAndWarningsLock)
-            {
-                Debug.Assert(_preAttentionErrors == null && _preAttentionWarnings == null, "Can't store errors for attention because there are already errors stored");
-
-                _hasErrorOrWarning = false;
-
-                _preAttentionErrors = _errors;
-                _preAttentionWarnings = _warnings;
-
-                _errors = null;
-                _warnings = null;
-            }
-        }
-
-        /// <summary>
-        /// Restores errors and warnings that were stored in order to process an attention
-        /// </summary>
-        internal void RestoreErrorAndWarningAfterAttention()
-        {
-            lock (_errorAndWarningsLock)
-            {
-                Debug.Assert(_errors == null && _warnings == null, "Can't restore errors after attention because there are already other errors");
-
-                _hasErrorOrWarning = (((_preAttentionErrors != null) && (_preAttentionErrors.Count > 0)) || ((_preAttentionWarnings != null) && (_preAttentionWarnings.Count > 0)));
-
-                _errors = _preAttentionErrors;
-                _warnings = _preAttentionWarnings;
-
-                _preAttentionErrors = null;
-                _preAttentionWarnings = null;
-            }
-        }
-
-        /// <summary>
-        /// Checks if an error is stored in _error and, if so, throws an error
-        /// </summary>
-        internal void CheckThrowSNIException()
-        {
-            if (HasErrorOrWarning)
-            {
-                ThrowExceptionAndWarning();
-            }
-        }
-
-        /// <summary>
-        /// Debug Only: Ensures that the TdsParserStateObject has no lingering state and can safely be re-used
-        /// </summary>
-        [Conditional("DEBUG")]
-        internal void AssertStateIsClean()
-        {
-            // If our TdsParser is closed or broken, then we don't really care about our state
-            TdsParser parser = _parser;
-            if ((parser != null) && (parser.State != TdsParserState.Closed) && (parser.State != TdsParserState.Broken))
-            {
-                // Async reads
-                Debug.Assert(_snapshot == null && _snapshotStatus == SnapshotStatus.NotActive, "StateObj has leftover snapshot state");
-                Debug.Assert(!_asyncReadWithoutSnapshot, "StateObj has AsyncReadWithoutSnapshot still enabled");
-                Debug.Assert(_executionContext == null, "StateObj has a stored execution context from an async read");
-                // Async writes
-                Debug.Assert(_asyncWriteCount == 0, "StateObj still has outstanding async writes");
-                Debug.Assert(_delayedWriteAsyncCallbackException == null, "StateObj has an unobserved exceptions from an async write");
-                // Attention\Cancellation\Timeouts
-                Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
-                Debug.Assert(!_cancelled, "StateObj still has cancellation set");
-                Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
-                // Errors and Warnings
-                Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
-            }
-        }
-
-#if DEBUG
-        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
-        {
-            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
-            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
-
-            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
-            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
-
-            try
-            {
-                if (realNetworkPacketTaskSource != null)
-                {
-                    // Wait for the real read to complete
-                    realNetworkPacketTaskSource.Task.Wait();
-                }
-            }
-            finally
-            {
-                if (networkPacketTaskSource != null)
-                {
-                    if (resetForcePendingReadsToWait)
-                    {
-                        s_forcePendingReadsToWaitForUser = false;
-                    }
-
-                    networkPacketTaskSource.TrySetResult(null);
-                }
-            }
-        }
-
-        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
-        {
-            TaskCompletionSource<object> realNetworkPacketTaskSource = _realNetworkPacketTaskSource;
-            TaskCompletionSource<object> networkPacketTaskSource = _networkPacketTaskSource;
-
-            Debug.Assert(s_forcePendingReadsToWaitForUser, "Not forcing pends to wait for user - can't force complete");
-            Debug.Assert(networkPacketTaskSource != null, "No pending read to complete");
-
-            try
-            {
-                if (realNetworkPacketTaskSource != null)
-                {
-                    // Wait for the real read to complete
-                    realNetworkPacketTaskSource.Task.Wait();
-                }
-            }
-            finally
-            {
-                if (networkPacketTaskSource != null)
-                {
-                    if (resetForcePendingReadsToWait)
-                    {
-                        s_forcePendingReadsToWaitForUser = false;
-                    }
-
-                    AddError(new SqlError(errorCode, 0x00, TdsEnums.FATAL_ERROR_CLASS, _parser.Server, string.Empty, string.Empty, 0));
-                    try
-                    {
-                        ThrowExceptionAndWarning();
-                    }
-                    catch (Exception ex)
-                    {
-                        networkPacketTaskSource.TrySetException(ex);
-                    }
-                }
-            }
-        }
-#endif
-
-        internal void CloneCleanupAltMetaDataSetArray()
-        {
-            if (_snapshot != null)
-            {
-                _snapshot.CloneCleanupAltMetaDataSetArray();
-            }
-        }
-
-
-        sealed partial class StateSnapshot
-        {
-
-        }
     }
 }
