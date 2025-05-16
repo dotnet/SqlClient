@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
     /// A base interface for implementing database connection pools.
-    /// Derived classes are responsible for managing the lifecycle 
+    /// Implementations are responsible for managing the lifecycle 
     /// of connections and providing access to database connections.
     /// </summary>
     internal interface IDbConnectionPool
@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// An id that uniqely identifies this connection pool.
         /// </summary>
-        int ObjectId { get; }
+        int Id { get; }
 
         /// <summary>
         /// The current state of the connection pool.

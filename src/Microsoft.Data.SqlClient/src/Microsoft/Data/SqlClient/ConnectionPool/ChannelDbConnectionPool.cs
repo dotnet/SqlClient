@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// </summary>
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool
     {
-        public int ObjectId => throw new NotImplementedException();
+        public int Id => throw new NotImplementedException();
 
         public DbConnectionPoolState State { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
