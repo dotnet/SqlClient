@@ -19,8 +19,6 @@ namespace Microsoft.Data.SqlClient
 
             _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
 
-            Debug.Assert(_negotiateAuth.TargetName == authParams.Resource, "SSPI resource does not match TargetName. SspiContextProvider should ensure that once a target is established it will only call with that.");
-
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
             // Log session id, status code and the actual SPN used in the negotiation
@@ -33,8 +31,6 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            // Reset _negotiateAuth to be generated again for next SPN.
-            _negotiateAuth = null;
             return false;
         }
     }
