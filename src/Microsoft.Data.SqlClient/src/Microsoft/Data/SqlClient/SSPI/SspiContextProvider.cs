@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
 
-        // This is used to store either a single or multiple SspiAuthenticationParameters. Since we initially have potential
+        // This is used to store either a single or multiple SspiAuthenticationParameters. Since we initially have potentially
         // multiple SPNs, we'll start with that. However, once we've succeeded creating an SSPI context, we'll consider that
         // to be the correct SPN going forward
         private object? _authParamValue;
