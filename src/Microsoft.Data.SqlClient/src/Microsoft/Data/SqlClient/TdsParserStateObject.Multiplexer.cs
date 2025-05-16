@@ -7,9 +7,6 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using PacketHandle = IntPtr;
-#endif
     partial class TdsParserStateObject
     {
         private Packet _partialPacket;

@@ -18,8 +18,6 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    using PacketHandle = IntPtr;
-
     internal partial class TdsParserStateObject
     {
         protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
