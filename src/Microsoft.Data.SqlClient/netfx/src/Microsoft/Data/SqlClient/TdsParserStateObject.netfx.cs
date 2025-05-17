@@ -136,12 +136,6 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
-        internal bool IsPacketEmpty(PacketHandle readPacket)
-        {
-            Debug.Assert(readPacket.Type == PacketHandle.NativePointerType || readPacket.Type == 0, "unexpected packet type when requiring NativePointer");
-            return IntPtr.Zero == readPacket.NativePointer;
-        }
-
         internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
         {
             SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();

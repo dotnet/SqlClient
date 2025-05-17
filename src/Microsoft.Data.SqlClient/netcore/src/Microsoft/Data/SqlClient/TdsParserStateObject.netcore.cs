@@ -100,8 +100,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void DisposePacketCache();
 
-        internal abstract bool IsPacketEmpty(PacketHandle readPacket);
-
         internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
 
         internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);

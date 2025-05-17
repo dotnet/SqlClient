@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using Interop.Windows.Sni;
 
 namespace Microsoft.Data.SqlClient
@@ -28,6 +29,12 @@ namespace Microsoft.Data.SqlClient
         internal override SessionHandle SessionHandle => SessionHandle.FromNativeHandle(_sessionHandle);
 
         internal override Guid? SessionId => default;
+
+        internal override bool IsPacketEmpty(PacketHandle readPacket)
+        {
+            Debug.Assert(readPacket.Type == PacketHandle.NativePointerType || readPacket.Type == 0, "unexpected packet type when requiring NativePointer");
+            return IntPtr.Zero == readPacket.NativePointer;
+        }
 
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);

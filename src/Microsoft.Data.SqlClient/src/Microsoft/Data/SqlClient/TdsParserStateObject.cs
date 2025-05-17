@@ -481,6 +481,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract SessionHandle SessionHandle { get; }
 
+        internal abstract bool IsPacketEmpty(PacketHandle readPacket);
+
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
         internal abstract uint DisableSsl();
