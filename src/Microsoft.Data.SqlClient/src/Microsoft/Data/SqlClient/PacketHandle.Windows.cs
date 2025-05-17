@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 
 namespace Microsoft.Data.SqlClient
@@ -22,13 +20,16 @@ namespace Microsoft.Data.SqlClient
     {
         public const int NativePointerType = 1;
         public const int NativePacketType = 2;
+#if NET
         public const int ManagedPacketType = 3;
 
         public readonly SNI.SNIPacket ManagedPacket;
+#endif
         public readonly SNIPacket NativePacket;
         public readonly IntPtr NativePointer;
         public readonly int Type;
 
+#if NET
         private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, SNI.SNIPacket managedPacket, int type)
         {
             Type = type;
@@ -36,7 +37,16 @@ namespace Microsoft.Data.SqlClient
             NativePointer = nativePointer;
             NativePacket = nativePacket;
         }
+#else
+        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, int type)
+        {
+            Type = type;
+            NativePointer = nativePointer;
+            NativePacket = nativePacket;
+        }
+#endif
 
+#if NET
         public static PacketHandle FromManagedPacket(SNI.SNIPacket managedPacket) =>
             new PacketHandle(default, default, managedPacket, ManagedPacketType);
 
@@ -45,9 +55,12 @@ namespace Microsoft.Data.SqlClient
 
         public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
             new PacketHandle(default, nativePacket, default, NativePacketType);
+#else
+        public static PacketHandle FromNativePointer(IntPtr nativePointer) =>
+            new PacketHandle(nativePointer, default, NativePointerType);
 
-
+        public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
+            new PacketHandle(default, nativePacket, NativePacketType);
+#endif
     }
 }
-
-#endif

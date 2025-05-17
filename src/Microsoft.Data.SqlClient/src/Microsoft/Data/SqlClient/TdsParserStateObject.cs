@@ -19,7 +19,6 @@ using System.Runtime.ConstrainedExecution;
 namespace Microsoft.Data.SqlClient
 {
 #if NETFRAMEWORK
-    using PacketHandle = IntPtr;
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 #endif
     
@@ -481,6 +480,34 @@ namespace Microsoft.Data.SqlClient
         internal abstract Guid? SessionId { get; }
 
         internal abstract SessionHandle SessionHandle { get; }
+
+        protected abstract PacketHandle EmptyReadPacket { get; }
+
+        internal abstract PacketHandle GetResetWritePacket(int dataSize);
+
+        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
+
+        protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
+
+        internal abstract bool IsFailedHandle();
+
+        internal abstract bool IsPacketEmpty(PacketHandle readPacket);
+
+        internal abstract void ReleasePacket(PacketHandle syncReadPacket);
+
+        internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
+
+        internal abstract uint WritePacket(PacketHandle packet, bool sync);
+
+        internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);
+
+        protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
+
+        internal abstract void ClearAllWritePackets();
+
+        internal abstract bool IsValidPacket(PacketHandle packetPointer);
+
+        internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
