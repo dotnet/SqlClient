@@ -485,6 +485,8 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
+        protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
+
         internal abstract bool IsFailedHandle();
 
         internal abstract bool IsPacketEmpty(PacketHandle readPacket);

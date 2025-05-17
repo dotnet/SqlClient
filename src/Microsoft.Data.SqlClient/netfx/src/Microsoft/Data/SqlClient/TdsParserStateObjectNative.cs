@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 
@@ -37,6 +38,13 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
             return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
+        }
+
+        protected override bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            IntPtr ptr = packet.NativePointer;
+            return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
         }
 
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;

@@ -400,8 +400,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
-
         public void WriteAsyncCallback(PacketHandle packet, uint sniError) =>
             WriteAsyncCallback(IntPtr.Zero, packet, sniError);
 

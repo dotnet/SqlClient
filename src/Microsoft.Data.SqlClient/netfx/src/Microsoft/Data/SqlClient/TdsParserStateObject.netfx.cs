@@ -460,13 +460,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source)
-        {
-            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            IntPtr ptr = packet.NativePointer;
-            return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
-        }
-
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
 
         public void WriteAsyncCallback(IntPtr key, PacketHandle packet, uint sniError)
