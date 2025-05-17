@@ -2,13 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
