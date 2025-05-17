@@ -86,8 +86,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
-        internal abstract bool IsFailedHandle();
-
         protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
 
         protected abstract void FreeGcHandle(int remaining, bool release);

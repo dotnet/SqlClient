@@ -31,6 +31,8 @@ namespace Microsoft.Data.SqlClient
 
         internal override Guid? SessionId => default;
 
+        internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
+
         internal override bool IsPacketEmpty(PacketHandle readPacket)
         {
             Debug.Assert(readPacket.Type == PacketHandle.NativePointerType || readPacket.Type == 0, "unexpected packet type when requiring NativePointer");

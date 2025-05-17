@@ -254,11 +254,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
-
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
+
+        internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
 
         internal override bool IsPacketEmpty(PacketHandle readPacket)
         {

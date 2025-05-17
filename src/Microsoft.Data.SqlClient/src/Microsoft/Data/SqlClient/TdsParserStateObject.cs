@@ -481,6 +481,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract SessionHandle SessionHandle { get; }
 
+        internal abstract bool IsFailedHandle();
+
         internal abstract bool IsPacketEmpty(PacketHandle readPacket);
 
         internal abstract void ReleasePacket(PacketHandle syncReadPacket);

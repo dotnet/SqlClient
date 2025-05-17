@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
-            if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
+            if (IsFailedHandle())
             {
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
