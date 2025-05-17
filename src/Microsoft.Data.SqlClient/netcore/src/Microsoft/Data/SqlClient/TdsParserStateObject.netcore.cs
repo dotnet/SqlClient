@@ -100,12 +100,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint CheckConnection();
 
-        internal abstract void ClearAllWritePackets();
-
-        internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);
-
-        protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
-
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);

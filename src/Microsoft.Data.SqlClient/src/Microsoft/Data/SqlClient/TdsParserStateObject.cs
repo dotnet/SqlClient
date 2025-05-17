@@ -499,6 +499,12 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint WritePacket(PacketHandle packet, bool sync);
 
+        internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);
+
+        protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
+
+        internal abstract void ClearAllWritePackets();
+
         internal abstract bool IsValidPacket(PacketHandle packetPointer);
 
         internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);

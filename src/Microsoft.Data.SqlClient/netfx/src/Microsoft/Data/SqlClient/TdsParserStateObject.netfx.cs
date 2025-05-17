@@ -23,10 +23,9 @@ namespace Microsoft.Data.SqlClient
         protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
-        private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
+        protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-        private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
-        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
+        protected readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -904,57 +903,6 @@ namespace Microsoft.Data.SqlClient
 
             AssertValidState();
             return task;
-        }
-
-        internal void ClearAllWritePackets()
-        {
-            if (_sniPacket != null)
-            {
-                _sniPacket.Dispose();
-                _sniPacket = null;
-            }
-            lock (_writePacketLockObject)
-            {
-                Debug.Assert(_pendingWritePackets.Count == 0 && _asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
-                _writePacketCache.Clear();
-            }
-        }
-
-        private PacketHandle AddPacketToPendingList(PacketHandle packetToAdd)
-        {
-            Debug.Assert(packetToAdd.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
-            SNIPacket packet = packetToAdd.NativePacket;
-            Debug.Assert(packet == _sniPacket, "Adding a packet other than the current packet to the pending list");
-            _sniPacket = null;
-            IntPtr pointer = packet.DangerousGetHandle();
-
-            lock (_writePacketLockObject)
-            {
-                _pendingWritePackets.Add(pointer, packet);
-            }
-
-            return PacketHandle.FromNativePointer(pointer);
-        }
-
-        private void RemovePacketFromPendingList(PacketHandle ptr)
-        {
-            Debug.Assert(ptr.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            IntPtr pointer = ptr.NativePointer;
-
-            lock (_writePacketLockObject)
-            {
-                if (_pendingWritePackets.TryGetValue(pointer, out SNIPacket recoveredPacket))
-                {
-                    _pendingWritePackets.Remove(pointer);
-                    _writePacketCache.Add(recoveredPacket);
-                }
-#if DEBUG
-                else
-                {
-                    Debug.Assert(false, "Removing a packet from the pending list that was never added to it");
-                }
-#endif
-            }
         }
 
         //////////////////////////////////////////////

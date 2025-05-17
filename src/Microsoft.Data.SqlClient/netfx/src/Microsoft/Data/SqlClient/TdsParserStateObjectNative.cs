@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
@@ -12,6 +13,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
+
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
             : base(parser, physicalConnection.Handle, async)
         {
@@ -45,6 +48,27 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
             IntPtr ptr = packet.NativePointer;
             return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
+        }
+
+        protected override void RemovePacketFromPendingList(PacketHandle ptr)
+        {
+            Debug.Assert(ptr.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            IntPtr pointer = ptr.NativePointer;
+
+            lock (_writePacketLockObject)
+            {
+                if (_pendingWritePackets.TryGetValue(pointer, out SNIPacket recoveredPacket))
+                {
+                    _pendingWritePackets.Remove(pointer);
+                    _writePacketCache.Add(recoveredPacket);
+                }
+#if DEBUG
+                else
+                {
+                    Debug.Fail("Removing a packet from the pending list that was never added to it");
+                }
+#endif
+            }
         }
 
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
@@ -82,6 +106,22 @@ namespace Microsoft.Data.SqlClient
             return SniNativeWrapper.SniWritePacket(Handle, packet.NativePacket, sync);
         }
 
+        internal override PacketHandle AddPacketToPendingList(PacketHandle packetToAdd)
+        {
+            Debug.Assert(packetToAdd.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
+            SNIPacket packet = packetToAdd.NativePacket;
+            Debug.Assert(packet == _sniPacket, "Adding a packet other than the current packet to the pending list");
+            _sniPacket = null;
+            IntPtr pointer = packet.DangerousGetHandle();
+
+            lock (_writePacketLockObject)
+            {
+                _pendingWritePackets.Add(pointer, packet);
+            }
+
+            return PacketHandle.FromNativePointer(pointer);
+        }
+
         internal override bool IsValidPacket(PacketHandle packetPointer)
         {
             Debug.Assert(packetPointer.Type == PacketHandle.NativePointerType || packetPointer.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePointer");
@@ -106,6 +146,20 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             return PacketHandle.FromNativePacket(_sniPacket);
+        }
+
+        internal override void ClearAllWritePackets()
+        {
+            if (_sniPacket != null)
+            {
+                _sniPacket.Dispose();
+                _sniPacket = null;
+            }
+            lock (_writePacketLockObject)
+            {
+                Debug.Assert(_pendingWritePackets.Count == 0 && _asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
+                _writePacketCache.Clear();
+            }
         }
 
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
