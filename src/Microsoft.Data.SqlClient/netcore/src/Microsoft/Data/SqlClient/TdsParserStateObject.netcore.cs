@@ -100,10 +100,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void DisposePacketCache();
 
-        internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
-
-        internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
-
         internal abstract uint CheckConnection();
 
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);

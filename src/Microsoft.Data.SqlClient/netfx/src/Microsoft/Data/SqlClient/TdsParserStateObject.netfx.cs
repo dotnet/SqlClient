@@ -136,21 +136,6 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
-        internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
-        {
-            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
-        internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
-        {
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]

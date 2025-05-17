@@ -485,6 +485,10 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void ReleasePacket(PacketHandle syncReadPacket);
 
+        internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
+
+        internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
+
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
         internal abstract uint DisableSsl();

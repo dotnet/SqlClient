@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using Interop.Windows.Sni;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -40,6 +41,21 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(syncReadPacket.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
             SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
+        }
+
+        internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
+        {
+            IntPtr readPacketPtr = IntPtr.Zero;
+            error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
+            return PacketHandle.FromNativePointer(readPacketPtr);
+        }
+
+        internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
+        {
+            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
+            IntPtr readPacketPtr = IntPtr.Zero;
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
+            return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)

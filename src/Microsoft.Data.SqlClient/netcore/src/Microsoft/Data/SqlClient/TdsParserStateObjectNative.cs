@@ -256,18 +256,6 @@ namespace Microsoft.Data.SqlClient
 
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
 
-        internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
-        {
-            SNIHandle handle = Handle;
-            if (handle == null)
-            {
-                throw ADP.ClosedConnectionError();
-            }
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
@@ -295,6 +283,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(handle.Type == SessionHandle.NativeHandleType, "unexpected handle type when requiring NativePointer");
             IntPtr readPacketPtr = IntPtr.Zero;
             error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
+            return PacketHandle.FromNativePointer(readPacketPtr);
+        }
+
+        internal override PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
+        {
+            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
+            IntPtr readPacketPtr = IntPtr.Zero;
+            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, GetTimeoutRemaining());
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
