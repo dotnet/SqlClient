@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClient.ManagedSni;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private SNIErrorDetails GetSniErrorDetails()
         {
             SNIErrorDetails details;
-            SNIError sniError = SNIProxy.Instance.GetLastError();
+            SniError sniError = SniProxy.Instance.GetLastError();
             details.sniErrorNumber = sniError.sniError;
             details.errorMessage = sniError.errorMessage;
             details.nativeError = sniError.nativeError;

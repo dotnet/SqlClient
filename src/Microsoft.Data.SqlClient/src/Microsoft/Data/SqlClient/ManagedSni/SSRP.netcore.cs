@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     internal sealed class SSRP
     {
@@ -188,8 +190,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 IPAddress[] ipAddresses = timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(browserHostname)
-                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout);
+                    ? SniCommon.GetDnsIpAddresses(browserHostname)
+                    : SniCommon.GetDnsIpAddresses(browserHostname, timeout);
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
                 IPAddress[] ipv4Addresses = null;
@@ -462,3 +464,5 @@ namespace Microsoft.Data.SqlClient.SNI
         }
     }
 }
+
+#endif
