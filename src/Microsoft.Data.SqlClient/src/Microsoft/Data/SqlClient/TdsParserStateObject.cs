@@ -495,6 +495,10 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
 
+        internal abstract uint WritePacket(PacketHandle packet, bool sync);
+
+        internal abstract bool IsValidPacket(PacketHandle packetPointer);
+
         internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);

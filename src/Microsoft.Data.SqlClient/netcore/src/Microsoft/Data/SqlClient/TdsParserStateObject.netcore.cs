@@ -705,10 +705,6 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-        internal abstract bool IsValidPacket(PacketHandle packetPointer);
-
-        internal abstract uint WritePacket(PacketHandle packet, bool sync);
-
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
         {

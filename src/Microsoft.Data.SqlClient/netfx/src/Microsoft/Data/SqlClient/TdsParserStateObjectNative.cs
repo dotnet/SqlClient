@@ -76,6 +76,22 @@ namespace Microsoft.Data.SqlClient
             return PacketHandle.FromNativePointer(readPacketPtr);
         }
 
+        internal override uint WritePacket(PacketHandle packet, bool sync)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
+            return SniNativeWrapper.SniWritePacket(Handle, packet.NativePacket, sync);
+        }
+
+        internal override bool IsValidPacket(PacketHandle packetPointer)
+        {
+            Debug.Assert(packetPointer.Type == PacketHandle.NativePointerType || packetPointer.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePointer");
+            return (
+                (packetPointer.Type == PacketHandle.NativePointerType && packetPointer.NativePointer != IntPtr.Zero)
+                ||
+                (packetPointer.Type == PacketHandle.NativePacketType && packetPointer.NativePacket != null)
+            );
+        }
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 

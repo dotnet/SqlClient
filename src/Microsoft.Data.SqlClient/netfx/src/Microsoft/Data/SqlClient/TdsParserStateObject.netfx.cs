@@ -675,8 +675,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
-                sniError = SniNativeWrapper.SniWritePacket(Handle, packet.NativePacket, sync);
+                sniError = WritePacket(packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -769,16 +768,6 @@ namespace Microsoft.Data.SqlClient
         }
 
 #pragma warning restore 420
-
-        internal bool IsValidPacket(PacketHandle packetPointer)
-        {
-            Debug.Assert(packetPointer.Type == PacketHandle.NativePointerType || packetPointer.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePointer");
-            return (
-                (packetPointer.Type == PacketHandle.NativePointerType && packetPointer.NativePointer != IntPtr.Zero)
-                ||
-                (packetPointer.Type == PacketHandle.NativePacketType && packetPointer.NativePacket != null)
-            );
-        }
 
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
