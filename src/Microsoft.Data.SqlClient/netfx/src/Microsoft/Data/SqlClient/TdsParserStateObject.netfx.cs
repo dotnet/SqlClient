@@ -153,12 +153,6 @@ namespace Microsoft.Data.SqlClient
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 
-        internal void ReleasePacket(PacketHandle syncReadPacket)
-        {
-            Debug.Assert(syncReadPacket.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
-        }
-
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {

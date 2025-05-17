@@ -36,6 +36,12 @@ namespace Microsoft.Data.SqlClient
             return IntPtr.Zero == readPacket.NativePointer;
         }
 
+        internal override void ReleasePacket(PacketHandle syncReadPacket)
+        {
+            Debug.Assert(syncReadPacket.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
+        }
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 

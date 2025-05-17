@@ -483,6 +483,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract bool IsPacketEmpty(PacketHandle readPacket);
 
+        internal abstract void ReleasePacket(PacketHandle syncReadPacket);
+
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
         internal abstract uint DisableSsl();
