@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
         internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
         internal const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
+        internal const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -32,6 +33,7 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
         private static Tristate s_useCompatProcessSni;
         private static Tristate s_useCompatAsyncBehaviour;
+        private static Tristate s_useConnectionPoolV2;
 
 #if NET
         static LocalAppContextSwitches()
@@ -268,6 +270,30 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_legacyVarTimeZeroScaleBehaviour == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, the connection pool will use the new V2 connection pool implementation.
+        /// When set to false, the connection pool will use the legacy V1 implementation.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool UseConnectionPoolV2
+        {
+            get
+            {
+                if (s_useConnectionPoolV2 == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseConnectionPoolV2String, out bool returnedValue) && returnedValue)
+                    {
+                        s_useConnectionPoolV2 = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useConnectionPoolV2 = Tristate.False;
+                    }
+                }
+                return s_useConnectionPoolV2 == Tristate.True;
             }
         }
     }
