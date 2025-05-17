@@ -54,11 +54,19 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        ////////////////
+        // Properties //
+        ////////////////
+
         internal SNIHandle Handle => _sessionHandle;
 
         internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
 
         internal override SessionHandle SessionHandle => SessionHandle.FromNativeHandle(_sessionHandle);
+
+        protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
+
+        internal override Guid? SessionId => default;
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
@@ -253,10 +261,6 @@ namespace Microsoft.Data.SqlClient
                 _gcHandle.Free();
             }
         }
-
-        protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
-
-        internal override Guid? SessionId => default;
 
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
 

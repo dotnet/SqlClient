@@ -29,6 +29,8 @@ namespace Microsoft.Data.SqlClient
 
         internal override SessionHandle SessionHandle => SessionHandle.FromNativeHandle(_sessionHandle);
 
+        protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
+
         internal override Guid? SessionId => default;
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)

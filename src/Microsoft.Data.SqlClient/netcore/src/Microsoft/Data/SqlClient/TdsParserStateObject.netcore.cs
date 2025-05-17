@@ -859,7 +859,5 @@ namespace Microsoft.Data.SqlClient
                 statistics.RequestNetworkServerTimer();
             }
         }
-
-        protected abstract PacketHandle EmptyReadPacket { get; }
     }
 }
