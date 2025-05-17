@@ -100,8 +100,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint CheckConnection();
 
-        internal abstract PacketHandle GetResetWritePacket(int dataSize);
-
         internal abstract void ClearAllWritePackets();
 
         internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);

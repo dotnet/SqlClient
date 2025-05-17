@@ -92,6 +92,22 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
+        internal override PacketHandle GetResetWritePacket(int dataSize)
+        {
+            if (_sniPacket != null)
+            {
+                SniNativeWrapper.SniPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
+            }
+            else
+            {
+                lock (_writePacketLockObject)
+                {
+                    _sniPacket = _writePacketCache.Take(Handle);
+                }
+            }
+            return PacketHandle.FromNativePacket(_sniPacket);
+        }
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 

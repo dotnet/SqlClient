@@ -853,7 +853,7 @@ namespace Microsoft.Data.SqlClient
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
-            PacketHandle packet = GetResetWritePacket();
+            PacketHandle packet = GetResetWritePacket(_outBytesUsed);
             SNIPacket nativePacket = packet.NativePacket;
             SniNativeWrapper.SniPacketSetData(nativePacket, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
@@ -904,22 +904,6 @@ namespace Microsoft.Data.SqlClient
 
             AssertValidState();
             return task;
-        }
-
-        internal PacketHandle GetResetWritePacket()
-        {
-            if (_sniPacket != null)
-            {
-                SniNativeWrapper.SniPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
-            }
-            else
-            {
-                lock (_writePacketLockObject)
-                {
-                    _sniPacket = _writePacketCache.Take(Handle);
-                }
-            }
-            return PacketHandle.FromNativePacket(_sniPacket);
         }
 
         internal void ClearAllWritePackets()

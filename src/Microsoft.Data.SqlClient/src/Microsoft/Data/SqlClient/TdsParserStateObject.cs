@@ -483,6 +483,8 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract PacketHandle EmptyReadPacket { get; }
 
+        internal abstract PacketHandle GetResetWritePacket(int dataSize);
+
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
 
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
