@@ -481,6 +481,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract SessionHandle SessionHandle { get; }
 
+        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
+
         internal abstract bool IsFailedHandle();
 
         internal abstract bool IsPacketEmpty(PacketHandle readPacket);

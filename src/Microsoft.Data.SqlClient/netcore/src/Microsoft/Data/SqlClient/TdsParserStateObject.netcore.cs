@@ -100,8 +100,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint CheckConnection();
 
-        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
-
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
         internal abstract void ClearAllWritePackets();

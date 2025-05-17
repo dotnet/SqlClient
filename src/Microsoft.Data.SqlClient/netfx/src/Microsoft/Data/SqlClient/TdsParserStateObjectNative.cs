@@ -31,6 +31,12 @@ namespace Microsoft.Data.SqlClient
 
         internal override Guid? SessionId => default;
 
+        protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
+        }
+
         internal override bool IsFailedHandle() => _sessionHandle.Status != TdsEnums.SNI_SUCCESS;
 
         internal override bool IsPacketEmpty(PacketHandle readPacket)

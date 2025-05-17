@@ -359,12 +359,6 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
-        private uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
-        {
-            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
-        }
-
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
