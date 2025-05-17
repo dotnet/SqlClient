@@ -10,13 +10,10 @@ using Microsoft.Data.SqlClient.Tests;
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using PacketHandle = IntPtr; 
-#elif NETCOREAPP
     internal struct PacketHandle
     {
     }
-#endif
+
     internal partial class TdsParserStateObject
     {
         internal int ObjectID = 1;
