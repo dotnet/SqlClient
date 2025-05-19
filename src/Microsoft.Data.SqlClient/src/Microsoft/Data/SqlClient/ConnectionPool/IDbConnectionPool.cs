@@ -21,14 +21,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
         #region Properties
         /// <summary>
-        /// An id that uniqely identifies this connection pool.
+        /// Gets the authentication contexts cached by the pool.
         /// </summary>
-        int Id { get; }
+        ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; }
 
         /// <summary>
-        /// The current state of the connection pool.
+        /// Gets the factory used to create database connections.
         /// </summary>
-        DbConnectionPoolState State { get; set; }
+        DbConnectionFactory ConnectionFactory { get; }
 
         /// <summary>
         /// The number of connections currently managed by the pool.
@@ -37,21 +37,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         int Count { get; }
 
         /// <summary>
-        /// Gets the factory used to create database connections.
-        /// </summary>
-        DbConnectionFactory ConnectionFactory { get; }
-
-        /// <summary>
         /// Indicates whether an error has occurred in the pool.
         /// Primarily used to support the pool blocking period feature.
         /// </summary>
         bool ErrorOccurred { get; }
 
         /// <summary>
-        /// Gets the duration of time to wait before reassigning a connection to a different server in a load-balanced
-        /// environment.
+        /// An id that uniqely identifies this connection pool.
         /// </summary>
-        TimeSpan LoadBalanceTimeout { get; }
+        int Id { get; }
 
         /// <summary>
         /// Gets the identity used by the connection pool when establishing connections.
@@ -62,6 +56,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Indicates whether the connection pool is currently running.
         /// </summary>
         bool IsRunning { get; }
+
+        /// <summary>
+        /// Gets the duration of time to wait before reassigning a connection to a different server in a load-balanced
+        /// environment.
+        /// </summary>
+        TimeSpan LoadBalanceTimeout { get; }
 
         /// <summary>
         /// Gets a reference to the connection pool group that this pool belongs to.
@@ -79,9 +79,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         DbConnectionPoolProviderInfo ProviderInfo { get; }
 
         /// <summary>
-        /// Gets the authentication contexts cached by the pool.
+        /// The current state of the connection pool.
         /// </summary>
-        ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; }
+        DbConnectionPoolState State { get; set; }
 
         /// <summary>
         /// Indicates whether the connection pool is using load balancing.
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// The internal connection will be set on completion source rather than passed out via the out parameter.</param>
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="connection">The retrieved connection will be passed out via this parameter.</param>
-        /// <returns>Returns true if a connection was set in the out parameter, otherwise returns false.</returns>
+        /// <returns>True if a connection was set in the out parameter, otherwise returns false.</returns>
         bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal connection);
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">The connection whos internal connection should be replaced.</param>
         /// <param name="userOptions">The user options to use if a new connection must be opened.</param>
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
-        /// <returns></returns>
+        /// <returns>A reference to the new DbConnectionInternal.</returns>
         DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionOptions userOptions, DbConnectionInternal oldConnection);
 
         /// <summary>
