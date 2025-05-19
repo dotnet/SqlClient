@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Type s_dbConnectionPoolKey = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolKey");
         private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(s_dbConnectionPoolKey, s_dbConnectionPoolGroup);
         private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(s_dbConnectionPoolIdentity, s_dbConnectionPool);
-        private static PropertyInfo s_dbConnectionPoolCount = s_waitHandleDbConnectionPool.GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo s_dbConnectionPoolCount = s_waitHandleDbConnectionPool.GetProperty("Count", BindingFlags.Instance);
         private static PropertyInfo s_dictStringPoolGroupGetKeys = s_dictStringPoolGroup.GetProperty("Keys");
         private static PropertyInfo s_dictPoolIdentityPoolValues = s_dictPoolIdentityPool.GetProperty("Values");
         private static FieldInfo s_dbConnectionFactoryPoolGroupList = s_dbConnectionFactory.GetField("_connectionPoolGroups", BindingFlags.Instance | BindingFlags.NonPublic);
