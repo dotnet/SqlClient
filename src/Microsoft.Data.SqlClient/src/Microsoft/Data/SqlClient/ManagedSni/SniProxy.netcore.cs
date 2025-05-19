@@ -218,8 +218,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 try
                 {
                     details.ResolvedPort = port = isAdminConnection ?
-                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
-                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
+                            SsrpClient.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
+                            SsrpClient.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
                 }
                 catch (SocketException se)
                 {

@@ -332,8 +332,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SSRP.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\ManagedSni\SSRP.netcore.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
