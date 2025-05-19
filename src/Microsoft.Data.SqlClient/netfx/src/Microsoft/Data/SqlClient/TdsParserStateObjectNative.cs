@@ -19,6 +19,16 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        ////////////////
+        // Properties //
+        ////////////////
+
+        internal override uint Status => _sessionHandle != null ? _sessionHandle.Status : TdsEnums.SNI_UNINITIALIZED;
+
+        internal override SessionHandle SessionHandle => SessionHandle.FromNativeHandle(_sessionHandle);
+
+        internal override Guid? SessionId => default;
+
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
             => SniNativeWrapper.SniGetConnectionId(Handle, ref clientConnectionId);
 
