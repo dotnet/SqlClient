@@ -26,7 +26,14 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj = physicalStateObj;
             _serverInfo = serverInfo;
 
-            _authParam = CreateAuthParams(serverSpn);
+            var options = parser.Connection.ConnectionOptions;
+
+            _authParam = new SspiAuthenticationParameters(options.DataSource, serverSpn)
+            {
+                DatabaseName = options.InitialCatalog,
+                UserId = options.UserID,
+                Password = options.Password,
+            };
 
             Initialize();
         }
@@ -46,18 +53,6 @@ namespace Microsoft.Data.SqlClient
                 // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
                 SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
             }
-        }
-
-        private SspiAuthenticationParameters CreateAuthParams(string serverSpn)
-        {
-            var options = _parser.Connection.ConnectionOptions;
-
-            return new SspiAuthenticationParameters(options.DataSource, serverSpn)
-            {
-                DatabaseName = options.InitialCatalog,
-                UserId = options.UserID,
-                Password = options.Password,
-            };
         }
 
         private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)
