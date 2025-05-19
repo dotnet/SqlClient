@@ -160,9 +160,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
-            Type sniProxyType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SNIProxy");
-            Type ssrpType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SSRP");
-            Type dataSourceType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.DataSource");
+            Type sniProxyType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SniProxy");
+            Type ssrpType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SsrpClient");
+            Type dataSourceType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.DataSource");
             Type timeoutTimerType = sqlConnectionAssembly.GetType("Microsoft.Data.ProviderBase.TimeoutTimer");
 
             Type[] dataSourceConstructorTypesArray = new Type[] { typeof(string) };

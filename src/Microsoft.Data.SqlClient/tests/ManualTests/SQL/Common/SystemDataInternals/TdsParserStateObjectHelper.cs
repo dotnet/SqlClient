@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Reflection;
 using Xunit;
 
@@ -16,8 +15,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static readonly FieldInfo s_forceSyncOverAsyncAfterFirstPend;
         private static readonly FieldInfo s_failAsyncPends;
         private static readonly FieldInfo s_forcePendingReadsToWaitForUser;
+        
+        #if NET
         private static readonly Type s_tdsParserStateObjectManaged;
         private static readonly FieldInfo s_tdsParserStateObjectManagedSessionHandle;
+        #endif
 
         static TdsParserStateObjectHelper()
         {
@@ -42,23 +44,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_forcePendingReadsToWaitForUser = tdsParserStateObject.GetField("s_forcePendingReadsToWaitForUser", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.True(s_forcePendingReadsToWaitForUser is not null, nameof(s_forcePendingReadsToWaitForUser));
 
-            // These managed SNI handles are allowed to be null, since they
-            // won't exist in .NET Framework builds.
-            s_tdsParserStateObjectManaged =
-                assembly.GetType("Microsoft.Data.SqlClient.SNI.TdsParserStateObjectManaged");
-            s_tdsParserStateObjectManagedSessionHandle = null;
-            if (s_tdsParserStateObjectManaged is not null)
-            {
-                s_tdsParserStateObjectManagedSessionHandle =
-                    s_tdsParserStateObjectManaged.GetField(
-                        "_sessionHandle",
-                        BindingFlags.Instance | BindingFlags.NonPublic);
-                // If we have the managed SNI type, we must have the session
-                // handle field.
-                Assert.True(
-                    s_tdsParserStateObjectManagedSessionHandle is not null,
-                    nameof(s_tdsParserStateObjectManagedSessionHandle));
-            }
+            #if NET
+            s_tdsParserStateObjectManaged = assembly.GetType(
+                "Microsoft.Data.SqlClient.ManagedSni.TdsParserStateObjectManaged");
+            Assert.NotNull(s_tdsParserStateObjectManaged);
+            
+            s_tdsParserStateObjectManagedSessionHandle = s_tdsParserStateObjectManaged.GetField(
+                "_sessionHandle",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(s_tdsParserStateObjectManagedSessionHandle);
+            #endif
         }
 
         internal static bool ForceAllPends
