@@ -73,6 +73,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        /// <summary>
+        /// Tests that when UseConnectionPoolV2 context switch is enabled, opening a connection throws NotImplementedException
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void UseConnectionPoolV2ThrowsNotImplemented(string connectionString)
+        {
+            try
+            {
+                // Enable the UseConnectionPoolV2 context switch
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2", true);
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    // This should throw NotImplementedException
+                    Assert.Throws<NotImplementedException>(() => connection.Open());
+                }
+            }
+            finally
+            {
+                // Reset the context switch
+                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2", false);
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
         public static void AccessTokenConnectionPoolingTest()
         {
@@ -198,6 +223,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             waitTask.Wait();
             Assert.Equal(TaskStatus.RanToCompletion, waitTask.Status);
         }
+
+        
 
         internal static InternalConnectionWrapper ReplacementConnectionUsesSemaphoreTask(string connectionString, Barrier syncBarrier)
         {
