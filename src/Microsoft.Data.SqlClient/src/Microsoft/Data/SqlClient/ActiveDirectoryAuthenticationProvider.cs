@@ -552,98 +552,30 @@ namespace Microsoft.Data.SqlClient
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
         {
-            IPublicClientApplication publicClientApplication;
-
-#if NETSTANDARD
-            if (_parentActivityOrWindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
-                .Build();
-            }
-#endif
-#if NETFRAMEWORK
-            if (_iWin32WindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_iWin32WindowFunc)
-                .Build();
-            }
-#endif
-#if !NETCOREAPP
-            else
-#endif
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .Build();
-            }
-
-            return publicClientApplication;
-        }
-
-        private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
-        {
-            if (tokenCredentialKey._tokenCredentialType == typeof(DefaultAzureCredential))
-            {
-                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
+            PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
+                .CreateWithApplicationOptions(new PublicClientApplicationOptions
                 {
-                    AuthorityHost = new Uri(tokenCredentialKey._authority),
-                    SharedTokenCacheTenantId = tokenCredentialKey._audience,
-                    VisualStudioCodeTenantId = tokenCredentialKey._audience,
-                    VisualStudioTenantId = tokenCredentialKey._audience,
-                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
-                };
-
-                // Optionally set clientId when available
-                if (tokenCredentialKey._clientId is not null)
-                {
-                    defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
-                    defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
-                    defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
-                }
-
-                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
-            }
-
-            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
-
-            if (tokenCredentialKey._tokenCredentialType == typeof(ManagedIdentityCredential))
+                    ClientId = publicClientAppKey._applicationClientId,
+                    ClientName = Common.DbConnectionStringDefaults.ApplicationName,
+                    ClientVersion = Common.ADP.GetAssemblyVersion().ToString(),
+                    RedirectUri = publicClientAppKey._redirectUri,
+                })
+                .WithAuthority(publicClientAppKey._authority);
+            
+            #if NETFRAMEWORK
+            if (_iWin32WindowFunc is not null)
             {
-                return new TokenCredentialData(new ManagedIdentityCredential(tokenCredentialKey._clientId, tokenCredentialOptions), GetHash(secret));
+                builder = builder.WithParentActivityOrWindow(_iWin32WindowFunc);
             }
-            else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
+            #endif
+            #if NETSTANDARD
+            if (_parentActivityOrWindowFunc is not null)
             {
-                return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
+                builder = builder.WithParentActivityOrWindow(_parentActivityOrWindowFunc);
             }
-            else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
-            {
-                // The WorkloadIdentityCredentialOptions object initialization populates its instance members
-                // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
-                // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
-                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+            #endif
 
-                if (tokenCredentialKey._clientId is not null)
-                {
-                    options.ClientId = tokenCredentialKey._clientId;
-                }
-
-                return new TokenCredentialData(new WorkloadIdentityCredential(options), GetHash(secret));
-            }
-
-            // This should never be reached, but if it is, throw an exception that will be noticed during development
-            throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
+            return builder.Build();
         }
 
         internal class PublicClientAppKey
