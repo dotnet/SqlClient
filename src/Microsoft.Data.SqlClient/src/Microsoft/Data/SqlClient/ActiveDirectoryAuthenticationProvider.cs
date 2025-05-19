@@ -506,6 +506,59 @@ namespace Microsoft.Data.SqlClient
 
             return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
         }
+        
+        private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
+        {
+            if (tokenCredentialKey._tokenCredentialType == typeof(DefaultAzureCredential))
+            {
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
+                {
+                    AuthorityHost = new Uri(tokenCredentialKey._authority),
+                    SharedTokenCacheTenantId = tokenCredentialKey._audience,
+                    VisualStudioCodeTenantId = tokenCredentialKey._audience,
+                    VisualStudioTenantId = tokenCredentialKey._audience,
+                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
+                };
+
+                // Optionally set clientId when available
+                if (tokenCredentialKey._clientId is not null)
+                {
+                    defaultAzureCredentialOptions.ManagedIdentityClientId = tokenCredentialKey._clientId;
+                    defaultAzureCredentialOptions.SharedTokenCacheUsername = tokenCredentialKey._clientId;
+                    defaultAzureCredentialOptions.WorkloadIdentityClientId = tokenCredentialKey._clientId;
+                }
+
+                return new TokenCredentialData(new DefaultAzureCredential(defaultAzureCredentialOptions), GetHash(secret));
+            }
+
+            TokenCredentialOptions tokenCredentialOptions = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
+            if (tokenCredentialKey._tokenCredentialType == typeof(ManagedIdentityCredential))
+            {
+                return new TokenCredentialData(new ManagedIdentityCredential(tokenCredentialKey._clientId, tokenCredentialOptions), GetHash(secret));
+            }
+            else if (tokenCredentialKey._tokenCredentialType == typeof(ClientSecretCredential))
+            {
+                return new TokenCredentialData(new ClientSecretCredential(tokenCredentialKey._audience, tokenCredentialKey._clientId, secret, tokenCredentialOptions), GetHash(secret));
+            }
+            else if (tokenCredentialKey._tokenCredentialType == typeof(WorkloadIdentityCredential))
+            {
+                // The WorkloadIdentityCredentialOptions object initialization populates its instance members
+                // from the environment variables AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE,
+                // and AZURE_ADDITIONALLY_ALLOWED_TENANTS. AZURE_CLIENT_ID may be overridden by the User Id.
+                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = new Uri(tokenCredentialKey._authority) };
+
+                if (tokenCredentialKey._clientId is not null)
+                {
+                    options.ClientId = tokenCredentialKey._clientId;
+                }
+
+                return new TokenCredentialData(new WorkloadIdentityCredential(options), GetHash(secret));
+            }
+
+            // This should never be reached, but if it is, throw an exception that will be noticed during development
+            throw new ArgumentException(nameof(ActiveDirectoryAuthenticationProvider));
+        }
 
         private static string GetAccountPwCacheKey(SqlAuthenticationParameters parameters)
         {
