@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient
                     redirectedUserInstance = true;
                     string instanceName;
 
-                    if (pool == null || (pool != null && pool.Count <= 0))
+                    if (pool == null || (pool != null && ((SqlConnectionPoolProviderInfo)pool.ProviderInfo).InstanceName == null))
                     { // Non-pooled or pooled and no connections in the pool.
 
                         SqlInternalConnectionTds sseConnection = null;
