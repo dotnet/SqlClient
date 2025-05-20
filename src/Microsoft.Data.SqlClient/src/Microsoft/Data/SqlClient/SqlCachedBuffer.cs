@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
                     byte[] byteArr = new byte[cb];
                     // pass false for the writeDataSizeToSnapshot parameter because we want to only take data
                     // from the current packet and not try to do a continue-capable multi packet read
-                    result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb, writeDataSizeToSnapshot: false, compatibilityMode: false);
+                    result = stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb, isAvailable, writeDataSizeToSnapshot: false, compatibilityMode: false);
                     if (result != TdsOperationStatus.Done)
                     {
                         if (result == TdsOperationStatus.NeedMoreData && isAvailable && cb == byteArr.Length)
