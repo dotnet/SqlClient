@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Configuration;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
@@ -134,59 +135,37 @@ namespace Microsoft.Data.SqlClient
             _object = value._object;
         }
 
+        #region General Properties
+        
         internal bool IsEmpty => _type == StorageType.Empty;
 
         internal bool IsNull { get; private set; }
 
         internal StorageType VariantInternalStorageType => _type;
 
+        #endregion
+        
+        #region Type Conversion Properties
+        
+        #endregion
+        
         internal bool Boolean
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Boolean == _type)
-                {
-                    return _value._boolean;
-                }
-                return (bool)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._boolean = value;
-                _type = StorageType.Boolean;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Boolean, _value._boolean);
+            set => SetValue(StorageType.Boolean, ref _value._boolean, value);
         }
 
         internal byte Byte
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Byte == _type)
-                {
-                    return _value._byte;
-                }
-                return (byte)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._byte = value;
-                _type = StorageType.Byte;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Byte, _value._byte);
+            set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
 
         internal byte[] ByteArray
         {
             get
             {
-                ThrowIfNull();
+                ThrowIfNull(); // Must be checked here because SqlBinary allows null.
                 return SqlBinary.Value;
             }
         }
@@ -361,23 +340,8 @@ namespace Microsoft.Data.SqlClient
 
         internal double Double
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Double == _type)
-                {
-                    return _value._double;
-                }
-                return (double)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._double = value;
-                _type = StorageType.Double;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Double, _value._double);
+            set => SetValue(StorageType.Double, ref _value._double, value);
         }
 
         internal Guid Guid
@@ -406,86 +370,26 @@ namespace Microsoft.Data.SqlClient
 
         internal short Int16
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int16 == _type)
-                {
-                    return _value._int16;
-                }
-                return (short)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int16 = value;
-                _type = StorageType.Int16;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Int16, _value._int16);
+            set => SetValue(StorageType.Int16, ref _value._int16, value);
         }
 
         internal int Int32
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int32 == _type)
-                {
-                    return _value._int32;
-                }
-                return (int)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int32 = value;
-                _type = StorageType.Int32;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Int32, _value._int32);
+            set => SetValue(StorageType.Int32, ref _value._int32, value);
         }
 
         internal long Int64
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Int64 == _type)
-                {
-                    return _value._int64;
-                }
-                return (long)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._int64 = value;
-                _type = StorageType.Int64;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Int64, _value._int64);
+            set => SetValue(StorageType.Int64, ref _value._int64, value);
         }
 
         internal float Single
         {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Single == _type)
-                {
-                    return _value._single;
-                }
-                return (float)Value; // anything else we haven't thought of goes through boxing.
-            }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _value._single = value;
-                _type = StorageType.Single;
-                IsNull = false;
-            }
+            get => GetValue(StorageType.Single, _value._single);
+            set => SetValue(StorageType.Single, ref _value._single, value);
         }
 
         internal string String
@@ -1477,5 +1381,28 @@ namespace Microsoft.Data.SqlClient
             ThrowIfNull();
             return (T)(object)_value._single;
         }
+        
+        #region Private Helpers
+
+        private T GetValue<T>(StorageType storageType, T value)
+        {
+            ThrowIfNull();
+
+            return _type == storageType
+                ? value
+                : (T)Value; // Types we cannot directly convert to (ie, everything except for
+                            // `storageType`) will need to converted via boxing.
+        }
+
+        private void SetValue<T>(StorageType storageType, ref T valueField, T value)
+        {
+            Debug.Assert(IsEmpty, "Value is being set a second time.");
+
+            _type = storageType;
+            valueField = value;
+            IsNull = false;
+        }
+        
+        #endregion
     }
 }
