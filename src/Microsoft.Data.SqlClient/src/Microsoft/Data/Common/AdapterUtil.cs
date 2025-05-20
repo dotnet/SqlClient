@@ -772,12 +772,23 @@ namespace Microsoft.Data.Common
                 || dataSource.Contains(PBI_DATAWAREHOUSE3);
         }
 
+        /// <summary>
+        /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
+        /// </summary>
+        /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
+        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
+        /// in their respective regions or environments.</remarks>
         internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
                                                                         AZURE_SQL_GERMANY,
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
                                                                         AZURE_SQL_FABRIC };
         
+        /// <summary>
+        /// Contains endpoint strings for Azure SQL Server on-demand services.
+        /// Each entry is a combination of the ONDEMAND_PREFIX and a specific Azure SQL endpoint string.
+        /// Example format: "ondemand.database.windows.net".
+        /// </summary>
         internal static readonly string[] s_azureSqlServerOnDemandEndpoints = { ONDEMAND_PREFIX + AZURE_SQL,
                                                                                 ONDEMAND_PREFIX + AZURE_SQL_GERMANY,
                                                                                 ONDEMAND_PREFIX + AZURE_SQL_USGOV,
@@ -823,9 +834,8 @@ namespace Microsoft.Data.Common
             }
 
             // check if servername ends with any endpoints
-            for (int index = 0; index < endpoints.Length; index++)
+            foreach (var endpoint in endpoints)
             {
-                string endpoint = endpoints[index];
                 if (length > endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
