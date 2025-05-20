@@ -556,7 +556,7 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             if (_iWin32WindowFunc is not null)
             {
-                builder = builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+                builder.WithParentActivityOrWindow(_iWin32WindowFunc);
             }
             #endif
 
