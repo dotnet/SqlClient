@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -73,6 +74,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        private enum Tristate : byte
+        {
+            NotInitialized = 0,
+            False = 1,
+            True = 2
+        }
+
         /// <summary>
         /// Tests that when UseConnectionPoolV2 context switch is enabled, opening a connection throws NotImplementedException
         /// </summary>
@@ -82,8 +90,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                // Enable the UseConnectionPoolV2 context switch
-                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2", true);
+                Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+                FieldInfo switchField = switchesType.GetField("s_useConnectionPoolV2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                switchField.SetValue(null, Tristate.True);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -94,7 +103,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 // Reset the context switch
-                AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2", false);
+                Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+                FieldInfo switchField = switchesType.GetField("s_useConnectionPoolV2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                switchField.SetValue(null, Tristate.False);
             }
         }
 
