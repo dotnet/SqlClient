@@ -764,7 +764,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX)
+            return IsEndpoint(dataSource, s_azureSqlServerOnDemandEndpoints)
                 || dataSource.Contains(AZURE_SYNAPSE)
                 || dataSource.Contains(FABRIC_DATAWAREHOUSE)
                 || dataSource.Contains(PBI_DATAWAREHOUSE)
@@ -777,14 +777,20 @@ namespace Microsoft.Data.Common
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
                                                                         AZURE_SQL_FABRIC };
+        
+        internal static readonly string[] s_azureSqlServerOnDemandEndpoints = { ONDEMAND_PREFIX + AZURE_SQL,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_GERMANY,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_USGOV,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_CHINA,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_FABRIC };
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, null);
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string prefix)
+        private static bool IsEndpoint(string dataSource, string[] endpoints)
         {
             int length = dataSource.Length;
             // remove server port
@@ -805,8 +811,6 @@ namespace Microsoft.Data.Common
                 foundIndex = -1;
             }
 
-
-  
             if (foundIndex > 0)
             {
                 length = foundIndex;
@@ -819,9 +823,9 @@ namespace Microsoft.Data.Common
             }
 
             // check if servername ends with any endpoints
-            for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
+            for (int index = 0; index < endpoints.Length; index++)
             {
-                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
+                string endpoint = endpoints[index];
                 if (length > endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
