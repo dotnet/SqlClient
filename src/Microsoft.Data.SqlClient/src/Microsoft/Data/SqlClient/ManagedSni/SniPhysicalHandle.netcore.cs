@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 int id = Interlocked.Increment(ref s_packetId);
                 packet = new SniPacket(this, id);
 #else
-                packet = new SNIPacket();
+                packet = new SniPacket();
 #endif
             }
 #if DEBUG
