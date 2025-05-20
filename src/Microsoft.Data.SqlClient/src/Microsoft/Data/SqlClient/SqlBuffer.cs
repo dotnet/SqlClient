@@ -147,19 +147,49 @@ namespace Microsoft.Data.SqlClient
         
         #region Type Conversion Properties
         
-        #endregion
-        
         internal bool Boolean
         {
             get => GetValue(StorageType.Boolean, _value._boolean);
             set => SetValue(StorageType.Boolean, ref _value._boolean, value);
         }
-
+        
         internal byte Byte
         {
             get => GetValue(StorageType.Byte, _value._byte);
             set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
+        
+        internal double Double
+        {
+            get => GetValue(StorageType.Double, _value._double);
+            set => SetValue(StorageType.Double, ref _value._double, value);
+        }
+        
+        internal short Int16
+        {
+            get => GetValue(StorageType.Int16, _value._int16);
+            set => SetValue(StorageType.Int16, ref _value._int16, value);
+        }
+        
+        internal int Int32
+        {
+            get => GetValue(StorageType.Int32, _value._int32);
+            set => SetValue(StorageType.Int32, ref _value._int32, value);
+        }
+        
+        internal long Int64
+        {
+            get => GetValue(StorageType.Int64, _value._int64);
+            set => SetValue(StorageType.Int64, ref _value._int64, value);
+        }
+        
+        internal float Single
+        {
+            get => GetValue(StorageType.Single, _value._single);
+            set => SetValue(StorageType.Single, ref _value._single, value);
+        }
+        
+        #endregion
 
         internal byte[] ByteArray
         {
@@ -338,12 +368,6 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
-        internal double Double
-        {
-            get => GetValue(StorageType.Double, _value._double);
-            set => SetValue(StorageType.Double, ref _value._double, value);
-        }
-
         internal Guid Guid
         {
             get
@@ -366,30 +390,6 @@ namespace Microsoft.Data.SqlClient
                 _value._guid = value;
                 IsNull = false;
             }
-        }
-
-        internal short Int16
-        {
-            get => GetValue(StorageType.Int16, _value._int16);
-            set => SetValue(StorageType.Int16, ref _value._int16, value);
-        }
-
-        internal int Int32
-        {
-            get => GetValue(StorageType.Int32, _value._int32);
-            set => SetValue(StorageType.Int32, ref _value._int32, value);
-        }
-
-        internal long Int64
-        {
-            get => GetValue(StorageType.Int64, _value._int64);
-            set => SetValue(StorageType.Int64, ref _value._int64, value);
-        }
-
-        internal float Single
-        {
-            get => GetValue(StorageType.Single, _value._single);
-            set => SetValue(StorageType.Single, ref _value._single, value);
         }
 
         internal string String
