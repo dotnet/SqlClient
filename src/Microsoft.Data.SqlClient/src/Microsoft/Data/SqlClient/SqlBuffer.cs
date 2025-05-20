@@ -11,7 +11,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlBuffer
+    internal sealed class SqlBuffer
     {
         internal enum StorageType
         {
