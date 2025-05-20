@@ -107,11 +107,18 @@ namespace Microsoft.Data.SqlClient
             internal DateTimeOffsetInfo _dateTimeOffsetInfo;
         }
 
-        private bool _isNull;
+        #region Member Variables
+
         private StorageType _type;
+        
+        // Storage for value types, eg, bool, int32, datetime2.
         private Storage _value;
+        
+        // Storage for reference types, eg, String, SqlBinary, SqlCachedBuffer, SqlGuid.
         private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
 
+        #endregion
+        
         internal SqlBuffer()
         {
         }
@@ -119,7 +126,7 @@ namespace Microsoft.Data.SqlClient
         private SqlBuffer(SqlBuffer value)
         { // Clone
             // value types
-            _isNull = value._isNull;
+            IsNull = value.IsNull;
             _type = value._type;
             // ref types - should also be read only unless at some point we allow this data
             // to be mutable, then we will need to copy
@@ -129,7 +136,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool IsEmpty => _type == StorageType.Empty;
 
-        internal bool IsNull => _isNull;
+        internal bool IsNull { get; private set; }
 
         internal StorageType VariantInternalStorageType => _type;
 
@@ -150,7 +157,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._boolean = value;
                 _type = StorageType.Boolean;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -171,7 +178,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._byte = value;
                 _type = StorageType.Byte;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -369,7 +376,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._double = value;
                 _type = StorageType.Double;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -393,7 +400,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _type = StorageType.Guid;
                 _value._guid = value;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -414,7 +421,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._int16 = value;
                 _type = StorageType.Int16;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -435,7 +442,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._int32 = value;
                 _type = StorageType.Int32;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -456,7 +463,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._int64 = value;
                 _type = StorageType.Int64;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -477,7 +484,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _value._single = value;
                 _type = StorageType.Single;
-                _isNull = false;
+                IsNull = false;
             }
         }
 
@@ -669,7 +676,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _object = value;
                 _type = StorageType.SqlBinary;
-                _isNull = value.IsNull;
+                IsNull = value.IsNull;
             }
         }
 
@@ -724,7 +731,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _object = value;
                 _type = StorageType.SqlCachedBuffer;
-                _isNull = value.IsNull;
+                IsNull = value.IsNull;
             }
         }
 
@@ -747,7 +754,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _object = value;
                 _type = StorageType.SqlXml;
-                _isNull = value.IsNull;
+                IsNull = value.IsNull;
             }
         }
 
@@ -825,7 +832,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(IsEmpty, "setting value a second time?");
                 _object = value;
                 _type = StorageType.SqlGuid;
-                _isNull = value.IsNull;
+                IsNull = value.IsNull;
             }
         }
 
@@ -990,7 +997,7 @@ namespace Microsoft.Data.SqlClient
                         return _object;
 
                     case StorageType.SqlXml:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return SqlXml.Null;
                         }
@@ -999,21 +1006,21 @@ namespace Microsoft.Data.SqlClient
 
                     case StorageType.Date:
                     case StorageType.DateTime2:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
                         return DateTime;
 
                     case StorageType.DateTimeOffset:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
                         return DateTimeOffset;
 
                     case StorageType.Time:
-                        if (_isNull)
+                        if (IsNull)
                         {
                             return DBNull.Value;
                         }
@@ -1233,7 +1240,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            _isNull = false;
+            IsNull = false;
             _type = StorageType.Empty;
             _object = null;
         }
@@ -1255,7 +1262,7 @@ namespace Microsoft.Data.SqlClient
             _value._dateTimeInfo._daypart = daypart;
             _value._dateTimeInfo._timepart = timepart;
             _type = StorageType.DateTime;
-            _isNull = false;
+            IsNull = false;
         }
         
         #if NETFRAMEWORK
@@ -1282,7 +1289,7 @@ namespace Microsoft.Data.SqlClient
             _value._numericInfo._data3 = bits[2];
             _value._numericInfo._data4 = bits[3];
             _type = StorageType.Decimal;
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToMoney(long value)
@@ -1290,14 +1297,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._int64 = value;
             _type = StorageType.Money;
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToNullOfType(StorageType storageType)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _type = storageType;
-            _isNull = true;
+            IsNull = true;
             _object = null;
         }
 
@@ -1306,7 +1313,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
             _type = StorageType.String;
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToJson(string value)
@@ -1314,7 +1321,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
             _type = StorageType.Json;
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDate(ReadOnlySpan<byte> bytes)
@@ -1323,7 +1330,7 @@ namespace Microsoft.Data.SqlClient
 
             _type = StorageType.Date;
             _value._int32 = GetDateFromByteArray(bytes);
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
@@ -1332,7 +1339,7 @@ namespace Microsoft.Data.SqlClient
 
             _type = StorageType.Time;
             FillInTimeInfo(ref _value._timeInfo, bytes, scale, denormalizedScale);
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToTime(TimeSpan timeSpan, byte scale)
@@ -1342,7 +1349,7 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.Time;
             _value._timeInfo._ticks = timeSpan.Ticks;
             _value._timeInfo._scale = scale;
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
@@ -1352,7 +1359,7 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.DateTime2;
             FillInTimeInfo(ref _value._dateTime2Info._timeInfo, bytes.Slice(0, length - 3), scale, denormalizedScale); // remaining 3 bytes is for date
             _value._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 3)); // 3 bytes for date
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
@@ -1363,7 +1370,7 @@ namespace Microsoft.Data.SqlClient
             FillInTimeInfo(ref _value._dateTimeOffsetInfo._dateTime2Info._timeInfo, bytes.Slice(0, length - 5), scale, denormalizedScale); // remaining 5 bytes are for date and offset
             _value._dateTimeOffsetInfo._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 5)); // 3 bytes for date
             _value._dateTimeOffsetInfo._offset = (short)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
-            _isNull = false;
+            IsNull = false;
         }
 
         internal void SetToDateTimeOffset(DateTimeOffset dateTimeOffset, byte scale)
@@ -1376,7 +1383,7 @@ namespace Microsoft.Data.SqlClient
             _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale = scale;
             _value._dateTimeOffsetInfo._dateTime2Info._date = utcDateTime.Subtract(DateTime.MinValue).Days;
             _value._dateTimeOffsetInfo._offset = (short)dateTimeOffset.Offset.TotalMinutes;
-            _isNull = false;
+            IsNull = false;
         }
 
         private static void FillInTimeInfo(ref TimeInfo timeInfo, ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
