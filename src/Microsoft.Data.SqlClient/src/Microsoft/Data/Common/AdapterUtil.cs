@@ -24,6 +24,8 @@ using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
+using System.Linq;
+
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -762,16 +764,6 @@ namespace Microsoft.Data.Common
         private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
         private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
 
-        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
-        {
-            return IsEndpoint(dataSource, s_azureSqlServerOnDemandEndpoints)
-                || dataSource.Contains(AZURE_SYNAPSE)
-                || dataSource.Contains(FABRIC_DATAWAREHOUSE)
-                || dataSource.Contains(PBI_DATAWAREHOUSE)
-                || dataSource.Contains(PBI_DATAWAREHOUSE2)
-                || dataSource.Contains(PBI_DATAWAREHOUSE3);
-        }
-
         /// <summary>
         /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
         /// </summary>
@@ -794,7 +786,25 @@ namespace Microsoft.Data.Common
                                                                                 ONDEMAND_PREFIX + AZURE_SQL_USGOV,
                                                                                 ONDEMAND_PREFIX + AZURE_SQL_CHINA,
                                                                                 ONDEMAND_PREFIX + AZURE_SQL_FABRIC };
+        /// <summary>
+        /// Represents a collection of endpoint identifiers for Azure Synapse and related services.
+        /// </summary>
+        /// <remarks>This array contains predefined endpoint strings used to identify Azure Synapse and
+        /// associated services, such as Fabric Data Warehouse and Power BI Data Warehouse.</remarks>
+        internal static readonly string[] s_azureSynapseEndpoints = { AZURE_SYNAPSE,
+                                                                      FABRIC_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE2,
+                                                                      PBI_DATAWAREHOUSE3 };
 
+        internal static readonly string[] s_azureSynapseOnDemandEndpoints = s_azureSqlServerOnDemandEndpoints
+                                                                            .Concat(s_azureSynapseEndpoints)
+                                                                            .ToArray();
+        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints);
+        }
+        
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
