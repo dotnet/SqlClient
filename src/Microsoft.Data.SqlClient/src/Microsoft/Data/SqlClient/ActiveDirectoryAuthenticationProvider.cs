@@ -556,6 +556,12 @@ namespace Microsoft.Data.SqlClient
                 builder.WithParentActivityOrWindow(_iWin32WindowFunc);
             }
             #endif
+            #if NETSTANDARD
+            if (_parentActivityOrWindowFunc is not null)
+            {
+                builder.WithParentActivityOrWindow(_parentActivityOrWindowFunc);
+            }
+            #endif
 
             return builder.Build();
         }
