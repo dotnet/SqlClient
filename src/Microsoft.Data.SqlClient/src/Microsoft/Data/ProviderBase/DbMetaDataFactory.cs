@@ -507,10 +507,12 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(readContainer);
             Debug.Assert(reader.NodeType == XmlNodeType.Element);
             Debug.Assert(reader.Name == "MetaData");
+            Debug.Assert(reader.Depth == 0);
 
             // Iterate over each "table element" of the outer container element.
             // LoadDataTable will read the child elements of each table element.
-            while (reader.Read())
+            while (reader.Read()
+                && reader.Depth == 1)
             {
                 DataTable dataTable = null;
                 Action<DataRow> rowFixup = null;
