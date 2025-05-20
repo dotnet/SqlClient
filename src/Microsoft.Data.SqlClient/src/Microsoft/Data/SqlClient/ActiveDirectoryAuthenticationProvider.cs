@@ -540,45 +540,24 @@ namespace Microsoft.Data.SqlClient
 
         private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
         {
-            IPublicClientApplication publicClientApplication;
+            PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
+                .CreateWithApplicationOptions(new PublicClientApplicationOptions
+                {
+                    ClientId = publicClientAppKey._applicationClientId,
+                    ClientName = Common.DbConnectionStringDefaults.ApplicationName,
+                    ClientVersion = Common.ADP.GetAssemblyVersion().ToString(),
+                    RedirectUri = publicClientAppKey._redirectUri,
+                })
+                .WithAuthority(publicClientAppKey._authority);
+            
+            #if NETFRAMEWORK
+            if (_iWin32WindowFunc is not null)
+            {
+                builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+            }
+            #endif
 
-#if NETSTANDARD
-            if (_parentActivityOrWindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_parentActivityOrWindowFunc)
-                .Build();
-            }
-#endif
-#if NETFRAMEWORK
-            if (_iWin32WindowFunc != null)
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .WithParentActivityOrWindow(_iWin32WindowFunc)
-                .Build();
-            }
-#endif
-#if !NETCOREAPP
-            else
-#endif
-            {
-                publicClientApplication = PublicClientApplicationBuilder.Create(publicClientAppKey._applicationClientId)
-                .WithAuthority(publicClientAppKey._authority)
-                .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
-                .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
-                .WithRedirectUri(publicClientAppKey._redirectUri)
-                .Build();
-            }
-
-            return publicClientApplication;
+            return builder.Build();
         }
 
         private static TokenCredentialData CreateTokenCredentialInstance(TokenCredentialKey tokenCredentialKey, string secret)
