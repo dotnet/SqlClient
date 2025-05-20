@@ -1191,7 +1191,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
         [RefreshProperties(RefreshProperties.All)]
-        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter")]
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string DataSource
         {
             get => _dataSource;
@@ -1373,7 +1373,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
         [RefreshProperties(RefreshProperties.All)]
-        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter")]
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string FailoverPartner
         {
             get => _failoverPartner;
