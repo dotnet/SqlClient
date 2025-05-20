@@ -16,13 +16,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Cci" Version="4.0.0-rc3-24214-00" />
-    <PackageReference Include="Microsoft.Composition" Version="1.0.30" />
-    <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
-    <PackageReference Include="System.Diagnostics.TraceSource" Version="4.0.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="1.6.0" />
-    <PackageReference Include="System.Memory" Version="4.5.3" />
-    <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />
+    <PackageReference Include="Microsoft.Cci" />
+    <PackageReference Include="Microsoft.Composition" />
+    <PackageReference Include="System.Diagnostics.Contracts" />
+    <PackageReference Include="System.Diagnostics.TraceSource" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.IO.FileSystem" />
   </ItemGroup>
 
 </Project>
