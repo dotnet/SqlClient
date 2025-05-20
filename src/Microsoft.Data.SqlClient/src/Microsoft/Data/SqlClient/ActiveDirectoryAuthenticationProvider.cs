@@ -565,13 +565,13 @@ namespace Microsoft.Data.SqlClient
             #if NETFRAMEWORK
             if (_iWin32WindowFunc is not null)
             {
-                builder = builder.WithParentActivityOrWindow(_iWin32WindowFunc);
+                builder.WithParentActivityOrWindow(_iWin32WindowFunc);
             }
             #endif
             #if NETSTANDARD
             if (_parentActivityOrWindowFunc is not null)
             {
-                builder = builder.WithParentActivityOrWindow(_parentActivityOrWindowFunc);
+                builder.WithParentActivityOrWindow(_parentActivityOrWindowFunc);
             }
             #endif
 
