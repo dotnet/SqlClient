@@ -58,13 +58,9 @@ namespace Microsoft.Data.SqlClient
             internal byte _scale;
         }
 
-        internal struct DateTime2Info
-        {
-            internal int _date;
-            internal TimeInfo _timeInfo;
-        }
+        
 
-        internal struct DateTimeOffsetInfo
+        private struct DateTimeOffsetInfo
         {
             internal DateTime2Info _dateTime2Info;
             internal short _offset;
@@ -179,8 +175,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     StorageType.Date => DateTime.MinValue.AddDays(_value._int32),
                     StorageType.DateTime => _value._dateTimeInfo.ToDateTime(),
-                    // @TODO: Move conversion into DateTime2Info struct
-                    StorageType.DateTime2 => new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info)),
+                    StorageType.DateTime2 => _value._dateTime2Info.ToDateTime(),
                     _ => (DateTime)Value,
                 };
             }
@@ -1371,7 +1366,7 @@ namespace Microsoft.Data.SqlClient
         #region Private Structs
         
         /// <summary>
-        /// Used to store DateTime information.
+        /// Used to store DATETIME information.
         /// </summary>
         private struct DateTimeInfo
         {
@@ -1438,6 +1433,33 @@ namespace Microsoft.Data.SqlClient
                 // 4) Combine ticks and generate DateTime object
                 long totalTicks = BaseDateTicks + dayTicks + timeTicks;
                 return new DateTime(totalTicks);
+            }
+        }
+        
+        /// <summary>
+        /// Used to store DATETIME2 information.
+        /// </summary>
+        private struct DateTime2Info
+        {
+            // @TODO: Move to properties
+            
+            /// <summary>
+            /// Number of days since 0001-01-01.
+            /// </summary>
+            internal int _date;
+            
+            /// <summary>
+            /// Time component of the DATETIME2 value.
+            /// </summary>
+            internal TimeInfo _timeInfo;
+
+            /// <summary>
+            /// Generates a new DateTime object from the SQL DATETIME2 information.
+            /// </summary>
+            internal DateTime ToDateTime()
+            {
+                long ticks = _date * TimeSpan.TicksPerDay + _timeInfo._ticks;
+                return new DateTime(ticks);
             }
         }
         
