@@ -358,6 +358,30 @@ namespace Microsoft.Data.SqlClient
                 };
             }
         }
+
+        internal TimeSpan Time
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type == StorageType.Time
+                    ? new TimeSpan(_value._timeInfo._ticks)
+                    : (TimeSpan)Value;
+            }
+        }
+        
+        #if NET
+        internal TimeOnly TimeOnly
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type == StorageType.Time
+                    ? new TimeOnly(_value._timeInfo._ticks)
+                    : (TimeOnly)Value;
+            }
+        }
+        #endif
         
         #endregion
 
@@ -603,37 +627,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal TimeSpan Time
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Time == _type)
-                {
-                    return new TimeSpan(_value._timeInfo._ticks);
-                }
-
-                return (TimeSpan)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
 #if NET
-        internal TimeOnly TimeOnly
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Time == _type)
-                {
-                    return new TimeOnly(_value._timeInfo._ticks);
-                }
-
-                return (TimeOnly)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
         internal DateOnly DateOnly
         {
             get
