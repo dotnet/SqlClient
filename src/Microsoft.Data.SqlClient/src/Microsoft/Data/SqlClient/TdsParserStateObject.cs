@@ -1871,7 +1871,7 @@ namespace Microsoft.Data.SqlClient
             }
             byte[] buf = null;
             int offset = 0;
-            (bool isAvailable, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
+            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
 
             if (isPlp)
             {
@@ -1889,7 +1889,7 @@ namespace Microsoft.Data.SqlClient
                 if (((_inBytesUsed + length) > _inBytesRead) || (_inBytesPacket < length))
                 {
                     int startOffset = 0;
-                    if (isAvailable)
+                    if (canContinue)
                     {
                         if (isContinuing || isStarting)
                         {
@@ -1907,7 +1907,7 @@ namespace Microsoft.Data.SqlClient
                         buf = new byte[length];
                     }
 
-                    TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, isAvailable);
+                    TdsOperationStatus result = TryReadByteArray(buf, length, out _, startOffset, canContinue);
                     
                     if (result != TdsOperationStatus.Done)
                     {
@@ -3465,15 +3465,15 @@ namespace Microsoft.Data.SqlClient
 
         internal (bool CanContinue, bool IsStarting, bool IsContinuing) GetSnapshotStatuses()
         {
-            bool isAvailable = _snapshot != null && _snapshot.ContinueEnabled && _snapshotStatus != SnapshotStatus.NotActive;
+            bool canContinue = _snapshot != null && _snapshot.ContinueEnabled && _snapshotStatus != SnapshotStatus.NotActive;
             bool isStarting = false;
             bool isContinuing = false;
-            if (isAvailable)
+            if (canContinue)
             {
                 isStarting = _snapshotStatus == SnapshotStatus.ReplayStarting;
                 isContinuing = _snapshotStatus == SnapshotStatus.ContinueRunning;
             }
-            return (isAvailable, isStarting, isContinuing);
+            return (canContinue, isStarting, isContinuing);
         }
 
         internal int GetSnapshotStorageLength<T>()
@@ -4026,28 +4026,6 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack == trace, "The stack trace on subsequent replays should be the same");
-                }
-            }
-
-            public int CurrentPacketIndex
-            {
-                get
-                {
-                    int value = -1;
-                    if (_current != null)
-                    {
-                        PacketData current = _firstPacket;
-                        while (current != null)
-                        {
-                            value += 1;
-                            if (current == _current)
-                            {
-                                break;
-                            }
-                            current = current.NextPacket;
-                        } 
-                    }
-                    return value;
                 }
             }
 #endif
