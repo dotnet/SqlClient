@@ -28,6 +28,8 @@ namespace Microsoft.Data.SqlClient
 
             var options = parser.Connection.ConnectionOptions;
 
+            SqlClientEventSource.Log.StateDumpEvent("<SspiContextProvider> Initializing provider {0} with SPN={1}", GetType().FullName, serverSpn);
+
             _authParam = new SspiAuthenticationParameters(options.DataSource, serverSpn)
             {
                 DatabaseName = options.InitialCatalog,

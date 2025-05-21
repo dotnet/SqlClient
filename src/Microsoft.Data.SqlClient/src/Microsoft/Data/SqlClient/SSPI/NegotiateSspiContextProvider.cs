@@ -31,9 +31,6 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            _negotiateAuth.Dispose();
-            _negotiateAuth = null;
-
             return false;
         }
     }
