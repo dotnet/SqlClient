@@ -188,6 +188,95 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Single, ref _value._single, value);
         }
         
+        
+        internal SqlBinary SqlBinary
+        {
+            get => _type == StorageType.SqlBinary
+                ? IsNull ? SqlBinary.Null : (SqlBinary)_object
+                : (SqlBinary)SqlValue;
+            set => SetObject(StorageType.SqlBinary, value);
+        }
+
+        internal SqlBoolean SqlBoolean
+        {
+            get => _type == StorageType.Boolean
+                ? IsNull ? SqlBoolean.Null : new SqlBoolean(_value._boolean)
+                : (SqlBoolean)SqlValue;
+        }
+
+        internal SqlByte SqlByte
+        {
+            get => _type == StorageType.Byte
+                ? IsNull ? SqlByte.Null : new SqlByte(_value._byte)
+                : (SqlByte)SqlValue;
+        }
+
+        internal SqlCachedBuffer SqlCachedBuffer
+        {
+            get => _type == StorageType.SqlCachedBuffer
+                ? IsNull ? SqlCachedBuffer.Null : (SqlCachedBuffer)_object
+                : (SqlCachedBuffer)SqlValue;
+            set => SetObject(StorageType.SqlCachedBuffer, value);
+        }
+        
+        internal SqlDateTime SqlDateTime
+        {
+            // @TODO: Add helper to DateTimeInfo struct
+            get => _type == StorageType.DateTime
+                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart)
+                : (SqlDateTime)SqlValue;
+        }
+        
+        internal SqlDouble SqlDouble
+        {
+            get => _type == StorageType.Double
+                ? IsNull ? SqlDouble.Null : new SqlDouble(_value._double)
+                : (SqlDouble)SqlValue;
+        }
+        
+        internal SqlInt16 SqlInt16
+        {
+            get => _type == StorageType.Int16
+                ? IsNull ? SqlInt16.Null : new SqlInt16(_value._int16)
+                : (SqlInt16)SqlValue;
+        }
+
+        internal SqlInt32 SqlInt32
+        {
+            get => _type == StorageType.Int32
+                ? IsNull ? SqlInt32.Null : new SqlInt32(_value._int32)
+                : (SqlInt32)SqlValue;
+        }
+
+        internal SqlInt64 SqlInt64
+        {
+            get => _type == StorageType.Int64
+                ? IsNull ? SqlInt64.Null : new SqlInt64(_value._int64)
+                : (SqlInt64)SqlValue;
+        }
+        
+        internal SqlJson SqlJson
+        {
+            get => StorageType.Json == _type
+                ? IsNull ? SqlJson.Null : new SqlJson((string)_object)
+                : (SqlJson)SqlValue;
+        }
+        
+        internal SqlSingle SqlSingle
+        {
+            get => _type == StorageType.Single
+                ? IsNull ? SqlSingle.Null : new SqlSingle(_value._single)
+                : (SqlSingle)SqlValue;
+        }
+        
+        internal SqlXml SqlXml
+        {
+            get => _type == StorageType.SqlXml
+                ? IsNull ? SqlXml.Null : (SqlXml)_object
+                : (SqlXml)SqlValue;
+            set => SetObject(StorageType.SqlXml, value);
+        }
+        
         #endregion
 
         internal byte[] ByteArray
@@ -560,51 +649,10 @@ namespace Microsoft.Data.SqlClient
             return (dateTime2Info._date * TimeSpan.TicksPerDay + dateTime2Info._timeInfo._ticks);
         }
 
-        internal SqlBinary SqlBinary
-        {
-            get => _type == StorageType.SqlBinary
-                ? IsNull ? SqlBinary.Null : (SqlBinary)_object
-                : (SqlBinary)SqlValue;
-            set => SetObject(StorageType.SqlBinary, value);
-        }
 
-        internal SqlBoolean SqlBoolean
-        {
-            get => _type == StorageType.Boolean
-                ? IsNull ? SqlBoolean.Null : new SqlBoolean(_value._boolean)
-                : (SqlBoolean)SqlValue;
-        }
+        
 
-        internal SqlByte SqlByte
-        {
-            get => _type == StorageType.Byte
-                ? IsNull ? SqlByte.Null : new SqlByte(_value._byte)
-                : (SqlByte)SqlValue;
-        }
-
-        internal SqlCachedBuffer SqlCachedBuffer
-        {
-            get => _type == StorageType.SqlCachedBuffer
-                ? IsNull ? SqlCachedBuffer.Null : (SqlCachedBuffer)_object
-                : (SqlCachedBuffer)SqlValue;
-            set => SetObject(StorageType.SqlCachedBuffer, value);
-        }
-
-        internal SqlXml SqlXml
-        {
-            get => _type == StorageType.SqlXml
-                ? IsNull ? SqlXml.Null : (SqlXml)_object
-                : (SqlXml)SqlValue;
-            set => SetObject(StorageType.SqlXml, value);
-        }
-
-        internal SqlDateTime SqlDateTime
-        {
-            // @TODO: Add helper to DateTimeInfo struct
-            get => _type == StorageType.DateTime
-                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart)
-                : (SqlDateTime)SqlValue;
-        }
+        
 
         internal SqlDecimal SqlDecimal
         {
@@ -629,12 +677,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDouble SqlDouble
-        {
-            get => _type == StorageType.Double
-                ? IsNull ? SqlDouble.Null : new SqlDouble(_value._double)
-                : (SqlDouble)SqlValue;
-        }
+        
 
         internal SqlGuid SqlGuid
         {
@@ -653,26 +696,7 @@ namespace Microsoft.Data.SqlClient
             set => SetObject(StorageType.SqlGuid, value);
         }
 
-        internal SqlInt16 SqlInt16
-        {
-            get => _type == StorageType.Int16
-                ? IsNull ? SqlInt16.Null : new SqlInt16(_value._int16)
-                : (SqlInt16)SqlValue;
-        }
-
-        internal SqlInt32 SqlInt32
-        {
-            get => _type == StorageType.Int32
-                ? IsNull ? SqlInt32.Null : new SqlInt32(_value._int32)
-                : (SqlInt32)SqlValue;
-        }
-
-        internal SqlInt64 SqlInt64
-        {
-            get => _type == StorageType.Int64
-                ? IsNull ? SqlInt64.Null : new SqlInt64(_value._int64)
-                : (SqlInt64)SqlValue;
-        }
+        
 
         internal SqlMoney SqlMoney
         {
@@ -694,12 +718,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlSingle SqlSingle
-        {
-            get => _type == StorageType.Single
-                ? IsNull ? SqlSingle.Null : new SqlSingle(_value._single)
-                : (SqlSingle)SqlValue;
-        }
+        
 
         internal SqlString SqlString
         {
@@ -727,12 +746,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlJson SqlJson
-        {
-            get => StorageType.Json == _type
-                ? IsNull ? SqlJson.Null : new SqlJson((string)_object)
-                : (SqlJson)SqlValue;
-        }
+        
 
         internal object SqlValue
         {
