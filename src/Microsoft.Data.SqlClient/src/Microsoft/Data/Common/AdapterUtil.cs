@@ -24,8 +24,6 @@ using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
-using System.Linq;
-
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -791,18 +789,17 @@ namespace Microsoft.Data.Common
         /// </summary>
         /// <remarks>This array contains predefined endpoint strings used to identify Azure Synapse and
         /// associated services, such as Fabric Data Warehouse and Power BI Data Warehouse.</remarks>
-        internal static readonly string[] s_azureSynapseEndpoints = { AZURE_SYNAPSE,
-                                                                      FABRIC_DATAWAREHOUSE,
+        internal static readonly string[] s_azureSynapseEndpoints = { FABRIC_DATAWAREHOUSE,
                                                                       PBI_DATAWAREHOUSE,
                                                                       PBI_DATAWAREHOUSE2,
                                                                       PBI_DATAWAREHOUSE3 };
 
-        internal static readonly string[] s_azureSynapseOnDemandEndpoints = s_azureSqlServerOnDemandEndpoints
-                                                                            .Concat(s_azureSynapseEndpoints)
-                                                                            .ToArray();
+        internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
+
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints);
+            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
+                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
         }
         
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
@@ -846,7 +843,7 @@ namespace Microsoft.Data.Common
             // check if servername ends with any endpoints
             foreach (var endpoint in endpoints)
             {
-                if (length > endpoint.Length)
+                if (length >= endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
                     {
