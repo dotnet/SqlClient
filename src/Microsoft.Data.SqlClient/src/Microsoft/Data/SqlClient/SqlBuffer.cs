@@ -58,20 +58,12 @@ namespace Microsoft.Data.SqlClient
             internal byte _scale;
         }
 
-        
-
-        private struct DateTimeOffsetInfo
-        {
-            internal DateTime2Info _dateTime2Info;
-            internal short _offset;
-        }
-
         internal struct VectorInfo
         {
             internal int _elementCount;
             internal byte _elementType;
         }
-
+        
         [StructLayout(LayoutKind.Explicit)]
         private struct Storage
         {
@@ -191,6 +183,17 @@ namespace Microsoft.Data.SqlClient
                     StorageType.DateTime2 => _value._dateTime2Info.ToDateTime(),
                     _ => (DateTime)Value,
                 };
+            }
+        }
+
+        internal DateTimeOffset DateTimeOffset
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type == StorageType.DateTimeOffset
+                    ? _value._dateTimeOffsetInfo.ToDateTimeOffset()
+                    : (DateTimeOffset)Value;
             }
         }
         
@@ -639,33 +642,6 @@ namespace Microsoft.Data.SqlClient
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }
         }
-
-        internal DateTimeOffset DateTimeOffset
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.DateTimeOffset == _type)
-                {
-                    TimeSpan offset = new TimeSpan(0, _value._dateTimeOffsetInfo._offset, 0);
-                    // datetime part presents time in UTC
-                    return new DateTimeOffset(GetTicksFromDateTime2Info(_value._dateTimeOffsetInfo._dateTime2Info) + offset.Ticks, offset);
-                }
-
-                return (DateTimeOffset)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        private static long GetTicksFromDateTime2Info(DateTime2Info dateTime2Info)
-        {
-            return (dateTime2Info._date * TimeSpan.TicksPerDay + dateTime2Info._timeInfo._ticks);
-        }
-
-
-        
-
-        
 
         internal SqlDecimal SqlDecimal
         {
@@ -1413,6 +1389,32 @@ namespace Microsoft.Data.SqlClient
             {
                 long ticks = _date * TimeSpan.TicksPerDay + _timeInfo._ticks;
                 return new DateTime(ticks);
+            }
+        }
+        
+        /// <summary>
+        /// Used to store DATETIMEOFFSET information.
+        /// </summary>
+        private struct DateTimeOffsetInfo
+        {
+            /// <summary>
+            /// DateTime component of the DATETIMEOFFSET value.
+            /// </summary>
+            internal DateTime2Info _dateTime2Info;
+            
+            /// <summary>
+            /// Timezone offset component of the DATETIMEOFFSET value, in minutes.
+            /// </summary>
+            internal short _offset;
+
+            /// <summary>
+            /// Generates a new DateTimeOffset object from the SQL DATETIMEOFFSET information.
+            /// </summary>
+            internal DateTimeOffset ToDateTimeOffset()
+            {
+                DateTime dateTime = _dateTime2Info.ToDateTime();
+                TimeSpan offset = new TimeSpan(0, _offset, 0);
+                return new DateTimeOffset(dateTime, offset);
             }
         }
         
