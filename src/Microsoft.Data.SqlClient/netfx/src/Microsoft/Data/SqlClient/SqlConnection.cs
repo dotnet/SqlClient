@@ -611,7 +611,7 @@ namespace Microsoft.Data.SqlClient
             get { return _sspiContextProvider; }
             set
             {
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null,  _accessTokenCallback, value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: null,  accessTokenCallback: null, sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
         }
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient
 
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null, _sspiContextProvider));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, null, sspiContextProvider: null));
             }
         }
 
@@ -766,7 +766,7 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
                 }
 
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value, _sspiContextProvider));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value, sspiContextProvider: null));
                 _accessTokenCallback = value;
             }
         }
@@ -1079,7 +1079,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, _sspiContextProvider));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _accessTokenCallback, sspiContextProvider: null));
             }
         }
 
