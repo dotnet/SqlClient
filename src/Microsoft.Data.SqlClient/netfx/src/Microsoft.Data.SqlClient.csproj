@@ -238,7 +238,7 @@
       <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs">
-      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOption.cs</Link>
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs</Link>
