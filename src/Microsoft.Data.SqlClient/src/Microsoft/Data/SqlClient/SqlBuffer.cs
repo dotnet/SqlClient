@@ -40,13 +40,6 @@ namespace Microsoft.Data.SqlClient
             Vector,
         }
 
-        internal struct DateTimeInfo
-        {
-            // This is used to store DateTime
-            internal int _daypart;
-            internal int _timepart;
-        }
-
         internal struct NumericInfo
         {
             // This is used to store Decimal data
@@ -84,7 +77,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [StructLayout(LayoutKind.Explicit)]
-        internal struct Storage
+        private struct Storage
         {
             [FieldOffset(0)]
             internal bool _boolean;
@@ -185,10 +178,7 @@ namespace Microsoft.Data.SqlClient
                 return _type switch
                 {
                     StorageType.Date => DateTime.MinValue.AddDays(_value._int32),
-                    // @TODO: Move conversion into DateTimeInfo struct
-                    StorageType.DateTime => SqlTypeWorkarounds.SqlDateTimeToDateTime(
-                        _value._dateTimeInfo._daypart,
-                        _value._dateTimeInfo._timepart),
+                    StorageType.DateTime => _value._dateTimeInfo.ToDateTime(),
                     // @TODO: Move conversion into DateTime2Info struct
                     StorageType.DateTime2 => new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info)),
                     _ => (DateTime)Value,
@@ -275,7 +265,7 @@ namespace Microsoft.Data.SqlClient
         {
             // @TODO: Add helper to DateTimeInfo struct
             get => _type == StorageType.DateTime
-                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart)
+                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo.DayPart, _value._dateTimeInfo.TimePart)
                 : (SqlDateTime)SqlValue;
         }
         
@@ -1126,8 +1116,8 @@ namespace Microsoft.Data.SqlClient
         internal void SetToDateTime(int daypart, int timepart)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
-            _value._dateTimeInfo._daypart = daypart;
-            _value._dateTimeInfo._timepart = timepart;
+            _value._dateTimeInfo.DayPart = daypart;
+            _value._dateTimeInfo.TimePart = timepart;
             _type = StorageType.DateTime;
             IsNull = false;
         }
@@ -1374,6 +1364,81 @@ namespace Microsoft.Data.SqlClient
             _type = storageType;
             valueField = value;
             IsNull = false;
+        }
+        
+        #endregion
+        
+        #region Private Structs
+        
+        /// <summary>
+        /// Used to store DateTime information.
+        /// </summary>
+        private struct DateTimeInfo
+        {
+            /// <summary>
+            /// Number of days since 1900-00-00 MINUS 53690.
+            /// </summary>
+            internal int DayPart { get; set; }
+            
+            /// <summary>
+            /// Number of SQL ticks since 00:00:00.
+            /// Note: this is not the same as CLR ticks.
+            /// </summary>
+            internal int TimePart { get; set; }
+
+            /// <summary>
+            /// Generates a new DateTime object from the SQL DATETIME information.
+            /// </summary>
+            internal DateTime ToDateTime()
+            {
+                // SQL DATETIME is represented as two integers, the number of days since 1900-01-01
+                // and the number of (SQL) ticks since 00:00:00.
+                
+                // Values that come from SqlDateTime
+                const double SqlTicksPerMillisecond = 0.3;
+                const int SqlTicksPerSecond = 300;
+                const int SqlTicksPerMinute = SqlTicksPerSecond * 60;
+                const int SqlTicksPerHour = SqlTicksPerMinute * 60;
+                const int SqlTicksPerDay = SqlTicksPerHour * 24;
+                
+                // This is added to date to bring negative days up to 0.
+                const uint MinDays = 53690;
+
+                // 9999-12-31 (max date) is this many days after 1900-01-01 (min date)
+                const uint MaxDays = 2958463;
+                const uint OffsetMaxDays = MaxDays + MinDays;
+
+                // Maximum time that can be stored in a DateTime (ie, 23:59:59.997) 
+                const uint MaxTicks = SqlTicksPerDay - 1;
+
+                // Number of ticks to add to a new DateTime to get to 1900-01-01
+                const long BaseDateTicks = 599266080000000000L;
+                
+                // 1) Check boundaries
+                //    a) Days must be:               min_days < days < max_days
+                //       Which can be simplified to: 0 < days+min_days < max_days+min_days
+                //       If days+min_days is still negative, casting to uint will cause it to
+                //       overflow, simplifying to:   uint(days+min_days) < max_days+min_days
+                //   b) Time must be:                0 < time < max_time
+                //      If time is negative, casting to uint will cause it to overflow, simplifying
+                //      to:                          uint(time) < max_time
+                if ((uint)(DayPart + MinDays) > OffsetMaxDays ||
+                    (uint)TimePart > MaxTicks)
+                {
+                    throw SQL.DateTimeOverflow();
+                }
+                
+                // 2) Calculate (CLR) ticks in the days
+                long dayTicks = DayPart * TimeSpan.TicksPerDay;
+                
+                // 3) Calculate (CLR) ticks in time part
+                double timeInMilliseconds = (TimePart / SqlTicksPerMillisecond) + 0.5;
+                long timeTicks = (long)timeInMilliseconds * TimeSpan.TicksPerMillisecond;
+                
+                // 4) Combine ticks and generate DateTime object
+                long totalTicks = BaseDateTicks + dayTicks + timeTicks;
+                return new DateTime(totalTicks);
+            }
         }
         
         #endregion
