@@ -240,9 +240,8 @@ namespace Microsoft.Data.SqlClient
         
         internal SqlDateTime SqlDateTime
         {
-            // @TODO: Add helper to DateTimeInfo struct
             get => _type == StorageType.DateTime
-                ? IsNull ? SqlDateTime.Null : new SqlDateTime(_value._dateTimeInfo.DayPart, _value._dateTimeInfo.TimePart)
+                ? IsNull ? SqlDateTime.Null : _value._dateTimeInfo.ToSqlDateTime()
                 : (SqlDateTime)SqlValue;
         }
         
@@ -1351,6 +1350,12 @@ namespace Microsoft.Data.SqlClient
                 long totalTicks = BaseDateTicks + dayTicks + timeTicks;
                 return new DateTime(totalTicks);
             }
+
+            /// <summary>
+            /// Generates a new SqlDateTime object from the SQL DATETIME information.
+            /// </summary>
+            internal SqlDateTime ToSqlDateTime() => 
+                new SqlDateTime(DayPart, TimePart);
         }
         
         /// <summary>
