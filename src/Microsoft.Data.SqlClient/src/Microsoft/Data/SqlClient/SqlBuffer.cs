@@ -482,23 +482,14 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-                if (StorageType.Guid == _type)
+                return _type switch
                 {
-                    return _value._guid;
-                }
-                else if (StorageType.SqlGuid == _type)
-                {
-                    return ((SqlGuid)_object).Value;
-                }
-                return (Guid)Value;
+                    StorageType.Guid => _value._guid,
+                    StorageType.SqlGuid => ((SqlGuid)_object).Value,
+                    _ => (Guid)Value,
+                };
             }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _type = StorageType.Guid;
-                _value._guid = value;
-                IsNull = false;
-            }
+            set => SetValue(StorageType.Guid, ref _value._guid, value);
         }
 
         internal string String
@@ -713,18 +704,12 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlGuid SqlGuid
         {
-            get
+            get => _type switch
             {
-                if (StorageType.Guid == _type)
-                {
-                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
-                }
-                else if (StorageType.SqlGuid == _type)
-                {
-                    return IsNull ? SqlGuid.Null : (SqlGuid)_object;
-                }
-                return (SqlGuid)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
+                StorageType.Guid => IsNull ? SqlGuid.Null : new SqlGuid(_value._guid)
+                StorageType.SqlGuid => IsNull ? SqlGuid.Null : (SqlGuid)_object,
+                _ => (SqlGuid)SqlValue
+            };
             set => SetObject(StorageType.SqlGuid, value);
         }
 
