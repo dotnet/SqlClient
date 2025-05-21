@@ -319,20 +319,17 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-
-                if (StorageType.Date == _type)
+                return _type switch
                 {
-                    return DateTime.MinValue.AddDays(_value._int32);
-                }
-                if (StorageType.DateTime2 == _type)
-                {
-                    return new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info));
-                }
-                if (StorageType.DateTime == _type)
-                {
-                    return SqlTypeWorkarounds.SqlDateTimeToDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart);
-                }
-                return (DateTime)Value; // anything else we haven't thought of goes through boxing.
+                    StorageType.Date => DateTime.MinValue.AddDays(_value._int32),
+                    // @TODO: Move conversion into DateTimeInfo struct
+                    StorageType.DateTime => SqlTypeWorkarounds.SqlDateTimeToDateTime(
+                        _value._dateTimeInfo._daypart,
+                        _value._dateTimeInfo._timepart),
+                    // @TODO: Move conversion into DateTime2Info struct
+                    StorageType.DateTime2 => new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info)),
+                    _ => (DateTime)Value,
+                };
             }
         }
 
