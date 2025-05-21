@@ -164,6 +164,21 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Double, ref _value._double, value);
         }
         
+        internal Guid Guid
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type switch
+                {
+                    StorageType.Guid => _value._guid,
+                    StorageType.SqlGuid => ((SqlGuid)_object).Value,
+                    _ => (Guid)Value,
+                };
+            }
+            set => SetValue(StorageType.Guid, ref _value._guid, value);
+        }
+        
         internal short Int16
         {
             get => GetValue(StorageType.Int16, _value._int16);
@@ -232,6 +247,17 @@ namespace Microsoft.Data.SqlClient
             get => _type == StorageType.Double
                 ? IsNull ? SqlDouble.Null : new SqlDouble(_value._double)
                 : (SqlDouble)SqlValue;
+        }
+        
+        internal SqlGuid SqlGuid
+        {
+            get => _type switch
+            {
+                StorageType.Guid => IsNull ? SqlGuid.Null : new SqlGuid(_value._guid),
+                StorageType.SqlGuid => IsNull ? SqlGuid.Null : (SqlGuid)_object,
+                _ => (SqlGuid)SqlValue
+            };
+            set => SetObject(StorageType.SqlGuid, value);
         }
         
         internal SqlInt16 SqlInt16
@@ -456,21 +482,6 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
-        internal Guid Guid
-        {
-            get
-            {
-                ThrowIfNull();
-                return _type switch
-                {
-                    StorageType.Guid => _value._guid,
-                    StorageType.SqlGuid => ((SqlGuid)_object).Value,
-                    _ => (Guid)Value,
-                };
-            }
-            set => SetValue(StorageType.Guid, ref _value._guid, value);
-        }
-
         internal string String
         {
             get
@@ -670,16 +681,7 @@ namespace Microsoft.Data.SqlClient
 
         
 
-        internal SqlGuid SqlGuid
-        {
-            get => _type switch
-            {
-                StorageType.Guid => IsNull ? SqlGuid.Null : new SqlGuid(_value._guid)
-                StorageType.SqlGuid => IsNull ? SqlGuid.Null : (SqlGuid)_object,
-                _ => (SqlGuid)SqlValue
-            };
-            set => SetObject(StorageType.SqlGuid, value);
-        }
+        
 
         
 
