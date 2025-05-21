@@ -166,6 +166,19 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
         
+        #if NET
+        internal DateOnly DateOnly
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type == StorageType.Date
+                    ? DateOnly.MinValue.AddDays(_value._int32)
+                    : (DateOnly)Value;
+            }
+        }
+        #endif
+        
         internal DateTime DateTime
         {
             get
@@ -626,22 +639,6 @@ namespace Microsoft.Data.SqlClient
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }
         }
-
-#if NET
-        internal DateOnly DateOnly
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Date == _type)
-                {
-                    return DateOnly.MinValue.AddDays(_value._int32);
-                }
-                return (DateOnly)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-#endif
 
         internal DateTimeOffset DateTimeOffset
         {
