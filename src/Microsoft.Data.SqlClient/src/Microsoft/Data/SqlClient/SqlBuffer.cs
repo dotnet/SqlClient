@@ -608,13 +608,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (SqlBinary)SqlValue; // anything else we haven't thought of goes through boxing.
             }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlBinary;
-                IsNull = value.IsNull;
-            }
+            set => SetObject(StorageType.SqlBinary, value);
         }
 
         internal SqlBoolean SqlBoolean
@@ -663,13 +657,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (SqlCachedBuffer)SqlValue; // anything else we haven't thought of goes through boxing.
             }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlCachedBuffer;
-                IsNull = value.IsNull;
-            }
+            set => SetObject(StorageType.SqlCachedBuffer, value);
         }
 
         internal SqlXml SqlXml
@@ -686,13 +674,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (SqlXml)SqlValue; // anything else we haven't thought of goes through boxing.
             }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlXml;
-                IsNull = value.IsNull;
-            }
+            set => SetObject(StorageType.SqlXml, value);
         }
 
         internal SqlDateTime SqlDateTime
@@ -764,13 +746,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (SqlGuid)SqlValue; // anything else we haven't thought of goes through boxing.
             }
-            set
-            {
-                Debug.Assert(IsEmpty, "setting value a second time?");
-                _object = value;
-                _type = StorageType.SqlGuid;
-                IsNull = value.IsNull;
-            }
+            set => SetObject(StorageType.SqlGuid, value);
         }
 
         internal SqlInt16 SqlInt16
@@ -1478,6 +1454,16 @@ namespace Microsoft.Data.SqlClient
                             // `storageType`) will need to converted via boxing.
         }
 
+        private void SetObject<T>(StorageType storageType, T value)
+            where T : INullable
+        {
+            Debug.Assert(IsEmpty, "Value is being set a second time.");
+
+            _type = storageType;
+            _object = value;
+            IsNull = value.IsNull;
+        }
+        
         private void SetValue<T>(StorageType storageType, ref T valueField, T value)
         {
             Debug.Assert(IsEmpty, "Value is being set a second time.");
