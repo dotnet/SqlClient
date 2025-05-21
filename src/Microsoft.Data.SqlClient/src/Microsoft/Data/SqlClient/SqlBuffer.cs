@@ -308,6 +308,13 @@ namespace Microsoft.Data.SqlClient
                 ? IsNull ? SqlJson.Null : new SqlJson((string)_object)
                 : (SqlJson)SqlValue;
         }
+
+        internal SqlMoney SqlMoney
+        {
+            get => _type == StorageType.Money
+                ? IsNull ? SqlMoney.Null : GetSqlMoneyFromLong(_value._int64)
+                : (SqlMoney)SqlValue;
+        }
         
         internal SqlSingle SqlSingle
         {
@@ -692,32 +699,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        
-
-        
-
-        
-
-        internal SqlMoney SqlMoney
-        {
-            get
-            {
-                if (StorageType.Money == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlMoney.Null;
-                    }
-#if NET
-                    return SqlMoney.FromTdsValue(_value._int64);
-#else
-                    return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
-#endif
-                }
-                return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
         //@TODO: SORT
         internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
         {
@@ -731,7 +712,7 @@ namespace Microsoft.Data.SqlClient
             }
             return (SqlVector<T>)SqlValue;
         }
-
+        
         internal object SqlValue
         {
             get
@@ -1285,6 +1266,15 @@ namespace Microsoft.Data.SqlClient
         }
         
         #region Private Helpers
+
+        private static SqlMoney GetSqlMoneyFromLong(long value)
+        {
+            #if NET
+            return SqlMoney.FromTdsValue(value);
+            #else
+            return SqlTypeWorkarounds.SqlMoneyCtor(value, 1);
+            #endif
+        }
         
         private string GetStringFromVector()
         {
@@ -1305,7 +1295,7 @@ namespace Microsoft.Data.SqlClient
             return _type == storageType
                 ? value
                 : (T)Value; // Types we cannot directly convert to (ie, everything except for
-                            // `storageType`) will need to converted via boxing.
+                            // `storageType` will need to converted via boxing.
         }
 
         private void SetObject<T>(StorageType storageType, T value)
