@@ -158,6 +158,25 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
         
+        internal DateTime DateTime
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type switch
+                {
+                    StorageType.Date => DateTime.MinValue.AddDays(_value._int32),
+                    // @TODO: Move conversion into DateTimeInfo struct
+                    StorageType.DateTime => SqlTypeWorkarounds.SqlDateTimeToDateTime(
+                        _value._dateTimeInfo._daypart,
+                        _value._dateTimeInfo._timepart),
+                    // @TODO: Move conversion into DateTime2Info struct
+                    StorageType.DateTime2 => new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info)),
+                    _ => (DateTime)Value,
+                };
+            }
+        }
+        
         internal double Double
         {
             get => GetValue(StorageType.Double, _value._double);
@@ -311,25 +330,6 @@ namespace Microsoft.Data.SqlClient
             {
                 ThrowIfNull(); // Must be checked here because SqlBinary allows null.
                 return SqlBinary.Value;
-            }
-        }
-
-        internal DateTime DateTime
-        {
-            get
-            {
-                ThrowIfNull();
-                return _type switch
-                {
-                    StorageType.Date => DateTime.MinValue.AddDays(_value._int32),
-                    // @TODO: Move conversion into DateTimeInfo struct
-                    StorageType.DateTime => SqlTypeWorkarounds.SqlDateTimeToDateTime(
-                        _value._dateTimeInfo._daypart,
-                        _value._dateTimeInfo._timepart),
-                    // @TODO: Move conversion into DateTime2Info struct
-                    StorageType.DateTime2 => new DateTime(GetTicksFromDateTime2Info(_value._dateTime2Info)),
-                    _ => (DateTime)Value,
-                };
             }
         }
 
