@@ -765,8 +765,8 @@ namespace Microsoft.Data.SqlClient
 
         private object GetVectorReturnValue()
         {
-            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementType;
-            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementCount;
+            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._elementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._elementCount;
 
             if (IsNull)
             {

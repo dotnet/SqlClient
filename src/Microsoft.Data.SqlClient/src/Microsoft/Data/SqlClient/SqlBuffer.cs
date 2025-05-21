@@ -133,11 +133,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         //@TODO: SORT
-        internal Storage GetVectorInfo()
+        internal VectorInfo GetVectorInfo()
         {
             if (_type == StorageType.Vector)
             {
-                return _value;
+                return _value._vectorInfo;
             }
             throw new InvalidOperationException();
         }
@@ -315,6 +315,18 @@ namespace Microsoft.Data.SqlClient
                 ? IsNull ? SqlSingle.Null : new SqlSingle(_value._single)
                 : (SqlSingle)SqlValue;
         }
+
+        internal SqlString SqlString
+        {
+            get => _type switch
+            {
+                StorageType.Json => IsNull ? SqlString.Null : new SqlString((string)_object),
+                StorageType.String => IsNull ? SqlString.Null : new SqlString((string)_object),
+                StorageType.SqlCachedBuffer => IsNull ? SqlString.Null : ((SqlCachedBuffer)_object).ToSqlString(),
+                StorageType.Vector => IsNull ? SqlString.Null : new SqlString(GetStringFromVector()),
+                _ => (SqlString)SqlValue
+            };
+        }
         
         internal SqlXml SqlXml
         {
@@ -322,6 +334,22 @@ namespace Microsoft.Data.SqlClient
                 ? IsNull ? SqlXml.Null : (SqlXml)_object
                 : (SqlXml)SqlValue;
             set => SetObject(StorageType.SqlXml, value);
+        }
+
+        internal string String
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type switch
+                {
+                    StorageType.Json => (string)_object,
+                    StorageType.String => (string)_object,
+                    StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
+                    StorageType.Vector => GetStringFromVector(),
+                    _ => (string)Value
+                };
+            }
         }
         
         #endregion
@@ -332,6 +360,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_type != StorageType.Vector)
                 {
+                    // Must be checked here because SqlBinary allows null.
                     ThrowIfNull();
                 }
                 return SqlBinary.Value;
@@ -483,35 +512,6 @@ namespace Microsoft.Data.SqlClient
             { len--; }
         }
         #endregion
-
-        internal string String
-        {
-            get
-            {
-                ThrowIfNull();
-                if (_type == StorageType.Vector)
-                {
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return GetSqlVector<float>().GetString();
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
-                }
-                
-                if (StorageType.String == _type || StorageType.Json == _type)
-                {
-                    return (string)_object;
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    return ((SqlCachedBuffer)(_object)).ToString();
-                }
-                return (string)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
 
         // use static list of format strings indexed by scale for perf
         private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
@@ -717,51 +717,6 @@ namespace Microsoft.Data.SqlClient
                 return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
             }
         }
-
-        
-
-        internal SqlString SqlString
-        {
-            get
-            {
-                if (_type is StorageType.Vector)
-                {
-                    if (IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return new SqlString(GetSqlVector<float>().GetString());
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
-                }
-                // String and Json storage type are both strings.
-                if (_type is StorageType.String or StorageType.Json)
-                {
-                    if (IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return new SqlString((string)_object);
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    SqlCachedBuffer data = (SqlCachedBuffer)(_object);
-                    if (data.IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return data.ToSqlString();
-                }
-                return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        
 
         //@TODO: SORT
         internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
@@ -1330,7 +1285,19 @@ namespace Microsoft.Data.SqlClient
         }
         
         #region Private Helpers
-
+        
+        private string GetStringFromVector()
+        {
+            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>().GetString();
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+        
         private T GetValue<T>(StorageType storageType, T value)
         {
             ThrowIfNull();
