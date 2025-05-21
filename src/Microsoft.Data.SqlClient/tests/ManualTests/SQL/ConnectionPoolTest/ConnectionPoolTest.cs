@@ -5,7 +5,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -199,8 +198,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             waitTask.Wait();
             Assert.Equal(TaskStatus.RanToCompletion, waitTask.Status);
         }
-
-        
 
         internal static InternalConnectionWrapper ReplacementConnectionUsesSemaphoreTask(string connectionString, Barrier syncBarrier)
         {
