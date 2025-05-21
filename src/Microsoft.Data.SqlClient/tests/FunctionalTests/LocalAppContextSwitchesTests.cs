@@ -11,13 +11,17 @@ namespace Microsoft.Data.SqlClient.Tests
     public class LocalAppContextSwitchesTests
     {
         [Theory]
-        [InlineData("SuppressInsecureTLSWarning", false)]
         [InlineData("LegacyRowVersionNullBehavior", false)]
+        [InlineData("SuppressInsecureTLSWarning", false)]
         [InlineData("MakeReadAsyncBlocking", false)]
         [InlineData("UseMinimumLoginTimeout", true)]
+        [InlineData("LegacyVarTimeZeroScaleBehaviour", true)]
         [InlineData("UseCompatibilityProcessSni", false)]
         [InlineData("UseCompatibilityAsyncBehaviour", false)]
         [InlineData("UseConnectionPoolV2", false)]
+        #if NETFRAMEWORK
+        [InlineData("DisableTNIRByDefault", false)]
+        #endif
         public void DefaultSwitchValue(string property, bool expectedDefaultValue)
         {
             var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
