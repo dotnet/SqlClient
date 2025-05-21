@@ -74,41 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private enum Tristate : byte
-        {
-            NotInitialized = 0,
-            False = 1,
-            True = 2
-        }
-
-        /// <summary>
-        /// Tests that when UseConnectionPoolV2 context switch is enabled, opening a connection throws NotImplementedException
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void UseConnectionPoolV2ThrowsNotImplemented(string connectionString)
-        {
-            try
-            {
-                Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-                FieldInfo switchField = switchesType.GetField("s_useConnectionPoolV2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                switchField.SetValue(null, Tristate.True);
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    // This should throw NotImplementedException
-                    Assert.Throws<NotImplementedException>(() => connection.Open());
-                }
-            }
-            finally
-            {
-                // Reset the context switch
-                Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-                FieldInfo switchField = switchesType.GetField("s_useConnectionPoolV2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-                switchField.SetValue(null, Tristate.False);
-            }
-        }
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
         public static void AccessTokenConnectionPoolingTest()
         {
