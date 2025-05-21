@@ -207,7 +207,6 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Single, ref _value._single, value);
         }
         
-        
         internal SqlBinary SqlBinary
         {
             get => _type == StorageType.SqlBinary
@@ -297,6 +296,17 @@ namespace Microsoft.Data.SqlClient
                 ? IsNull ? SqlSingle.Null : new SqlSingle(_value._single)
                 : (SqlSingle)SqlValue;
         }
+
+        internal SqlString SqlString
+        {
+            get => _type switch
+            {
+                StorageType.Json => IsNull ? SqlString.Null : new SqlString((string)_object),
+                StorageType.String => IsNull ? SqlString.Null : new SqlString((string)_object),
+                StorageType.SqlCachedBuffer => IsNull ? SqlString.Null : ((SqlCachedBuffer)_object).ToSqlString(),
+                _ => (SqlString)SqlValue
+            };
+        }
         
         internal SqlXml SqlXml
         {
@@ -304,6 +314,21 @@ namespace Microsoft.Data.SqlClient
                 ? IsNull ? SqlXml.Null : (SqlXml)_object
                 : (SqlXml)SqlValue;
             set => SetObject(StorageType.SqlXml, value);
+        }
+
+        internal string String
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type switch
+                {
+                    StorageType.Json => (string)_object,
+                    StorageType.String => (string)_object,
+                    StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
+                    _ => (string)Value
+                };
+            }
         }
         
         #endregion
@@ -462,24 +487,6 @@ namespace Microsoft.Data.SqlClient
             { len--; }
         }
         #endregion
-
-        internal string String
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.String == _type || StorageType.Json == _type)
-                {
-                    return (string)_object;
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    return ((SqlCachedBuffer)(_object)).ToString();
-                }
-                return (string)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
 
         // use static list of format strings indexed by scale for perf
         private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
@@ -685,36 +692,6 @@ namespace Microsoft.Data.SqlClient
                 return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
             }
         }
-
-        
-
-        internal SqlString SqlString
-        {
-            get
-            {
-                // String and Json storage type are both strings.
-                if (StorageType.String == _type || StorageType.Json == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return new SqlString((string)_object);
-                }
-                else if (StorageType.SqlCachedBuffer == _type)
-                {
-                    SqlCachedBuffer data = (SqlCachedBuffer)(_object);
-                    if (data.IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return data.ToSqlString();
-                }
-                return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        
 
         internal object SqlValue
         {
