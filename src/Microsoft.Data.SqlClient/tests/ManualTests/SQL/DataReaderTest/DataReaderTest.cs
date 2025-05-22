@@ -638,7 +638,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         command.Parameters.Clear();
                         var result = (byte[])await command.ExecuteScalarAsync();
 
-                        Debug.Assert(data.SequenceEqual(result));
+                        Assert.Equal(data, result);
                     }
 
                 }
