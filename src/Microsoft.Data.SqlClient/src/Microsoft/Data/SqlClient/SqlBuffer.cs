@@ -491,6 +491,7 @@ namespace Microsoft.Data.SqlClient
                     StorageType.DateTimeOffset => DateTimeOffset,
                     StorageType.Decimal        => Decimal,
                     StorageType.Double         => Double,
+                    StorageType.Empty          => DBNull.Value,
                     StorageType.Int16          => Int16,
                     StorageType.Int32          => Int32,
                     StorageType.Int64          => Int64,
