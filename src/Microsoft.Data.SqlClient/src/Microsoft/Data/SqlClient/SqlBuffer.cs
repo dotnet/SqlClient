@@ -501,6 +501,44 @@ namespace Microsoft.Data.SqlClient
         }
         #endif
         
+        internal object Value
+        {
+            get => IsNull
+                ? DBNull.Value
+                : _type switch
+                {
+                    StorageType.Boolean        => Boolean ? True : False, // Return pre-boxed values for perf
+                    StorageType.Byte           => Byte,
+                    StorageType.Date           => DateTime,
+                    StorageType.DateTime       => DateTime,
+                    StorageType.DateTime2      => DateTime,
+                    StorageType.DateTimeOffset => DateTimeOffset,
+                    StorageType.Decimal        => Decimal,
+                    StorageType.Double         => Double,
+                    StorageType.Int16          => Int16,
+                    StorageType.Int32          => Int32,
+                    StorageType.Int64          => Int64,
+                    StorageType.Json           => String,
+                    StorageType.Guid           => Guid,
+                    StorageType.Money          => Decimal,
+                    StorageType.Single         => Single,
+                    StorageType.String         => String,
+                    StorageType.SqlBinary      => ByteArray,
+                    StorageType.SqlGuid        => Guid,
+                    StorageType.Time           => Time,
+                    StorageType.Vector         => ByteArray,
+                    
+                    // @TODO: Verify that these follow the same pattern as other types
+                    //     (ie, ClrType => (cast)Value)
+                    // If we have a cached buffer, it's because it's an XMLTYPE column and we have
+                    // to return a string when they're asking for the CLR value of the column.
+                    StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
+                    StorageType.SqlXml          => ((SqlXml)_object).Value,
+                    
+                    _ => null
+                };
+        }
+        
         #endregion
 
         internal object SqlValue
@@ -592,47 +630,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 return null; // need to return the value as an object of some SQL type
             }
-        }
-
-
-        
-
-        internal object Value
-        {
-            get => IsNull
-                ? DBNull.Value
-                : _type switch
-                {
-                    StorageType.Boolean        => Boolean ? True : False, // Return pre-boxed values for perf
-                    StorageType.Byte           => Byte,
-                    StorageType.Date           => DateTime,
-                    StorageType.DateTime       => DateTime,
-                    StorageType.DateTime2      => DateTime,
-                    StorageType.DateTimeOffset => DateTimeOffset,
-                    StorageType.Decimal        => Decimal,
-                    StorageType.Double         => Double,
-                    StorageType.Int16          => Int16,
-                    StorageType.Int32          => Int32,
-                    StorageType.Int64          => Int64,
-                    StorageType.Json           => String,
-                    StorageType.Guid           => Guid,
-                    StorageType.Money          => Decimal,
-                    StorageType.Single         => Single,
-                    StorageType.String         => String,
-                    StorageType.SqlBinary      => ByteArray,
-                    StorageType.SqlGuid        => Guid,
-                    StorageType.Time           => Time,
-                    StorageType.Vector         => ByteArray,
-                    
-                    // @TODO: Verify that these follow the same pattern as other types
-                    //     (ie, ClrType => (cast)Value)
-                    // If we have a cached buffer, it's because it's an XMLTYPE column and we have
-                    // to return a string when they're asking for the CLR value of the column.
-                    StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
-                    StorageType.SqlXml          => ((SqlXml)_object).Value,
-                    
-                    _ => null
-                };
         }
 
         internal Type GetTypeFromStorageType(bool isSqlType)
