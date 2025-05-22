@@ -143,7 +143,6 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
 
 #if NETFRAMEWORK
         InitField(
-            switchesType,
             "s_disableTNIRByDefault",
             out _disableTNIRByDefaultField,
             out _disableTNIRByDefaultOriginal);
