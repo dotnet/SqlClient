@@ -13,6 +13,46 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class SqlBuffer
     {
+        #region Constants
+        
+        // These formats work with DateTime stricts
+        private static readonly string[] Sql2008DateTime2Formats = new[] {
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss.f",
+            "yyyy-MM-dd HH:mm:ss.ff",
+            "yyyy-MM-dd HH:mm:ss.fff",
+            "yyyy-MM-dd HH:mm:ss.ffff",
+            "yyyy-MM-dd HH:mm:ss.fffff",
+            "yyyy-MM-dd HH:mm:ss.ffffff",
+            "yyyy-MM-dd HH:mm:ss.fffffff",
+        };
+        
+        // These formats work with DateTimeOffset structs
+        private static readonly string[] Sql2008DateTimeOffsetFormats = new[] {
+            "yyyy-MM-dd HH:mm:ss zzz",
+            "yyyy-MM-dd HH:mm:ss.f zzz",
+            "yyyy-MM-dd HH:mm:ss.ff zzz",
+            "yyyy-MM-dd HH:mm:ss.fff zzz",
+            "yyyy-MM-dd HH:mm:ss.ffff zzz",
+            "yyyy-MM-dd HH:mm:ss.fffff zzz",
+            "yyyy-MM-dd HH:mm:ss.ffffff zzz",
+            "yyyy-MM-dd HH:mm:ss.fffffff zzz",
+        };
+        
+        // These formats only work with TimeSpan structs
+        private static readonly string[] Sql2008TimeFormats = new string[] {
+            @"hh\:mm\:ss",
+            @"hh\:mm\:ss\.f",
+            @"hh\:mm\:ss\.ff",
+            @"hh\:mm\:ss\.fff",
+            @"hh\:mm\:ss\.ffff",
+            @"hh\:mm\:ss\.fffff",
+            @"hh\:mm\:ss\.ffffff",
+            @"hh\:mm\:ss\.fffffff",
+        };
+        
+        #endregion
+        
         internal enum StorageType
         {
             Empty = 0,
@@ -423,67 +463,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // use static list of format strings indexed by scale for perf
-        private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
-                "yyyy-MM-dd HH:mm:ss zzz",
-                "yyyy-MM-dd HH:mm:ss.f zzz",
-                "yyyy-MM-dd HH:mm:ss.ff zzz",
-                "yyyy-MM-dd HH:mm:ss.fff zzz",
-                "yyyy-MM-dd HH:mm:ss.ffff zzz",
-                "yyyy-MM-dd HH:mm:ss.fffff zzz",
-                "yyyy-MM-dd HH:mm:ss.ffffff zzz",
-                "yyyy-MM-dd HH:mm:ss.fffffff zzz",
-        };
-
-        private static readonly string[] s_sql2008DateTime2FormatByScale = new string[] {
-                "yyyy-MM-dd HH:mm:ss",
-                "yyyy-MM-dd HH:mm:ss.f",
-                "yyyy-MM-dd HH:mm:ss.ff",
-                "yyyy-MM-dd HH:mm:ss.fff",
-                "yyyy-MM-dd HH:mm:ss.ffff",
-                "yyyy-MM-dd HH:mm:ss.fffff",
-                "yyyy-MM-dd HH:mm:ss.ffffff",
-                "yyyy-MM-dd HH:mm:ss.fffffff",
-        };
-
-        private static readonly string[] s_sql2008TimeFormatByScale = new string[] {
-                "HH:mm:ss",
-                "HH:mm:ss.f",
-                "HH:mm:ss.ff",
-                "HH:mm:ss.fff",
-                "HH:mm:ss.ffff",
-                "HH:mm:ss.fffff",
-                "HH:mm:ss.ffffff",
-                "HH:mm:ss.fffffff",
-        };
-
         internal string Sql2008DateTimeString
         {
             get
             {
                 ThrowIfNull();
 
-                if (StorageType.Date == _type)
+                string formatString;
+                switch (_type)
                 {
-                    return DateTime.ToString("yyyy-MM-dd", DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.Date:
+                        formatString = "yyyy-MM-dd";
+                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.DateTime2:
+                        formatString = Sql2008DateTime2Formats[_value._dateTime2Info._timeInfo._scale];
+                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.DateTimeOffset:
+                        formatString = Sql2008DateTimeOffsetFormats[_value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale];
+                        return DateTimeOffset.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.Time:
+                        formatString = Sql2008TimeFormats[_value._timeInfo._scale];
+                        return Time.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    default:
+                        return (string)Value;
                 }
-                if (StorageType.Time == _type)
-                {
-                    byte scale = _value._timeInfo._scale;
-                    return new DateTime(_value._timeInfo._ticks).ToString(s_sql2008TimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
-                }
-                if (StorageType.DateTime2 == _type)
-                {
-                    byte scale = _value._dateTime2Info._timeInfo._scale;
-                    return DateTime.ToString(s_sql2008DateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
-                }
-                if (StorageType.DateTimeOffset == _type)
-                {
-                    DateTimeOffset dto = DateTimeOffset;
-                    byte scale = _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale;
-                    return dto.ToString(s_sql2008DateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
-                }
-                return (string)Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
@@ -1073,7 +1076,7 @@ namespace Microsoft.Data.SqlClient
         }
         
         #region Private Helpers
-
+        
         private static SqlMoney GetSqlMoneyFromLong(long value)
         {
             #if NET
