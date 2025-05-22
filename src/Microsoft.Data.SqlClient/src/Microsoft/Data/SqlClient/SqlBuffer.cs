@@ -1009,7 +1009,7 @@ namespace Microsoft.Data.SqlClient
             #if NET
             return SqlMoney.FromTdsValue(value);
             #else
-            SqlTypeWorkarounds.SqlMoneyCtor(value);
+            return SqlTypeWorkarounds.SqlMoneyCtor(value, 1 /* ignored */);
             #endif
         }
         
