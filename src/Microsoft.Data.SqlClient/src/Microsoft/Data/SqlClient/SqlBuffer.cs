@@ -185,6 +185,20 @@ namespace Microsoft.Data.SqlClient
             get => GetValue(StorageType.Byte, _value._byte);
             set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
+
+        internal byte[] ByteArray
+        {
+            get
+            {
+                if (_type is not StorageType.Vector)
+                {
+                    // Must be checked here because SqlBinary allows null.
+                    ThrowIfNull();
+                }
+
+                return SqlBinary.Value;
+            }
+        }
         
         #if NET
         internal DateOnly DateOnly
@@ -484,33 +498,6 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
-        internal byte[] ByteArray
-        {
-            get
-            {
-                if (_type != StorageType.Vector)
-                {
-                    // Must be checked here because SqlBinary allows null.
-                    ThrowIfNull();
-                }
-                return SqlBinary.Value;
-            }
-        }
-
-        //@TODO: SORT
-        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
-        {
-            if (_type is StorageType.Vector)
-            {
-                if (IsNull)
-                {
-                    return new SqlVector<T>(_value._vectorInfo._elementCount);
-                }
-                return new SqlVector<T>(SqlBinary.Value);
-            }
-            return (SqlVector<T>)SqlValue;
-        }
-        
         internal object SqlValue
         {
             get
@@ -821,6 +808,19 @@ namespace Microsoft.Data.SqlClient
             _object = null;
         }
 
+        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
+        {
+            if (_type is StorageType.Vector)
+            {
+                if (IsNull)
+                {
+                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                }
+                return new SqlVector<T>(SqlBinary.Value);
+            }
+            return (SqlVector<T>)SqlValue;
+        }
+        
         #if NETFRAMEWORK
         internal void SetToDate(DateTime date)
         {
