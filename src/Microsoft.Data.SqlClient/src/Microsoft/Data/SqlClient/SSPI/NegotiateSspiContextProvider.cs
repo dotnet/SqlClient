@@ -9,7 +9,7 @@ using System.Net.Security;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class NegotiateSspiContextProvider : SspiContextProvider
+    internal sealed class NegotiateSspiContextProvider : SspiContextProvider, IDisposable
     {
         private NegotiateAuthentication? _negotiateAuth;
 
@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient
         {
             NegotiateAuthenticationStatusCode statusCode = NegotiateAuthenticationStatusCode.UnknownCredentials;
 
-            _negotiateAuth ??= new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
+            _negotiateAuth = GetNegotiateAuthenticationForParams(authParams);
 
             var sendBuff = _negotiateAuth.GetOutgoingBlob(incomingBlob, out statusCode)!;
 
@@ -32,6 +32,27 @@ namespace Microsoft.Data.SqlClient
             }
 
             return false;
+        }
+
+        public void Dispose()
+        {
+            _negotiateAuth?.Dispose();
+        }
+
+        private NegotiateAuthentication GetNegotiateAuthenticationForParams(SspiAuthenticationParameters authParams)
+        {
+            if (_negotiateAuth is { })
+            {
+                if (string.Equals(_negotiateAuth.TargetName, authParams.Resource, StringComparison.Ordinal))
+                {
+                    return _negotiateAuth;
+                }
+
+                // Dispose of it since we're not going to use it now
+                _negotiateAuth?.Dispose();
+            }
+
+            return _negotiateAuth = new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
         }
     }
 }

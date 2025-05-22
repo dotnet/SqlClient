@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient
                 serverInfo.ExtendedServerName,
                 timeout,
                 out instanceName,
-                out var serverSpn,
+                out var resolvedServerSpn,
                 false,
                 true,
                 fParallel,
@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ExtendedServerName,
                     timeout,
                     out instanceName,
-                    out serverSpn,
+                    out resolvedServerSpn,
                     true,
                     true,
                     fParallel,
@@ -591,9 +591,9 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake successful");
 
-            if (_authenticationProvider is { } && serverSpn is { })
+            if (_authenticationProvider is { })
             {
-                _authenticationProvider.Initialize(serverInfo, _physicalStateObj, this, serverSpn);
+                _authenticationProvider.Initialize(serverInfo, _physicalStateObj, this, resolvedServerSpn.Primary, resolvedServerSpn.Secondary);
             }
 
             if (_fMARS && marsCapable)

@@ -11,15 +11,22 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser = null!;
         private ServerInfo _serverInfo = null!;
 
-        private SspiAuthenticationParameters? _authParam;
+        private SspiAuthenticationParameters? _primaryAuthParams;
+        private SspiAuthenticationParameters? _secondaryAuthParams;
 
         private protected TdsParserStateObject _physicalStateObj = null!;
 
+#if NET
+        /// <remarks>
+        /// <see cref="SNI.ResolvedServerSpn"/> for details as to what <paramref name="primaryServerSpn"/> and <paramref name="secondaryServerSpn"/> means and why there are two.
+        /// </remarks>
+#endif
         internal void Initialize(
             ServerInfo serverInfo,
             TdsParserStateObject physicalStateObj,
             TdsParser parser,
-            string serverSpn
+            string primaryServerSpn,
+            string? secondaryServerSpn = null
             )
         {
             _parser = parser;
@@ -28,16 +35,23 @@ namespace Microsoft.Data.SqlClient
 
             var options = parser.Connection.ConnectionOptions;
 
-            SqlClientEventSource.Log.StateDumpEvent("<SspiContextProvider> Initializing provider {0} with SPN={1}", GetType().FullName, serverSpn);
+            SqlClientEventSource.Log.StateDumpEvent("<SspiContextProvider> Initializing provider {0} with SPN={1} and alternate={2}", GetType().FullName, primaryServerSpn, secondaryServerSpn);
 
-            _authParam = new SspiAuthenticationParameters(options.DataSource, serverSpn)
+            _primaryAuthParams = CreateAuthParams(options, primaryServerSpn);
+
+            if (secondaryServerSpn is { })
             {
-                DatabaseName = options.InitialCatalog,
-                UserId = options.UserID,
-                Password = options.Password,
-            };
+                _secondaryAuthParams = CreateAuthParams(options, secondaryServerSpn);
+            }
 
             Initialize();
+
+            static SspiAuthenticationParameters CreateAuthParams(SqlConnectionString connString, string serverSpn) => new(connString.DataSource, serverSpn)
+            {
+                DatabaseName = connString.InitialCatalog,
+                UserId = connString.UserID,
+                Password = connString.Password,
+            };
         }
 
         private protected virtual void Initialize()
@@ -50,11 +64,30 @@ namespace Microsoft.Data.SqlClient
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
 
-            if (!(_authParam is { } && RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, _authParam)))
+            if (_primaryAuthParams is { })
             {
-                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
-                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
+                if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, _primaryAuthParams))
+                {
+                    return;
+                }
+
+                // remove _primaryAuth from future attempts as it failed
+                _primaryAuthParams = null;
             }
+
+            if (_secondaryAuthParams is { })
+            {
+                if (RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, _secondaryAuthParams))
+                {
+                    return;
+                }
+
+                // remove _secondaryAuthParams from future attempts as it failed
+                _secondaryAuthParams = null;
+            }
+
+            // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
+            SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
         }
 
         private bool RunGenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams)

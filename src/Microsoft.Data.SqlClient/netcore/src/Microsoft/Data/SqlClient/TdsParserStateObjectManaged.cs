@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            out string resolvedSpn,
+            out ResolvedServerSpn resolvedSpn,
             bool flushCache,
             bool async,
             bool parallel,

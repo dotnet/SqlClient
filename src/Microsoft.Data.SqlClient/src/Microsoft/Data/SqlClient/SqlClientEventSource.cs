@@ -893,6 +893,12 @@ namespace Microsoft.Data.SqlClient
         {
             StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
+
+        [NonEvent]
+        internal void StateDumpEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        {
+            StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString()));
+        }
         #endregion
 
         #region SNI Trace

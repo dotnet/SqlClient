@@ -730,6 +730,7 @@
     </Compile>
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\ResolvedServerSpn.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIHandle.cs" />
