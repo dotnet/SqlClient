@@ -154,6 +154,32 @@ namespace Microsoft.Data.SqlClient
 
         internal bool IsNull { get; private set; }
 
+        internal Type SqlType
+        {
+            get => _type switch
+            {
+                StorageType.Boolean         => typeof(SqlBoolean),
+                StorageType.Byte            => typeof(SqlByte),
+                StorageType.DateTime        => typeof(SqlDateTime),
+                StorageType.Decimal         => typeof(SqlDecimal),
+                StorageType.Double          => typeof(SqlDouble),
+                StorageType.Empty           => null,
+                StorageType.Guid            => typeof(SqlGuid),
+                StorageType.Int16           => typeof(SqlInt16),
+                StorageType.Int32           => typeof(SqlInt32),
+                StorageType.Int64           => typeof(SqlInt64),
+                StorageType.Json            => typeof(SqlJson),
+                StorageType.Money           => typeof(SqlMoney),
+                StorageType.Single          => typeof(SqlSingle),
+                StorageType.String          => typeof(SqlString),
+                StorageType.SqlBinary       => typeof(object),
+                StorageType.SqlCachedBuffer => typeof(SqlString),
+                StorageType.SqlGuid         => typeof(SqlGuid),
+                StorageType.SqlXml          => typeof(SqlXml),
+                _                           => null
+            };
+        }
+        
         internal StorageType VariantInternalStorageType => _type;
 
         #endregion
