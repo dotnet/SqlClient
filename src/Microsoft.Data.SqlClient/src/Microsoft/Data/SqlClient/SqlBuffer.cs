@@ -519,84 +519,31 @@ namespace Microsoft.Data.SqlClient
 
         internal object SqlValue
         {
-            get
+            get => _type switch
             {
-                switch (_type)
-                {
-                    case StorageType.Empty:
-                        return DBNull.Value;
-                    case StorageType.Boolean:
-                        return SqlBoolean;
-                    case StorageType.Byte:
-                        return SqlByte;
-                    case StorageType.DateTime:
-                        return SqlDateTime;
-                    case StorageType.Decimal:
-                        return SqlDecimal;
-                    case StorageType.Double:
-                        return SqlDouble;
-                    case StorageType.Int16:
-                        return SqlInt16;
-                    case StorageType.Int32:
-                        return SqlInt32;
-                    case StorageType.Int64:
-                        return SqlInt64;
-                    case StorageType.Guid:
-                        return SqlGuid;
-                    case StorageType.Money:
-                        return SqlMoney;
-                    case StorageType.Single:
-                        return SqlSingle;
-                    case StorageType.String:
-                        return SqlString;
-                    case StorageType.Json:
-                        return SqlJson;
-                    case StorageType.SqlCachedBuffer:
-                        {
-                            SqlCachedBuffer data = (SqlCachedBuffer)(_object);
-                            if (data.IsNull)
-                            {
-                                return SqlXml.Null;
-                            }
-                            return data.ToSqlXml();
-                        }
-
-                    case StorageType.SqlBinary:
-                    case StorageType.SqlGuid:
-                        return _object;
-
-                    case StorageType.SqlXml:
-                        if (IsNull)
-                        {
-                            return SqlXml.Null;
-                        }
-                        Debug.Assert(_object != null);
-                        return (SqlXml)_object;
-
-                    case StorageType.Date:
-                    case StorageType.DateTime2:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return DateTime;
-
-                    case StorageType.DateTimeOffset:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return DateTimeOffset;
-
-                    case StorageType.Time:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return Time;
-                }
-                return null; // need to return the value as an object of some SQL type
-            }
+                StorageType.Boolean         => SqlBoolean,
+                StorageType.Byte            => SqlByte,
+                StorageType.Date            => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTime        => SqlDateTime,
+                StorageType.DateTime2       => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTimeOffset  => IsNull ? DBNull.Value : DateTimeOffset,
+                StorageType.Decimal         => SqlDecimal,
+                StorageType.Double          => SqlDouble,
+                StorageType.Guid            => SqlGuid,
+                StorageType.Int16           => SqlInt16,
+                StorageType.Int32           => SqlInt32,
+                StorageType.Int64           => SqlInt64,
+                StorageType.Json            => SqlJson,
+                StorageType.Money           => SqlMoney,
+                StorageType.Single          => SqlSingle,
+                StorageType.String          => SqlString,
+                StorageType.SqlBinary       => _object,
+                StorageType.SqlCachedBuffer => IsNull ? SqlXml.Null : ((SqlCachedBuffer)_object).ToSqlXml(),
+                StorageType.SqlGuid         => _object,
+                StorageType.SqlXml          => IsNull ? SqlXml.Null : (SqlXml)_object,
+                StorageType.Time            => IsNull ? DBNull.Value : Time,
+                _ => null
+            };
         }
 
         internal Type GetTypeFromStorageType(bool isSqlType)
