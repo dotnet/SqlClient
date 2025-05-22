@@ -149,6 +149,41 @@ namespace Microsoft.Data.SqlClient
         }
 
         #region General Properties
+
+        internal Type ClrType
+        {
+            get => _type switch
+            {
+                StorageType.Boolean         => typeof(bool),
+                StorageType.Byte            => typeof(byte),
+                StorageType.DateTime        => typeof(DateTime),
+                StorageType.DateTime2       => typeof(DateTime),
+                StorageType.DateTimeOffset  => typeof(DateTimeOffset),
+                StorageType.Decimal         => typeof(decimal),
+                StorageType.Double          => typeof(double),
+                StorageType.Empty           => null,
+                StorageType.Guid            => typeof(Guid),
+                StorageType.Int16           => typeof(short),
+                StorageType.Int32           => typeof(int),
+                StorageType.Int64           => typeof(long),
+                StorageType.Json            => typeof(string),
+                StorageType.Money           => typeof(double),
+                StorageType.Single          => typeof(float),
+                StorageType.SqlBinary       => typeof(byte[]),
+                StorageType.SqlCachedBuffer => typeof(string),
+                StorageType.SqlGuid         => typeof(Guid),
+                StorageType.SqlXml          => typeof(string),
+                StorageType.String          => typeof(string),
+                
+                // @TODO: IF this property is meant to return the type that you'll get back when
+                //    calling Value, then this isn't correct.
+                #if NET
+                StorageType.Time            => typeof(TimeSpan),
+                #endif
+                
+                _                           => null
+            };
+        }
         
         internal bool IsEmpty => _type == StorageType.Empty;
 
@@ -171,11 +206,11 @@ namespace Microsoft.Data.SqlClient
                 StorageType.Json            => typeof(SqlJson),
                 StorageType.Money           => typeof(SqlMoney),
                 StorageType.Single          => typeof(SqlSingle),
-                StorageType.String          => typeof(SqlString),
                 StorageType.SqlBinary       => typeof(object),
                 StorageType.SqlCachedBuffer => typeof(SqlString),
                 StorageType.SqlGuid         => typeof(SqlGuid),
                 StorageType.SqlXml          => typeof(SqlXml),
+                StorageType.String          => typeof(SqlString),
                 _                           => null
             };
         }
@@ -476,11 +511,11 @@ namespace Microsoft.Data.SqlClient
                 StorageType.Json            => SqlJson,
                 StorageType.Money           => SqlMoney,
                 StorageType.Single          => SqlSingle,
-                StorageType.String          => SqlString,
                 StorageType.SqlBinary       => _object,
                 StorageType.SqlCachedBuffer => IsNull ? SqlXml.Null : ((SqlCachedBuffer)_object).ToSqlXml(),
                 StorageType.SqlGuid         => _object,
                 StorageType.SqlXml          => IsNull ? SqlXml.Null : (SqlXml)_object,
+                StorageType.String          => SqlString,
                 StorageType.Time            => IsNull ? DBNull.Value : Time,
                 _ => null
             };
@@ -555,9 +590,9 @@ namespace Microsoft.Data.SqlClient
                     StorageType.Guid           => Guid,
                     StorageType.Money          => Decimal,
                     StorageType.Single         => Single,
-                    StorageType.String         => String,
                     StorageType.SqlBinary      => ByteArray,
                     StorageType.SqlGuid        => Guid,
+                    StorageType.String         => String,
                     StorageType.Time           => Time,
                     
                     // @TODO: Verify that these follow the same pattern as other types
@@ -572,107 +607,6 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-
-        internal Type GetTypeFromStorageType(bool isSqlType)
-        {
-            if (isSqlType)
-            {
-                switch (_type)
-                {
-                    case StorageType.Empty:
-                        return null;
-                    case StorageType.Boolean:
-                        return typeof(SqlBoolean);
-                    case StorageType.Byte:
-                        return typeof(SqlByte);
-                    case StorageType.DateTime:
-                        return typeof(SqlDateTime);
-                    case StorageType.Decimal:
-                        return typeof(SqlDecimal);
-                    case StorageType.Double:
-                        return typeof(SqlDouble);
-                    case StorageType.Int16:
-                        return typeof(SqlInt16);
-                    case StorageType.Int32:
-                        return typeof(SqlInt32);
-                    case StorageType.Int64:
-                        return typeof(SqlInt64);
-                    case StorageType.Guid:
-                        return typeof(SqlGuid);
-                    case StorageType.Money:
-                        return typeof(SqlMoney);
-                    case StorageType.Single:
-                        return typeof(SqlSingle);
-                    case StorageType.String:
-                        return typeof(SqlString);
-                    case StorageType.SqlCachedBuffer:
-                        return typeof(SqlString);
-                    case StorageType.SqlBinary:
-                        return typeof(object);
-                    case StorageType.SqlGuid:
-                        return typeof(SqlGuid);
-                    case StorageType.SqlXml:
-                        return typeof(SqlXml);
-                    case StorageType.Json:
-                        return typeof(SqlJson);
-                        // Time Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
-                }
-            }
-            else
-            { //Is CLR Type
-                switch (_type)
-                {
-                    case StorageType.Empty:
-                        return null;
-                    case StorageType.Boolean:
-                        return typeof(bool);
-                    case StorageType.Byte:
-                        return typeof(byte);
-                    case StorageType.DateTime:
-                        return typeof(DateTime);
-                    case StorageType.Decimal:
-                        return typeof(decimal);
-                    case StorageType.Double:
-                        return typeof(double);
-                    case StorageType.Int16:
-                        return typeof(short);
-                    case StorageType.Int32:
-                        return typeof(int);
-                    case StorageType.Int64:
-                        return typeof(long);
-                    case StorageType.Guid:
-                        return typeof(Guid);
-                    case StorageType.Money:
-                        return typeof(decimal);
-                    case StorageType.Single:
-                        return typeof(float);
-                    case StorageType.String:
-                        return typeof(string);
-                    case StorageType.SqlBinary:
-                        return typeof(byte[]);
-                    case StorageType.SqlCachedBuffer:
-                        return typeof(string);
-                    case StorageType.SqlGuid:
-                        return typeof(Guid);
-                    case StorageType.SqlXml:
-                        return typeof(string);
-                    case StorageType.Date:
-                        return typeof(DateTime);
-                    case StorageType.DateTime2:
-                        return typeof(DateTime);
-                    case StorageType.DateTimeOffset:
-                        return typeof(DateTimeOffset);
-                    case StorageType.Json:
-                        return typeof(string);
-#if NET
-                    case StorageType.Time:
-                        return typeof(TimeOnly);
-#endif
-                }
-            }
-
-            return null; // need to return the value as an object of some CLS type            
-        }
 
         internal static SqlBuffer[] CreateBufferArray(int length)
         {

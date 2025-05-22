@@ -1916,8 +1916,12 @@ namespace Microsoft.Data.SqlClient
                 return MetaType.GetMetaTypeFromType(valueType);
             }
             else if (_sqlBufferReturnValue != null)
-            {  // value came back from the server
-                Type valueType = _sqlBufferReturnValue.GetTypeFromStorageType(HasFlag(SqlParameterFlags.IsSqlParameterSqlType));
+            {  
+                // value came back from the server
+                Type valueType = HasFlag(SqlParameterFlags.IsSqlParameterSqlType)
+                    ? _sqlBufferReturnValue.SqlType
+                    : _sqlBufferReturnValue.ClrType;
+
                 if (valueType != null)
                 {
                     return MetaType.GetMetaTypeFromType(valueType);
