@@ -442,6 +442,7 @@ namespace Microsoft.Data.SqlClient
                 StorageType.DateTimeOffset  => IsNull ? DBNull.Value : DateTimeOffset,
                 StorageType.Decimal         => SqlDecimal,
                 StorageType.Double          => SqlDouble,
+                StorageType.Empty           => DBNull.Value,
                 StorageType.Guid            => SqlGuid,
                 StorageType.Int16           => SqlInt16,
                 StorageType.Int32           => SqlInt32,
