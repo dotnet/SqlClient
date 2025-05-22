@@ -40,18 +40,6 @@ namespace Microsoft.Data.SqlClient
             Vector,
         }
 
-        internal struct NumericInfo
-        {
-            // This is used to store Decimal data
-            internal int _data1;
-            internal int _data2;
-            internal int _data3;
-            internal int _data4;
-            internal byte _precision;
-            internal byte _scale;
-            internal bool _positive;
-        }
-
         internal struct TimeInfo
         {
             internal long _ticks;
@@ -196,6 +184,20 @@ namespace Microsoft.Data.SqlClient
                     : (DateTimeOffset)Value;
             }
         }
+
+        internal decimal Decimal
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type switch
+                {
+                    StorageType.Decimal => _value._numericInfo.ToDecimal(),
+                    StorageType.Money => GetSqlMoneyFromLong(_value._int64).ToDecimal(),
+                    _ => (decimal)Value,
+                };
+            }
+        }
         
         internal double Double
         {
@@ -277,6 +279,13 @@ namespace Microsoft.Data.SqlClient
             get => _type == StorageType.DateTime
                 ? IsNull ? SqlDateTime.Null : _value._dateTimeInfo.ToSqlDateTime()
                 : (SqlDateTime)SqlValue;
+        }
+
+        internal SqlDecimal SqlDecimal
+        {
+            get => _type == StorageType.Decimal
+                ? IsNull ? SqlDecimal.Null : _value._numericInfo.ToSqlDecimal()
+                : (SqlDecimal)SqlValue;
         }
         
         internal SqlDouble SqlDouble
@@ -414,152 +423,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        #region Decimal
-        internal decimal Decimal
-        {
-            get
-            {
-                ThrowIfNull();
-
-                if (StorageType.Decimal == _type)
-                {
-                    if (_value._numericInfo._data4 != 0 || _value._numericInfo._scale > 28)
-                    {
-                        // Only removing trailing zeros from a decimal part won't hit its value!
-                        if (_value._numericInfo._scale > 0)
-                        {
-                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2,
-                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4,
-                                                                   _value._numericInfo._scale, out int precision);
-
-                            int minScale = _value._numericInfo._scale - zeroCnt; // minimum possible sacle after removing the trailing zeros.
-
-                            if (zeroCnt > 0 && minScale <= 28 && precision <= 29)
-                            {
-                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive,
-                                                          _value._numericInfo._data1, _value._numericInfo._data2,
-                                                          _value._numericInfo._data3, _value._numericInfo._data4);
-
-                                int integral = precision - minScale;
-                                int newPrec = 29;
-
-                                if (integral != 1 && precision != 29)
-                                {
-                                    newPrec = 28;
-                                }
-
-                                try
-                                {
-                                    // Precision could be 28 or 29
-                                    // ex: (precision == 29 && scale == 28)
-                                    // valid:   (+/-)7.1234567890123456789012345678
-                                    // invalid: (+/-)8.1234567890123456789012345678
-                                    return SqlDecimal.ConvertToPrecScale(sqlValue, newPrec, newPrec - integral).Value;
-                                }
-                                catch (OverflowException)
-                                {
-                                    throw new OverflowException(SQLResource.ConversionOverflowMessage);
-                                }
-                            }
-                        }
-                        throw new OverflowException(SQLResource.ConversionOverflowMessage);
-                    }
-                    return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
-                }
-                if (StorageType.Money == _type)
-                {
-                    long l = _value._int64;
-                    bool isNegative = false;
-                    if (l < 0)
-                    {
-                        isNegative = true;
-                        l = -l;
-                    }
-                    return new decimal((int)(l & 0xffffffff), (int)(l >> 32), 0, isNegative, 4);
-                }
-                return (decimal)Value; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        /// <summary>
-        /// Returns number of trailing zeros using the supplied parameters.
-        /// </summary>
-        /// <param name="data1">An 32-bit unsigned integer which will be combined with data2, data3, and data4</param>
-        /// <param name="data2">An 32-bit unsigned integer which will be combined with data1, data3, and data4</param>
-        /// <param name="data3">An 32-bit unsigned integer which will be combined with data1, data2, and data4</param>
-        /// <param name="data4">An 32-bit unsigned integer which will be combined with data1, data2, and data3</param>
-        /// <param name="scale">The number of decimal places</param>
-        /// <param name="valuablePrecision">OUT |The number of digits without trailing zeros</param>
-        /// <returns>Number of trailing zeros</returns>
-        private static int FindTrailingZerosAndPrec(uint data1, uint data2, uint data3, uint data4, byte scale, out int valuablePrecision)
-        {
-            // Make local copy of data to avoid modifying input.
-            Span<uint> rgulNumeric = stackalloc uint[4] { data1, data2, data3, data4 };
-            int zeroCnt = 0;    //Number of trailing zero digits
-            int precCnt = 0;    //Valuable precision
-            uint uiRem = 0;     //Remainder of a division by 10
-            int len = 4;        // Max possible items
-
-            //Retrieve each digit from the lowest significant digit
-            while (len > 1 || rgulNumeric[0] != 0)
-            {
-                SqlDecimalDivBy(rgulNumeric, ref len, 10, out uiRem);
-                if (uiRem == 0 && precCnt == 0)
-                {
-                    zeroCnt++;
-                }
-                else
-                {
-                    precCnt++;
-                }
-            }
-
-            if (uiRem == 0)
-            {
-                zeroCnt = scale;
-            }
-
-            // if scale of the number has not been reached, pad remaining number with zeros.
-            if (zeroCnt + precCnt <= scale)
-            {
-                precCnt = scale - zeroCnt + 1;
-            }
-            valuablePrecision = precCnt;
-            return zeroCnt;
-        }
-
-        /// <summary>
-        /// Multi-precision one super-digit divide in place.
-        /// U = U / D,
-        /// R = U % D
-        /// (Length of U can decrease)
-        /// </summary>
-        /// <param name="data">InOut | U</param>
-        /// <param name="len">InOut | Number of items with non-zero value in U between 1 to 4</param>
-        /// <param name="divisor">In     | D</param>
-        /// <param name="remainder">Out    | R</param>
-        private static void SqlDecimalDivBy(Span<uint> data, ref int len, uint divisor, out uint remainder)
-        {
-            uint uiCarry = 0;
-            ulong ulAccum;
-            ulong ulDivisor = (ulong)divisor;
-            int iLen = len;
-
-            while (iLen > 0)
-            {
-                iLen--;
-                ulAccum = (((ulong)uiCarry) << 32) + (ulong)(data[iLen]);
-                data[iLen] = (uint)(ulAccum / ulDivisor);
-                uiCarry = (uint)(ulAccum - (ulong)data[iLen] * ulDivisor);  // (ULONG) (ulAccum % divisor)
-            }
-            remainder = uiCarry;
-
-            // Normalize multi-precision number - remove leading zeroes
-            while (len > 1 && data[len - 1] == 0)
-            { len--; }
-        }
-        #endregion
-
         // use static list of format strings indexed by scale for perf
         private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
@@ -640,29 +503,6 @@ namespace Microsoft.Data.SqlClient
                     return new SqlString(Sql2008DateTimeString);
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
-        }
-
-        internal SqlDecimal SqlDecimal
-        {
-            get
-            {
-                if (StorageType.Decimal == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlDecimal.Null;
-                    }
-                    return new SqlDecimal(_value._numericInfo._precision,
-                                          _value._numericInfo._scale,
-                                          _value._numericInfo._positive,
-                                          _value._numericInfo._data1,
-                                          _value._numericInfo._data2,
-                                          _value._numericInfo._data3,
-                                          _value._numericInfo._data4
-                                          );
-                }
-                return (SqlDecimal)SqlValue; // anything else we haven't thought of goes through boxing.
             }
         }
 
@@ -1397,6 +1237,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private struct DateTimeOffsetInfo
         {
+            // @TODO: Move to properties
+            
             /// <summary>
             /// DateTime component of the DATETIMEOFFSET value.
             /// </summary>
@@ -1415,6 +1257,167 @@ namespace Microsoft.Data.SqlClient
                 DateTime dateTime = _dateTime2Info.ToDateTime();
                 TimeSpan offset = new TimeSpan(0, _offset, 0);
                 return new DateTimeOffset(dateTime, offset);
+            }
+        }
+        
+        /// <summary>
+        /// Used to store DECIMAL/NUMERIC type information.
+        /// </summary>
+        private struct NumericInfo
+        {
+            /// <summary>
+            /// Low 32 bits of the integer value.
+            /// </summary>
+            internal int _data1;
+            
+            /// <summary>
+            /// Middle 32 bits of the integer value.
+            /// </summary>
+            internal int _data2;
+            
+            /// <summary>
+            /// High 32 bits of the integer value.
+            /// </summary>
+            internal int _data3;
+            
+            /// <summary>
+            /// Extended 32 bits of the integer value.
+            /// </summary>
+            internal int _data4;
+            
+            /// <summary>
+            /// Prevision of the value (ie, the number of significant digits to retain). Minimum of
+            /// 1, maximum of 38.
+            /// </summary>
+            internal byte _precision;
+            
+            /// <summary>
+            /// Scale to apply to the integer value (ie, the integer will be multiplied by 1/10^x).
+            /// </summary>
+            internal byte _scale;
+            
+            /// <summary>
+            /// Whether the number is positive or negative.
+            /// </summary>
+            internal bool _positive;
+
+            internal decimal ToDecimal()
+            {
+                // SQL DECIMAL/NUMERIC type can store larger numbers than CLR decimal type, if we
+                // cannot directly represent the number as a CLR decimal, we can try some tricks to
+                // optimize storage before giving up.
+                
+                // 1) Determine if number can fit within a CLR decimal and directly convert if so.
+                if (_data4 == 0 && _scale <= 28)
+                {
+                    return new decimal(_data1, _data2, _data3, !_positive, _scale);
+                }
+                
+                // 2) Number cannot fit in a CLR decimal, attempt optimization of the value
+                if (_scale > 0)
+                {
+                    // 2.1) Find trailing zeroes and actual precision
+                    (int trailingZeroes, int actualPrecision) = FindTrailingZeroesAndPrecision();
+                    
+                    // 2.2) Calculate minimum scale after removing trailing zeroes
+                    int minimumScale = _scale - trailingZeroes;
+                    
+                    // 2.3) Check if value fits in CLR decimal after optimization
+                    if (trailingZeroes > 0 && minimumScale <= 28 && actualPrecision <= 29)
+                    {
+                        // We can indeed optimize to fit in CLR decimal!
+                        // 2.3.1) Calculate target precision for conversion
+                        int integerDigits = actualPrecision - minimumScale;
+                        int targetPrecision = 29; // Default to maximum precision
+                        
+                        // 2.3.2) Adjust precision based on integer value size.
+                        if (integerDigits != 1 && actualPrecision != 29)
+                        {
+                            // Integer value is not 1 digit (cannot be zero), and we're not already at
+                            // maximum precision. Use 28 for target precision to allow for potential
+                            // growth.
+                            targetPrecision = 28;
+                        }
+                        
+                        // 2.3.3 Use SqlDecimal to convert to target precision/scale
+                        try
+                        {
+                            int targetScale = targetPrecision - integerDigits;
+                            SqlDecimal sqlValue = ToSqlDecimal();
+                            return SqlDecimal.ConvertToPrecScale(sqlValue, targetPrecision, targetScale).Value;
+                        }
+                        catch (OverflowException)
+                        {
+                            throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        }
+                    }
+                }
+                
+                // 3) Optimization was not possible
+                throw new OverflowException(SQLResource.ConversionOverflowMessage);
+            }
+            
+            internal SqlDecimal ToSqlDecimal() =>
+                new SqlDecimal(_precision, _scale, _positive, _data1, _data2, _data3, _data4);
+
+            private (int trailingZeroes, int valuableDigits) FindTrailingZeroesAndPrecision()
+            {
+                // Make local copy of the data so we do not modify the internal data.
+                Span<uint> integerData = stackalloc uint[] { (uint)_data1, (uint)_data2, (uint)_data3, (uint)_data4 };
+
+                // Repeatedly divide by 10 to determine how many digits are trailing zeroes and how
+                // many are non-zero
+                int length = 4;          // Number of data blocks that will be used in the calculation
+                int trailingZeroes = 0;  // Number of trailing zeroes
+                int valuableDigits = 0;  // Digits in the number that are valuable (non-zero)
+                uint remainder = 0;      // Remainder after division by 10
+                while (length > 1 || integerData[0] != 0)
+                {
+                    // 1) Divide the number by 10 in-place
+                    uint carry = 0;
+                    for (int i = length - 1; i >= 0; i--)
+                    {
+                        ulong accumulator = ((ulong)carry << 32) + integerData[i];
+                        integerData[i] = (uint)(accumulator / 10);
+                        carry = (uint)(accumulator - integerData[i] * 10);
+                    }
+
+                    remainder = carry;
+                    
+                    // 2) Normalize the multi-precision number, ie, remove the leading zeroes
+                    while (length > 1 && integerData[length - 1] == 0)
+                    {
+                        length--;
+                    }
+                    
+                    // 3) If the working number was divisible by 10, increase trailing zero count.
+                    //    Otherwise, increase the number of valuable digits.
+                    if (remainder == 0 && valuableDigits == 0)
+                    {
+                        trailingZeroes++;
+                    }
+                    else
+                    {
+                        valuableDigits++;
+                    }
+                }
+
+                // Handle case where the number divided down to exactly 0. This means all decimal
+                // digits are trailing zeroes.
+                if (remainder == 0)
+                {
+                    trailingZeroes = _scale;
+                }
+                
+                // Ensure we account for all decimal places defined by the scale.
+                // If we haven't processed enough digits, the remaining are implied leading zeroes,
+                // and we need at least one valuable digit to represent the number.
+                if (trailingZeroes + valuableDigits <= _scale)
+                {
+                    valuableDigits = _scale - trailingZeroes + 1;
+                }
+
+                return (trailingZeroes, valuableDigits);
             }
         }
         
