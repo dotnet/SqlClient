@@ -18,7 +18,7 @@ namespace Microsoft.Data.ProviderBase
     internal abstract class DbConnectionFactory
     {
         private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
-        private readonly List<DbConnectionPool> _poolsToRelease;
+        private readonly List<IDbConnectionPool> _poolsToRelease;
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
         private readonly Timer _pruningTimer;
 
@@ -37,7 +37,7 @@ namespace Microsoft.Data.ProviderBase
         protected DbConnectionFactory()
         {
             _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
-            _poolsToRelease = new List<DbConnectionPool>();
+            _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
             _pruningTimer = CreatePruningTimer();
         }
@@ -122,7 +122,7 @@ namespace Microsoft.Data.ProviderBase
             return newConnection;
         }
 
-        internal DbConnectionInternal CreatePooledConnection(DbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
+        internal DbConnectionInternal CreatePooledConnection(IDbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
         {
             Debug.Assert(pool != null, "null pool?");
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo = pool.PoolGroup.ProviderInfo;
@@ -176,7 +176,7 @@ namespace Microsoft.Data.ProviderBase
             Debug.Assert(owningConnection != null, "null owningConnection?");
 
             DbConnectionPoolGroup poolGroup;
-            DbConnectionPool connectionPool;
+            IDbConnectionPool connectionPool;
             connection = null;
 
             //  Work around race condition with clearing the pool between GetConnectionPool obtaining pool 
@@ -371,7 +371,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        private DbConnectionPool GetConnectionPool(DbConnection owningObject, DbConnectionPoolGroup connectionPoolGroup)
+        private IDbConnectionPool GetConnectionPool(DbConnection owningObject, DbConnectionPoolGroup connectionPoolGroup)
         {
             // if poolgroup is disabled, it will be replaced with a new entry
 
@@ -402,7 +402,7 @@ namespace Microsoft.Data.ProviderBase
                 Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup?");
                 SetConnectionPoolGroup(owningObject, connectionPoolGroup);
             }
-            DbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool(this);
+            IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool(this);
             return connectionPool;
         }
 
@@ -530,8 +530,8 @@ namespace Microsoft.Data.ProviderBase
             {
                 if (0 != _poolsToRelease.Count)
                 {
-                    DbConnectionPool[] poolsToRelease = _poolsToRelease.ToArray();
-                    foreach (DbConnectionPool pool in poolsToRelease)
+                    IDbConnectionPool[] poolsToRelease = _poolsToRelease.ToArray();
+                    foreach (IDbConnectionPool pool in poolsToRelease)
                     {
                         if (pool != null)
                         {
@@ -540,7 +540,7 @@ namespace Microsoft.Data.ProviderBase
                             if (0 == pool.Count)
                             {
                                 _poolsToRelease.Remove(pool);
-                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.ObjectId);
+                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectID, pool.Id);
 
                                 SqlClientEventSource.Metrics.ExitInactiveConnectionPool();
                             }
@@ -607,7 +607,7 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal void QueuePoolForRelease(DbConnectionPool pool, bool clearing)
+        internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
         {
             // Queue the pool up for release -- we'll clear it out and dispose
             // of it as the last part of the pruning timer callback so we don't
@@ -645,12 +645,12 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
         }
 
-        virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection);
         }
 
-        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection);
+        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection);
 
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 

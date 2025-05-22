@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Reflection;
 using Xunit;
 
@@ -17,6 +18,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("LegacyVarTimeZeroScaleBehaviour", true)]
         [InlineData("UseCompatibilityProcessSni", false)]
         [InlineData("UseCompatibilityAsyncBehaviour", false)]
+        [InlineData("UseConnectionPoolV2", false)]
         #if NETFRAMEWORK
         [InlineData("DisableTNIRByDefault", false)]
         #endif

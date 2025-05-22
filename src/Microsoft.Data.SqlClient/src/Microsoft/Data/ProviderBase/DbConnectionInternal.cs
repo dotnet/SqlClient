@@ -108,7 +108,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 // NOTE: There are race conditions between PrePush, PostPop and this
                 //       property getter -- only use this while this object is locked;
-                //       (DbConnectionPool.Clear and ReclaimEmancipatedObjects
+                //       (IDbConnectionPool.Clear and ReclaimEmancipatedObjects
                 //       do this for us)
 
                 // The functionality is as follows:
@@ -157,7 +157,7 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// The pooler that the connection came from (Pooled connections only)
         /// </summary>
-        internal DbConnectionPool Pool { get; private set; }
+        internal IDbConnectionPool Pool { get; private set; }
 
         public abstract string ServerVersion { get; }
 
@@ -393,7 +393,7 @@ namespace Microsoft.Data.ProviderBase
         {
             DetachTransaction(transaction, false);
 
-            DbConnectionPool pool = Pool;
+            IDbConnectionPool pool = Pool;
             pool?.TransactionEnded(transaction, this);
         }
 
@@ -454,7 +454,7 @@ namespace Microsoft.Data.ProviderBase
                     {
                         PrepareForCloseConnection();
 
-                        DbConnectionPool connectionPool = Pool;
+                        IDbConnectionPool connectionPool = Pool;
 
                         // Detach from enlisted transactions that are no longer active on close
                         DetachCurrentTransactionIfEnded();
@@ -464,10 +464,10 @@ namespace Microsoft.Data.ProviderBase
                         // into the pool.
                         if (connectionPool is not null)
                         {
-                            // PutObject calls Deactivate for us...
-                            connectionPool.PutObject(this, owningObject);
+                            // ReturnInternalConnection calls Deactivate for us...
+                            connectionPool.ReturnInternalConnection(this, owningObject);
 
-                            // NOTE: Before we leave the PutObject call, another thread may have
+                            // NOTE: Before we leave the ReturnInternalConnection call, another thread may have
                             // already popped the connection from the pool, so don't expect to be
                             // able to verify it.
                         }
@@ -558,7 +558,7 @@ namespace Microsoft.Data.ProviderBase
 
                 Deactivate(); // call it one more time just in case
 
-                DbConnectionPool pool = Pool;
+                IDbConnectionPool pool = Pool;
 
                 if (pool == null)
                 {
@@ -698,7 +698,7 @@ namespace Microsoft.Data.ProviderBase
         /// Used by DbConnectionFactory to indicate that this object IS part of a connection pool.
         /// </summary>
         /// <param name="connectionPool"></param>
-        internal void MakePooledConnection(DbConnectionPool connectionPool)
+        internal void MakePooledConnection(IDbConnectionPool connectionPool)
         {
             _createTime = DateTime.UtcNow;
             Pool = connectionPool;
@@ -717,7 +717,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PostPop(DbConnection newOwner)
         {
-            // Called by DbConnectionPool right after it pulls this from its pool, we take this
+            // Called by IDbConnectionPool right after it pulls this from its pool, we take this
             // opportunity to ensure ownership and pool counts are legit.
             Debug.Assert(!IsEmancipated, "pooled object not in pool");
 
@@ -757,7 +757,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal void PrePush(object expectedOwner)
         {
-            // Called by DbConnectionPool when we're about to be put into it's pool, we take this
+            // Called by IDbConnectionPool when we're about to be put into it's pool, we take this
             // opportunity to ensure ownership and pool counts are legit.
 
             // IMPORTANT NOTE: You must have taken a lock on the object before you call this method
