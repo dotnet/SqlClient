@@ -3161,7 +3161,7 @@ namespace Microsoft.Data.SqlClient
             // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
             // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
-            Type dataType = data.GetTypeFromStorageType(false);
+            Type dataType = data.ClrType;
             if (typeof(T) == typeof(int) && dataType == typeof(int))
             {
                 return data.Int32As<T>();
