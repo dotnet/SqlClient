@@ -85,14 +85,11 @@ where T : unmanaged
 
     #region Methods
 
-    internal string GetString()
-    {
-        if (IsNull)
-        {
-            return SQLResource.NullString;
-        }
-        return JsonSerializer.Serialize(Memory);
-    }
+    /// <inheritdoc />
+    string ISqlVector.GetString() =>
+        IsNull
+            ? SQLResource.NullString
+            : JsonSerializer.Serialize(Memory);
 
     #endregion
 
@@ -112,12 +109,15 @@ where T : unmanaged
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
     public ReadOnlyMemory<T> Memory { get; init; }
 
-    #endregion
-
-    #region ISqlVector Internal Properties
-    byte ISqlVector.ElementType => _elementType;
+    /// <inheritdoc />
     byte ISqlVector.ElementSize => _elementSize;
+
+    /// <inheritdoc />
+    byte ISqlVector.ElementType => _elementType;
+
+    /// <inheritdoc />
     byte[] ISqlVector.VectorPayload => _tdsBytes;
+
     #endregion
 
     #region Helpers

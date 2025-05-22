@@ -448,7 +448,7 @@ namespace Microsoft.Data.SqlClient
                 StorageType.Json => IsNull ? SqlString.Null : new SqlString((string)_object),
                 StorageType.String => IsNull ? SqlString.Null : new SqlString((string)_object),
                 StorageType.SqlCachedBuffer => IsNull ? SqlString.Null : ((SqlCachedBuffer)_object).ToSqlString(),
-                StorageType.Vector => IsNull ? SqlString.Null : new SqlString(GetStringFromVector()),
+                StorageType.Vector => IsNull ? SqlString.Null : new SqlString(GetSqlVector().GetString()),
                 _ => (SqlString)SqlValue
             };
         }
@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
                     StorageType.Json => (string)_object,
                     StorageType.String => (string)_object,
                     StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
-                    StorageType.Vector => GetStringFromVector(),
+                    StorageType.Vector => GetSqlVector().GetString(),
                     _ => (string)Value
                 };
             }
@@ -544,93 +544,32 @@ namespace Microsoft.Data.SqlClient
 
         internal object SqlValue
         {
-            get
+            get => _type switch
             {
-                switch (_type)
-                {
-                    case StorageType.Empty:
-                        return DBNull.Value;
-                    case StorageType.Boolean:
-                        return SqlBoolean;
-                    case StorageType.Byte:
-                        return SqlByte;
-                    case StorageType.DateTime:
-                        return SqlDateTime;
-                    case StorageType.Decimal:
-                        return SqlDecimal;
-                    case StorageType.Double:
-                        return SqlDouble;
-                    case StorageType.Int16:
-                        return SqlInt16;
-                    case StorageType.Int32:
-                        return SqlInt32;
-                    case StorageType.Int64:
-                        return SqlInt64;
-                    case StorageType.Guid:
-                        return SqlGuid;
-                    case StorageType.Money:
-                        return SqlMoney;
-                    case StorageType.Single:
-                        return SqlSingle;
-                    case StorageType.String:
-                        return SqlString;
-                    case StorageType.Json:
-                        return SqlJson;
-                    case StorageType.Vector:
-                        var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                        switch (elementType)
-                        {
-                            case MetaType.SqlVectorElementType.Float32:
-                                return GetSqlVector<float>();
-                            default:
-                                throw SQL.VectorTypeNotSupported(elementType.ToString());
-                        }
-                    case StorageType.SqlCachedBuffer:
-                        {
-                            SqlCachedBuffer data = (SqlCachedBuffer)(_object);
-                            if (data.IsNull)
-                            {
-                                return SqlXml.Null;
-                            }
-                            return data.ToSqlXml();
-                        }
-
-                    case StorageType.SqlBinary:
-                    case StorageType.SqlGuid:
-                        return _object;
-
-                    case StorageType.SqlXml:
-                        if (IsNull)
-                        {
-                            return SqlXml.Null;
-                        }
-                        Debug.Assert(_object != null);
-                        return (SqlXml)_object;
-
-                    case StorageType.Date:
-                    case StorageType.DateTime2:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return DateTime;
-
-                    case StorageType.DateTimeOffset:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return DateTimeOffset;
-
-                    case StorageType.Time:
-                        if (IsNull)
-                        {
-                            return DBNull.Value;
-                        }
-                        return Time;
-                }
-                return null; // need to return the value as an object of some SQL type
-            }
+                StorageType.Boolean         => SqlBoolean,
+                StorageType.Byte            => SqlByte,
+                StorageType.Date            => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTime        => SqlDateTime,
+                StorageType.DateTime2       => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTimeOffset  => IsNull ? DBNull.Value : DateTimeOffset,
+                StorageType.Decimal         => SqlDecimal,
+                StorageType.Double          => SqlDouble,
+                StorageType.Guid            => SqlGuid,
+                StorageType.Int16           => SqlInt16,
+                StorageType.Int32           => SqlInt32,
+                StorageType.Int64           => SqlInt64,
+                StorageType.Json            => SqlJson,
+                StorageType.Money           => SqlMoney,
+                StorageType.Single          => SqlSingle,
+                StorageType.String          => SqlString,
+                StorageType.SqlBinary       => _object,
+                StorageType.SqlCachedBuffer => IsNull ? SqlXml.Null : ((SqlCachedBuffer)_object).ToSqlXml(),
+                StorageType.SqlGuid         => _object,
+                StorageType.SqlXml          => IsNull ? SqlXml.Null : (SqlXml)_object,
+                StorageType.Time            => IsNull ? DBNull.Value : Time,
+                StorageType.Vector          => GetSqlVector(),
+                _ => null
+            };
         }
 
         internal Type GetTypeFromStorageType(bool isSqlType)
@@ -774,7 +713,7 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.Empty;
             _object = null;
         }
-
+        
         internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
         {
             if (_type is StorageType.Vector)
@@ -1040,14 +979,14 @@ namespace Microsoft.Data.SqlClient
             return SqlTypeWorkarounds.SqlMoneyCtor(value, 1);
             #endif
         }
-        
-        private string GetStringFromVector()
+
+        private ISqlVector GetSqlVector()
         {
             MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return GetSqlVector<float>().GetString();
+                    return GetSqlVector<float>();
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
