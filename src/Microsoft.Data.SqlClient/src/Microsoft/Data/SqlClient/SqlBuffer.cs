@@ -14,6 +14,11 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlBuffer
     {
         #region Constants
+        // These variables store pre-boxed bool values to be used when returning a boolean as an
+        // object. If these are not used a new value is boxed each time one is needed which leads
+        // to a lot of garbage which needs to be collected
+        private static readonly object True = true;
+        private static readonly object False = false;
         
         // These formats work with DateTime stricts
         private static readonly string[] Sql2008DateTime2Formats = new[] {
@@ -590,80 +595,44 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        // these variables store pre-boxed bool values to be used when returning a boolean
-        // in a object typed location, if these are not used a new value is boxed each time
-        // one is needed which leads to a lot of garbage which needs to be collected
-        private static readonly object s_cachedTrueObject = true;
-        private static readonly object s_cachedFalseObject = false;
+        
 
         internal object Value
         {
-            get
-            {
-                if (IsNull)
+            get => IsNull
+                ? DBNull.Value
+                : _type switch
                 {
-                    return DBNull.Value;
-                }
-                switch (_type)
-                {
-                    case StorageType.Empty:
-                        return DBNull.Value;
-                    case StorageType.Boolean:
-                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject; // return pre-boxed values for perf
-                    case StorageType.Byte:
-                        return Byte;
-                    case StorageType.DateTime:
-                        return DateTime;
-                    case StorageType.Decimal:
-                        return Decimal;
-                    case StorageType.Double:
-                        return Double;
-                    case StorageType.Int16:
-                        return Int16;
-                    case StorageType.Int32:
-                        return Int32;
-                    case StorageType.Int64:
-                        return Int64;
-                    case StorageType.Guid:
-                        return Guid;
-                    case StorageType.Money:
-                        return Decimal;
-                    case StorageType.Single:
-                        return Single;
-                    case StorageType.String:
-                        return String;
-                    case StorageType.SqlBinary:
-                    case StorageType.Vector:
-                        return ByteArray;
-                    case StorageType.SqlCachedBuffer:
-                        {
-                            // If we have a CachedBuffer, it's because it's an XMLTYPE column
-                            // and we have to return a string when they're asking for the CLS
-                            // value of the column.
-                            return ((SqlCachedBuffer)(_object)).ToString();
-                        }
-                    case StorageType.SqlGuid:
-                        return Guid;
-                    case StorageType.SqlXml:
-                        {
-                            // XMLTYPE columns must be returned as string when asking for the CLS value
-                            SqlXml data = (SqlXml)_object;
-                            string s = data.Value;
-                            return s;
-                        }
-                    case StorageType.Date:
-                        return DateTime;
-                    case StorageType.DateTime2:
-                        return DateTime;
-                    case StorageType.DateTimeOffset:
-                        return DateTimeOffset;
-                    case StorageType.Time:
-                        return Time;
-                    case StorageType.Json:
-                        return String;
-                }
-                return null; // need to return the value as an object of some CLS type
-            }
+                    StorageType.Boolean        => Boolean ? True : False, // Return pre-boxed values for perf
+                    StorageType.Byte           => Byte,
+                    StorageType.Date           => DateTime,
+                    StorageType.DateTime       => DateTime,
+                    StorageType.DateTime2      => DateTime,
+                    StorageType.DateTimeOffset => DateTimeOffset,
+                    StorageType.Decimal        => Decimal,
+                    StorageType.Double         => Double,
+                    StorageType.Int16          => Int16,
+                    StorageType.Int32          => Int32,
+                    StorageType.Int64          => Int64,
+                    StorageType.Json           => String,
+                    StorageType.Guid           => Guid,
+                    StorageType.Money          => Decimal,
+                    StorageType.Single         => Single,
+                    StorageType.String         => String,
+                    StorageType.SqlBinary      => ByteArray,
+                    StorageType.SqlGuid        => Guid,
+                    StorageType.Time           => Time,
+                    StorageType.Vector         => ByteArray,
+                    
+                    // @TODO: Verify that these follow the same pattern as other types
+                    //     (ie, ClrType => (cast)Value)
+                    // If we have a cached buffer, it's because it's an XMLTYPE column and we have
+                    // to return a string when they're asking for the CLR value of the column.
+                    StorageType.SqlCachedBuffer => ((SqlCachedBuffer)_object).ToString(),
+                    StorageType.SqlXml          => ((SqlXml)_object).Value,
+                    
+                    _ => null
+                };
         }
 
         internal Type GetTypeFromStorageType(bool isSqlType)
