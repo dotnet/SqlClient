@@ -265,6 +265,13 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Single, ref _value._single, value);
         }
         
+        internal SqlString Sql2008DateTimeSqlString
+        {
+            get => _type is StorageType.Date or StorageType.DateTime2 or StorageType.DateTimeOffset or StorageType.Time
+                ? IsNull ? SqlString.Null : new SqlString(Sql2008DateTimeString)
+                : (SqlString)SqlValue;
+        }
+        
         internal string Sql2008DateTimeString
         {
             get
@@ -463,13 +470,6 @@ namespace Microsoft.Data.SqlClient
                 ThrowIfNull(); // Must be checked here because SqlBinary allows null.
                 return SqlBinary.Value;
             }
-        }
-
-        internal SqlString Sql2008DateTimeSqlString
-        {
-            get => _type is StorageType.Date or StorageType.DateTime2 or StorageType.DateTimeOffset or StorageType.Time
-                ? IsNull ? SqlString.Null : new SqlString(Sql2008DateTimeString)
-                : (SqlString)SqlValue;
         }
 
         internal object SqlValue
