@@ -467,21 +467,9 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlString Sql2008DateTimeSqlString
         {
-            get
-            {
-                if (StorageType.Date == _type ||
-                    StorageType.Time == _type ||
-                    StorageType.DateTime2 == _type ||
-                    StorageType.DateTimeOffset == _type)
-                {
-                    if (IsNull)
-                    {
-                        return SqlString.Null;
-                    }
-                    return new SqlString(Sql2008DateTimeString);
-                }
-                return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
-            }
+            get => _type is StorageType.Date or StorageType.DateTime2 or StorageType.DateTimeOffset or StorageType.Time
+                ? IsNull ? SqlString.Null : new SqlString(Sql2008DateTimeString)
+                : (SqlString)SqlValue;
         }
 
         internal object SqlValue
