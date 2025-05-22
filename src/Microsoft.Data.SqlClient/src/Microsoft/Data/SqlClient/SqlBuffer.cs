@@ -166,6 +166,17 @@ namespace Microsoft.Data.SqlClient
             get => GetValue(StorageType.Byte, _value._byte);
             set => SetValue(StorageType.Byte, ref _value._byte, value);
         }
+
+        internal byte[] ByteArray
+        {
+            get
+            {
+                ThrowIfNull();
+                return _type == StorageType.SqlBinary
+                    ? ((SqlBinary)_object).Value
+                    : ((SqlBinary)SqlValue).Value;
+            }
+        }
         
         #if NET
         internal DateOnly DateOnly
@@ -462,15 +473,6 @@ namespace Microsoft.Data.SqlClient
         #endif
         
         #endregion
-
-        internal byte[] ByteArray
-        {
-            get
-            {
-                ThrowIfNull(); // Must be checked here because SqlBinary allows null.
-                return SqlBinary.Value;
-            }
-        }
 
         internal object SqlValue
         {
