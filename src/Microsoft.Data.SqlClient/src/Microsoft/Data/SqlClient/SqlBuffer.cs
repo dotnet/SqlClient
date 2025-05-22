@@ -429,6 +429,35 @@ namespace Microsoft.Data.SqlClient
                 _ => (SqlString)SqlValue
             };
         }
+
+        internal object SqlValue
+        {
+            get => _type switch
+            {
+                StorageType.Boolean         => SqlBoolean,
+                StorageType.Byte            => SqlByte,
+                StorageType.Date            => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTime        => SqlDateTime,
+                StorageType.DateTime2       => IsNull ? DBNull.Value : DateTime,
+                StorageType.DateTimeOffset  => IsNull ? DBNull.Value : DateTimeOffset,
+                StorageType.Decimal         => SqlDecimal,
+                StorageType.Double          => SqlDouble,
+                StorageType.Guid            => SqlGuid,
+                StorageType.Int16           => SqlInt16,
+                StorageType.Int32           => SqlInt32,
+                StorageType.Int64           => SqlInt64,
+                StorageType.Json            => SqlJson,
+                StorageType.Money           => SqlMoney,
+                StorageType.Single          => SqlSingle,
+                StorageType.String          => SqlString,
+                StorageType.SqlBinary       => _object,
+                StorageType.SqlCachedBuffer => IsNull ? SqlXml.Null : ((SqlCachedBuffer)_object).ToSqlXml(),
+                StorageType.SqlGuid         => _object,
+                StorageType.SqlXml          => IsNull ? SqlXml.Null : (SqlXml)_object,
+                StorageType.Time            => IsNull ? DBNull.Value : Time,
+                _ => null
+            };
+        }
         
         internal SqlXml SqlXml
         {
@@ -516,35 +545,6 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-
-        internal object SqlValue
-        {
-            get => _type switch
-            {
-                StorageType.Boolean         => SqlBoolean,
-                StorageType.Byte            => SqlByte,
-                StorageType.Date            => IsNull ? DBNull.Value : DateTime,
-                StorageType.DateTime        => SqlDateTime,
-                StorageType.DateTime2       => IsNull ? DBNull.Value : DateTime,
-                StorageType.DateTimeOffset  => IsNull ? DBNull.Value : DateTimeOffset,
-                StorageType.Decimal         => SqlDecimal,
-                StorageType.Double          => SqlDouble,
-                StorageType.Guid            => SqlGuid,
-                StorageType.Int16           => SqlInt16,
-                StorageType.Int32           => SqlInt32,
-                StorageType.Int64           => SqlInt64,
-                StorageType.Json            => SqlJson,
-                StorageType.Money           => SqlMoney,
-                StorageType.Single          => SqlSingle,
-                StorageType.String          => SqlString,
-                StorageType.SqlBinary       => _object,
-                StorageType.SqlCachedBuffer => IsNull ? SqlXml.Null : ((SqlCachedBuffer)_object).ToSqlXml(),
-                StorageType.SqlGuid         => _object,
-                StorageType.SqlXml          => IsNull ? SqlXml.Null : (SqlXml)_object,
-                StorageType.Time            => IsNull ? DBNull.Value : Time,
-                _ => null
-            };
-        }
 
         internal Type GetTypeFromStorageType(bool isSqlType)
         {
