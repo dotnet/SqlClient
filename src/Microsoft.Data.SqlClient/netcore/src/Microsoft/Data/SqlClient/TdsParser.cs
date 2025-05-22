@@ -11368,7 +11368,14 @@ namespace Microsoft.Data.SqlClient
 
             const int marsHeaderSize = 18; // 4 + 2 + 8 + 4
 
-            int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
+            // Header Length (DWORD)
+            // Header Type (ushort)
+            // Trace Data Guid
+            // Trace Data Sequence Number (uint)
+            const int traceHeaderSize = 26;  // 4 + 2 + GUID_SIZE + sizeof(UInt32);
+
+            // TotalLength  - DWORD  - including all headers and lengths, including itself
+            int totalHeaderLength = this.IncludeTraceHeader ? (4 + marsHeaderSize + notificationHeaderSize + traceHeaderSize) : (4 + marsHeaderSize + notificationHeaderSize);
             Debug.Assert(stateObj._outBytesUsed == stateObj._outputHeaderLen, "Output bytes written before total header length");
             // Write total header length
             WriteInt(totalHeaderLength, stateObj);
@@ -11384,6 +11391,15 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(notificationHeaderSize, stateObj);
                 // Write notificaiton header data
                 WriteQueryNotificationHeaderData(notificationRequest, stateObj);
+            }
+
+            if (IncludeTraceHeader)
+            {
+
+                // Write trace header length
+                WriteInt(traceHeaderSize, stateObj);
+                // Write trace header data
+                WriteTraceHeaderData(stateObj);
             }
         }
 
