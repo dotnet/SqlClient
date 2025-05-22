@@ -284,6 +284,33 @@ namespace Microsoft.Data.SqlClient
             set => SetValue(StorageType.Single, ref _value._single, value);
         }
         
+        internal string Sql2008DateTimeString
+        {
+            get
+            {
+                ThrowIfNull();
+
+                string formatString;
+                switch (_type)
+                {
+                    case StorageType.Date:
+                        formatString = "yyyy-MM-dd";
+                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.DateTime2:
+                        formatString = Sql2008DateTime2Formats[_value._dateTime2Info._timeInfo._scale];
+                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.DateTimeOffset:
+                        formatString = Sql2008DateTimeOffsetFormats[_value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale];
+                        return DateTimeOffset.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    case StorageType.Time:
+                        formatString = Sql2008TimeFormats[_value._timeInfo._scale];
+                        return Time.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
+                    default:
+                        return (string)Value;
+                }
+            }
+        }
+        
         internal SqlBinary SqlBinary
         {
             get => _type is StorageType.SqlBinary or StorageType.Vector
@@ -460,33 +487,6 @@ namespace Microsoft.Data.SqlClient
                     ThrowIfNull();
                 }
                 return SqlBinary.Value;
-            }
-        }
-
-        internal string Sql2008DateTimeString
-        {
-            get
-            {
-                ThrowIfNull();
-
-                string formatString;
-                switch (_type)
-                {
-                    case StorageType.Date:
-                        formatString = "yyyy-MM-dd";
-                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
-                    case StorageType.DateTime2:
-                        formatString = Sql2008DateTime2Formats[_value._dateTime2Info._timeInfo._scale];
-                        return DateTime.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
-                    case StorageType.DateTimeOffset:
-                        formatString = Sql2008DateTimeOffsetFormats[_value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale];
-                        return DateTimeOffset.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
-                    case StorageType.Time:
-                        formatString = Sql2008TimeFormats[_value._timeInfo._scale];
-                        return Time.ToString(formatString, DateTimeFormatInfo.InvariantInfo);
-                    default:
-                        return (string)Value;
-                }
             }
         }
 
