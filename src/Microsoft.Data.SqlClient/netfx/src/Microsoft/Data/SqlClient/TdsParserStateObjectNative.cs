@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -13,6 +14,8 @@ namespace Microsoft.Data.SqlClient
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {
+        private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
+
         private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
@@ -171,6 +174,23 @@ namespace Microsoft.Data.SqlClient
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SniNativeWrapper.SniSetInfo(Handle, QueryType.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
+
+        internal override void DisposePacketCache()
+        {
+            lock (_writePacketLockObject)
+            {
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+                try
+                { }
+                finally
+                {
+                    _writePacketCache.Dispose();
+                    // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
+                }
+            }
+        }
 
         internal override SspiContextProvider CreateSspiContextProvider() => new NativeSspiContextProvider();
     }

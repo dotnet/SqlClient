@@ -25,7 +25,6 @@ namespace Microsoft.Data.SqlClient
         // SNI variables                                                     // multiple resultsets in one batch.
         protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-        protected readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -196,20 +195,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (_writePacketCache != null)
-            {
-                lock (_writePacketLockObject)
-                {
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    { }
-                    finally
-                    {
-                        _writePacketCache.Dispose();
-                        // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                    }
-                }
-            }
+            DisposePacketCache();
         }
 
         /// <summary>

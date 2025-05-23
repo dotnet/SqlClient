@@ -96,8 +96,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void Dispose();
 
-        internal abstract void DisposePacketCache();
-
         internal abstract uint CheckConnection();
 
         internal int DecrementPendingCallbacks(bool release)

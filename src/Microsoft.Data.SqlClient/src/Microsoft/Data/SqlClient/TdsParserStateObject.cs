@@ -519,6 +519,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
+        internal abstract void DisposePacketCache();
+
         internal int GetTimeoutRemaining()
         {
             int remaining;
