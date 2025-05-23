@@ -6500,8 +6500,8 @@ namespace Microsoft.Data.SqlClient
             bytes = null;
             int offset = 0;
             byte[] temp = null;
-            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
-            if (isAvailable)
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            if (canContinue)
             {
                 if (isContinuing || isStarting)
                 {
@@ -12983,9 +12983,9 @@ namespace Microsoft.Data.SqlClient
             char[] temp = null;
             bool buffIsRented = false;
             int startOffset = 0;
-            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
-            if (isAvailable)
+            if (canContinue)
             {
                 if (isContinuing || isStarting)
                 {
@@ -13004,7 +13004,7 @@ namespace Microsoft.Data.SqlClient
                 length >> 1,
                 stateObj,
                 out length,
-                supportRentedBuff: !isAvailable, // do not use the arraypool if we are going to keep the buffer in the snapshot
+                supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented,
                 startOffset,
                 isStarting || isContinuing

@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -584,6 +586,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                     return id;
+
+                }
+                finally
+                {
+                    try
+                    {
+                        using (var dropCommand = connection.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadBinaryData()
+        {
+            const int Size = 20_000;
+
+            byte[] data = Enumerable.Range(0, Size)
+                .Select(i => (byte)(i % 256))
+                .ToArray();
+            string tableName = DataTestUtility.GenerateObjectName();
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                try
+                {
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = $@"
+DROP TABLE IF EXISTS [{tableName}]
+CREATE TABLE [{tableName}] (Id INT IDENTITY(1,1) PRIMARY KEY, Data VARBINARY(MAX));
+INSERT INTO [{tableName}] (Data) VALUES (@data);";
+                        createCommand.Parameters.Add(new SqlParameter("@data", SqlDbType.VarBinary, Size) { Value = data });
+                        await createCommand.ExecuteNonQueryAsync();
+                    }
+
+                    using (var command = connection.CreateCommand())
+                    {
+
+                        command.CommandText = $"SELECT Data FROM [{tableName}]";
+                        command.Parameters.Clear();
+                        var result = (byte[])await command.ExecuteScalarAsync();
+
+                        Assert.Equal(data, result);
+                    }
 
                 }
                 finally
