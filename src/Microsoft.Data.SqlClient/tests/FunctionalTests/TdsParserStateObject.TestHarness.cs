@@ -12,13 +12,9 @@ using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwit
 
 namespace Microsoft.Data.SqlClient
 {
-#if NETFRAMEWORK
-    using PacketHandle = IntPtr; 
-#elif NETCOREAPP
     internal struct PacketHandle
     {
     }
-#endif
     internal partial class TdsParserStateObject : IDisposable
     {
         internal int ObjectID = 1;

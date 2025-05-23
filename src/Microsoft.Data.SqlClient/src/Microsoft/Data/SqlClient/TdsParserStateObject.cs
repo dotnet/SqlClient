@@ -19,7 +19,6 @@ using System.Runtime.ConstrainedExecution;
 namespace Microsoft.Data.SqlClient
 {
 #if NETFRAMEWORK
-    using PacketHandle = IntPtr;
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 #endif
     

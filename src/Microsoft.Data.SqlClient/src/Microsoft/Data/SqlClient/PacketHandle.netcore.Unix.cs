@@ -18,8 +18,22 @@ namespace Microsoft.Data.SqlClient
 
     internal readonly ref struct PacketHandle
     {
+        /// <summary>
+        /// PacketHandle is transporting a native pointer. The NativePointer field is valid.
+        /// A PacketHandle has this type when managed code is referencing a pointer to a
+        /// packet which has been read from the native SNI layer.
+        /// </summary>
         public const int NativePointerType = 1;
+        /// <summary>
+        /// PacketHandle is transporting a native packet. The NativePacket field is valid.
+        /// A PacketHandle has this type when managed code is directly referencing a packet
+        /// which is due to be passed to the native SNI layer.
+        /// </summary>
         public const int NativePacketType = 2;
+        /// <summary>
+        /// PacketHandle is transporting a managed packet. The ManagedPacket field is valid.
+        /// A PacketHandle used by the managed SNI layer will always have this type.
+        /// </summary>
         public const int ManagedPacketType = 3;
 
         public readonly SNI.SNIPacket ManagedPacket;
