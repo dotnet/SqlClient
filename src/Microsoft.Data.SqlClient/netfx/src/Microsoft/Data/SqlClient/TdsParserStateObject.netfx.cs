@@ -358,6 +358,12 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
+        private uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
+        }
+
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
@@ -457,6 +463,13 @@ namespace Microsoft.Data.SqlClient
 
                 AssertValidState();
             }
+        }
+
+        private bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source)
+        {
+            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
+            IntPtr ptr = packet.NativePointer;
+            return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
         }
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
