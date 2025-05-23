@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Dispose of it since we're not going to use it now
-                _negotiateAuth?.Dispose();
+                _negotiateAuth.Dispose();
             }
 
             return _negotiateAuth = new(new NegotiateAuthenticationClientOptions { Package = "Negotiate", TargetName = authParams.Resource });
