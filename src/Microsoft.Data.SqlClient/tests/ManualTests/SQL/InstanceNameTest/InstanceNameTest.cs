@@ -212,8 +212,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string serverSPN = "";
             MethodInfo getSqlServerSPNs = sniProxyObj.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getSqlServerSPNsTypesArray, null);
 
-            string spnInfo = (string)getSqlServerSPNs.Invoke(sniProxyObj, new object[] { dataSrcInfo, serverSPN });
-            
+            object resolvedSpns = getSqlServerSPNs.Invoke(sniProxyObj, new object[] { dataSrcInfo, serverSPN });
+
+            string spnInfo = (string)resolvedSpns.GetType().GetProperty("Primary", BindingFlags.Instance | BindingFlags.Public).GetValue(resolvedSpns);
+
             return spnInfo;
         }
 
