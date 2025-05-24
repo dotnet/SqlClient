@@ -762,29 +762,53 @@ namespace Microsoft.Data.Common
         private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
         private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
 
-        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
-        {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX)
-                || dataSource.Contains(AZURE_SYNAPSE)
-                || dataSource.Contains(FABRIC_DATAWAREHOUSE)
-                || dataSource.Contains(PBI_DATAWAREHOUSE)
-                || dataSource.Contains(PBI_DATAWAREHOUSE2)
-                || dataSource.Contains(PBI_DATAWAREHOUSE3);
-        }
-
+        /// <summary>
+        /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
+        /// </summary>
+        /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
+        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
+        /// in their respective regions or environments.</remarks>
         internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
                                                                         AZURE_SQL_GERMANY,
                                                                         AZURE_SQL_USGOV,
                                                                         AZURE_SQL_CHINA,
                                                                         AZURE_SQL_FABRIC };
+        
+        /// <summary>
+        /// Contains endpoint strings for Azure SQL Server on-demand services.
+        /// Each entry is a combination of the ONDEMAND_PREFIX and a specific Azure SQL endpoint string.
+        /// Example format: "ondemand.database.windows.net".
+        /// </summary>
+        internal static readonly string[] s_azureSqlServerOnDemandEndpoints = { ONDEMAND_PREFIX + AZURE_SQL,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_GERMANY,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_USGOV,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_CHINA,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_FABRIC };
+        /// <summary>
+        /// Represents a collection of endpoint identifiers for Azure Synapse and related services.
+        /// </summary>
+        /// <remarks>This array contains predefined endpoint strings used to identify Azure Synapse and
+        /// associated services, such as Fabric Data Warehouse and Power BI Data Warehouse.</remarks>
+        internal static readonly string[] s_azureSynapseEndpoints = { FABRIC_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE2,
+                                                                      PBI_DATAWAREHOUSE3 };
 
+        internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
+
+        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
+                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
+        }
+        
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, null);
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string prefix)
+        private static bool IsEndpoint(string dataSource, string[] endpoints)
         {
             int length = dataSource.Length;
             // remove server port
@@ -805,8 +829,6 @@ namespace Microsoft.Data.Common
                 foundIndex = -1;
             }
 
-
-  
             if (foundIndex > 0)
             {
                 length = foundIndex;
@@ -819,10 +841,9 @@ namespace Microsoft.Data.Common
             }
 
             // check if servername ends with any endpoints
-            for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
+            foreach (var endpoint in endpoints)
             {
-                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
-                if (length > endpoint.Length)
+                if (length >= endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
                     {
