@@ -739,6 +739,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ParameterIsSqlType)
                     {
+                        if (_sqlBufferReturnValue.VariantInternalStorageType == SqlBuffer.StorageType.Vector)
+                        {
+                            return GetVectorReturnValue();
+                        }
                         return _sqlBufferReturnValue.SqlValue;
                     }
                     return _sqlBufferReturnValue.Value;
@@ -756,6 +760,30 @@ namespace Microsoft.Data.SqlClient
                 _udtLoadError = null;
                 _actualSize = -1;
             }
+        }
+
+        private object GetVectorReturnValue()
+        {
+            byte elementType = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementCount;
+            
+            if (IsNull)
+            {
+                 switch (elementType)
+                 {
+                     case 0x0:
+                         return new SqlFloatVector(elementCount);
+                     default:
+                        throw ADP.InvalidEnumerationValue(typeof(MetaType.SqlVectorElementType), elementType);
+                 }
+             }
+             switch (elementType)
+             {
+                case 0x0:
+                    return new SqlFloatVector((byte[])_sqlBufferReturnValue.Value);
+                default:
+                    throw ADP.InvalidEnumerationValue(typeof(MetaType.SqlVectorElementType), elementType);
+             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />

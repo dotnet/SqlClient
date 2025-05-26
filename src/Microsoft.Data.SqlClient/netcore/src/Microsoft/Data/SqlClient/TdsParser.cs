@@ -9696,7 +9696,10 @@ namespace Microsoft.Data.SqlClient
             if (param.Direction == ParameterDirection.Output)
             {
                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
-                param.Value = null;
+                if (mt.SqlDbType != SqlDbTypeExtensions.Vector)
+                {
+                    param.Value = null;
+                }
                 param.ParameterIsSqlType = isSqlVal;
             }
             else
