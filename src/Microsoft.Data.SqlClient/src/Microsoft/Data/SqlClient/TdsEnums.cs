@@ -487,6 +487,7 @@ namespace Microsoft.Data.SqlClient
         public const int SQLDATETIMEOFFSET = 0x2b;
 
         public const int SQLJSON = 0xF4;
+        public const int SQLVECTOR = 0xF5;
 
         public const int DEFAULT_VARTIME_SCALE = 7;
 
