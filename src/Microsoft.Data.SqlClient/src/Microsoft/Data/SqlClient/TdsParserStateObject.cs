@@ -4027,6 +4027,28 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack == trace, "The stack trace on subsequent replays should be the same");
                 }
             }
+
+            public int CurrentPacketIndex
+            {
+                get
+                {
+                    int value = -1;
+                    if (_current != null)
+                    {
+                        PacketData current = _firstPacket;
+                        while (current != null)
+                        {
+                            value += 1;
+                            if (current == _current)
+                            {
+                                break;
+                            }
+                            current = current.NextPacket;
+                        } 
+                    }
+                    return value;
+                }
+            }
 #endif
             public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
 
