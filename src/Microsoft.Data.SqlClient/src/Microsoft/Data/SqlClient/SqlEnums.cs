@@ -380,6 +380,8 @@ namespace Microsoft.Data.SqlClient
                         return MetaXml;
                     else if (dataType == typeof(SqlJson))
                         return s_MetaJson;
+                    else if (dataType == typeof(SqlFloatVector))
+                        return s_MetaVector;
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
