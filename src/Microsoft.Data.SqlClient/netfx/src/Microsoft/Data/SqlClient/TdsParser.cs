@@ -6056,6 +6056,11 @@ namespace Microsoft.Data.SqlClient
                     nullVal.SetToNullOfType(SqlBuffer.StorageType.Json);
                     break;
 
+                case SqlDbTypeExtensions.Vector:
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.Vector);
+                    nullVal.SetVectorInfo(MetaType.GetVectorElementCount(md.length, md.scale), md.scale, true);
+                    break;
+
                 default:
                     Debug.Fail("unknown null sqlType!" + md.type.ToString());
                     break;
@@ -6661,6 +6666,18 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
+                case TdsEnums.SQLVECTOR:
+                    result = TryReadByteArrayWithContinue(stateObj, length, out b);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                    value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
+                    int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
+                    byte elementType = b[4];
+                    value.SetVectorInfo(elementCount, elementType, false);
+                    break;
+
                 case TdsEnums.SQLCHAR:
                 case TdsEnums.SQLBIGCHAR:
                 case TdsEnums.SQLVARCHAR:
@@ -7012,6 +7029,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARBINARY:
                 case TdsEnums.SQLVARBINARY:
                 case TdsEnums.SQLIMAGE:
+                case TdsEnums.SQLVECTOR:
                     {
                         // Note: Better not come here with plp data!!
                         Debug.Assert(length <= TdsEnums.MAXSIZE);

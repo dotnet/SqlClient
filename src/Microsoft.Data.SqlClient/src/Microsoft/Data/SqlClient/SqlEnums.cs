@@ -1054,6 +1054,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static int GetVectorElementCount(int length, byte elementType)
+        {
+            return (length - 8) / GetVectorElementSize(elementType);
+        }
+
         //
         // please leave string sorted alphabetically
         // note that these names should only be used in the context of parameters.  We always send over BIG* and nullable types for SQL Server
