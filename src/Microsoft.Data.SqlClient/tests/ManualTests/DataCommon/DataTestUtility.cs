@@ -1092,7 +1092,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public readonly ref struct XEventScope : IDisposable
+        public readonly ref struct XEventScope // : IDisposable
         {
             private readonly SqlConnection _connection;
             private readonly bool _useDatabaseSession;

@@ -11387,6 +11387,7 @@ namespace Microsoft.Data.SqlClient
             if (notificationHeaderSize != 0)
             {
                 // Write notification header length and data
+                // MS-TDS 2.2.5.3.1: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/e168d373-a7b7-41aa-b6ca-25985466a7e0
                 WriteInt(notificationHeaderSize, stateObj);
                 WriteQueryNotificationHeaderData(notificationRequest, stateObj);
             }
@@ -11394,6 +11395,7 @@ namespace Microsoft.Data.SqlClient
             if (IncludeTraceHeader)
             {
                 // Write trace header length and data
+                // MS-TDS 2.2.5.3.3: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/6e9f106b-df6e-4cbe-a6eb-45ceb10c63be
                 WriteInt(TraceHeaderSize, stateObj);
                 WriteTraceHeaderData(stateObj);
             }
