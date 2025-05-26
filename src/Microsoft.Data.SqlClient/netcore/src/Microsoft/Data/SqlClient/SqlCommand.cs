@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
     {
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
@@ -113,6 +113,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private string _commandText;
         private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
@@ -2645,7 +2646,7 @@ namespace Microsoft.Data.SqlClient
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
-                context.Dispose();
+                context?.Dispose();
             }
 
             return returnedTask;
@@ -2794,7 +2795,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 source.SetException(e);
-                context.Dispose();
+                context?.Dispose();
             }
 
             return returnedTask;
@@ -3050,7 +3051,6 @@ namespace Microsoft.Data.SqlClient
                 context = new ExecuteXmlReaderAsyncCallContext();
             }
             context.Set(this, source, registration, operationId);
-
 
             Task<XmlReader> returnedTask = source.Task;
             try
