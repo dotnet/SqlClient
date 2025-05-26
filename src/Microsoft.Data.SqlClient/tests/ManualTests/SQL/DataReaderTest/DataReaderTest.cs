@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsBDNull()
+        public static void CheckNullRowVersionIsDBNull()
         {
             lock (s_rowVersionLock)
             {

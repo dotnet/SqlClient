@@ -4033,27 +4033,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            public int CurrentPacketIndex
-            {
-                get
-                {
-                    int value = -1;
-                    if (_current != null)
-                    {
-                        PacketData current = _firstPacket;
-                        while (current != null)
-                        {
-                            value += 1;
-                            if (current == _current)
-                            {
-                                break;
-                            }
-                            current = current.NextPacket;
-                        } 
-                    }
-                    return value;
-                }
-            }
 #endif
             public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
 
