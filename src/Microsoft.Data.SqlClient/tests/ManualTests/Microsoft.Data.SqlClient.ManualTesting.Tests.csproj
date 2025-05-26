@@ -280,6 +280,7 @@
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="Json\SqlJsonTest.cs" />
+    <Compile Include="Vector\SqlFloatVectorTest.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
     <Compile Include="SQL\Common\InternalConnectionWrapper.cs" />
@@ -322,6 +323,7 @@
     <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
     <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <!-- <PackageReference Include="System.Text.Json" Version="8.0.5" /> -->
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->

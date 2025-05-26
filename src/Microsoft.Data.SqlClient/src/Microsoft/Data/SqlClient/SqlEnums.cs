@@ -63,6 +63,15 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is90Supported;
         internal readonly bool Is100Supported;
 
+        // SqlVector Element Types
+        internal enum SqlVectorElementType : byte
+        {
+            Float32 = 0
+            // Future values:
+            // Half = 1,
+            // Int32 = 2, etc.
+        }
+
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
 #if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
@@ -1025,6 +1034,15 @@ namespace Microsoft.Data.SqlClient
                 return 4;
 
             return 5;
+        }
+
+        internal static int GetVectorElementSize(byte type)
+        {
+            switch (type)
+            {
+                case 0: return 4;
+                default: return 4;
+            }
         }
 
         //
