@@ -11,7 +11,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlBuffer
+    internal sealed class SqlBuffer
     {
         internal enum StorageType
         {
@@ -1238,6 +1238,17 @@ namespace Microsoft.Data.SqlClient
             _object = null;
         }
 
+        #if NETFRAMEWORK
+        internal void SetToDate(DateTime date)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.Date;
+            _value._int32 = date.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+        #endif
+
         internal void SetToDateTime(int daypart, int timepart)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
@@ -1246,6 +1257,19 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.DateTime;
             _isNull = false;
         }
+        
+        #if NETFRAMEWORK
+        internal void SetToDateTime2(DateTime dateTime, byte scale)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.DateTime2;
+            _value._dateTime2Info._timeInfo._ticks = dateTime.TimeOfDay.Ticks;
+            _value._dateTime2Info._timeInfo._scale = scale;
+            _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+        #endif
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
         {

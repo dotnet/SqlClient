@@ -33,12 +33,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
                     opt = new SqlConnectionString(opt, instanceName, false /* user instance=false */, null /* do not modify the Enlist value */);
                     poolGroupProviderInfo = null; // null so we do not pass to constructor below...
                 }
-                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, pool, key.AccessToken, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessTokenCallback);
+                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
             }
             return result;
         }
