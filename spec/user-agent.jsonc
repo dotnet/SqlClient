@@ -1,0 +1,117 @@
+{
+  // This is the JSON Schema that defines the format of the driver user agent
+  // payload sent to the server during login.
+  //
+  // The design document is here:
+  //
+  // https://microsoft.sharepoint-df.com/:w:/t/sqldevx/ERIWTt0zlCxLroNHyaPlKYwBI_LNSff6iy_wXZ8xX6nctQ?e=9Cr35Q
+
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:microsoft:mssql:user-agent:v1",
+  "title": "Driver User Agent",
+  "description": "The user agent payload sent by the driver to the server during login.",
+    
+  "type": "object",
+  "properties":
+  {
+    "driver":
+    {
+      "enum": ["MS-JDBC", "MS-MDS", "MS-ODBC", "MS-OLEDB", "MS-PHP", "MS-PYTHON"],
+      "description": "The type of driver."
+    },
+    "version":
+    {
+      "type": "string",
+      "description": "The version of the driver, as a semantic version.",
+      // See:
+      // 
+      // https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string
+      //
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"
+    },
+    "os":
+    {
+      "type": "object",
+      "description": "Information about the operating system.",
+      "properties":
+      {
+        "type":
+        {
+          "enum": ["Windows", "Linux", "macOS", "FreeBSD", "Android", "Unknown"],
+          "description": "The type of operating system."
+        },
+        "details":
+        {
+          "type": "string",
+          "description": "Extended details of the operating system."
+        }
+      }
+    },
+    "arch":
+    {
+      "type": "string",
+      "description": "The architecture of the driver process."
+    },
+    "runtime":
+    {
+      "type": "string",
+      "description": "The runtime environment of the driver."
+    },
+    "ext":
+    {
+      "type": "object",
+      "description": "Extended properties for the user agent.",
+      "properties":
+      {
+        "agentId":
+        {
+          "type": "string",
+          "description": "A unique identifier for the agent using the driver."
+        },
+        "agentVersion":
+        {
+          "type": "string",
+          "description": "The version of the agent using the driver."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "driver",
+    "version",
+    "os",
+    "arch",
+    "runtime"
+  ],
+  "examples": [
+    {
+      "driver": "MS-MDS",
+      "version": "6.0.2",
+      "os":
+      {
+        "type": "Linux",
+        "details": "Debian GNU Linux 12.2 Bookworm"
+      },
+      "arch": "amd64",
+      "runtime": ".NET 9.0.3"
+    },
+    {
+      "driver": "MS-JDBC",
+      "version": "11.2.0",
+      "os":
+      {
+        "type": "Windows",
+        "details": "Windows 10 Pro 22H2"
+      },
+      "arch": "x64",
+      "runtime": "Java 17.0.8+7-LTS",
+      "ext":
+      {
+        "agentId": "12345678-1234-5678-1234-567812345678",
+        "agentVersion": "1.0.0"
+      }
+    }
+  ]
+}
