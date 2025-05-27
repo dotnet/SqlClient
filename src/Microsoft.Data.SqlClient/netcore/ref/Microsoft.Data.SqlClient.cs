@@ -5,6 +5,10 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
+using System;
+using System.Diagnostics;
+using System.Threading;
+
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
@@ -1939,6 +1943,41 @@ namespace Microsoft.Data.SqlClient
         public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
+    }
+}
+namespace Microsoft.Data.SqlClient.ConnectionPool
+{
+    sealed internal class DbConnectionPoolAuthenticationContext
+    {
+        internal DbConnectionPoolAuthenticationContext(byte[] accessToken, DateTime expirationTime) {}
+
+        internal static DbConnectionPoolAuthenticationContext ChooseAuthenticationContextToUpdate(DbConnectionPoolAuthenticationContext context1, DbConnectionPoolAuthenticationContext context2)
+        {
+            throw null;
+        }
+
+        internal byte[] AccessToken
+        {
+            get
+            {
+                throw null;
+            }
+        }
+
+        internal DateTime ExpirationTime
+        {
+            get
+            {
+                throw null;
+            }
+        }
+
+        internal bool LockToUpdate()
+        {
+            throw null;
+        }
+
+        internal void ReleaseLockToUpdate() {}
     }
 }
 namespace Microsoft.Data.SqlClient.Diagnostics
