@@ -54,6 +54,20 @@ steps:
 
 - ${{if eq(parameters.operatingSystem, 'Windows')}}:
   - task: MSBuild@1
+    displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+      platform: '${{parameters.platform }}'
+      configuration: '${{parameters.configuration }}'
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
+        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      ${{ else }}: # x86
+        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+    retryCountOnTaskFailure: 1
+
+  - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
     inputs:
       solution: build.proj

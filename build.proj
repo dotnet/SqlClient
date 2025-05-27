@@ -56,14 +56,18 @@
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
+    <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
+    <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
+    
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
     <FunctionalTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <FunctionalTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <FunctionalTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
-    <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
-    <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" />
+    <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
+    <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
+    
 
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
@@ -81,8 +85,8 @@
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLibAnyOS;GenerateSqlServerPackage"/>
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildUnitTestsNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildUnitTestsNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
   <Target Name="RestoreSqlServerLib">
@@ -96,6 +100,7 @@
   <Target Name="RestoreTestsNetCore">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
+    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -105,6 +110,7 @@
   <Target Name="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
+    <MSBuild Projects="@(UnitTests)" Targets="restore" Properties="$(TestProjectProperties)"/>
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
@@ -141,6 +147,15 @@
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
+  <Target Name="BuildUnitTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
+    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
+
+    <!-- Only build platform specific builds for Package reference types -->
+    <Message Text=">>> Building UnitTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);ReferenceType=$(ReferenceType);] ..." Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
+  </Target>
+  
   <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
     <Message Text=">>> Building FunctionalTestsNetCore [TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;ReferenceType=$(ReferenceType);] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))" />
@@ -159,6 +174,15 @@
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
+  <Target Name="BuildUnitTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+    <Message Text=">>> Building UnitTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
+
+    <!-- Only build platform specific builds for Package reference types -->
+    <Message Text=">>> Building UnitTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);] ..." Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(UnitTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
+  </Target>
+  
   <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <Message Text=">>> Building FunctionalTestsNetFx [TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;] ..." Condition="!$(ReferenceType.Contains('Package'))"/>
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
@@ -179,8 +203,57 @@
 
   <!-- Tests -->
 
+  <!-- Run all tests applicable to the host OS. -->
+  <Target Name="RunTests" DependsOnTargets="RunUnitTests;RunFunctionalTests;RunManualTests"/>
+
   <!-- Run all unit tests applicable to the host OS. -->
-  <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
+  <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix"/>
+  
+  <!-- Run all unit tests applicable to Windows. -->
+  <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(UnitTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:Target$(TFGroup)Version=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Windows$(TargetGroup)
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests"
+        --logger:"trx;LogFilePrefix=Unit-Windows$(TargetGroup)-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for Windows via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
+
+  <!-- Run all unit tests applicable to Unix. -->
+  <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+    <PropertyGroup>
+      <TestCommand>
+        $(DotnetPath)dotnet test "@(UnitTestsProj)"
+        --no-build
+        -v n
+        -p:Configuration=$(Configuration)
+        -p:TargetNetCoreVersion=$(TF)
+        -p:ReferenceType=$(ReferenceType)
+        -p:TestSet=$(TestSet)
+        -p:TestTargetOS=Unixnetcoreapp
+        --collect "Code coverage"
+        --results-directory $(ResultsDirectory)
+        --filter "category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests"
+        --logger:"trx;LogFilePrefix=Unit-Unixnetcoreapp-$(TestSet)"
+      </TestCommand>
+      <TestCommand>$(TestCommand.Replace($([System.Environment]::NewLine), " "))</TestCommand>
+    </PropertyGroup>
+    <Message Text=">>> Running unit tests for Unix via command: $(TestCommand)"/>
+    <Exec ConsoleToMsBuild="true" Command="$(TestCommand)"/>
+  </Target>
 
   <!-- Run all Functional tests applicable to the host OS. -->
   <Target Name="RunFunctionalTests" DependsOnTargets="RunFunctionalTestsWindows;RunFunctionalTestsUnix"/>
