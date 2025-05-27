@@ -2646,7 +2646,7 @@ namespace Microsoft.Data.SqlClient
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 source.SetException(e);
-                context?.Dispose();
+                context.Dispose();
             }
 
             return returnedTask;

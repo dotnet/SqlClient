@@ -3042,7 +3042,7 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e)
             {
                 source.SetException(e);
-                context?.Dispose();
+                context.Dispose();
             }
 
             return returnedTask;
