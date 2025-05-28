@@ -682,6 +682,12 @@ namespace Microsoft.Data.SqlClient
             _object = null;
         }
 
+        #region Get Methods
+        
+        
+        
+        #endregion
+        
         #region Set Methods
         
         #if NETFRAMEWORK
@@ -783,60 +789,28 @@ namespace Microsoft.Data.SqlClient
                 throw new SqlNullValueException();
             }
         }
-        // [Field]As<T> method explanation:
-        // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
-        // where typeof(T) == typeof(field) 
-        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
-        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
-        //   generated assembly will be short and direct
-        //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
-        //   value type which is no worse than the mechanism that this code replaces
-        // where typeof(T) != typeof(field)
-        //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
-        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
-        //   for example users cannot widen a short to an int preserving external expectations 
 
-        internal T ByteAs<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._byte;
-        }
 
-        internal T BooleanAs<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._boolean;
-        }
+        internal T ByteAs<T>() =>
+            GetValueAs<byte, T>(_value._byte);
 
-        internal T Int32As<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._int32;
-        }
+        internal T BooleanAs<T>() =>
+            GetValueAs<bool, T>(_value._boolean);
 
-        internal T Int16As<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._int16;
-        }
+        internal T Int32As<T>() =>
+            GetValueAs<int, T>(_value._int32);
 
-        internal T Int64As<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._int64;
-        }
+        internal T Int16As<T>() =>
+            GetValueAs<short, T>(_value._int16);
 
-        internal T DoubleAs<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._double;
-        }
+        internal T Int64As<T>() =>
+            GetValueAs<long, T>(_value._int64);
 
-        internal T SingleAs<T>()
-        {
-            ThrowIfNull();
-            return (T)(object)_value._single;
-        }
+        internal T DoubleAs<T>() =>
+            GetValueAs<double, T>(_value._double);
+
+        internal T SingleAs<T>() =>
+            GetValueAs<float, T>(_value._single);
         
         #region Private Helpers
         
@@ -857,6 +831,25 @@ namespace Microsoft.Data.SqlClient
                 ? value
                 : (T)Value; // Types we cannot directly convert to (ie, everything except for
                             // `storageType` will need to converted via boxing.
+        }
+
+        private TOut GetValueAs<TValue, TOut>(TValue value)
+        {
+            // [Field]As<T> method explanation:
+            // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
+            // 1) where typeof(T) == typeof(field) 
+            //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
+            //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
+            //   generated assembly will be short and direct
+            //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
+            //   value type which is no worse than the mechanism that this code replaces
+            // 2) where typeof(T) != typeof(field)
+            //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
+            //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
+            //   for example users cannot widen a short to an int preserving external expectations 
+            
+            ThrowIfNull();
+            return (TOut)(object)value;
         }
 
         private void SetObject<T>(StorageType storageType, T value)
