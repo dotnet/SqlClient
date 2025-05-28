@@ -107,11 +107,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (stateObj != null)
                 {
-#if NETFRAMEWORK
-                    stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
-#else
                     stateObj.ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
-#endif // NETFRAMEWORK
                 }
             }
         }
@@ -132,11 +128,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (stateObj != null)
                 {
-#if NETFRAMEWORK
-                    stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);
-#else
                     stateObj.WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
-#endif // NETFRAMEWORK
                 }
             }
         }

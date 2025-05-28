@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NET
-
 using System;
 
 namespace Microsoft.Data.SqlClient
@@ -20,15 +18,34 @@ namespace Microsoft.Data.SqlClient
 
     internal readonly ref struct PacketHandle
     {
+        /// <summary>
+        /// PacketHandle is transporting a native pointer. The NativePointer field is valid.
+        /// A PacketHandle has this type when managed code is referencing a pointer to a
+        /// packet which has been read from the native SNI layer.
+        /// </summary>
         public const int NativePointerType = 1;
+        /// <summary>
+        /// PacketHandle is transporting a native packet. The NativePacket field is valid.
+        /// A PacketHandle has this type when managed code is directly referencing a packet
+        /// which is due to be passed to the native SNI layer.
+        /// </summary>
         public const int NativePacketType = 2;
+        
+        #if NET
+        /// <summary>
+        /// PacketHandle is transporting a managed packet. The ManagedPacket field is valid.
+        /// A PacketHandle used by the managed SNI layer will always have this type.
+        /// </summary>
         public const int ManagedPacketType = 3;
 
         public readonly ManagedSni.SniPacket ManagedPacket;
+        #endif
+        
         public readonly SNIPacket NativePacket;
         public readonly IntPtr NativePointer;
         public readonly int Type;
 
+        #if NET
         private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, ManagedSni.SniPacket managedPacket, int type)
         {
             Type = type;
@@ -36,7 +53,16 @@ namespace Microsoft.Data.SqlClient
             NativePointer = nativePointer;
             NativePacket = nativePacket;
         }
+        #else
+        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, int type)
+        {
+            Type = type;
+            NativePointer = nativePointer;
+            NativePacket = nativePacket;
+        }
+        #endif
 
+        #if NET
         public static PacketHandle FromManagedPacket(ManagedSni.SniPacket managedPacket) =>
             new PacketHandle(default, default, managedPacket, ManagedPacketType);
 
@@ -45,9 +71,12 @@ namespace Microsoft.Data.SqlClient
 
         public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
             new PacketHandle(default, nativePacket, default, NativePacketType);
+        #else
+        public static PacketHandle FromNativePointer(IntPtr nativePointer) =>
+            new PacketHandle(nativePointer, default, NativePointerType);
 
-
+        public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
+            new PacketHandle(default, nativePacket, NativePacketType);
+        #endif
     }
 }
-
-#endif
