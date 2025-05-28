@@ -65,10 +65,17 @@ steps:
     msbuildArguments: '-t:BuildTestsNetCore -p:ReferenceType=${{parameters.referenceType }} -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:Configuration=${{parameters.configuration }}'
 
 - task: DotNetCoreCLI@2
+  displayName: 'Run Unit Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"'
+
+- task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetCoreVersion }}'
   inputs:
     command: test
-    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj'
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
     arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"'
 
 - task: DotNetCoreCLI@2
