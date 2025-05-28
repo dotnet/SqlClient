@@ -3,11 +3,12 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
+    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
+    <OutputPath Condition="'$(BuildForLib)' == 'true' AND '$(TargetGroup)' != 'netcoreapp'">$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\netstandard\</OutputPath>
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <Product>Core $(BaseProduct)</Product>
     <Configurations>Debug;Release;</Configurations>
-    <TargetGroup Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))'=='.NETCoreApp'">netcoreapp</TargetGroup>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
   <!--Generating Strong Name-->
@@ -42,5 +43,6 @@
 
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS' AND '$(TargetGroup)' != 'netcoreapp'" />
-  <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />
+  <!-- Trim docs for intellisense for ref folder (netcore/netstandard) but not when building for lib folder (only netstandard is built for lib from here) -->
+  <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" Condition="'$(BuildForLib)' != 'true'" />
 </Project>
