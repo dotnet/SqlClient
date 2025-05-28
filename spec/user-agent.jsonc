@@ -56,25 +56,6 @@
     {
       "type": "string",
       "description": "The runtime environment of the driver."
-    },
-    "ext":
-    {
-      "type": "object",
-      "description": "Extended properties for the user agent.",
-      "properties":
-      {
-        "agentId":
-        {
-          "type": "string",
-          "description": "A unique identifier for the agent using the driver."
-        },
-        "agentVersion":
-        {
-          "type": "string",
-          "description": "The version of the agent using the driver."
-        }
-      },
-      "additionalProperties": false
     }
   },
   "additionalProperties": false,
@@ -106,12 +87,7 @@
         "details": "Windows 10 Pro 22H2"
       },
       "arch": "x64",
-      "runtime": "Java 17.0.8+7-LTS",
-      "ext":
-      {
-        "agentId": "12345678-1234-5678-1234-567812345678",
-        "agentVersion": "1.0.0"
-      }
+      "runtime": "Java 17.0.8+7-LTS"
     }
   ]
 }
