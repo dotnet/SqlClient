@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient
         };
         
         // These formats only work with TimeSpan structs
-        private static readonly string[] Sql2008TimeFormats = new string[] {
+        private static readonly string[] Sql2008TimeFormats = new[] {
             @"hh\:mm\:ss",
             @"hh\:mm\:ss\.f",
             @"hh\:mm\:ss\.ff",
@@ -86,113 +86,39 @@ namespace Microsoft.Data.SqlClient
             Vector,
         }
 
-        internal struct TimeInfo
-        {
-            internal long _ticks;
-            internal byte _scale;
-
-            internal void FromByteArray(ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
-            {
-                // Prefetch the length for guaranteed performance.
-                int length = timeBytes.Length;
-                
-                Debug.Assert(length >= 3 && length <= 5, "typeBytes must have 3-5 items in it.");
-                Debug.Assert(scale <= 7, "scale must be less than 8");
-                Debug.Assert(denormalizedScale <= 7, "denormalizedScale mut be less than 8");
-
-                // Deserialize the timeBytes into a long
-                // Note: we cannot use binary primitives here since timeBytes is variable length
-                //    and will never be 8 bytes.
-                long tickUnits = 0;
-                for (int i = 0; i < length; i++)
-                {
-                    tickUnits += (long)timeBytes[i] << (8 * i);
-                }
-                
-                // Calculate true ticks from deserialized value and scale
-                _ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
-                
-                // Once the deserialization has been completed using the value scale, we need to
-                // set the actual denormalized scale, coming from the data type, on the original
-                // result, so that it has the proper scale setting. This only applies for values
-                // that got serialized/deserialized for encryption. Otherwise, both scales should
-                // be equal.
-                _scale = denormalizedScale;
-            }
-            
-            internal void FromTimeSpanAndScale(TimeSpan timeSpan, byte scale)
-            {
-                _ticks = timeSpan.Ticks;
-                _scale = scale;
-            }
-        }
-
-        internal struct VectorInfo
-        {
-            internal int _elementCount;
-            internal byte _elementType;
-        }
-        
-        [StructLayout(LayoutKind.Explicit)]
-        private struct Storage
-        {
-            [FieldOffset(0)]
-            internal bool _boolean;
-            [FieldOffset(0)]
-            internal byte _byte;
-            [FieldOffset(0)]
-            internal DateTimeInfo _dateTimeInfo;
-            [FieldOffset(0)]
-            internal double _double;
-            [FieldOffset(0)]
-            internal NumericInfo _numericInfo;
-            [FieldOffset(0)]
-            internal short _int16;
-            [FieldOffset(0)]
-            internal int _int32;
-            [FieldOffset(0)]
-            internal long _int64;     // also used to store Money, UtcDateTime, Date , and Time
-            [FieldOffset(0)]
-            internal Guid _guid;
-            [FieldOffset(0)]
-            internal float _single;
-            [FieldOffset(0)]
-            internal TimeInfo _timeInfo;
-            [FieldOffset(0)]
-            internal DateTime2Info _dateTime2Info;
-            [FieldOffset(0)]
-            internal DateTimeOffsetInfo _dateTimeOffsetInfo;
-            [FieldOffset(0)]
-            internal VectorInfo _vectorInfo;
-        }
-
         #region Member Variables
 
+        // Storage for reference types, eg, String, SqlBinary, SqlCachedBuffer, SqlGuid.
+        private object _object;
+        
         private StorageType _type;
         
-        // Storage for value types, eg, bool, int32, datetime2.
+        // Storage for value types, eg, bool, int32, datetime2. Note that on construction of the
+        // SqlBuffer object, this will be initialized to an empty Storage instance.
         private Storage _value;
-        
-        // Storage for reference types, eg, String, SqlBinary, SqlCachedBuffer, SqlGuid.
-        private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
 
         #endregion
+        
+        #region Constructors
         
         internal SqlBuffer()
         {
         }
 
         private SqlBuffer(SqlBuffer value)
-        { // Clone
+        {
             // value types
             IsNull = value.IsNull;
             _type = value._type;
+            
             // ref types - should also be read only unless at some point we allow this data
             // to be mutable, then we will need to copy
             _value = value._value;
             _object = value._object;
         }
 
+        #endregion
+        
         #region General Properties
 
         internal Type ClrType
@@ -661,7 +587,27 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-
+        
+        #region General Methods
+        
+        internal void Clear()
+        {
+            IsNull = false;
+            _type = StorageType.Empty;
+            _object = null;
+        }
+        
+        internal static void Clear(SqlBuffer[] values)
+        {
+            if (values != null)
+            {
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    values[i].Clear();
+                }
+            }
+        }
+        
         internal static SqlBuffer[] CreateBufferArray(int length)
         {
             SqlBuffer[] buffers = new SqlBuffer[length];
@@ -682,46 +628,8 @@ namespace Microsoft.Data.SqlClient
             return copy;
         }
 
-        internal static void Clear(SqlBuffer[] values)
-        {
-            if (values != null)
-            {
-                for (int i = 0; i < values.Length; ++i)
-                {
-                    values[i].Clear();
-                }
-            }
-        }
-
-        internal void Clear()
-        {
-            IsNull = false;
-            _type = StorageType.Empty;
-            _object = null;
-        }
+        #endregion
         
-        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
-        {
-            if (_type is StorageType.Vector)
-            {
-                if (IsNull)
-                {
-                    return new SqlVector<T>(_value._vectorInfo._elementCount);
-                }
-                return new SqlVector<T>(SqlBinary.Value);
-            }
-            return (SqlVector<T>)SqlValue;
-        }
-        
-        internal VectorInfo GetVectorInfo()
-        {
-            if (_type == StorageType.Vector)
-            {
-                return _value._vectorInfo;
-            }
-            throw new InvalidOperationException();
-        }
-
         #region Get Methods
         
         internal T BooleanAs<T>() =>
@@ -744,6 +652,28 @@ namespace Microsoft.Data.SqlClient
         
         internal T SingleAs<T>() =>
             GetValueAs<float, T>(_value._single);
+        
+        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
+        {
+            if (_type is StorageType.Vector)
+            {
+                if (IsNull)
+                {
+                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                }
+                return new SqlVector<T>(SqlBinary.Value);
+            }
+            return (SqlVector<T>)SqlValue;
+        }
+        
+        internal VectorInfo GetVectorInfo()
+        {
+            if (_type == StorageType.Vector)
+            {
+                return _value._vectorInfo;
+            }
+            throw new InvalidOperationException();
+        }
         
         #endregion
         
@@ -1281,6 +1211,106 @@ namespace Microsoft.Data.SqlClient
 
                 return (trailingZeroes, valuableDigits);
             }
+        }
+        
+        /// <summary>
+        /// This is a hacky way of creating a union type in C#, for optimizing storage of a single
+        /// object of various types. This struct is specifically used for storing value types.
+        /// </summary>
+        [StructLayout(LayoutKind.Explicit)]
+        private struct Storage
+        {
+            [FieldOffset(0)]
+            internal bool _boolean;
+            
+            [FieldOffset(0)]
+            internal byte _byte;
+            
+            [FieldOffset(0)]
+            internal DateTimeInfo _dateTimeInfo;
+            
+            [FieldOffset(0)]
+            internal double _double;
+            
+            [FieldOffset(0)]
+            internal NumericInfo _numericInfo;
+            
+            [FieldOffset(0)]
+            internal short _int16;
+            
+            [FieldOffset(0)]
+            internal int _int32;
+            
+            [FieldOffset(0)]
+            internal long _int64;     // also used to store Money, UtcDateTime, Date , and Time
+            
+            [FieldOffset(0)]
+            internal Guid _guid;
+            
+            [FieldOffset(0)]
+            internal float _single;
+            
+            [FieldOffset(0)]
+            internal TimeInfo _timeInfo;
+            
+            [FieldOffset(0)]
+            internal DateTime2Info _dateTime2Info;
+
+            [FieldOffset(0)]
+            internal DateTimeOffsetInfo _dateTimeOffsetInfo;
+            
+            [FieldOffset(0)]
+            internal VectorInfo _vectorInfo;
+        }
+        
+        /// <summary>
+        /// Used to store TIME information.
+        /// </summary>
+        internal struct TimeInfo
+        {
+            internal long _ticks;
+            internal byte _scale;
+
+            internal void FromByteArray(ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
+            {
+                // Prefetch the length for guaranteed performance.
+                int length = timeBytes.Length;
+                
+                Debug.Assert(length >= 3 && length <= 5, "typeBytes must have 3-5 items in it.");
+                Debug.Assert(scale <= 7, "scale must be less than 8");
+                Debug.Assert(denormalizedScale <= 7, "denormalizedScale mut be less than 8");
+
+                // Deserialize the timeBytes into a long
+                // Note: we cannot use binary primitives here since timeBytes is variable length
+                //    and will never be 8 bytes.
+                long tickUnits = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    tickUnits += (long)timeBytes[i] << (8 * i);
+                }
+                
+                // Calculate true ticks from deserialized value and scale
+                _ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
+                
+                // Once the deserialization has been completed using the value scale, we need to
+                // set the actual denormalized scale, coming from the data type, on the original
+                // result, so that it has the proper scale setting. This only applies for values
+                // that got serialized/deserialized for encryption. Otherwise, both scales should
+                // be equal.
+                _scale = denormalizedScale;
+            }
+            
+            internal void FromTimeSpanAndScale(TimeSpan timeSpan, byte scale)
+            {
+                _ticks = timeSpan.Ticks;
+                _scale = scale;
+            }
+        }
+        
+        internal struct VectorInfo
+        {
+            internal int _elementCount;
+            internal byte _elementType;
         }
         
         #endregion
