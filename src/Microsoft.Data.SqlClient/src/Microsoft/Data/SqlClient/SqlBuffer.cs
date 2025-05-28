@@ -684,7 +684,26 @@ namespace Microsoft.Data.SqlClient
 
         #region Get Methods
         
+        internal T BooleanAs<T>() =>
+            GetValueAs<bool, T>(_value._boolean);
         
+        internal T ByteAs<T>() =>
+            GetValueAs<byte, T>(_value._byte);
+        
+        internal T DoubleAs<T>() =>
+            GetValueAs<double, T>(_value._double);
+        
+        internal T Int16As<T>() =>
+            GetValueAs<short, T>(_value._int16);
+        
+        internal T Int32As<T>() =>
+            GetValueAs<int, T>(_value._int32);
+        
+        internal T Int64As<T>() =>
+            GetValueAs<long, T>(_value._int64);
+        
+        internal T SingleAs<T>() =>
+            GetValueAs<float, T>(_value._single);
         
         #endregion
         
@@ -778,40 +797,6 @@ namespace Microsoft.Data.SqlClient
 
         #endregion        
 
-        
-
-        
-
-        private void ThrowIfNull()
-        {
-            if (IsNull)
-            {
-                throw new SqlNullValueException();
-            }
-        }
-
-
-        internal T ByteAs<T>() =>
-            GetValueAs<byte, T>(_value._byte);
-
-        internal T BooleanAs<T>() =>
-            GetValueAs<bool, T>(_value._boolean);
-
-        internal T Int32As<T>() =>
-            GetValueAs<int, T>(_value._int32);
-
-        internal T Int16As<T>() =>
-            GetValueAs<short, T>(_value._int16);
-
-        internal T Int64As<T>() =>
-            GetValueAs<long, T>(_value._int64);
-
-        internal T DoubleAs<T>() =>
-            GetValueAs<double, T>(_value._double);
-
-        internal T SingleAs<T>() =>
-            GetValueAs<float, T>(_value._single);
-        
         #region Private Helpers
         
         private static SqlMoney GetSqlMoneyFromLong(long value)
@@ -871,6 +856,14 @@ namespace Microsoft.Data.SqlClient
 
             IsNull = isNull;
             _type = storageType;
+        }
+        
+        private void ThrowIfNull()
+        {
+            if (IsNull)
+            {
+                throw new SqlNullValueException();
+            }
         }
         
         #endregion
