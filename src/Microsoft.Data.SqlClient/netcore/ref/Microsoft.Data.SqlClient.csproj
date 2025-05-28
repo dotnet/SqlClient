@@ -19,6 +19,10 @@
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UnitTests" />
+  </ItemGroup>
   
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />

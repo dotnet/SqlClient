@@ -18,6 +18,7 @@
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="Microsoft.Data.SqlClient.cs" />
   </ItemGroup>
   <ItemGroup>
