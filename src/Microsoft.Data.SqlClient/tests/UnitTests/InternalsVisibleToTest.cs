@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void TestInternalsVisible()
         {
             DbConnectionPoolAuthenticationContext context = new([1, 2, 3], DateTime.UtcNow.AddMinutes(5));
+            Assert.NotNull(context);
             Assert.Equal([1, 2, 3], context.AccessToken);
         }
     }
