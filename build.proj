@@ -56,6 +56,12 @@
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
+    <UnitTests Include="**/tools/TDS/TDS/TDS.csproj" />
+    <UnitTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
+    <UnitTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
+    <UnitTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
+    <UnitTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <UnitTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     
