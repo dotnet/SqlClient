@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
@@ -89,6 +90,41 @@ namespace Microsoft.Data.SqlClient
         {
             internal long _ticks;
             internal byte _scale;
+
+            internal void FromByteArray(ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
+            {
+                // Prefetch the length for guaranteed performance.
+                int length = timeBytes.Length;
+                
+                Debug.Assert(length >= 3 && length <= 5, "typeBytes must have 3-5 items in it.");
+                Debug.Assert(scale <= 7, "scale must be less than 8");
+                Debug.Assert(denormalizedScale <= 7, "denormalizedScale mut be less than 8");
+
+                // Deserialize the timeBytes into a long
+                // Note: we cannot use binary primitives here since timeBytes is variable length
+                //    and will never be 8 bytes.
+                long tickUnits = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    tickUnits += (long)timeBytes[i] << (8 * i);
+                }
+                
+                // Calculate true ticks from deserialized value and scale
+                _ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
+                
+                // Once the deserialization has been completed using the value scale, we need to
+                // set the actual denormalized scale, coming from the data type, on the original
+                // result, so that it has the proper scale setting. This only applies for values
+                // that got serialized/deserialized for encryption. Otherwise, both scales should
+                // be equal.
+                _scale = denormalizedScale;
+            }
+            
+            internal void FromTimeSpanAndScale(TimeSpan timeSpan, byte scale)
+            {
+                _ticks = timeSpan.Ticks;
+                _scale = scale;
+            }
         }
 
         internal struct VectorInfo
@@ -156,7 +192,7 @@ namespace Microsoft.Data.SqlClient
             _value = value._value;
             _object = value._object;
         }
-        
+
         #region General Properties
 
         internal Type ClrType
@@ -687,14 +723,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         #if NETFRAMEWORK
-        internal void SetToDate(DateTime date)
-        {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.Date;
-            _value._int32 = date.Subtract(DateTime.MinValue).Days;
-            IsNull = false;
-        }
+        internal void SetToDate(DateTime date) =>
+            SetValue(StorageType.Date, ref _value._int32, date.Subtract(DateTime.MinValue).Days);
         #endif
 
         //@TODO: SORT
@@ -706,164 +736,85 @@ namespace Microsoft.Data.SqlClient
             IsNull = isNull;
         }
 
-        internal void SetToDateTime(int daypart, int timepart)
+        internal void SetToDateTime(int dayPart, int timePart)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            _value._dateTimeInfo.DayPart = daypart;
-            _value._dateTimeInfo.TimePart = timepart;
-            _type = StorageType.DateTime;
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.DateTime, false);
+            _value._dateTimeInfo.FromDateTimeData(dayPart, timePart);
         }
         
         #if NETFRAMEWORK
         internal void SetToDateTime2(DateTime dateTime, byte scale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.DateTime2;
-            _value._dateTime2Info._timeInfo._ticks = dateTime.TimeOfDay.Ticks;
-            _value._dateTime2Info._timeInfo._scale = scale;
-            _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.DateTime2, false);
+            _value._dateTime2Info.FromDateTimeAndScale(dateTime, scale);
         }
         #endif
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            _value._numericInfo._precision = precision;
-            _value._numericInfo._scale = scale;
-            _value._numericInfo._positive = positive;
-            _value._numericInfo._data1 = bits[0];
-            _value._numericInfo._data2 = bits[1];
-            _value._numericInfo._data3 = bits[2];
-            _value._numericInfo._data4 = bits[3];
-            _type = StorageType.Decimal;
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.Decimal, false);
+            _value._numericInfo.FromDecimalData(precision, scale, positive, bits);
         }
 
-        internal void SetToMoney(long value)
-        {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            _value._int64 = value;
-            _type = StorageType.Money;
-            IsNull = false;
-        }
+        internal void SetToMoney(long value) =>
+            SetValue(StorageType.Money, ref _value._int64, value);
 
         internal void SetToNullOfType(StorageType storageType)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            _type = storageType;
-            IsNull = true;
+            SetTypeAndIsNull(storageType, true);
             _object = null;
         }
 
         internal void SetToString(string value)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
+            SetTypeAndIsNull(StorageType.String, false);
             _object = value;
-            _type = StorageType.String;
-            IsNull = false;
         }
 
         internal void SetToJson(string value)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
+            SetTypeAndIsNull(StorageType.Json, false);
             _object = value;
-            _type = StorageType.Json;
-            IsNull = false;
         }
 
         internal void SetToDate(ReadOnlySpan<byte> bytes)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.Date;
-            _value._int32 = GetDateFromByteArray(bytes);
-            IsNull = false;
+            // NOTE: Reordered to optimize JIT generated bounds checks to a single instance,
+            //     review generated asm before changing.
+            // @TODO: Verify that ^^^ is still accurate/needed
+            byte thirdByte = bytes[2]; // 
+            int dateValue = bytes[0] + (bytes[1] << 8) + (thirdByte << 16);
+            SetValue(StorageType.Date, ref _value._int32, dateValue);
         }
 
         internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.Time;
-            FillInTimeInfo(ref _value._timeInfo, bytes, scale, denormalizedScale);
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.Time, false);
+            _value._timeInfo.FromByteArray(bytes, scale, denormalizedScale);
         }
 
         internal void SetToTime(TimeSpan timeSpan, byte scale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.Time;
-            _value._timeInfo._ticks = timeSpan.Ticks;
-            _value._timeInfo._scale = scale;
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.Time, false);
+            _value._timeInfo.FromTimeSpanAndScale(timeSpan, scale);
         }
 
         internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            int length = bytes.Length;
-            _type = StorageType.DateTime2;
-            FillInTimeInfo(ref _value._dateTime2Info._timeInfo, bytes.Slice(0, length - 3), scale, denormalizedScale); // remaining 3 bytes is for date
-            _value._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 3)); // 3 bytes for date
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.DateTime2, false);
+            _value._dateTime2Info.FromByteArray(bytes, scale, denormalizedScale);
         }
 
         internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-            int length = bytes.Length;
-            _type = StorageType.DateTimeOffset;
-            FillInTimeInfo(ref _value._dateTimeOffsetInfo._dateTime2Info._timeInfo, bytes.Slice(0, length - 5), scale, denormalizedScale); // remaining 5 bytes are for date and offset
-            _value._dateTimeOffsetInfo._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 5)); // 3 bytes for date
-            _value._dateTimeOffsetInfo._offset = (short)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
-            IsNull = false;
+            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
+            _value._dateTimeOffsetInfo.FromByteArray(bytes, scale, denormalizedScale);
         }
 
         internal void SetToDateTimeOffset(DateTimeOffset dateTimeOffset, byte scale)
         {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.DateTimeOffset;
-            DateTime utcDateTime = dateTimeOffset.UtcDateTime; // timeInfo stores the utc datetime of a datatimeoffset
-            _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._ticks = utcDateTime.TimeOfDay.Ticks;
-            _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale = scale;
-            _value._dateTimeOffsetInfo._dateTime2Info._date = utcDateTime.Subtract(DateTime.MinValue).Days;
-            _value._dateTimeOffsetInfo._offset = (short)dateTimeOffset.Offset.TotalMinutes;
-            IsNull = false;
-        }
-
-        private static void FillInTimeInfo(ref TimeInfo timeInfo, ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
-        {
-            int length = timeBytes.Length;
-            Debug.Assert(3 <= length && length <= 5, "invalid data length for timeInfo: " + length);
-            Debug.Assert(0 <= scale && scale <= 7, "invalid scale: " + scale);
-            Debug.Assert(0 <= denormalizedScale && denormalizedScale <= 7, "invalid denormalized scale: " + denormalizedScale);
-
-            long tickUnits = timeBytes[0] + ((long)timeBytes[1] << 8) + ((long)timeBytes[2] << 16);
-            if (length > 3)
-            {
-                tickUnits += ((long)timeBytes[3] << 24);
-            }
-            if (length > 4)
-            {
-                tickUnits += ((long)timeBytes[4] << 32);
-            }
-            timeInfo._ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
-
-            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale, 
-            // coming from the data type, on the original result, so that it has the proper scale setting.
-            // This only applies for values that got serialized/deserialized for encryption. Otherwise, both scales should be equal.
-            timeInfo._scale = denormalizedScale;
-        }
-
-        private static int GetDateFromByteArray(ReadOnlySpan<byte> buf)
-        {
-            byte thirdByte = buf[2]; // reordered to optimize JIT generated bounds checks to a single instance, review generated asm before changing
-            return buf[0] + (buf[1] << 8) + (thirdByte << 16);
+            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
+            _value._dateTimeOffsetInfo.FromDateTimeOffsetAndScale(dateTimeOffset, scale);
         }
 
         private void ThrowIfNull()
@@ -964,20 +915,22 @@ namespace Microsoft.Data.SqlClient
         private void SetObject<T>(StorageType storageType, T value)
             where T : INullable
         {
-            Debug.Assert(IsEmpty, "Value is being set a second time.");
-
-            _type = storageType;
+            SetTypeAndIsNull(storageType, value.IsNull);
             _object = value;
-            IsNull = value.IsNull;
         }
         
         private void SetValue<T>(StorageType storageType, ref T valueField, T value)
         {
+            SetTypeAndIsNull(storageType, false);
+            valueField = value;
+        }
+
+        private void SetTypeAndIsNull(StorageType storageType, bool isNull)
+        {
             Debug.Assert(IsEmpty, "Value is being set a second time.");
 
+            IsNull = isNull;
             _type = storageType;
-            valueField = value;
-            IsNull = false;
         }
         
         #endregion
@@ -1000,6 +953,12 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             internal int TimePart { get; set; }
 
+            internal void FromDateTimeData(int dayPart, int timePart)
+            {
+                DayPart = dayPart;
+                TimePart = timePart;
+            }
+            
             /// <summary>
             /// Generates a new DateTime object from the SQL DATETIME information.
             /// </summary>
@@ -1078,6 +1037,29 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             internal TimeInfo _timeInfo;
 
+            internal void FromByteArray(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+            {
+                int length = bytes.Length;
+
+                // Set time from time bytes
+                ReadOnlySpan<byte> timeBytes = bytes.Slice(0, length - 3);
+                _timeInfo.FromByteArray(timeBytes, scale, denormalizedScale);
+
+                // Set days from day bytes 
+                // NOTE: Reordered to optimize JIT generated bounds checks to a single instance,
+                //     review generated asm before changing.
+                // @TODO: Verify that ^^^ is still accurate/needed
+                ReadOnlySpan<byte> dateBytes = bytes.Slice(length - 3);
+                byte thirdByte = dateBytes[2];
+                _date = dateBytes[0] + (dateBytes[1] << 8) + (thirdByte << 16);
+            }
+            
+            internal void FromDateTimeAndScale(DateTime dateTime, byte scale)
+            {
+                _date = dateTime.Subtract(DateTime.MinValue).Days;
+                _timeInfo.FromTimeSpanAndScale(dateTime.TimeOfDay, scale);
+            }
+            
             /// <summary>
             /// Generates a new DateTime object from the SQL DATETIME2 information.
             /// </summary>
@@ -1105,6 +1087,25 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             internal short _offset;
 
+            internal void FromByteArray(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+            {
+                int length = bytes.Length;
+
+                // Set DATETIME2 info from bytes
+                ReadOnlySpan<byte> dateTime2Bytes = bytes.Slice(0, length - 2);
+                _dateTime2Info.FromByteArray(dateTime2Bytes, scale, denormalizedScale);
+                
+                // Set offset from remaining bytes
+                ReadOnlySpan<byte> offsetBytes = bytes.Slice(length - 2);
+                _offset = BinaryPrimitives.ReadInt16LittleEndian(offsetBytes);
+            }
+
+            internal void FromDateTimeOffsetAndScale(DateTimeOffset dateTimeOffset, byte scale)
+            {
+                _dateTime2Info.FromDateTimeAndScale(dateTimeOffset.UtcDateTime, scale);
+                _offset = (short)dateTimeOffset.Offset.TotalMinutes;
+            }
+            
             /// <summary>
             /// Generates a new DateTimeOffset object from the SQL DATETIMEOFFSET information.
             /// </summary>
@@ -1157,6 +1158,19 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             internal bool _positive;
 
+            internal void FromDecimalData(byte precision, byte scale, bool positive, int[] integerBlocks)
+            {
+                Debug.Assert(integerBlocks.Length == 4, "Integer blocks must contain low, mid, high, and extended bits");
+
+                _precision = precision;
+                _scale = scale;
+                _positive = positive;
+                _data1 = integerBlocks[0];
+                _data2 = integerBlocks[1];
+                _data3 = integerBlocks[2];
+                _data4 = integerBlocks[3];
+            }
+            
             internal decimal ToDecimal()
             {
                 // SQL DECIMAL/NUMERIC type can store larger numbers than CLR decimal type, if we
