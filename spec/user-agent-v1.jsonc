@@ -1,15 +1,19 @@
 {
-  // This is the JSON Schema that defines the format of the driver user agent
-  // payload sent to the server during login.
+  // This is the JSON Schema that defines the format of the TDS USERAGENT
+  // Feature Extension payload (version 1) sent to the server during login.
   //
-  // The design document is here:
+  // Feature Extension Name:     USERAGENT
+  // Feature Extension Version:  1
+  // Schema Version:             1
   //
-  // https://microsoft.sharepoint-df.com/:w:/t/sqldevx/ERIWTt0zlCxLroNHyaPlKYwBI_LNSff6iy_wXZ8xX6nctQ?e=9Cr35Q
+  // The design document for version 1 is here:
+  //
+  // https://microsoft.sharepoint-df.com/:w:/t/sqldevx/ERIWTt0zlCxLroNHyaPlKYwBI_LNSff6iy_wXZ8xX6nctQ?e=iP8q75
 
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:microsoft:mssql:user-agent:v1",
-  "title": "Driver User Agent",
-  "description": "The user agent payload sent by the driver to the server during login.",
+  "title": "Driver User Agent V1",
+  "description": "The user agent payload sent by the driver during login.",
     
   "type": "object",
   "properties":
@@ -45,7 +49,9 @@
           "type": "string",
           "description": "Extended details of the operating system."
         }
-      }
+      },
+      "additionalProperties": false,
+      "required": ["type", "details"]
     },
     "arch":
     {
@@ -59,14 +65,9 @@
     }
   },
   "additionalProperties": false,
-  "required": [
-    "driver",
-    "version",
-    "os",
-    "arch",
-    "runtime"
-  ],
-  "examples": [
+  "required": ["driver", "version", "os", "arch", "runtime"],
+  "examples":
+  [
     {
       "driver": "MS-MDS",
       "version": "6.0.2",
