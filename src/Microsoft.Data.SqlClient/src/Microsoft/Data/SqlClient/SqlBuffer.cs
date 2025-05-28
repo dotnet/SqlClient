@@ -722,20 +722,23 @@ namespace Microsoft.Data.SqlClient
             throw new InvalidOperationException();
         }
 
+        #region Set Methods
+        
         #if NETFRAMEWORK
         internal void SetToDate(DateTime date) =>
             SetValue(StorageType.Date, ref _value._int32, date.Subtract(DateTime.MinValue).Days);
         #endif
 
-        //@TODO: SORT
-        internal void SetVectorInfo(int elementCount, byte elementType, bool isNull)
+        internal void SetToDate(ReadOnlySpan<byte> bytes)
         {
-            _value._vectorInfo._elementCount = elementCount;
-            _value._vectorInfo._elementType = elementType;
-            _type = StorageType.Vector;
-            IsNull = isNull;
+            // NOTE: Reordered to optimize JIT generated bounds checks to a single instance,
+            //     review generated asm before changing.
+            // @TODO: Verify that ^^^ is still accurate/needed
+            byte thirdByte = bytes[2]; // 
+            int dateValue = bytes[0] + (bytes[1] << 8) + (thirdByte << 16);
+            SetValue(StorageType.Date, ref _value._int32, dateValue);
         }
-
+        
         internal void SetToDateTime(int dayPart, int timePart)
         {
             SetTypeAndIsNull(StorageType.DateTime, false);
@@ -749,6 +752,24 @@ namespace Microsoft.Data.SqlClient
             _value._dateTime2Info.FromDateTimeAndScale(dateTime, scale);
         }
         #endif
+        
+        internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+        {
+            SetTypeAndIsNull(StorageType.DateTime2, false);
+            _value._dateTime2Info.FromByteArray(bytes, scale, denormalizedScale);
+        }
+        
+        internal void SetToDateTimeOffset(DateTimeOffset dateTimeOffset, byte scale)
+        {
+            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
+            _value._dateTimeOffsetInfo.FromDateTimeOffsetAndScale(dateTimeOffset, scale);
+        }
+        
+        internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+        {
+            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
+            _value._dateTimeOffsetInfo.FromByteArray(bytes, scale, denormalizedScale);
+        }
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
         {
@@ -756,6 +777,12 @@ namespace Microsoft.Data.SqlClient
             _value._numericInfo.FromDecimalData(precision, scale, positive, bits);
         }
 
+        internal void SetToJson(string value)
+        {
+            SetTypeAndIsNull(StorageType.Json, false);
+            _object = value;
+        }
+        
         internal void SetToMoney(long value) =>
             SetValue(StorageType.Money, ref _value._int64, value);
 
@@ -771,22 +798,6 @@ namespace Microsoft.Data.SqlClient
             _object = value;
         }
 
-        internal void SetToJson(string value)
-        {
-            SetTypeAndIsNull(StorageType.Json, false);
-            _object = value;
-        }
-
-        internal void SetToDate(ReadOnlySpan<byte> bytes)
-        {
-            // NOTE: Reordered to optimize JIT generated bounds checks to a single instance,
-            //     review generated asm before changing.
-            // @TODO: Verify that ^^^ is still accurate/needed
-            byte thirdByte = bytes[2]; // 
-            int dateValue = bytes[0] + (bytes[1] << 8) + (thirdByte << 16);
-            SetValue(StorageType.Date, ref _value._int32, dateValue);
-        }
-
         internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
             SetTypeAndIsNull(StorageType.Time, false);
@@ -798,24 +809,19 @@ namespace Microsoft.Data.SqlClient
             SetTypeAndIsNull(StorageType.Time, false);
             _value._timeInfo.FromTimeSpanAndScale(timeSpan, scale);
         }
-
-        internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+        
+        internal void SetToVectorInfo(int elementCount, byte elementType, bool isNull)
         {
-            SetTypeAndIsNull(StorageType.DateTime2, false);
-            _value._dateTime2Info.FromByteArray(bytes, scale, denormalizedScale);
+            SetTypeAndIsNull(StorageType.Vector, isNull);
+            _value._vectorInfo._elementCount = elementCount;
+            _value._vectorInfo._elementType = elementType;
         }
 
-        internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
-        {
-            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
-            _value._dateTimeOffsetInfo.FromByteArray(bytes, scale, denormalizedScale);
-        }
+        #endregion        
 
-        internal void SetToDateTimeOffset(DateTimeOffset dateTimeOffset, byte scale)
-        {
-            SetTypeAndIsNull(StorageType.DateTimeOffset, false);
-            _value._dateTimeOffsetInfo.FromDateTimeOffsetAndScale(dateTimeOffset, scale);
-        }
+        
+
+        
 
         private void ThrowIfNull()
         {

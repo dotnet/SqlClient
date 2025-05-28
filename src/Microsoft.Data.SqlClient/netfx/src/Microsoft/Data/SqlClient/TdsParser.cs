@@ -6058,7 +6058,7 @@ namespace Microsoft.Data.SqlClient
 
                 case SqlDbTypeExtensions.Vector:
                     nullVal.SetToNullOfType(SqlBuffer.StorageType.Vector);
-                    nullVal.SetVectorInfo(MetaType.GetVectorElementCount(md.length, md.scale), md.scale, true);
+                    nullVal.SetToVectorInfo(MetaType.GetVectorElementCount(md.length, md.scale), md.scale, true);
                     break;
 
                 default:
@@ -6684,7 +6684,7 @@ namespace Microsoft.Data.SqlClient
                     // object from binary payload.
                     int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
                     byte elementType = b[4];
-                    value.SetVectorInfo(elementCount, elementType, false);
+                    value.SetToVectorInfo(elementCount, elementType, false);
                     break;
 
                 case TdsEnums.SQLCHAR:
