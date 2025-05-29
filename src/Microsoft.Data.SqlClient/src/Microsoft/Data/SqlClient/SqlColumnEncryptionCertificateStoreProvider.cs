@@ -477,6 +477,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate.HasPrivateKey, "Attempting to encrypt with cert without privatekey");
 
             RSA rsa = certificate.GetRSAPublicKey();
+            
+            // CodeQL [SM03796] Required for an external standard: Always Encrypted only supports encrypting column encryption keys with RSA_OAEP(SHA1) (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsa.Encrypt(plainText, RSAEncryptionPadding.OaepSHA1);
         }
 
@@ -493,6 +495,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(certificate.HasPrivateKey, "Attempting to decrypt with cert without privatekey");
 
             RSA rsa = certificate.GetRSAPrivateKey();
+            
+            // CodeQL [SM03796] Required for an external standard: Always Encrypted only supports encrypting column encryption keys with RSA_OAEP(SHA1) (https://learn.microsoft.com/en-us/sql/t-sql/statements/create-column-encryption-key-transact-sql?view=sql-server-ver16)
             return rsa.Decrypt(cipherText, RSAEncryptionPadding.OaepSHA1);
         }
 

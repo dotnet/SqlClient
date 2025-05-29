@@ -11,13 +11,14 @@ using System.IO;
 using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlConnectionFactory : DbConnectionFactory
     {
-        private SqlConnectionFactory() : base(SqlPerformanceCounters.SingletonInstance)
+        private SqlConnectionFactory() : base()
         {
         }
 
@@ -32,12 +33,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
@@ -144,14 +145,14 @@ namespace Microsoft.Data.SqlClient
                     opt = new SqlConnectionString(opt, instanceName, false /* user instance=false */, null /* do not modify the Enlist value */);
                     poolGroupProviderInfo = null; // null so we do not pass to constructor below...
                 }
-                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, pool, key.AccessToken, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessTokenCallback);
+                result = new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
             }
             return result;
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
         {
-            Debug.Assert(!ADP.IsEmpty(connectionString), "empty connectionString");
+            Debug.Assert(!string.IsNullOrEmpty(connectionString), "empty connectionString");
             SqlConnectionString result = new SqlConnectionString(connectionString);
             return result;
         }
@@ -341,20 +342,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-    }
-
-    [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
-    sealed internal class SqlPerformanceCounters : DbConnectionPoolCounters
-    {
-        private const string CategoryName = ".NET Data Provider for SqlServer";
-        private const string CategoryHelp = "Counters for Microsoft.Data.SqlClient";
-
-        public static readonly SqlPerformanceCounters SingletonInstance = new SqlPerformanceCounters();
-
-        [System.Diagnostics.PerformanceCounterPermissionAttribute(System.Security.Permissions.SecurityAction.Assert, PermissionAccess = PerformanceCounterPermissionAccess.Write, MachineName = ".", CategoryName = CategoryName)]
-        private SqlPerformanceCounters() : base(CategoryName, CategoryHelp)
-        {
-        }
     }
 }
 

@@ -20,6 +20,9 @@ namespace Microsoft.Data.SqlClient
         internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
+        internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
+        internal const string UseCompatibilityAsyncBehaviourString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour";
+        internal const string UseConnectionPoolV2String = @"Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
@@ -28,6 +31,9 @@ namespace Microsoft.Data.SqlClient
         private static Tristate s_useMinimumLoginTimeout;
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
+        private static Tristate s_useCompatProcessSni;
+        private static Tristate s_useCompatAsyncBehaviour;
+        private static Tristate s_useConnectionPoolV2;
 
 #if NET
         static LocalAppContextSwitches()
@@ -83,6 +89,66 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
+        /// <summary>
+        /// In TdsParser the ProcessSni function changed significantly when the packet
+        /// multiplexing code needed for high speed multi-packet column values was added.
+        /// In case of compatibility problems this switch will change TdsParser to use
+        /// the previous version of the function.
+        /// </summary>
+        public static bool UseCompatibilityProcessSni
+        {
+            get
+            {
+                if (s_useCompatProcessSni == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useCompatProcessSni = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useCompatProcessSni = Tristate.False;
+                    }
+                }
+                return s_useCompatProcessSni == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// In TdsParser the async multi-packet column value fetch behaviour is capable of
+        /// using a continue snapshot state in addition to the original replay from start
+        /// logic.
+        /// This switch disables use of the continue snapshot state. This switch will always
+        /// return true if <see cref="UseCompatibilityProcessSni"/> is enabled because the 
+        /// continue state is not stable without the multiplexer.
+        /// </summary>
+        public static bool UseCompatibilityAsyncBehaviour
+        {
+            get
+            {
+                if (UseCompatibilityProcessSni)
+                {
+                    // If ProcessSni compatibility mode has been enabled then the packet
+                    // multiplexer has been disabled. The new async behaviour using continue
+                    // point capture is only stable if the multiplexer is enabled so we must
+                    // return true to enable compatibility async behaviour using only restarts.
+                    return true;
+                }
+
+                if (s_useCompatAsyncBehaviour == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) && returnedValue)
+                    {
+                        s_useCompatAsyncBehaviour = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useCompatAsyncBehaviour = Tristate.False;
+                    }
+                }
+                return s_useCompatAsyncBehaviour == Tristate.True;
+            }
+        }
 
         /// <summary>
         /// When using Encrypt=false in the connection string, a security warning is output to the console if the TLS version is 1.2 or lower.
@@ -167,7 +233,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_useMinimumLoginTimeout == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) && returnedValue)
+                    if (!AppContext.TryGetSwitch(UseMinimumLoginTimeoutString, out bool returnedValue) || returnedValue)
                     {
                         s_useMinimumLoginTimeout = Tristate.True;
                     }
@@ -204,6 +270,30 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 return s_legacyVarTimeZeroScaleBehaviour == Tristate.True;
+            }
+        }
+
+        /// <summary>
+        /// When set to true, the connection pool will use the new V2 connection pool implementation.
+        /// When set to false, the connection pool will use the legacy V1 implementation.
+        /// This app context switch defaults to 'false'.
+        /// </summary>
+        public static bool UseConnectionPoolV2
+        {
+            get
+            {
+                if (s_useConnectionPoolV2 == Tristate.NotInitialized)
+                {
+                    if (AppContext.TryGetSwitch(UseConnectionPoolV2String, out bool returnedValue) && returnedValue)
+                    {
+                        s_useConnectionPoolV2 = Tristate.True;
+                    }
+                    else
+                    {
+                        s_useConnectionPoolV2 = Tristate.False;
+                    }
+                }
+                return s_useConnectionPoolV2 == Tristate.True;
             }
         }
     }

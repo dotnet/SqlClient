@@ -1,0 +1,19 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+    # Well-known paths
+    - name: REPO_ROOT
+      value: '$(Build.SourcesDirectory)'
+      readonly: true
+      
+    - name: BUILD_OUTPUT
+      value: '$(Build.SourcesDirectory)/artifacts'
+      readonly: true
+      
+    - name: ARTIFACT_PATH
+      value: '$(Build.SourcesDirectory)/packages'
+      readonly: true

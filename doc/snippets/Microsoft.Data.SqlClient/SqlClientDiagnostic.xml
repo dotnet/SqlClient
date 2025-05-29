@@ -34,7 +34,7 @@
       <returns>
         The element at the specified index in the read-only list.
       </returns>
-      <exception cref="IndexOutOfRangeException" />
+      <exception cref="System.IndexOutOfRangeException" />
     </Item1>
     <Count>
       <summary>

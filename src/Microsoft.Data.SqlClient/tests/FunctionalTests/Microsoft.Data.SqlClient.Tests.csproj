@@ -12,7 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
-    <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
@@ -29,19 +28,12 @@
     <Compile Include="DataCommon\TestUtility.cs" />
     <Compile Include="LocalizationTest.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
-    <Compile Include="Resources\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <EmbeddedResource Update="Resources\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
+    <Compile Include="MultiplexerTests.cs" />
     <Compile Include="SqlAuthenticationProviderTest.cs" />
     <Compile Include="SqlBufferTests.cs" />
     <Compile Include="SqlClientLoggerTest.cs" />
     <Compile Include="SqlCommandSetTest.cs" />
+    <Compile Include="LocalAppContextSwitchesTests.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
@@ -74,10 +66,13 @@
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
+    <Compile Include="TdsParserStateObject.TestHarness.cs" />
     <Compile Include="TestTdsServer.cs" />
     <Compile Include="TestRoutingTdsServer.cs" />
     <Compile Include="SqlHelperTest.cs" />
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStateObject.Multiplexer.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Packet.cs" />
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
@@ -95,7 +90,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.utility" Version="$(XunitVersion)" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>
@@ -104,7 +98,10 @@
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="System.Buffers" Version="$(SystemBuffersVersion)" />    
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
@@ -125,6 +122,7 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj">
       <Name>TDS</Name>
     </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />

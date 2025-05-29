@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -31,12 +32,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
@@ -135,7 +136,7 @@ namespace Microsoft.Data.SqlClient
                 opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
-            return new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling: applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
+            return new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)

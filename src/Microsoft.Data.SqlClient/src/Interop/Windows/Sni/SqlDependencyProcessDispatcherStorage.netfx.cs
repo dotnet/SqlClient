@@ -4,52 +4,50 @@
 
 #if NETFRAMEWORK
 
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Threading;
+using System.Runtime.Versioning;
 
 namespace Interop.Windows.Sni
 {
-    internal unsafe class SqlDependencyProcessDispatcherStorage
+    internal class SqlDependencyProcessDispatcherStorage
     {
-        static void* data;
+        private static readonly object s_lockObj = new();
+        private static IntPtr s_data;
+        private static int s_size;
 
-        static int size;
-        static volatile int thelock; // Int used for a spin-lock.
-
-        public static void* NativeGetData(out int passedSize)
+        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        public static byte[] NativeGetData()
         {
-            passedSize = size;
-            return data;
+            byte[] result = null;
+            if (s_data != IntPtr.Zero)
+            {
+                result = new byte[s_size];
+                Marshal.Copy(s_data, result, 0, s_size);
+            }
+
+            return result;
         }
 
-        internal static bool NativeSetData(void* passedData, int passedSize)
+        [ResourceExposure(ResourceScope.Process)] // SxS: there is no way to set scope = Instance, using Process which is wider
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        internal static void NativeSetData(byte[] data)
         {
-            bool success = false;
-
-            while (0 != Interlocked.CompareExchange(ref thelock, 1, 0))
-            { // Spin until we have the lock.
-                Thread.Sleep(50); // Sleep with short-timeout to prevent starvation.
-            }
-            Trace.Assert(1 == thelock); // Now that we have the lock, lock should be equal to 1.
-
-            if (data == null)
+            lock (s_lockObj)
             {
-                data = Marshal.AllocHGlobal(passedSize).ToPointer();
-
-                Trace.Assert(data != null);
-
-                System.Buffer.MemoryCopy(passedData, data, passedSize, passedSize);
-
-                Trace.Assert(0 == size); // Size should still be zero at this point.
-                size = passedSize;
-                success = true;
+                if (s_data == IntPtr.Zero)
+                {
+                    s_data = Marshal.AllocHGlobal(data.Length);
+                    Trace.Assert(s_data != IntPtr.Zero);
+                    
+                    Marshal.Copy(data, 0, s_data, data.Length);
+                    
+                    Trace.Assert(s_size == 0); // Size should still be zero at this point
+                    s_size = data.Length;
+                }
             }
-
-            int result = Interlocked.CompareExchange(ref thelock, 0, 1);
-            Trace.Assert(1 == result); // The release of the lock should have been successful.  
-
-            return success;
         }
     }
 }

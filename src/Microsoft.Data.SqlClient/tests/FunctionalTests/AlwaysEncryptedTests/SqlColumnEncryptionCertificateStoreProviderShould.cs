@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +17,10 @@ using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.TestFixtures;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    public class SqlColumnEncryptionCertificateStoreProviderShould : IClassFixture<CertificateFixture>
+    public class SqlColumnEncryptionCertificateStoreProviderShould : IClassFixture<ColumnEncryptionCertificateFixture>
     {
-        private const string MASTER_KEY_PATH = "CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946";
+        private const string PRIMARY_CERTIFICATE_PATH = "CurrentUser/My/{primary_thumbprint}";
+        private const string SECONDARY_CERTIFICATE_PATH = "CurrentUser/My/{secondary_thumbprint}";
         private const string ENCRYPTION_ALGORITHM = "RSA_OAEP";
 
         /// <summary>
@@ -93,13 +95,24 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// </summary>
         private const int CipherTextStartIndex = IVStartIndex + IVLengthInBytes;
 
+        private readonly ColumnEncryptionCertificateFixture _certFixture;
+
+        public SqlColumnEncryptionCertificateStoreProviderShould(ColumnEncryptionCertificateFixture certFixture)
+        {
+            _certFixture = certFixture;
+
+            // Disable the cache to avoid false failures.
+            SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
+        }
+
         [Theory]
         [InvalidDecryptionParameters]
         public void ThrowExceptionWithInvalidParameterWhileDecryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            Exception ex = Assert.Throws(exceptionType, () => provider.DecryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, bytes));
-            Assert.Matches(errorMsg, ex.Message);
+            Exception ex = Assert.Throws(exceptionType,
+                () => provider.DecryptColumnEncryptionKey(ReplaceKeyTokens(masterKeyPath), encryptionAlgorithm, bytes));
+            Assert.Matches(ReplaceKeyTokens(errorMsg), ex.Message);
         }
 
         [Theory]
@@ -107,8 +120,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void ThrowExceptionWithInvalidParameterWhileEncryptingColumnEncryptionKey(string errorMsg, Type exceptionType, string masterKeyPath, string encryptionAlgorithm, byte[] bytes)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            Exception ex = Assert.Throws(exceptionType, () => provider.EncryptColumnEncryptionKey(masterKeyPath, encryptionAlgorithm, bytes));
-            Assert.Matches(errorMsg, ex.Message);
+            Exception ex = Assert.Throws(exceptionType, () => provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(masterKeyPath), encryptionAlgorithm, bytes));
+            Assert.Matches(ReplaceKeyTokens(errorMsg), ex.Message);
         }
 
         [Theory]
@@ -121,24 +134,24 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [InlineData("CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        [InlineData("CURRENTUSER/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        [InlineData("currentuser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        public void SetStoreLocationApproperiatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
+        [InlineData("CurrentUser/My/{primary_thumbprint}")]
+        [InlineData("CURRENTUSER/My/{primary_thumbprint}")]
+        [InlineData("currentuser/My/{primary_thumbprint}")]
+        public void SetStoreLocationAppropriatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            byte[] ciphertext = provider.EncryptColumnEncryptionKey(masterKeyPath, ENCRYPTION_ALGORITHM, new byte[] { 1, 2, 3, 4, 5 });
+            byte[] ciphertext = provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(masterKeyPath), ENCRYPTION_ALGORITHM, new byte[] { 1, 2, 3, 4, 5 });
             Assert.NotNull(ciphertext);
         }
 
         [Theory]
-        [InlineData("CurrentUser/my/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        [InlineData("CurrentUser/MY/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        [InlineData("CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946")]
-        public void SetStoreNameApproperiatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
+        [InlineData("CurrentUser/my/{primary_thumbprint}")]
+        [InlineData("CurrentUser/MY/{primary_thumbprint}")]
+        [InlineData("CurrentUser/My/{primary_thumbprint}")]
+        public void SetStoreNameAppropriatelyFromMasterKeyPathRegardlessOfCase(string masterKeyPath)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            byte[] ciphertext = provider.EncryptColumnEncryptionKey(masterKeyPath, ENCRYPTION_ALGORITHM, new byte[] { 1, 2, 3, 4, 5 });
+            byte[] ciphertext = provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(masterKeyPath), ENCRYPTION_ALGORITHM, new byte[] { 1, 2, 3, 4, 5 });
             Assert.NotNull(ciphertext);
         }
 
@@ -149,7 +162,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void AcceptEncryptionAlgorithmRegardlessOfCase(string algorithm)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            byte[] ciphertext = provider.EncryptColumnEncryptionKey(MASTER_KEY_PATH, algorithm, new byte[] { 1, 2, 3, 4, 5 });
+            byte[] ciphertext = provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), algorithm, new byte[] { 1, 2, 3, 4, 5 });
             Assert.NotNull(ciphertext);
         }
 
@@ -164,8 +177,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             var randomNumberGenerator = new Random();
             randomNumberGenerator.NextBytes(columnEncryptionKey);
 
-            byte[] encryptedData = provider.EncryptColumnEncryptionKey(MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, columnEncryptionKey);
-            byte[] decryptedData = provider.DecryptColumnEncryptionKey(MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, encryptedData);
+            byte[] encryptedData = provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), ENCRYPTION_ALGORITHM, columnEncryptionKey);
+            byte[] decryptedData = provider.DecryptColumnEncryptionKey(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), ENCRYPTION_ALGORITHM, encryptedData);
             Assert.Equal(columnEncryptionKey, decryptedData);
         }
 
@@ -175,10 +188,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void SignAndVerifyColumnMasterKeyMetadataSuccessfully(bool allowEnclaveComputations)
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            byte[] signature = provider.SignColumnMasterKeyMetadata(MASTER_KEY_PATH, allowEnclaveComputations);
+            byte[] signature = provider.SignColumnMasterKeyMetadata(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), allowEnclaveComputations);
             Assert.NotNull(signature);
-            Assert.True(provider.VerifyColumnMasterKeyMetadata(MASTER_KEY_PATH, allowEnclaveComputations, signature));
-            Assert.False(provider.VerifyColumnMasterKeyMetadata(MASTER_KEY_PATH, !allowEnclaveComputations, signature));
+            Assert.True(provider.VerifyColumnMasterKeyMetadata(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), allowEnclaveComputations, signature));
+            Assert.False(provider.VerifyColumnMasterKeyMetadata(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), !allowEnclaveComputations, signature));
         }
 
         [Theory]
@@ -188,10 +201,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
 
-            byte[] signature = provider.SignColumnMasterKeyMetadata(MASTER_KEY_PATH, allowEnclaveComputations);
+            byte[] signature = provider.SignColumnMasterKeyMetadata(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), allowEnclaveComputations);
             Assert.NotNull(signature);
             Assert.False(
-                provider.VerifyColumnMasterKeyMetadata("CurrentUser/My/4281446463C6F7F5B8EDFFA4BD6E345E46857CAD", allowEnclaveComputations, signature));
+                provider.VerifyColumnMasterKeyMetadata(ReplaceKeyTokens(SECONDARY_CERTIFICATE_PATH), allowEnclaveComputations, signature));
         }
 
         [Fact]
@@ -199,23 +212,30 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             var input = new byte[] { 1, 2, 3, 4, 5 };
             var provider = new SqlColumnEncryptionCertificateStoreProvider();
-            byte[] ciphertext = provider.EncryptColumnEncryptionKey(MASTER_KEY_PATH, ENCRYPTION_ALGORITHM,
+            byte[] ciphertext = provider.EncryptColumnEncryptionKey(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), ENCRYPTION_ALGORITHM,
                 new byte[] { 1, 2, 3, 4, 5 });
             byte[] output =
-                provider.DecryptColumnEncryptionKey(MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, ciphertext);
+                provider.DecryptColumnEncryptionKey(ReplaceKeyTokens(PRIMARY_CERTIFICATE_PATH), ENCRYPTION_ALGORITHM, ciphertext);
             Assert.Equal(input, output);
         }
 
         [Theory]
-        [CEKEncryptionReversalParameters]
+        [MemberData(
+            nameof(CEKEncryptionReversalData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void TestCEKEncryptionReversal(StoreLocation certificateStoreLocation, String certificateStoreNameAndLocation)
         {
             Assert.True(!string.IsNullOrWhiteSpace(certificateStoreNameAndLocation));
-            string certificateName = @"TestCertificate12";
 
             // Fetch the newly created cert.
-            X509Certificate2 masterKeyCertificate = Utility.GetCertificate(certificateName,
-                                                                            certificateStoreLocation);
+            X509Certificate2 masterKeyCertificate = _certFixture.GetCertificate(certificateStoreLocation);
 
             Assert.True(masterKeyCertificate != null);
 
@@ -357,7 +377,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         [Theory]
-        [ValidCertificatePathsParameters]
+        [MemberData(
+            nameof(ValidCertificatePathsData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void TestValidCertificatePaths(string certificateStoreNameAndLocation, object location)
         {
             StoreLocation certificateStoreLocation;
@@ -375,11 +400,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 certificateStoreLocation = StoreLocation.CurrentUser;
             }
 
-            string certificateName = @"TestCertificate12";
-
             // Fetch the newly created cert.
-            X509Certificate2 masterKeyCertificate = Utility.GetCertificate(certificateName,
-                                                                            certificateStoreLocation);
+            X509Certificate2 masterKeyCertificate = _certFixture.GetCertificate(certificateStoreLocation);
 
             Assert.True(masterKeyCertificate != null);
 
@@ -444,6 +466,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Matches(expectedErrorMessage, e.InnerException.Message);
         }
 
+        private string ReplaceKeyTokens(string keyPath)
+        {
+            return keyPath?.Replace("{primary_thumbprint}", _certFixture.PrimaryColumnEncryptionCertificate.Thumbprint)
+                ?.Replace("{secondary_thumbprint}", _certFixture.SecondaryColumnEncryptionCertificate.Thumbprint)
+                ?.Replace("{npk_thumbprint}", _certFixture.CertificateWithoutPrivateKey.Thumbprint);
+        }
+
         public class AeadEncryptionParameters : DataAttribute
         {
             /// <summary>
@@ -475,37 +504,29 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
         }
 
-        public class CEKEncryptionReversalParameters : DataAttribute
+        public static IEnumerable<object[]> CEKEncryptionReversalData()
         {
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
+            // use localmachine cert path only when current user is Admin.
+            if (ColumnEncryptionCertificateFixture.IsAdmin)
             {
-                yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
-                // use localmachine cert path only when current user is Admin.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && CertificateFixture.IsAdmin)
-                {
-                    yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
-                }
+                yield return new object[2] { StoreLocation.LocalMachine, LocalMachineMyPathPrefix };
             }
         }
 
-
-        public class ValidCertificatePathsParameters : DataAttribute
+        public static IEnumerable<object[]> ValidCertificatePathsData()
         {
+            yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
 
-            public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
+            // use localmachine cert path (or a location in the cert path which defaults to localmachine) only when current user is Admin.
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                yield return new object[2] { CurrentUserMyPathPrefix, StoreLocation.CurrentUser };
+                yield return new object[2] { @"", null };
+                yield return new object[2] { MyPathPrefix, null };
 
-                // use localmachine cert path (or a location in the cert path which defaults to localmachine) only when current user is Admin.
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (ColumnEncryptionCertificateFixture.IsAdmin)
                 {
-                    yield return new object[2] { @"", null };
-                    yield return new object[2] { MyPathPrefix, null };
-
-                    if (CertificateFixture.IsAdmin)
-                    {
-                        yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
-                    }
+                    yield return new object[2] { LocalMachineMyPathPrefix, StoreLocation.LocalMachine };
                 }
             }
         }
@@ -526,11 +547,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCertificateLocation_Windows = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateLocation_Unix = @"Internal error. Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Internal error. Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateSignature = @"Internal error. Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidAlgorithmVersion = @"Specified encrypted column encryption key contains an invalid encryption algorithm version '02'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
-            private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/C74D53B816A971E3FF9714FE1DD2E57E1710D946'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidCiphertextLengthInEncryptedCEK = @"The specified encrypted column encryption key's ciphertext length: 128 does not match the ciphertext length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidSignatureInEncryptedCEK = @"The specified encrypted column encryption key's signature length: 128 does not match the signature length: 256 when using column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+            private const string TCE_InvalidSignature = @"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(certificate\) in 'CurrentUser/My/{primary_thumbprint}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
 
             private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
             private static readonly string TCE_EmptyCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_EmptyCertificatePath_Windows : TCE_EmptyCertificatePath_Unix;
@@ -541,19 +564,21 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, null };
-                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
-                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), MASTER_KEY_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), MASTER_KEY_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null };
+                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
+                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidAlgorithmVersion, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256) };
-                yield return new Object[] { TCE_InvalidSignatureInEncryptedCEK, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 128) };
-                yield return new Object[] { TCE_InvalidSignature, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidAlgorithmVersion, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(2, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidCiphertextLengthInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 128, 256) };
+                yield return new Object[] { TCE_InvalidSignatureInEncryptedCEK, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 128) };
+                yield return new Object[] { TCE_InvalidSignature, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
             }
         }
 
@@ -573,6 +598,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             private const string TCE_InvalidCertificateLocation_Windows = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is either 'LocalMachine' or 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateLocation_Unix = @"Invalid certificate location 'Invalid' in certificate path 'Invalid/My/Thumbprint'. Use the following format: <certificate location>/<certificate store>/<certificate thumbprint>, where <certificate location> is 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateStore = @"Invalid certificate store 'Invalid' specified in certificate path 'CurrentUser/Invalid/Thumbprint'. Expected value: 'My'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateNotFound = @"Certificate with thumbprint 'JunkThumbprint' not found in certificate store 'My' in certificate location 'CurrentUser'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            private const string TCE_CertificateWithNoPrivateKey = @"Certificate specified in key path 'CurrentUser/My/{npk_thumbprint}' does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
             private const string TCE_InvalidCertificateSignature = @"Empty certificate thumbprint specified in certificate path 'CurrentUser/My/'.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             private static readonly string TCE_NullCertificatePath = Environment.OSVersion.Platform == PlatformID.Win32NT ? TCE_NullCertificatePath_Windows : TCE_NullCertificatePath_Unix;
@@ -584,14 +611,16 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 yield return new Object[] { TCE_NullCertificatePath, typeof(ArgumentNullException), null, ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_EmptyCertificatePath, typeof(ArgumentException), "", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, null };
-                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), MASTER_KEY_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
-                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), MASTER_KEY_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
-                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), MASTER_KEY_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_NullEncryptedColumnEncryptionKey, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, null };
+                yield return new Object[] { TCE_EmptyEncryptedColumnEncryptionKey, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, ENCRYPTION_ALGORITHM, new byte[] { } };
+                yield return new Object[] { TCE_NullKeyEncryptionAlgorithm, typeof(ArgumentNullException), PRIMARY_CERTIFICATE_PATH, null, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_InvalidKeyEncryptionAlgorithm, typeof(ArgumentException), PRIMARY_CERTIFICATE_PATH, "", GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_LargeCertificatePathLength, typeof(ArgumentException), GenerateString(Int16.MaxValue + 1), ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificatePath, typeof(ArgumentException), "CurrentUser/My/Thumbprint/extra", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateLocation, typeof(ArgumentException), "Invalid/My/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateStore, typeof(ArgumentException), "CurrentUser/Invalid/Thumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateNotFound, typeof(ArgumentException), "CurrentUser/My/JunkThumbprint", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
+                yield return new Object[] { TCE_CertificateWithNoPrivateKey, typeof(ArgumentException), "CurrentUser/My/{npk_thumbprint}", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
                 yield return new Object[] { TCE_InvalidCertificateSignature, typeof(ArgumentException), "CurrentUser/My/", ENCRYPTION_ALGORITHM, GenerateTestEncryptedBytes(1, 0, 256, 256) };
             }
         }
@@ -626,82 +655,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
 
             return s.ToString();
-        }
-    }
-
-    public class CertificateFixture : IDisposable
-    {
-        public const string EmbeddedCertificatePassword = @"P@zzw0rD!SqlvN3x+";
-
-        public static bool IsAdmin
-        {
-            get
-            {
-                return new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
-            }
-        }
-        // Thumbprint C74D53B816A971E3FF9714FE1DD2E57E1710D946
-        private static readonly X509Certificate2 _certificate1 = new X509Certificate2(Resources.Resources.Certificate1, EmbeddedCertificatePassword, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-        // Thumbprint 4281446463C6F7F5B8EDFFA4BD6E345E46857CAD
-        private static readonly X509Certificate2 _certificate2 = new X509Certificate2(Resources.Resources.Certificate2, EmbeddedCertificatePassword, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-        // Thumbprint E111C1CBE6839C5A80BE2676C4BDFF2730D172FA
-        private static readonly X509Certificate2 _certificate3 = new X509Certificate2(Resources.Resources.Certificate3, EmbeddedCertificatePassword, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-        public CertificateFixture()
-        {
-            AddCertificateToStore(_certificate1, StoreLocation.CurrentUser);
-            AddCertificateToStore(_certificate2, StoreLocation.CurrentUser);
-            AddCertificateToStore(_certificate3, StoreLocation.CurrentUser);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsAdmin)
-            {
-                AddCertificateToStore(_certificate3, StoreLocation.LocalMachine);
-            }
-        }
-
-        public void Dispose()
-        {
-            // Do Not remove Certificates to provide concurrency support
-            // RemoveCertificate(certificate1, StoreLocation.CurrentUser);
-            // RemoveCertificate(certificate2, StoreLocation.CurrentUser);
-        }
-
-        public static void AddCertificateToStore(X509Certificate2 certificate, StoreLocation certificateStoreLocation)
-        {
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, certificateStoreLocation);
-                certStore.Open(OpenFlags.ReadWrite);
-                if (!certStore.Certificates.Contains(certificate))
-                {
-                    certStore.Add(certificate);
-                }
-
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-        }
-
-        public static void RemoveCertificate(X509Certificate2 certificate, StoreLocation certificateStoreLocation)
-        {
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, certificateStoreLocation);
-                certStore.Open(OpenFlags.ReadWrite);
-                certStore.Remove(certificate);
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
         }
     }
 }

@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Identity.Client;
@@ -47,6 +48,7 @@ namespace Microsoft.Data.Common
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
+        // @TODO: These are not necessary because the TPL has optimized commonly used task return values like true and false.
         private static Task<bool> s_trueTask;
         internal static Task<bool> TrueTask => s_trueTask ??= Task.FromResult(true);
 
@@ -750,24 +752,63 @@ namespace Microsoft.Data.Common
 
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
+        private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
+        private const string PBI_DATAWAREHOUSE3 = ".pbidedicated.windows.net";
+        private const string AZURE_SQL = ".database.windows.net";
+        private const string AZURE_SQL_GERMANY = ".database.cloudapi.de";
+        private const string AZURE_SQL_USGOV = ".database.usgovcloudapi.net";
+        private const string AZURE_SQL_CHINA = ".database.chinacloudapi.cn";
+        private const string AZURE_SQL_FABRIC = ".database.fabric.microsoft.com";
+
+        /// <summary>
+        /// Represents a collection of Azure SQL Server endpoint URLs for various regions and environments.
+        /// </summary>
+        /// <remarks>This array includes endpoint URLs for Azure SQL in global, Germany, US Government,
+        /// China, and Fabric environments. These endpoints are used to identify and interact with Azure SQL services 
+        /// in their respective regions or environments.</remarks>
+        internal static readonly string[] s_azureSqlServerEndpoints = { AZURE_SQL,
+                                                                        AZURE_SQL_GERMANY,
+                                                                        AZURE_SQL_USGOV,
+                                                                        AZURE_SQL_CHINA,
+                                                                        AZURE_SQL_FABRIC };
+        
+        /// <summary>
+        /// Contains endpoint strings for Azure SQL Server on-demand services.
+        /// Each entry is a combination of the ONDEMAND_PREFIX and a specific Azure SQL endpoint string.
+        /// Example format: "ondemand.database.windows.net".
+        /// </summary>
+        internal static readonly string[] s_azureSqlServerOnDemandEndpoints = { ONDEMAND_PREFIX + AZURE_SQL,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_GERMANY,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_USGOV,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_CHINA,
+                                                                                ONDEMAND_PREFIX + AZURE_SQL_FABRIC };
+        /// <summary>
+        /// Represents a collection of endpoint identifiers for Azure Synapse and related services.
+        /// </summary>
+        /// <remarks>This array contains predefined endpoint strings used to identify Azure Synapse and
+        /// associated services, such as Fabric Data Warehouse and Power BI Data Warehouse.</remarks>
+        internal static readonly string[] s_azureSynapseEndpoints = { FABRIC_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE,
+                                                                      PBI_DATAWAREHOUSE2,
+                                                                      PBI_DATAWAREHOUSE3 };
+
+        internal static readonly string[] s_azureSynapseOnDemandEndpoints = [.. s_azureSqlServerOnDemandEndpoints, .. s_azureSynapseEndpoints];
 
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+            return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
+                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0; 
         }
-
-        internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
-                                                                        StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
-
+        
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
-            return IsEndpoint(dataSource, null);
+            return IsEndpoint(dataSource, s_azureSqlServerEndpoints);
         }
 
         // This method assumes dataSource parameter is in TCP connection string format.
-        private static bool IsEndpoint(string dataSource, string prefix)
+        private static bool IsEndpoint(string dataSource, string[] endpoints)
         {
             int length = dataSource.Length;
             // remove server port
@@ -777,8 +818,17 @@ namespace Microsoft.Data.Common
                 length = foundIndex;
             }
 
-            // check for the instance name
-            foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            // Safeguard LastIndexOf call to avoid ArgumentOutOfRangeException when length is 0
+            if (length > 0)
+            {
+                // check for the instance name
+                foundIndex = dataSource.LastIndexOf('\\', length - 1, length - 1);
+            }
+            else
+            {
+                foundIndex = -1;
+            }
+
             if (foundIndex > 0)
             {
                 length = foundIndex;
@@ -791,10 +841,9 @@ namespace Microsoft.Data.Common
             }
 
             // check if servername ends with any endpoints
-            for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
+            foreach (var endpoint in endpoints)
             {
-                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
-                if (length > endpoint.Length)
+                if (length >= endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
                     {
@@ -945,7 +994,7 @@ namespace Microsoft.Data.Common
 
             SqlDependencyObtainProcessDispatcherFailureObjectHandle = 50,
             SqlDependencyProcessDispatcherFailureCreateInstance = 51,
-            SqlDependencyProcessDispatcherFailureAppDomain = 52,
+            
             SqlDependencyCommandHashIsNotAssociatedWithNotification = 53,
 
             UnknownTransactionFailure = 60,
@@ -1312,7 +1361,6 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
         #endregion
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only

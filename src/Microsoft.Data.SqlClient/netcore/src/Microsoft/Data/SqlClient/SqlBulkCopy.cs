@@ -532,188 +532,219 @@ namespace Microsoft.Data.SqlClient
 
             string[] parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, "[\"", "]\"", Strings.SQL_BulkCopyDestinationTableName, true);
             updateBulkCommandText.AppendFormat("insert bulk {0} (", ADP.BuildMultiPartName(parts));
-            int nmatched = 0;  // Number of columns that match and are accepted
-            int nrejected = 0; // Number of columns that match but were rejected
-            bool rejectColumn; // True if a column is rejected because of an excluded type
 
-            bool isInTransaction;
-
-            isInTransaction = _connection.HasLocalTransaction;
             // Throw if there is a transaction but no flag is set
-            if (isInTransaction && _externalTransaction == null && _internalTransaction == null && (_connection.Parser != null && _connection.Parser.CurrentTransaction != null && _connection.Parser.CurrentTransaction.IsLocal))
+            if (_connection.HasLocalTransaction
+                && _externalTransaction == null
+                && _internalTransaction == null
+                && _connection.Parser != null
+                && _connection.Parser.CurrentTransaction != null
+                && _connection.Parser.CurrentTransaction.IsLocal)
             {
                 throw SQL.BulkLoadExistingTransaction();
             }
 
             HashSet<string> destColumnNames = new HashSet<string>();
 
-            // Loop over the metadata for each column
+            // Keep track of any result columns that we don't have a local
+            // mapping for.
+            HashSet<string> unmatchedColumns = new(_localColumnMappings.Count);
+
+            // Start by assuming all locally mapped Destination columns will be
+            // unmatched.
+            for (int i = 0; i < _localColumnMappings.Count; ++i)
+            {
+                unmatchedColumns.Add(_localColumnMappings[i].DestinationColumn);
+            }
+
+            // Flag to remember whether or not we need to append a comma before
+            // the next column in the command text.
+            bool appendComma = false;
+
+            // Loop over the metadata for each result column.
             _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
                 _SqlMetaData metadata = metaDataSet[i];
-                rejectColumn = false;
 
-                // Check for excluded types
-                if ((metadata.type == SqlDbType.Timestamp)
-                    || ((metadata.IsIdentity) && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
+                bool matched = false;
+                bool rejected = false;
+                
+                // Look for a local match for the remote column.
+                for (int j = 0; j < _localColumnMappings.Count; ++j)
                 {
-                    // Remove metadata for excluded columns
-                    metaDataSet[i] = null;
-                    rejectColumn = true;
-                    // We still need to find a matching column association
-                }
+                    var localColumn = _localColumnMappings[j];
 
-                // Find out if this column is associated
-                int assocId;
-                for (assocId = 0; assocId < _localColumnMappings.Count; assocId++)
-                {
-                    if ((_localColumnMappings[assocId]._destinationColumnOrdinal == metadata.ordinal) ||
-                        (UnquotedName(_localColumnMappings[assocId]._destinationColumnName) == metadata.column))
+                    // Are we missing a mapping between the result column and
+                    // this local column (by ordinal or name)?
+                    if (localColumn._destinationColumnOrdinal != metadata.ordinal
+                        && UnquotedName(localColumn._destinationColumnName) != metadata.column)
                     {
-                        if (rejectColumn)
+                        // Yes, so move on to the next local column.
+                        continue;
+                    }
+
+                    // Ok, we found a matching local column.
+                    matched = true;
+
+                    // Remove it from our unmatched set.
+                    unmatchedColumns.Remove(localColumn.DestinationColumn);
+                    
+                    // Check for column types that we refuse to bulk load, even
+                    // though we found a match.
+                    //
+                    // We will not process timestamp or identity columns.
+                    //
+                    if (metadata.type == SqlDbType.Timestamp
+                        || (metadata.IsIdentity && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
+                    {
+                        rejected = true;
+                        break;
+                    }
+
+                    _sortedColumnMappings.Add(new _ColumnMapping(localColumn._internalSourceColumnOrdinal, metadata));
+                    destColumnNames.Add(metadata.column);
+
+                    // Append a comma for each subsequent column.
+                    if (appendComma)
+                    {
+                        updateBulkCommandText.Append(", ");
+                    }
+                    else
+                    {
+                        appendComma = true;
+                    }
+
+                    // Some datatypes need special handling ...
+                    if (metadata.type == SqlDbType.Variant)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
+                    }
+                    else if (metadata.type == SqlDbType.Udt)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
+                    }
+                    else if (metadata.type == SqlDbTypeExtensions.Json)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
+                    }
+                    else
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
+                    }
+
+                    switch (metadata.metaType.NullableType)
+                    {
+                        case TdsEnums.SQLNUMERICN:
+                        case TdsEnums.SQLDECIMALN:
+                            // Decimal and numeric need to include precision and scale
+                            updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata.precision, metadata.scale);
+                            break;
+                        case TdsEnums.SQLUDT:
                         {
-                            nrejected++; // Count matched columns only
+                            if (metadata.IsLargeUdt)
+                            {
+                                updateBulkCommandText.Append("(max)");
+                            }
+                            else
+                            {
+                                int size = metadata.length;
+                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                            }
                             break;
                         }
-
-                        _sortedColumnMappings.Add(new _ColumnMapping(_localColumnMappings[assocId]._internalSourceColumnOrdinal, metadata));
-                        destColumnNames.Add(metadata.column);
-                        nmatched++;
-
-                        if (nmatched > 1)
+                        case TdsEnums.SQLTIME:
+                        case TdsEnums.SQLDATETIME2:
+                        case TdsEnums.SQLDATETIMEOFFSET:
+                            // date, dateime2, and datetimeoffset need to include scale
+                            updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata.scale);
+                            break;
+                        default:
                         {
-                            updateBulkCommandText.Append(", "); // A leading comma for all but the first one
-                        }
-
-                        // Some datatypes need special handling ...
-                        if (metadata.type == SqlDbType.Variant)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
-                        }
-                        else if (metadata.type == SqlDbType.Udt)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
-                        }
-                        else if (metadata.type == SqlDbTypeExtensions.Json)
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
-                        }
-                        else
-                        {
-                            AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
-                        }
-
-                        switch (metadata.metaType.NullableType)
-                        {
-                            case TdsEnums.SQLNUMERICN:
-                            case TdsEnums.SQLDECIMALN:
-                                // Decimal and numeric need to include precision and scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0},{1})", metadata.precision, metadata.scale);
-                                break;
-                            case TdsEnums.SQLUDT:
-                                {
-                                    if (metadata.IsLargeUdt)
-                                    {
-                                        updateBulkCommandText.Append("(max)");
-                                    }
-                                    else
-                                    {
-                                        int size = metadata.length;
-                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
-                                    }
-                                    break;
-                                }
-                            case TdsEnums.SQLTIME:
-                            case TdsEnums.SQLDATETIME2:
-                            case TdsEnums.SQLDATETIMEOFFSET:
-                                // date, dateime2, and datetimeoffset need to include scale
-                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", metadata.scale);
-                                break;
-                            default:
-                                {
-                                    // For non-long non-fixed types we need to add the Size
-                                    if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
-                                    {
-                                        int size = metadata.length;
-                                        switch (metadata.metaType.NullableType)
-                                        {
-                                            case TdsEnums.SQLNCHAR:
-                                            case TdsEnums.SQLNVARCHAR:
-                                            case TdsEnums.SQLNTEXT:
-                                                size /= 2;
-                                                break;
-                                            default:
-                                                break;
-                                        }
-                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
-                                    }
-                                    else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
-                                    {
-                                        // Partial length column prefix (max)
-                                        updateBulkCommandText.Append("(max)");
-                                    }
-                                    break;
-                                }
-                        }
-
-                        // Get collation for column i
-                        Result rowset = internalResults[CollationResultId];
-                        object rowvalue = rowset[i][CollationId];
-
-                        bool shouldSendCollation;
-                        switch (metadata.type)
-                        {
-                            case SqlDbType.Char:
-                            case SqlDbType.NChar:
-                            case SqlDbType.VarChar:
-                            case SqlDbType.NVarChar:
-                            case SqlDbType.Text:
-                            case SqlDbType.NText:
-                                shouldSendCollation = true;
-                                break;
-
-                            default:
-                                shouldSendCollation = false;
-                                break;
-                        }
-
-                        if (rowvalue != null && shouldSendCollation)
-                        {
-                            Debug.Assert(rowvalue is SqlString);
-                            SqlString collation_name = (SqlString)rowvalue;
-                            if (!collation_name.IsNull)
+                            // For non-long non-fixed types we need to add the Size
+                            if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
                             {
-                                updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
-                                // Compare collations only if the collation value was set on the metadata
-                                if (_sqlDataReaderRowSource != null && metadata.collation != null)
+                                int size = metadata.length;
+                                switch (metadata.metaType.NullableType)
                                 {
-                                    // On SqlDataReader we can verify the sourcecolumn collation!
-                                    int sourceColumnId = _localColumnMappings[assocId]._internalSourceColumnOrdinal;
-                                    int destinationLcid = metadata.collation.LCID;
-                                    int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
-                                    if (sourceLcid != destinationLcid)
-                                    {
-                                        throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
-                                    }
+                                    case TdsEnums.SQLNCHAR:
+                                    case TdsEnums.SQLNVARCHAR:
+                                    case TdsEnums.SQLNTEXT:
+                                        size /= 2;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                            }
+                            else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
+                            {
+                                // Partial length column prefix (max)
+                                updateBulkCommandText.Append("(max)");
+                            }
+                            break;
+                        }
+                    }
+
+                    // Get collation for column i
+                    Result rowset = internalResults[CollationResultId];
+                    object rowvalue = rowset[i][CollationId];
+
+                    bool shouldSendCollation;
+                    switch (metadata.type)
+                    {
+                        case SqlDbType.Char:
+                        case SqlDbType.NChar:
+                        case SqlDbType.VarChar:
+                        case SqlDbType.NVarChar:
+                        case SqlDbType.Text:
+                        case SqlDbType.NText:
+                            shouldSendCollation = true;
+                            break;
+
+                        default:
+                            shouldSendCollation = false;
+                            break;
+                    }
+
+                    if (rowvalue != null && shouldSendCollation)
+                    {
+                        Debug.Assert(rowvalue is SqlString);
+                        SqlString collation_name = (SqlString)rowvalue;
+                        if (!collation_name.IsNull)
+                        {
+                            updateBulkCommandText.Append(" COLLATE " + collation_name.Value);
+                            // Compare collations only if the collation value was set on the metadata
+                            if (_sqlDataReaderRowSource != null && metadata.collation != null)
+                            {
+                                // On SqlDataReader we can verify the sourcecolumn collation!
+                                int sourceColumnId = localColumn._internalSourceColumnOrdinal;
+                                int destinationLcid = metadata.collation.LCID;
+                                int sourceLcid = _sqlDataReaderRowSource.GetLocaleId(sourceColumnId);
+                                if (sourceLcid != destinationLcid)
+                                {
+                                    throw SQL.BulkLoadLcidMismatch(sourceLcid, _sqlDataReaderRowSource.GetName(sourceColumnId), destinationLcid, metadata.column);
                                 }
                             }
                         }
-                        break;
                     }
+
+                    // We found a match, so no need to keep looking.
+                    break;
                 }
-                if (assocId == _localColumnMappings.Count)
+
+                // Remove metadata for unmatched and rejected columns.
+                if (! matched || rejected)
                 {
-                    // Remove metadata for unmatched columns
                     metaDataSet[i] = null;
                 }
             }
 
-            // All columnmappings should have matched up
-            if (nmatched + nrejected != _localColumnMappings.Count)
+            // Do we have any unmatched columns?
+            if (unmatchedColumns.Count > 0)
             {
-                throw (SQL.BulkLoadNonMatchingColumnMapping());
+                throw SQL.BulkLoadNonMatchingColumnNames(unmatchedColumns);
             }
 
             updateBulkCommandText.Append(")");
@@ -1589,7 +1620,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value);
+                            value = _connection.GetBytes(value, out _, out _);
                             typeChanged = true;
                         }
                         break;
@@ -1969,8 +2000,13 @@ namespace Microsoft.Data.SqlClient
             _parserLock = internalConnection._parserLock;
             _parserLock.Wait(canReleaseFromAnyThread: _isAsyncBulkCopy);
 
+            TdsParser bestEffortCleanupTarget = null;
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
                 WriteRowSourceToServerCommon(columnCount); // This is common in both sync and async
                 Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
                 if (resultTask != null)
@@ -2018,6 +2054,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 _connection.Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
             finally
@@ -2278,7 +2317,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         source.SetResult(null);
                     }
-                }
+                },
+                connectionToDoom: _connection.GetOpenTdsConnection()
            );
         }
 
@@ -2415,8 +2455,8 @@ namespace Microsoft.Data.SqlClient
                             resultTask = source.Task;
 
                             AsyncHelper.ContinueTaskWithState(readTask, source, this,
-                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source)
-                                
+                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source),
+                                connectionToDoom: _connection.GetOpenTdsConnection()
                             );
                             return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
                         }
@@ -2440,12 +2480,14 @@ namespace Microsoft.Data.SqlClient
                                 else
                                 {
                                     AsyncHelper.ContinueTaskWithState(readTask, source, sqlBulkCopy,
-                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source)
+                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source),
+                                        connectionToDoom: _connection.GetOpenTdsConnection()
                                     );
                                 }
-                           }
-                       );
-                       return resultTask;
+                            },
+                            connectionToDoom: _connection.GetOpenTdsConnection()
+                        );
+                        return resultTask;
                     }
                 }
 
@@ -2523,7 +2565,8 @@ namespace Microsoft.Data.SqlClient
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
                                     sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
-                            }
+                            },
+                            connectionToDoom: _connection.GetOpenTdsConnection()
                         );
                         return source.Task;
                     }
@@ -2590,7 +2633,8 @@ namespace Microsoft.Data.SqlClient
                             }
                         },
                         onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
+                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
 
                     return source.Task;
@@ -2656,7 +2700,8 @@ namespace Microsoft.Data.SqlClient
                             // Always call back into CopyBatchesAsync
                             sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false)
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return source.Task;
                 }
@@ -2679,6 +2724,9 @@ namespace Microsoft.Data.SqlClient
         private void CopyBatchesAsyncContinuedOnError(bool cleanupParser)
         {
             SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 if ((cleanupParser) && (_parser != null) && (_stateObj != null))
@@ -2819,7 +2867,8 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                             }
-                        }
+                        },
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return;
                 }
@@ -2938,6 +2987,7 @@ namespace Microsoft.Data.SqlClient
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
+                            connectionToAbort: _connection,
                             onFailure: static (Exception _, object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             onCancellation: static (object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             exceptionConverter: (ex) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
@@ -2989,7 +3039,8 @@ namespace Microsoft.Data.SqlClient
                 if (internalResultsTask != null)
                 {
                     AsyncHelper.ContinueTaskWithState(internalResultsTask, source, this,
-                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source)
+                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source),
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                 }
                 else
@@ -3073,7 +3124,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
                             }
-                        }
+                        },
+                        connectionToDoom: _connection.GetOpenTdsConnection()
                     );
                     return resultTask;
                 }

@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Niezgodność typów niemożliwych do konwersji między elementem SourceColumn {0} z {1} a elementem DataColumn {2} z {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Brak elementu DataColumn {0} dla elementu SourceColumn {2}.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>Brak elementu DataColumn {0} w elemencie DataTable {1} dla elementu SourceColumn {2}.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Tworzenie skojarzenia portu z mechanizmem zakończenia We/Wy I/O nie powiodło się</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Gniazdo ma wartość null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Błąd limitu czasu</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiuje zachowanie okresu blokowania dla puli połączeń.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Określa, czy jest włączone buforowanie metadanych zapytań.</value>
   </data>
@@ -4745,5 +4730,17 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Nieprawidłowa próba pobrania pliku JsonDocument w kolumnie „{0}”. Obiekt JsonDocument jest obsługiwany tylko w przypadku kolumn typu JSON.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Bufor przesunięty za daleko {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Przekroczono maksymalny rozmiar buforu: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>Brak elementu DataColumn {0} dla elementu SourceColumn {2}.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>Lista SqlBatchCommand nie została zainicjowana.</value>
   </data>
 </root>

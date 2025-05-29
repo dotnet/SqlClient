@@ -16,8 +16,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
     public static class Utility
     {
-        public const string EmbeddedCertificatePassword = @"P@zzw0rD!SqlvN3x+";
-
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
         // reflections
@@ -179,80 +177,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return cipherText;
         }
 
-        internal static X509Certificate2 CreateCertificate()
-        {
-            X509Certificate2 certificate = new X509Certificate2(Resources.Resources.Certificate4, EmbeddedCertificatePassword, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                certStore.Open(OpenFlags.ReadWrite);
-                if (!certStore.Certificates.Contains(certificate))
-                {
-                    certStore.Add(certificate);
-                }
-
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-
-            return certificate;
-        }
-
-        /// <summary>
-        /// Gets the certificate.
-        /// </summary>
-        /// <param name="certificateName"></param>
-        /// <param name="certificateStoreLocation"></param>
-        /// <returns></returns>
-        internal static X509Certificate2 GetCertificate(string certificateName, StoreLocation certificateStoreLocation)
-        {
-            Assert.True(!string.IsNullOrWhiteSpace(certificateName));
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, certificateStoreLocation);
-                certStore.Open(OpenFlags.ReadOnly);
-                X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
-                Assert.True(certCollection != null && certCollection.Count > 0);
-
-                return certCollection[0];
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Removes a certificate from the local certificate store (useful for test cleanup).
-        /// </summary>
-        internal static void RemoveCertificate(X509Certificate2 certificate)
-        {
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                certStore.Open(OpenFlags.ReadWrite);
-                certStore.Remove(certificate);
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-        }
-
         /// <summary>
         /// Encrypt Data using AED
         /// </summary>
@@ -349,35 +273,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             decryptedData = (byte[])decryptedValue;
 
             return decryptedData;
-        }
-
-        /// <summary>
-        /// Create a self-signed certificate without private key.
-        /// </summary>
-        internal static X509Certificate2 CreateCertificateWithNoPrivateKey()
-        {
-            using X509Certificate2 certificate = new X509Certificate2(Resources.Resources.Certificate5, EmbeddedCertificatePassword, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.UserKeySet);
-            X509Certificate2 publicKey = new X509Certificate2(certificate.Export(X509ContentType.Cert));
-            X509Store certStore = null;
-            try
-            {
-                certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                certStore.Open(OpenFlags.ReadWrite);
-                if (certStore.Certificates.Contains(publicKey))
-                {
-                    certStore.Remove(publicKey);
-                }
-                certStore.Add(publicKey);
-            }
-            finally
-            {
-                if (certStore != null)
-                {
-                    certStore.Close();
-                }
-            }
-
-            return publicKey;
         }
 
         /// <summary>

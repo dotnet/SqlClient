@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
     <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
     <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
@@ -64,10 +63,26 @@
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904;NU1905</WarningsNotAsErrors>
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
+  </PropertyGroup>
+  
+  <!-- NuGet Audit Settings -->
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <!--
+      ADO does not support audit/vulnerability feeds, so the audit feed is specified (in
+      nuget.config) as nuget.org. OneBranch default network isolation does not allow connections
+      to nuget.org. To avoid this issue, we will disable auditing for official builds, but leave it
+      enabled for local builds.
+      @TODO: If/when auditing is enabled for central feeds services, this can be removed. 
+    -->
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
 
   <!-- Packaging  for source link-->
@@ -81,11 +96,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>  
+  </PropertyGroup>
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
-  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))" Project="$(ToolsDir)props\VersionsNet8OrLater.props" />
+  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))" Project="$(ToolsDir)props\VersionsNet9OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
@@ -96,5 +111,26 @@
   <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
   <PropertyGroup>
     <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
+  <!--
+    For non-.NET, we explicitly set the C# language version to 13.  This matches
+    the language version used by the .NET 9 SDK, and provides helpful modern
+    language features.  While this isn't strictly supported by .NET in general,
+    it works well in practice.  There are very few C# language features that
+    depend on SDK APIs, and we avoid them.
+
+    For .NET, we omit this property entirely, which results in the SDK choosing
+    the C# language version that matches the .NET version.
+
+    Details here:
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
+  -->
+  <PropertyGroup
+    Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' != '.NETCoreApp'">
+    <LangVersion>13.0</LangVersion>
   </PropertyGroup>
 </Project>

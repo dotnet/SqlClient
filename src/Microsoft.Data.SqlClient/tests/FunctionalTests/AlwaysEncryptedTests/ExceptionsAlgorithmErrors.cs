@@ -7,17 +7,37 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
 using Xunit;
 using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.Utility;
 
 namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
-    public class ExceptionsAlgorithmErrors : IClassFixture<CertFixture>
+    public class ExceptionsAlgorithmErrors : IClassFixture<ColumnEncryptionCertificateFixture>
     {
         // Reflection
         public static Assembly systemData = Assembly.GetAssembly(typeof(SqlConnection));
         public static Type sqlClientSymmetricKey = systemData.GetType("Microsoft.Data.SqlClient.SqlClientSymmetricKey");
         public static ConstructorInfo sqlColumnEncryptionKeyConstructor = sqlClientSymmetricKey.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
+
+        private readonly ColumnEncryptionCertificateFixture _fixture;
+        private readonly byte[] _cek;
+        private readonly byte[] _encryptedCek;
+        private readonly string _certificatePath;
+
+        public ExceptionsAlgorithmErrors(ColumnEncryptionCertificateFixture fixture)
+        {
+            // Disable the cache to avoid false failures.
+            SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
+
+            SqlColumnEncryptionCertificateStoreProvider provider = new SqlColumnEncryptionCertificateStoreProvider();
+            X509Certificate2 currUserCertificate = fixture.GetCertificate(StoreLocation.CurrentUser);
+
+            _cek = GenerateRandomBytes(32);
+            _fixture = fixture;
+            _certificatePath = string.Format("CurrentUser/My/{0}", currUserCertificate.Thumbprint);
+            _encryptedCek = provider.EncryptColumnEncryptionKey(_certificatePath, "RSA_OAEP", _cek);
+        }
 
         [Fact]
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -52,9 +72,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             const byte invalidEncryptionType = 3;
             Object cipherMD = GetSqlCipherMetadata(0, 2, null, invalidEncryptionType, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_InvalidEncryptionType,
                 "AEAD_AES_256_CBC_HMAC_SHA256", invalidEncryptionType, "'Deterministic', 'Randomized'");
@@ -74,7 +94,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_InvalidCipherTextSize,
                 invalidCiphertextLength, 65);
             byte[] cipherText = GenerateRandomBytes(invalidCiphertextLength); // minimum length is 65
-            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, CertFixture.cek, CColumnEncryptionType.Deterministic));
+            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, _cek, CColumnEncryptionType.Deterministic));
             Assert.Contains(expectedMessage, e.InnerException.Message);
         }
 
@@ -85,10 +105,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_InvalidAlgorithmVersion,
                 40, "01");
             byte[] plainText = Encoding.Unicode.GetBytes("Hello World");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
             // Put a version number of 0x10
             cipherText[0] = 0x40;
-            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, CertFixture.cek, CColumnEncryptionType.Deterministic));
+            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, _cek, CColumnEncryptionType.Deterministic));
             Assert.Contains(expectedMessage, e.InnerException.Message);
         }
 
@@ -98,13 +118,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             string expectedMessage = SystemDataResourceManager.Instance.TCE_InvalidAuthenticationTag;
             byte[] plainText = Encoding.Unicode.GetBytes("Hello World");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
             // Zero out 4 bytes of authentication tag
             for (int i = 0; i < 4; i++)
             {
                 cipherText[i + 1] = 0x00;
             }
-            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, CertFixture.cek, CColumnEncryptionType.Deterministic));
+            TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptDataUsingAED(cipherText, _cek, CColumnEncryptionType.Deterministic));
             Assert.Contains(expectedMessage, e.InnerException.Message);
         }
 
@@ -115,9 +135,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_NullColumnEncryptionAlgorithm,
                 "'AEAD_AES_256_CBC_HMAC_SHA256'");
             Object cipherMD = GetSqlCipherMetadata(0, 0, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
             TargetInvocationException e = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(cipherText, cipherMD));
             Assert.Contains(expectedMessage, e.InnerException.Message);
@@ -133,9 +153,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnknownColumnEncryptionAlgorithmId,
                 unknownEncryptionAlgoId, "'1', '2'");
             Object cipherMD = GetSqlCipherMetadata(0, unknownEncryptionAlgoId, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
             Exception decryptEx = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(plainText, cipherMD));
             Assert.Matches(expectedMessage, decryptEx.InnerException.Message);
@@ -157,9 +177,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
                     invalidProviderName, "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", "");
                 Object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x03);
-                AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, invalidProviderName, "RSA_OAEP");
+                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, invalidProviderName, "RSA_OAEP");
                 byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-                byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+                byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
                 Exception decryptEx = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(plainText, cipherMD));
                 Assert.Contains(expectedMessage, decryptEx.InnerException.Message);
@@ -179,9 +199,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnknownColumnEncryptionAlgorithm,
                 unknownEncryptionAlgorithm, "'AEAD_AES_256_CBC_HMAC_SHA256'");
             Object cipherMD = GetSqlCipherMetadata(0, 0, "Dummy", 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
             Exception decryptEx = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(cipherText, cipherMD));
             Assert.Contains(expectedMessage, decryptEx.InnerException.Message);
@@ -194,15 +214,15 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestExceptionsFromCertStore()
         {
-            byte[] corruptedCek = GenerateInvalidEncryptedCek(CertFixture.cek, ECEKCorruption.SIGNATURE);
+            byte[] corruptedCek = GenerateInvalidEncryptedCek(_cek, ECEKCorruption.SIGNATURE);
 
             string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailedCertStore,
                 "MSSQL_CERTIFICATE_STORE", BitConverter.ToString(corruptedCek, corruptedCek.Length - 10, 10));
 
             Object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x01);
-            AddEncryptionKeyToCipherMD(cipherMD, corruptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
+            AddEncryptionKeyToCipherMD(cipherMD, corruptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "MSSQL_CERTIFICATE_STORE", "RSA_OAEP");
             byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-            byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+            byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
             Exception decryptEx = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(cipherText, cipherMD));
             Assert.Matches(expectedMessage, decryptEx.InnerException.Message);
@@ -224,9 +244,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
 
                 object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x01);
-                AddEncryptionKeyToCipherMD(cipherMD, CertFixture.encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, CertFixture.certificatePath, "DummyProvider", "DummyAlgo");
+                AddEncryptionKeyToCipherMD(cipherMD, _encryptedCek, 0, 0, 0, new byte[] { 0x01, 0x02, 0x03 }, _certificatePath, "DummyProvider", "DummyAlgo");
                 byte[] plainText = Encoding.Unicode.GetBytes("HelloWorld");
-                byte[] cipherText = EncryptDataUsingAED(plainText, CertFixture.cek, CColumnEncryptionType.Deterministic);
+                byte[] cipherText = EncryptDataUsingAED(plainText, _cek, CColumnEncryptionType.Deterministic);
 
                 Exception decryptEx = Assert.Throws<TargetInvocationException>(() => DecryptWithKey(cipherText, cipherMD));
                 Assert.Contains(expectedMessage, decryptEx.InnerException.Message);
@@ -236,37 +256,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
                 ClearSqlConnectionGlobalProviders();
             }
-        }
-    }
-
-    public class CertFixture : IDisposable
-    {
-        private readonly SqlColumnEncryptionCertificateStoreProvider provider = new SqlColumnEncryptionCertificateStoreProvider();
-
-        public static X509Certificate2 certificate;
-        public static string thumbprint;
-        public static string certificatePath;
-        public static byte[] cek;
-        public static byte[] encryptedCek;
-
-        public CertFixture()
-        {
-            if (certificate == null)
-            {
-                certificate = Utility.CreateCertificate();
-            }
-            thumbprint = certificate.Thumbprint;
-            certificatePath = string.Format("CurrentUser/My/{0}", thumbprint);
-            cek = GenerateRandomBytes(32);
-            encryptedCek = provider.EncryptColumnEncryptionKey(certificatePath, "RSA_OAEP", cek);
-
-            // Disable the cache to avoid false failures.
-            SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
-        }
-
-        public void Dispose()
-        {
-            // Do NOT remove certificate for concurrent consistency. Certificates are used for other test cases as well.
         }
     }
 }

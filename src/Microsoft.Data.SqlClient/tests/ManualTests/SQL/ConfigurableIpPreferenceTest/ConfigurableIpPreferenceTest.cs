@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
 
@@ -21,6 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private const string CnnPrefIPv6 = ";IPAddressPreference=IPv6First";
         private const string CnnPrefIPv4 = ";IPAddressPreference=IPv4First";
+        private const string LocalHost = "localhost";
 
         private static bool IsTCPConnectionStringSetup() => !string.IsNullOrEmpty(TCPConnectionString);
         private static bool IsValidDataSource()
@@ -37,7 +39,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 serverName = builder.DataSource.Substring(startIdx, endIdx - startIdx);
             }
-
+#if NET
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) &&
+                LocalHost.Equals(serverName, StringComparison.OrdinalIgnoreCase))
+            {
+                // Skip the test for localhost on macOS as Docker (hosting SQL Server) doesn't support IPv6
+                return false;
+            }
+#endif
             List<IPAddress> ipAddresses = Dns.GetHostAddresses(serverName).ToList();
             return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
                     ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetworkV6);

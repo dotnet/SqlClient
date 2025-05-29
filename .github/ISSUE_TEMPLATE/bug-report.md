@@ -1,9 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: 'Triage Needed'
-assignees: ''
+title: ""
+labels: [":new: Triage Needed", ":bug: Bug!"]
+assignees: []
 
 ---
 
@@ -31,9 +31,9 @@ A clear and concise description of what you expected to happen.
 
 ### Further technical details
 Microsoft.Data.SqlClient version: (found on the nuget or Microsoft.Data.SqlClient.dll)
-.NET target: (e.g. Framework 4.7.1, Core 2.2.2)
-SQL Server version: (e.g. SQL Server 2017)
-Operating system: (e.g. Windows 2019, Ubuntu 18.04, macOS 10.13, Docker container)
+.NET target: (e.g. .NET Framework 4.7.2, .NET 6.0)
+SQL Server version: (e.g. SQL Server 2022)
+Operating system: (e.g. Windows Server 2022, Ubuntu 24.04, macOS 14.7.1, Docker container)
 
 **Additional context**
 Add any other context about the problem here.

@@ -2,17 +2,18 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>PerformanceTests</AssemblyName>
-    <TargetFrameworks>net8.0</TargetFrameworks>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <Configurations>Debug;Release;</Configurations>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
   </PropertyGroup>
+
   <ItemGroup>
     <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
     <None Remove="BenchmarkDotNet.Artifacts\**" />
   </ItemGroup>
+
   <ItemGroup>
     <None Remove=".AssemblyAttributes" />
   </ItemGroup>
@@ -20,29 +21,13 @@
   <ItemGroup>
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
   </ItemGroup>
+
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.json" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Config\Config.cs" />
-    <Compile Include="Config\Constants.cs" />
-    <Compile Include="Config\DataTypes.cs" />
-    <Compile Include="Config\BenchmarkConfig.cs" />
-    <Compile Include="DBFramework\Table.cs" />
-    <Compile Include="DBFramework\Column.cs" />
-    <Compile Include="DBFramework\DbUtils.cs" />
-    <Compile Include="DBFramework\TablePatterns.cs" />
-    <Compile Include="BenchmarkRunners\BaseRunner.cs" />
-    <Compile Include="BenchmarkRunners\SqlBulkCopyRunner.cs" />
-    <Compile Include="BenchmarkRunners\SqlConnectionRunner.cs" />
-    <Compile Include="BenchmarkRunners\SqlCommandRunner.cs" />
-    <Compile Include="BenchmarkRunners\DataTypeReaderRunner.cs" />
-    <Compile Include="BenchmarkRunners\DataTypeReaderAsyncRunner.cs" />
-    <Compile Include="Program.cs" />
   </ItemGroup>
 </Project>

@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient
         private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
 #endif
 
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
         private bool _parentOperationStarted = false;
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
@@ -2445,9 +2445,16 @@ namespace Microsoft.Data.SqlClient
                                 _cachedAsyncState.ResetAsyncState();
                             }
 
-                            _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                            try
+                            {
+                                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
 
-                            globalCompletion.TrySetException(e);
+                                globalCompletion.TrySetException(e);
+                            }
+                            catch (Exception e2)
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
                         }
                         else
                         {
@@ -2464,21 +2471,26 @@ namespace Microsoft.Data.SqlClient
                                     TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), true /*inRetry*/,
                                     asyncWrite);
 
-                                retryTask.ContinueWith(retryTsk =>
-                                {
-                                    if (retryTsk.IsFaulted)
+                                retryTask.ContinueWith(
+                                    static (Task<object> retryTask, object state) =>
                                     {
-                                        globalCompletion.TrySetException(retryTsk.Exception.InnerException);
-                                    }
-                                    else if (retryTsk.IsCanceled)
-                                    {
-                                        globalCompletion.TrySetCanceled();
-                                    }
-                                    else
-                                    {
-                                        globalCompletion.TrySetResult(retryTsk.Result);
-                                    }
-                                }, TaskScheduler.Default);
+                                        TaskCompletionSource<object> completion = (TaskCompletionSource<object>)state;
+                                        if (retryTask.IsFaulted)
+                                        {
+                                            completion.TrySetException(retryTask.Exception.InnerException);
+                                        }
+                                        else if (retryTask.IsCanceled)
+                                        {
+                                            completion.TrySetCanceled();
+                                        }
+                                        else
+                                        {
+                                            completion.TrySetResult(retryTask.Result);
+                                        }
+                                    }, 
+                                    state: globalCompletion,
+                                    TaskScheduler.Default
+                                );
                             }
                             catch (Exception e2)
                             {
