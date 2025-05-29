@@ -237,6 +237,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
     </Compile>
@@ -254,9 +260,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
-      <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\MultipartIdentifier.cs">
       <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
@@ -938,7 +941,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
+    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netfx.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
