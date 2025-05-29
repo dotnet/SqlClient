@@ -11554,39 +11554,37 @@ namespace Microsoft.Data.SqlClient
 
             int notificationHeaderSize = GetNotificationHeaderSize(notificationRequest);
 
-            const int marsHeaderSize = 18; // 4 + 2 + 8 + 4
+            const int MarsHeaderSize = 18; // 4 + 2 + 8 + 4
 
             // Header Length (DWORD)
             // Header Type (ushort)
             // Trace Data Guid
             // Trace Data Sequence Number (uint)
-            const int traceHeaderSize = 26;  // 4 + 2 + GUID_SIZE + sizeof(UInt32);
+            const int TraceHeaderSize = 26;  // 4 + 2 + sizeof(Guid) + sizeof(uint);
 
             // TotalLength  - DWORD  - including all headers and lengths, including itself
-            int totalHeaderLength = this.IncludeTraceHeader ? (4 + marsHeaderSize + notificationHeaderSize + traceHeaderSize) : (4 + marsHeaderSize + notificationHeaderSize);
+            int totalHeaderLength = IncludeTraceHeader ? (4 + MarsHeaderSize + notificationHeaderSize + TraceHeaderSize) : (4 + MarsHeaderSize + notificationHeaderSize);
             Debug.Assert(stateObj._outBytesUsed == stateObj._outputHeaderLen, "Output bytes written before total header length");
             // Write total header length
             WriteInt(totalHeaderLength, stateObj);
 
-            // Write Mars header length
-            WriteInt(marsHeaderSize, stateObj);
-            // Write Mars header data
+            // Write MARS header length and data
+            WriteInt(MarsHeaderSize, stateObj);
             WriteMarsHeaderData(stateObj, CurrentTransaction);
 
-            if (0 != notificationHeaderSize)
+            if (notificationHeaderSize != 0)
             {
-                // Write Notification header length
+                // Write notification header length and data
+                // MS-TDS 2.2.5.3.1: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/e168d373-a7b7-41aa-b6ca-25985466a7e0
                 WriteInt(notificationHeaderSize, stateObj);
-                // Write notificaiton header data
                 WriteQueryNotificationHeaderData(notificationRequest, stateObj);
             }
 
             if (IncludeTraceHeader)
             {
-
-                // Write trace header length
-                WriteInt(traceHeaderSize, stateObj);
-                // Write trace header data
+                // Write trace header length and data
+                // MS-TDS 2.2.5.3.3: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/6e9f106b-df6e-4cbe-a6eb-45ceb10c63be
+                WriteInt(TraceHeaderSize, stateObj);
                 WriteTraceHeaderData(stateObj);
             }
         }
