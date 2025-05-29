@@ -84,8 +84,6 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate = "",
             string serverCertificateFilename = "");
 
-        internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
-
         protected abstract void FreeGcHandle(int remaining, bool release);
 
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);

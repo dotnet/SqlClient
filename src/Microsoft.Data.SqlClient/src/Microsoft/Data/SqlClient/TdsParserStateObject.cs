@@ -485,6 +485,8 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
 
+        internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
+
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
         protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
@@ -50,6 +51,59 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
+        }
+
+        // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the
+        // IsSupported flag as true in the feature ext ack from server.
+        internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
+        {
+            uint result;
+            ushort portFromSNI = 0;
+            string IPStringFromSNI = string.Empty;
+            IPAddress IPFromSNI;
+            _parser.isTcpProtocol = false;
+            Provider providerNumber = Provider.INVALID_PROV;
+
+            if (string.IsNullOrEmpty(userProtocol))
+            {
+
+                result = SniNativeWrapper.SniGetProviderNumber(Handle, ref providerNumber);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
+                _parser.isTcpProtocol = (providerNumber == Provider.TCP_PROV);
+            }
+            else if (userProtocol == TdsEnums.TCP)
+            {
+                _parser.isTcpProtocol = true;
+            }
+
+            // serverInfo.UserProtocol could be empty
+            if (_parser.isTcpProtocol)
+            {
+                result = SniNativeWrapper.SniGetConnectionPort(Handle, ref portFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
+
+                result = SniNativeWrapper.SniGetConnectionIpString(Handle, ref IPStringFromSNI);
+                Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
+
+                pendingDNSInfo = new SQLDNSInfo(DNSCacheKey, null, null, portFromSNI.ToString());
+
+                if (IPAddress.TryParse(IPStringFromSNI, out IPFromSNI))
+                {
+                    if (System.Net.Sockets.AddressFamily.InterNetwork == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv4 = IPStringFromSNI;
+                    }
+                    else if (System.Net.Sockets.AddressFamily.InterNetworkV6 == IPFromSNI.AddressFamily)
+                    {
+                        pendingDNSInfo.AddrIPv6 = IPStringFromSNI;
+                    }
+                }
+            }
+            else
+            {
+                pendingDNSInfo = null;
+            }
         }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
