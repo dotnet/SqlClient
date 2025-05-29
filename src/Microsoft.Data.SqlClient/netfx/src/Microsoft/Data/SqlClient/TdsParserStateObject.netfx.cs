@@ -114,9 +114,14 @@ namespace Microsoft.Data.SqlClient
             bool fParallel,
             TransparentNetworkResolutionState transparentNetworkResolutionState,
             int totalTimeout,
-            SqlConnectionIPAddressPreference ipPreference,
+            SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
-            string hostNameInCertificate = "")
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity = false,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "",
+            string serverCertificateFilename = "")
         {
             ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -127,7 +132,7 @@ namespace Microsoft.Data.SqlClient
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref spn, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
-                ipPreference, cachedDNSInfo, hostNameInCertificate);
+                iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);

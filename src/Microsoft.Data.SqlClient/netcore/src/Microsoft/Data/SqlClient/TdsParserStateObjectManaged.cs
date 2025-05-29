@@ -85,6 +85,8 @@ namespace Microsoft.Data.SqlClient.SNI
             bool flushCache,
             bool async,
             bool parallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
             SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,

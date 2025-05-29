@@ -75,6 +75,8 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool async,
             bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
             SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,

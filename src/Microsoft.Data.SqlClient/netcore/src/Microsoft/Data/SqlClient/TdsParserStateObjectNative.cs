@@ -162,7 +162,9 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool async,
             bool fParallel,
-            SqlConnectionIPAddressPreference ipPreference,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
@@ -191,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             spns = new[] { serverSPN.TrimEnd() };
         }
 

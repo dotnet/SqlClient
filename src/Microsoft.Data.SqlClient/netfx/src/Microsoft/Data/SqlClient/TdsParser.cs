@@ -516,7 +516,12 @@ namespace Microsoft.Data.SqlClient
                 totalTimeout,
                 _connHandler.ConnectionOptions.IPAddressPreference,
                 FQDNforDNSCache,
-                hostNameInCertificate);
+                ref _connHandler.pendingSQLDNSObject,
+                serverInfo.ServerSPN,
+                integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                isTlsFirst,
+                hostNameInCertificate,
+                serverCertificateFilename);
 
             _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
@@ -610,7 +615,12 @@ namespace Microsoft.Data.SqlClient
                     totalTimeout,
                     _connHandler.ConnectionOptions.IPAddressPreference,
                     serverInfo.ResolvedServerName,
-                    hostNameInCertificate);
+                    ref _connHandler.pendingSQLDNSObject,
+                    serverInfo.ServerSPN,
+                    integratedSecurity,
+                    isTlsFirst,
+                    hostNameInCertificate,
+                    serverCertificateFilename);
 
                 _authenticationProvider?.Initialize(serverInfo, _physicalStateObj, this);
 
