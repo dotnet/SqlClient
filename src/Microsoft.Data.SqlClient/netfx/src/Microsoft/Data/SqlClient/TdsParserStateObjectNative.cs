@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
-            : base(parser, physicalConnection.Handle, async)
+            : base(parser, physicalConnection, async)
         {
         }
 
@@ -39,6 +39,18 @@ namespace Microsoft.Data.SqlClient
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
+
+        protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
+        {
+            Debug.Assert(physicalConnection is TdsParserStateObjectNative, "Expected a stateObject of type " + this.GetType());
+            TdsParserStateObjectNative nativeSNIObject = physicalConnection as TdsParserStateObjectNative;
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
+
+            SQLDNSInfo cachedDNSInfo;
+            bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
+        }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
         {

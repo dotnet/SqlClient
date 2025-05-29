@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -85,8 +85,6 @@ namespace Microsoft.Data.SqlClient
             string serverCertificateFilename = "");
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
-
-        protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
 
         protected abstract void FreeGcHandle(int remaining, bool release);
 

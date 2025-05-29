@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        protected TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
+        protected TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
         {
             // Construct a MARS session
             Debug.Assert(parser != null, "no parser?");
@@ -56,12 +56,8 @@ namespace Microsoft.Data.SqlClient
             // Determine packet size based on physical connection buffer lengths.
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
-            ConsumerInfo myInfo = CreateConsumerInfo(async);
-            SQLDNSInfo cachedDNSInfo;
+            CreateSessionHandle(physicalConnection, async);
 
-            SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
-
-            _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (IsFailedHandle())
             {
                 AddError(parser.ProcessSNIError(this));
@@ -90,7 +86,7 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        private ConsumerInfo CreateConsumerInfo(bool async)
+        protected ConsumerInfo CreateConsumerInfo(bool async)
         {
             ConsumerInfo myInfo = new ConsumerInfo();
 
