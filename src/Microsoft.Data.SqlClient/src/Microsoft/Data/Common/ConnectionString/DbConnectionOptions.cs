@@ -8,87 +8,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Data.Common.ConnectionString;
-using Microsoft.Data.SqlClient;
 
-namespace Microsoft.Data.Common
+namespace Microsoft.Data.Common.ConnectionString
 {
-    partial class DbConnectionOptions
+    internal partial class DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        // connection string common keywords
-        private static class KEY
-        {
-            internal const string Integrated_Security = DbConnectionStringKeywords.IntegratedSecurity;
-            internal const string Password = DbConnectionStringKeywords.Password;
-            internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
-            internal const string User_ID = DbConnectionStringKeywords.UserID;
-            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
-        }
-
-        // known connection string common synonyms
-        private static class SYNONYM
-        {
-            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
-            internal const string UID = DbConnectionStringSynonyms.UID;
-        }
-
-#if DEBUG
-        /*private const string ConnectionStringPatternV1 =
-             "[\\s;]*"
-            +"(?<key>([^=\\s]|\\s+[^=\\s]|\\s+==|==)+)"
-            +   "\\s*=(?!=)\\s*"
-            +"(?<value>("
-            +   "(" + "\"" + "([^\"]|\"\")*" + "\"" + ")"
-            +   "|"
-            +   "(" + "'" + "([^']|'')*" + "'" + ")"
-            +   "|"
-            +   "(" + "(?![\"'])" + "([^\\s;]|\\s+[^\\s;])*" + "(?<![\"'])" + ")"
-            + "))"
-            + "[\\s;]*"
-        ;*/
-        private const string ConnectionStringPattern =                  // may not contain embedded null except trailing last value
-                "([\\s;]*"                                                  // leading whitespace and extra semicolons
-                + "(?![\\s;])"                                              // key does not start with space or semicolon
-                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)"  // allow any visible character for keyname except '=' which must quoted as '=='
-                + "\\s*=(?!=)\\s*"                                          // the equal sign divides the key and value parts
-                + "(?<value>"
-                + "(\"([^\"\u0000]|\"\")*\")"                              // double quoted string, " must be quoted as ""
-                + "|"
-                + "('([^'\u0000]|'')*')"                                   // single quoted string, ' must be quoted as ''
-                + "|"
-                + "((?![\"'\\s])"                                          // unquoted value must not start with " or ' or space, would also like = but too late to change
-                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                  // control characters must be quoted
-                + "(?<![\"']))"                                            // unquoted value must not stop with " or '
-                + ")(\\s*)(;|[\u0000\\s]*$)"                                // whitespace after value up to semicolon or end-of-line
-                + ")*"                                                      // repeat the key-value pair
-                + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-            ;
-
-        private const string ConnectionStringPatternOdbc =              // may not contain embedded null except trailing last value
-                "([\\s;]*"                                                  // leading whitespace and extra semicolons
-                + "(?![\\s;])"                                              // key does not start with space or semicolon
-                + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}])+)"            // allow any visible character for keyname except '='
-                + "\\s*=\\s*"                                               // the equal sign divides the key and value parts
-                + "(?<value>"
-                + "(\\{([^\\}\u0000]|\\}\\})*\\})"                         // quoted string, starts with { and ends with }
-                + "|"
-                + "((?![\\{\\s])"                                          // unquoted value must not start with { or space, would also like = but too late to change
-                + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                  // control characters must be quoted
-
-                + ")" // although the spec does not allow {}
-                      // embedded within a value, the retail code does.
-                + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
-                + ")*"                                                      // repeat the key-value pair
-                + "[\\s;]*[\u0000\\s]*"                                     // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-            ;
-
-        private static readonly Regex s_connectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringRegexOdbc = new Regex(ConnectionStringPatternOdbc, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
-#endif
         private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
         private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
         private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
@@ -114,14 +42,16 @@ namespace Microsoft.Data.Common
         public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
-            _usersConnectionString = connectionString != null ? connectionString : "";
+            _usersConnectionString = connectionString ?? "";
 
             // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length)
+            if (_usersConnectionString.Length > 0)
             {
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
-                _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
-                _hasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
+                _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
+                                      _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
+                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserID) ||
+                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
             }
         }
 
@@ -139,29 +69,35 @@ namespace Microsoft.Data.Common
         // same as Boolean, but with SSPI thrown in as valid yes
         public bool ConvertValueToIntegratedSecurity()
         {
-            return _parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
-                   ConvertValueToIntegratedSecurityInternal(value) :
-                   false;
+            return _parsetable.TryGetValue(DbConnectionStringKeywords.IntegratedSecurity, out string value) && value != null
+                ? ConvertValueToIntegratedSecurityInternal(value)
+                : false;
         }
 
         internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
-                return true;
-            else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
-                return false;
-            else
             {
-                string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
-                if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
-                    return true;
-                else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
-                    return false;
-                else
-                {
-                    throw ADP.InvalidConnectionOptionValue(KEY.Integrated_Security);
-                }
+                return true;
             }
+            
+            if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
+            {
+                return false;
+            }
+
+            string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
+            if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
+            {
+                return true;
+            }
+
+            if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
+            {
+                return false;
+            }
+
+            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IntegratedSecurity);
         }
 
         public int ConvertValueToInt32(string keyName, int defaultValue)
@@ -208,9 +144,9 @@ namespace Microsoft.Data.Common
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => _hasPasswordKeyword ?
-            ConvertValueToBoolean(KEY.Persist_Security_Info, DbConnectionStringDefaults.PersistSecurityInfo) :
-            true; // no password means persistable password so we don't have to munge
+        internal bool HasPersistablePassword => _hasPasswordKeyword
+            ? ConvertValueToBoolean(DbConnectionStringKeywords.PersistSecurityInfo, DbConnectionStringDefaults.PersistSecurityInfo)
+            : true; // no password means persistable password so we don't have to munge
 
         public bool ConvertValueToBoolean(string keyName, bool defaultValue)
         {
@@ -242,30 +178,6 @@ namespace Microsoft.Data.Common
 
         private static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
-
-        [System.Diagnostics.Conditional("DEBUG")]
-        private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
-        {
-            if (SqlClientEventSource.Log.IsAdvancedTraceOn())
-            {
-                Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
-                string realkeyname = synonyms != null ? synonyms[keyname] : keyname;
-
-                if (!string.Equals(KEY.Password, realkeyname, StringComparison.InvariantCultureIgnoreCase) &&
-                   !string.Equals(SYNONYM.Pwd, realkeyname, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    // don't trace passwords ever!
-                    if (keyvalue != null)
-                    {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}', KeyValue='{1}'", keyname, keyvalue);
-                    }
-                    else
-                    {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
-                    }
-                }
-            }
-        }
 
         private static string GetKeyName(StringBuilder buffer)
         {
@@ -543,130 +455,16 @@ namespace Microsoft.Data.Common
             return false;
         }
 
-#if DEBUG
-        private static Dictionary<string, string> SplitConnectionString(string connectionString, Dictionary<string, string> synonyms, bool firstKey)
-        {
-            var parsetable = new Dictionary<string, string>();
-            Regex parser = (firstKey ? s_connectionStringRegexOdbc : s_connectionStringRegex);
-
-            const int KeyIndex = 1, ValueIndex = 2;
-            Debug.Assert(KeyIndex == parser.GroupNumberFromName("key"), "wrong key index");
-            Debug.Assert(ValueIndex == parser.GroupNumberFromName("value"), "wrong value index");
-
-            if (connectionString != null)
-            {
-                Match match = parser.Match(connectionString);
-                if (!match.Success || (match.Length != connectionString.Length))
-                {
-                    throw ADP.ConnectionStringSyntax(match.Length);
-                }
-                int indexValue = 0;
-                CaptureCollection keyvalues = match.Groups[ValueIndex].Captures;
-                foreach (Capture keypair in match.Groups[KeyIndex].Captures)
-                {
-                    string keyname = (firstKey ? keypair.Value : keypair.Value.Replace("==", "=")).ToLower(CultureInfo.InvariantCulture);
-                    string keyvalue = keyvalues[indexValue++].Value;
-                    if (0 < keyvalue.Length)
-                    {
-                        if (!firstKey)
-                        {
-                            switch (keyvalue[0])
-                            {
-                                case '\"':
-                                    keyvalue = keyvalue.Substring(1, keyvalue.Length - 2).Replace("\"\"", "\"");
-                                    break;
-                                case '\'':
-                                    keyvalue = keyvalue.Substring(1, keyvalue.Length - 2).Replace("\'\'", "\'");
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        keyvalue = null;
-                    }
-                    DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
-                    string synonym;
-                    string realkeyname = synonyms != null
-                        ? (synonyms.TryGetValue(keyname, out synonym) ? synonym : null)
-                        : keyname;
-
-                    if (!IsKeyNameValid(realkeyname))
-                    {
-                        throw ADP.KeywordNotSupported(keyname);
-                    }
-                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
-                    {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                    }
-                }
-            }
-            return parsetable;
-        }
-
-        private static void ParseComparison(Dictionary<string, string> parsetable, string connectionString, Dictionary<string, string> synonyms, bool firstKey, Exception e)
-        {
-            try
-            {
-                var parsedvalues = SplitConnectionString(connectionString, synonyms, firstKey);
-                foreach (var entry in parsedvalues)
-                {
-                    string keyname = entry.Key;
-                    string value1 = entry.Value;
-                    string value2;
-                    bool parsetableContainsKey = parsetable.TryGetValue(keyname, out value2);
-                    Debug.Assert(parsetableContainsKey, $"{nameof(ParseInternal)} code vs. regex mismatch keyname <{keyname}>");
-                    Debug.Assert(value1 == value2, $"{nameof(ParseInternal)} code vs. regex mismatch keyvalue <{value1}> <{value2}>");
-                }
-            }
-            catch (ArgumentException f)
-            {
-                if (e != null)
-                {
-                    string msg1 = e.Message;
-                    string msg2 = f.Message;
-
-                    const string KeywordNotSupportedMessagePrefix = "Keyword not supported:";
-                    const string WrongFormatMessagePrefix = "Format of the initialization string";
-                    bool isEquivalent = (msg1 == msg2);
-                    if (!isEquivalent)
-                    {
-                        // We also accept cases were Regex parser (debug only) reports "wrong format" and 
-                        // retail parsing code reports format exception in different location or "keyword not supported"
-                        if (msg2.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
-                        {
-                            if (msg1.StartsWith(KeywordNotSupportedMessagePrefix, StringComparison.Ordinal) || msg1.StartsWith(WrongFormatMessagePrefix, StringComparison.Ordinal))
-                            {
-                                isEquivalent = true;
-                            }
-                        }
-                    }
-                    Debug.Assert(isEquivalent, "ParseInternal code vs regex message mismatch: <" + msg1 + "> <" + msg2 + ">");
-                }
-                else
-                {
-                    Debug.Fail("ParseInternal code vs regex throw mismatch " + f.Message);
-                }
-                e = null;
-            }
-            if (e != null)
-            {
-                Debug.Fail("ParseInternal code threw exception vs regex mismatch");
-            }
-        }
-#endif
-
         private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
             NameValuePair localKeychain = null, keychain = null;
-#if DEBUG
+
+            #if DEBUG
             try
             {
-#endif
+            #endif
                 int nextStartPosition = 0;
                 int endPosition = connectionString.Length;
                 while (nextStartPosition < endPosition)
@@ -680,9 +478,8 @@ namespace Microsoft.Data.Common
                         // if (nextStartPosition != endPosition) { throw; }
                         break;
                     }
-#if DEBUG
+
                     DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
-#endif
                     Debug.Assert(IsKeyNameValid(keyname), "ParseFailure, invalid keyname");
                     Debug.Assert(IsValueValidInternal(keyvalue), "parse failure, invalid keyvalue");
 
@@ -708,7 +505,7 @@ namespace Microsoft.Data.Common
                         keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
                 }
-#if DEBUG
+            #if DEBUG
             }
             catch (ArgumentException e)
             {
@@ -716,7 +513,8 @@ namespace Microsoft.Data.Common
                 throw;
             }
             ParseComparison(parsetable, connectionString, synonyms, firstKey, null);
-#endif
+            #endif
+            
             return keychain;
         }
 
@@ -728,8 +526,8 @@ namespace Microsoft.Data.Common
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
-                if (!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
-                   !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (!CompareInsensitiveInvariant(DbConnectionStringKeywords.Password, current.Name) &&
+                    !CompareInsensitiveInvariant(DbConnectionStringSynonyms.Pwd, current.Name))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
                     if (fakePassword)

@@ -53,6 +53,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
     </Compile>
@@ -70,9 +76,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
-      <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\MultipartIdentifier.cs">
       <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
@@ -791,8 +794,8 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-    
-    <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
+
+    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
