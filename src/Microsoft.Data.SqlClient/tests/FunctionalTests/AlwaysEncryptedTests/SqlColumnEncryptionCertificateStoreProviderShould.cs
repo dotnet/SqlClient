@@ -397,7 +397,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             }
             else
             {
-                certificateStoreLocation = StoreLocation.CurrentUser;
+                certificateStoreLocation = Environment.OSVersion.Platform == PlatformID.Win32NT
+                    ? StoreLocation.LocalMachine
+                    : StoreLocation.CurrentUser;
             }
 
             // Fetch the newly created cert.

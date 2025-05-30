@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
-#if NET9_0_OR_GREATER
+#if NET
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = RSA.Create(2048);
@@ -84,8 +84,22 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             // This is to ensure that it's imported into the certificate stores with its private key.
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
-                return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pkcs12, password), password,
+#if NET9_0_OR_GREATER
+                return X509CertificateLoader.LoadPkcs12(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults)
+                    {
+                        PreserveStorageProvider = true,
+                        PreserveKeyName = true
+                    });
+#else
+                return new X509Certificate2(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+#endif
             }
 #else
             // The CertificateRequest API is available in .NET Core, but was only added to .NET Framework 4.7.2; it thus can't be used in the test projects.
