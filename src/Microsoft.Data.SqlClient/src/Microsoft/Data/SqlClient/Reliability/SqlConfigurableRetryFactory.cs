@@ -77,6 +77,8 @@ namespace Microsoft.Data.SqlClient
             => InternalCreateRetryProvider(retryLogicOption,
                                             retryLogicOption != null ? new SqlFixedIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
+        internal static bool IsKnownTransientErrorCode(int errorCode) => s_defaultTransientErrors.Contains(errorCode);
+
         private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(SqlRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
         {
             if (retryLogicOption == null)
