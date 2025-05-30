@@ -57,7 +57,7 @@ namespace Microsoft.Data.Common.ConnectionString
         
         #if NETFRAMEWORK
         internal const bool ConnectionReset = true;
-        internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
+        internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTnirByDefault;
         internal const string NetworkLibrary = "";
         #endif
     }

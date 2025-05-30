@@ -110,6 +110,9 @@
     <Compile Include="SslOverTdsStreamTest.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj">
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>

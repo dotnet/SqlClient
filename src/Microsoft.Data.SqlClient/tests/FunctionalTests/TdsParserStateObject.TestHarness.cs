@@ -8,13 +8,15 @@ using System.Diagnostics;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Tests;
 
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
+
 namespace Microsoft.Data.SqlClient
 {
     internal struct PacketHandle
     {
     }
 
-    internal partial class TdsParserStateObject
+    internal partial class TdsParserStateObject : IDisposable
     {
         internal int ObjectID = 1;
 
@@ -103,6 +105,7 @@ namespace Microsoft.Data.SqlClient
         public int _inBytesRead;
         public int _inBytesUsed;
         public byte[] _inBuff;
+
         [DebuggerStepThrough]
         public TdsParserStateObject(List<PacketData> input, int packetSize, bool isAsync)
         {
@@ -114,6 +117,13 @@ namespace Microsoft.Data.SqlClient
                 _snapshot = new Snapshot();
             }
         }
+
+        [DebuggerStepThrough]
+        public void Dispose()
+        {
+            LocalAppContextSwitches.Dispose();
+        }
+
         [DebuggerStepThrough]
         private uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
         {
@@ -145,30 +155,9 @@ namespace Microsoft.Data.SqlClient
         [DebuggerStepThrough]
         private void AddError(object value) => throw new Exception(value as string ?? "AddError");
 
-        internal static class LocalAppContextSwitches
-        {
-            public static bool UseCompatibilityProcessSni
-            {
-                get
-                {
-                    var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        private SwitchesHelper LocalAppContextSwitches = new();
 
-                    return (bool)switchesType.GetProperty(nameof(UseCompatibilityProcessSni), BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                }
-            }
-
-            public static bool UseCompatibilityAsyncBehaviour
-            {
-                get
-                {
-                    var switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-
-                    return (bool)switchesType.GetProperty(nameof(UseCompatibilityAsyncBehaviour), BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                }
-            }
-        }
-
-        #if NETFRAMEWORK
+#if NETFRAMEWORK
         private SniNativeWrapperImpl _native;
         internal SniNativeWrapperImpl SniNativeWrapper
         {
@@ -189,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             internal uint SniPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize) => _parent.SniPacketGetData(packet, inBuff, ref dataSize);
         }
-        #endif
+#endif
     }
 
     internal static class TdsEnums
