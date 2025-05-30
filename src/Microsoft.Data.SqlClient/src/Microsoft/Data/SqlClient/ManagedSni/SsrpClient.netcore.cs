@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,9 +14,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    internal sealed class SSRP
+    internal sealed class SsrpClient
     {
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434; //port SQL Server Browser
@@ -38,7 +40,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            using (TrySNIEventScope.Create(nameof(SSRP)))
+            using (TrySNIEventScope.Create(nameof(SsrpClient)))
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
                 byte[] responsePacket = null;
@@ -54,7 +56,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     // the same error as if the response was empty. The higher error suits all scenarios.
                     // But log it, just in case there is a different, underlying issue that support needs
                     // to troubleshoot.
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
                     throw;
                 }
 
@@ -86,7 +88,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            using (TrySNIEventScope.Create(nameof(SSRP)))
+            using (TrySNIEventScope.Create(nameof(SsrpClient)))
             {
                 const byte ClntUcastInst = 0x04;
                 instanceName += char.MinValue;
@@ -170,7 +172,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>response packet from UDP server</returns>
         private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket, TimeoutTimer timeout, bool allIPsInParallel, SqlConnectionIPAddressPreference ipPreference)
         {
-            using (TrySNIEventScope.Create(nameof(SSRP)))
+            using (TrySNIEventScope.Create(nameof(SsrpClient)))
             {
                 Debug.Assert(!string.IsNullOrWhiteSpace(browserHostname), "browserhostname should not be null, empty, or whitespace");
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
@@ -188,8 +190,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 IPAddress[] ipAddresses = timeout.IsInfinite
-                    ? SNICommon.GetDnsIpAddresses(browserHostname)
-                    : SNICommon.GetDnsIpAddresses(browserHostname, timeout);
+                    ? SniCommon.GetDnsIpAddresses(browserHostname)
+                    : SniCommon.GetDnsIpAddresses(browserHostname, timeout);
 
                 Debug.Assert(ipAddresses.Length > 0, "DNS should throw if zero addresses resolve");
                 IPAddress[] ipv4Addresses = null;
@@ -338,10 +340,10 @@ namespace Microsoft.Data.SqlClient.SNI
                     Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, endPoint);
                     Task<UdpReceiveResult> receiveTask = null;
 
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
                     if (sendTask.Wait(sendTimeOutMs) && (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received Port info from UDP Client.");
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received Port info from UDP Client.");
                         result.ResponsePacket = receiveTask.Result.Buffer;
                     }
                 }
@@ -358,7 +360,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             result.Error = e;
                         }
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO,
                             "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
                     }
 
@@ -368,14 +370,14 @@ namespace Microsoft.Data.SqlClient.SNI
                 else
                 {
                     result.Error = ae;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO,
                         "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: ae.Message);
                 }
             }
             catch (Exception e)
             {
                 result.Error = e;
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO,
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO,
                     "SendUDPRequest ({0}) resulted in exception: {1}", args0: endPoint.ToString(), args1: e.Message);
             }
 
@@ -396,13 +398,13 @@ namespace Microsoft.Data.SqlClient.SNI
             // https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
             int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX;
 
-            using (TrySNIEventScope.Create(nameof(SSRP)))
+            using (TrySNIEventScope.Create(nameof(SsrpClient)))
             {
                 using (UdpClient clientListener = new UdpClient())
                 {
                     Task<int> sendTask = clientListener.SendAsync(CLNT_BCAST_EX_Request, CLNT_BCAST_EX_Request.Length, new IPEndPoint(IPAddress.Broadcast, SqlServerBrowserPort));
                     Task<UdpReceiveResult> receiveTask = null;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
                     Stopwatch sw = new Stopwatch(); //for waiting until 15 sec elapsed
                     sw.Start();
                     try
@@ -410,7 +412,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= ReceiveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
                         {
                             currentTimeOut = ReceiveTimeoutsForCLNT_BCAST_EX;
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SsrpClient), EventType.INFO, "Received instnace info from UDP Client.");
                             if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                             {
                                 response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
@@ -462,3 +464,5 @@ namespace Microsoft.Data.SqlClient.SNI
         }
     }
 }
+
+#endif

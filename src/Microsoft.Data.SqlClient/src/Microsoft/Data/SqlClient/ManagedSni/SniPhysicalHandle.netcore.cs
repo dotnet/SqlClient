@@ -2,38 +2,40 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.SqlClient.Utilities;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
-    internal abstract class SNIPhysicalHandle : SNIHandle
+    internal abstract class SniPhysicalHandle : SniHandle
     {
         protected const int DefaultPoolSize = 4;
 
 #if DEBUG
         private static int s_packetId;
 #endif
-        private ObjectPool<SNIPacket> _pool;
+        private ObjectPool<SniPacket> _pool;
 
-        protected SNIPhysicalHandle(int poolSize = DefaultPoolSize)
+        protected SniPhysicalHandle(int poolSize = DefaultPoolSize)
         {
-            _pool = new ObjectPool<SNIPacket>(poolSize);
+            _pool = new ObjectPool<SniPacket>(poolSize);
         }
 
-        public override SNIPacket RentPacket(int headerSize, int dataSize)
+        public override SniPacket RentPacket(int headerSize, int dataSize)
         {
-            SNIPacket packet;
+            SniPacket packet;
             if (!_pool.TryGet(out packet))
             {
 #if DEBUG
                 int id = Interlocked.Increment(ref s_packetId);
-                packet = new SNIPacket(this, id);
+                packet = new SniPacket(this, id);
 #else
-                packet = new SNIPacket();
+                packet = new SniPacket();
 #endif
             }
 #if DEBUG
@@ -57,7 +59,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return packet;
         }
 
-        public override void ReturnPacket(SNIPacket packet)
+        public override void ReturnPacket(SniPacket packet)
         {
 #if DEBUG
             Debug.Assert(packet != null, "releasing null SNIPacket");
@@ -98,3 +100,5 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif
     }
 }
+
+#endif

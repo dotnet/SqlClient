@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.SNI;
+using Microsoft.Data.SqlClient.ManagedSni;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -13,14 +13,14 @@ namespace Microsoft.Data.SqlClient
 
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        public EncryptionOptions EncryptionOptions => SNI.SNILoadHandle.SingletonInstance.Options;
+        public EncryptionOptions EncryptionOptions => ManagedSni.SniLoadHandle.SingletonInstance.Options;
 
-        public uint SNIStatus => SNI.SNILoadHandle.SingletonInstance.Status;
+        public uint SNIStatus => ManagedSni.SniLoadHandle.SingletonInstance.Status;
 
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        public bool ClientOSEncryptionSupport => SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+        public bool ClientOSEncryptionSupport => ManagedSni.SniLoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {

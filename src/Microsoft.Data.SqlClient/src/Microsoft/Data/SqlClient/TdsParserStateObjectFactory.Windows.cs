@@ -2,9 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 #if NET
-using Microsoft.Data.SqlClient.SNI;
+using System;
+using Microsoft.Data.SqlClient.ManagedSni;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -27,14 +27,14 @@ namespace Microsoft.Data.SqlClient
 
         public EncryptionOptions EncryptionOptions =>
 #if NET
-            UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
+            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.Options : SNILoadHandle.SingletonInstance.Options;
 #else
             SNILoadHandle.SingletonInstance.Options;
 #endif
 
         public uint SNIStatus =>
 #if NET
-            UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
+            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.Status : SNILoadHandle.SingletonInstance.Status;
 #else
             SNILoadHandle.SingletonInstance.Status;
 #endif
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public bool ClientOSEncryptionSupport =>
 #if NET
-            UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
+            UseManagedSNI ? ManagedSni.SniLoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #else
             SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 #endif
