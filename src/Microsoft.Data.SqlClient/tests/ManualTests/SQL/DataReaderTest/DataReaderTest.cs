@@ -606,6 +606,56 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadSequentialDecreasingChunks()
+        {
+            const string baseString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            StringBuilder inputBuilder = new StringBuilder();
+            while (inputBuilder.Length < (64 * 1024))
+            {
+                inputBuilder.Append(baseString);
+                inputBuilder.Append(' ');
+            }
+
+            string input = inputBuilder.ToString();
+
+            StringBuilder resultBuilder = new StringBuilder();
+            CancellationTokenSource cts = new CancellationTokenSource();
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync(cts.Token);
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT CONVERT(varchar(max),@str) as a";
+                    command.Parameters.AddWithValue("@str", input);
+
+                    using (var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cts.Token))
+                    {
+                        if (await reader.ReadAsync(cts.Token))
+                        {
+                            using (var textReader = reader.GetTextReader(0))
+                            {
+                                var buffer = new char[4096];
+                                var charsReadCount = -1;
+                                var start = 0;
+                                while (charsReadCount != 0)
+                                {
+                                    charsReadCount = await textReader.ReadAsync(buffer, start, buffer.Length - start);
+                                    resultBuilder.Append(buffer, start, charsReadCount);
+                                    start++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            string result = resultBuilder.ToString();
+
+            Assert.Equal(input, result);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadBinaryData()
         {
             const int Size = 20_000;
