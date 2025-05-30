@@ -111,11 +111,30 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
         public SqlJson(System.Text.Json.JsonDocument jsonDoc) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
-        public bool IsNull => throw null; 
+        public bool IsNull => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Null/*' />
         public static SqlJson Null => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Value/*' />
         public string Value { get { throw null; } }
+    }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/SqlFloatVector/*' />
+    public class SqlFloatVector : System.Data.SqlTypes.INullable
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ctor1/*' />
+        public SqlFloatVector(int length) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ctor2/*' />
+        public SqlFloatVector(float[] values) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/IsNull/*' />
+        public bool IsNull => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/Null/*' />
+        public static SqlJson Null => throw null;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ElementCount/*' />
+        public int ElementCount { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ToArray/*' />
+        public float[] ToArray() { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ToString/*' />
+        public override string ToString() { throw null; }
     }
 }
 namespace Microsoft.Data.SqlClient

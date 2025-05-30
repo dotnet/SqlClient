@@ -2835,6 +2835,22 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlFloatVector/*' />
+        virtual public SqlFloatVector GetSqlFloatVector(int i)
+        {
+            ReadColumn(i);
+            int elementCount = (_metaData[i].length - 8) / 4;
+
+            if (!_data[i].IsNull)
+            {
+                return new SqlFloatVector(_data[i].SqlBinary.Value);
+            }
+            else
+            {
+                return new SqlFloatVector(elementCount);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
@@ -2954,13 +2970,22 @@ namespace Microsoft.Data.SqlClient
         override public string GetString(int i)
         {
             ReadColumn(i);
-
+            if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+            {
+                switch (_metaData[i].scale)
+                {
+                    case 0:
+                        return GetSqlFloatVector(i).ToString();
+                    default:
+                        throw new NotSupportedException($"Unsupported vector type");
+                }
+            }
             // Convert 2008 value to string if type system knob is 2005 or earlier
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeString;
             }
-
+            
             return _data[i].String;
         }
 
@@ -2990,6 +3015,16 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
+                if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                {
+                    switch (_metaData[i].scale)
+                    {
+                        case 0:
+                            return GetSqlFloatVector(i);
+                        default:
+                            throw new NotSupportedException($"Unsupported vector type");
+                    }
+                }
                 return GetValueInternal(i);
             }
             finally
