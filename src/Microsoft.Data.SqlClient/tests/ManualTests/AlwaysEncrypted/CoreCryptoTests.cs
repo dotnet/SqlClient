@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         // Synapse: Always Encrypted not supported in Azure Synapse.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestAeadCryptoWithNativeBaseline()
         {
             // Initialize the reader for resource text file which has the native code generated baseline.
@@ -48,7 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         // Synapse: Always Encrypted not supported in Azure Synapse.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRsaCryptoWithNativeBaseline()
         {
             // Initialize the reader for resource text file which has the native code generated baseline.
