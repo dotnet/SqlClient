@@ -909,7 +909,7 @@ namespace Microsoft.Data.SqlClient
             string warningMessage = protocol.GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
-                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTlsWarning)
                 {
                     // Skip console warning
                     SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);

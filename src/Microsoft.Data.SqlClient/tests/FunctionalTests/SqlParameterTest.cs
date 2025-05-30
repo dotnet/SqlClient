@@ -1947,7 +1947,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(5, 5, false)]
         [InlineData(6, 6, false)]
         [InlineData(7, 7, false)]
-        public void SqlDatetime2Scale_Legacy(int? setScale, byte outputScale, bool legacyVarTimeZeroScaleSwitchValue)
+        public void SqlDateTime2Scale_Legacy(int? setScale, byte outputScale, bool legacyVarTimeZeroScaleSwitchValue)
         {
             lock (_parameterLegacyScaleLock)
             {

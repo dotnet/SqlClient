@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("UseCompatibilityAsyncBehaviour", false)]
         [InlineData("UseConnectionPoolV2", false)]
         #if NETFRAMEWORK
-        [InlineData("DisableTNIRByDefault", false)]
+        [InlineData("DisableTnirByDefault", false)]
         #endif
         public void DefaultSwitchValue(string property, bool expectedDefaultValue)
         {
