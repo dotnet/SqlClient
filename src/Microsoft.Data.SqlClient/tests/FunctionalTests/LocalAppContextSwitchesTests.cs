@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         [Theory]
         [InlineData("LegacyRowVersionNullBehavior", false)]
-        [InlineData("SuppressInsecureTLSWarning", false)]
+        [InlineData("SuppressInsecureTlsWarning", false)]
         [InlineData("MakeReadAsyncBlocking", false)]
         [InlineData("UseMinimumLoginTimeout", true)]
         [InlineData("LegacyVarTimeZeroScaleBehaviour", true)]
