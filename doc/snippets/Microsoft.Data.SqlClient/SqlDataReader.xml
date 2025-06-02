@@ -390,37 +390,37 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <typeparamref name="T" /> can be one of the following types:
         </para>
         <list type="bullet">
-          <item>Boolean (<c>bool</c>)</item>
-          <item>Byte</item>
-          <item>Char</item>
-          <item>DateOnly (.NET 6 or later)</item>
-          <item>DateTime</item>
-          <item>DateTimeOffset</item>
-          <item>Decimal</item>
-          <item>Double</item>
-          <item>Single (<c>float</c>)</item>
-          <item>Guid</item>
-          <item>Int16 (<c>short</c>)</item>
-          <item>Int32 (<c>int</c>)</item>
-          <item>Int64 (<c>long</c>)</item>
-          <item>SqlBoolean</item>
-          <item>SqlByte</item>
-          <item>SqlDateTime</item>
-          <item>SqlDecimal</item>
-          <item>SqlDouble</item>
-          <item>SqlGuid</item>
-          <item>SqlInt16</item>
-          <item>SqlInt32</item>
-          <item>SqlInt64</item>
-          <item>SqlMoney</item>
-          <item>SqlSingle</item>
-          <item>SqlString</item>
-          <item>Stream</item>
-          <item>String</item>
-          <item>TextReader</item>
-          <item>TimeOnly (.NET 6 or later)</item>
-          <item>XmlReader</item>
-          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
+          <item><description>Boolean (<c>bool</c>)</description></item>
+          <item><description>Byte</description></item>
+          <item><description>Char</description></item>
+          <item><description>DateOnly (.NET 6 or later)</description></item>
+          <item><description>DateTime</description></item>
+          <item><description>DateTimeOffset</description></item>
+          <item><description>Decimal</description></item>
+          <item><description>Double</description></item>
+          <item><description>Single (<c>float</c>)</description></item>
+          <item><description>Guid</description></item>
+          <item><description>Int16 (<c>short</c>)</description></item>
+          <item><description>Int32 (<c>int</c>)</description></item>
+          <item><description>Int64 (<c>long</c>)</description></item>
+          <item><description>SqlBoolean</description></item>
+          <item><description>SqlByte</description></item>
+          <item><description>SqlDateTime</description></item>
+          <item><description>SqlDecimal</description></item>
+          <item><description>SqlDouble</description></item>
+          <item><description>SqlGuid</description></item>
+          <item><description>SqlInt16</description></item>
+          <item><description>SqlInt32</description></item>
+          <item><description>SqlInt64</description></item>
+          <item><description>SqlMoney</description></item>
+          <item><description>SqlSingle</description></item>
+          <item><description>SqlString</description></item>
+          <item><description>Stream</description></item>
+          <item><description>String</description></item>
+          <item><description>TextReader</description></item>
+          <item><description>TimeOnly (.NET 6 or later)</description></item>
+          <item><description>XmlReader</description></item>
+          <item><description>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -428,11 +428,11 @@ No conversions are performed; therefore. the data retrieved must already be a ch
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Tried to read a previously-read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Tried to read a previously-read column in sequential mode.</description></item>
+          <item><description><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -464,37 +464,37 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <typeparamref name="T" /> can be one of the following types:
         </para>
         <list type="bullet">
-          <item>Boolean (<c>bool</c>)</item>
-          <item>Byte</item>
-          <item>Char</item>
-          <item>DateOnly (.NET 6 or later)</item>
-          <item>DateTime</item>
-          <item>DateTimeOffset</item>
-          <item>Decimal</item>
-          <item>Double</item>
-          <item>Single (<c>float</c>)</item>
-          <item>Guid</item>
-          <item>Int16 (<c>short</c>)</item>
-          <item>Int32 (<c>int</c>)</item>
-          <item>Int64 (<c>long</c>)</item>
-          <item>SqlBoolean</item>
-          <item>SqlByte</item>
-          <item>SqlDateTime</item>
-          <item>SqlDecimal</item>
-          <item>SqlDouble</item>
-          <item>SqlGuid</item>
-          <item>SqlInt16</item>
-          <item>SqlInt32</item>
-          <item>SqlInt64</item>
-          <item>SqlMoney</item>
-          <item>SqlSingle</item>
-          <item>SqlString</item>
-          <item>Stream</item>
-          <item>String</item>
-          <item>TextReader</item>
-          <item>TimeOnly (.NET 6 or later)</item>
-          <item>XmlReader</item>
-          <item>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</item>
+          <item><description>Boolean (<c>bool</c>)</description></item>
+          <item><description>Byte</description></item>
+          <item><description>Char</description></item>
+          <item><description>DateOnly (.NET 6 or later)</description></item>
+          <item><description>DateTime</description></item>
+          <item><description>DateTimeOffset</description></item>
+          <item><description>Decimal</description></item>
+          <item><description>Double</description></item>
+          <item><description>Single (<c>float</c>)</description></item>
+          <item><description>Guid</description></item>
+          <item><description>Int16 (<c>short</c>)</description></item>
+          <item><description>Int32 (<c>int</c>)</description></item>
+          <item><description>Int64 (<c>long</c>)</description></item>
+          <item><description>SqlBoolean</description></item>
+          <item><description>SqlByte</description></item>
+          <item><description>SqlDateTime</description></item>
+          <item><description>SqlDecimal</description></item>
+          <item><description>SqlDouble</description></item>
+          <item><description>SqlGuid</description></item>
+          <item><description>SqlInt16</description></item>
+          <item><description>SqlInt32</description></item>
+          <item><description>SqlInt64</description></item>
+          <item><description>SqlMoney</description></item>
+          <item><description>SqlSingle</description></item>
+          <item><description>SqlString</description></item>
+          <item><description>Stream</description></item>
+          <item><description>String</description></item>
+          <item><description>TextReader</description></item>
+          <item><description>TimeOnly (.NET 6 or later)</description></item>
+          <item><description>XmlReader</description></item>
+          <item><description>UDT, which can be any CLR type marked with <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" />.</description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>.
@@ -502,11 +502,11 @@ No conversions are performed; therefore. the data retrieved must already be a ch
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Tried to read a previously-read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Tried to read a previously-read column in sequential mode.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -1079,15 +1079,15 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           The following <see cref="T:System.IO.Stream" /> members are not available for objects returned by <b>GetStream</b>:
         </para>
         <list type="bullet">
-          <item>BeginWrite</item>
-          <item>EndWrite</item>
-          <item>Length</item>
-          <item>Position</item>
-          <item>Seek</item>
-          <item>SetLength</item>
-          <item>Write</item>
-          <item>WriteByte</item>
-          <item>WriteTimeout</item>
+          <item><description>BeginWrite</description></item>
+          <item><description>EndWrite</description></item>
+          <item><description>Length</description></item>
+          <item><description>Position</description></item>
+          <item><description>Seek</description></item>
+          <item><description>SetLength</description></item>
+          <item><description>Write</description></item>
+          <item><description>WriteByte</description></item>
+          <item><description>WriteTimeout</description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support">SqlClient Streaming Support</see>
@@ -1095,11 +1095,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Tried to read a previously-read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Tried to read a previously-read column in sequential mode.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -1110,10 +1110,10 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
           The returned type was not one of the types below:
         </para>
         <list type="bullet">
-          <item>binary</item>
-          <item>image</item>
-          <item>varbinary</item>
-          <item>udt</item>
+          <item><description>binary</description></item>
+          <item><description>image</description></item>
+          <item><description>varbinary</description></item>
+          <item><description>udt</description></item>
         </list>
       </exception>
     </GetStream>
@@ -1162,11 +1162,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Tried to read a previously-read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Tried to read a previously-read column in sequential mode.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>         
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -1175,12 +1175,12 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       <exception cref="T:System.InvalidCastException">
         <para>The returned type was not one of the types below:</para>
         <list type="bullet">
-          <item>char</item>
-          <item>nchar</item>
-          <item>ntext</item>
-          <item>nvarchar</item>
-          <item>text</item>
-          <item>varchar</item>
+          <item><description>char</description></item>
+          <item><description>nchar</description></item>
+          <item><description>ntext</description></item>
+          <item><description>nvarchar</description></item>
+          <item><description>text</description></item>
+          <item><description>varchar</description></item>
         </list>
       </exception>
     </GetTextReader>
@@ -1303,11 +1303,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Trying to read a previously read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Trying to read a previously read column in sequential mode.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>         
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
@@ -1417,11 +1417,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The connection drops or is closed during the data retrieval.</item>
-          <item>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</item>
-          <item>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</item>
-          <item>Trying to read a previously read column in sequential mode.</item>
-          <item>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</item>
+          <item><description>The connection drops or is closed during the data retrieval.</description></item>
+          <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
+          <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
+          <item><description>Trying to read a previously read column in sequential mode.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>         
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
