@@ -608,6 +608,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadSequentialDecreasingChunks()
         {
+            // pattern repeat input allows you to more easily identify if chunks are incorrectly
+            //  related to each other by seeing the start and end of sequential chunks and checking
+            //  if they correctly move to the next char while debugging
+            // simply repeating a single char can't tell you where in the string it went wrong.
             const string baseString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             StringBuilder inputBuilder = new StringBuilder();
             while (inputBuilder.Length < (64 * 1024))
