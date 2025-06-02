@@ -7,20 +7,20 @@ using Microsoft.Data.SqlClient;
 #nullable enable
 namespace Microsoft.Data.SqlTypes
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/SqlFloatVector/*' />
-    public class SqlFloatVector : INullable, ISqlVector
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/SqlVectorFloat32/*' />
+    public class SqlVectorFloat32 : INullable, ISqlVector
     {
         #region Constructors
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ctor1/*' />
-        public SqlFloatVector(int length)
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ctor1/*' />
+        public SqlVectorFloat32(int length)
         : this()
         {
             _elementCount = length;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ctor2/*' />
-        public SqlFloatVector(float[] values)
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ctor2/*' />
+        public SqlVectorFloat32(float[] values)
         : this()
         {
             if (values == null)
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlTypes
         #endregion
 
         #region Methods
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ToArray/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ToArray/*' />
         public float[] ToArray()
         {
 
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlTypes
 
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ToString/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ToString/*' />
         public override string ToString()
         {
             if (IsNull || _rawbytes == null)
@@ -75,12 +75,12 @@ namespace Microsoft.Data.SqlTypes
         #endregion
 
         #region Properties
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/IsNull/*' />
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/IsNull/*' />
         public bool IsNull => _rawbytes == null || _rawbytes.Length == 0;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/Null/*' />
-        public static SqlFloatVector Null => new(0);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFloatVector.xml' path='docs/members[@name="SqlFloatVector"]/ElementCount/*' />
-        public int ElementCount => _elementCount;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/Null/*' />
+        public static SqlVectorFloat32? Null => new(0);
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ElementCount/*' />
+        public int Length => _elementCount;
 
         byte ISqlVector.ElementType => _elementType;
         byte ISqlVector.ElementSize => _elementSize;
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlTypes
                 if (_rawbytes is null)
                 {
                     throw new System.NullReferenceException(
-                        $"SqlFloatVector is null");
+                        $"SqlVectorFloat32 is null");
                 }
                 return _rawbytes;
             }
@@ -128,14 +128,14 @@ namespace Microsoft.Data.SqlTypes
         }
 
         // Acquire the name and size of each T element.
-        private SqlFloatVector()
+        private SqlVectorFloat32()
         {
             _elementType = (byte)MetaType.SqlVectorElementType.Float32;
             _elementSize = (byte)sizeof(float);
             _rawbytes = Array.Empty<byte>();
         }
 
-        internal SqlFloatVector(byte[] rawbytes)
+        internal SqlVectorFloat32(byte[] rawbytes)
         {
             if (!ValidateRawBytes(rawbytes))
             {

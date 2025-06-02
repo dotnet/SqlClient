@@ -6832,7 +6832,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     var sqlVectorProps = (ISqlVector)sqlParam.Value;
                     paramList.Append('(');
-                    paramList.Append(sqlVectorProps.ElementCount);
+                    paramList.Append(sqlVectorProps.Length);
                     paramList.Append(')');
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType != SqlDbType.Timestamp && mt.SqlDbType != SqlDbType.Udt && SqlDbType.Structured != mt.SqlDbType)

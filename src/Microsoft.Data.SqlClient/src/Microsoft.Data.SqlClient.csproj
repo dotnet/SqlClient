@@ -16,6 +16,5 @@
     <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" Condition="'$(TargetFramework)' == 'net462'" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
-    <!-- <PackageReference Include="System.Text.Json" Version="8.0.5" /> -->
   </ItemGroup> 
 </Project>

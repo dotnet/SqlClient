@@ -2835,19 +2835,19 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlFloatVector/*' />
-        virtual public SqlFloatVector GetSqlFloatVector(int i)
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVectorFloat32/*' />
+        virtual public SqlVectorFloat32 GetSqlVectorFloat32(int i)
         {
             ReadColumn(i);
             int elementCount = (_metaData[i].length - 8) / 4;
 
             if (!_data[i].IsNull)
             {
-                return new SqlFloatVector(_data[i].SqlBinary.Value);
+                return new SqlVectorFloat32(_data[i].SqlBinary.Value);
             }
             else
             {
-                return new SqlFloatVector(elementCount);
+                return new SqlVectorFloat32(elementCount);
             }
         }
 
@@ -2975,7 +2975,7 @@ namespace Microsoft.Data.SqlClient
                 switch (_metaData[i].scale)
                 {
                     case 0:
-                        return GetSqlFloatVector(i).ToString();
+                        return GetSqlVectorFloat32(i).ToString();
                     default:
                         throw new NotSupportedException($"Unsupported vector type");
                 }
@@ -3020,7 +3020,7 @@ namespace Microsoft.Data.SqlClient
                     switch (_metaData[i].scale)
                     {
                         case 0:
-                            return GetSqlFloatVector(i);
+                            return GetSqlVectorFloat32(i);
                         default:
                             throw new NotSupportedException($"Unsupported vector type");
                     }

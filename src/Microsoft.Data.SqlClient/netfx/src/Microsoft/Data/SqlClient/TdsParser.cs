@@ -10222,7 +10222,7 @@ namespace Microsoft.Data.SqlClient
                     if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
                         var sqlVectorProps = ((ISqlVector)param.Value);
-                        maxsize = 8 + sqlVectorProps.ElementCount * sqlVectorProps.ElementSize;
+                        maxsize = 8 + sqlVectorProps.Length * sqlVectorProps.ElementSize;
                     }
 
                     WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);

@@ -959,15 +959,15 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       <summary>Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlJson"/>.</summary>
       <returns>A <see cref="T:Microsoft.Data.SqlTypes.SqlJson"/> object representing the column at the given ordinal.</returns>
     </GetSqlJson>
-    <GetSqlFloatVector>
+    <GetSqlVectorFloat32>
       <param name="i"></param>
       <summary>
-        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlFloatVector"/>.
+        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlVectorFloat32"/>.
       </summary>
       <returns>
-        A <see cref="T:Microsoft.Data.SqlTypes.SqlFloatVector"/> object representing the column at the given ordinal.
+        A <see cref="T:Microsoft.Data.SqlTypes.SqlVectorFloat32"/> object representing the column at the given ordinal.
       </returns>
-    </GetSqlFloatVector>
+    </GetSqlVectorFloat32>
     <GetSqlMoney>
       <param name="i">
         The zero-based column ordinal.

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <docs>
-  <members name="SqlFloatVector">
-    <SqlFloatVector>
+  <members name="SqlVectorFloat32">
+    <SqlVectorFloat32>
       <summary>Represents the vector of float datatype in SQL Server.</summary>
-    </SqlFloatVector>
+    </SqlVectorFloat32>
     <ctor1>
       <param name="length"></param>
       <summary>
@@ -13,7 +13,7 @@
     <ctor2>
       <param name="values"></param>
       <summary>
-        Takes an array of float values as input and initializes a new instance of the SqlFloatVector class.
+        Takes an array of float values as input and initializes a new instance of the SqlVectorFloat32 class.
       </summary>
     </ctor2>
     <IsNull>

@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Gets the number of elements in the vector.
         /// </summary>
-        int ElementCount { get; }
+        int Length { get; }
 
         /// <summary>
         /// Gets the type of the elements in vector.

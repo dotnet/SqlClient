@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient
                  switch (elementType)
                  {
                      case 0x0:
-                         return new SqlFloatVector(elementCount);
+                         return new SqlVectorFloat32(elementCount);
                      default:
                         throw ADP.InvalidEnumerationValue(typeof(MetaType.SqlVectorElementType), elementType);
                  }
@@ -780,7 +780,7 @@ namespace Microsoft.Data.SqlClient
              switch (elementType)
              {
                 case 0x0:
-                    return new SqlFloatVector((byte[])_sqlBufferReturnValue.Value);
+                    return new SqlVectorFloat32((byte[])_sqlBufferReturnValue.Value);
                 default:
                     throw ADP.InvalidEnumerationValue(typeof(MetaType.SqlVectorElementType), elementType);
              }
@@ -2353,7 +2353,7 @@ namespace Microsoft.Data.SqlClient
                         value = ((TimeOnly)value).ToTimeSpan();
                     }
 #endif
-                    else if (currentType == typeof(SqlFloatVector))
+                    else if (currentType == typeof(SqlVectorFloat32))
                     {
                         value = (value as ISqlVector).VectorPayload;
                     }
