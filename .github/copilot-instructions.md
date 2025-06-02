@@ -1,6 +1,6 @@
 This is a .NET repo that targets .NET Framework 4.2.6, .NET 8.0, and .NET 9.0.
 
-This repo contains many C# projets.  The main solution file is src/Microsoft.Data.SqlClient.sln.
+This repo contains many C# projects.  The main solution file is src/Microsoft.Data.SqlClient.sln.
 
 Consider the build.proj file to understand what build targets are available.
 
