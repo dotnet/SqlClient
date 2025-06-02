@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Principal;
@@ -1027,7 +1028,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public class MDSEventListener : BaseEventListener
         {
+            private static Type s_activityCorrelatorType = Type.GetType("Microsoft.Data.Common.ActivityCorrelator, Microsoft.Data.SqlClient");
+            private static PropertyInfo s_currentActivityProperty = s_activityCorrelatorType.GetProperty("Current", BindingFlags.NonPublic | BindingFlags.Static);
+
+            public readonly HashSet<string> ActivityIDs = new();
+
             public override string Name => MDSEventSourceName;
+
+            protected override void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+                object currentActivity = s_currentActivityProperty.GetValue(null);
+                string activityId = GetActivityId(currentActivity);
+
+                ActivityIDs.Add(activityId);
+            }
+
+            private static string GetActivityId(object currentActivity)
+            {
+                Type activityIdType = currentActivity.GetType();
+                FieldInfo idField = activityIdType.GetField("Id", BindingFlags.NonPublic | BindingFlags.Instance);
+                FieldInfo sequenceField = activityIdType.GetField("Sequence", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                Guid id = (Guid)idField.GetValue(currentActivity);
+                uint sequence = (uint)sequenceField.GetValue(currentActivity);
+
+                // This activity ID format matches the one used in the XEvents trace
+                return string.Format("{0}-{1}", id, sequence).ToUpper();
+            }
         }
 
         public class BaseEventListener : EventListener
@@ -1056,6 +1083,103 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     IDs.Add(eventData.EventId);
                     EventData.Add(eventData);
+                    OnMatchingEventWritten(eventData);
+                }
+            }
+
+            protected virtual void OnMatchingEventWritten(EventWrittenEventArgs eventData)
+            {
+            }
+        }
+
+        public readonly ref struct XEventScope // : IDisposable
+        {
+            private readonly SqlConnection _connection;
+            private readonly bool _useDatabaseSession;
+
+            public string SessionName { get; }
+
+            public XEventScope(SqlConnection connection, string eventSpecification, string targetSpecification)
+            {
+                SessionName = GenerateRandomCharacters("Session");
+                _connection = connection;
+                // SQL Azure only supports database-scoped XEvent sessions
+                _useDatabaseSession = GetSqlServerProperty(connection.ConnectionString, "EngineEdition") == "5";
+
+                SetupXEvent(eventSpecification, targetSpecification);
+            }
+
+            public void Dispose()
+                => DropXEvent();
+
+            public System.Xml.XmlDocument GetEvents()
+            {
+                string xEventQuery = _useDatabaseSession
+                    ? $@"SELECT xet.target_data
+                        FROM sys.dm_xe_database_session_targets AS xet
+                        INNER JOIN sys.dm_xe_database_sessions AS xe
+                           ON (xe.address = xet.event_session_address)
+                        WHERE xe.name = '{SessionName}'"
+                    : $@"SELECT xet.target_data
+                        FROM sys.dm_xe_session_targets AS xet
+                        INNER JOIN sys.dm_xe_sessions AS xe
+                           ON (xe.address = xet.event_session_address)
+                        WHERE xe.name = '{SessionName}'";
+
+                using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
+                {
+                    if (_connection.State == ConnectionState.Closed)
+                    {
+                        _connection.Open();
+                    }
+
+                    string targetData = command.ExecuteScalar() as string;
+                    System.Xml.XmlDocument xmlDocument = new System.Xml.XmlDocument();
+
+                    xmlDocument.LoadXml(targetData);
+                    return xmlDocument;
+                }
+            }
+
+            private void SetupXEvent(string eventSpecification, string targetSpecification)
+            {
+                string sessionLocation = _useDatabaseSession ? "DATABASE" : "SERVER";
+                string xEventCreateAndStartCommandText = $@"CREATE EVENT SESSION [{SessionName}] ON {sessionLocation}
+                        {eventSpecification}
+                        {targetSpecification}
+                        WITH (
+                            MAX_MEMORY=4096 KB,
+                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
+                            MAX_DISPATCH_LATENCY=30 SECONDS,
+                            MAX_EVENT_SIZE=0 KB,
+                            MEMORY_PARTITION_MODE=NONE,
+                            TRACK_CAUSALITY=ON,
+                            STARTUP_STATE=OFF)
+                            
+                        ALTER EVENT SESSION [{SessionName}] ON {sessionLocation} STATE = START ";
+
+                using (SqlCommand createXEventSession = new SqlCommand(xEventCreateAndStartCommandText, _connection))
+                {
+                    if (_connection.State == ConnectionState.Closed)
+                    {
+                        _connection.Open();
+                    }
+
+                    createXEventSession.ExecuteNonQuery();
+                }
+            }
+
+            private void DropXEvent()
+            {
+                string dropXEventSessionCommand = _useDatabaseSession
+                    ? $"IF EXISTS (select * from sys.dm_xe_database_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON DATABASE"
+                    : $"IF EXISTS (select * from sys.dm_xe_sessions where name ='{SessionName}')" +
+                        $" DROP EVENT SESSION [{SessionName}] ON SERVER";
+
+                using (SqlCommand command = new SqlCommand(dropXEventSessionCommand, _connection))
+                {
+                    command.ExecuteNonQuery();
                 }
             }
         }
