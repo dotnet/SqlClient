@@ -1925,6 +1925,10 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_value == null || _value == DBNull.Value))
+                {
+                    return MetaType.GetDefaultMetaType();
+                }
                 return _metaType;
             }
             if (_value != null && DBNull.Value != _value)
@@ -2180,7 +2184,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (value is ISqlVector sqlVector)
             {
-                return sqlVector.VectorPayload.Length;
+                return TdsEnums.VECTOR_HEADER_SIZE + (sqlVector.Length * sqlVector.ElementSize);
             }
             if (value is SqlChars sqlChars)
             {

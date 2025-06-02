@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/IsNull/*' />
         public bool IsNull => _rawbytes == null || _rawbytes.Length == 0;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/Null/*' />
-        public static SqlVectorFloat32? Null => new(0);
+        public static SqlVectorFloat32? Null => null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ElementCount/*' />
         public int Length => _elementCount;
 

@@ -983,6 +983,7 @@ namespace Microsoft.Data.SqlClient
 
         // Vector Support constants
         internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
+        internal const int VECTOR_HEADER_SIZE = 8; // Size of the vector header in bytes
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
