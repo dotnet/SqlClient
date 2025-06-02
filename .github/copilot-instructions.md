@@ -4,7 +4,7 @@ This repo contains many C# projects.  The main solution file is src/Microsoft.Da
 
 Consider the build.proj file to understand what build targets are available.
 
-Consider the ADO pipeline configurations in the eng/ directory to understand how the we perform continuous integration and release processes.
+Consider the ADO pipeline configurations in the eng/ directory to understand how we perform continuous integration and release processes.
 
 Consider instructions in the policy/ directory to understand our development policies and practices.
 
