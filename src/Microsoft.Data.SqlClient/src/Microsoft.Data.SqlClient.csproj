@@ -4,17 +4,26 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<RootNamespace />
 	</PropertyGroup>
-	
+  
+  <!-- References ====================================================== -->
   <ItemGroup>
-    <Reference Include="System.Configuration" Condition="'$(TargetFramework)' == 'net462'" />
-	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
-	</ItemGroup>
-	<ItemGroup>
+    <!-- References that apply to all target frameworks -->
+    
+    <Reference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
-    <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" Condition="'$(TargetFramework)' == 'net462'" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <!-- References that only apply to net462 -->
+    <Reference Include="System.Configuration" />
+	  <Reference Include="System.Transactions" />
+    <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" />
+	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <!-- References that only apply to netcore -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
   </ItemGroup>
 </Project>
