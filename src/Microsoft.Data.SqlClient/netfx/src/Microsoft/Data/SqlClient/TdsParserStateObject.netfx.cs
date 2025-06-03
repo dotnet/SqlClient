@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient
             string serverName,
             TimeoutTimer timeout,
             out byte[] instanceName,
-            ref string spn,
+            ref string[] spns,
             bool flushCache,
             bool async,
             bool fParallel,
@@ -123,6 +123,19 @@ namespace Microsoft.Data.SqlClient
             string hostNameInCertificate = "",
             string serverCertificateFilename = "")
         {
+            if (isIntegratedSecurity)
+            {
+                if (!string.IsNullOrEmpty(serverSPN))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
+                }
+                else
+                {
+                    // Empty signifies to interop layer that SPN needs to be generated
+                    serverSPN = string.Empty;
+                }
+            }
+
             ConsumerInfo myInfo = CreateConsumerInfo(async);
 
             // serverName : serverInfo.ExtendedServerName
@@ -130,9 +143,10 @@ namespace Microsoft.Data.SqlClient
 
             _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, ref spn, timeout.MillisecondsRemainingInt,
+            _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt,
                 out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
                 iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
+            spns = new[] { serverSPN.TrimEnd() };
         }
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);

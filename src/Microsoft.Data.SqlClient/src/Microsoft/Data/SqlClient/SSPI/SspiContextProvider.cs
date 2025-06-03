@@ -27,17 +27,6 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract bool GenerateSspiClientContext(ReadOnlySpan<byte> incomingBlob, IBufferWriter<byte> outgoingBlobWriter, SspiAuthenticationParameters authParams);
 
-        internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, string serverSpn)
-        {
-            using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
-
-            if (!RunGenerateSspiClientContext(receivedBuff, outgoingBlobWriter, serverSpn))
-            {
-                // If we've hit here, the SSPI context provider implementation failed to generate the SSPI context.
-                SSPIError(SQLMessage.SSPIGenerateError(), TdsEnums.GEN_CLIENT_CONTEXT);
-            }
-        }
-
         internal void SSPIData(ReadOnlySpan<byte> receivedBuff, IBufferWriter<byte> outgoingBlobWriter, ReadOnlySpan<string> serverSpns)
         {
             using var _ = TrySNIEventScope.Create(nameof(SspiContextProvider));
