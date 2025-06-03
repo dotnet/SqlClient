@@ -26,9 +26,6 @@ namespace Microsoft.Data.SqlClient
         protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
 
-        // Async variables
-        protected GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
-
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
         internal int _tracePasswordLength = 0;
@@ -85,24 +82,6 @@ namespace Microsoft.Data.SqlClient
         /////////////////////
         // General methods //
         /////////////////////
-
-        protected ConsumerInfo CreateConsumerInfo(bool async)
-        {
-            ConsumerInfo myInfo = new ConsumerInfo();
-
-            Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
-
-            myInfo.defaultBufferSize = _outBuff.Length; // Obtain packet size from outBuff size.
-
-            if (async)
-            {
-                myInfo.readDelegate = SNILoadHandle.SingletonInstance.ReadAsyncCallbackDispatcher;
-                myInfo.writeDelegate = SNILoadHandle.SingletonInstance.WriteAsyncCallbackDispatcher;
-                _gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
-                myInfo.key = (IntPtr)_gcHandle;
-            }
-            return myInfo;
-        }
 
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
 

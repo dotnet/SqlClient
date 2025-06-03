@@ -20,6 +20,8 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
 
+        private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
+
         private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         internal TdsParserStateObjectNative(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
@@ -107,6 +109,24 @@ namespace Microsoft.Data.SqlClient
             {
                 pendingDNSInfo = null;
             }
+        }
+
+        private ConsumerInfo CreateConsumerInfo(bool async)
+        {
+            ConsumerInfo myInfo = new ConsumerInfo();
+
+            Debug.Assert(_outBuff.Length == _inBuff.Length, "Unexpected unequal buffers.");
+
+            myInfo.defaultBufferSize = _outBuff.Length; // Obtain packet size from outBuff size.
+
+            if (async)
+            {
+                myInfo.readDelegate = SNILoadHandle.SingletonInstance.ReadAsyncCallbackDispatcher;
+                myInfo.writeDelegate = SNILoadHandle.SingletonInstance.WriteAsyncCallbackDispatcher;
+                _gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
+                myInfo.key = (IntPtr)_gcHandle;
+            }
+            return myInfo;
         }
 
         internal override void CreatePhysicalSNIHandle(
