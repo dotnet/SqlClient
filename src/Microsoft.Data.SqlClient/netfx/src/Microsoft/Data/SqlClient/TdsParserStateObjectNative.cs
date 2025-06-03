@@ -208,6 +208,50 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal override void Dispose()
+        {
+
+            SafeHandle packetHandle = _sniPacket;
+            SafeHandle sessionHandle = _sessionHandle;
+            SafeHandle asyncAttnPacket = _sniAsyncAttnPacket;
+            _sniPacket = null;
+            _sessionHandle = null;
+            _sniAsyncAttnPacket = null;
+
+            DisposeCounters();
+
+            if (sessionHandle != null || packetHandle != null)
+            {
+                // Comment CloseMARSSession
+                // UNDONE - if there are pending reads or writes on logical connections, we need to block
+                // here for the callbacks!!!  This only applies to async.  Should be fixed by async fixes for
+                // AD unload/exit.
+
+                // TODO: Make this a BID trace point!
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                { }
+                finally
+                {
+                    if (packetHandle != null)
+                    {
+                        packetHandle.Dispose();
+                    }
+                    if (asyncAttnPacket != null)
+                    {
+                        asyncAttnPacket.Dispose();
+                    }
+                    if (sessionHandle != null)
+                    {
+                        sessionHandle.Dispose();
+                        DecrementPendingCallbacks(true); // Will dispose of GC handle.
+                    }
+                }
+            }
+
+            DisposePacketCache();
+        }
+
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         protected override void FreeGcHandle(int remaining, bool release)
         {

@@ -71,8 +71,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 
-        internal abstract void Dispose();
-
         internal abstract uint CheckConnection();
 
         internal int DecrementPendingCallbacks(bool release)

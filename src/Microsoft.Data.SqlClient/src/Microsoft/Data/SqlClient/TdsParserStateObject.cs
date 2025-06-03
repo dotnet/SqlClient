@@ -514,6 +514,8 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
 
+        internal abstract void Dispose();
+
         protected abstract void FreeGcHandle(int remaining, bool release);
 
         internal abstract bool IsFailedHandle();
