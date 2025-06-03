@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
@@ -398,6 +400,263 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadXmlData()
+        {
+            const string xml = @"<catalog id1=""00000000-0000-0000-0000-000000000000"" id2=""00000000-0000-0000-0000-000000000000"" id3=""00000000-0000-0000-0000-000000000000"" id4=""00000000-0000-0000-0000-000000000000"" id5=""00000000-0000-0000-0000-000000000000"">
+   <book id=""bk101"">
+      <author>Gambardella, Matthew</author>
+      <title>XML Developer's Guide</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications 
+      with XML.</description>
+   </book>
+   <book id=""bk102"">
+      <author>Ralls, Kim</author>
+      <title>Midnight Rain</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2000-12-16</publish_date>
+      <description>A former architect battles corporate zombies, 
+      an evil sorceress, and her own childhood to become queen 
+      of the world.</description>
+   </book>
+   <book id=""bk103"">
+      <author>Corets, Eva</author>
+      <title>Maeve Ascendant</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2000-11-17</publish_date>
+      <description>After the collapse of a nanotechnology 
+      society in England, the young survivors lay the 
+      foundation for a new society.</description>
+   </book>
+   <book id=""bk104"">
+      <author>Corets, Eva</author>
+      <title>Oberon's Legacy</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2001-03-10</publish_date>
+      <description>In post-apocalypse England, the mysterious 
+      agent known only as Oberon helps to create a new life 
+      for the inhabitants of London. Sequel to Maeve 
+      Ascendant.</description>
+   </book>
+   <book id=""bk105"">
+      <author>Corets, Eva</author>
+      <title>The Sundered Grail</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2001-09-10</publish_date>
+      <description>The two daughters of Maeve, half-sisters, 
+      battle one another for control of England. Sequel to 
+      Oberon's Legacy.</description>
+   </book>
+   <book id=""bk106"">
+      <author>Randall, Cynthia</author>
+      <title>Lover Birds</title>
+      <genre>Romance</genre>
+      <price>4.95</price>
+      <publish_date>2000-09-02</publish_date>
+      <description>When Carla meets Paul at an ornithology 
+      conference, tempers fly as feathers get ruffled.</description>
+   </book>
+   <book id=""bk107"">
+      <author>Thurman, Paula</author>
+      <title>Splish Splash</title>
+      <genre>Romance</genre>
+      <price>4.95</price>
+      <publish_date>2000-11-02</publish_date>
+      <description>A deep sea diver finds true love twenty 
+      thousand leagues beneath the sea.</description>
+   </book>
+   <book id=""bk108"">
+      <author>Knorr, Stefan</author>
+      <title>Creepy Crawlies</title>
+      <genre>Horror</genre>
+      <price>4.95</price>
+      <publish_date>2000-12-06</publish_date>
+      <description>An anthology of horror stories about roaches,
+      centipedes, scorpions  and other insects.</description>
+   </book>
+   <book id=""bk109"">
+      <author>Kress, Peter</author>
+      <title>Paradox Lost</title>
+      <genre>Science Fiction</genre>
+      <price>6.95</price>
+      <publish_date>2000-11-02</publish_date>
+      <description>After an inadvertant trip through a Heisenberg
+      Uncertainty Device, James Salway discovers the problems 
+      of being quantum.</description>
+   </book>
+   <book id=""bk110"">
+      <author>O'Brien, Tim</author>
+      <title>Microsoft .NET: The Programming Bible</title>
+      <genre>Computer</genre>
+      <price>36.95</price>
+      <publish_date>2000-12-09</publish_date>
+      <description>Microsoft's .NET initiative is explored in 
+      detail in this deep programmer's reference.</description>
+   </book>
+   <book id=""bk111"">
+      <author>O'Brien, Tim</author>
+      <title>MSXML3: A Comprehensive Guide</title>
+      <genre>Computer</genre>
+      <price>36.95</price>
+      <publish_date>2000-12-01</publish_date>
+      <description>The Microsoft MSXML3 parser is covered in 
+      detail, with attention to XML DOM interfaces, XSLT processing, 
+      SAX and more.</description>
+   </book>
+   <book id=""bk112"">
+      <author>Galos, Mike</author>
+      <title>Visual Studio 7: A Comprehensive Guide</title>
+      <genre>Computer</genre>
+      <price>49.95</price>
+      <publish_date>2001-04-16</publish_date>
+      <description>Microsoft Visual Studio 7 is explored in depth,
+      looking at how Visual Basic, Visual C++, C#, and ASP+ are 
+      integrated into a comprehensive development 
+      environment.</description>
+   </book>
+</catalog>";
+
+            string tableName = DataTestUtility.GenerateObjectName();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.PersistSecurityInfo = true;
+            builder.PacketSize = 3096; // should reproduce failure that this tests for in <100 reads
+
+            using (var connection = new SqlConnection(builder.ToString()))
+            {
+                await connection.OpenAsync();
+
+                try
+                {
+                    // setup
+                    using (var dropCommand = connection.CreateCommand())
+                    {
+                        dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                        dropCommand.ExecuteNonQuery();
+                    }
+
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = $"CREATE TABLE [{tableName}] (Id int PRIMARY KEY, Data xml NOT NULL)";
+                        createCommand.ExecuteNonQuery();
+                    }
+
+                    for (var i = 0; i < 100; i++)
+                    {
+                        using (var insertCommand = connection.CreateCommand())
+                        {
+                            insertCommand.CommandText = $"INSERT INTO [{tableName}] (Id, Data) VALUES (@id, @data)";
+                            insertCommand.Parameters.AddWithValue("@id", i);
+                            insertCommand.Parameters.AddWithValue("@data", xml);
+                            insertCommand.ExecuteNonQuery();
+                        }
+                    }
+
+                    // execute
+                    int id = 0;
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = $"SELECT Data FROM [{tableName}] ORDER BY Id";
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            string expectedResult = null;
+                            while (await reader.ReadAsync())
+                            {
+                                var result = reader.GetString(0);
+                                if (expectedResult == null)
+                                {
+                                    expectedResult = result;
+                                }
+                                else
+                                {
+                                    Assert.Equal(expectedResult, result);
+                                }
+                                id++;
+                            }
+                        }
+                    }
+                    return id;
+
+                }
+                finally
+                {
+                    try
+                    {
+                        using (var dropCommand = connection.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadBinaryData()
+        {
+            const int Size = 20_000;
+
+            byte[] data = Enumerable.Range(0, Size)
+                .Select(i => (byte)(i % 256))
+                .ToArray();
+            string tableName = DataTestUtility.GenerateObjectName();
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                try
+                {
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = $@"
+DROP TABLE IF EXISTS [{tableName}]
+CREATE TABLE [{tableName}] (Id INT IDENTITY(1,1) PRIMARY KEY, Data VARBINARY(MAX));
+INSERT INTO [{tableName}] (Data) VALUES (@data);";
+                        createCommand.Parameters.Add(new SqlParameter("@data", SqlDbType.VarBinary, Size) { Value = data });
+                        await createCommand.ExecuteNonQueryAsync();
+                    }
+
+                    using (var command = connection.CreateCommand())
+                    {
+
+                        command.CommandText = $"SELECT Data FROM [{tableName}]";
+                        command.Parameters.Clear();
+                        var result = (byte[])await command.ExecuteScalarAsync();
+
+                        Assert.Equal(data, result);
+                    }
+
+                }
+                finally
+                {
+                    try
+                    {
+                        using (var dropCommand = connection.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
         }
 
         // Synapse: Cannot find data type 'rowversion'.

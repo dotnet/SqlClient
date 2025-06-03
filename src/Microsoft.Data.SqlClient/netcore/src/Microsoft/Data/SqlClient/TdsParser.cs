@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
-        private SSPIContextProvider _authenticationProvider;
+        private SspiContextProvider _authenticationProvider;
 
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
@@ -413,7 +413,7 @@ namespace Microsoft.Data.SqlClient
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
-                _authenticationProvider = _physicalStateObj.CreateSSPIContextProvider();
+                _authenticationProvider = _physicalStateObj.CreateSspiContextProvider();
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
@@ -2781,6 +2781,7 @@ namespace Microsoft.Data.SqlClient
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
                             uint bufferSizeResult = _physicalStateObj.SetConnectionBufferSize(ref unsignedPacketSize);
+
                             Debug.Assert(bufferSizeResult == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
 
@@ -6499,8 +6500,8 @@ namespace Microsoft.Data.SqlClient
             bytes = null;
             int offset = 0;
             byte[] temp = null;
-            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
-            if (isAvailable)
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            if (canContinue)
             {
                 if (isContinuing || isStarting)
                 {
@@ -11365,24 +11366,38 @@ namespace Microsoft.Data.SqlClient
 
             int notificationHeaderSize = GetNotificationHeaderSize(notificationRequest);
 
-            const int marsHeaderSize = 18; // 4 + 2 + 8 + 4
+            const int MarsHeaderSize = 18; // 4 + 2 + 8 + 4
 
-            int totalHeaderLength = 4 + marsHeaderSize + notificationHeaderSize;
+            // Header Length (DWORD)
+            // Header Type (ushort)
+            // Trace Data Guid
+            // Trace Data Sequence Number (uint)
+            const int TraceHeaderSize = 26;  // 4 + 2 + sizeof(Guid) + sizeof(uint);
+
+            // TotalLength  - DWORD  - including all headers and lengths, including itself
+            int totalHeaderLength = IncludeTraceHeader ? (4 + MarsHeaderSize + notificationHeaderSize + TraceHeaderSize) : (4 + MarsHeaderSize + notificationHeaderSize);
             Debug.Assert(stateObj._outBytesUsed == stateObj._outputHeaderLen, "Output bytes written before total header length");
             // Write total header length
             WriteInt(totalHeaderLength, stateObj);
 
-            // Write Mars header length
-            WriteInt(marsHeaderSize, stateObj);
-            // Write Mars header data
+            // Write MARS header length and data
+            WriteInt(MarsHeaderSize, stateObj);
             WriteMarsHeaderData(stateObj, CurrentTransaction);
 
-            if (0 != notificationHeaderSize)
+            if (notificationHeaderSize != 0)
             {
-                // Write Notification header length
+                // Write notification header length and data
+                // MS-TDS 2.2.5.3.1: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/e168d373-a7b7-41aa-b6ca-25985466a7e0
                 WriteInt(notificationHeaderSize, stateObj);
-                // Write notificaiton header data
                 WriteQueryNotificationHeaderData(notificationRequest, stateObj);
+            }
+
+            if (IncludeTraceHeader)
+            {
+                // Write trace header length and data
+                // MS-TDS 2.2.5.3.3: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/6e9f106b-df6e-4cbe-a6eb-45ceb10c63be
+                WriteInt(TraceHeaderSize, stateObj);
+                WriteTraceHeaderData(stateObj);
             }
         }
 
@@ -12982,9 +12997,9 @@ namespace Microsoft.Data.SqlClient
             char[] temp = null;
             bool buffIsRented = false;
             int startOffset = 0;
-            (bool isAvailable, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
+            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
 
-            if (isAvailable)
+            if (canContinue)
             {
                 if (isContinuing || isStarting)
                 {
@@ -13003,7 +13018,7 @@ namespace Microsoft.Data.SqlClient
                 length >> 1,
                 stateObj,
                 out length,
-                supportRentedBuff: !isAvailable, // do not use the arraypool if we are going to keep the buffer in the snapshot
+                supportRentedBuff: !canContinue, // do not use the arraypool if we are going to keep the buffer in the snapshot
                 rentedBuff: ref buffIsRented,
                 startOffset,
                 isStarting || isContinuing

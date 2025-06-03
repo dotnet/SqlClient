@@ -3805,7 +3805,7 @@
     <value>Associazione della porta al meccanismo di completamento I/O non riuscita</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>Il socket è null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Errore di timeout</value>
@@ -4739,5 +4739,8 @@
   </data>
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>DataColumn '{0}' mancante per la SourceColumn '{2}'.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>L'elenco SqlBatchCommand non è stato inizializzato.</value>
   </data>
 </root>

@@ -3805,7 +3805,7 @@
     <value>Bağlantı noktasını G/Ç tamamlama mekanizması ile ilişkilendirme hatası</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>Yuva değeri null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Zaman aşımı hatası</value>
@@ -4739,5 +4739,8 @@
   </data>
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>SourceColumn '{2}' için DataColumn '{0}' eksik.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand listesi başlatılmadı.</value>
   </data>
 </root>

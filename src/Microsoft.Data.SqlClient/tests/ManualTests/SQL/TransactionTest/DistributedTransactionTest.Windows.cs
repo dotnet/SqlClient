@@ -48,15 +48,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool s_EnlistedTransactionPreservedWhilePooledCondition => DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotX86Architecture;
 
         [ConditionalFact(nameof(s_EnlistedTransactionPreservedWhilePooledCondition), Timeout = 10000)]
-        public void Test_EnlistedTransactionPreservedWhilePooled()
+        public async Task Test_EnlistedTransactionPreservedWhilePooled()
         {
 #if NET
             TransactionManager.ImplicitDistributedTransactions = true;
 #endif
-            RunTestSet(EnlistedTransactionPreservedWhilePooled);
+            await RunTestSet(EnlistedTransactionPreservedWhilePooled);
         }
 
-        private void EnlistedTransactionPreservedWhilePooled()
+        private async Task EnlistedTransactionPreservedWhilePooled()
         {
             Exception commandException = null;
             Exception transactionException = null;
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     // Leave first connection open so that the transaction is promoted
                     SqlConnection rootConnection = new SqlConnection(ConnectionString);
-                    rootConnection.Open();
+                    await rootConnection.OpenAsync();
                     using (SqlCommand command = rootConnection.CreateCommand())
                     {
                         command.CommandText = $"INSERT INTO {TestTableName} VALUES ({InputCol1}, '{InputCol2}')";
@@ -109,25 +109,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Even if an application swallows the command exception, completing the transaction should indicate that it failed.
-            var expectedTransactionExceptions = new[] { typeof(TransactionAbortedException), typeof(TransactionInDoubtException) };
+            Type[] expectedTransactionExceptions = new[] { typeof(TransactionAbortedException), typeof(TransactionInDoubtException) };
             Assert.Contains(transactionException.GetType(), expectedTransactionExceptions);
 
-            var expectedCommandExceptions = new[] { typeof(SqlException), typeof(InvalidOperationException) };
+            Type[] expectedCommandExceptions = new[] { typeof(SqlException), typeof(InvalidOperationException) };
             Assert.Contains(commandException.GetType(), expectedCommandExceptions);
 
-            if (commandException is SqlException)
+            if (commandException is SqlException exception)
             {
                 // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-8000-to-8999?view=sql-server-ver16
                 // The distributed transaction failed
                 // See https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors-3000-to-3999?view=sql-server-ver16
                 // Error 3971 corresponds to "The server failed to resume the transaction."
                 var expectedExceptionCodes = new[] { 3971, 8525 };
-                Assert.Contains(((SqlException)commandException).Number, expectedExceptionCodes);
+                Assert.Contains(exception.Number, expectedExceptionCodes);
             }
 
             // Verify that nothing made it into the database
             DataTable result = DataTestUtility.RunQuery(ConnectionString, $"select col2 from {TestTableName} where col1 = {InputCol1}");
-            Assert.True(result.Rows.Count == 0);
+            Assert.Equal(0, result.Rows.Count);
         }
 
         private void KillProcess(int serverProcessId)
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const int InputCol1 = 1;
         private const string InputCol2 = "One";
 
-        private static void RunTestSet(Action TestCase)
+        private static async Task RunTestSet(Func<Task> TestCase)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
 
@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {
-                TestCase();
+                await TestCase();
             }
             finally
             {

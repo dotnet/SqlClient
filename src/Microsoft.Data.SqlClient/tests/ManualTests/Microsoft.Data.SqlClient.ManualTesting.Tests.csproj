@@ -178,6 +178,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="TracingTests\XEventsTracingTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
@@ -250,8 +251,10 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
+    <Compile Include="TracingTests\MetricsTest.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="TracingTests\EventCounterTest.cs" />
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>
@@ -339,7 +342,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.utility" Version="$(XunitVersion)" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
   <ItemGroup>

@@ -1301,7 +1301,18 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to SqlBatchCommand list has not been initialized..
+        /// </summary>
+        internal static string ADP_NoSqlBatchCommandList
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_NoSqlBatchCommandList", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The stored procedure &apos;{0}&apos; doesn&apos;t exist..
         /// </summary>

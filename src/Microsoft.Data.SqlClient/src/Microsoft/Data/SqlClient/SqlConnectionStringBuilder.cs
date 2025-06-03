@@ -749,7 +749,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
         private sealed class SqlDataSourceConverter : StringConverter
         {
             private StandardValuesCollection _standardValues;
@@ -768,10 +767,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Get the sources rowset for the SQLOLEDB enumerator
                     DataTable table = SqlClientFactory.Instance.CreateDataSourceEnumerator().GetDataSources();
-                    string ServerName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("ServerName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
-                    string InstanceName = typeof(System.Data.Sql.SqlDataSourceEnumerator).GetField("InstanceName", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null).ToString();
-                    DataColumn serverName = table.Columns[ServerName];
-                    DataColumn instanceName = table.Columns[InstanceName];
+                    DataColumn serverName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil.ServerNameCol];
+                    DataColumn instanceName = table.Columns[Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil.InstanceNameCol];
                     DataRowCollection rows = table.Rows;
 
                     string[] serverNames = new string[rows.Count];
@@ -889,7 +886,7 @@ namespace Microsoft.Data.SqlClient
                 return standardValues;
             }
         }
-#else    
+#if NET
         private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.TransactionBinding,
@@ -1194,9 +1191,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
         [RefreshProperties(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string DataSource
         {
             get => _dataSource;
@@ -1378,9 +1373,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
         [RefreshProperties(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
+        [TypeConverter("Microsoft.Data.SqlClient.SqlConnectionStringBuilder+SqlDataSourceConverter, Microsoft.Data.SqlClient")]
         public string FailoverPartner
         {
             get => _failoverPartner;

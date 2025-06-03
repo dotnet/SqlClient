@@ -3805,7 +3805,7 @@
     <value>Falha ao associar porta e mecanismo de conclusão de E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value>Socket is null</value>
+    <value>O soquete é nulo</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Erro de tempo limite</value>
@@ -4739,5 +4739,8 @@
   </data>
   <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
     <value>DataColumn '{0}' de SourceColumn '{2}' inexistente.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>A lista SqlBatchCommand não foi inicializada.</value>
   </data>
 </root>

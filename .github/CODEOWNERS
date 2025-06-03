@@ -1,0 +1,25 @@
+#==============================================================================
+# This is the global GitHub code owners file for the SqlClient repo.  No other
+# CODEOWNERS files should exist in the repo.
+#
+# Code owners documentation is here:
+#
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# The entire repo is owned by the SqlClientDevTeam GitHub team:
+#
+# https://github.com/orgs/dotnet/teams/sqlclientdevteam
+#
+# This team must be configured with write access to the repo for code ownership
+# rules to apply.
+#
+# The main branch should also be protected and require all PRs to be approved
+# by owners.  See:
+#
+# https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-pull-request-reviews-before-merging
+#
+# There should be no other owners specified in the repo.
+#
+* @dotnet/sqlclientdevteam
+
+#==============================================================================

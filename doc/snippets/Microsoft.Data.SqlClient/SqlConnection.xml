@@ -236,8 +236,35 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
       <value>
         The access token for the connection.
       </value>
+      <exception cref="T:System.InvalidOperationException">
+        The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" />
+        is combined with other conflicting authentication configurations.
+      </exception>
       <remarks>
-        The AccessToken is a part of the connection pool key. Care should be taken when using this property to manage your own access token. The application is responsible for knowing when the token expires and connections from the pool should no longer be used. If you set a minimum pool size > 0 along with AccessToken, you must call <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)" /> after the access token expires to ensure the connection pool doesn't maintain those connections indefinitely.
+        <para>
+          The AccessToken is a part of the connection pool key.  Supplying a
+          refreshed access token to a new connection, with all other properties
+          the same as other existing connections, will place that new connection
+          into a new pool.  Care should be taken when using this property to
+          manage your own access token.  Consider using the
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+          property instead, which will not consider refreshed access tokens as
+          distinct for the purposes of connection pooling.
+        </para>
+        <para>
+          The application is responsible for knowing when the access token
+          expires and the connections from the pool should no longer be used. If
+          you set a minimum pool size &gt; 0 along with an AccessToken, you must
+          call
+          <see cref="M:Microsoft.Data.SqlClient.SqlConnection.ClearPool(Microsoft.Data.SqlClient.SqlConnection)" />
+          after the access token expires to ensure the connection pool doesn't
+          maintain the physical connections (created by the pool) indefinitely.
+        </para>
+        <para>
+          This property is mutually exclusive with the
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" />
+          property, among others.
+        </para>
       </remarks>
     </AccessToken>
     <AccessTokenCallback>
@@ -271,10 +298,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
 
               const string defaultScopeSuffix = "/.default";
 
-              // Reuse credential objects to take advantage of underlying token caches
+              // Reuse credential objects to take advantage of underlying token caches.
               private static ConcurrentDictionar&lt;string, DefaultAzureCredential&gt; credentials = new ConcurrentDictionary&lt;string, DefaultAzureCredential&gt;();
 
-              // Use a shared callback function for connections that should be in the same connection pool
+              // Use a shared callback function for connections that should be in the same connection pool.
               private static Func&lt;SqlAuthenticationParameters, CancellationToken, Task&lt;SqlAuthenticationToken&gt;&gt; myAccessTokenCallback =
                   async (authParams, cancellationToken) =>
                   {
@@ -285,7 +312,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
                       DefaultAzureCredentialOptions options = new DefaultAzureCredentialOptions();
                       options.ManagedIdentityClientId = authParams.UserId;
 
-                      // Reuse the same credential object if we are using the same MI Client ID
+                      // Reuse the same credential object if we are using the same MI Client ID.
                       AccessToken token = await credentials.GetOrAdd(authParams.UserId, new DefaultAzureCredential(options)).GetTokenAsync(
                           new TokenRequestContext(new string[] { scope }),
                           cancellationToken);
@@ -317,6 +344,26 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
       <exception cref="T:System.InvalidOperationException">
         The <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback" /> is combined with other conflicting authentication configurations.
       </exception>
+      <remarks>
+        <para>
+          The AccessTokenCallback function itself is a part of the connection
+          pool key.  The same callback function should always provide a valid
+          access token of the same security context given the same
+          SqlAuthenticationParameters.  When multiple connections use the same
+          callback function, and all other properties that comprise the pool key
+          are the same, they will be grouped into the same connection pool.
+        </para>
+        <para>
+          When using a token callback function, the connection manages
+          refreshing the tokens returned by the callback.  The application is
+          not responsible for knowing when tokens expire.
+        </para>
+        <para>
+          This property is mutually exclusive with the
+          <see cref="P:Microsoft.Data.SqlClient.SqlConnection.AccessToken" />
+          property, among others.
+        </para>
+      </remarks>
     </AccessTokenCallback>
     <BeginDbTransaction>
       <param name="isolationLevel">
