@@ -488,6 +488,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
     </Compile>
@@ -589,9 +592,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCredential.cs">
       <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
