@@ -48,7 +48,6 @@
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
     <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\AEConnectionStringProviderWithCspParameters.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\AzureKeyVaultKeyFixture.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
