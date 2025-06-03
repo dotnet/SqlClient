@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        public string ColumnMasterKeyPath { get; protected set; }
+        public string ColumnMasterKeyPath { get; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
         public Table BulkCopyAETestTable { get; private set; }
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategy()
             : base(true)
         {
-            ColumnMasterKeyPath = string.Format("{0}/{1}/{2}", StoreLocation.CurrentUser, StoreName.My, ColumnMasterKeyCertificate.Thumbprint);
+            ColumnMasterKeyPath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{ColumnMasterKeyCertificate.Thumbprint}";
         }
 
         protected SQLSetupStrategy(string customKeyPath)

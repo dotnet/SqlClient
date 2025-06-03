@@ -14,6 +14,12 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
     public abstract class CertificateFixtureBase : IDisposable
     {
+        /// <summary>
+        /// Certificates must be created using this provider. Certificates created by PowerShell
+        /// using another provider aren't accessible from RSACryptoServiceProvider, which means
+        /// that we could not roundtrip between SqlColumnEncryptionCertificateStoreProvider and
+        /// SqlColumnEncryptionCspProvider.
+        /// </summary>
         private const string CspProviderName = "Microsoft Enhanced RSA and AES Cryptographic Provider";
 
         private sealed class CertificateStoreContext
