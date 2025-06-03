@@ -67,25 +67,6 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        internal abstract void CreatePhysicalSNIHandle(
-            string serverName,
-            TimeoutTimer timeout,
-            out byte[] instanceName,
-            ref string[] spns,
-            bool flushCache,
-            bool async,
-            bool fParallel,
-            TransparentNetworkResolutionState transparentNetworkResolutionState,
-            int totalTimeout,
-            SqlConnectionIPAddressPreference iPAddressPreference,
-            string cachedFQDN,
-            ref SQLDNSInfo pendingDNSInfo,
-            string serverSPN,
-            bool isIntegratedSecurity = false,
-            bool tlsFirst = false,
-            string hostNameInCertificate = "",
-            string serverCertificateFilename = "");
-
         protected abstract void FreeGcHandle(int remaining, bool release);
 
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);

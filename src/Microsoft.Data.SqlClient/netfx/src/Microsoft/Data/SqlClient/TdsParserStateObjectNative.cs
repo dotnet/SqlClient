@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -104,6 +105,51 @@ namespace Microsoft.Data.SqlClient
             {
                 pendingDNSInfo = null;
             }
+        }
+
+        internal override void CreatePhysicalSNIHandle(
+            string serverName,
+            TimeoutTimer timeout,
+            out byte[] instanceName,
+            ref string[] spns,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity = false,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "",
+            string serverCertificateFilename = "")
+        {
+            if (isIntegratedSecurity)
+            {
+                if (!string.IsNullOrEmpty(serverSPN))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverSPN);
+                }
+                else
+                {
+                    // Empty signifies to interop layer that SPN needs to be generated
+                    serverSPN = string.Empty;
+                }
+            }
+
+            ConsumerInfo myInfo = CreateConsumerInfo(async);
+
+            // serverName : serverInfo.ExtendedServerName
+            // may not use this serverName as key
+
+            _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
+
+            _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt,
+                out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
+                iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
+            spns = new[] { serverSPN.TrimEnd() };
         }
 
         protected override uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)

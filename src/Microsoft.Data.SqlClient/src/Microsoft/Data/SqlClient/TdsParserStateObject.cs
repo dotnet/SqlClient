@@ -12,6 +12,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
+
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
 #endif
@@ -486,6 +488,25 @@ namespace Microsoft.Data.SqlClient
         protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
+
+        internal abstract void CreatePhysicalSNIHandle(
+            string serverName,
+            TimeoutTimer timeout,
+            out byte[] instanceName,
+            ref string[] spns,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            string serverSPN,
+            bool isIntegratedSecurity = false,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "",
+            string serverCertificateFilename = "");
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);
 
