@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
@@ -183,6 +185,16 @@ namespace Microsoft.Data.SqlClient
                     Debug.Fail("Removing a packet from the pending list that was never added to it");
                 }
 #endif
+            }
+        }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+        protected override void FreeGcHandle(int remaining, bool release)
+        {
+            if ((0 == remaining || release) && _gcHandle.IsAllocated)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
+                _gcHandle.Free();
             }
         }
 

@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
 
         // Async variables
-        private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
+        protected GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -112,11 +112,7 @@ namespace Microsoft.Data.SqlClient
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
 
-            if ((0 == remaining || release) && _gcHandle.IsAllocated)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
-                _gcHandle.Free();
-            }
+            FreeGcHandle(remaining, release);
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
