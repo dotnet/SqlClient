@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.Collections.Generic;
 using System.Net.Security;
@@ -10,12 +12,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// SNI connection handle
     /// </summary>
-    internal abstract class SNIHandle
+    internal abstract class SniHandle
     {
         protected static readonly SslProtocols s_supportedProtocols = SslProtocols.None;
 
@@ -47,7 +49,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="receiveCallback">Receive callback</param>
         /// <param name="sendCallback">Send callback</param>
-        public abstract void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback);
+        public abstract void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback);
 
         /// <summary>
         /// Set buffer size
@@ -60,14 +62,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint Send(SNIPacket packet);
+        public abstract uint Send(SniPacket packet);
 
         /// <summary>
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint SendAsync(SNIPacket packet);
+        public abstract uint SendAsync(SniPacket packet);
 
         /// <summary>
         /// Receive a packet synchronously
@@ -75,14 +77,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="packet">SNI packet</param>
         /// <param name="timeoutInMilliseconds">Timeout in Milliseconds</param>
         /// <returns>SNI error code</returns>
-        public abstract uint Receive(out SNIPacket packet, int timeoutInMilliseconds);
+        public abstract uint Receive(out SniPacket packet, int timeoutInMilliseconds);
 
         /// <summary>
         /// Receive a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
         /// <returns>SNI error code</returns>
-        public abstract uint ReceiveAsync(ref SNIPacket packet);
+        public abstract uint ReceiveAsync(ref SniPacket packet);
 
         /// <summary>
         /// Enable SSL
@@ -112,19 +114,22 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public virtual int ReserveHeaderSize => 0;
 
-        public abstract SNIPacket RentPacket(int headerSize, int dataSize);
+        public abstract SniPacket RentPacket(int headerSize, int dataSize);
 
-        public abstract void ReturnPacket(SNIPacket packet);
+        public abstract void ReturnPacket(SniPacket packet);
 
         /// <summary>
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
         public virtual int ProtocolVersion { get; } = 0;
-#if DEBUG
+
+        #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection
         /// </summary>
         public abstract void KillConnection();
-#endif
+        #endif
     }
 }
+
+#endif

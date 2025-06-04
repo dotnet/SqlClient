@@ -2,12 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+#if NET
+
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// This class implements a FIFO Queue with SemaphoreSlim for ordered execution of parallel tasks.
@@ -56,5 +57,6 @@ namespace Microsoft.Data.SqlClient.SNI
             _semaphore.Release();
         }
     }
-
 }
+
+#endif

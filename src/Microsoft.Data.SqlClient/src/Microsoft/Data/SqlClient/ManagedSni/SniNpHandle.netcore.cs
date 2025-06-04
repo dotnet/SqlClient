@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 using System.ComponentModel;
 using System.IO;
@@ -12,12 +14,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// Named Pipe connection handle
     /// </summary>
-    internal sealed class SNINpHandle : SNIPhysicalHandle
+    internal sealed class SniNpHandle : SniPhysicalHandle
     {
         internal const string DefaultPipePath = @"sql\query"; // e.g. \\HOSTNAME\pipe\sql\query
         // private const int MAX_PIPE_INSTANCES = 255; // TODO: Investigate pipe instance limit.
@@ -32,19 +34,19 @@ namespace Microsoft.Data.SqlClient.SNI
         private SslOverTdsStream _sslOverTdsStream;
 
         private SslStream _sslStream;
-        private SNIAsyncCallback _receiveCallback;
-        private SNIAsyncCallback _sendCallback;
+        private SniAsyncCallback _receiveCallback;
+        private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
+        public SniNpHandle(string serverName, string pipeName, TimeoutTimer timeout, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}, pipe name = {2}", args0: _connectionId, args1: serverName, args2: pipeName);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}, pipe name = {2}", args0: _connectionId, args1: serverName, args2: pipeName);
 
                 _sendSync = new object();
                 _targetServer = serverName;
@@ -61,7 +63,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (timeout.IsInfinite)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO,
                                                                   "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting with infinite timeout.",
                                                                   args0: _connectionId,
                                                                   args1: serverName,
@@ -71,7 +73,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     else
                     {
                         int timeoutMilliseconds = timeout.MillisecondsRemainingInt;
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO,
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO,
                                                                   "Connection Id {0}, Setting server name = {1}, pipe name = {2}. Connecting within the {3} specified milliseconds.",
                                                                   args0: _connectionId,
                                                                   args1: serverName,
@@ -82,24 +84,24 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (TimeoutException te)
                 {
-                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, te);
+                    SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.ConnOpenFailedError, te);
                     _status = TdsEnums.SNI_ERROR;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, Connection Timed out. Error Code 1 Exception = {1}", args0: _connectionId, args1: te?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, Connection Timed out. Error Code 1 Exception = {1}", args0: _connectionId, args1: te?.Message);
                     return;
                 }
                 catch (IOException ioe)
                 {
-                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.ConnOpenFailedError, ioe);
+                    SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.ConnOpenFailedError, ioe);
                     _status = TdsEnums.SNI_ERROR;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, IO Exception occurred. Error Code 1 Exception = {1}", args0: _connectionId, args1: ioe?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, IO Exception occurred. Error Code 1 Exception = {1}", args0: _connectionId, args1: ioe?.Message);
                     return;
                 }
 
                 if (!_pipeStream.IsConnected || !_pipeStream.CanWrite || !_pipeStream.CanRead)
                 {
-                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
+                    SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                     _status = TdsEnums.SNI_ERROR;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, Pipe Stream not operational. Error Code 1 Exception = {1}", args0: _connectionId, args1: Strings.SNI_ERROR_1);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, Pipe Stream not operational. Error Code 1 Exception = {1}", args0: _connectionId, args1: Strings.SNI_ERROR_1);
                     return;
                 }
 
@@ -110,7 +112,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     _sslOverTdsStream = new SslOverTdsStream(_pipeStream, _connectionId);
                     stream = _sslOverTdsStream;
                 }
-                _sslStream = new SNISslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                _sslStream = new SniSslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
@@ -138,16 +140,16 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint CheckConnection()
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
                 if (!_stream.CanWrite || !_stream.CanRead)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, Cannot write or read to/from the stream", args0: _connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, Cannot write or read to/from the stream", args0: _connectionId);
                     return TdsEnums.SNI_ERROR;
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Can read and write to/from stream.", args0: _connectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Can read and write to/from stream.", args0: _connectionId);
                     return TdsEnums.SNI_SUCCESS;
                 }
             }
@@ -177,15 +179,15 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 //Release any references held by _stream.
                 _stream = null;
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, All streams disposed and references cleared.", args0: _connectionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, All streams disposed and references cleared.", args0: _connectionId);
             }
         }
 
-        public override uint Receive(out SNIPacket packet, int timeout)
+        public override uint Receive(out SniPacket packet, int timeout)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SNIPacket errorPacket;
+                SniPacket errorPacket;
                 lock (this)
                 {
                     packet = null;
@@ -193,14 +195,14 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                         packet.ReadFromStream(_stream);
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
 
                         if (packet.Length == 0)
                         {
                             errorPacket = packet;
                             packet = null;
                             var e = new Win32Exception();
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, Packet length found 0, Win32 exception raised: {1}", args0: _connectionId, args1: e?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, Packet length found 0, Win32 exception raised: {1}", args0: _connectionId, args1: e?.Message);
                             return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                         }
                     }
@@ -208,14 +210,14 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         errorPacket = packet;
                         packet = null;
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
                         return ReportErrorAndReleasePacket(errorPacket, ode);
                     }
                     catch (IOException ioe)
                     {
                         errorPacket = packet;
                         packet = null;
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
                         return ReportErrorAndReleasePacket(errorPacket, ioe);
                     }
                     return TdsEnums.SNI_SUCCESS;
@@ -223,39 +225,39 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint ReceiveAsync(ref SNIPacket packet)
+        public override uint ReceiveAsync(ref SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SNIPacket errorPacket;
+                SniPacket errorPacket;
                 packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                 packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
                 {
                     packet.ReadFromStreamAsync(_stream);
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
                 catch (ObjectDisposedException ode)
                 {
                     errorPacket = packet;
                     packet = null;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
                     return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
                 catch (IOException ioe)
                 {
                     errorPacket = packet;
                     packet = null;
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
                     return ReportErrorAndReleasePacket(errorPacket, ioe);
                 }
             }
         }
 
-        public override uint Send(SNIPacket packet)
+        public override uint Send(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
                 bool releaseLock = false;
                 try
@@ -281,18 +283,18 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         try
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                             packet.WriteToStream(_stream);
                             return TdsEnums.SNI_SUCCESS;
                         }
                         catch (ObjectDisposedException ode)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, ObjectDisposedException occurred: {1}.", args0: _connectionId, args1: ode?.Message);
                             return ReportErrorAndReleasePacket(packet, ode);
                         }
                         catch (IOException ioe)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, IOException occurred: {1}.", args0: _connectionId, args1: ioe?.Message);
                             return ReportErrorAndReleasePacket(packet, ioe);
                         }
                     }
@@ -307,17 +309,17 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint SendAsync(SNIPacket packet)
+        public override uint SendAsync(SniPacket packet)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
-                packet.WriteToStreamAsync(_stream, _sendCallback, SNIProviders.NP_PROV);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
+                packet.WriteToStreamAsync(_stream, _sendCallback, SniProviders.NP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
         }
 
-        public override void SetAsyncCallbacks(SNIAsyncCallback receiveCallback, SNIAsyncCallback sendCallback)
+        public override void SetAsyncCallbacks(SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback)
         {
             _receiveCallback = receiveCallback;
             _sendCallback = sendCallback;
@@ -325,7 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint EnableSsl(uint options)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
@@ -346,13 +348,13 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (AuthenticationException aue)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, AuthenticationException message = {1}.", args0: ConnectionId, args1: aue?.Message);
-                    return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, aue);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, AuthenticationException message = {1}.", args0: ConnectionId, args1: aue?.Message);
+                    return SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.InternalExceptionError, aue);
                 }
                 catch (InvalidOperationException ioe)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.ERR, "Connection Id {0}, InvalidOperationException message = {1}.", args0: ConnectionId, args1: ioe?.Message);
-                    return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, ioe);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, InvalidOperationException message = {1}.", args0: ConnectionId, args1: ioe?.Message);
+                    return SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.InternalExceptionError, ioe);
                 }
                 _stream = _sslStream;
                 return TdsEnums.SNI_SUCCESS;
@@ -379,16 +381,16 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
-            using (TrySNIEventScope.Create(nameof(SNINpHandle)))
+            using (TrySNIEventScope.Create(nameof(SniNpHandle)))
             {			
                 if (!_validateCert)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
                     return true;
                 }
 
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
-                return SNICommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
+                return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
 			}	
         }
 
@@ -401,27 +403,27 @@ namespace Microsoft.Data.SqlClient.SNI
             _bufferSize = bufferSize;
         }
 
-        private uint ReportErrorAndReleasePacket(SNIPacket packet, Exception sniException)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, Exception sniException)
         {
             if (packet != null)
             {
                 ReturnPacket(packet);
             }
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet returned, error occurred: {1}", args0: ConnectionId, args1: sniException?.Message);
-            return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, sniException);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Packet returned, error occurred: {1}", args0: ConnectionId, args1: sniException?.Message);
+            return SniCommon.ReportSNIError(SniProviders.NP_PROV, SniCommon.InternalExceptionError, sniException);
         }
 
-        private uint ReportErrorAndReleasePacket(SNIPacket packet, uint nativeError, uint sniError, string errorMessage)
+        private uint ReportErrorAndReleasePacket(SniPacket packet, uint nativeError, uint sniError, string errorMessage)
         {
             if (packet != null)
             {
                 ReturnPacket(packet);
             }
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet returned, error occurred: {1}", args0: ConnectionId, args1: errorMessage);
-            return SNICommon.ReportSNIError(SNIProviders.NP_PROV, nativeError, sniError, errorMessage);
+            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Packet returned, error occurred: {1}", args0: ConnectionId, args1: errorMessage);
+            return SniCommon.ReportSNIError(SniProviders.NP_PROV, nativeError, sniError, errorMessage);
         }
 
-#if DEBUG
+        #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection
         /// </summary>
@@ -430,6 +432,8 @@ namespace Microsoft.Data.SqlClient.SNI
             _pipeStream.Dispose();
             _pipeStream = null;
         }
-#endif
+        #endif
     }
 }
+
+#endif
