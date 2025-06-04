@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object stateObject = TdsParserHelper.GetStateObject(tdsParser);
 
             Assembly assembly = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-            Type sniHandleType = assembly.GetType("Microsoft.Data.SqlClient.SNI.SNIHandle");
+            Type sniHandleType = assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SniHandle");
 
             MethodInfo killConn = null;
             if (sniHandleType is not null)

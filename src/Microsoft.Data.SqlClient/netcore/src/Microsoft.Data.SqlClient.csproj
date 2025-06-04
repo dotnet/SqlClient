@@ -279,6 +279,69 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniCommon.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniCommon.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniMarsConnection.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniMarsConnection.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSmuxFlags.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSmuxFlags.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSmuxHeader.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSmuxHeader.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
     </Compile>
@@ -735,25 +798,8 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-    
+
     <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netcore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNILoadHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsConnection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
@@ -886,6 +932,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\PacketHandle.Windows.cs</Link>
     </Compile>
@@ -914,7 +963,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
@@ -932,6 +980,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs</Link>
@@ -955,7 +1006,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
 
