@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+  -->
+  
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure</RootNamespace>
+  </PropertyGroup>
+
+  <!-- NuGet Properties -->
+  <PropertyGroup>
+    <PackageId>Microsoft.Data.SqlClient.Extensions.Azure</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions for Azure</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- We need types from the Extensions package. -->
+  <ItemGroup>
+    <ProjectReference Include="../Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.14.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+  </ItemGroup>
+
+</Project>

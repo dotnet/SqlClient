@@ -21,7 +21,6 @@ using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using IsolationLevel = System.Data.IsolationLevel;
-using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
 using System.Security.Authentication;
 
@@ -452,7 +451,9 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
 
-        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        // TODO(ADO-37652): This should be removed in favour of simply using
+        // the SqlAuthenticationProviderException's message.
+        internal static Exception CreateSqlException(SqlAuthenticationProviderException providerException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
         {
             // Error[0]
             SqlErrorCollection sqlErs = new();
@@ -460,20 +461,14 @@ namespace Microsoft.Data.Common
             sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
                                     connectionOptions.DataSource,
                                     StringsHelper.GetString(Strings.SQL_MSALFailure, username, connectionOptions.Authentication.ToString("G")),
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                    providerException.Action, 0));
 
             // Error[1]
-            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
-            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                    connectionOptions.DataSource, errorMessage1, 
-                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
-
-            // Error[2]
-            if (!string.IsNullOrEmpty(msalException.Message))
+            if (!string.IsNullOrEmpty(providerException.Message))
             {
                 sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
-                                        connectionOptions.DataSource, msalException.Message,
-                                        ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+                                        connectionOptions.DataSource, providerException.Message,
+                                        providerException.Action, 0));
             }
             return SqlException.CreateException(sqlErs, "", sender, innerException: null, batchCommand: null);
         }

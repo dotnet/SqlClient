@@ -1,0 +1,22 @@
+﻿<docs>
+  <members name="SqlAuthenticationTokenBase">
+    <SqlAuthenticationTokenBase>
+      <summary>Represents an authentication token.</summary>
+    </SqlAuthenticationTokenBase>
+    <ctor>
+      <param name="accessToken">The access token.</param>
+      <param name="expiresOn">The token expiration time.</param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationTokenBase" /> class.
+      </summary>
+    </ctor>
+    <ExpiresOn>
+      <summary>Gets the token expiration time.</summary>
+      <value>The token expiration time.</value>
+    </ExpiresOn>
+    <AccessToken>
+      <summary>Gets the token string.</summary>
+      <value>The token string.</value>
+    </AccessToken>
+  </members>
+</docs>

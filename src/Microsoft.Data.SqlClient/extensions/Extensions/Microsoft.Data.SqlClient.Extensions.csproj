@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Additional project config is imported from parent Directory.Build.props
+    files.
+  -->
+  
+  <!-- Target Config -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- Compiler Config -->
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Build Config -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.Extensions</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.Extensions</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+      <AssemblyAttribute Include="System.CLSCompliantAttribute">
+          <_Parameter1>true</_Parameter1>
+      </AssemblyAttribute>
+  </ItemGroup>
+
+  <!-- NuGet Package Config -->
+  <PropertyGroup>
+    <PackageId>Microsoft.Data.SqlClient.Extensions</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <Authors>Microsoft Corporation</Authors>
+    <Company>Microsoft Corporation</Company>
+    <Description>Microsoft.Data.SqlClient Extensions</Description>
+    <RepositoryUrl>https://github.com/dotnet/SqlClient</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+</Project>

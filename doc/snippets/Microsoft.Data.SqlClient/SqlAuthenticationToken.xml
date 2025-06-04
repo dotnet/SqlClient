@@ -13,13 +13,5 @@
         The <paramref name="accessToken" /> parameter is <see langword="null" /> or empty.
       </exception>
     </ctor>
-    <ExpiresOn>
-      <summary>Gets the token expiration time.</summary>
-      <value>The token expiration time.</value>
-    </ExpiresOn>
-    <AccessToken>
-      <summary>Gets the token string.</summary>
-      <value>The token string.</value>
-    </AccessToken>
   </members>
 </docs>

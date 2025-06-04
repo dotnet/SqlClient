@@ -146,6 +146,22 @@ namespace Microsoft.Data.SqlClient
         internal uint dataLen;
         internal byte[] accessToken;
         internal long expirationFileTime;
+
+        internal SqlFedAuthToken()
+        {
+            dataLen = 0;
+            accessToken = null;
+            expirationFileTime = 0;
+        }
+
+        internal SqlFedAuthToken(SqlAuthenticationTokenBase token)
+        {
+            var tokenBytes = Encoding.Unicode.GetBytes(token.AccessToken);
+
+            dataLen = (uint)tokenBytes.Length;
+            accessToken = tokenBytes;
+            expirationFileTime = token.ExpiresOn.ToFileTime();
+        }
     }
 
     internal sealed class _SqlMetaData : SqlMetaDataPriv
