@@ -5,10 +5,6 @@
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 
-using System;
-using System.Diagnostics;
-using System.Threading;
-
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
