@@ -147,19 +147,19 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
             <term>Properties</term>
             <description>Initial value</description>
           </listheader>
-          <item><description>
+          <item>
             <term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /></term>
             <description><c>connectionString</c></description>
           </item>
-          <item><description>
+          <item>
             <term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionTimeout" /></term>
             <description>15</description>
           </item>
-          <item><description>
+          <item>
             <term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.Database" /></term>
             <description>empty string ("")</description>
           </item>
-          <item><description>
+          <item>
             <term><see cref="P:Microsoft.Data.SqlClient.SqlConnection.DataSource" /></term>
             <description>empty string ("")</description>
           </item>
