@@ -63,12 +63,7 @@ steps:
     solution: build.proj
     msbuildArguments: ' -t:BuildTestsNetFx -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:Configuration=${{parameters.configuration }} -p:Platform=${{parameters.platform }}'
     
-- task: DotNetCoreCLI@2
-  displayName: 'Run Unit Tests for ${{parameters.TargetNetFxVersion }}'
-  inputs:
-    command: test
-    projects: 'src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj'
-    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetFxVersion=${{parameters.TargetNetFxVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" --collect "Code Coverage"'
+# Don't run unit tests using package reference. Unit tests are only run using project reference.
 
 - task: DotNetCoreCLI@2
   displayName: 'Run Functional Tests for ${{parameters.TargetNetFxVersion }}'

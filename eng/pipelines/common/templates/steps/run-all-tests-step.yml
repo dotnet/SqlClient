@@ -61,9 +61,9 @@ steps:
       platform: '${{parameters.platform }}'
       configuration: '${{parameters.configuration }}'
       ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
-        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
       ${{ else }}: # x86
-        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
     retryCountOnTaskFailure: 1
 

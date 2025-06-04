@@ -4,19 +4,17 @@
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
-  <!-- XUnit and XUnit extensions -->
+  <!-- Common references -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)" Condition="$(TargetGroup) == 'netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitrunnervisualstudioVersion)">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -28,14 +26,17 @@
     </PackageReference>
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+  <!-- .NET Framework references -->
+  <ItemGroup Condition="$(TargetGroup) == 'netfx'">
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
+    <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  <!-- .NET references -->
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <ProjectReference  Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
