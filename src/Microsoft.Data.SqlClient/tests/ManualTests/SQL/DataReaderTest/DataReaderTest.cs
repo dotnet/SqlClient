@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -268,7 +269,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsBDNull()
+        public static void CheckNullRowVersionIsDBNull()
         {
             lock (s_rowVersionLock)
             {
@@ -606,6 +607,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadSequentialDecreasingChunks()
+        {
+            // pattern repeat input allows you to more easily identify if chunks are incorrectly
+            //  related to each other by seeing the start and end of sequential chunks and checking
+            //  if they correctly move to the next char while debugging
+            // simply repeating a single char can't tell you where in the string it went wrong.
+            const string baseString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            StringBuilder inputBuilder = new StringBuilder();
+            while (inputBuilder.Length < (64 * 1024))
+            {
+                inputBuilder.Append(baseString);
+                inputBuilder.Append(' ');
+            }
+
+            string input = inputBuilder.ToString();
+
+            StringBuilder resultBuilder = new StringBuilder();
+            CancellationTokenSource cts = new CancellationTokenSource();
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync(cts.Token);
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT CONVERT(varchar(max),@str) as a";
+                    command.Parameters.AddWithValue("@str", input);
+
+                    using (var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cts.Token))
+                    {
+                        if (await reader.ReadAsync(cts.Token))
+                        {
+                            using (var textReader = reader.GetTextReader(0))
+                            {
+                                var buffer = new char[4096];
+                                var charsReadCount = -1;
+                                var start = 0;
+                                while (charsReadCount != 0)
+                                {
+                                    charsReadCount = await textReader.ReadAsync(buffer, start, buffer.Length - start);
+                                    resultBuilder.Append(buffer, start, charsReadCount);
+                                    start++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            string result = resultBuilder.ToString();
+
+            Assert.Equal(input, result);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadBinaryData()
         {
             const int Size = 20_000;
@@ -655,6 +710,94 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     catch
                     {
                     }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanGetCharsSequentially()
+        {
+            const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
+            const int length = 32000;
+            const string sqlCharWithArg = "SELECT CONVERT(BIGINT, 1) AS [Id], CONVERT(NVARCHAR(MAX), @input) AS [Value];";
+
+            using (var sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await sqlConnection.OpenAsync();
+
+                StringBuilder inputBuilder = new StringBuilder(length);
+                Random random = new Random();
+                for (int i = 0; i < length; i++)
+                {
+                    inputBuilder.Append((char)random.Next(0x30, 0x5A));
+                }
+                string input = inputBuilder.ToString();
+
+                using (var sqlCommand = new SqlCommand())
+                {
+                    sqlCommand.Connection = sqlConnection;
+                    sqlCommand.CommandTimeout = 0;
+                    sqlCommand.CommandText = sqlCharWithArg;
+                    sqlCommand.Parameters.Add(new SqlParameter("@input", SqlDbType.NVarChar, -1) { Value = input });
+
+                    using (var sqlReader = await sqlCommand.ExecuteReaderAsync(commandBehavior))
+                    {
+                        if (await sqlReader.ReadAsync())
+                        {
+                            long id = sqlReader.GetInt64(0);
+                            if (id != 1)
+                            {
+                                Assert.Fail("Id not 1");
+                            }
+
+                            var sliced = GetPooledChars(sqlReader, 1, input);
+                            if (!sliced.SequenceEqual(input.ToCharArray()))
+                            {
+                                Assert.Fail("sliced != input");
+                            }
+                        }
+                    }
+                }
+            }
+
+            static char[] GetPooledChars(SqlDataReader sqlDataReader, int ordinal, string input)
+            {
+                var buffer = ArrayPool<char>.Shared.Rent(8192);
+                int offset = 0;
+                while (true)
+                {
+                    int read = (int)sqlDataReader.GetChars(ordinal, offset, buffer, offset, buffer.Length - offset);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    ReadOnlySpan<char> fetched = buffer.AsSpan(offset, read);
+                    ReadOnlySpan<char> origin = input.AsSpan(offset, read);
+
+                    if (!fetched.Equals(origin, StringComparison.Ordinal))
+                    {
+                        Assert.Fail($"chunk (start:{offset}, for:{read}), is not the same as the input");
+                    }
+
+                    offset += read;
+
+                    if (buffer.Length - offset < 128)
+                    {
+                        buffer = Resize(buffer);
+                    }
+                }
+
+                var sliced = buffer.AsSpan(0, offset).ToArray();
+                ArrayPool<char>.Shared.Return(buffer);
+                return sliced;
+
+                static char[] Resize(char[] buffer)
+                {
+                    var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                    Array.Copy(buffer, newBuffer, buffer.Length);
+                    ArrayPool<char>.Shared.Return(buffer);
+                    return newBuffer;
                 }
             }
         }

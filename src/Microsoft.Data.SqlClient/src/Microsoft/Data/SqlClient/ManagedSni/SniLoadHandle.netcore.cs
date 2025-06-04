@@ -2,26 +2,28 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System.Threading;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// Global SNI settings and status
     /// </summary>
-    internal class SNILoadHandle
+    internal class SniLoadHandle
     {
-        public static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
+        public static readonly SniLoadHandle SingletonInstance = new SniLoadHandle();
 
         public readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
-        public ThreadLocal<SNIError> _lastError = new ThreadLocal<SNIError>(static () => new SNIError(SNIProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty));
+        public ThreadLocal<SniError> _lastError = new ThreadLocal<SniError>(static () => new SniError(SniProviders.INVALID_PROV, 0, TdsEnums.SNI_SUCCESS, string.Empty));
 
         private readonly uint _status = TdsEnums.SNI_SUCCESS;
 
         /// <summary>
         /// Last SNI error
         /// </summary>
-        public SNIError LastError
+        public SniError LastError
         {
             get
             {
@@ -63,3 +65,5 @@ namespace Microsoft.Data.SqlClient.SNI
         public bool ClientOSEncryptionSupport => true;
     }
 }
+
+#endif
