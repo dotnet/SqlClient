@@ -1957,41 +1957,6 @@ namespace Microsoft.Data.SqlClient
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
     }
 }
-namespace Microsoft.Data.SqlClient.ConnectionPool
-{
-    sealed internal class DbConnectionPoolAuthenticationContext
-    {
-        internal DbConnectionPoolAuthenticationContext(byte[] accessToken, DateTime expirationTime) {}
-
-        internal static DbConnectionPoolAuthenticationContext ChooseAuthenticationContextToUpdate(DbConnectionPoolAuthenticationContext context1, DbConnectionPoolAuthenticationContext context2)
-        {
-            throw null;
-        }
-
-        internal byte[] AccessToken
-        {
-            get
-            {
-                throw null;
-            }
-        }
-
-        internal DateTime ExpirationTime
-        {
-            get
-            {
-                throw null;
-            }
-        }
-
-        internal bool LockToUpdate()
-        {
-            throw null;
-        }
-
-        internal void ReleaseLockToUpdate() {}
-    }
-}
 namespace Microsoft.Data.SqlClient.Diagnostics
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientCommandBefore"]/SqlClientCommandBefore/*'/>
