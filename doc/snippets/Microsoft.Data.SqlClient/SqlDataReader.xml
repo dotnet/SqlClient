@@ -432,7 +432,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <item><description>The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed during the data retrieval.</description></item>
           <item><description>There is no data ready to be read (for example, the first <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> hasn't been called, or returned false).</description></item>
           <item><description>Tried to read a previously-read column in sequential mode.</description></item>
-          <item><description><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
+          <item><description>There was an asynchronous operation in progress. This applies to all Get* methods when running in sequential mode, as they could be called while reading a stream.</description></item>
         </list>
       </exception>
       <exception cref="T:System.IndexOutOfRangeException">
