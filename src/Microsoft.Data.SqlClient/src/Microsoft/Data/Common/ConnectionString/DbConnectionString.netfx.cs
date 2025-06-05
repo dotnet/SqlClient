@@ -23,14 +23,6 @@ namespace Microsoft.Data.Common
         // used by permission classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        // @TODO: Remove in favor of DbConnectionStringKeywords
-        private static class KEY
-        {
-            internal const string Password = DbConnectionStringKeywords.Password;
-            internal const string PersistSecurityInfo = DbConnectionStringKeywords.PersistSecurityInfo;
-            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
-        };
-
         // this class is serializable with Everett, so ugly field names can't be changed
         readonly private string _encryptedUsersConnectionString;
 
@@ -105,13 +97,13 @@ namespace Microsoft.Data.Common
                 // serialize out with '*' so already knows what we do.  Better this way
                 // than to treat password specially later on which causes problems.
                 const string star = "*";
-                if (_parsetable.ContainsKey(KEY.Password))
+                if (_parsetable.ContainsKey(DbConnectionStringKeywords.Password))
                 {
-                    _parsetable[KEY.Password] = star;
+                    _parsetable[DbConnectionStringKeywords.Password] = star;
                 }
-                if (_parsetable.ContainsKey(KEY.Pwd))
+                if (_parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd))
                 {
-                    _parsetable[KEY.Pwd] = star;
+                    _parsetable[DbConnectionStringSynonyms.Pwd] = star;
                 }
 
                 // replace user's password/pwd value with "*" in the linked list and build a new string
@@ -291,8 +283,8 @@ namespace Microsoft.Data.Common
             }
 
             // verify _hasPassword & _parsetable are in sync between Everett/Whidbey
-            Debug.Assert(!_hasPassword || ContainsKey(KEY.Password) || ContainsKey(KEY.Pwd), "OnDeserialized password mismatch this");
-            Debug.Assert(entry == null || !entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
+            Debug.Assert(!_hasPassword || ContainsKey(DbConnectionStringKeywords.Password) || ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch this");
+            Debug.Assert(entry == null || !entry._hasPassword || entry.ContainsKey(DbConnectionStringKeywords.Password) || entry.ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch entry");
 
             DBConnectionString value = new DBConnectionString(this, restrictionValues, behavior);
             ValidateCombinedSet(this, value);
@@ -377,8 +369,8 @@ namespace Microsoft.Data.Common
 
         internal bool IsSupersetOf(DBConnectionString entry)
         {
-            Debug.Assert(!_hasPassword || ContainsKey(KEY.Password) || ContainsKey(KEY.Pwd), "OnDeserialized password mismatch this");
-            Debug.Assert(!entry._hasPassword || entry.ContainsKey(KEY.Password) || entry.ContainsKey(KEY.Pwd), "OnDeserialized password mismatch entry");
+            Debug.Assert(!_hasPassword || ContainsKey(DbConnectionStringKeywords.Password) || ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch this");
+            Debug.Assert(!entry._hasPassword || entry.ContainsKey(DbConnectionStringKeywords.Password) || entry.ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch entry");
 
             switch (_behavior)
             {
