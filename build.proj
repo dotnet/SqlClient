@@ -61,6 +61,7 @@
     <UnitTests Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     <UnitTestsProj Include="**/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj" />
     
+    <FunctionalTests Include="**/Common/Common.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS/TDS.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />
     <FunctionalTests Include="**/tools/TDS/TDS.Servers/TDS.Servers.csproj" />
@@ -70,7 +71,7 @@
     <FunctionalTests Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     <FunctionalTestsProj Include="**/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj" />
     
-
+    <ManualTests Include="**/Common/Common.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Address/Address.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Circle/Circle.csproj" />
     <ManualTests Include="**/ManualTests/SQL/UdtTest/UDTs/Shapes/Shapes.csproj" />

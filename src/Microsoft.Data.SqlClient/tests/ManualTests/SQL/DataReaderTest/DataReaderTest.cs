@@ -15,19 +15,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderTest
     {
         private static readonly object s_rowVersionLock = new();
-
-        // this enum must mirror the definition in LocalAppContextSwitches
-        private enum Tristate : byte
-        {
-            NotInitialized = 0,
-            False = 1,
-            True = 2
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
@@ -273,34 +267,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
-                try
-                {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.True(reader.IsDBNull(0));
-                    Assert.Equal(DBNull.Value, reader[0]);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<DBNull>(result);
-                    Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
-                    Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.False;
 
-                    SqlBinary binary = reader.GetSqlBinary(0);
-                    Assert.True(binary.IsNull);
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.True(reader.IsDBNull(0));
+                Assert.Equal(DBNull.Value, reader[0]);
+                var result = reader.GetValue(0);
+                Assert.IsType<DBNull>(result);
+                Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
+                Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
 
-                    SqlBytes bytes = reader.GetSqlBytes(0);
-                    Assert.True(bytes.IsNull);
-                    Assert.Null(bytes.Buffer);
+                SqlBinary binary = reader.GetSqlBinary(0);
+                Assert.True(binary.IsNull);
 
-                }
-                finally
-                {
-                    SetLegacyRowVersionNullBehavior(originalValue);
-                }
+                SqlBytes bytes = reader.GetSqlBytes(0);
+                Assert.True(bytes.IsNull);
+                Assert.Null(bytes.Buffer);
             }
         }
 
@@ -808,38 +796,24 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
-                try
-                {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.False(reader.IsDBNull(0));
-                    SqlBinary value = reader.GetSqlBinary(0);
-                    Assert.False(value.IsNull);
-                    Assert.Equal(0, value.Length);
-                    Assert.NotNull(value.Value);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<byte[]>(result);
-                    Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
-                }
-                finally
-                {
-                    SetLegacyRowVersionNullBehavior(originalValue);
-                }
-            }
-        }
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.True;
 
-        private static Tristate SetLegacyRowVersionNullBehavior(Tristate value)
-        {
-            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Tristate originalValue = (Tristate)switchField.GetValue(null);
-            switchField.SetValue(null, value);
-            return originalValue;
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.False(reader.IsDBNull(0));
+                SqlBinary value = reader.GetSqlBinary(0);
+                Assert.False(value.IsNull);
+                Assert.Equal(0, value.Length);
+                Assert.NotNull(value.Value);
+                var result = reader.GetValue(0);
+                Assert.IsType<byte[]>(result);
+                Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
+            }
         }
     }
 }
