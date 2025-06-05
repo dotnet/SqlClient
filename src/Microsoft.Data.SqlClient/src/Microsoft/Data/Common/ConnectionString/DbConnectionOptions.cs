@@ -58,7 +58,7 @@ namespace Microsoft.Data.Common.ConnectionString
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
-                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
+                                    _parsetable.ContainsKey(DbConnectionStringSynonyms.Uid);
             }
         }
 
@@ -677,7 +677,7 @@ namespace Microsoft.Data.Common.ConnectionString
                     }
 
                     return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserId, out value) && !string.IsNullOrEmpty(value)) || 
-                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.UID, out value) && !string.IsNullOrEmpty(value));
+                           (_parsetable.TryGetValue(DbConnectionStringSynonyms.Uid, out value) && !string.IsNullOrEmpty(value));
                 }
                 return false;
             }
