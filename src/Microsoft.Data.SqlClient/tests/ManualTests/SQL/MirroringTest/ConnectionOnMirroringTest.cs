@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -28,17 +29,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.ConnectTimeout = 0;
 
                 TestWorker worker = new TestWorker(builder.ConnectionString);
-                Thread childThread = new Thread(() => worker.TestMultipleConnection());
-                childThread.Start();
+                Task childTask = Task.Factory.StartNew(() => worker.TestMultipleConnection(), TaskCreationOptions.LongRunning);
 
                 if (workerCompletedEvent.WaitOne(10000))
                 {
-                    childThread.Join();
+                    childTask.Wait();
                 }
                 else
                 {
-                    // currently Thread.Abort() throws PlatformNotSupportedException in CoreFx.
-                    childThread.Interrupt();
                     throw new Exception("SqlConnection could not open and close successfully in timely manner. Possibly connection hangs.");
                 }
             }
