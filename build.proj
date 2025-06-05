@@ -206,10 +206,10 @@
   <Target Name="RunTests" DependsOnTargets="RunUnitTests;RunFunctionalTests;RunManualTests"/>
 
   <!-- Run all unit tests applicable to the host OS. -->
-  <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix"/>
+  <Target Name="RunUnitTests" DependsOnTargets="RunUnitTestsWindows;RunUnitTestsUnix" Condition="$(ReferenceType.Contains('Project'))"/>
   
   <!-- Run all unit tests applicable to Windows. -->
-  <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true'">
+  <Target Name="RunUnitTestsWindows" Condition="'$(IsEnabledWindows)' == 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"
@@ -229,7 +229,7 @@
   </Target>
 
   <!-- Run all unit tests applicable to Unix. -->
-  <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true'">
+  <Target Name="RunUnitTestsUnix" Condition="'$(IsEnabledWindows)' != 'true' AND $(ReferenceType.Contains('Project'))">
     <PropertyGroup>
       <TestCommand>
         $(DotnetPath)dotnet test "@(UnitTestsProj)"

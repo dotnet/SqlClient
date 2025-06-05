@@ -53,19 +53,20 @@ steps:
     condition: succeededOrFailed()
 
 - ${{if eq(parameters.operatingSystem, 'Windows')}}:
-  - task: MSBuild@1
-    displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
-    inputs:
-      solution: build.proj
-      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
-      platform: '${{parameters.platform }}'
-      configuration: '${{parameters.configuration }}'
-      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
-        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
-      ${{ else }}: # x86
-        msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
-    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
-    retryCountOnTaskFailure: 1
+  - ${{if eq(parameters.referenceType, 'Project')}}:
+    - task: MSBuild@1
+      displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
+      inputs:
+        solution: build.proj
+        msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+        platform: '${{parameters.platform }}'
+        configuration: '${{parameters.configuration }}'
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+        ${{ else }}: # x86
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+        retryCountOnTaskFailure: 1
 
   - task: MSBuild@1
     displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
@@ -96,17 +97,18 @@ steps:
     retryCountOnTaskFailure: 2
 
 - ${{ else }}: # Linux or macOS
-  - task: DotNetCoreCLI@2
-    displayName: 'Run Unit Tests'
-    inputs:
-      command: custom
-      projects: build.proj
-      custom: msbuild
-      arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
-      verbosityRestore: Detailed
-      verbosityPack: Detailed
-    retryCountOnTaskFailure: 1
-    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+  - ${{if eq(parameters.referenceType, 'Project')}}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Unit Tests'
+      inputs:
+        command: custom
+        projects: build.proj
+        custom: msbuild
+        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      retryCountOnTaskFailure: 1
+      condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Functional Tests'
