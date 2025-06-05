@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="..\..\Directory.Packages.props" />
+  <!-- Test Project Dependencies for NetFx only -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+  </ItemGroup>
+  <ItemGroup Condition="$(ReferenceType) == 'Package'">
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+  </ItemGroup>
+</Project>

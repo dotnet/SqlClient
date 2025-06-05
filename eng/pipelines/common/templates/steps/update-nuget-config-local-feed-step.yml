@@ -67,18 +67,12 @@ steps:
     $parent_xpath = '/Project/ItemGroup/PackageReference[@Include="Microsoft.Data.SqlClient"]'
     $node = $Doc.SelectSingleNode($parent_xpath)
     
-    if($node -ne $null){
-        $node.Version="${{parameters.nugetPackageVersion }}"
-    }
-    else{
+    if($node -eq $null){
         $packagerefnode = $doc.createelement("packagereference")
         $value = $doc.selectsinglenode('/project/itemgroup/projectreference')
         $attrinclude = $doc.createattribute("include")
         $attrinclude.value = "microsoft.data.sqlclient"
-        $attrversion = $doc.createattribute("version")
-        $attrversion.value = "${{parameters.nugetPackageVersion }}"
         $packagerefnode.attributes.append($attrinclude)
-        $packagerefnode.attributes.append($attrversion)
         $parentNode.AppendChild($packageRefNode)
     }
 
