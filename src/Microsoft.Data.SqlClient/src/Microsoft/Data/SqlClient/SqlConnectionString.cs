@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient
 
             _applicationIntent = ConvertValueToApplicationIntent();
             _applicationName = ConvertValueToString(KEY.Application_Name, DbConnectionStringDefaults.ApplicationName);
-            _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DbConnectionStringDefaults.AttachDBFilename);
+            _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DbConnectionStringDefaults.AttachDbFilename);
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DbConnectionStringDefaults.ContextConnection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DbConnectionStringDefaults.CurrentLanguage);
             _dataSource = ConvertValueToString(KEY.Data_Source, DbConnectionStringDefaults.DataSource);
@@ -293,14 +293,14 @@ namespace Microsoft.Data.SqlClient
             _ipAddressPreference = ConvertValueToIPAddressPreference();
             _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DbConnectionStringDefaults.HostNameInCertificate);
             _serverCertificate = ConvertValueToString(KEY.ServerCertificate, DbConnectionStringDefaults.ServerCertificate);
-            _serverSPN = ConvertValueToString(KEY.Server_SPN, DbConnectionStringDefaults.ServerSPN);
-            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DbConnectionStringDefaults.FailoverPartnerSPN);
+            _serverSPN = ConvertValueToString(KEY.Server_SPN, DbConnectionStringDefaults.ServerSpn);
+            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DbConnectionStringDefaults.FailoverPartnerSpn);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
             string transactionBindingString = ConvertValueToString(KEY.TransactionBinding, null);
 
-            _userID = ConvertValueToString(KEY.User_ID, DbConnectionStringDefaults.UserID);
+            _userID = ConvertValueToString(KEY.User_ID, DbConnectionStringDefaults.UserId);
             _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
 
             if (_contextConnection)
@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DbConnectionStringDefaults.ConnectionReset);
-            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DbConnectionStringDefaults.TransparentNetworkIPResolution);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DbConnectionStringDefaults.TransparentNetworkIpResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
             if (_networkLibrary != null)
@@ -990,7 +990,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DbConnectionStringDefaults.IPAddressPreference;
+                return DbConnectionStringDefaults.IpAddressPreference;
             }
 
             try
