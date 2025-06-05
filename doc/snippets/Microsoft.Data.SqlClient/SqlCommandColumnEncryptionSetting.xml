@@ -6,12 +6,12 @@
       </summary>
       <remarks>
         <list type="bullet">
-          <item>
+          <item><description>
             If Always Encrypted is disabled for a query and the query has parameters that need to be encrypted (parameters that correspond to encrypted columns), the query will fail.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If Always Encrypted is disabled for a query and the query returns results from encrypted columns, the query will return encrypted values. The encrypted values will have the varbinary datatype.
-          </item>
+          </description></item>
         </list>
       </remarks>
     </SqlCommandColumnEncryptionSetting>

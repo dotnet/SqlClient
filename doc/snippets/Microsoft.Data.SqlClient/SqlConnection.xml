@@ -733,12 +733,12 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </example>
       <exception cref="T:System.ArgumentException">
         <list type="bullet">
-          <item>
+          <item><description>
             The connection string includes the option to use integrated security.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <paramref name="newPassword" /> exceeds 128 characters.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentNullException">
@@ -760,18 +760,18 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </summary>
       <exception cref="T:System.ArgumentException">
         <list type="bullet">
-          <item>
+          <item><description>
             The connection string contains any combination of <c>UserId</c>, <c>Password</c>, or <c>Integrated Security=true</c>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <paramref name="newSecurePassword" /> is greater than 128 characters.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <paramref name="newSecurePassword" /> is not read only.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <paramref name="newSecurePassword" /> is an empty string.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentNullException">
@@ -1116,18 +1116,18 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
           <c>Persist Security Info = true</c> is required to get the value of the <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> object with <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" />. The default value of <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is null. An <see cref="T:System.InvalidOperationException" /> exception will be raised:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             If <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is set on an open connection.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is set when <c>Integrated Security = true</c>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is set when the connection string uses <c>Password</c>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If <see cref="P:Microsoft.Data.SqlClient.SqlConnection.Credential" /> is set when the connection string uses <c>UserID</c>.
-          </item>
+          </description></item>
         </list>
       </remarks>
     </Credential>
@@ -1331,9 +1331,9 @@ For more information on working with events, see [Connection Events](https://lea
           You may need the schema information of the database, tables or columns. This sample:
         </para>
         <list type="bullet">
-          <item>Uses GetSchema to get schema information.</item>
-          <item>Use schema restrictions to get the specified information.</item>
-          <item>Gets schema information of the database, tables, and some columns.</item>
+          <item><description>Uses GetSchema to get schema information.</description></item>
+          <item><description>Use schema restrictions to get the specified information.</description></item>
+          <item><description>Gets schema information of the database, tables, and some columns.</description></item>
         </list>
       </remarks>
       <example>
@@ -1682,8 +1682,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, o
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Cannot open a connection without specifying a data source or server.</item>
-          <item>The connection is already open.</item>
+          <item><description>Cannot open a connection without specifying a data source or server.</description></item>
+          <item><description>The connection is already open.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -1729,8 +1729,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, o
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Cannot open a connection without specifying a data source or server.</item>
-          <item>The connection is already open.</item>
+          <item><description>Cannot open a connection without specifying a data source or server.</description></item>
+          <item><description>The connection is already open.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -1881,9 +1881,9 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, o
       </example>
       <exception cref="T:System.ArgumentNullException">
         <list type="bullet">
-          <item>A null dictionary was provided.</item>
-          <item>A string key in the dictionary was null or empty.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.</item>
+          <item><description>A null dictionary was provided.</description></item>
+          <item><description>A string key in the dictionary was null or empty.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.</description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -1905,15 +1905,15 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, o
           Custom master key store providers can be registered with the driver at three different layers. The precedence of the three registrations is as follows:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The per-command registration will be checked if it is not empty.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If the per-command registration is empty, the per-connection registration will be checked if it is not empty.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If the per-connection registration is empty, the global registration will be checked.
-          </item>
+          </description></item>
         </list>
         <para>
           Once any key store provider is found at a registration level, the driver will <b>NOT</b> fall back to the other registrations to search for a provider. If providers are registered but the proper provider is not found at a level, an exception will be thrown containing only the registered providers in the registration that was checked.
@@ -1927,9 +1927,9 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, o
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         <list type="bullet">
-          <item>A null dictionary was provided.</item>
-          <item>A string key in the dictionary was null or empty.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.</item>
+          <item><description>A null dictionary was provided.</description></item>
+          <item><description>A string key in the dictionary was null or empty.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.</description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -2007,18 +2007,18 @@ The following sample tries to open a connection to an invalid database to simula
         <list type="table">
           <listheader>
             <term>Supported internal properties</term>
-            <term>Type</term>
-            <term>Information provided</term>
-            <term>Return value</term>
+            <description>Type</description>
+            <description>Information provided</description>
+            <description>Return value</description>
           </listheader>
           <item>
-            <description><c>SQLDNSCachingSupportedState</c></description>
+            <term><c>SQLDNSCachingSupportedState</c></term>
             <description>string</description>
             <description>To indicate the IsSupported flag sent by the server for DNS Caching</description>
             <description>"true", "false", "innerConnection is null!"</description>
           </item>
           <item>
-            <description><c>SQLDNSCachingSupportedStateBeforeRedirect</c></description>
+            <term><c>SQLDNSCachingSupportedStateBeforeRedirect</c></term>
             <description>string</description>
             <description>To indicate the IsSupported flag sent by the server for DNS Caching before redirection.</description>
             <description>"true", "false", "innerConnection is null!"</description>
