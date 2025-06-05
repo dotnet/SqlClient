@@ -302,6 +302,9 @@
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj">
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
