@@ -24,55 +24,6 @@ namespace Microsoft.Data.SqlClient
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        // @TODO: Remove this in favor of using DbConnectionStringDefaults??
-        internal static class DEFAULT
-        {
-            internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
-            internal const string Application_Name = DbConnectionStringDefaults.ApplicationName;
-            internal const string AttachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
-            internal const int Command_Timeout = DbConnectionStringDefaults.CommandTimeout;
-            internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
-            internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
-            internal const string Data_Source = DbConnectionStringDefaults.DataSource;
-            internal static readonly SqlConnectionEncryptOption Encrypt = DbConnectionStringDefaults.Encrypt;
-            internal const string HostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
-            internal const string ServerCertificate = DbConnectionStringDefaults.ServerCertificate;
-            internal const bool Enlist = DbConnectionStringDefaults.Enlist;
-            internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
-            internal const string Initial_Catalog = DbConnectionStringDefaults.InitialCatalog;
-            internal const bool Integrated_Security = DbConnectionStringDefaults.IntegratedSecurity;
-            internal const int Load_Balance_Timeout = DbConnectionStringDefaults.LoadBalanceTimeout;
-            internal const bool MARS = DbConnectionStringDefaults.MultipleActiveResultSets;
-            internal const int Max_Pool_Size = DbConnectionStringDefaults.MaxPoolSize;
-            internal const int Min_Pool_Size = DbConnectionStringDefaults.MinPoolSize;
-            internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
-            internal const int Packet_Size = DbConnectionStringDefaults.PacketSize;
-            internal const string Password = DbConnectionStringDefaults.Password;
-            internal const bool Persist_Security_Info = DbConnectionStringDefaults.PersistSecurityInfo;
-            internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
-            internal const bool Pooling = DbConnectionStringDefaults.Pooling;
-            internal const bool TrustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
-            internal const string Type_System_Version = DbConnectionStringDefaults.TypeSystemVersion;
-            internal const string User_ID = DbConnectionStringDefaults.UserID;
-            internal const bool User_Instance = DbConnectionStringDefaults.UserInstance;
-            internal const bool Replication = DbConnectionStringDefaults.Replication;
-            internal const int Connect_Retry_Count = DbConnectionStringDefaults.ConnectRetryCount;
-            internal const int Connect_Retry_Interval = DbConnectionStringDefaults.ConnectRetryInterval;
-            internal const string EnclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
-            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
-            internal static readonly SqlAuthenticationMethod Authentication = DbConnectionStringDefaults.Authentication;
-            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
-            internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
-            internal const string ServerSPN = DbConnectionStringDefaults.ServerSPN;
-            internal const string FailoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
-            internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
-#if NETFRAMEWORK
-            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
-            internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
-            internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
-#endif // NETFRAMEWORK
-        }
-
         // @TODO: Remove in favor of DbConnectionStringKeywords
         // SqlConnection ConnectionString Options
         internal static class KEY
@@ -307,49 +258,49 @@ namespace Microsoft.Data.SqlClient
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
             _encrypt = ConvertValueToSqlConnectionEncrypt();
-            _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
-            _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
-            _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
-            _pooling = ConvertValueToBoolean(KEY.Pooling, DEFAULT.Pooling);
-            _replication = ConvertValueToBoolean(KEY.Replication, DEFAULT.Replication);
-            _userInstance = ConvertValueToBoolean(KEY.User_Instance, DEFAULT.User_Instance);
-            _multiSubnetFailover = ConvertValueToBoolean(KEY.MultiSubnetFailover, DEFAULT.MultiSubnetFailover);
+            _enlist = ConvertValueToBoolean(KEY.Enlist, DbConnectionStringDefaults.Enlist);
+            _mars = ConvertValueToBoolean(KEY.MARS, DbConnectionStringDefaults.MultipleActiveResultSets);
+            _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DbConnectionStringDefaults.PersistSecurityInfo);
+            _pooling = ConvertValueToBoolean(KEY.Pooling, DbConnectionStringDefaults.Pooling);
+            _replication = ConvertValueToBoolean(KEY.Replication, DbConnectionStringDefaults.Replication);
+            _userInstance = ConvertValueToBoolean(KEY.User_Instance, DbConnectionStringDefaults.UserInstance);
+            _multiSubnetFailover = ConvertValueToBoolean(KEY.MultiSubnetFailover, DbConnectionStringDefaults.MultiSubnetFailover);
 
-            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DEFAULT.Command_Timeout);
-            _connectTimeout = ConvertValueToInt32(KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
-            _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
-            _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
-            _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
-            _packetSize = ConvertValueToInt32(KEY.Packet_Size, DEFAULT.Packet_Size);
-            _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
-            _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
+            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DbConnectionStringDefaults.CommandTimeout);
+            _connectTimeout = ConvertValueToInt32(KEY.Connect_Timeout, DbConnectionStringDefaults.ConnectTimeout);
+            _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DbConnectionStringDefaults.LoadBalanceTimeout);
+            _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DbConnectionStringDefaults.MaxPoolSize);
+            _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DbConnectionStringDefaults.MinPoolSize);
+            _packetSize = ConvertValueToInt32(KEY.Packet_Size, DbConnectionStringDefaults.PacketSize);
+            _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DbConnectionStringDefaults.ConnectRetryCount);
+            _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DbConnectionStringDefaults.ConnectRetryInterval);
 
             _applicationIntent = ConvertValueToApplicationIntent();
-            _applicationName = ConvertValueToString(KEY.Application_Name, DEFAULT.Application_Name);
-            _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DEFAULT.AttachDBFilename);
-            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
-            _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
-            _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
+            _applicationName = ConvertValueToString(KEY.Application_Name, DbConnectionStringDefaults.ApplicationName);
+            _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DbConnectionStringDefaults.AttachDBFilename);
+            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DbConnectionStringDefaults.ContextConnection);
+            _currentLanguage = ConvertValueToString(KEY.Current_Language, DbConnectionStringDefaults.CurrentLanguage);
+            _dataSource = ConvertValueToString(KEY.Data_Source, DbConnectionStringDefaults.DataSource);
             _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
-            _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
-            _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
-            _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
-            _trustServerCertificate = ConvertValueToBoolean(KEY.TrustServerCertificate, DEFAULT.TrustServerCertificate);
+            _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DbConnectionStringDefaults.FailoverPartner);
+            _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DbConnectionStringDefaults.InitialCatalog);
+            _password = ConvertValueToString(KEY.Password, DbConnectionStringDefaults.Password);
+            _trustServerCertificate = ConvertValueToBoolean(KEY.TrustServerCertificate, DbConnectionStringDefaults.TrustServerCertificate);
             _authType = ConvertValueToAuthenticationType();
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
-            _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
+            _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DbConnectionStringDefaults.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
             _ipAddressPreference = ConvertValueToIPAddressPreference();
-            _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DEFAULT.HostNameInCertificate);
-            _serverCertificate = ConvertValueToString(KEY.ServerCertificate, DEFAULT.ServerCertificate);
-            _serverSPN = ConvertValueToString(KEY.Server_SPN, DEFAULT.ServerSPN);
-            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DEFAULT.FailoverPartnerSPN);
+            _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DbConnectionStringDefaults.HostNameInCertificate);
+            _serverCertificate = ConvertValueToString(KEY.ServerCertificate, DbConnectionStringDefaults.ServerCertificate);
+            _serverSPN = ConvertValueToString(KEY.Server_SPN, DbConnectionStringDefaults.ServerSPN);
+            _failoverPartnerSPN = ConvertValueToString(KEY.Failover_Partner_SPN, DbConnectionStringDefaults.FailoverPartnerSPN);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
             string transactionBindingString = ConvertValueToString(KEY.TransactionBinding, null);
 
-            _userID = ConvertValueToString(KEY.User_ID, DEFAULT.User_ID);
+            _userID = ConvertValueToString(KEY.User_ID, DbConnectionStringDefaults.UserID);
             _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
 
             if (_contextConnection)
@@ -393,8 +344,8 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
-            _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
-            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
+            _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DbConnectionStringDefaults.ConnectionReset);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DbConnectionStringDefaults.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
             if (_networkLibrary != null)
@@ -409,7 +360,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _networkLibrary = DEFAULT.Network_Library;
+                _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
             }
 #endif // NETFRAMEWORK
 
@@ -437,7 +388,7 @@ namespace Microsoft.Data.SqlClient
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
             }
 
-            if (!string.Equals(DEFAULT.FailoverPartner, _failoverPartner, StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(DbConnectionStringDefaults.FailoverPartner, _failoverPartner, StringComparison.OrdinalIgnoreCase))
             {
                 // fail-over partner is set
 
@@ -446,7 +397,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: false, internalConnection: null);
                 }
 
-                if (string.Equals(DEFAULT.Initial_Catalog, _initialCatalog, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(DbConnectionStringDefaults.InitialCatalog, _initialCatalog, StringComparison.OrdinalIgnoreCase))
                 {
                     throw ADP.MissingConnectionOptionValue(KEY.FailoverPartner, KEY.Initial_Catalog);
                 }
@@ -930,7 +881,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.ApplicationIntent, out string value))
             {
-                return DEFAULT.ApplicationIntent;
+                return DbConnectionStringDefaults.ApplicationIntent;
             }
 
             // when wrong value is used in the connection string provided to SqlConnection.ConnectionString or c-tor,
@@ -964,7 +915,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.Authentication, out string value))
             {
-                return DEFAULT.Authentication;
+                return DbConnectionStringDefaults.Authentication;
             }
 
             try
@@ -989,7 +940,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.ColumnEncryptionSetting, out string value))
             {
-                return DEFAULT.ColumnEncryptionSetting;
+                return DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
 
             try
@@ -1014,7 +965,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
             {
-                return DEFAULT.AttestationProtocol;
+                return DbConnectionStringDefaults.AttestationProtocol;
             }
 
             try
@@ -1039,7 +990,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DEFAULT.IpAddressPreference;
+                return DbConnectionStringDefaults.IPAddressPreference;
             }
 
             try
@@ -1060,7 +1011,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out string value))
             {
-                return DEFAULT.PoolBlockingPeriod;
+                return DbConnectionStringDefaults.PoolBlockingPeriod;
             }
 
             try
@@ -1077,7 +1028,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.Encrypt, out string value))
             {
-                return DEFAULT.Encrypt;
+                return DbConnectionStringDefaults.Encrypt;
             }
 
             try
