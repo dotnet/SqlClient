@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         private ApplicationIntent _applicationIntent = DbConnectionStringDefaults.ApplicationIntent;
         private string _applicationName = DbConnectionStringDefaults.ApplicationName;
-        private string _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+        private string _attachDBFilename = DbConnectionStringDefaults.AttachDbFilename;
         private string _currentLanguage = DbConnectionStringDefaults.CurrentLanguage;
         private string _dataSource = DbConnectionStringDefaults.DataSource;
         private string _failoverPartner = DbConnectionStringDefaults.FailoverPartner;
@@ -95,8 +95,8 @@ namespace Microsoft.Data.SqlClient
         private string _password = DbConnectionStringDefaults.Password;
         private string _transactionBinding = DbConnectionStringDefaults.TransactionBinding;
         private string _typeSystemVersion = DbConnectionStringDefaults.TypeSystemVersion;
-        private string _userID = DbConnectionStringDefaults.UserID;
-        private string _workstationID = DbConnectionStringDefaults.WorkstationID;
+        private string _userID = DbConnectionStringDefaults.UserId;
+        private string _workstationID = DbConnectionStringDefaults.WorkstationId;
 
         private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
@@ -124,13 +124,13 @@ namespace Microsoft.Data.SqlClient
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
         private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
-        private SqlConnectionIPAddressPreference _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
-        private string _serverSPN = DbConnectionStringDefaults.ServerSPN;
-        private string _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
+        private SqlConnectionIPAddressPreference _ipAddressPreference = DbConnectionStringDefaults.IpAddressPreference;
+        private string _serverSPN = DbConnectionStringDefaults.ServerSpn;
+        private string _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSpn;
 
 #if NETFRAMEWORK
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
-        private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+        private bool _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIpResolution;
         private string _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
 #endif
         #endregion //Fields
@@ -429,7 +429,7 @@ namespace Microsoft.Data.SqlClient
                     _applicationName = DbConnectionStringDefaults.ApplicationName;
                     break;
                 case Keywords.AttachDBFilename:
-                    _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+                    _attachDBFilename = DbConnectionStringDefaults.AttachDbFilename;
                     break;
                 case Keywords.Authentication:
                     _authentication = DbConnectionStringDefaults.Authentication;
@@ -516,13 +516,13 @@ namespace Microsoft.Data.SqlClient
                     _typeSystemVersion = DbConnectionStringDefaults.TypeSystemVersion;
                     break;
                 case Keywords.UserID:
-                    _userID = DbConnectionStringDefaults.UserID;
+                    _userID = DbConnectionStringDefaults.UserId;
                     break;
                 case Keywords.UserInstance:
                     _userInstance = DbConnectionStringDefaults.UserInstance;
                     break;
                 case Keywords.WorkstationID:
-                    _workstationID = DbConnectionStringDefaults.WorkstationID;
+                    _workstationID = DbConnectionStringDefaults.WorkstationId;
                     break;
                 case Keywords.ColumnEncryptionSetting:
                     _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
@@ -534,13 +534,13 @@ namespace Microsoft.Data.SqlClient
                     _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
                     break;
                 case Keywords.IPAddressPreference:
-                    _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+                    _ipAddressPreference = DbConnectionStringDefaults.IpAddressPreference;
                     break;
                 case Keywords.ServerSPN:
-                    _serverSPN = DbConnectionStringDefaults.ServerSPN;
+                    _serverSPN = DbConnectionStringDefaults.ServerSpn;
                     break;
                 case Keywords.FailoverPartnerSPN:
-                    _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSPN;
+                    _failoverPartnerSPN = DbConnectionStringDefaults.FailoverPartnerSpn;
                     break;
                 case Keywords.ContextConnection:
                     break;
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient
                     _connectionReset = DbConnectionStringDefaults.ConnectionReset;
                     break;
                 case Keywords.TransparentNetworkIPResolution:
-                    _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+                    _transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIpResolution;
                     break;
                 case Keywords.NetworkLibrary:
                     _networkLibrary = DbConnectionStringDefaults.NetworkLibrary;
