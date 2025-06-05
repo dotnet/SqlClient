@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Security;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -103,14 +104,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //       the server, we will use that name over what was specified  
             //       in the original connection string.
 
-            if (userConnectionOptions.ContainsKey(SqlConnectionString.KEY.FailoverPartner) &&
-                userConnectionOptions[SqlConnectionString.KEY.FailoverPartner] == null)
+            if (userConnectionOptions.ContainsKey(DbConnectionStringKeywords.FailoverPartner) &&
+                userConnectionOptions[DbConnectionStringKeywords.FailoverPartner] == null)
             {
-                keywordToReplace = SqlConnectionString.KEY.Data_Source;
+                keywordToReplace = DbConnectionStringKeywords.DataSource;
             }
             else
             {
-                keywordToReplace = SqlConnectionString.KEY.FailoverPartner;
+                keywordToReplace = DbConnectionStringKeywords.FailoverPartner;
             }
 
             string failoverConnectionString = userConnectionOptions.ExpandKeyword(keywordToReplace, actualFailoverPartner);

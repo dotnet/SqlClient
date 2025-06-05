@@ -2273,11 +2273,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
                 if (connectionOptions.ContextConnection)
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.Context_Connection);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.ContextConnection);
                 }
 
                 System.Security.PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
@@ -2337,12 +2337,12 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
 
                 if (connectionOptions.ContextConnection)
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.Context_Connection);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.ContextConnection);
                 }
 
                 System.Security.PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
