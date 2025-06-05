@@ -2,19 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// SNI error
     /// </summary>
-    internal class SNIError
+    internal class SniError
     {
         // Error numbers from native SNI implementation
         internal const uint CertificateValidationErrorCode = 2148074277;
 
-        public readonly SNIProviders provider;
+        public readonly SniProviders provider;
         public readonly string errorMessage;
         public readonly uint nativeError;
         public readonly uint sniError;
@@ -22,7 +24,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public readonly uint lineNumber;
         public readonly Exception exception;
 
-        public SNIError(SNIProviders provider, uint nativeError, uint sniErrorCode, string errorMessage)
+        public SniError(SniProviders provider, uint nativeError, uint sniErrorCode, string errorMessage)
         {
             lineNumber = 0;
             function = string.Empty;
@@ -33,7 +35,7 @@ namespace Microsoft.Data.SqlClient.SNI
             exception = null;
         }
 
-        public SNIError(SNIProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
+        public SniError(SniProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
         {
             lineNumber = 0;
             function = string.Empty;
@@ -45,3 +47,5 @@ namespace Microsoft.Data.SqlClient.SNI
         }
     }
 }
+
+#endif

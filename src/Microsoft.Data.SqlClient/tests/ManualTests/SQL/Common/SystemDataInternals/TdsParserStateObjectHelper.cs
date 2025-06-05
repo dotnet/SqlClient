@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             // These managed SNI handles are allowed to be null, since they
             // won't exist in .NET Framework builds.
             s_tdsParserStateObjectManaged =
-                assembly.GetType("Microsoft.Data.SqlClient.SNI.TdsParserStateObjectManaged");
+                assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.TdsParserStateObjectManaged");
             s_tdsParserStateObjectManagedSessionHandle = null;
             if (s_tdsParserStateObjectManaged is not null)
             {
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             {
                 throw new ArgumentException("Library being tested does not implement TdsParserStateObjectManaged", nameof(stateObject));
             }
-            if (! s_tdsParserStateObjectManaged.IsInstanceOfType(stateObject))
+            if (!s_tdsParserStateObjectManaged.IsInstanceOfType(stateObject))
             {
                 throw new ArgumentException("Object provided was not a TdsParserStateObjectManaged", nameof(stateObject));
             }

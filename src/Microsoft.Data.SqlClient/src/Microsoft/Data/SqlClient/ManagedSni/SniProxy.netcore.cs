@@ -2,31 +2,30 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+
 using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.Data.ProviderBase;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient.ManagedSni
 {
     /// <summary>
     /// Managed SNI proxy implementation. Contains many SNI entry points used by SqlClient.
     /// </summary>
-    internal class SNIProxy
+    internal class SniProxy
     {
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
 
-        private static readonly SNIProxy s_singleton = new SNIProxy();
+        private static readonly SniProxy s_singleton = new SniProxy();
 
-        internal static SNIProxy Instance => s_singleton;
+        internal static SniProxy Instance => s_singleton;
 
         /// <summary>
         /// Create a SNI connection handle
@@ -47,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="hostNameInCertificate">Used for the HostName in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(
+        internal static SniHandle CreateConnectionHandle(
             string fullServerName,
             TimeoutTimer timeout,
             out byte[] instanceName,
@@ -82,7 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 return null;
             }
 
-            SNIHandle sniHandle = null;
+            SniHandle sniHandle = null;
             switch (details.ResolvedProtocol)
             {
                 case DataSource.Protocol.Admin:
@@ -107,7 +106,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (Exception e)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, SNICommon.ErrorSpnLookup, e);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, SniCommon.ErrorSpnLookup, e);
                 }
             }
 
@@ -190,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="hostNameInCertificate">Host name in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNITCPHandle</returns>
-        private static SNITCPHandle CreateTcpHandle(
+        private static SniTcpHandle CreateTcpHandle(
             DataSource details,
             TimeoutTimer timeout,
             bool parallel,
@@ -208,7 +207,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -219,12 +218,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 try
                 {
                     details.ResolvedPort = port = isAdminConnection ?
-                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
-                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
+                            SsrpClient.GetDacPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference) :
+                            SsrpClient.GetPortByInstanceName(hostName, details.InstanceName, timeout, parallel, ipPreference);
                 }
                 catch (SocketException se)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.TCP_PROV, SniCommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }
@@ -237,7 +236,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
+            return new SniTcpHandle(hostName, port, timeout, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
                 tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
@@ -251,24 +250,24 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="hostNameInCertificate">Host name in certificate</param>
         /// <param name="serverCertificateFilename">Used for the path to the Server Certificate</param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, TimeoutTimer timeout, bool parallel, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
+        private static SniNpHandle CreateNpHandle(DataSource details, TimeoutTimer timeout, bool parallel, bool tlsFirst, string hostNameInCertificate, string serverCertificateFilename)
         {
             if (parallel)
             {
                 // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
+                SniCommon.ReportSNIError(SniProviders.NP_PROV, 0, SniCommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
+            return new SniNpHandle(details.PipeHostName, details.PipeName, timeout, tlsFirst, hostNameInCertificate, serverCertificateFilename);
         }
 
         /// <summary>
         /// Get last SNI error on this thread
         /// </summary>
         /// <returns></returns>
-        internal SNIError GetLastError()
+        internal SniError GetLastError()
         {
-            return SNILoadHandle.SingletonInstance.LastError;
+            return SniLoadHandle.SingletonInstance.LastError;
         }
 
         /// <summary>
@@ -385,11 +384,11 @@ namespace Microsoft.Data.SqlClient.SNI
             if (_dataSourceAfterTrimmingProtocol.Contains(Slash)) // Pipe paths only allow back slashes
             {
                 if (ResolvedProtocol == Protocol.None)
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                 else if (ResolvedProtocol == Protocol.NP)
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                 else if (ResolvedProtocol == Protocol.TCP)
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
             }
         }
 
@@ -442,8 +441,8 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else if (index > 0)
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
+                SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SniCommon.ErrorLocatingServerInstance, Strings.SNI_ERROR_26);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniProxy), EventType.ERR, "Incompatible use of prefix with LocalDb: '{0}'", dataSource);
                 error = true;
             }
             else if (index == 0)
@@ -461,7 +460,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    SniLoadHandle.SingletonInstance.LastError = new SniError(SniProviders.INVALID_PROV, 0, SniCommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
             }
@@ -528,7 +527,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 // Bad Data Source like "server, "
                 if (string.IsNullOrEmpty(parameter))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
@@ -540,21 +539,21 @@ namespace Microsoft.Data.SqlClient.SNI
                 else if (ResolvedProtocol != Protocol.TCP)
                 {
                     // Parameter has been specified for non-TCP protocol. This is not allowed.
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
                 int port;
                 if (!int.TryParse(parameter, out port))
                 {
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
                     return false;
                 }
 
                 // If the user explicitly specified a invalid port in the connection string.
                 if (port < 1)
                 {
-                    ReportSNIError(SNIProviders.TCP_PROV);
+                    ReportSNIError(SniProviders.TCP_PROV);
                     return false;
                 }
 
@@ -568,13 +567,13 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (string.IsNullOrWhiteSpace(InstanceName))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
                 if (DefaultSqlServerInstanceName.Equals(InstanceName))
                 {
-                    ReportSNIError(SNIProviders.INVALID_PROV);
+                    ReportSNIError(SniProviders.INVALID_PROV);
                     return false;
                 }
 
@@ -586,9 +585,9 @@ namespace Microsoft.Data.SqlClient.SNI
             return true;
         }
 
-        private void ReportSNIError(SNIProviders provider)
+        private void ReportSNIError(SniProviders provider)
         {
-            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
+            SniLoadHandle.SingletonInstance.LastError = new SniError(provider, 0, SniCommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 
@@ -615,14 +614,14 @@ namespace Microsoft.Data.SqlClient.SNI
                         }
                         else
                         {
-                            ReportSNIError(SNIProviders.NP_PROV);
+                            ReportSNIError(SniProviders.NP_PROV);
                             return false;
                         }
                     }
                     else
                     {
                         PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
-                        PipeName = SNINpHandle.DefaultPipePath;
+                        PipeName = SniNpHandle.DefaultPipePath;
                     }
 
                     InferLocalServerName();
@@ -638,7 +637,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Another valid Sql named pipe for an named instance is \\.\pipe\MSSQL$MYINSTANCE\sql\query
                     if (tokensByBackSlash.Length < 6)
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
@@ -646,14 +645,14 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (string.IsNullOrEmpty(host))
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
                     //Check if the "pipe" keyword is the first part of path
                     if (!PipeToken.Equals(tokensByBackSlash[3]))
                     {
-                        ReportSNIError(SNIProviders.NP_PROV);
+                        ReportSNIError(SniProviders.NP_PROV);
                         return false;
                     }
 
@@ -685,7 +684,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (UriFormatException)
                 {
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                     return false;
                 }
 
@@ -697,7 +696,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 else if (ResolvedProtocol != Protocol.NP)
                 {
                     // In case the path began with a "\\" and protocol was not Named Pipes
-                    ReportSNIError(SNIProviders.NP_PROV);
+                    ReportSNIError(SniProviders.NP_PROV);
                     return false;
                 }
                 return true;
@@ -705,7 +704,9 @@ namespace Microsoft.Data.SqlClient.SNI
             return false;
         }
 
-        private static bool IsLocalHost(string serverName)
-            => ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
+        private static bool IsLocalHost(string serverName) =>
+            ".".Equals(serverName) || "(local)".Equals(serverName) || "localhost".Equals(serverName);
     }
 }
+
+#endif

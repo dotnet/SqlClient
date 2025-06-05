@@ -1419,6 +1419,11 @@ namespace Microsoft.Data.SqlClient
             return false;
         }
 
+        internal int GetPacketSize()
+        {
+            return _inBuff.Length;
+        }
+
         ///////////////////////////////////////
         // Buffer read methods - data values //
         ///////////////////////////////////////
@@ -4086,6 +4091,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack == trace, "The stack trace on subsequent replays should be the same");
                 }
             }
+
 #endif
             public bool ContinueEnabled => !LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
 
