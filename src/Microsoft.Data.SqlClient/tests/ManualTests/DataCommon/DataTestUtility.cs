@@ -37,8 +37,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADPasswordConnectionString = null;
         public static readonly string AADServicePrincipalId = null;
         public static readonly string AADServicePrincipalSecret = null;
-        public static readonly string AKVBaseUrl = null;
-        public static readonly string AKVUrl = null;
         public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
         public static readonly string LocalDbAppName = null;
@@ -69,7 +67,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADUserIdentityAccessToken = null;
         public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
-        public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
         public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
         public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
@@ -143,8 +140,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
-                AKVBaseUrl = AKVBaseUri.AbsoluteUri;
-                AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             }
 
             AKVTenantId = c.AzureKeyVaultTenantId;
@@ -339,7 +334,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
+            return AKVBaseUri != null && !string.IsNullOrEmpty(UserManagedIdentityClientId) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
         private static readonly DefaultAzureCredential s_defaultCredential = new(new DefaultAzureCredentialOptions { ManagedIdentityClientId = UserManagedIdentityClientId });
