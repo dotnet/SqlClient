@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             // * Start date: 24hrs ago
             // * End date: 24hrs in the future
             // * Subject: {subjectName}
-            // * Subject alternative names: {dnsNames}, {ipAddresses}
+            // * Subject alternative names: {subjectName}, {dnsNames}, {ipAddresses}
             // * Public key: 2048-bit RSA
             // * Hash algorithm: SHA256
             // * Key usage: digital signature, key encipherment
@@ -51,22 +51,21 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
             rnd.NextBytes(passwordBytes);
             password = Convert.ToBase64String(passwordBytes);
-#if NET9_0_OR_GREATER
+#if NET
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
             RSA rsaKey = RSA.Create(2048);
-            bool hasSans = false;
 
             subjectBuilder.AddCommonName(subjectName);
+
+            sanBuilder.AddDnsName(subjectName);
             foreach (string dnsName in dnsNames)
             {
                 sanBuilder.AddDnsName(dnsName);
-                hasSans = true;
             }
             foreach (string ipAddress in ipAddresses)
             {
                 sanBuilder.AddIpAddress(System.Net.IPAddress.Parse(ipAddress));
-                hasSans = true;
             }
 
             CertificateRequest request = new CertificateRequest(subjectBuilder.Build(), rsaKey, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
@@ -75,17 +74,28 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             request.CertificateExtensions.Add(new X509KeyUsageExtension(X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, false));
             request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(new OidCollection() { new Oid("1.3.6.1.5.5.7.3.1"), new Oid("1.3.6.1.5.5.7.3.2") }, true));
 
-            if (hasSans)
-            {
-                request.CertificateExtensions.Add(sanBuilder.Build());
-            }
+            request.CertificateExtensions.Add(sanBuilder.Build());
 
             // Generate an ephemeral certificate, then export it and return it as a new certificate with the correct key storage flags set.
             // This is to ensure that it's imported into the certificate stores with its private key.
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
-                return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pkcs12, password), password,
+#if NET9_0_OR_GREATER
+                return X509CertificateLoader.LoadPkcs12(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults)
+                    {
+                        PreserveStorageProvider = true,
+                        PreserveKeyName = true
+                    });
+#else
+                return new X509Certificate2(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+#endif
             }
 #else
             // The CertificateRequest API is available in .NET Core, but was only added to .NET Framework 4.7.2; it thus can't be used in the test projects.
