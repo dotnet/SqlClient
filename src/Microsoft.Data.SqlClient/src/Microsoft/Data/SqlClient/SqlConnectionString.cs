@@ -24,74 +24,6 @@ namespace Microsoft.Data.SqlClient
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        // @TODO: Remove in favor DbConnectionStringSynonyms
-        // Constant for the number of duplicate options in the connection string
-        private static class SYNONYM
-        {
-            // ip address preference
-            internal const string IPADDRESSPREFERENCE = DbConnectionStringSynonyms.IPADDRESSPREFERENCE;
-            //application intent
-            internal const string APPLICATIONINTENT = DbConnectionStringSynonyms.APPLICATIONINTENT;
-            // application name
-            internal const string APP = DbConnectionStringSynonyms.APP;
-            // attachDBFilename
-            internal const string EXTENDED_PROPERTIES = DbConnectionStringSynonyms.EXTENDEDPROPERTIES;
-            internal const string INITIAL_FILE_NAME = DbConnectionStringSynonyms.INITIALFILENAME;
-            // connect timeout
-            internal const string CONNECTION_TIMEOUT = DbConnectionStringSynonyms.CONNECTIONTIMEOUT;
-            internal const string TIMEOUT = DbConnectionStringSynonyms.TIMEOUT;
-            // current language
-            internal const string LANGUAGE = DbConnectionStringSynonyms.LANGUAGE;
-            // data source
-            internal const string ADDR = DbConnectionStringSynonyms.ADDR;
-            internal const string ADDRESS = DbConnectionStringSynonyms.ADDRESS;
-            internal const string SERVER = DbConnectionStringSynonyms.SERVER;
-            internal const string NETWORK_ADDRESS = DbConnectionStringSynonyms.NETWORKADDRESS;
-            // host name in certificate
-            internal const string HOSTNAMEINCERTIFICATE = DbConnectionStringSynonyms.HOSTNAMEINCERTIFICATE;
-            // server certificate
-            internal const string SERVERCERTIFICATE = DbConnectionStringSynonyms.SERVERCERTIFICATE;
-            // initial catalog
-            internal const string DATABASE = DbConnectionStringSynonyms.DATABASE;
-            // integrated security
-            internal const string TRUSTED_CONNECTION = DbConnectionStringSynonyms.TRUSTEDCONNECTION;
-            //connect retry count
-            internal const string CONNECTRETRYCOUNT = DbConnectionStringSynonyms.CONNECTRETRYCOUNT;
-            //connect retry interval
-            internal const string CONNECTRETRYINTERVAL = DbConnectionStringSynonyms.CONNECTRETRYINTERVAL;
-            // load balance timeout
-            internal const string Connection_Lifetime = DbConnectionStringSynonyms.ConnectionLifetime;
-            // multiple active result sets
-            internal const string MULTIPLEACTIVERESULTSETS = DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS;
-            // multi subnet failover
-            internal const string MULTISUBNETFAILOVER = DbConnectionStringSynonyms.MULTISUBNETFAILOVER;
-            // network library
-            internal const string NET = DbConnectionStringSynonyms.NET;
-            internal const string NETWORK = DbConnectionStringSynonyms.NETWORK;
-            // pool blocking period
-            internal const string POOLBLOCKINGPERIOD = DbConnectionStringSynonyms.POOLBLOCKINGPERIOD;
-            // password
-            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
-            // persist security info
-            internal const string PERSISTSECURITYINFO = DbConnectionStringSynonyms.PERSISTSECURITYINFO;
-            // trust server certificate
-            internal const string TRUSTSERVERCERTIFICATE = DbConnectionStringSynonyms.TRUSTSERVERCERTIFICATE;
-            // user id
-            internal const string UID = DbConnectionStringSynonyms.UID;
-            internal const string User = DbConnectionStringSynonyms.User;
-            // workstation id
-            internal const string WSID = DbConnectionStringSynonyms.WSID;
-            // server SPNs
-            internal const string ServerSPN = DbConnectionStringSynonyms.ServerSPN;
-            internal const string FailoverPartnerSPN = DbConnectionStringSynonyms.FailoverPartnerSPN;
-
-#if NETFRAMEWORK
-            internal const string TRANSPARENTNETWORKIPRESOLUTION = DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION;
-#endif
-
-            // make sure to update SynonymCount value below when adding or removing synonyms
-        }
-
         internal enum TypeSystem
         {
             Latest = 2008,
@@ -707,43 +639,43 @@ namespace Microsoft.Data.SqlClient
                     { DbConnectionStringKeywords.UserInstance, DbConnectionStringKeywords.UserInstance },
                     { DbConnectionStringKeywords.WorkstationId, DbConnectionStringKeywords.WorkstationId },
 
-                    { SYNONYM.IPADDRESSPREFERENCE, DbConnectionStringKeywords.IpAddressPreference },
-                    { SYNONYM.APP, DbConnectionStringKeywords.ApplicationName },
-                    { SYNONYM.APPLICATIONINTENT, DbConnectionStringKeywords.ApplicationIntent },
-                    { SYNONYM.EXTENDED_PROPERTIES, DbConnectionStringKeywords.AttachDbFilename },
-                    { SYNONYM.HOSTNAMEINCERTIFICATE, DbConnectionStringKeywords.HostNameInCertificate },
-                    { SYNONYM.SERVERCERTIFICATE, DbConnectionStringKeywords.ServerCertificate},
-                    { SYNONYM.INITIAL_FILE_NAME, DbConnectionStringKeywords.AttachDbFilename },
-                    { SYNONYM.CONNECTRETRYCOUNT, DbConnectionStringKeywords.ConnectRetryCount },
-                    { SYNONYM.CONNECTRETRYINTERVAL, DbConnectionStringKeywords.ConnectRetryInterval },
-                    { SYNONYM.CONNECTION_TIMEOUT, DbConnectionStringKeywords.ConnectTimeout },
-                    { SYNONYM.TIMEOUT, DbConnectionStringKeywords.ConnectTimeout },
-                    { SYNONYM.LANGUAGE, DbConnectionStringKeywords.CurrentLanguage },
-                    { SYNONYM.ADDR, DbConnectionStringKeywords.DataSource },
-                    { SYNONYM.ADDRESS, DbConnectionStringKeywords.DataSource },
-                    { SYNONYM.MULTIPLEACTIVERESULTSETS, DbConnectionStringKeywords.MultipleActiveResultSets },
-                    { SYNONYM.MULTISUBNETFAILOVER, DbConnectionStringKeywords.MultiSubnetFailover },
-                    { SYNONYM.NETWORK_ADDRESS, DbConnectionStringKeywords.DataSource },
-                    { SYNONYM.POOLBLOCKINGPERIOD, DbConnectionStringKeywords.PoolBlockingPeriod},
-                    { SYNONYM.SERVER, DbConnectionStringKeywords.DataSource },
-                    { SYNONYM.DATABASE, DbConnectionStringKeywords.InitialCatalog },
-                    { SYNONYM.TRUSTED_CONNECTION, DbConnectionStringKeywords.IntegratedSecurity },
-                    { SYNONYM.TRUSTSERVERCERTIFICATE, DbConnectionStringKeywords.TrustServerCertificate },
-                    { SYNONYM.Connection_Lifetime, DbConnectionStringKeywords.LoadBalanceTimeout },
-                    { SYNONYM.Pwd, DbConnectionStringKeywords.Password },
-                    { SYNONYM.PERSISTSECURITYINFO, DbConnectionStringKeywords.PersistSecurityInfo },
-                    { SYNONYM.UID, DbConnectionStringKeywords.UserId },
-                    { SYNONYM.User, DbConnectionStringKeywords.UserId },
-                    { SYNONYM.WSID, DbConnectionStringKeywords.WorkstationId },
-                    { SYNONYM.ServerSPN, DbConnectionStringKeywords.ServerSpn },
-                    { SYNONYM.FailoverPartnerSPN, DbConnectionStringKeywords.FailoverPartnerSpn },
+                    { DbConnectionStringSynonyms.IPADDRESSPREFERENCE, DbConnectionStringKeywords.IpAddressPreference },
+                    { DbConnectionStringSynonyms.APP, DbConnectionStringKeywords.ApplicationName },
+                    { DbConnectionStringSynonyms.APPLICATIONINTENT, DbConnectionStringKeywords.ApplicationIntent },
+                    { DbConnectionStringSynonyms.EXTENDEDPROPERTIES, DbConnectionStringKeywords.AttachDbFilename },
+                    { DbConnectionStringSynonyms.HOSTNAMEINCERTIFICATE, DbConnectionStringKeywords.HostNameInCertificate },
+                    { DbConnectionStringSynonyms.SERVERCERTIFICATE, DbConnectionStringKeywords.ServerCertificate},
+                    { DbConnectionStringSynonyms.INITIALFILENAME, DbConnectionStringKeywords.AttachDbFilename },
+                    { DbConnectionStringSynonyms.CONNECTRETRYCOUNT, DbConnectionStringKeywords.ConnectRetryCount },
+                    { DbConnectionStringSynonyms.CONNECTRETRYINTERVAL, DbConnectionStringKeywords.ConnectRetryInterval },
+                    { DbConnectionStringSynonyms.CONNECTIONTIMEOUT, DbConnectionStringKeywords.ConnectTimeout },
+                    { DbConnectionStringSynonyms.TIMEOUT, DbConnectionStringKeywords.ConnectTimeout },
+                    { DbConnectionStringSynonyms.LANGUAGE, DbConnectionStringKeywords.CurrentLanguage },
+                    { DbConnectionStringSynonyms.ADDR, DbConnectionStringKeywords.DataSource },
+                    { DbConnectionStringSynonyms.ADDRESS, DbConnectionStringKeywords.DataSource },
+                    { DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS, DbConnectionStringKeywords.MultipleActiveResultSets },
+                    { DbConnectionStringSynonyms.MULTISUBNETFAILOVER, DbConnectionStringKeywords.MultiSubnetFailover },
+                    { DbConnectionStringSynonyms.NETWORKADDRESS, DbConnectionStringKeywords.DataSource },
+                    { DbConnectionStringSynonyms.POOLBLOCKINGPERIOD, DbConnectionStringKeywords.PoolBlockingPeriod},
+                    { DbConnectionStringSynonyms.SERVER, DbConnectionStringKeywords.DataSource },
+                    { DbConnectionStringSynonyms.DATABASE, DbConnectionStringKeywords.InitialCatalog },
+                    { DbConnectionStringSynonyms.TRUSTEDCONNECTION, DbConnectionStringKeywords.IntegratedSecurity },
+                    { DbConnectionStringSynonyms.TRUSTSERVERCERTIFICATE, DbConnectionStringKeywords.TrustServerCertificate },
+                    { DbConnectionStringSynonyms.ConnectionLifetime, DbConnectionStringKeywords.LoadBalanceTimeout },
+                    { DbConnectionStringSynonyms.Pwd, DbConnectionStringKeywords.Password },
+                    { DbConnectionStringSynonyms.PERSISTSECURITYINFO, DbConnectionStringKeywords.PersistSecurityInfo },
+                    { DbConnectionStringSynonyms.UID, DbConnectionStringKeywords.UserId },
+                    { DbConnectionStringSynonyms.User, DbConnectionStringKeywords.UserId },
+                    { DbConnectionStringSynonyms.WSID, DbConnectionStringKeywords.WorkstationId },
+                    { DbConnectionStringSynonyms.ServerSPN, DbConnectionStringKeywords.ServerSpn },
+                    { DbConnectionStringSynonyms.FailoverPartnerSPN, DbConnectionStringKeywords.FailoverPartnerSpn },
 #if NETFRAMEWORK
                     { DbConnectionStringKeywords.ConnectionReset, DbConnectionStringKeywords.ConnectionReset },
                     { DbConnectionStringKeywords.NetworkLibrary, DbConnectionStringKeywords.NetworkLibrary },
                     { DbConnectionStringKeywords.TransparentNetworkIpResolution, DbConnectionStringKeywords.TransparentNetworkIpResolution },
-                    { SYNONYM.NET, DbConnectionStringKeywords.NetworkLibrary },
-                    { SYNONYM.NETWORK, DbConnectionStringKeywords.NetworkLibrary },
-                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, DbConnectionStringKeywords.TransparentNetworkIpResolution },
+                    { DbConnectionStringSynonyms.NET, DbConnectionStringKeywords.NetworkLibrary },
+                    { DbConnectionStringSynonyms.NETWORK, DbConnectionStringKeywords.NetworkLibrary },
+                    { DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION, DbConnectionStringKeywords.TransparentNetworkIpResolution },
 #endif // NETFRAMEWORK
                 };
                 Debug.Assert(synonyms.Count == count, $"incorrect initial ParseSynonyms size {count} v/s {synonyms.Count}");
