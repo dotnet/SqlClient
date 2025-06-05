@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             string[] validKeywords = new string[KeywordsCount];
             validKeywords[(int)Keywords.ApplicationIntent] = DbConnectionStringKeywords.ApplicationIntent;
             validKeywords[(int)Keywords.ApplicationName] = DbConnectionStringKeywords.ApplicationName;
-            validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDBFilename;
+            validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDbFilename;
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
             validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
             validKeywords[(int)Keywords.ConnectTimeout] = DbConnectionStringKeywords.ConnectTimeout;
@@ -167,23 +167,23 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.TransactionBinding] = DbConnectionStringKeywords.TransactionBinding;
             validKeywords[(int)Keywords.TrustServerCertificate] = DbConnectionStringKeywords.TrustServerCertificate;
             validKeywords[(int)Keywords.TypeSystemVersion] = DbConnectionStringKeywords.TypeSystemVersion;
-            validKeywords[(int)Keywords.UserID] = DbConnectionStringKeywords.UserID;
+            validKeywords[(int)Keywords.UserID] = DbConnectionStringKeywords.UserId;
             validKeywords[(int)Keywords.UserInstance] = DbConnectionStringKeywords.UserInstance;
-            validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationID;
+            validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationId;
             validKeywords[(int)Keywords.ConnectRetryCount] = DbConnectionStringKeywords.ConnectRetryCount;
             validKeywords[(int)Keywords.ConnectRetryInterval] = DbConnectionStringKeywords.ConnectRetryInterval;
             validKeywords[(int)Keywords.Authentication] = DbConnectionStringKeywords.Authentication;
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
-            validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IPAddressPreference;
-            validKeywords[(int)Keywords.ServerSPN] = DbConnectionStringKeywords.ServerSPN;
-            validKeywords[(int)Keywords.FailoverPartnerSPN] = DbConnectionStringKeywords.FailoverPartnerSPN;
+            validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IpAddressPreference;
+            validKeywords[(int)Keywords.ServerSPN] = DbConnectionStringKeywords.ServerSpn;
+            validKeywords[(int)Keywords.FailoverPartnerSPN] = DbConnectionStringKeywords.FailoverPartnerSpn;
             validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
 #if NETFRAMEWORK
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
             validKeywords[(int)Keywords.NetworkLibrary] = DbConnectionStringKeywords.NetworkLibrary;
-            validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIPResolution;
+            validKeywords[(int)Keywords.TransparentNetworkIPResolution] = DbConnectionStringKeywords.TransparentNetworkIpResolution;
 #endif
             return validKeywords;
         }
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
             {
                 { DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent },
                 { DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName },
-                { DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename },
+                { DbConnectionStringKeywords.AttachDbFilename, Keywords.AttachDBFilename },
                 { DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod },
                 { DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout },
                 { DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout },
@@ -220,22 +220,22 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.TransactionBinding, Keywords.TransactionBinding },
                 { DbConnectionStringKeywords.TrustServerCertificate, Keywords.TrustServerCertificate },
                 { DbConnectionStringKeywords.TypeSystemVersion, Keywords.TypeSystemVersion },
-                { DbConnectionStringKeywords.UserID, Keywords.UserID },
+                { DbConnectionStringKeywords.UserId, Keywords.UserID },
                 { DbConnectionStringKeywords.UserInstance, Keywords.UserInstance },
-                { DbConnectionStringKeywords.WorkstationID, Keywords.WorkstationID },
+                { DbConnectionStringKeywords.WorkstationId, Keywords.WorkstationID },
                 { DbConnectionStringKeywords.ConnectRetryCount, Keywords.ConnectRetryCount },
                 { DbConnectionStringKeywords.ConnectRetryInterval, Keywords.ConnectRetryInterval },
                 { DbConnectionStringKeywords.Authentication, Keywords.Authentication },
                 { DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting },
                 { DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl },
                 { DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol },
-                { DbConnectionStringKeywords.IPAddressPreference, Keywords.IPAddressPreference },
-                { DbConnectionStringKeywords.ServerSPN, Keywords.ServerSPN },
-                { DbConnectionStringKeywords.FailoverPartnerSPN, Keywords.FailoverPartnerSPN },
+                { DbConnectionStringKeywords.IpAddressPreference, Keywords.IPAddressPreference },
+                { DbConnectionStringKeywords.ServerSpn, Keywords.ServerSPN },
+                { DbConnectionStringKeywords.FailoverPartnerSpn, Keywords.FailoverPartnerSPN },
                 { DbConnectionStringKeywords.ContextConnection, Keywords.ContextConnection },
 #if NETFRAMEWORK
                 { DbConnectionStringKeywords.ConnectionReset, Keywords.ConnectionReset },
-                { DbConnectionStringKeywords.TransparentNetworkIPResolution, Keywords.TransparentNetworkIPResolution },
+                { DbConnectionStringKeywords.TransparentNetworkIpResolution, Keywords.TransparentNetworkIPResolution },
                 { DbConnectionStringKeywords.NetworkLibrary, Keywords.NetworkLibrary },
                 { DbConnectionStringSynonyms.NET, Keywords.NetworkLibrary },
                 { DbConnectionStringSynonyms.NETWORK, Keywords.NetworkLibrary },
@@ -599,7 +599,7 @@ namespace Microsoft.Data.SqlClient
         private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
         {
             Debug.Assert(IpAddressPreferenceUtilities.IsValidIPAddressPreference(value), "Invalid value for SqlConnectionIPAddressPreference");
-            base[DbConnectionStringKeywords.IPAddressPreference] = IpAddressPreferenceUtilities.IPAddressPreferenceToString(value);
+            base[DbConnectionStringKeywords.IpAddressPreference] = IpAddressPreferenceUtilities.IPAddressPreferenceToString(value);
         }
 
         private void SetAuthenticationValue(SqlAuthenticationMethod value)
@@ -890,7 +890,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly string[] s_notSupportedKeywords = {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.TransactionBinding,
-            DbConnectionStringKeywords.TransparentNetworkIPResolution,
+            DbConnectionStringKeywords.TransparentNetworkIpResolution,
             DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION,
         };
 
@@ -1118,7 +1118,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*' />
-        [DisplayName(DbConnectionStringKeywords.AttachDBFilename)]
+        [DisplayName(DbConnectionStringKeywords.AttachDbFilename)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
         [Editor("System.Windows.Forms.Design.FileNameEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
@@ -1128,7 +1128,7 @@ namespace Microsoft.Data.SqlClient
             get => _attachDBFilename;
             set
             {
-                SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
+                SetValue(DbConnectionStringKeywords.AttachDbFilename, value);
                 _attachDBFilename = value;
             }
         }
@@ -1203,7 +1203,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ServerSPN/*' />
-        [DisplayName(DbConnectionStringKeywords.ServerSPN)]
+        [DisplayName(DbConnectionStringKeywords.ServerSpn)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerSPN)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1212,7 +1212,7 @@ namespace Microsoft.Data.SqlClient
             get => _serverSPN;
             set
             {
-                SetValue(DbConnectionStringKeywords.ServerSPN, value);
+                SetValue(DbConnectionStringKeywords.ServerSpn, value);
                 _serverSPN = value;
             }
         }
@@ -1319,7 +1319,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
-        [DisplayName(DbConnectionStringKeywords.IPAddressPreference)]
+        [DisplayName(DbConnectionStringKeywords.IpAddressPreference)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_IPAddressPreference)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1385,7 +1385,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartnerSPN/*' />
-        [DisplayName(DbConnectionStringKeywords.FailoverPartnerSPN)]
+        [DisplayName(DbConnectionStringKeywords.FailoverPartnerSpn)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartnerSPN)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1394,7 +1394,7 @@ namespace Microsoft.Data.SqlClient
             get => _failoverPartnerSPN;
             set
             {
-                SetValue(DbConnectionStringKeywords.FailoverPartnerSPN, value);
+                SetValue(DbConnectionStringKeywords.FailoverPartnerSpn, value);
                 _failoverPartnerSPN = value;
             }
         }
@@ -1708,7 +1708,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*' />
-        [DisplayName(DbConnectionStringKeywords.UserID)]
+        [DisplayName(DbConnectionStringKeywords.UserId)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_UserID)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1717,7 +1717,7 @@ namespace Microsoft.Data.SqlClient
             get => _userID;
             set
             {
-                SetValue(DbConnectionStringKeywords.UserID, value);
+                SetValue(DbConnectionStringKeywords.UserId, value);
                 _userID = value;
             }
         }
@@ -1738,7 +1738,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*' />
-        [DisplayName(DbConnectionStringKeywords.WorkstationID)]
+        [DisplayName(DbConnectionStringKeywords.WorkstationId)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Context)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_WorkstationID)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1747,7 +1747,7 @@ namespace Microsoft.Data.SqlClient
             get => _workstationID;
             set
             {
-                SetValue(DbConnectionStringKeywords.WorkstationID, value);
+                SetValue(DbConnectionStringKeywords.WorkstationId, value);
                 _workstationID = value;
             }
         }
@@ -1844,7 +1844,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
-        [DisplayName(DbConnectionStringKeywords.TransparentNetworkIPResolution)]
+        [DisplayName(DbConnectionStringKeywords.TransparentNetworkIpResolution)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
         [RefreshProperties(RefreshProperties.All)]
@@ -1853,7 +1853,7 @@ namespace Microsoft.Data.SqlClient
             get => _transparentNetworkIPResolution;
             set
             {
-                SetValue(DbConnectionStringKeywords.TransparentNetworkIPResolution, value);
+                SetValue(DbConnectionStringKeywords.TransparentNetworkIpResolution, value);
                 _transparentNetworkIPResolution = value;
             }
         }
