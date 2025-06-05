@@ -17,7 +17,7 @@ namespace Microsoft.Data.Common
     // @TODO: Theoretically this class could be replaced with SqlConnectionString.
     
     [Serializable] // MDAC 83147
-    internal sealed class DBConnectionString
+    internal sealed class DbConnectionString
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by permission classes so it is much easier to verify correctness
@@ -47,21 +47,21 @@ namespace Microsoft.Data.Common
         readonly private string _encryptedActualConnectionString;
 #pragma warning restore 169
 
-        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
+        internal DbConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
             : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
             // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
             // the hashtable doesn't need clone since it isn't shared with anything else
         }
 
-        internal DBConnectionString(DbConnectionOptions connectionOptions)
+        internal DbConnectionString(DbConnectionOptions connectionOptions)
             : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, null, true)
         {
-            // used by DBDataPermission to convert from DbConnectionOptions to DBConnectionString
+            // used by DBDataPermission to convert from DbConnectionOptions to DbConnectionString
             // since backward compatibility requires Everett level classes
         }
 
-        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
+        private DbConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
         { // used by DBDataPermission
             Debug.Assert(connectionOptions != null, "null connectionOptions");
             switch (behavior)
@@ -117,7 +117,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private DBConnectionString(DBConnectionString connectionString, string[] restrictionValues, KeyRestrictionBehavior behavior)
+        private DbConnectionString(DbConnectionString connectionString, string[] restrictionValues, KeyRestrictionBehavior behavior)
         {
             // used by intersect for two equal connection strings with different restrictions
             _encryptedUsersConnectionString = connectionString._encryptedUsersConnectionString;
@@ -194,7 +194,7 @@ namespace Microsoft.Data.Common
             return _parsetable.ContainsKey(keyword);
         }
 
-        internal DBConnectionString Intersect(DBConnectionString entry)
+        internal DbConnectionString Intersect(DbConnectionString entry)
         {
             KeyRestrictionBehavior behavior = _behavior;
             string[] restrictionValues = null;
@@ -286,7 +286,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(!_hasPassword || ContainsKey(DbConnectionStringKeywords.Password) || ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch this");
             Debug.Assert(entry == null || !entry._hasPassword || entry.ContainsKey(DbConnectionStringKeywords.Password) || entry.ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch entry");
 
-            DBConnectionString value = new DBConnectionString(this, restrictionValues, behavior);
+            DbConnectionString value = new DbConnectionString(this, restrictionValues, behavior);
             ValidateCombinedSet(this, value);
             ValidateCombinedSet(entry, value);
 
@@ -294,7 +294,7 @@ namespace Microsoft.Data.Common
         }
 
         [Conditional("DEBUG")]
-        private void ValidateCombinedSet(DBConnectionString componentSet, DBConnectionString combinedSet)
+        private void ValidateCombinedSet(DbConnectionString componentSet, DbConnectionString combinedSet)
         {
             Debug.Assert(combinedSet != null, "The combined connection string should not be null");
             if ((componentSet != null) && (combinedSet._restrictionValues != null) && (componentSet._restrictionValues != null))
@@ -367,7 +367,7 @@ namespace Microsoft.Data.Common
             return (_restrictionValues == null || (0 > Array.BinarySearch(_restrictionValues, key, StringComparer.Ordinal)));
         }
 
-        internal bool IsSupersetOf(DBConnectionString entry)
+        internal bool IsSupersetOf(DbConnectionString entry)
         {
             Debug.Assert(!_hasPassword || ContainsKey(DbConnectionStringKeywords.Password) || ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch this");
             Debug.Assert(!entry._hasPassword || entry.ContainsKey(DbConnectionStringKeywords.Password) || entry.ContainsKey(DbConnectionStringSynonyms.Pwd), "OnDeserialized password mismatch entry");
@@ -477,10 +477,10 @@ namespace Microsoft.Data.Common
             return restrictionValues;
         }
 
-        private static string[] ParseRestrictions(string restrictions, Dictionary<string, string> synonyms)
+        private static string[] ParseRestrictions(string restrictions, IReadOnlyDictionary<string, string> synonyms)
         {
 #if DEBUG
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> Restrictions='{0}'", restrictions);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DbConnectionString|INFO|ADV> Restrictions='{0}'", restrictions);
 #endif
             List<string> restrictionValues = new List<string>();
             StringBuilder buffer = new StringBuilder(restrictions.Length);
@@ -496,7 +496,7 @@ namespace Microsoft.Data.Common
                 if (!string.IsNullOrEmpty(keyname))
                 {
 #if DEBUG
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> KeyName='{0}'", keyname);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DbConnectionString|INFO|ADV> KeyName='{0}'", keyname);
 #endif
                     string realkeyname = synonyms != null ? (string)synonyms[keyname] : keyname; // MDAC 85144
                     if (string.IsNullOrEmpty(realkeyname))
