@@ -56,7 +56,7 @@ namespace Microsoft.Data.Common.ConnectionString
                 _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) || 
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
-                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserID) ||
+                _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
                                     _parsetable.ContainsKey(DbConnectionStringSynonyms.UID);
             }
         }
@@ -628,7 +628,7 @@ namespace Microsoft.Data.Common.ConnectionString
             StringBuilder builder = new(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; current != null; current = current.Next)
             {
-                if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDBFilename, StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDbFilename, StringComparison.InvariantCultureIgnoreCase))
                 {
                     builder.Append($"{current.Name}={replacementValue};");
                 }
@@ -679,7 +679,7 @@ namespace Microsoft.Data.Common.ConnectionString
                         return string.IsNullOrEmpty(value); // MDAC 83097
                     }
 
-                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserID, out value) && !string.IsNullOrEmpty(value)) || 
+                    return (_parsetable.TryGetValue(DbConnectionStringKeywords.UserId, out value) && !string.IsNullOrEmpty(value)) || 
                            (_parsetable.TryGetValue(DbConnectionStringSynonyms.UID, out value) && !string.IsNullOrEmpty(value));
                 }
                 return false;

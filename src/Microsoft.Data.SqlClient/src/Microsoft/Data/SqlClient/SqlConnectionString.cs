@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient
 
             _applicationIntent = ConvertValueToApplicationIntent();
             _applicationName = ConvertValueToString(DbConnectionStringKeywords.ApplicationName, DbConnectionStringDefaults.ApplicationName);
-            _attachDBFileName = ConvertValueToString(DbConnectionStringKeywords.AttachDBFilename, DbConnectionStringDefaults.AttachDbFilename);
+            _attachDBFileName = ConvertValueToString(DbConnectionStringKeywords.AttachDbFilename, DbConnectionStringDefaults.AttachDbFilename);
             _contextConnection = ConvertValueToBoolean(DbConnectionStringKeywords.ContextConnection, DbConnectionStringDefaults.ContextConnection);
             _currentLanguage = ConvertValueToString(DbConnectionStringKeywords.CurrentLanguage, DbConnectionStringDefaults.CurrentLanguage);
             _dataSource = ConvertValueToString(DbConnectionStringKeywords.DataSource, DbConnectionStringDefaults.DataSource);
@@ -237,15 +237,15 @@ namespace Microsoft.Data.SqlClient
             _ipAddressPreference = ConvertValueToIPAddressPreference();
             _hostNameInCertificate = ConvertValueToString(DbConnectionStringKeywords.HostNameInCertificate, DbConnectionStringDefaults.HostNameInCertificate);
             _serverCertificate = ConvertValueToString(DbConnectionStringKeywords.ServerCertificate, DbConnectionStringDefaults.ServerCertificate);
-            _serverSPN = ConvertValueToString(DbConnectionStringKeywords.ServerSPN, DbConnectionStringDefaults.ServerSpn);
-            _failoverPartnerSPN = ConvertValueToString(DbConnectionStringKeywords.FailoverPartnerSPN, DbConnectionStringDefaults.FailoverPartnerSpn);
+            _serverSPN = ConvertValueToString(DbConnectionStringKeywords.ServerSpn, DbConnectionStringDefaults.ServerSpn);
+            _failoverPartnerSPN = ConvertValueToString(DbConnectionStringKeywords.FailoverPartnerSpn, DbConnectionStringDefaults.FailoverPartnerSpn);
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(DbConnectionStringKeywords.TypeSystemVersion, null);
             string transactionBindingString = ConvertValueToString(DbConnectionStringKeywords.TransactionBinding, null);
 
-            _userID = ConvertValueToString(DbConnectionStringKeywords.UserID, DbConnectionStringDefaults.UserId);
-            _workstationId = ConvertValueToString(DbConnectionStringKeywords.WorkstationID, null);
+            _userID = ConvertValueToString(DbConnectionStringKeywords.UserId, DbConnectionStringDefaults.UserId);
+            _workstationId = ConvertValueToString(DbConnectionStringKeywords.WorkstationId, null);
 
             if (_contextConnection)
             {
@@ -289,7 +289,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _connectionReset = ConvertValueToBoolean(DbConnectionStringKeywords.ConnectionReset, DbConnectionStringDefaults.ConnectionReset);
-            _transparentNetworkIPResolution = ConvertValueToBoolean(DbConnectionStringKeywords.TransparentNetworkIPResolution, DbConnectionStringDefaults.TransparentNetworkIpResolution);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(DbConnectionStringKeywords.TransparentNetworkIpResolution, DbConnectionStringDefaults.TransparentNetworkIpResolution);
             _networkLibrary = ConvertValueToString(DbConnectionStringKeywords.NetworkLibrary, null);
 
             if (_networkLibrary != null)
@@ -326,10 +326,10 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_failoverPartner, TdsEnums.MAXLEN_SERVERNAME, DbConnectionStringKeywords.FailoverPartner);
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, DbConnectionStringKeywords.InitialCatalog);
             ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, DbConnectionStringKeywords.Password);
-            ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, DbConnectionStringKeywords.UserID);
+            ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, DbConnectionStringKeywords.UserId);
             if (_workstationId != null)
             {
-                ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, DbConnectionStringKeywords.WorkstationID);
+                ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, DbConnectionStringKeywords.WorkstationId);
             }
 
             if (!string.Equals(DbConnectionStringDefaults.FailoverPartner, _failoverPartner, StringComparison.OrdinalIgnoreCase))
@@ -348,14 +348,14 @@ namespace Microsoft.Data.SqlClient
             }
 
             // expand during construction so that CreatePermissionSet and Expand are consistent
-            _expandedAttachDBFilename = ExpandDataDirectory(DbConnectionStringKeywords.AttachDBFilename, _attachDBFileName);
+            _expandedAttachDBFilename = ExpandDataDirectory(DbConnectionStringKeywords.AttachDbFilename, _attachDBFileName);
             if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
                 {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDBFilename);
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
                 }
-                ValidateValueLength(_expandedAttachDBFilename, TdsEnums.MAXLEN_ATTACHDBFILE, DbConnectionStringKeywords.AttachDBFilename);
+                ValidateValueLength(_expandedAttachDBFilename, TdsEnums.MAXLEN_ATTACHDBFILE, DbConnectionStringKeywords.AttachDbFilename);
                 if (_localDBInstance == null)
                 {
                     // fail fast to verify LocalHost when using |DataDirectory|
@@ -370,11 +370,11 @@ namespace Microsoft.Data.SqlClient
             }
             else if (0 <= _attachDBFileName.IndexOf('|'))
             {
-                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDBFilename);
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
             }
             else
             {
-                ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, DbConnectionStringKeywords.AttachDBFilename);
+                ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, DbConnectionStringKeywords.AttachDbFilename);
             }
             _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion10;
 
@@ -619,7 +619,7 @@ namespace Microsoft.Data.SqlClient
             if (_expandedAttachDBFilename != null)
             {
 #if NETFRAMEWORK
-                return ExpandKeyword(DbConnectionStringKeywords.AttachDBFilename, _expandedAttachDBFilename);
+                return ExpandKeyword(DbConnectionStringKeywords.AttachDbFilename, _expandedAttachDBFilename);
 #else
                 return ExpandAttachDbFileName(_expandedAttachDBFilename);
 #endif
@@ -667,7 +667,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     { DbConnectionStringKeywords.ApplicationIntent, DbConnectionStringKeywords.ApplicationIntent },
                     { DbConnectionStringKeywords.ApplicationName, DbConnectionStringKeywords.ApplicationName },
-                    { DbConnectionStringKeywords.AttachDBFilename, DbConnectionStringKeywords.AttachDBFilename },
+                    { DbConnectionStringKeywords.AttachDbFilename, DbConnectionStringKeywords.AttachDbFilename },
                     { DbConnectionStringKeywords.AttestationProtocol, DbConnectionStringKeywords.AttestationProtocol},
                     { DbConnectionStringKeywords.Authentication, DbConnectionStringKeywords.Authentication },
                     { DbConnectionStringKeywords.ColumnEncryptionSetting, DbConnectionStringKeywords.ColumnEncryptionSetting },
@@ -682,12 +682,12 @@ namespace Microsoft.Data.SqlClient
                     { DbConnectionStringKeywords.Encrypt, DbConnectionStringKeywords.Encrypt },
                     { DbConnectionStringKeywords.Enlist, DbConnectionStringKeywords.Enlist },
                     { DbConnectionStringKeywords.FailoverPartner, DbConnectionStringKeywords.FailoverPartner },
-                    { DbConnectionStringKeywords.FailoverPartnerSPN, DbConnectionStringKeywords.FailoverPartnerSPN },
+                    { DbConnectionStringKeywords.FailoverPartnerSpn, DbConnectionStringKeywords.FailoverPartnerSpn },
                     { DbConnectionStringKeywords.HostNameInCertificate, DbConnectionStringKeywords.HostNameInCertificate },
                     { DbConnectionStringKeywords.ServerCertificate, DbConnectionStringKeywords.ServerCertificate},
                     { DbConnectionStringKeywords.InitialCatalog, DbConnectionStringKeywords.InitialCatalog },
                     { DbConnectionStringKeywords.IntegratedSecurity, DbConnectionStringKeywords.IntegratedSecurity },
-                    { DbConnectionStringKeywords.IPAddressPreference, DbConnectionStringKeywords.IPAddressPreference },
+                    { DbConnectionStringKeywords.IpAddressPreference, DbConnectionStringKeywords.IpAddressPreference },
                     { DbConnectionStringKeywords.LoadBalanceTimeout, DbConnectionStringKeywords.LoadBalanceTimeout },
                     { DbConnectionStringKeywords.MultipleActiveResultSets, DbConnectionStringKeywords.MultipleActiveResultSets },
                     { DbConnectionStringKeywords.MaxPoolSize, DbConnectionStringKeywords.MaxPoolSize },
@@ -699,21 +699,21 @@ namespace Microsoft.Data.SqlClient
                     { DbConnectionStringKeywords.Pooling, DbConnectionStringKeywords.Pooling },
                     { DbConnectionStringKeywords.PoolBlockingPeriod, DbConnectionStringKeywords.PoolBlockingPeriod },
                     { DbConnectionStringKeywords.Replication, DbConnectionStringKeywords.Replication },
-                    { DbConnectionStringKeywords.ServerSPN, DbConnectionStringKeywords.ServerSPN },
+                    { DbConnectionStringKeywords.ServerSpn, DbConnectionStringKeywords.ServerSpn },
                     { DbConnectionStringKeywords.TrustServerCertificate, DbConnectionStringKeywords.TrustServerCertificate },
                     { DbConnectionStringKeywords.TransactionBinding, DbConnectionStringKeywords.TransactionBinding },
                     { DbConnectionStringKeywords.TypeSystemVersion, DbConnectionStringKeywords.TypeSystemVersion },
-                    { DbConnectionStringKeywords.UserID, DbConnectionStringKeywords.UserID },
+                    { DbConnectionStringKeywords.UserId, DbConnectionStringKeywords.UserId },
                     { DbConnectionStringKeywords.UserInstance, DbConnectionStringKeywords.UserInstance },
-                    { DbConnectionStringKeywords.WorkstationID, DbConnectionStringKeywords.WorkstationID },
+                    { DbConnectionStringKeywords.WorkstationId, DbConnectionStringKeywords.WorkstationId },
 
-                    { SYNONYM.IPADDRESSPREFERENCE, DbConnectionStringKeywords.IPAddressPreference },
+                    { SYNONYM.IPADDRESSPREFERENCE, DbConnectionStringKeywords.IpAddressPreference },
                     { SYNONYM.APP, DbConnectionStringKeywords.ApplicationName },
                     { SYNONYM.APPLICATIONINTENT, DbConnectionStringKeywords.ApplicationIntent },
-                    { SYNONYM.EXTENDED_PROPERTIES, DbConnectionStringKeywords.AttachDBFilename },
+                    { SYNONYM.EXTENDED_PROPERTIES, DbConnectionStringKeywords.AttachDbFilename },
                     { SYNONYM.HOSTNAMEINCERTIFICATE, DbConnectionStringKeywords.HostNameInCertificate },
                     { SYNONYM.SERVERCERTIFICATE, DbConnectionStringKeywords.ServerCertificate},
-                    { SYNONYM.INITIAL_FILE_NAME, DbConnectionStringKeywords.AttachDBFilename },
+                    { SYNONYM.INITIAL_FILE_NAME, DbConnectionStringKeywords.AttachDbFilename },
                     { SYNONYM.CONNECTRETRYCOUNT, DbConnectionStringKeywords.ConnectRetryCount },
                     { SYNONYM.CONNECTRETRYINTERVAL, DbConnectionStringKeywords.ConnectRetryInterval },
                     { SYNONYM.CONNECTION_TIMEOUT, DbConnectionStringKeywords.ConnectTimeout },
@@ -732,18 +732,18 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.Connection_Lifetime, DbConnectionStringKeywords.LoadBalanceTimeout },
                     { SYNONYM.Pwd, DbConnectionStringKeywords.Password },
                     { SYNONYM.PERSISTSECURITYINFO, DbConnectionStringKeywords.PersistSecurityInfo },
-                    { SYNONYM.UID, DbConnectionStringKeywords.UserID },
-                    { SYNONYM.User, DbConnectionStringKeywords.UserID },
-                    { SYNONYM.WSID, DbConnectionStringKeywords.WorkstationID },
-                    { SYNONYM.ServerSPN, DbConnectionStringKeywords.ServerSPN },
-                    { SYNONYM.FailoverPartnerSPN, DbConnectionStringKeywords.FailoverPartnerSPN },
+                    { SYNONYM.UID, DbConnectionStringKeywords.UserId },
+                    { SYNONYM.User, DbConnectionStringKeywords.UserId },
+                    { SYNONYM.WSID, DbConnectionStringKeywords.WorkstationId },
+                    { SYNONYM.ServerSPN, DbConnectionStringKeywords.ServerSpn },
+                    { SYNONYM.FailoverPartnerSPN, DbConnectionStringKeywords.FailoverPartnerSpn },
 #if NETFRAMEWORK
                     { DbConnectionStringKeywords.ConnectionReset, DbConnectionStringKeywords.ConnectionReset },
                     { DbConnectionStringKeywords.NetworkLibrary, DbConnectionStringKeywords.NetworkLibrary },
-                    { DbConnectionStringKeywords.TransparentNetworkIPResolution, DbConnectionStringKeywords.TransparentNetworkIPResolution },
+                    { DbConnectionStringKeywords.TransparentNetworkIpResolution, DbConnectionStringKeywords.TransparentNetworkIpResolution },
                     { SYNONYM.NET, DbConnectionStringKeywords.NetworkLibrary },
                     { SYNONYM.NETWORK, DbConnectionStringKeywords.NetworkLibrary },
-                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, DbConnectionStringKeywords.TransparentNetworkIPResolution },
+                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, DbConnectionStringKeywords.TransparentNetworkIpResolution },
 #endif // NETFRAMEWORK
                 };
                 Debug.Assert(synonyms.Count == count, $"incorrect initial ParseSynonyms size {count} v/s {synonyms.Count}");
@@ -764,7 +764,7 @@ namespace Microsoft.Data.SqlClient
                 // since permission to open the connection has been granted
                 // the information is shared with the server, but not directly with the user
                 result = ADP.MachineName();
-                ValidateValueLength(result, TdsEnums.MAXLEN_HOSTNAME, DbConnectionStringKeywords.WorkstationID);
+                ValidateValueLength(result, TdsEnums.MAXLEN_HOSTNAME, DbConnectionStringKeywords.WorkstationId);
             }
             return result;
         }
@@ -798,7 +798,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (enforceLocalHost)
                         {
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDBFilename);
+                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
                         }
                     }
                 }
@@ -932,22 +932,22 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal SqlConnectionIPAddressPreference ConvertValueToIPAddressPreference()
         {
-            if (!TryGetParsetableValue(DbConnectionStringKeywords.IPAddressPreference, out string value))
+            if (!TryGetParsetableValue(DbConnectionStringKeywords.IpAddressPreference, out string value))
             {
                 return DbConnectionStringDefaults.IpAddressPreference;
             }
 
             try
             {
-                return IpAddressPreferenceUtilities.ConvertToIPAddressPreference(DbConnectionStringKeywords.IPAddressPreference, value);
+                return IpAddressPreferenceUtilities.ConvertToIPAddressPreference(DbConnectionStringKeywords.IpAddressPreference, value);
             }
             catch (FormatException e)
             {
-                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IPAddressPreference, e);
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IpAddressPreference, e);
             }
             catch (OverflowException e)
             {
-                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IPAddressPreference, e);
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.IpAddressPreference, e);
             }
         }
 
