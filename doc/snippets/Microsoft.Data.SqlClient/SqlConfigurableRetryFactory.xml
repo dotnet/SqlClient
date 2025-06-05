@@ -138,21 +138,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateExponentialRetryProvider>
@@ -178,21 +178,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateIncrementalRetryProvider>
@@ -218,21 +218,21 @@
       <exception cref="T:System.ArgumentOutOfRangeException">
         If at least one of the following conditions occurs:
         <list type="bullet">
-          <item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.NumberOfTries" /> is less than 1 or bigger than 60.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.DeltaTime" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" /> is bigger than 120 seconds.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MinTimeInterval" /> is not less than <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicOption.MaxTimeInterval" />.
-          </item>
+          </description></item>
         </list>
       </exception>
     </CreateFixedRetryProvider>
