@@ -51,7 +51,12 @@ namespace Microsoft.Data.Common
         readonly private string _encryptedActualConnectionString;
 #pragma warning restore 169
 
-        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
+        internal DBConnectionString(
+            string value,
+            string restrictions,
+            KeyRestrictionBehavior behavior,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool useOdbcRules)
             : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
             // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
@@ -65,8 +70,14 @@ namespace Microsoft.Data.Common
             // since backward compatibility requires Everett level classes
         }
 
-        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
-        { // used by DBDataPermission
+        private DBConnectionString(
+            DbConnectionOptions connectionOptions,
+            string restrictions,
+            KeyRestrictionBehavior behavior,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool mustCloneDictionary)
+        {
+            // used by DBDataPermission
             Debug.Assert(connectionOptions != null, "null connectionOptions");
             switch (behavior)
             {
@@ -121,7 +132,10 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private DBConnectionString(DBConnectionString connectionString, string[] restrictionValues, KeyRestrictionBehavior behavior)
+        private DBConnectionString(
+            DBConnectionString connectionString,
+            string[] restrictionValues,
+            KeyRestrictionBehavior behavior)
         {
             // used by intersect for two equal connection strings with different restrictions
             _encryptedUsersConnectionString = connectionString._encryptedUsersConnectionString;
@@ -481,7 +495,7 @@ namespace Microsoft.Data.Common
             return restrictionValues;
         }
 
-        private static string[] ParseRestrictions(string restrictions, Dictionary<string, string> synonyms)
+        private static string[] ParseRestrictions(string restrictions, IReadOnlyDictionary<string, string> synonyms)
         {
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> Restrictions='{0}'", restrictions);

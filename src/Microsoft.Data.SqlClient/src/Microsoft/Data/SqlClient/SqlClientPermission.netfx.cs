@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
         {
-            DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
+            DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.KeywordMap, false);
             AddPermissionEntry(constr);
         }
         
