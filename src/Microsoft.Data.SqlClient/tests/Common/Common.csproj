@@ -14,11 +14,11 @@
   <!-- .NET Framework Packages -->
   <ItemGroup>
     <!-- For compilation targeting .NET Framework using .NET SDKs. -->
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)" Condition="$(TargetGroup) == 'netfx'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Condition="$(TargetGroup) == 'netfx'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
+    <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 
   <!-- xUnit and Testing Packages -->
