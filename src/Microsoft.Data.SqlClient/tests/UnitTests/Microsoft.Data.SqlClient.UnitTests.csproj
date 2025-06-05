@@ -30,6 +30,7 @@
   <ItemGroup Condition="$(TargetGroup) == 'netfx'">
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <ProjectReference Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
+	  <Reference Include="System.Transactions" />
   </ItemGroup>
   <!-- .NET references -->
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
