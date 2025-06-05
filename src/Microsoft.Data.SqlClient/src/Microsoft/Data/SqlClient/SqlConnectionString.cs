@@ -53,14 +53,8 @@ namespace Microsoft.Data.SqlClient
             internal const string ImplicitUnbind = "Implicit Unbind";
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
-
-#if NETFRAMEWORK
-        internal const int SynonymCount = 33;
-#else
-        internal const int SynonymCount = 30;
-#endif // NETFRAMEWORK
-
-        private static Dictionary<string, string> s_sqlClientSynonyms;
+        
+        private static readonly Dictionary<string, string> s_keywordMap = new Dictionary<string, string>();
 
         private readonly bool _integratedSecurity;
 
@@ -115,11 +109,105 @@ namespace Microsoft.Data.SqlClient
         private static readonly Version s_constTypeSystemAsmVersion11 = new("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
+        
+        #region Constructors
+        
+        /// <summary>
+        /// Static constructor to do things that we can't do in a single line initialization.
+        /// </summary>
+        static SqlConnectionString()
+        {
+            // Add keywords and synonyms to the keyword map.
+            // @TODO: About half of these synonyms are just the same as the keyword but with spaces
+            //    removed. However, not all multiword keywords are supported without spaced. We
+            //    should just add support for all keywords w/ or w/o spaces, then remove them from
+            //    synonyms.
+            AddKeywordToMap(DbConnectionStringKeywords.ApplicationIntent,
+                            DbConnectionStringSynonyms.ApplicationIntent);
+            AddKeywordToMap(DbConnectionStringKeywords.ApplicationName,
+                            DbConnectionStringSynonyms.App); 
+            AddKeywordToMap(DbConnectionStringKeywords.AttachDbFilename,
+                            DbConnectionStringSynonyms.ExtendedProperties,
+                            DbConnectionStringSynonyms.InitialFileName);
+            AddKeywordToMap(DbConnectionStringKeywords.AttestationProtocol);
+            AddKeywordToMap(DbConnectionStringKeywords.Authentication);
+            AddKeywordToMap(DbConnectionStringKeywords.ColumnEncryptionSetting);
+            AddKeywordToMap(DbConnectionStringKeywords.CommandTimeout);
+            AddKeywordToMap(DbConnectionStringKeywords.ConnectRetryCount,
+                            DbConnectionStringSynonyms.ConnectRetryCount);
+            AddKeywordToMap(DbConnectionStringKeywords.ConnectRetryInterval,
+                            DbConnectionStringSynonyms.ConnectRetryInterval);
+            AddKeywordToMap(DbConnectionStringKeywords.ConnectTimeout,
+                            DbConnectionStringSynonyms.ConnectionTimeout,
+                            DbConnectionStringSynonyms.Timeout);
+            AddKeywordToMap(DbConnectionStringKeywords.ContextConnection);
+            AddKeywordToMap(DbConnectionStringKeywords.CurrentLanguage,
+                            DbConnectionStringSynonyms.Language);
+            AddKeywordToMap(DbConnectionStringKeywords.DataSource,
+                            DbConnectionStringSynonyms.Addr,
+                            DbConnectionStringSynonyms.Address,
+                            DbConnectionStringSynonyms.NetworkAddress,
+                            DbConnectionStringSynonyms.Server);
+            AddKeywordToMap(DbConnectionStringKeywords.EnclaveAttestationUrl);
+            AddKeywordToMap(DbConnectionStringKeywords.Encrypt);
+            AddKeywordToMap(DbConnectionStringKeywords.Enlist);
+            AddKeywordToMap(DbConnectionStringKeywords.FailoverPartner);
+            AddKeywordToMap(DbConnectionStringKeywords.FailoverPartnerSpn,
+                            DbConnectionStringSynonyms.FailoverPartnerSpn);
+            AddKeywordToMap(DbConnectionStringKeywords.HostNameInCertificate,
+                            DbConnectionStringSynonyms.HostNameInCertificate);
+            AddKeywordToMap(DbConnectionStringKeywords.InitialCatalog,
+                            DbConnectionStringSynonyms.Database);
+            AddKeywordToMap(DbConnectionStringKeywords.IntegratedSecurity,
+                            DbConnectionStringSynonyms.TrustedConnection);
+            AddKeywordToMap(DbConnectionStringKeywords.IpAddressPreference,
+                            DbConnectionStringSynonyms.IpAddressPreference);
+            AddKeywordToMap(DbConnectionStringKeywords.LoadBalanceTimeout,
+                            DbConnectionStringSynonyms.ConnectionLifetime);
+            AddKeywordToMap(DbConnectionStringKeywords.MultipleActiveResultSets,
+                            DbConnectionStringSynonyms.MultipleActiveResultSets);
+            AddKeywordToMap(DbConnectionStringKeywords.MaxPoolSize);
+            AddKeywordToMap(DbConnectionStringKeywords.MinPoolSize);
+            AddKeywordToMap(DbConnectionStringKeywords.MultiSubnetFailover,
+                            DbConnectionStringSynonyms.MultiSubnetFailover);
+            AddKeywordToMap(DbConnectionStringKeywords.PacketSize);
+            AddKeywordToMap(DbConnectionStringKeywords.Password,
+                            DbConnectionStringSynonyms.Pwd);
+            AddKeywordToMap(DbConnectionStringKeywords.PersistSecurityInfo,
+                            DbConnectionStringSynonyms.PersistSecurityInfo);
+            AddKeywordToMap(DbConnectionStringKeywords.Pooling);
+            AddKeywordToMap(DbConnectionStringKeywords.PoolBlockingPeriod,
+                            DbConnectionStringSynonyms.PoolBlockingPeriod);
+            AddKeywordToMap(DbConnectionStringKeywords.Replication);
+            AddKeywordToMap(DbConnectionStringKeywords.ServerCertificate,
+                            DbConnectionStringSynonyms.ServerCertificate);
+            AddKeywordToMap(DbConnectionStringKeywords.ServerSpn,
+                            DbConnectionStringSynonyms.ServerSpn);
+            AddKeywordToMap(DbConnectionStringKeywords.TrustServerCertificate,
+                            DbConnectionStringSynonyms.TrustServerCertificate);
+            AddKeywordToMap(DbConnectionStringKeywords.TransactionBinding);
+            AddKeywordToMap(DbConnectionStringKeywords.TypeSystemVersion);
+            AddKeywordToMap(DbConnectionStringKeywords.UserId,
+                            DbConnectionStringSynonyms.Uid,
+                            DbConnectionStringSynonyms.User);
+            AddKeywordToMap(DbConnectionStringKeywords.UserInstance);
+            AddKeywordToMap(DbConnectionStringKeywords.WorkstationId,
+                            DbConnectionStringSynonyms.WsId);
 
+            #if NETFRAMEWORK
+            AddKeywordToMap(DbConnectionStringKeywords.ConnectionReset);
+            AddKeywordToMap(DbConnectionStringKeywords.NetworkLibrary,
+                            DbConnectionStringSynonyms.Net,
+                            DbConnectionStringSynonyms.Network);
+            AddKeywordToMap(DbConnectionStringKeywords.TransparentNetworkIpResolution,
+                            DbConnectionStringSynonyms.TransparentNetworkIpResolution);
+            #endif
+        }
+        
         // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal SqlConnectionString(string connectionString): base(connectionString, GetParseSynonyms())
+        internal SqlConnectionString(string connectionString): base(connectionString, s_keywordMap)
         {
 #if !NETFRAMEWORK
             ThrowUnsupportedIfKeywordSet(DbConnectionStringKeywords.ConnectionReset);
@@ -482,8 +570,13 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, DbConnectionStringKeywords.DataSource);
         }
 
+        #endregion
+        
         internal bool IntegratedSecurity => _integratedSecurity;
 
+        // @TODO: This is temporary until we can remove DbConnectionString (see SqlClientPermission)
+        internal static IReadOnlyDictionary<string, string> KeywordMap => s_keywordMap;
+        
         // We always initialize in Async mode so that both synchronous and asynchronous methods
         // will work.  In the future we can deprecate the keyword entirely.
         internal bool Asynchronous => true;
@@ -584,104 +677,6 @@ namespace Microsoft.Data.SqlClient
                 equal = true;
             }
             return equal;
-        }
-
-        // This dictionary is meant to be read-only translation of parsed string
-        // keywords/synonyms to a known keyword string.
-        internal static Dictionary<string, string> GetParseSynonyms()
-        {
-            Dictionary<string, string> synonyms = s_sqlClientSynonyms;
-            if (synonyms == null)
-            {
-
-                int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-                synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
-                {
-                    { DbConnectionStringKeywords.ApplicationIntent, DbConnectionStringKeywords.ApplicationIntent },
-                    { DbConnectionStringKeywords.ApplicationName, DbConnectionStringKeywords.ApplicationName },
-                    { DbConnectionStringKeywords.AttachDbFilename, DbConnectionStringKeywords.AttachDbFilename },
-                    { DbConnectionStringKeywords.AttestationProtocol, DbConnectionStringKeywords.AttestationProtocol},
-                    { DbConnectionStringKeywords.Authentication, DbConnectionStringKeywords.Authentication },
-                    { DbConnectionStringKeywords.ColumnEncryptionSetting, DbConnectionStringKeywords.ColumnEncryptionSetting },
-                    { DbConnectionStringKeywords.CommandTimeout, DbConnectionStringKeywords.CommandTimeout },
-                    { DbConnectionStringKeywords.ConnectRetryCount, DbConnectionStringKeywords.ConnectRetryCount },
-                    { DbConnectionStringKeywords.ConnectRetryInterval, DbConnectionStringKeywords.ConnectRetryInterval },
-                    { DbConnectionStringKeywords.ConnectTimeout, DbConnectionStringKeywords.ConnectTimeout },
-                    { DbConnectionStringKeywords.ContextConnection, DbConnectionStringKeywords.ContextConnection },
-                    { DbConnectionStringKeywords.CurrentLanguage, DbConnectionStringKeywords.CurrentLanguage },
-                    { DbConnectionStringKeywords.DataSource, DbConnectionStringKeywords.DataSource },
-                    { DbConnectionStringKeywords.EnclaveAttestationUrl, DbConnectionStringKeywords.EnclaveAttestationUrl },
-                    { DbConnectionStringKeywords.Encrypt, DbConnectionStringKeywords.Encrypt },
-                    { DbConnectionStringKeywords.Enlist, DbConnectionStringKeywords.Enlist },
-                    { DbConnectionStringKeywords.FailoverPartner, DbConnectionStringKeywords.FailoverPartner },
-                    { DbConnectionStringKeywords.FailoverPartnerSpn, DbConnectionStringKeywords.FailoverPartnerSpn },
-                    { DbConnectionStringKeywords.HostNameInCertificate, DbConnectionStringKeywords.HostNameInCertificate },
-                    { DbConnectionStringKeywords.ServerCertificate, DbConnectionStringKeywords.ServerCertificate},
-                    { DbConnectionStringKeywords.InitialCatalog, DbConnectionStringKeywords.InitialCatalog },
-                    { DbConnectionStringKeywords.IntegratedSecurity, DbConnectionStringKeywords.IntegratedSecurity },
-                    { DbConnectionStringKeywords.IpAddressPreference, DbConnectionStringKeywords.IpAddressPreference },
-                    { DbConnectionStringKeywords.LoadBalanceTimeout, DbConnectionStringKeywords.LoadBalanceTimeout },
-                    { DbConnectionStringKeywords.MultipleActiveResultSets, DbConnectionStringKeywords.MultipleActiveResultSets },
-                    { DbConnectionStringKeywords.MaxPoolSize, DbConnectionStringKeywords.MaxPoolSize },
-                    { DbConnectionStringKeywords.MinPoolSize, DbConnectionStringKeywords.MinPoolSize },
-                    { DbConnectionStringKeywords.MultiSubnetFailover, DbConnectionStringKeywords.MultiSubnetFailover },
-                    { DbConnectionStringKeywords.PacketSize, DbConnectionStringKeywords.PacketSize },
-                    { DbConnectionStringKeywords.Password, DbConnectionStringKeywords.Password },
-                    { DbConnectionStringKeywords.PersistSecurityInfo, DbConnectionStringKeywords.PersistSecurityInfo },
-                    { DbConnectionStringKeywords.Pooling, DbConnectionStringKeywords.Pooling },
-                    { DbConnectionStringKeywords.PoolBlockingPeriod, DbConnectionStringKeywords.PoolBlockingPeriod },
-                    { DbConnectionStringKeywords.Replication, DbConnectionStringKeywords.Replication },
-                    { DbConnectionStringKeywords.ServerSpn, DbConnectionStringKeywords.ServerSpn },
-                    { DbConnectionStringKeywords.TrustServerCertificate, DbConnectionStringKeywords.TrustServerCertificate },
-                    { DbConnectionStringKeywords.TransactionBinding, DbConnectionStringKeywords.TransactionBinding },
-                    { DbConnectionStringKeywords.TypeSystemVersion, DbConnectionStringKeywords.TypeSystemVersion },
-                    { DbConnectionStringKeywords.UserId, DbConnectionStringKeywords.UserId },
-                    { DbConnectionStringKeywords.UserInstance, DbConnectionStringKeywords.UserInstance },
-                    { DbConnectionStringKeywords.WorkstationId, DbConnectionStringKeywords.WorkstationId },
-
-                    { DbConnectionStringSynonyms.IpAddressPreference, DbConnectionStringKeywords.IpAddressPreference },
-                    { DbConnectionStringSynonyms.App, DbConnectionStringKeywords.ApplicationName },
-                    { DbConnectionStringSynonyms.ApplicationIntent, DbConnectionStringKeywords.ApplicationIntent },
-                    { DbConnectionStringSynonyms.ExtendedProperties, DbConnectionStringKeywords.AttachDbFilename },
-                    { DbConnectionStringSynonyms.HostNameInCertificate, DbConnectionStringKeywords.HostNameInCertificate },
-                    { DbConnectionStringSynonyms.ServerCertificate, DbConnectionStringKeywords.ServerCertificate},
-                    { DbConnectionStringSynonyms.InitialFileName, DbConnectionStringKeywords.AttachDbFilename },
-                    { DbConnectionStringSynonyms.ConnectRetryCount, DbConnectionStringKeywords.ConnectRetryCount },
-                    { DbConnectionStringSynonyms.ConnectRetryInterval, DbConnectionStringKeywords.ConnectRetryInterval },
-                    { DbConnectionStringSynonyms.ConnectionTimeout, DbConnectionStringKeywords.ConnectTimeout },
-                    { DbConnectionStringSynonyms.Timeout, DbConnectionStringKeywords.ConnectTimeout },
-                    { DbConnectionStringSynonyms.Language, DbConnectionStringKeywords.CurrentLanguage },
-                    { DbConnectionStringSynonyms.Addr, DbConnectionStringKeywords.DataSource },
-                    { DbConnectionStringSynonyms.Address, DbConnectionStringKeywords.DataSource },
-                    { DbConnectionStringSynonyms.MultipleActiveResultSets, DbConnectionStringKeywords.MultipleActiveResultSets },
-                    { DbConnectionStringSynonyms.MultiSubnetFailover, DbConnectionStringKeywords.MultiSubnetFailover },
-                    { DbConnectionStringSynonyms.NetworkAddress, DbConnectionStringKeywords.DataSource },
-                    { DbConnectionStringSynonyms.PoolBlockingPeriod, DbConnectionStringKeywords.PoolBlockingPeriod},
-                    { DbConnectionStringSynonyms.Server, DbConnectionStringKeywords.DataSource },
-                    { DbConnectionStringSynonyms.Database, DbConnectionStringKeywords.InitialCatalog },
-                    { DbConnectionStringSynonyms.TrustedConnection, DbConnectionStringKeywords.IntegratedSecurity },
-                    { DbConnectionStringSynonyms.TrustServerCertificate, DbConnectionStringKeywords.TrustServerCertificate },
-                    { DbConnectionStringSynonyms.ConnectionLifetime, DbConnectionStringKeywords.LoadBalanceTimeout },
-                    { DbConnectionStringSynonyms.Pwd, DbConnectionStringKeywords.Password },
-                    { DbConnectionStringSynonyms.PersistSecurityInfo, DbConnectionStringKeywords.PersistSecurityInfo },
-                    { DbConnectionStringSynonyms.Uid, DbConnectionStringKeywords.UserId },
-                    { DbConnectionStringSynonyms.User, DbConnectionStringKeywords.UserId },
-                    { DbConnectionStringSynonyms.WsId, DbConnectionStringKeywords.WorkstationId },
-                    { DbConnectionStringSynonyms.ServerSpn, DbConnectionStringKeywords.ServerSpn },
-                    { DbConnectionStringSynonyms.FailoverPartnerSpn, DbConnectionStringKeywords.FailoverPartnerSpn },
-#if NETFRAMEWORK
-                    { DbConnectionStringKeywords.ConnectionReset, DbConnectionStringKeywords.ConnectionReset },
-                    { DbConnectionStringKeywords.NetworkLibrary, DbConnectionStringKeywords.NetworkLibrary },
-                    { DbConnectionStringKeywords.TransparentNetworkIpResolution, DbConnectionStringKeywords.TransparentNetworkIpResolution },
-                    { DbConnectionStringSynonyms.Net, DbConnectionStringKeywords.NetworkLibrary },
-                    { DbConnectionStringSynonyms.Network, DbConnectionStringKeywords.NetworkLibrary },
-                    { DbConnectionStringSynonyms.TransparentNetworkIpResolution, DbConnectionStringKeywords.TransparentNetworkIpResolution },
-#endif // NETFRAMEWORK
-                };
-                Debug.Assert(synonyms.Count == count, $"incorrect initial ParseSynonyms size {count} v/s {synonyms.Count}");
-                Interlocked.CompareExchange(ref s_sqlClientSynonyms, synonyms, null);
-            }
-            return synonyms;
         }
 
         internal string ObtainWorkstationId()
@@ -988,5 +983,21 @@ namespace Microsoft.Data.SqlClient
         internal string NetworkLibrary => _networkLibrary;
 
 #endif // NETFRAMEWORK
+        
+        #region Private Methods
+        
+        private static void AddKeywordToMap(string keyword, params string[] synonyms)
+        {
+            // Add mapping of keyword to keyword
+            s_keywordMap.Add(keyword, keyword);
+            
+            // Add mapping of synonyms to keyword
+            foreach (string synonym in synonyms)
+            {
+                s_keywordMap.Add(synonym, keyword);
+            }
+        }
+        
+        #endregion
     }
 }

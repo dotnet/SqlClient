@@ -45,7 +45,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal Dictionary<string, string> Parsetable => _parsetable;
         public bool IsEmpty => _keyChain == null;
 
-        public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
+        public DbConnectionOptions(string connectionString, IReadOnlyDictionary<string, string> synonyms)
         {
             _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
             _usersConnectionString = connectionString ?? "";
@@ -462,7 +462,12 @@ namespace Microsoft.Data.Common.ConnectionString
             return false;
         }
 
-        private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
+        private static NameValuePair ParseInternal(
+            Dictionary<string, string> parsetable,
+            string connectionString,
+            bool buildChain,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool firstKey)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();

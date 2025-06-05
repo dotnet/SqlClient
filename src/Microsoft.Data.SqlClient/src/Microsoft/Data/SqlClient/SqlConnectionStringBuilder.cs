@@ -190,7 +190,11 @@ namespace Microsoft.Data.SqlClient
 
         private static Dictionary<string, Keywords> CreateKeywordsDictionary()
         {
-            Dictionary<string, Keywords> pairs = new(KeywordsCount + SqlConnectionString.SynonymCount, StringComparer.OrdinalIgnoreCase)
+            // @TODO: Ok, I think we should consider centralizing all these keywords into a single
+            //    place. We have DbConnectionString*, Keywords, etc.
+            //    Can we consider something DbConnectionOptions as backing store for the values
+            //    and both SqlConnectionStringBuilder and SqlConnectionString use it to store?
+            Dictionary<string, Keywords> pairs = new(StringComparer.OrdinalIgnoreCase)
             {
                 { DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent },
                 { DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName },
@@ -272,7 +276,6 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.ServerSpn, Keywords.ServerSPN },
                 { DbConnectionStringSynonyms.FailoverPartnerSpn, Keywords.FailoverPartnerSPN },
             };
-            Debug.Assert((KeywordsCount + SqlConnectionString.SynonymCount) == pairs.Count, "initial expected size is incorrect");
             return pairs;
         }
         
