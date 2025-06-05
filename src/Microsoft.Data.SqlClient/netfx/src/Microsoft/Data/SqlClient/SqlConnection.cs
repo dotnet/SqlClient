@@ -2195,7 +2195,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();
@@ -2255,7 +2255,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
 
                 PermissionSet permissionSet = connectionOptions.CreatePermissionSet();

@@ -2272,7 +2272,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2329,7 +2329,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDBFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
