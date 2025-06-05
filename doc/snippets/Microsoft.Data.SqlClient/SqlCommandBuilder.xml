@@ -229,15 +229,15 @@
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -290,15 +290,15 @@
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -407,15 +407,15 @@
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.

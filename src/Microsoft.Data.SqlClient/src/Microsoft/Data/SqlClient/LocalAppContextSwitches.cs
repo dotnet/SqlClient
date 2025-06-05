@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient
 
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-        internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
+        internal const string SuppressInsecureTlsWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
         internal const string UseMinimumLoginTimeoutString = @"Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
         internal const string LegacyVarTimeZeroScaleBehaviourString = @"Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour";
         internal const string UseCompatibilityProcessSniString = @"Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni";
@@ -26,13 +26,13 @@ namespace Microsoft.Data.SqlClient
 
         // this field is accessed through reflection in tests and should not be renamed or have the type changed without refactoring NullRow related tests
         private static Tristate s_legacyRowVersionNullBehavior;
-        private static Tristate s_suppressInsecureTLSWarning;
+        private static Tristate s_suppressInsecureTlsWarning;
         private static Tristate s_makeReadAsyncBlocking;
         private static Tristate s_useMinimumLoginTimeout;
         // this field is accessed through reflection in Microsoft.Data.SqlClient.Tests.SqlParameterTests and should not be renamed or have the type changed without refactoring related tests
         private static Tristate s_legacyVarTimeZeroScaleBehaviour;
-        private static Tristate s_useCompatProcessSni;
-        private static Tristate s_useCompatAsyncBehaviour;
+        private static Tristate s_useCompatibilityProcessSni;
+        private static Tristate s_useCompatibilityAsyncBehaviour;
         private static Tristate s_useConnectionPoolV2;
 
 #if NET
@@ -52,8 +52,8 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 #if NETFRAMEWORK
-        internal const string DisableTNIRByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
-        private static Tristate s_disableTNIRByDefault;
+        internal const string DisableTnirByDefaultString = @"Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
+        private static Tristate s_disableTnirByDefault;
 
         /// <summary>
         /// Transparent Network IP Resolution (TNIR) is a revision of the existing MultiSubnetFailover feature.
@@ -70,22 +70,22 @@ namespace Microsoft.Data.SqlClient
         /// 
         /// This app context switch defaults to 'false'.
         /// </summary>
-        public static bool DisableTNIRByDefault
+        public static bool DisableTnirByDefault
         {
             get
             {
-                if (s_disableTNIRByDefault == Tristate.NotInitialized)
+                if (s_disableTnirByDefault == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(DisableTNIRByDefaultString, out bool returnedValue) && returnedValue)
+                    if (AppContext.TryGetSwitch(DisableTnirByDefaultString, out bool returnedValue) && returnedValue)
                     {
-                        s_disableTNIRByDefault = Tristate.True;
+                        s_disableTnirByDefault = Tristate.True;
                     }
                     else
                     {
-                        s_disableTNIRByDefault = Tristate.False;
+                        s_disableTnirByDefault = Tristate.False;
                     }
                 }
-                return s_disableTNIRByDefault == Tristate.True;
+                return s_disableTnirByDefault == Tristate.True;
             }
         }
 #endif
@@ -99,18 +99,18 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_useCompatProcessSni == Tristate.NotInitialized)
+                if (s_useCompatibilityProcessSni == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(UseCompatibilityProcessSniString, out bool returnedValue) && returnedValue)
                     {
-                        s_useCompatProcessSni = Tristate.True;
+                        s_useCompatibilityProcessSni = Tristate.True;
                     }
                     else
                     {
-                        s_useCompatProcessSni = Tristate.False;
+                        s_useCompatibilityProcessSni = Tristate.False;
                     }
                 }
-                return s_useCompatProcessSni == Tristate.True;
+                return s_useCompatibilityProcessSni == Tristate.True;
             }
         }
 
@@ -135,18 +135,18 @@ namespace Microsoft.Data.SqlClient
                     return true;
                 }
 
-                if (s_useCompatAsyncBehaviour == Tristate.NotInitialized)
+                if (s_useCompatibilityAsyncBehaviour == Tristate.NotInitialized)
                 {
                     if (AppContext.TryGetSwitch(UseCompatibilityAsyncBehaviourString, out bool returnedValue) && returnedValue)
                     {
-                        s_useCompatAsyncBehaviour = Tristate.True;
+                        s_useCompatibilityAsyncBehaviour = Tristate.True;
                     }
                     else
                     {
-                        s_useCompatAsyncBehaviour = Tristate.False;
+                        s_useCompatibilityAsyncBehaviour = Tristate.False;
                     }
                 }
-                return s_useCompatAsyncBehaviour == Tristate.True;
+                return s_useCompatibilityAsyncBehaviour == Tristate.True;
             }
         }
 
@@ -155,22 +155,22 @@ namespace Microsoft.Data.SqlClient
         /// This warning can be suppressed by enabling this AppContext switch.
         /// This app context switch defaults to 'false'.
         /// </summary>
-        public static bool SuppressInsecureTLSWarning
+        public static bool SuppressInsecureTlsWarning
         {
             get
             {
-                if (s_suppressInsecureTLSWarning == Tristate.NotInitialized)
+                if (s_suppressInsecureTlsWarning == Tristate.NotInitialized)
                 {
-                    if (AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out bool returnedValue) && returnedValue)
+                    if (AppContext.TryGetSwitch(SuppressInsecureTlsWarningString, out bool returnedValue) && returnedValue)
                     {
-                        s_suppressInsecureTLSWarning = Tristate.True;
+                        s_suppressInsecureTlsWarning = Tristate.True;
                     }
                     else
                     {
-                        s_suppressInsecureTLSWarning = Tristate.False;
+                        s_suppressInsecureTlsWarning = Tristate.False;
                     }
                 }
-                return s_suppressInsecureTLSWarning == Tristate.True;
+                return s_suppressInsecureTlsWarning == Tristate.True;
             }
         }
 
