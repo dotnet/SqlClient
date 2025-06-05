@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,6 +14,8 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
+    // @TODO: Theoretically this class could be replaced with SqlConnectionString.
+    
     [Serializable] // MDAC 83147
     internal sealed class DBConnectionString
     {
@@ -568,3 +572,5 @@ namespace Microsoft.Data.Common
         }
     }
 }
+
+#endif
