@@ -24,11 +24,12 @@
   <!-- NetFx project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>6.0.2</MicrosoftDataSqlClientSniVersion>
+    <SystemDataCommonVersion>4.3.0</SystemDataCommonVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
     <SystemTextEncodingsWebVersion>8.0.0</SystemTextEncodingsWebVersion>
     <SystemTextJsonVersion>8.0.5</SystemTextJsonVersion>
-    <SystemDataCommonVersion>4.3.0</SystemDataCommonVersion>
+    <SystemThreadingChannelsVersion>9.0.4</SystemThreadingChannelsVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>

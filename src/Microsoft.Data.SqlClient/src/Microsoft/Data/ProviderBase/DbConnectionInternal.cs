@@ -97,6 +97,8 @@ namespace Microsoft.Data.ProviderBase
 
         #region Properties
 
+        internal DateTime CreateTime => _createTime;
+
         internal bool AllowSetConnectionString { get; }
 
         internal bool CanBePooled => !IsConnectionDoomed && !_cannotBePooled && !_owningObject.TryGetTarget(out _);
