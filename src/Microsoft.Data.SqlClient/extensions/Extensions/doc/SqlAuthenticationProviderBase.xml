@@ -1,0 +1,36 @@
+﻿<docs>
+  <members name="SqlAuthenticationProviderBase">
+    <SqlAuthenticationProviderBase>
+      <summary>Defines the core behavior of authentication providers and provides a base class for derived classes.</summary>
+      <remarks>
+        Derived classes must provide a parameterless constructor if they can be instantiated from the app.config file.
+      </remarks>
+    </SqlAuthenticationProviderBase>
+    <BeforeLoad>
+      <param name="authenticationMethod">The authentication method.</param>
+      <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
+      <remarks>
+        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
+      </remarks>
+    </BeforeLoad>
+    <BeforeUnload>
+      <param name="authenticationMethod">The authentication method.</param>
+      <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
+      <remarks>
+        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+      </remarks>
+    </BeforeUnload>
+    <IsSupported>
+      <param name="authenticationMethod">The authentication method.</param>
+      <summary>Indicates whether the specified authentication method is supported.</summary>
+      <returns>
+        <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
+      </returns>
+    </IsSupported>
+    <AcquireTokenAsync>
+      <param name="parameters">The Active Directory authentication parameters passed by the driver to authentication providers.</param>
+      <summary>Acquires a security token from the authority.</summary>
+      <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
+    </AcquireTokenAsync>
+  </members>
+</docs>

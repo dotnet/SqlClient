@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
-    public class SqlAuthenticationParameters
+    public class SqlAuthenticationParameters : ISqlAuthenticationParameters
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
         public SqlAuthenticationMethod AuthenticationMethod { get; }
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             string authority,
             string userId,
             string password,
-            Guid connectionId, 
+            Guid connectionId,
             int connectionTimeout)
         {
             AuthenticationMethod = authenticationMethod;
@@ -79,20 +79,20 @@ namespace Microsoft.Data.SqlClient
             private int _connectionTimeout = ADP.DefaultConnectionTimeout;
 
             /// <summary>
-            /// Implicitly converts to <see cref="SqlAuthenticationParameters"/>.
+            /// Build and return a <see cref="SqlAuthenticationParameters"/> instance.
             /// </summary>
-            public static implicit operator SqlAuthenticationParameters(Builder builder)
+            public SqlAuthenticationParameters Build()
             {
                 return new SqlAuthenticationParameters(
-                    authenticationMethod: builder._authenticationMethod,
-                    serverName: builder._serverName,
-                    databaseName: builder._databaseName,
-                    resource: builder._resource,
-                    authority: builder._authority,
-                    userId: builder._userId,
-                    password: builder._password,
-                    connectionId: builder._connectionId,
-                    connectionTimeout: builder._connectionTimeout);
+                    authenticationMethod: _authenticationMethod,
+                    serverName: _serverName,
+                    databaseName: _databaseName,
+                    resource: _resource,
+                    authority: _authority,
+                    userId: _userId,
+                    password: _password,
+                    connectionId: _connectionId,
+                    connectionTimeout: _connectionTimeout);
             }
 
             /// <summary>

@@ -6,6 +6,8 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -45,28 +47,93 @@ namespace Microsoft.Data.SqlClient
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            SetDefaultAuthProviders(Instance);
-        }
 
-        /// <summary>
-        /// Sets default supported Active Directory Authentication providers by the driver 
-        /// on the SqlAuthenticationProviderManager instance.
-        /// </summary>
-        private static void SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
-        {
-            if (instance != null)
+            // If our Azure extensions package is present, use its
+            // authentication provider as our default.
+            const string assemblyName = "Microsoft.Data.SqlClient.Extensions.Azure";
+
+            try
             {
-                var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
-                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, activeDirectoryAuthProvider);
+                // Try to load our Azure extension.
+                var assembly = Assembly.Load(assemblyName);
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension assembly={assemblyName} found; " +
+                    "attempting to set as default provider for all Active " +
+                    "Directory authentication methods");
+
+                // Look for the authentication provider class.
+                const string className = "Microsoft.Data.SqlClient.Extensions.Azure.ActiveDirectoryAuthenticationProvider";
+                var type = assembly.GetType(className);
+
+                if (type is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Azure extension does not contain class={className}; " +
+                        "no default Active Directory provider installed");
+
+                    return;
+                }
+
+                // Try to instantiate it.
+                var instance = Activator.CreateInstance(
+                    type,
+                    [Instance._applicationClientId])
+                    as SqlAuthenticationProvider;
+
+                if (instance is null)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        nameof(SqlAuthenticationProviderManager) +
+                        $": Failed to instantiate Azure extension class={className}; " +
+                        "no default Active Directory provider installed");
+
+                    return;
+                }
+
+                // We successfully instantiated the provider, so set it as the
+                // default for all Active Directory authentication methods.
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, instance);
+                Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity, instance);
+
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension class={className} installed as " +
+                    "provider for all Active Directory authentication methods");
             }
+            // All of these exceptions mean we couldn't find or instantiate the
+            // Azure extension's authentication provider, in which case we
+            // simply have no default and the app must provide one if they
+            // attempt to use Active Directory authentication.
+            catch (Exception ex)
+            when (ex is ArgumentNullException ||
+                  ex is ArgumentException ||
+                  ex is BadImageFormatException ||
+                  ex is FileLoadException ||
+                  ex is FileNotFoundException ||
+                  ex is MemberAccessException ||
+                  ex is MethodAccessException ||
+                  ex is MissingMethodException ||
+                  ex is NotSupportedException ||
+                  ex is TargetInvocationException ||
+                  ex is TypeLoadException)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderManager) +
+                    $": Azure extension assembly={assemblyName} not found or " +
+                    "not usable; no default provider installed; " +
+                    $"{ex.GetType().Name}: {ex.Message}");
+            }
+            // Any other exceptions are fatal.
         }
 
         public static readonly SqlAuthenticationProviderManager Instance;
@@ -75,7 +142,7 @@ namespace Microsoft.Data.SqlClient
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
-        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
+        private readonly string _applicationClientId = null;
 
         /// <summary>
         /// Constructor.
