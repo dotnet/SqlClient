@@ -156,11 +156,6 @@ namespace Microsoft.Data.SqlClient
         private const int MetaDataResultId = 1;
 
         private const int CollationResultId = 2;
-	//netfx---
-        private const int ColIdId = 0;
-        private const int NameId = 1;
-        private const int Tds_CollationId = 2;
-        //---netfx
         private const int CollationId = 3;
 
         private const int MAX_LENGTH = 0x7FFFFFFF;
@@ -183,9 +178,6 @@ namespace Microsoft.Data.SqlClient
 
         private object _rowSource;
         private SqlDataReader _sqlDataReaderRowSource;
-        //netfx---
-        private bool _rowSourceIsSqlDataReaderSmi;
-        //---netfx
         private DbDataReader _dbDataReaderRowSource;
         private DataTable _dataTableSource;
 
@@ -202,6 +194,10 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
+        #if NETFRAMEWORK
+        private bool _rowSourceIsSqlDataReaderSmi;
+        #endif
+        
         private int RowNumber
         {
             get
@@ -432,10 +428,6 @@ namespace Microsoft.Data.SqlClient
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
 
-            //netfx---
-            // If its a temp DB then try to connect
-            //---netfx
-
             string TableCollationsStoredProc;
             if (_connection.Is2008OrNewer)
             {
@@ -560,11 +552,11 @@ namespace Microsoft.Data.SqlClient
 
             // Keep track of any result columns that we don't have a local
             // mapping for.
-            //netfx---
+            #if NETFRAMEWORK
             HashSet<string> unmatchedColumns = new();
-            //---netfx|netcore---
+            #else
             HashSet<string> unmatchedColumns = new(_localColumnMappings.Count);
-            //---netcore
+            #endif
 
             // Start by assuming all locally mapped Destination columns will be
             // unmatched.
@@ -647,11 +639,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        //netfx---
-                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, typeof(SqlDbType).GetEnumName(metadata.type));
-                        //---netfx|netcore---
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
-                        //---netcore
                     }
 
                     switch (metadata.metaType.NullableType)
@@ -916,10 +904,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             throw;
                         }
-
-                        //netfx---
                         ADP.TraceExceptionWithoutRethrow(e);
-                        //---netfx
                     }
                 }
                 finally
@@ -1145,16 +1130,9 @@ namespace Microsoft.Data.SqlClient
                 return _dbDataReaderRowSource.ReadAsync(cts).ContinueWith(
                     static (Task<bool> task, object state) =>
                     {
-                        //netcore---
-                        SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                        //---netcore
                         if (task.Status == TaskStatus.RanToCompletion)
                         {
-                            //netfx---
                             ((SqlBulkCopy)state)._hasMoreRowToCopy = task.Result;
-                            //---netfx|netcore---
-                            sqlBulkCopy._hasMoreRowToCopy = task.Result;
-                            //---netcore
                         }
                         return task;
                     },
@@ -1228,6 +1206,19 @@ namespace Microsoft.Data.SqlClient
 
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
+            bool IsMetadataDataStream(_SqlMetaData metadata)
+            {
+                #if NETFRAMEWORK
+                if (_rowSourceIsSqlDataReaderSmi)
+                {
+                    return false;
+                }
+                #endif
+
+                return _enableStreaming &&
+                       (metadata.length == MAX_LENGTH || metadata.type is SqlDbTypeExtensions.Json);
+            }
+            
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
             _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
 
@@ -1278,12 +1269,7 @@ namespace Microsoft.Data.SqlClient
                     method = ValueMethod.GetValue;
                 }
             }
-            // Check for data streams
-            //netfx---
-            else if ((_enableStreaming) && ((metadata.length == MAX_LENGTH) || metadata.metaType.SqlDbType == SqlDbTypeExtensions.Json) && (!_rowSourceIsSqlDataReaderSmi))
-            //---netfx|netcore---
-            else if ((_enableStreaming) && ((metadata.length == MAX_LENGTH) || metadata.type == SqlDbTypeExtensions.Json))
-            //---netcore
+            else if (IsMetadataDataStream(metadata))
             {
                 isSqlType = false;
 
@@ -1299,11 +1285,7 @@ namespace Microsoft.Data.SqlClient
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    //netfx---
-                    else if (((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar) || (metadata.type == SqlDbTypeExtensions.Json)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
-                    //---netfx|netcore---
-                    else if (((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar || metadata.type == SqlDbTypeExtensions.Json)) && (mtSource.IsCharType) && (mtSource.SqlDbType != SqlDbType.Xml))
-                    //---netcore
+                    else if (metadata.type is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -1359,13 +1341,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ConnectionRequired(method);
             }
-
-            //netfx---
-            if (_connection.IsContextConnection)
-            {
-                throw SQL.NotAvailableOnContextConnection();
-            }
-            //---netfx
 
             if (_ownConnection && _connection.State != ConnectionState.Open)
             {
@@ -1600,12 +1575,10 @@ namespace Microsoft.Data.SqlClient
                             {
                                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
-                            //netfx---
                             catch (Exception e)
                             {
                                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
-                            //---netfx
                         }
 
                         // Perf: It is more efficient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
@@ -1718,9 +1691,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>
         public void WriteToServer(DbDataReader reader)
         {
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (reader == null)
             {
@@ -1741,12 +1714,12 @@ namespace Microsoft.Data.SqlClient
                 _dbDataReaderRowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
 
-                //netfx---
+                #if NETFRAMEWORK
                 if (_sqlDataReaderRowSource != null)
                 {
                     _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
                 }
-                //---netfx
+                #endif
 
                 _rowSourceType = ValueSourceType.DbDataReader;
 
@@ -1761,9 +1734,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="IDataReaderParameter"]/*'/>
         public void WriteToServer(IDataReader reader)
         {
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (reader == null)
             {
@@ -1783,12 +1756,12 @@ namespace Microsoft.Data.SqlClient
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
 
-                //netfx---
+                #if NETFRAMEWORK
                 if (_sqlDataReaderRowSource != null)
                 {
                     _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
                 }
-                //---netfx
+                #endif
 
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
@@ -1806,9 +1779,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableAndRowStateParameters"]/*'/>
         public void WriteToServer(DataTable table, DataRowState rowState)
         {
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (table == null)
             {
@@ -1842,9 +1815,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataRowParameter"]/*'/>
         public void WriteToServer(DataRow[] rows)
         {
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             SqlStatistics statistics = Statistics;
 
@@ -1889,10 +1862,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DataRow[] rows, CancellationToken cancellationToken)
         {
-            Task resultTask = null;
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (rows == null)
             {
@@ -1903,31 +1875,18 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadPendingOperation();
             }
-
+            
             SqlStatistics statistics = Statistics;
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                
                 ResetWriteToServerGlobalVariables();
                 if (rows.Length == 0)
                 {
-                    //netfx---
-                    TaskCompletionSource<object> source = new TaskCompletionSource<object>();
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        source.SetCanceled();
-                    }
-                    else
-                    {
-                        source.SetResult(null);
-                    }
-                    resultTask = source.Task;
-                    return resultTask; // nothing to do. user passed us an empty array. Return a completed Task.
-                    //---netfx|netcore---
-                    return cancellationToken.IsCancellationRequested ?
-                            Task.FromCanceled(cancellationToken) :
-                            Task.CompletedTask;
-                    //---netcore
+                    return cancellationToken.IsCancellationRequested
+                        ? Task.FromCanceled(cancellationToken)
+                        : Task.CompletedTask;
                 }
 
                 DataTable table = rows[0].Table;
@@ -1938,13 +1897,14 @@ namespace Microsoft.Data.SqlClient
                 _rowSourceType = ValueSourceType.RowArray;
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
+                
+                // It returns Task since _isAsyncBulkCopy = true;
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); 
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
             }
-            return resultTask;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderParameter"]/*'/>
@@ -1953,11 +1913,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DbDataReader reader, CancellationToken cancellationToken)
         {
-            Task resultTask = null;
-
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (reader == null)
             {
@@ -1968,24 +1926,26 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadPendingOperation();
             }
-
+            
             SqlStatistics statistics = Statistics;
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
                 _dbDataReaderRowSource = reader;
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
-                resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
+                
+                // It returns Task since _isAsyncBulkCopy = true;
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
             }
-            return resultTask;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderParameter"]/*'/>
@@ -1994,11 +1954,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(IDataReader reader, CancellationToken cancellationToken)
         {
-            Task resultTask = null;
-
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (reader == null)
             {
@@ -2020,13 +1978,14 @@ namespace Microsoft.Data.SqlClient
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
-                resultTask = WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
+                
+                // It returns Task since _isAsyncBulkCopy = true;
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
             }
-            return resultTask;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableParameter"]/*'/>
@@ -2041,11 +2000,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateAndCancellationTokenParameters"]/*'/>
         public Task WriteToServerAsync(DataTable table, DataRowState rowState, CancellationToken cancellationToken)
         {
-            Task resultTask = null;
-
-            //netfx---
+            #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
-            //---netfx
+            #endif
 
             if (table == null)
             {
@@ -2061,6 +2018,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                
                 ResetWriteToServerGlobalVariables();
                 _rowStateToSkip = ((rowState == 0) || (rowState == DataRowState.Deleted)) ? DataRowState.Deleted : ~rowState | DataRowState.Deleted;
                 _rowSource = table;
@@ -2068,13 +2026,14 @@ namespace Microsoft.Data.SqlClient
                 _rowSourceType = ValueSourceType.DataTable;
                 _rowEnumerator = table.Rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
-                resultTask = WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken); // It returns Task since _isAsyncBulkCopy = true;
+                
+                // It returns Task since _isAsyncBulkCopy = true;
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
             }
-            return resultTask;
         }
 
         private Task WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
@@ -2119,12 +2078,8 @@ namespace Microsoft.Data.SqlClient
 
             bool finishedSynchronously = true;
             _isBulkCopyingInProgress = true;
-
-            //netfx---
-            CreateOrValidateConnection(SQL.WriteToServer);
-            //---netfx|netcore---
+            
             CreateOrValidateConnection(nameof(WriteToServer));
-            //---netcore
 
             SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
 
@@ -2273,11 +2228,7 @@ namespace Microsoft.Data.SqlClient
                                 case ValueSourceType.IDataReader:
                                     try
                                     {
-                                        //netfx---
-                                        index = ((IDataRecord)_rowSource).GetOrdinal(unquotedColumnName);
-                                        //---netfx|netcore---
                                         index = ((IDataReader)_rowSource).GetOrdinal(unquotedColumnName);
-                                        //---netcore
                                     }
                                     catch (IndexOutOfRangeException e)
                                     {
@@ -2523,11 +2474,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (_connection.State != ConnectionState.Open)
             {
-                //netfx---
-                throw ADP.OpenConnectionRequired(SQL.WriteToServer, _connection.State);
-                //---netfx|netcore---
                 throw ADP.OpenConnectionRequired(nameof(WriteToServer), _connection.State);
-                //---netcore
             }
             if (exception != null)
             {
@@ -3148,13 +3095,13 @@ namespace Microsoft.Data.SqlClient
                                 WriteToServerInternalRestAsync(cts, source);
                             },
                             connectionToAbort: _connection,
-                            onFailure: static (Exception _, object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            onCancellation: static (object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
-                            //netfx---
-                            exceptionConverter: (Exception ex, object state) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
-                            //---netfx|netcore---
-                            exceptionConverter: (ex) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
-                            //---netcore
+                            onFailure: static (_, state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
+                            onCancellation: static state => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
+                            #if NET
+                            exceptionConverter: ex => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
+                            #else
+                            exceptionConverter: (ex, _) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex)
+                            #endif
                         );
                         return;
                     }
@@ -3306,7 +3253,7 @@ namespace Microsoft.Data.SqlClient
             }
             return resultTask;
         }
-
+        
         private void ResetWriteToServerGlobalVariables()
         {
             _dataTableSource = null;

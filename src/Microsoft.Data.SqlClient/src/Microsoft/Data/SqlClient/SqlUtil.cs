@@ -2466,9 +2466,6 @@ namespace Microsoft.Data.SqlClient
             return StringsHelper.GetResourceString(errorMessageId);
         }
 
-        // BulkLoad
-        internal const string WriteToServer = "WriteToServer";
-
         // Default values for SqlDependency and SqlNotificationRequest
         internal const int SqlDependencyTimeoutDefault = 0;
         internal const int SqlDependencyServerTimeout = 5 * 24 * 3600; // 5 days - used to compute default TTL of the dependency
