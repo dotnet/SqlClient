@@ -8,6 +8,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient.Server
 {
+    // @TODO: Is this implemented *anywhere*?
     internal abstract class SmiEventStream : IDisposable
     {
         internal abstract bool HasEvents { get; }
