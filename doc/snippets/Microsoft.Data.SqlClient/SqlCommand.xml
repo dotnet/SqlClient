@@ -436,35 +436,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -709,35 +709,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
     </BeginExecuteNonQuery>
@@ -873,35 +873,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -1049,35 +1049,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -1234,33 +1234,33 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>Any error that occurred while executing the command text.</item>
-          <item>
+          <item><description>Any error that occurred while executing the command text.</description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -1516,35 +1516,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -1683,35 +1683,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -1970,35 +1970,35 @@ Next, compile and execute the following:
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             Any error that occurred while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="P:Microsoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" /> is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2427,12 +2427,12 @@ If the option is enabled and a parameter with Direction Output or InputOutput is
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             The amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             In some situations, <see cref="T:System.IAsyncResult" /> can set <see cref="P:System.IAsyncResult.IsCompleted" /> incorrectly. If this occurs and <see cref="M:Microsoft.Data.SqlClient.SqlCommand.EndExecuteNonQuery(System.IAsyncResult)" /> is called, EndExecuteNonQuery could raise a SqlException error if the amount of time specified in <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> elapsed and the asynchronous operation specified with <see cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" /> is not complete. To correct this situation, you should either increase the value of CommandTimeout or reduce the work being done by the asynchronous operation.
-          </item>
+          </description></item>
         </list>
       </exception>
     </EndExecuteNonQuery>
@@ -2569,25 +2569,25 @@ If the option is enabled and a parameter with Direction Output or InputOutput is
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             An exception occurred while executing the command against a locked row. This exception is not generated when you are using Microsoft .NET Framework version 1.0.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2622,35 +2622,35 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2687,35 +2687,35 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             An exception occurred while executing the command against a locked row. This exception is not generated when you are using Microsoft .NET Framework version 1.0.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The current state of the connection is closed. <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" /> requires an open <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2791,15 +2791,15 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand>, and 
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type-="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -2834,15 +2834,15 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -2850,22 +2850,22 @@ For more information about asynchronous programming in the .NET Framework Data P
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2890,15 +2890,15 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -2906,22 +2906,22 @@ For more information about asynchronous programming in the .NET Framework Data P
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -2946,15 +2946,15 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -2962,22 +2962,22 @@ For more information about asynchronous programming in the .NET Framework Data P
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior,System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -3005,15 +3005,15 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">
@@ -3021,22 +3021,22 @@ For more information about asynchronous programming in the .NET Framework Data P
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Data.CommandBehavior,System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -3091,25 +3091,25 @@ For more information about asynchronous programming in the .NET Framework Data P
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             An exception occurred while executing the command against a locked row. This exception is not generated when you are using Microsoft .NET Framework version 1.0.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
@@ -3144,35 +3144,35 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -3232,25 +3232,25 @@ For more information about asynchronous programming in the .NET Framework Data P
       </example>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             An exception occurred while executing the command against a locked row. This exception is not generated when you are using Microsoft .NET Framework version 1.0.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
@@ -3284,35 +3284,35 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -3337,35 +3337,35 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.InvalidCastException">
         <list type="bullet">
-          <item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Binary</c> or <c>VarBinary</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.Stream" />. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Char</c>, <c>NChar</c>, <c>NVarChar</c>, <c>VarChar</c>, or <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.IO.TextReader" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="P:Microsoft.Data.SqlClient.SqlParameter.SqlDbType" /> other than <c>Xml</c> was used when <see cref="P:Microsoft.Data.SqlClient.SqlParameter.Value" /> was set to <see cref="T:System.Xml.XmlReader" />.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             Calling <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> closed or dropped during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         <list type="bullet">
-          <item>
+          <item><description>
             SQL Server returned an error while executing the command text.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A timeout occurred during a streaming operation. For more information about streaming, see <see href='https://learn.microsoft.com/sql/connect/ado-net/sqlclient-streaming-support'>SqlClient Streaming Support</see>.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.IO.IOException">
@@ -3398,9 +3398,9 @@ For more information about asynchronous programming in the .NET Framework Data P
           Custom master key store providers can be registered with the driver at three different layers. The precedence of the three registrations is as follows:
         </para>
         <list type="bullet">
-          <item>The per-command registration will be checked if it is not empty.</item>
-          <item>If the per-command registration is empty, the per-connection registration will be checked if it is not empty.</item>
-          <item>If the per-connection registration is empty, the global registration will be checked.</item>
+          <item><description>The per-command registration will be checked if it is not empty.</description></item>
+          <item><description>If the per-command registration is empty, the per-connection registration will be checked if it is not empty.</description></item>
+          <item><description>If the per-connection registration is empty, the global registration will be checked.</description></item>
         </list>
         <para>
           Once any key store provider is found at a registration level, the driver will <b>NOT</b> fall back to the other registrations to search for a provider. If providers are registered but the proper provider is not found at a level, an exception will be thrown containing only the registered providers in the registration that was checked.
@@ -3414,11 +3414,11 @@ For more information about asynchronous programming in the .NET Framework Data P
       </remarks>
       <exception cref="T:System.ArgumentNullException">
         <list type="bullet">
-          <item>A null dictionary was provided.</item>
-          <item>A string key in the dictionary was null or empty.</item>
-          <item>
+          <item><description>A null dictionary was provided.</description></item>
+          <item><description>A string key in the dictionary was null or empty.</description></item>
+          <item><description>
             A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.
-          </item>
+          </description></item>
         </list>
       </exception>
       <exception cref="T:System.ArgumentException">

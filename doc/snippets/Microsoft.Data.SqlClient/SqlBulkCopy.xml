@@ -637,12 +637,12 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion. Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion. Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -669,13 +669,13 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataRow[])" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataRow[])" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -698,15 +698,15 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -745,15 +745,15 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -780,15 +780,15 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.IDataReader)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.IDataReader)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>The <see cref="T:System.Data.IDataReader" /> 's associated connection was closed before the completed <see cref="T:System.Threading.Tasks.Task" /> returned.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -811,13 +811,13 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -844,13 +844,13 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -876,13 +876,13 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
@@ -912,13 +912,13 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</item>
-          <item>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</item>
-          <item>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</item>
-          <item>Returned in the task object, there was a connection pool timeout.</item>
-          <item>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</item>
-          <item>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> multiple times for the same instance before task completion.</description></item>
+          <item><description>Calling <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> and <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable,System.Data.DataRowState)" /> for the same instance before task completion.</description></item>
+          <item><description>The connection drops or is closed during <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServerAsync(System.Data.DataTable,System.Data.DataRowState)" /> execution.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> object was closed during the method execution.</description></item>
+          <item><description>Returned in the task object, there was a connection pool timeout.</description></item>
+          <item><description>Returned in the task object, the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object is closed before method execution.</description></item>
+          <item><description>A <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> did not specify a valid destination column name.</description></item>
         </list>
       </exception>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
