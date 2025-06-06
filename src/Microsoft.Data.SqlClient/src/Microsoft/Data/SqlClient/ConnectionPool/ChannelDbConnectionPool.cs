@@ -110,9 +110,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         // Counts the total number of open connections tracked by the pool.
         private volatile int _numConnections;
-
-        // Counts the number of connections currently sitting idle in the pool.
-        private volatile int _idleCount;
         #endregion
 
 
@@ -140,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             _connections = new DbConnectionInternal[MaxPoolSize];
 
-            // We enforce Max Pool Size, so no need to to create a bounded channel (which is less efficient)
+            // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
             // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
             // On the producing side, we have connections being released back into the pool (both multiplexing and not)
             var idleChannel = Channel.CreateUnbounded<DbConnectionInternal?>();
@@ -198,6 +195,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             if (taskCompletionSource is not null)
             {
+                // This is ugly, but async anti-patterns further up the stack necessitate a fresh task to be created.
+                // Ideally we would just return a Task<DbConnectionInternal> and let the caller await it as needed,
+                // but we need to signal to the provided TaskCompletionSource when the connection is established.
+                // This pattern has implications for connection open retry logic that are intricate enough to merit
+                // dedicated work.
                 Task.Run(async () =>
                 {
                     //TODO: use same timespan everywhere and tick down for queueuing and actual connection opening work
@@ -224,7 +226,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
-        internal async Task<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        private async Task<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
         {
             DbConnectionInternal? connection = null;
 
@@ -282,7 +284,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
                         }
 
-                        if (connection != null && CheckIdleConnection(connection))
+                        // TODO: check if connection is still valid
+                        if (connection != null)
                         {
                             //TODO: set connection internal state
                             //PrepareConnection(owningConnection, connection, transaction);
@@ -332,40 +335,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DbConnectionInternal? GetIdleConnection()
         {
-
             while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
             {
-                if (CheckIdleConnection(connection))
-                {
-                    return connection;
-                }
+                // TODO: check if connection is still valid
+                // if (CheckIdleConnection(connection))
+                return connection;
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Checks that the provided connection is live and unexpired and closes it if needed.
-        /// Decrements the idle count as long as the connection is not null.
-        /// </summary>
-        /// <param name="connection">The connection to be checked.</param>
-        /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
-        /// TODO: profile the inlining to see if it's necessary
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CheckIdleConnection(DbConnectionInternal? connection)
-        {
-            if (connection is null)
-            {
-                return false;
-            }
-
-            // Only decrement when the connection has a value.
-            Interlocked.Decrement(ref _idleCount);
-
-            //TODO: check if the connection is expired
-            //return CheckConnection(connection);
-
-            return true;
         }
 
         /// <inheritdoc/>

@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public ChannelDbConnectionPoolTest()
         {
             // Use a stubbed connection factory to avoid network code
-            connectionFactory = new ConnectionFactoryStub();
+            connectionFactory = new SuccessfulConnectionFactory();
             identity = DbConnectionPoolIdentity.NoIdentity;
             connectionPoolProviderInfo = new DbConnectionPoolProviderInfo();
             poolGroupOptions = new DbConnectionPoolGroupOptions(
@@ -54,20 +54,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(1)]
         [InlineData(5)]
         [InlineData(10)]
-        public async Task TestGetConnectionFromEmptyPoolSync_ShouldCreateNewConnection(int numConnections)
+        public void TestGetConnectionFromEmptyPoolSync_ShouldCreateNewConnection(int numConnections)
         {
             // Act
             for (int i = 0; i < numConnections; i++)
             {
-                var internalConnection = await pool.GetInternalConnection(
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
                     new SqlConnection(),
+                    taskCompletionSource: null,
                     new DbConnectionOptions("", null),
-                    TimeSpan.Zero,
-                    async: false,
-                    CancellationToken.None
+                    out internalConnection
                 );
 
                 // Assert
+                Assert.True(completed);
                 Assert.NotNull(internalConnection);
             }
 
@@ -85,22 +86,28 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Act
             for (int i = 0; i < numConnections; i++)
             {
-                var internalConnection = await pool.GetInternalConnection(
+                var tcs = new TaskCompletionSource<DbConnectionInternal>();
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
                     new SqlConnection(),
+                    tcs,
                     new DbConnectionOptions("", null),
-                    TimeSpan.Zero,
-                    async: false,
-                    CancellationToken.None
+                    out internalConnection
                 );
 
                 // Assert
-                Assert.NotNull(internalConnection);
+                Assert.False(completed);
+                Assert.Null(internalConnection);
+                Assert.NotNull(await tcs.Task);
             }
 
 
             // Assert
             Assert.Equal(numConnections, pool.Count);
         }
+
+        // Test that requests to get connection from the pool fails when max pool size is reached
+       
 
         #region Property Tests
 
@@ -236,15 +243,53 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
         }
+        [Fact]
+        public void TestGetConnectionFailsWhenMaxPoolSizeReached()
+        {
+            // Arrange
+            for (int i = 0; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
 
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            try
+            {
+                // Act
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    //TODO: set timeout to make this faster
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+            } catch (Exception ex)
+            {
+                // Assert
+                Assert.IsType<InvalidOperationException>(ex);
+                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            }
+
+            // Assert
+            Assert.Equal(poolGroupOptions.MaxPoolSize, pool.Count);
+        }
         #endregion
 
         #region Test classes
-        internal class ConnectionFactoryStub : DbConnectionFactory
+        internal class SuccessfulConnectionFactory : DbConnectionFactory
         {
             protected override DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
             {
-                return new TestDbConnectionInternal();
+                return new SuccessfulDbConnectionInternal();
             }
 
             #region Not Implemented Members
@@ -302,7 +347,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             #endregion
         }
 
-        internal class TestDbConnectionInternal : DbConnectionInternal
+        internal class SuccessfulDbConnectionInternal : DbConnectionInternal
         {
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
@@ -323,6 +368,68 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
 
             protected override void Deactivate()
+            {
+                throw new NotImplementedException();
+            }
+            #endregion
+        }
+
+        internal class TimeoutConnectionFactory : DbConnectionFactory
+        {
+            protected override DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
+            {
+                return new SuccessfulDbConnectionInternal();
+            }
+
+            #region Not Implemented Members
+            public override DbProviderFactory ProviderFactory => throw new NotImplementedException();
+
+            protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override int GetObjectId(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void PermissionDemand(DbConnection outerConnection)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
             {
                 throw new NotImplementedException();
             }
