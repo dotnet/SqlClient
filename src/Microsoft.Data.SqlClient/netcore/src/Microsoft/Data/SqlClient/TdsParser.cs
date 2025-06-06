@@ -198,6 +198,8 @@ namespace Microsoft.Data.SqlClient
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
+        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
         internal SqlInternalConnectionTds Connection
         {
             get
@@ -2813,7 +2815,7 @@ namespace Microsoft.Data.SqlClient
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
                             {
-                                _defaultEncoding = Encoding.UTF8;
+                                _defaultEncoding = s_utf8EncodingWithoutBom;
                             }
                             else
                             {
@@ -4324,7 +4326,7 @@ namespace Microsoft.Data.SqlClient
             
                 if (rec.collation.IsUTF8)
                 { // UTF8 collation
-                    rec.encoding = Encoding.UTF8;
+                    rec.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -5181,7 +5183,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.collation.IsUTF8)
                 { // UTF8 collation
-                    col.encoding = Encoding.UTF8;
+                    col.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -5986,7 +5988,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.SQLJSON:
-                    encoding = Encoding.UTF8;
+                    encoding = s_utf8EncodingWithoutBom;
                     string jsonStringValue;
                     result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
                     if (result != TdsOperationStatus.Done)
@@ -11052,7 +11054,7 @@ namespace Microsoft.Data.SqlClient
                     // Replace encoding if it is UTF8
                     if (metadata.collation.IsUTF8)
                     {
-                        _defaultEncoding = Encoding.UTF8;
+                        _defaultEncoding = s_utf8EncodingWithoutBom;
                     }
 
                     _defaultCollation = metadata.collation;
