@@ -24,7 +24,7 @@ public class CspCertificateFixture : CertificateFixtureBase
 
         AddToStore(CspCertificate, StoreLocation.CurrentUser, StoreName.My);
 
-        CspCertificatePath = string.Format("{0}/{1}/{2}", StoreLocation.CurrentUser, StoreName.My, CspCertificate.Thumbprint);
+        CspCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{CspCertificate.Thumbprint}";
         CspKeyPath = GetCspPathFromCertificate();
     }
 
