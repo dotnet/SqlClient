@@ -8,6 +8,14 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
+/// <summary>
+/// Provides a fixture for working with certificates backed by a Cryptographic Service Provider (CSP).
+/// </summary>
+/// <remarks>
+/// This class creates and manages a certificate stored in the current user's certificate store,  along
+/// with its associated CSP key path. It is intended to facilitate testing or scenarios  requiring temporary
+/// certificates.
+/// </remarks>
 public class CspCertificateFixture : CertificateFixtureBase
 {
     public CspCertificateFixture()

@@ -8,6 +8,14 @@ using System.Security.Principal;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
+/// <summary>
+/// Provides a fixture for managing certificates used in column encryption scenarios.
+/// </summary>
+/// <remarks>
+/// This class creates and manages certificates for testing or operational purposes, including primary
+/// and secondary column encryption certificates, as well as a certificate without a private key. Certificates are
+/// added to the appropriate certificate stores based on the current user's permissions.
+/// </remarks>
 public sealed class ColumnEncryptionCertificateFixture : CertificateFixtureBase
 {
     public X509Certificate2 PrimaryColumnEncryptionCertificate { get; }

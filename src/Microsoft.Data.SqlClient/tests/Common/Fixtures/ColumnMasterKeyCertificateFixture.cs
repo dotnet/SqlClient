@@ -7,6 +7,13 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
+/// <summary>
+/// Provides a test fixture for managing a column master key certificate.
+/// </summary>
+/// <remarks>
+/// This class is intended to simplify the setup and teardown of a column master key certificate for
+/// testing purposes. It creates and optionally adds the certificate to the specified certificate store.
+/// </remarks>
 public class ColumnMasterKeyCertificateFixture : CertificateFixtureBase
 {
     public ColumnMasterKeyCertificateFixture()

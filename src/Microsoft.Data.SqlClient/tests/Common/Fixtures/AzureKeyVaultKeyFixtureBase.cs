@@ -9,6 +9,14 @@ using Azure.Security.KeyVault.Keys;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
+/// <summary>
+/// Provides a base class for managing Azure Key Vault keys in test fixtures.
+/// </summary>
+/// <remarks>
+/// This class simplifies the creation and cleanup of RSA keys in an Azure Key Vault during testing
+/// scenarios. It ensures that any keys created during the fixture's lifetime are properly deleted when the fixture is
+/// disposed.
+/// </remarks>
 public abstract class AzureKeyVaultKeyFixtureBase : IDisposable
 {
     private readonly KeyClient _keyClient;

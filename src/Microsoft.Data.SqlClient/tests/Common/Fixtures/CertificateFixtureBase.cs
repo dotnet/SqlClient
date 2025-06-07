@@ -12,6 +12,19 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
+/// <summary>
+/// Provides a base class for managing the creation, storage, and disposal of X.509 certificates used in cryptographic
+/// operations. This class is designed to facilitate scenarios where certificates need to be programmatically generated,
+/// added to certificate stores, and cleaned up after use.
+/// </summary>
+/// <remarks>
+/// This class includes functionality for creating self-signed certificates with specific configurations,
+/// adding certificates to system certificate stores, and ensuring proper cleanup of certificates to avoid resource
+/// leaks. It is intended to be used as a base class for test fixtures or other scenarios requiring temporary
+/// certificate management.
+/// <para>The class implements <see cref="IDisposable"/> to ensure that any certificates added to
+/// certificate stores are removed and properly disposed of when the object is no longer needed.</para>
+/// </remarks>
 public abstract class CertificateFixtureBase : IDisposable
 {
     /// <summary>
