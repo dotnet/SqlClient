@@ -178,8 +178,6 @@ namespace Microsoft.Data.SqlClient
         internal bool isTcpProtocol { get; set; }
         internal string FQDNforDNSCache { get; set; }
 
-        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-
         /// <summary>
         /// Get if data classification is enabled by the server.
         /// </summary>

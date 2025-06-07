@@ -198,8 +198,6 @@ namespace Microsoft.Data.SqlClient
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
         }
 
-        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-
         internal SqlInternalConnectionTds Connection
         {
             get

@@ -67,14 +67,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long finalCount = Convert.ToInt64(countCommand.ExecuteScalar());
             Assert.Equal(1, finalCount - initialCount);
 
-            using SqlCommand verifyCommand = new SqlCommand($"SELECT str_col FROM {destinationTable}", destinationConnection);
+            using SqlCommand verifyCommand = new SqlCommand($"SELECT cast(str_col as varbinary) FROM {destinationTable}", destinationConnection);
             using SqlDataReader verifyReader = verifyCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
             byte[] expectedBytes = Encoding.UTF8.GetBytes("test");
 
             Assert.True(verifyReader.Read(), "No data found in destination table after bulk copy.");
 
-            byte[] actualBytes = Encoding.UTF8.GetBytes(verifyReader.GetString(0));
+            byte[] actualBytes = verifyReader.GetSqlBinary(0).Value;
             Assert.Equal(expectedBytes.Length, actualBytes.Length);
             Assert.Equal(expectedBytes, actualBytes);
         }
