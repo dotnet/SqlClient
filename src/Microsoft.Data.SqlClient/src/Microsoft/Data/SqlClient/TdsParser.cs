@@ -1,14 +1,18 @@
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Text;
 using Microsoft.Data.SqlClient.Utilities;
 
 #nullable enable
 
 namespace Microsoft.Data.SqlClient
 {
+    
     internal partial class TdsParser
     {
+        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
         internal void ProcessSSPI(int receivedLength)
         {
             Debug.Assert(_authenticationProvider is not null);
