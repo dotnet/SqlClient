@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool IsRunning => State is Running;
 
         /// <inheritdoc />
-        public TimeSpan LoadBalanceTimeout => throw new NotImplementedException();
+        public TimeSpan LoadBalanceTimeout => PoolGroupOptions.LoadBalanceTimeout;
 
         /// <inheritdoc />
         public DbConnectionPoolGroup PoolGroup => _connectionPoolGroup;
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public bool UseLoadBalancing => throw new NotImplementedException();
+        public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
         private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
         #endregion
@@ -169,7 +169,172 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
-            throw new NotImplementedException();
+            // Once a connection is closing (which is the state that we're in at
+            // this point in time) you cannot delegate a transaction to or enlist
+            // a transaction in it, so we can correctly presume that if there was
+            // not a delegated or enlisted transaction to start with, that there
+            // will not be a delegated or enlisted transaction once we leave the
+            // lock.
+
+            lock (obj)
+            {
+                // Calling PrePush prevents the object from being reclaimed
+                // once we leave the lock, because it sets _pooledCount such
+                // that it won't appear to be out of the pool.  What that
+                // means, is that we're now responsible for this connection:
+                // it won't get reclaimed if it gets lost.
+                obj.PrePush(owningObject);
+
+                // TODO: Consider using a Cer to ensure that we mark the object for reclaimation in the event something bad happens?
+            }
+
+            if (!CheckConnection(obj))
+            {
+                return;
+            }
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.", Id, obj.ObjectID);
+            obj.DeactivateConnection();
+
+            bool returnToGeneralPool = false;
+            bool destroyObject = false;
+
+            if (obj.IsConnectionDoomed || 
+                !obj.CanBePooled || 
+                State is ShuttingDown)
+            {
+                // the object is not fit for reuse -- just dispose of it.
+                destroyObject = true;
+            }
+            else
+            {
+                returnToGeneralPool = true;
+            }
+                    
+
+            if (returnToGeneralPool)
+            {
+                // Only push the connection into the general pool if we didn't
+                //   already push it onto the transacted pool, put it into stasis,
+                //   or want to destroy it.
+                Debug.Assert(destroyObject == false);
+                // Statement order is important since we have synchronous completions on the channel.
+                
+                var written = _idleConnectionWriter.TryWrite(obj);
+                Debug.Assert(written);
+            }
+            else if (destroyObject)
+            {
+                // Connections that have been marked as no longer 
+                // poolable (e.g. exceeded their connection lifetime) are not, in fact,
+                // returned to the general pool
+                CloseConnection(obj);
+            }
+
+            //-------------------------------------------------------------------------------------
+            // postcondition
+
+            // ensure that the connection was processed
+            Debug.Assert(returnToGeneralPool == true || destroyObject == true);
+        }
+
+        /// <summary>
+        /// Checks that the provided connector is live and unexpired and closes it if needed.
+        /// </summary>
+        /// <param name="connection"></param>
+        /// <returns>Returns true if the connector is live and unexpired, otherwise returns false.</returns>
+        private bool CheckConnection(DbConnectionInternal? connection)
+        {
+            // If Clear/ClearAll has been been called since this connector was first opened,
+            // throw it away. The same if it's broken (in which case CloseConnector is only
+            // used to update state/perf counter).
+            //TODO: check clear counter
+
+            // An connector could be broken because of a keepalive that occurred while it was
+            // idling in the pool
+            // TODO: Consider removing the pool from the keepalive code. The following branch is simply irrelevant
+            // if keepalive isn't turned on.
+            if (connection == null)
+            {
+                return false;
+            }
+
+            if (!connection.IsConnectionAlive())
+            {
+                CloseConnection(connection);
+                return false;
+            }
+
+            if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
+            {
+                CloseConnection(connection);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Closes the provided connector and adjust pool state accordingly.
+        /// </summary>
+        /// <param name="connector">The connector to be closed.</param>
+        private void CloseConnection(DbConnectionInternal connector)
+        {
+            try
+            {
+                connector.Dispose();
+            }
+            catch
+            {
+                //TODO: log error
+            }
+
+            // TODO: check clear counter so that we don't clear new connections
+
+            int i;
+            for (i = 0; i < MaxPoolSize; i++)
+            {
+                if (Interlocked.CompareExchange(ref _connections[i], null, connector) == connector)
+                {
+                    break;
+                }
+            }
+
+            // If CloseConnection is being called from within OpenNewConnection (e.g. an error happened during a connection initializer which
+            // causes the connector to Break, and therefore return the connector), then we haven't yet added the connector to Connections.
+            // In this case, there's no state to revert here (that's all taken care of in OpenNewConnection), skip it.
+            if (i == MaxPoolSize)
+            {
+                return;
+            }
+
+            var numConnections = Interlocked.Decrement(ref _numConnections);
+            Debug.Assert(numConnections >= 0);
+
+            // If a connection has been closed for any reason, we write a null to the idle connection channel to wake up
+            // a waiter, who will open a new physical connection
+            // Statement order is important since we have synchronous completions on the channel.
+            _idleConnectionWriter.TryWrite(null);
+        }
+
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj)
+        {
+            lock (obj)
+            {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
+                obj.PostPop(owningObject);
+            }
+            try
+            {
+                //TODO: pass through transaction
+                obj.ActivateConnection(null);
+            }
+            catch
+            {
+                // if Activate throws an exception
+                // put it back in the pool or have it properly disposed of
+                this.ReturnInternalConnection(obj, owningObject);
+                throw;
+            }
         }
 
         /// <inheritdoc />
@@ -239,7 +404,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (connection != null)
             {
                 // TODO: set connection internal state
-                // PrepareConnection(owningConnection, connection, transaction);
+                PrepareConnection(owningConnection, connection);
                 return connection;
             }
 
@@ -285,10 +450,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
 
                         // TODO: check if connection is still valid
-                        if (connection != null)
+                        if (connection != null && CheckConnection(connection))
                         {
                             //TODO: set connection internal state
-                            //PrepareConnection(owningConnection, connection, transaction);
+                            PrepareConnection(owningConnection, connection);
                             return connection;
                         }
                     }
@@ -316,7 +481,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     if (connection != null)
                     {
                         //TODO: set connection internal state
-                        //PrepareConnection(owningConnection, connection, transaction);
+                        PrepareConnection(owningConnection, connection);
                         return connection;
                     }
                 }
@@ -338,8 +503,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
             {
                 // TODO: check if connection is still valid
-                // if (CheckIdleConnection(connection))
-                return connection;
+                if (CheckConnection(connection))
+                {
+                    return connection;
+                }
             }
 
             return null;

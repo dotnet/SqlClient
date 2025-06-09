@@ -158,17 +158,17 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        [ActiveIssue("Requires ReturnInternalConnection to be implemented in ChannelDbConnectionPool")]
         public void ConnectionsAreReused()
         {
             // Arrange
             Setup(SuccessfulConnectionFactory);
+            SqlConnection owningConnection = new SqlConnection();
             DbConnectionInternal internalConnection1 = null;
             DbConnectionInternal internalConnection2 = null;
 
             // Act: Get the first connection
             var completed1 = pool.TryGetConnection(
-                new SqlConnection(),
+                owningConnection,
                 null,
                 new DbConnectionOptions("", null),
                 out internalConnection1
@@ -179,11 +179,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.NotNull(internalConnection1);
 
             // Act: Return the first connection to the pool
-            pool.ReturnInternalConnection(internalConnection1, null);
+            pool.ReturnInternalConnection(internalConnection1, owningConnection);
 
             // Act: Get the second connection (should reuse the first one)
             var completed2 = pool.TryGetConnection(
-                new SqlConnection(),
+                owningConnection,
                 null,
                 new DbConnectionOptions("", null),
                 out internalConnection2
@@ -221,78 +221,91 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void TestAuthenticationContexts()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => _ = pool.AuthenticationContexts);
         }
 
         [Fact]
         public void TestConnectionFactory()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(connectionFactory, pool.ConnectionFactory);
         }
 
         [Fact]
         public void TestCount()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(0, pool.Count);
         }
 
         [Fact]
         public void TestErrorOccurred()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => _ = pool.ErrorOccurred);
         }
 
         [Fact]
         public void TestId()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.True(pool.Id >= 1);
         }
 
         [Fact]
         public void TestIdentity()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(identity, pool.Identity);
         }
 
         [Fact]
         public void TestIsRunning()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.True(pool.IsRunning);
         }
 
         [Fact]
         public void TestLoadBalanceTimeout()
         {
-            Assert.Throws<NotImplementedException>(() => _ = pool.LoadBalanceTimeout);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(poolGroupOptions.LoadBalanceTimeout, pool.LoadBalanceTimeout);
         }
 
         [Fact]
         public void TestPoolGroup()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(dbConnectionPoolGroup, pool.PoolGroup);
         }
 
         [Fact]
         public void TestPoolGroupOptions()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(poolGroupOptions, pool.PoolGroupOptions);
         }
 
         [Fact]
         public void TestProviderInfo()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(connectionPoolProviderInfo, pool.ProviderInfo);
         }
 
         [Fact]
         public void TestStateGetter()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
         [Fact]
         public void TestStateSetter()
         {
+            Setup(SuccessfulConnectionFactory);
             pool.State = DbConnectionPoolState.ShuttingDown;
             Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
             pool.State = DbConnectionPoolState.Running;
@@ -302,7 +315,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void TestUseLoadBalancing()
         {
-            Assert.Throws<NotImplementedException>(() => _ = pool.UseLoadBalancing);
+            Setup(SuccessfulConnectionFactory);
+            Assert.Equal(poolGroupOptions.UseLoadBalancing, pool.UseLoadBalancing);
         }
 
         #endregion
@@ -312,42 +326,42 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void TestClear()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.Clear());
         }
 
         [Fact]
         public void TestPutObjectFromTransactedPool()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.PutObjectFromTransactedPool(null!));
         }
 
         [Fact]
         public void TestReplaceConnection()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.ReplaceConnection(null!, null!, null!));
-        }
-
-        [Fact]
-        public void TestReturnInternalConnection()
-        {
-            Assert.Throws<NotImplementedException>(() => pool.ReturnInternalConnection(null!, null!));
         }
 
         [Fact]
         public void TestShutdown()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.Shutdown());
         }
 
         [Fact]
         public void TestStartup()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.Startup());
         }
 
         [Fact]
         public void TestTransactionEnded()
         {
+            Setup(SuccessfulConnectionFactory);
             Assert.Throws<NotImplementedException>(() => pool.TransactionEnded(null!, null!));
         }
         #endregion
@@ -357,7 +371,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             protected override DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
             {
-                return new SuccessfulDbConnectionInternal();
+                return new StubDbConnectionInternal();
             }
 
             #region Not Implemented Members
@@ -477,7 +491,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             #endregion
         }
 
-        internal class SuccessfulDbConnectionInternal : DbConnectionInternal
+        internal class StubDbConnectionInternal : DbConnectionInternal
         {
             #region Not Implemented Members
             public override string ServerVersion => throw new NotImplementedException();
@@ -489,17 +503,17 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             public override void EnlistTransaction(Transaction transaction)
             {
-                throw new NotImplementedException();
+                return;
             }
 
             protected override void Activate(Transaction transaction)
             {
-                throw new NotImplementedException();
+                return;
             }
 
             protected override void Deactivate()
             {
-                throw new NotImplementedException();
+                return;
             }
             #endregion
         }
