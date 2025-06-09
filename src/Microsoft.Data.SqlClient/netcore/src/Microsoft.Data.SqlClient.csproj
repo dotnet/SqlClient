@@ -663,8 +663,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetadataFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlMetadataFactory.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetaDataFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
@@ -1036,18 +1036,20 @@
   </ItemGroup>
   <!-- Package References Etc -->
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-    <!-- Enable the project reference for debugging purposes. -->
-    <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
-    <PackageReference Include="Microsoft.SqlServer.Server" />
-    <PackageReference Include="Azure.Identity" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+
+    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
+    <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
   </ItemGroup>
+
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

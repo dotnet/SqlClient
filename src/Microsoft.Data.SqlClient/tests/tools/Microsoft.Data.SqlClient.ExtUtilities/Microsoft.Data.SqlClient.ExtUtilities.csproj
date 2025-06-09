@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" />
+
     <ProjectReference Include="../Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 </Project>
