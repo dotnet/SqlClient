@@ -1386,11 +1386,11 @@ namespace Microsoft.Data.SqlClient
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
-                //netfx---
-                _parser.RunReliably(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
-                //---netfx|netcore---
+                #if NETFRAMEWORK
+                _parser.RunReliably(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);                
+                #else
                 _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
-                //---netcore
+                #endif
             }
             finally
             {
@@ -2038,14 +2038,14 @@ namespace Microsoft.Data.SqlClient
 
         private Task WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
         {
-            //netfx---
+            #if NETFRAMEWORK
             // If user's token is canceled, return a canceled task
             if (ctoken.IsCancellationRequested)
             {
                 Debug.Assert(_isAsyncBulkCopy, "Should not have a cancelled token for a synchronous bulk copy");
                 return ADP.CreatedTaskWithCancellation<object>();
             }
-            //---netfx
+            #endif
 
             Task reconnectTask = _connection._currentReconnectionTask;
             if (reconnectTask != null && !reconnectTask.IsCompleted)
@@ -3049,35 +3049,27 @@ namespace Microsoft.Data.SqlClient
                         TaskCompletionSource<object> cancellableReconnectTS = new TaskCompletionSource<object>();
                         if (cts.CanBeCanceled)
                         {
-                            //netfx---
-                            regReconnectCancel.Value = cts.Register(() => cancellableReconnectTS.TrySetCanceled());
-                            //---netfx|netcore---
-                            regReconnectCancel.Value = cts.Register(static (object tcs) => ((TaskCompletionSource<object>)tcs).TrySetCanceled(), cancellableReconnectTS);
-                            //---netcore
+                            regReconnectCancel.Value = cts.Register(
+                                static tcs => ((TaskCompletionSource<object>)tcs).TrySetCanceled(),
+                                cancellableReconnectTS);
                         }
-                        //netfx---
-                        AsyncHelper.ContinueTaskWithState(reconnectTask, cancellableReconnectTS, cancellableReconnectTS,
-                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                        );
-                        //---netfx|netcore---
-                        AsyncHelper.ContinueTaskWithState(reconnectTask, cancellableReconnectTS,
+
+                        AsyncHelper.ContinueTaskWithState(
+                            reconnectTask,
+                            cancellableReconnectTS,
                             state: cancellableReconnectTS,
-                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                        );
-                        //---netcore
+                            onSuccess: static state => ((TaskCompletionSource<object>)state).SetResult(null));
+
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
-                        //netfx---
-                        AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
-                                () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        //---netfx|netcore---
                         AsyncHelper.SetTimeoutExceptionWithState(
                             completion: cancellableReconnectTS, 
                             timeout: BulkCopyTimeout,
                             state: _destinationTableName,
-                            onFailure: static (object state) => SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
+                            onFailure: static state => 
+                                SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
                             cancellationToken: CancellationToken.None
                         );
-                        //---netcore
+
                         AsyncHelper.ContinueTaskWithState(
                             task: cancellableReconnectTS.Task,
                             completion: source,
