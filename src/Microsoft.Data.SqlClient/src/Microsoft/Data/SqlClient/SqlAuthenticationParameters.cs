@@ -11,35 +11,8 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
-    public class SqlAuthenticationParameters : ISqlAuthenticationParameters
+    public class SqlAuthenticationParameters : SqlAuthenticationParametersBase
     {
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
-        public SqlAuthenticationMethod AuthenticationMethod { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Resource/*'/>
-        public string Resource { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Authority/*'/>
-        public string Authority { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/UserId/*'/>
-        public string UserId { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Password/*'/>
-        public string Password { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionId/*'/>
-        public Guid ConnectionId { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ServerName/*'/>
-        public string ServerName { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
-        public string DatabaseName { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
-        public int ConnectionTimeout { get; } = ADP.DefaultConnectionTimeout;
-
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
@@ -51,16 +24,17 @@ namespace Microsoft.Data.SqlClient
             string password,
             Guid connectionId,
             int connectionTimeout)
+            : base(
+                authenticationMethod,
+                serverName,
+                databaseName,
+                resource,
+                authority,
+                userId,
+                password,
+                connectionId,
+                connectionTimeout)
         {
-            AuthenticationMethod = authenticationMethod;
-            ServerName = serverName;
-            DatabaseName = databaseName;
-            Resource = resource;
-            Authority = authority;
-            UserId = userId;
-            Password = password;
-            ConnectionId = connectionId;
-            ConnectionTimeout = connectionTimeout;
         }
 
         /// <summary>

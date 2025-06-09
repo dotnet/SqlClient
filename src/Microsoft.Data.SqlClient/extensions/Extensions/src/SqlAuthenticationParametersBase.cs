@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/ISqlAuthenticationParameters.xml' path='docs/members[@name="ISqlAuthenticationParameters"]/ISqlAuthenticationParameters/*'/>
-public interface ISqlAuthenticationParameters
+public class SqlAuthenticationParametersBase
 {
     /// <include file='../doc/ISqlAuthenticationParameters.xml' path='docs/members[@name="ISqlAuthenticationParameters"]/AuthenticationMethod/*'/>
     public SqlAuthenticationMethod AuthenticationMethod { get; }
@@ -33,4 +33,27 @@ public interface ISqlAuthenticationParameters
 
     /// <include file='../doc/ISqlAuthenticationParameters.xml' path='docs/members[@name="ISqlAuthenticationParameters"]/ConnectionTimeout/*'/>
     public int ConnectionTimeout { get; }
+
+    /// <include file='../doc/Microsoft.Data.SqlClient/SqlAuthenticationParametersBase.xml' path='docs/members[@name="SqlAuthenticationParametersBase"]/ctor/*'/>
+    protected SqlAuthenticationParametersBase(
+        SqlAuthenticationMethod authenticationMethod,
+        string serverName,
+        string databaseName,
+        string resource,
+        string authority,
+        string userId,
+        string password,
+        Guid connectionId,
+        int connectionTimeout)
+    {
+        AuthenticationMethod = authenticationMethod;
+        ServerName = serverName;
+        DatabaseName = databaseName;
+        Resource = resource;
+        Authority = authority;
+        UserId = userId;
+        Password = password;
+        ConnectionId = connectionId;
+        ConnectionTimeout = connectionTimeout;
+    }
 }

@@ -17,5 +17,5 @@ public abstract class SqlAuthenticationProviderBase
     public abstract bool IsSupported(SqlAuthenticationMethod authenticationMethod);
 
     /// <include file='../doc/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
-    public abstract Task<SqlAuthenticationTokenBase> AcquireTokenAsync(ISqlAuthenticationParameters parameters);
+    public abstract Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParametersBase parameters);
 }

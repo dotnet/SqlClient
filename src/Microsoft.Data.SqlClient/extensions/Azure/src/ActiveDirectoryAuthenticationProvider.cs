@@ -118,7 +118,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
 
-    public override async Task<SqlAuthenticationTokenBase> AcquireTokenAsync(ISqlAuthenticationParameters parameters)
+    public override async Task<SqlAuthenticationTokenBase> AcquireTokenAsync(SqlAuthenticationParametersBase parameters)
     {
         // For unknown MSAL errors, we will retry after this period, which we
         // double for each subsequent attempt.
@@ -406,7 +406,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         }
     }
 
-    private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, ISqlAuthenticationParameters parameters,
+    private static async Task<AuthenticationResult?> TryAcquireTokenSilent(IPublicClientApplication app, SqlAuthenticationParametersBase parameters,
         string[] scopes, CancellationTokenSource cts)
     {
         AuthenticationResult? result = null;
@@ -611,7 +611,7 @@ public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationPro
         return await tokenCredentialInstance._tokenCredential.GetTokenAsync(tokenRequestContext, cancellationToken);
     }
 
-    private static string GetAccountPwCacheKey(ISqlAuthenticationParameters parameters)
+    private static string GetAccountPwCacheKey(SqlAuthenticationParametersBase parameters)
     {
         return parameters.Authority + "+" + parameters.UserId;
     }

@@ -1,10 +1,10 @@
 ﻿<docs>
-  <members name="ISqlAuthenticationParameters">
-    <ISqlAuthenticationParameters>
+  <members name="SqlAuthenticationParametersBase">
+    <SqlAuthenticationParameters>
       <summary>
         Represents AD authentication parameters passed by a driver to authentication providers.
       </summary>
-    </ISqlAuthenticationParameters>
+    </SqlAuthenticationParameters>
     <ctor>
       <param name="authenticationMethod">One of the enumeration values that specifies the authentication method.</param>
       <param name="serverName">The server name.</param>
@@ -16,7 +16,7 @@
       <param name="connectionId">The connection ID.</param>
       <param name="connectionTimeout">The connection timeout value in seconds.</param>
       <summary>
-        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password, connection ID and connection timeout value.
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParametersBase" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password, connection ID and connection timeout value.
       </summary>
     </ctor>
     <AuthenticationMethod>
