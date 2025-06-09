@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlCommand verifyCommand = new SqlCommand($"SELECT cast(str_col as varbinary) FROM {destinationTable}", destinationConnection);
             using SqlDataReader verifyReader = verifyCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            byte[] expectedBytes = Encoding.UTF8.GetBytes("test");
+            byte[] expectedBytes = new byte[] { 0x74, 0x65, 0x73, 0x74 };
 
             Assert.True(verifyReader.Read(), "No data found in destination table after bulk copy.");
 
