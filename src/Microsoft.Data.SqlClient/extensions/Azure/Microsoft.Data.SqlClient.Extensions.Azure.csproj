@@ -7,7 +7,7 @@
   
   <!-- Target Config -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462;net8.0;net9.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Config -->
@@ -19,15 +19,33 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <RootNamespace>Microsoft.Data.SqlClient.Extensions.Azure</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+      <AssemblyAttribute Include="System.CLSCompliantAttribute">
+          <_Parameter1>true</_Parameter1>
+      </AssemblyAttribute>
+  </ItemGroup>
 
-  <!-- NuGet Properties -->
+  <!--
+    NuGet Package Config
+
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
   <PropertyGroup>
-    <PackageId>Microsoft.Data.SqlClient.Extensions.Azure</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+    <!--
+      We omit specifying <PackageId> here, since it defaults to $(AssemblyName),
+      specified above.
+    -->
+    
+    <!-- See tools/props/Versions.props. -->
+    <PackageVersion>$(MicrosoftDataSqlClientExtensionsAzureVersion)</PackageVersion>
 
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>
@@ -36,13 +54,11 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
-  <!-- We need types from the Extensions package. -->
+  <!-- Package Dependencies -->
   <ItemGroup>
-    <ProjectReference Include="../Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.14.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" Version="$(MicrosoftDataSqlClientExtensionsVersion)" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
   </ItemGroup>
 
 </Project>

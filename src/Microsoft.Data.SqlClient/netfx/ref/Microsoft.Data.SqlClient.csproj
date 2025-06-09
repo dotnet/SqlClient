@@ -18,11 +18,6 @@
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <!-- We need types from our Extensions package. -->
-  <ItemGroup>
-    <ProjectReference Include="../../extensions/Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
-  </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
   </ItemGroup>
@@ -53,6 +48,8 @@
     <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
+
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" Version="$(MicrosoftDataSqlClientExtensionsVersion)" />
   </ItemGroup>
 
   <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />

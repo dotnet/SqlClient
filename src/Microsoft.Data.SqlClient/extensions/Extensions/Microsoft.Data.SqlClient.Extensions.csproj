@@ -7,7 +7,7 @@
   
   <!-- Target Config -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462;net8.0;net9.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Config -->
@@ -19,6 +19,7 @@
   <!-- Build Config -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions</AssemblyName>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <RootNamespace>Microsoft.Data.SqlClient.Extensions</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
@@ -27,12 +28,24 @@
       </AssemblyAttribute>
   </ItemGroup>
 
-  <!-- NuGet Package Config -->
-  <PropertyGroup>
-    <PackageId>Microsoft.Data.SqlClient.Extensions</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
+  <!--
+    NuGet Package Config
 
+    See: https://learn.microsoft.com/en-us/nuget/reference/msbuild-targets#pack-target
+  -->
+  <PropertyGroup>
+    <!--
+      We omit specifying <PackageId> here, since it defaults to $(AssemblyName),
+      specified above.
+    -->
+
+    <!-- See tools/props/Versions.props. -->
+    <PackageVersion>$(MicrosoftDataSqlClientExtensionsVersion)</PackageVersion>
+
+    <PackageOutputPath>$(PackagesDir)</PackageOutputPath>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <Authors>Microsoft Corporation</Authors>
     <Company>Microsoft Corporation</Company>

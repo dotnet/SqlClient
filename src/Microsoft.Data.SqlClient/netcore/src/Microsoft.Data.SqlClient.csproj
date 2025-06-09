@@ -41,11 +41,6 @@
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>
 
-  <!-- We need types from our Extensions package. -->
-  <ItemGroup>
-    <ProjectReference Include="../../extensions/Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
-  </ItemGroup>
-
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Sni\SniErrors.cs">
@@ -1052,6 +1047,8 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
+  
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" Version="$(MicrosoftDataSqlClientExtensionsVersion)" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />

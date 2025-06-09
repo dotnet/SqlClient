@@ -76,11 +76,6 @@
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
-  <!-- We need types from our Extensions package. -->
-  <ItemGroup>
-    <ProjectReference Include="../../extensions/Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
-  </ItemGroup>
-
   <!-- ********************** Configuration and Platform specific properties ********************* -->
   <!-- All Available Configurations-->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
@@ -1015,6 +1010,8 @@
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="System.Text.Json" Version="$(SystemTextJsonVersion)" />
+
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" Version="$(MicrosoftDataSqlClientExtensionsVersion)" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
   <Import Project="$(NetFxSource)tools\targets\GenerateThisAssemblyCs.targets" />

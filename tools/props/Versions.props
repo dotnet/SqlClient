@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  
+  <!-- Extensions Package Versioning -->
+  <PropertyGroup>
+    <MicrosoftDataSqlClientExtensionsVersion>1.0.0</MicrosoftDataSqlClientExtensionsVersion>
+  </PropertyGroup>
+
+  <!-- MDS Package Versioning -->
   <PropertyGroup>
     <MdsVersionDefault>6.1.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
@@ -12,6 +19,8 @@
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault)-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
+
+  <!-- SQL Server Package Versioning -->
   <PropertyGroup>
     <!-- This version section corresponds to version info of Microsoft.SqlServer.Server Assembly. -->
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
@@ -21,6 +30,12 @@
     <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
+
+  <!-- Azure Package Versioning -->
+  <PropertyGroup>
+    <MicrosoftDataSqlClientExtensionsAzureVersion>1.0.0</MicrosoftDataSqlClientExtensionsAzureVersion>
+  </PropertyGroup>
+
   <!-- NetFx project dependencies -->
   <PropertyGroup>
     <MicrosoftDataSqlClientSniVersion>6.0.2</MicrosoftDataSqlClientSniVersion>
