@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Specialized;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +59,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(1)]
         [InlineData(5)]
         [InlineData(10)]
-        public void GetConnectionFromEmptyPoolSync_ShouldCreateNewConnection(int numConnections)
+        public void GetConnectionEmptyPool_ShouldCreateNewConnection(int numConnections)
         {
             // Arrange
             Setup(SuccessfulConnectionFactory);
@@ -87,7 +89,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(1)]
         [InlineData(5)]
         [InlineData(10)]
-        public async Task GetConnectionFromEmptyPoolAsync_ShouldCreateNewConnection(int numConnections)
+        public async Task GetConnectionAsyncEmptyPool_ShouldCreateNewConnection(int numConnections)
         {
             // Arrange
             Setup(SuccessfulConnectionFactory);
@@ -116,7 +118,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void GetConnectionRespectsMaxPoolSize()
+        public void GetConnectionMaxPoolSize_ShouldTimeoutAfterPeriod()
         {
             // Arrange
             Setup(SuccessfulConnectionFactory);
@@ -158,6 +160,263 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldTimeoutAfterPeriod()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+
+            for (int i = 0; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            try
+            {
+                // Act
+                TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    taskCompletionSource,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+                await taskCompletionSource.Task;
+            }
+            catch (Exception ex)
+            {
+                // Assert
+                Assert.IsType<InvalidOperationException>(ex);
+                Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+            }
+
+            // Assert
+            Assert.Equal(poolGroupOptions.MaxPoolSize, pool.Count);
+        }
+
+        [Fact]
+        public async Task GetConnectionMaxPoolSize_ShouldReuseAfterConnectionReleased()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> tcs = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            var task = Task.Run(() =>
+            {
+                DbConnectionInternal extraConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection(""),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out extraConnection
+                );
+                return extraConnection;
+            });
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            var extraConnection = await task;
+
+            // Assert
+            Assert.Equal(firstConnection, extraConnection);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldReuseAfterConnectionReleased()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            DbConnectionInternal recycledConnection = null;
+            var exceeded = pool.TryGetConnection(
+                new SqlConnection(""),
+                taskCompletionSource,
+                new DbConnectionOptions("", null),
+                out recycledConnection
+            );
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            recycledConnection = await taskCompletionSource.Task;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+        }
+
+        [Fact]
+        public async Task GetConnectionMaxPoolSize_ShouldRespectOrderOfRequest()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            // Act
+            var recycledTask = Task.Run(() =>
+            {
+                DbConnectionInternal recycledConnection = null;
+                var exceeded = pool.TryGetConnection(
+                    new SqlConnection(""),
+                    null,
+                    new DbConnectionOptions("", null),
+                    out recycledConnection
+                );
+                return recycledConnection;
+            });
+            var failedTask = Task.Run(() =>
+            {
+                DbConnectionInternal failedConnection = null;
+                var exceeded2 = pool.TryGetConnection(
+                    new SqlConnection("Timeout=1"),
+                    null,
+                    new DbConnectionOptions("", null),
+                    out failedConnection
+                );
+                return failedConnection;
+            });
+
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            var recycledConnection = await recycledTask;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await failedTask);
+        }
+
+        [Fact]
+        public async Task GetConnectionAsyncMaxPoolSize_ShouldRespectOrderOfRequest()
+        {
+            // Arrange
+            Setup(SuccessfulConnectionFactory);
+            DbConnectionInternal firstConnection = null;
+            SqlConnection firstOwningConnection = new SqlConnection();
+
+            pool.TryGetConnection(
+                firstOwningConnection,
+                taskCompletionSource: null,
+                new DbConnectionOptions("", null),
+                out firstConnection
+            );
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize; i++)
+            {
+                DbConnectionInternal internalConnection = null;
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                Assert.True(completed);
+                Assert.NotNull(internalConnection);
+            }
+
+            TaskCompletionSource<DbConnectionInternal> recycledTaskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+            TaskCompletionSource<DbConnectionInternal> failedCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            DbConnectionInternal recycledConnection = null;
+            var exceeded = pool.TryGetConnection(
+                new SqlConnection(""),
+                recycledTaskCompletionSource,
+                new DbConnectionOptions("", null),
+                out recycledConnection
+            );
+            DbConnectionInternal failedConnection = null;
+            var exceeded2 = pool.TryGetConnection(
+                new SqlConnection("Timeout=1"),
+                failedCompletionSource,
+                new DbConnectionOptions("", null),
+                out failedConnection
+            );
+
+            pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
+            recycledConnection = await recycledTaskCompletionSource.Task;
+
+            // Assert
+            Assert.Equal(firstConnection, recycledConnection);
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => failedConnection = await failedCompletionSource.Task);
+        }
+
+        [Fact]
         public void ConnectionsAreReused()
         {
             // Arrange
@@ -196,7 +455,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void GetConnectionWithTimeout_ShouldThrowTimeoutException()
+        public void GetConnectionTimeout_ShouldThrowTimeoutException()
         {
             // Arrange
             Setup(TimeoutConnectionFactory);
@@ -215,6 +474,99 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
         }
+
+        [Fact]
+        public async Task GetConnectionAsyncTimeout_ShouldThrowTimeoutException()
+        {
+            // Arrange
+            Setup(TimeoutConnectionFactory);
+            DbConnectionInternal internalConnection = null;
+            TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                var completed = pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource,
+                    new DbConnectionOptions("", null),
+                    out internalConnection
+                );
+
+                await taskCompletionSource.Task;
+            });
+
+            Assert.Equal("Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.", ex.Message);
+        }
+
+        [Fact]
+        public void StressTest()
+        {
+            //Arrange
+            Setup(SuccessfulConnectionFactory);
+            ConcurrentBag<Task> tasks = new ConcurrentBag<Task>();
+
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize * 3; i++)
+            {
+                var t = Task.Run(() =>
+                {
+                    DbConnectionInternal internalConnection = null;
+                    SqlConnection owningObject = new SqlConnection();
+                    var completed = pool.TryGetConnection(
+                        owningObject,
+                        taskCompletionSource: null,
+                        new DbConnectionOptions("", null),
+                        out internalConnection
+                    );
+                    if (completed)
+                    {
+                        pool.ReturnInternalConnection(internalConnection, owningObject);
+                    }
+
+                    Assert.True(completed);
+                    Assert.NotNull(internalConnection);
+                });
+                tasks.Add(t);
+            }
+
+            Task.WaitAll(tasks.ToArray());
+            Assert.True(pool.Count <= poolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
+        }
+
+        [Fact]
+        public void StressTestAsync()
+        {
+            //Arrange
+            Setup(SuccessfulConnectionFactory);
+            ConcurrentBag<Task> tasks = new ConcurrentBag<Task>();
+
+
+            for (int i = 1; i < poolGroupOptions.MaxPoolSize * 3; i++)
+            {
+                var t = Task.Run(async () =>
+                {
+                    DbConnectionInternal internalConnection = null;
+                    SqlConnection owningObject = new SqlConnection();
+                    TaskCompletionSource<DbConnectionInternal> taskCompletionSource = new TaskCompletionSource<DbConnectionInternal>();
+                    var completed = pool.TryGetConnection(
+                        owningObject,
+                        taskCompletionSource,
+                        new DbConnectionOptions("", null),
+                        out internalConnection
+                    );
+                    internalConnection = await taskCompletionSource.Task;
+                    pool.ReturnInternalConnection(internalConnection, owningObject);
+
+                    Assert.NotNull(internalConnection);
+                });
+                tasks.Add(t);
+            }
+
+            Task.WaitAll(tasks.ToArray());
+            Assert.True(pool.Count <= poolGroupOptions.MaxPoolSize, "Pool size exceeded max pool size after stress test.");
+        }
+
 
         #region Property Tests
 

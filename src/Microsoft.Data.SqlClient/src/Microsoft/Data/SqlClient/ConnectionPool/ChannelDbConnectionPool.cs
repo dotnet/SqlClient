@@ -169,13 +169,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
         {
-            // Once a connection is closing (which is the state that we're in at
-            // this point in time) you cannot delegate a transaction to or enlist
-            // a transaction in it, so we can correctly presume that if there was
-            // not a delegated or enlisted transaction to start with, that there
-            // will not be a delegated or enlisted transaction once we leave the
-            // lock.
-
             lock (obj)
             {
                 // Calling PrePush prevents the object from being reclaimed
