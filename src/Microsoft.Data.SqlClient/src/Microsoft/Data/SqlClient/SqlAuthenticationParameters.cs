@@ -11,35 +11,8 @@ namespace Microsoft.Data.SqlClient
 {
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
-    public class SqlAuthenticationParameters
+    public class SqlAuthenticationParameters : SqlAuthenticationParametersBase
     {
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
-        public SqlAuthenticationMethod AuthenticationMethod { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Resource/*'/>
-        public string Resource { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Authority/*'/>
-        public string Authority { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/UserId/*'/>
-        public string UserId { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Password/*'/>
-        public string Password { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionId/*'/>
-        public Guid ConnectionId { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ServerName/*'/>
-        public string ServerName { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
-        public string DatabaseName { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
-        public int ConnectionTimeout { get; } = ADP.DefaultConnectionTimeout;
-
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
@@ -49,18 +22,19 @@ namespace Microsoft.Data.SqlClient
             string authority,
             string userId,
             string password,
-            Guid connectionId, 
+            Guid connectionId,
             int connectionTimeout)
+            : base(
+                authenticationMethod,
+                serverName,
+                databaseName,
+                resource,
+                authority,
+                userId,
+                password,
+                connectionId,
+                connectionTimeout)
         {
-            AuthenticationMethod = authenticationMethod;
-            ServerName = serverName;
-            DatabaseName = databaseName;
-            Resource = resource;
-            Authority = authority;
-            UserId = userId;
-            Password = password;
-            ConnectionId = connectionId;
-            ConnectionTimeout = connectionTimeout;
         }
 
         /// <summary>
@@ -79,20 +53,20 @@ namespace Microsoft.Data.SqlClient
             private int _connectionTimeout = ADP.DefaultConnectionTimeout;
 
             /// <summary>
-            /// Implicitly converts to <see cref="SqlAuthenticationParameters"/>.
+            /// Build and return a <see cref="SqlAuthenticationParameters"/> instance.
             /// </summary>
-            public static implicit operator SqlAuthenticationParameters(Builder builder)
+            public SqlAuthenticationParameters Build()
             {
                 return new SqlAuthenticationParameters(
-                    authenticationMethod: builder._authenticationMethod,
-                    serverName: builder._serverName,
-                    databaseName: builder._databaseName,
-                    resource: builder._resource,
-                    authority: builder._authority,
-                    userId: builder._userId,
-                    password: builder._password,
-                    connectionId: builder._connectionId,
-                    connectionTimeout: builder._connectionTimeout);
+                    authenticationMethod: _authenticationMethod,
+                    serverName: _serverName,
+                    databaseName: _databaseName,
+                    resource: _resource,
+                    authority: _authority,
+                    userId: _userId,
+                    password: _password,
+                    connectionId: _connectionId,
+                    connectionTimeout: _connectionTimeout);
             }
 
             /// <summary>

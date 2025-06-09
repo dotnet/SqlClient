@@ -17,6 +17,7 @@
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)!=Official">
     <AssemblyOriginatorKeyFile>$(SigningKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="Microsoft.Data.SqlClient.cs" />
   </ItemGroup>
@@ -47,6 +48,8 @@
     <PackageReference Include="System.Data.Common" Version="$(SystemDataCommonVersion)" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
+
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions" Version="$(MicrosoftDataSqlClientExtensionsVersion)" />
   </ItemGroup>
 
   <Import Project="$(ToolsDir)targets\TrimDocsForIntelliSense.targets" />
