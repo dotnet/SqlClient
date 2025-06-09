@@ -52,17 +52,17 @@
 
     <!-- Target framework specific dependencies -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-        <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.4" />
-        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
-        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.4" />
-        <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.4" />
-        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+        <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.5" />
+        <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
     </ItemGroup>
     <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
         <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
         <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
         <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
         <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.3" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     </ItemGroup>
 </Project>
