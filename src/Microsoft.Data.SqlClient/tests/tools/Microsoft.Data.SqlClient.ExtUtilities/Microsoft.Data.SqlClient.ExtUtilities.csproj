@@ -7,6 +7,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" />
 
+    <!--
+      Transitive dependencies with vulnerabilities, so we explicitly ask for
+      non-vulnerable versions.
+    -->
+    <PackageReference Include="System.Formats.Asn1" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
   </ItemGroup>
 </Project>
