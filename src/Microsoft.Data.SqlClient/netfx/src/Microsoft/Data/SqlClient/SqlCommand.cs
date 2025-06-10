@@ -463,8 +463,8 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version);
+                
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version)");
                 _command.OnParametersAvailableSmi(metaData, parameterValues);
             }
 
@@ -474,7 +474,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData?.GetType(), metaData?.TraceString());
                 }
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version);
+
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)");
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
             }
         }

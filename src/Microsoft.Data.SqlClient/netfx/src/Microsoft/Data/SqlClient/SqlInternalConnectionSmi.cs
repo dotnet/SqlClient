@@ -30,10 +30,8 @@ namespace Microsoft.Data.SqlClient
 
             override internal string ServerVersion
             {
-                get
-                {
-                    return SmiContextFactory.Instance.ServerVersion;
-                }
+                // @TODO: Will always throw
+                get => throw SQL.ContextUnavailableOutOfProc();
             }
 
             override protected void DispatchMessages(bool ignoreNonFatalMessages)
@@ -165,10 +163,8 @@ namespace Microsoft.Data.SqlClient
 
         override internal bool Is2008OrNewer
         {
-            get
-            {
-                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version;
-            }
+            // @TODO: Will always throw
+            get => throw SQL.ContextUnavailableOutOfProc();
         }
 
         override internal SqlInternalTransaction PendingTransaction
@@ -181,10 +177,8 @@ namespace Microsoft.Data.SqlClient
 
         override public string ServerVersion
         {
-            get
-            {
-                return SmiContextFactory.Instance.ServerVersion;
-            }
+            // @TODO: Will always throw
+            get => throw SQL.ContextUnavailableOutOfProc();
         }
 
         /// <summary>
