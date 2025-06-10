@@ -1,0 +1,68 @@
+<Project>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    </PropertyGroup>
+    <!-- NetFx project dependencies -->
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
+        <PackageVersion Include="System.Buffers" Version="4.5.1" />
+        <PackageVersion Include="System.Memory" Version="4.5.5" />
+        <PackageVersion Include="System.Text.Encodings.Web" Version="8.0.0" />
+        <PackageVersion Include="System.Text.Json" Version="8.0.5" />
+        <PackageVersion Include="System.Data.Common" Version="4.3.0" />
+    </ItemGroup>
+    <!-- NetFx and NetCore project dependencies -->
+    <ItemGroup>
+        <PackageVersion Include="Azure.Identity" Version="1.13.2" />
+        <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
+        <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.7.1" />
+        <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
+    </ItemGroup>
+    <!-- NetCore project dependencies -->
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+        <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
+    </ItemGroup>
+    <!-- AKV Provider project dependencies -->
+    <ItemGroup>
+        <PackageVersion Include="Azure.Core" Version="[1.44.1,2.0.0)" />
+        <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="[4.7.0,5.0.0)" />
+    </ItemGroup>
+    <!-- Test Project Dependencies -->
+    <ItemGroup>
+        <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+        <PackageVersion Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.6" />
+        <PackageVersion Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25164.6" />
+        <PackageVersion Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25164.6" />
+        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+        <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
+        <PackageVersion Include="Microsoft.SqlServer.Types" Version="160.1000.6" />
+        <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+        <PackageVersion Include="Microsoft.Win32.Registry" Version="5.0.0" />
+        <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageVersion Include="System.Data.Odbc" Version="8.0.1" />
+        <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
+        <PackageVersion Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
+        <PackageVersion Include="System.Text.Encoding.CodePages" Version="6.0.0" />
+        <PackageVersion Include="xunit" Version="2.9.2" />
+        <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+        <PackageVersion Include="xunit.runner.console" Version="2.9.2" />
+    </ItemGroup>
+
+    <!-- Target framework specific dependencies -->
+    <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+        <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.5" />
+        <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
+    </ItemGroup>
+    <ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+        <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
+        <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+        <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+        <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+    </ItemGroup>
+</Project>
