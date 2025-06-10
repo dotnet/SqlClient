@@ -8,24 +8,19 @@
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
   </PropertyGroup>
-
   <ItemGroup>
     <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
     <None Remove="BenchmarkDotNet.Artifacts\**" />
   </ItemGroup>
-
   <ItemGroup>
     <None Remove=".AssemblyAttributes" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
+    <PackageReference Include="BenchmarkDotNet" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.json" CopyToOutputDirectory="PreserveNewest" />
