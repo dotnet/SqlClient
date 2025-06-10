@@ -48,8 +48,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The transaction has already been committed or rolled back.</item>
-          <item>The connection is broken.</item>
+          <item><description>The transaction has already been committed or rolled back.</description></item>
+          <item><description>The connection is broken.</description></item>
         </list>
       </exception>
     </Commit>
@@ -140,8 +140,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The transaction has already been committed or rolled back.</item>
-          <item>The connection is broken.</item>
+          <item><description>The transaction has already been committed or rolled back.</description></item>
+          <item><description>The connection is broken.</description></item>
         </list>
       </exception>
     </Rollback2>
@@ -176,8 +176,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The transaction has already been committed or rolled back.</item>
-          <item>The connection is broken.</item>
+          <item><description>The transaction has already been committed or rolled back.</description></item>
+          <item><description>The connection is broken.</description></item>
         </list>
       </exception>
     </RollbackTransactionName>
@@ -204,8 +204,8 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The transaction has already been committed or rolled back.</item>
-          <item>The connection is broken.</item>
+          <item><description>The transaction has already been committed or rolled back.</description></item>
+          <item><description>The connection is broken.</description></item>
         </list>
       </exception>
     </Save>
