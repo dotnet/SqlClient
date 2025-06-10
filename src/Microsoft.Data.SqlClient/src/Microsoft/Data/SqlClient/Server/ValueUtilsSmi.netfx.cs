@@ -17,35 +17,6 @@ namespace Microsoft.Data.SqlClient.Server
     //  as an ExtendedClrTypeCode enum for rapid access (lookup in static array is best, if possible).
     internal static partial class ValueUtilsSmi
     {
-
-        internal static SqlSequentialStreamSmi GetSequentialStream(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool bypassTypeCheck = false)
-        {
-            Debug.Assert(!ValueUtilsSmi.IsDBNull_Unchecked(sink, getters, ordinal), "Should not try to get a SqlSequentialStreamSmi on a null column");
-            ThrowIfITypedGettersIsNull(sink, getters, ordinal);
-            if ((!bypassTypeCheck) && (!CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Stream)))
-            {
-                throw ADP.InvalidCast();
-            }
-
-            // This will advance the column to ordinal
-            long length = GetBytesLength_Unchecked(sink, getters, ordinal);
-            return new SqlSequentialStreamSmi(sink, getters, ordinal, length);
-        }
-
-        internal static SqlSequentialTextReaderSmi GetSequentialTextReader(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
-        {
-            Debug.Assert(!ValueUtilsSmi.IsDBNull_Unchecked(sink, getters, ordinal), "Should not try to get a SqlSequentialTextReaderSmi on a null column");
-            ThrowIfITypedGettersIsNull(sink, getters, ordinal);
-            if (!CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.TextReader))
-            {
-                throw ADP.InvalidCast();
-            }
-
-            // This will advance the column to ordinal
-            long length = GetCharsLength_Unchecked(sink, getters, ordinal);
-            return new SqlSequentialTextReaderSmi(sink, getters, ordinal, length);
-        }
-
         internal static Stream GetStream(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool bypassTypeCheck = false)
         {
             bool isDbNull = ValueUtilsSmi.IsDBNull_Unchecked(sink, getters, ordinal);
@@ -473,36 +444,6 @@ namespace Microsoft.Data.SqlClient.Server
                     }
                 }
             }
-        }
-
-        // spool a Stream into a scratch stream from the Smi interface and return it as a SqlStreamChars
-        internal static SqlStreamChars CopyIntoNewSmiScratchStreamChars(Stream source, SmiEventSink_Default sink, SmiContext context)
-        {
-            SqlClientWrapperSmiStreamChars dest = new(sink, context.GetScratchStream(sink));
-
-            int chunkSize;
-            if (source.CanSeek && source.Length < MaxByteChunkSize)
-            {
-                chunkSize = unchecked((int)source.Length);  // unchecked cast is safe due to check on line above
-            }
-            else
-            {
-                chunkSize = MaxByteChunkSize;
-            }
-
-            byte[] copyBuffer = new byte[chunkSize];
-            int bytesRead;
-            while (0 != (bytesRead = source.Read(copyBuffer, 0, chunkSize)))
-            {
-                dest.Write(copyBuffer, 0, bytesRead);
-            }
-            dest.Flush();
-
-            // SQLBU 494334
-            //  Need to re-wind scratch stream to beginning before returning
-            dest.Seek(0, SeekOrigin.Begin);
-
-            return dest;
         }
     }
 }
