@@ -31,24 +31,13 @@ namespace Microsoft.Data.SqlClient.Server
         private object GetValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
-            else
-            {
-                return ValueUtilsSmi.GetValue(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
+            return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
         }
     
         private object GetSqlValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
-            }
-            return ValueUtilsSmi.GetSqlValue(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
+            return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
         }
 
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
@@ -78,7 +67,7 @@ namespace Microsoft.Data.SqlClient.Server
                     isMultiValued: false,
                     values[i],
                     metaData.Type,
-                    SmiVersion
+                    SmiContextFactory.Sql2008Version
                 );
                 if (typeCodes[i] == ExtendedClrTypeCode.Invalid)
                 {
@@ -90,14 +79,15 @@ namespace Microsoft.Data.SqlClient.Server
             //      the validation loop and here, or if an invalid UDT was sent).
             for (int i = 0; i < copyLength; i++)
             {
-                if (SmiVersion >= SmiContextFactory.Sql2008Version)
-                {
-                    ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
-                }
-                else
-                {
-                    ValueUtilsSmi.SetCompatibleValue(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0);
-                }
+                ValueUtilsSmi.SetCompatibleValueV200(
+                    _eventSink,
+                    _recordBuffer,
+                    ordinal: i,
+                    GetSmiMetaData(i),
+                    values[i],
+                    typeCodes[i],
+                    offset: 0,
+                    peekAhead: null);
             }
 
             return copyLength;
@@ -111,27 +101,40 @@ namespace Microsoft.Data.SqlClient.Server
                 isMultiValued: false,
                 value,
                 metaData.Type,
-                SmiVersion
+                SmiContextFactory.Sql2008Version
             );
             if (typeCode == ExtendedClrTypeCode.Invalid)
             {
                 throw ADP.InvalidCast();
             }
-
-            if (SmiVersion >= SmiContextFactory.Sql2008Version)
-            {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
-            }
-            else
-            {
-                ValueUtilsSmi.SetCompatibleValue(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0);
-            }
+            
+            ValueUtilsSmi.SetCompatibleValueV200(
+                _eventSink,
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                typeCode,
+                offset: 0,
+                peekAhead: null);
         }
   
-        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
-        private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
-
-        // @TODO: Where is this being used?
-        private static ulong SmiVersion => SmiContextFactory.LatestVersion;
+        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => 
+            ValueUtilsSmi.SetTimeSpan(
+                _eventSink,
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                settersSupport2008DateTime: true);
+        
+        private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) =>
+            ValueUtilsSmi.SetDateTimeOffset(
+                _eventSink,
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                settersSupport2008DateTime: true);
     }
 }
