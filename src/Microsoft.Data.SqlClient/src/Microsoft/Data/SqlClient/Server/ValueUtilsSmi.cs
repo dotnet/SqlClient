@@ -482,28 +482,8 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 else
                 {
-#if NETFRAMEWORK
-                    long length = GetCharsLength_Unchecked(sink, getters, ordinal);
-                    if (length < MaxByteChunkSize || true)
-                    {
-                        char[] charBuffer = GetCharArray_Unchecked(sink, getters, ordinal);
-                        result = new SqlChars(charBuffer);
-                    }
-                    else
-                    {    // InProc only
-                        Stream s = new SmiGettersStream(sink, getters, ordinal, metaData);
-                        SqlStreamChars sc = CopyIntoNewSmiScratchStreamChars(s, sink, context);
-
-                        Type SqlCharsType = (typeof(SqlChars));
-                        Type[] argTypes = new Type[] { typeof(SqlStreamChars) };
-                        SqlChars SqlCharsInstance = (SqlChars)SqlCharsType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
-                              null, argTypes, null).Invoke(new object[] { sc });
-                        result = SqlCharsInstance;
-                    }
-#else
                     char[] charBuffer = GetCharArray_Unchecked(sink, getters, ordinal);
                     result = new SqlChars(charBuffer);
-#endif
                 }
             }
             else
@@ -3184,20 +3164,11 @@ namespace Microsoft.Data.SqlClient.Server
         private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiContext context)
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
-#if NETFRAMEWORK
-            // allow context to be null so strongly-typed getters can use
-            //  this method without having to pass along the almost-never-used context as a parameter
-            //  Looking the context up like this will be slightly slower, but still correct behavior
-            //  since it's only used to get a scratch stream.
-            if (context == null && false)
-            {
-                context = SmiContextFactory.Instance.GetCurrentContext();    // In the future we need to push the context checking to a higher level
-            }
-#endif
+
             // Note: must make a copy of getter stream, since it will be used beyond
             //  this method (valid lifetime of getters is limited).
             Stream s = new SmiGettersStream(sink, getters, ordinal, SmiMetaData.DefaultXml);
-            Stream copy = ValueUtilsSmi.CopyIntoNewSmiScratchStream(s, sink, context);
+            Stream copy = CopyIntoNewSmiScratchStream(s, sink, context);
             SqlXml result = new(copy);
             return result;
         }

@@ -2434,6 +2434,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
 
+        // @TODO: Check these methods for usage
         static internal Exception UserInstanceNotAvailableInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));

@@ -386,23 +386,13 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             _eventSink = new SmiEventSink_Default();
-#if NETFRAMEWORK
-            if (false)
-            {
-                _recordContext = SmiContextFactory.Instance.GetCurrentContext();
-                _recordBuffer = _recordContext.CreateRecordBuffer(_columnSmiMetaData, _eventSink);
-                _usesStringStorageForXml = false;
-            }
-            else
-            {
-                _recordContext = null;
-                _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
-                _usesStringStorageForXml = true;
-            }
-#else
+            #if NETFRAMEWORK
+            _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
+            _usesStringStorageForXml = true;
+            #else
             _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
             _eventSink.ProcessMessagesAndThrow();
-#endif
+            #endif
         }
 
         internal SmiExtendedMetaData GetSmiMetaData(int ordinal)

@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient.Server
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
     {
-        private readonly SmiContext _recordContext;
+        // @TODO: This is always null but is passed around quite a bit.
+        private readonly SmiContext _recordContext = null;
      
         private Type GetFieldTypeFrameworkSpecific(int ordinal)
         {
@@ -130,6 +131,7 @@ namespace Microsoft.Data.SqlClient.Server
         private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
         private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.Sql2008Version);
 
-        private ulong SmiVersion => false ? SmiContextFactory.Instance.NegotiatedSmiVersion : SmiContextFactory.LatestVersion;
+        // @TODO: Where is this being used?
+        private static ulong SmiVersion => SmiContextFactory.LatestVersion;
     }
 }

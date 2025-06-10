@@ -34,60 +34,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         private SmiContextFactory()
         {
-            if (false)
-            {
-                Type smiLinkType = Type.GetType("Microsoft.SqlServer.Server.InProcLink, SqlAccess, PublicKeyToken=89845dcd8080cc91");
-
-                if (smiLinkType == null)
-                {
-                    Debug.Assert(false, "could not get InProcLink type");
-                    throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server.
-                }
-
-                System.Reflection.FieldInfo instanceField = GetStaticField(smiLinkType, "Instance");
-                if (instanceField != null)
-                {
-                    _smiLink = (SmiLink)GetValue(instanceField);
-                }
-                else
-                {
-                    Debug.Assert(false, "could not get InProcLink.Instance");
-                    throw SQL.ContextUnavailableOutOfProc();    // Must not be a valid version of Sql Server.
-                }
-
-                System.Reflection.FieldInfo buildVersionField = GetStaticField(smiLinkType, "BuildVersion");
-                if (buildVersionField != null)
-                {
-                    uint buildVersion = (uint)GetValue(buildVersionField);
-
-                    byte majorVersion = (byte)(buildVersion >> 24);
-                    byte minorVersion = (byte)((buildVersion >> 16) & 0xff);
-                    short buildNum = (short)(buildVersion & 0xffff);
-                    _serverVersion = string.Format(null, "{0:00}.{1:00}.{2:0000}", majorVersion, (short)minorVersion, buildNum);
-                }
-                else
-                {
-                    _serverVersion = string.Empty;  // default value if nothing exists.
-                }
-                
-                _negotiatedSmiVersion = _smiLink.NegotiateVersion(SmiLink.InterfaceVersion);
-                bool isSupportedVersion = false;
-                for (int i = 0; !isSupportedVersion && i < _supportedSmiVersions.Length; i++)
-                {
-                    if (_supportedSmiVersions[i] == _negotiatedSmiVersion)
-                    {
-                        isSupportedVersion = true;
-                    }
-                }
-
-                // Disconnect if we didn't get a supported version!!
-                if (!isSupportedVersion)
-                {
-                    _smiLink = null;
-                }
-
-                _eventSinkForGetCurrentContext = new SmiEventSink_Default();
-            }
         }
 
         internal ulong NegotiatedSmiVersion

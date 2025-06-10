@@ -921,7 +921,6 @@ namespace Microsoft.Data.SqlClient
                 return ValueUtilsSmi.GetSqlValue200(_readerEventSink, (SmiTypedGetterSetter)_currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
             }
             return ValueUtilsSmi.GetSqlValue(_readerEventSink, _currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
-            ;
         }
 
         public override int GetSqlValues(object[] values)
