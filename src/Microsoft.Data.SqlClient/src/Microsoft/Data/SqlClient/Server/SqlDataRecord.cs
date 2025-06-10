@@ -387,7 +387,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             _eventSink = new SmiEventSink_Default();
 #if NETFRAMEWORK
-            if (InOutOfProcHelper.InProc)
+            if (false)
             {
                 _recordContext = SmiContextFactory.Instance.GetCurrentContext();
                 _recordBuffer = _recordContext.CreateRecordBuffer(_columnSmiMetaData, _eventSink);

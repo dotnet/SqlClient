@@ -512,7 +512,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (connectionOptions.UserInstance && InOutOfProcHelper.InProc)
+            if (connectionOptions.UserInstance && false)
             {
                 throw SQL.UserInstanceNotAvailableInProc();
             }

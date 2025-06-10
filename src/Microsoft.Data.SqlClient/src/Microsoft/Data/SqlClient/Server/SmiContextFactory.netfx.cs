@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private SmiContextFactory()
         {
-            if (InOutOfProcHelper.InProc)
+            if (false)
             {
                 Type smiLinkType = Type.GetType("Microsoft.SqlServer.Server.InProcLink, SqlAccess, PublicKeyToken=89845dcd8080cc91");
 

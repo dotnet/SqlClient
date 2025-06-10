@@ -484,7 +484,7 @@ namespace Microsoft.Data.SqlClient.Server
                 {
 #if NETFRAMEWORK
                     long length = GetCharsLength_Unchecked(sink, getters, ordinal);
-                    if (length < MaxByteChunkSize || !InOutOfProcHelper.InProc)
+                    if (length < MaxByteChunkSize || true)
                     {
                         char[] charBuffer = GetCharArray_Unchecked(sink, getters, ordinal);
                         result = new SqlChars(charBuffer);
@@ -3189,7 +3189,7 @@ namespace Microsoft.Data.SqlClient.Server
             //  this method without having to pass along the almost-never-used context as a parameter
             //  Looking the context up like this will be slightly slower, but still correct behavior
             //  since it's only used to get a scratch stream.
-            if (context == null && InOutOfProcHelper.InProc)
+            if (context == null && false)
             {
                 context = SmiContextFactory.Instance.GetCurrentContext();    // In the future we need to push the context checking to a higher level
             }

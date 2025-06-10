@@ -2760,11 +2760,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
-
-    internal static class InOutOfProcHelper
-    {
-        internal static bool InProc
-            => false;
-    }
 }
 

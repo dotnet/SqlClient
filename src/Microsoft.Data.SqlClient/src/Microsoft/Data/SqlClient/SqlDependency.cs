@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
 #if NETFRAMEWORK
-                if (InOutOfProcHelper.InProc)
+                if (false)
                 {
                     throw SQL.SqlDepCannotBeCreatedInProc();
                 }
@@ -566,7 +566,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
                 // as possible.
-                if (InOutOfProcHelper.InProc)
+                if (false)
                 {
                     throw SQL.SqlDepCannotBeCreatedInProc();
                 }
@@ -719,7 +719,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
                 // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
                 // as possible.
-                if (InOutOfProcHelper.InProc)
+                if (false)
                 {
                     throw SQL.SqlDepCannotBeCreatedInProc();
                 }
