@@ -585,9 +585,7 @@ namespace Microsoft.Data.SqlClient
                 DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
                 {
                     AuthorityHost = new Uri(tokenCredentialKey._authority),
-                    SharedTokenCacheTenantId = tokenCredentialKey._audience,
-                    VisualStudioCodeTenantId = tokenCredentialKey._audience,
-                    VisualStudioTenantId = tokenCredentialKey._audience,
+                    TenantId = tokenCredentialKey._audience,
                     ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
                 };
 

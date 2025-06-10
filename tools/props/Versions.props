@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>5.2.0</MdsVersionDefault>
+    <MdsVersionDefault>5.2.4</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
@@ -27,12 +27,12 @@
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.61.3</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.35.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>6.35.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <AzureIdentityVersion>1.14.0</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.71.1</MicrosoftIdentityClientVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.36.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>6.36.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
+    <SystemTextEncodingsWebVersion>8.0.0</SystemTextEncodingsWebVersion>
     <MicrosoftSourceLinkGitHubVersion>8.0.0</MicrosoftSourceLinkGitHubVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
@@ -51,7 +51,7 @@
   <!-- NetStandard project dependencies -->
   <PropertyGroup>
     <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
-    <SystemDiagnosticsDiagnosticSourceVersion>6.0.1</SystemDiagnosticsDiagnosticSourceVersion>
+    <SystemDiagnosticsDiagnosticSourceVersion>8.0.1</SystemDiagnosticsDiagnosticSourceVersion>
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
