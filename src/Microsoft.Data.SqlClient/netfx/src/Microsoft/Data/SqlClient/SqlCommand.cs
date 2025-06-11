@@ -480,7 +480,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SmiContext _smiRequestContext; // context that _smiRequest came from
         private CommandEventSink _smiEventSink;
         private SmiEventSink_DeferredProcessing _outParamEventSink;
 
@@ -599,9 +598,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     _transaction = null;
                 }
-
-                // If the connection has changes, then the request context may have changed as well
-                _smiRequestContext = null;
 
                 // Command is no longer prepared on new connection, cleanup prepare status
                 if (IsPrepared)
@@ -6200,12 +6196,22 @@ namespace Microsoft.Data.SqlClient
                     if (_activeConnection.Is2008OrNewer)
                     {
                         result = ValueUtilsSmi.GetOutputParameterV200Smi(
-                                OutParamEventSink, (SmiTypedGetterSetter)parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                OutParamEventSink,
+                                (SmiTypedGetterSetter)parameterValues,
+                                ordinal,
+                                metaData,
+                                context: null,
+                                buffer);
                     }
                     else
                     {
                         result = ValueUtilsSmi.GetOutputParameterV3Smi(
-                                    OutParamEventSink, parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                    OutParamEventSink,
+                                    parameterValues,
+                                    ordinal,
+                                    metaData,
+                                    context: null,
+                                    buffer);
                     }
                     if (result != null)
                     {
