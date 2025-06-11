@@ -55,7 +55,7 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
+    <AzureCoreVersion>[1.46.1,2.0.0)</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>[4.5.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
     <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
