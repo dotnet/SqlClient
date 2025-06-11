@@ -12,9 +12,6 @@ namespace Microsoft.Data.SqlClient.Server
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
     {
-        // @TODO: This is always null but is passed around quite a bit.
-        private readonly SmiContext _recordContext = null;
-     
         private Type GetFieldTypeFrameworkSpecific(int ordinal)
         {
             SqlMetaData md = GetSqlMetaData(ordinal);
@@ -31,20 +28,23 @@ namespace Microsoft.Data.SqlClient.Server
         private object GetValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
+            return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData, context: null);
         }
     
         private object GetSqlValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData, _recordContext);
+            return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData, context: null);
         }
 
-        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), context: null);
  
-        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), context: null);
         
-        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), _recordContext);
+        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), context: null);
  
         private int SetValuesFrameworkSpecific(params object[] values)
         {
