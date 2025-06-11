@@ -121,22 +121,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.ctor|ADV> {0}, constructed new SMI internal connection", ObjectID);
         }
 
-        internal SmiContext InternalContext
-        {
-            get
-            {
-                return _smiContext;
-            }
-        }
-
-        internal SmiConnection SmiConnection
-        {
-            get
-            {
-                return _smiConnection;
-            }
-        }
-
         internal SmiEventSink CurrentEventSink
         {
             get
