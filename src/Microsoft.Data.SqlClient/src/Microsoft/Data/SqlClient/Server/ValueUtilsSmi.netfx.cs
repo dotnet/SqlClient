@@ -162,17 +162,22 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
         }
-
-        // UDTs and null variants come back via return value, all else is via targetBuffer.
-        //  implements SqlClient 2.0-compatible output parameter semantics
+        
+        /// <summary>
+        /// UDTs and null variants come back via return value, all else is via targetBuffer.
+        /// implements SqlClient 2.0-compatible output parameter semantics. 
+        /// </summary>
+        /// <param name="sink">Event sink for errors</param>
+        /// <param name="getters">Getters interface to grab value from</param>
+        /// <param name="ordinal">Parameter within getters</param>
+        /// <param name="metaData">Getter's type for this ordinal</param>
+        /// <param name="targetBuffer">Destination</param>
         internal static object GetOutputParameterV3Smi(
-            SmiEventSink_Default sink,                   // event sink for errors
-            ITypedGettersV3 getters,                // getters interface to grab value from
-            int ordinal,                // parameter within getters
-            SmiMetaData metaData,               // Getter's type for this ordinal
-            SmiContext context,                // used to obtain scratch streams
-            SqlBuffer targetBuffer            // destination
-        )
+            SmiEventSink_Default sink, 
+            ITypedGettersV3 getters, 
+            int ordinal, 
+            SmiMetaData metaData, 
+            SqlBuffer targetBuffer)
         {
             object result = null;   // Workaround for UDT hack in non-Smi code paths.
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -243,7 +248,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant not supposed to be possible!");
-                        GetOutputParameterV3Smi(sink, getters, ordinal, metaData, context, targetBuffer);
+                        GetOutputParameterV3Smi(sink, getters, ordinal, metaData, targetBuffer);
                         break;
                     case SqlDbType.Udt:
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
@@ -301,7 +306,7 @@ namespace Microsoft.Data.SqlClient.Server
                         targetBuffer.SetToDateTimeOffset(GetDateTimeOffset_Unchecked(sink, getters, ordinal), metaData.Scale);
                         break;
                     default:
-                        result = GetOutputParameterV3Smi(sink, getters, ordinal, metaData, context, targetBuffer);
+                        result = GetOutputParameterV3Smi(sink, getters, ordinal, metaData, targetBuffer);
                         break;
                 }
             }

@@ -6210,7 +6210,6 @@ namespace Microsoft.Data.SqlClient
                                     parameterValues,
                                     ordinal,
                                     metaData,
-                                    context: null,
                                     buffer);
                     }
                     if (result != null)
