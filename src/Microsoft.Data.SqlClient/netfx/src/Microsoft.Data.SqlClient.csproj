@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.Net.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace></RootNamespace>
@@ -12,9 +12,6 @@
     <DocumentationFile>$(OutputPath)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <IntermediateOutputPath>$(ObjPath)$(AssemblyName)\netfx\</IntermediateOutputPath>
     <Product>Framework $(BaseProduct)</Product>
-    <!-- ResolveComReferenceSilent suppresses warnings thrown due to the inclusion of mscoree.
-     We should remove ResolveComReferenceSilent as soon as we can remove the dependency on mscoree. -->
-    <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
@@ -61,7 +58,10 @@
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <Utf8Output>True</Utf8Output>
     <ErrorReport>None</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+
+    <!-- This code analysis ruleset only exists with the .NET Framework toolset. -->
+    <CodeAnalysisRuleSet Condition="$(MSBuildRuntimeType) == 'Full'">MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+
     <BuildProjectReferences>True</BuildProjectReferences>
     <GenerateAssemblyRefs>True</GenerateAssemblyRefs>
     <DefineConstants>$(DefineConstants);USEOFFSET;CODE_ANALYSIS_BASELINE;FEATURE_LEGACYSURFACEAREA;FEATURE_UTF32;FEATURE_UTF7;TRACE;</DefineConstants>
@@ -951,7 +951,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netfx.cs" />
-    <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
+    <Compile Include="Microsoft\Data\Common\DBConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
@@ -1000,29 +1000,18 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="mscoree">
-      <Guid>{5477469E-83B1-11D2-8B49-00A0C9B7C9C4}</Guid>
-      <VersionMajor>2</VersionMajor>
-      <VersionMinor>4</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-    <PackageReference Include="System.Text.Encodings.Web" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI">
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Azure.Identity" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.Text.Encodings.Web" />
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
   <Import Project="$(CommonSourceRoot)tools\targets\GenerateResourceStringsSource.targets" />
