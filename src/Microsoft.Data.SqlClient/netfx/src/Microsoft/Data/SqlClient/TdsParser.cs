@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient
     // and surfacing objects to the user.
     sealed internal class TdsParser
     {
+        private static readonly Encoding s_utf8EncodingWithoutBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
         private static int _objectTypeCount; // EventSource Counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
 
@@ -3221,7 +3222,7 @@ namespace Microsoft.Data.SqlClient
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
                             {
-                                _defaultEncoding = Encoding.UTF8;
+                                _defaultEncoding = s_utf8EncodingWithoutBom;
                             }
                             else
                             {
@@ -4739,7 +4740,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (rec.collation.IsUTF8)
                 { // UTF8 collation
-                    rec.encoding = Encoding.UTF8;
+                    rec.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -5636,7 +5637,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.collation.IsUTF8)
                 { // UTF8 collation
-                    col.encoding = Encoding.UTF8;
+                    col.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -11670,7 +11671,7 @@ namespace Microsoft.Data.SqlClient
                     // Replace encoding if it is UTF8
                     if (metadata.collation.IsUTF8)
                     {
-                        _defaultEncoding = Encoding.UTF8;
+                        _defaultEncoding = s_utf8EncodingWithoutBom;
                     }
 
                     _defaultCollation = metadata.collation;
