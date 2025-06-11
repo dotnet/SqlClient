@@ -550,7 +550,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return tcs.Task;
         }
 
-        private static async Task ParallelConnectHelper(
+        private static async void ParallelConnectHelper(
             Socket socket,
             Task connectTask,
             TaskCompletionSource<Socket> tcs,

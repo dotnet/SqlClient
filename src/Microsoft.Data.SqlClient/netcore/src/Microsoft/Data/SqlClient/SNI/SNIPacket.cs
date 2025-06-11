@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="stream">Stream to write to</param>
         /// <param name="callback">SNI Asynchronous Callback</param>
         /// <param name="provider">SNI provider identifier</param>
-        public async Task WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider)
+        public async void WriteToStreamAsync(Stream stream, SNIAsyncCallback callback, SNIProviders provider)
         {
             uint status = TdsEnums.SNI_SUCCESS;
             try
