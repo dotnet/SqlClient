@@ -6200,7 +6200,6 @@ namespace Microsoft.Data.SqlClient
                                 (SmiTypedGetterSetter)parameterValues,
                                 ordinal,
                                 metaData,
-                                context: null,
                                 buffer);
                     }
                     else

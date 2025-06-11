@@ -264,17 +264,22 @@ namespace Microsoft.Data.SqlClient.Server
 
             return result;
         }
-
-        // UDTs and null variants come back via return value, all else is via targetBuffer.
-        //  implements SqlClient 1.1-compatible output parameter semantics
+        
+        /// <summary>
+        /// UDTs and null variants come back via return value, all else is via targetBuffer.
+        ///  implements SqlClient 1.1-compatible output parameter semantics. 
+        /// </summary>
+        /// <param name="sink">Event sink for errors</param>
+        /// <param name="getters">Getters interface to grab value from</param>
+        /// <param name="ordinal">Parameter within getters</param>
+        /// <param name="metaData">Getter's type for this ordinal</param>
+        /// <param name="targetBuffer">Destination</param>
         internal static object GetOutputParameterV200Smi(
-            SmiEventSink_Default sink,                   // event sink for errors
-            SmiTypedGetterSetter getters,                // getters interface to grab value from
-            int ordinal,                // parameter within getters
-            SmiMetaData metaData,               // Getter's type for this ordinal
-            SmiContext context,                // used to obtain scratch streams
-            SqlBuffer targetBuffer            // destination
-        )
+            SmiEventSink_Default sink, 
+            SmiTypedGetterSetter getters, 
+            int ordinal, 
+            SmiMetaData metaData, 
+            SqlBuffer targetBuffer)
         {
             object result = null;   // Workaround for UDT hack in non-Smi code paths.
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -291,7 +296,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant not supposed to be possible!");
-                        GetOutputParameterV200Smi(sink, getters, ordinal, metaData, context, targetBuffer);
+                        GetOutputParameterV200Smi(sink, getters, ordinal, metaData, targetBuffer);
                         break;
                     case SqlDbType.Date:
                         targetBuffer.SetToDate(GetDateTime_Unchecked(sink, getters, ordinal));
