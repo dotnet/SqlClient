@@ -1285,7 +1285,7 @@ namespace Microsoft.Data.SqlClient
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    else if (metadata.type is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
+                    else if ((metadata.type is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json) && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -2038,14 +2038,12 @@ namespace Microsoft.Data.SqlClient
 
         private Task WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
         {
-            #if NETFRAMEWORK
             // If user's token is canceled, return a canceled task
             if (ctoken.IsCancellationRequested)
             {
                 Debug.Assert(_isAsyncBulkCopy, "Should not have a cancelled token for a synchronous bulk copy");
-                return ADP.CreatedTaskWithCancellation<object>();
+                return Task.FromCanceled(ctoken);
             }
-            #endif
 
             Task reconnectTask = _connection._currentReconnectionTask;
             if (reconnectTask != null && !reconnectTask.IsCompleted)
