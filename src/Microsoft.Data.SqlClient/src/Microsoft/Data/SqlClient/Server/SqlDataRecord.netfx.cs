@@ -66,9 +66,7 @@ namespace Microsoft.Data.SqlClient.Server
                     metaData.SqlDbType,
                     isMultiValued: false,
                     values[i],
-                    metaData.Type,
-                    SmiContextFactory.Sql2008Version
-                );
+                    metaData.Type);
                 if (typeCodes[i] == ExtendedClrTypeCode.Invalid)
                 {
                     throw ADP.InvalidCast();
@@ -100,9 +98,7 @@ namespace Microsoft.Data.SqlClient.Server
                 metaData.SqlDbType,
                 isMultiValued: false,
                 value,
-                metaData.Type,
-                SmiContextFactory.Sql2008Version
-            );
+                metaData.Type);
             if (typeCode == ExtendedClrTypeCode.Invalid)
             {
                 throw ADP.InvalidCast();

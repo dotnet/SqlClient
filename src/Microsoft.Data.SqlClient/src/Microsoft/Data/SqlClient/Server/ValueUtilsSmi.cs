@@ -1997,13 +1997,11 @@ namespace Microsoft.Data.SqlClient.Server
                                 {
                                     o = reader.GetValue(i);
                                 }
-                                ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData[i].SqlDbType, metaData[i].IsMultiValued, o, null
-#if NETFRAMEWORK
-                                    ,// TODO: this version works for shipping VS2008, since only 2008 (TVP) codepath calls this method at this time.
-                                     //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
-                                    SmiContextFactory.Sql2008Version
-#endif
-                                    );
+                                ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
+                                    metaData[i].SqlDbType,
+                                    metaData[i].IsMultiValued,
+                                    value: o,
+                                    udtType: null);
                                 if ((storageType == SqlBuffer.StorageType.DateTime2) || (storageType == SqlBuffer.StorageType.Date))
                                 {
                                     SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null, storageType);
@@ -3868,13 +3866,10 @@ namespace Microsoft.Data.SqlClient.Server
                         if (ExtendedClrTypeCode.Invalid == cellTypes[i])
                         {
                             cellTypes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                                    fieldMetaData.SqlDbType, fieldMetaData.IsMultiValued, cellValue, fieldMetaData.Type
-#if NETFRAMEWORK
-                                   ,// TODO: this version works for shipping VS2008, since only 2008 supports TVPs at this time.
-                                    //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
-                                    SmiContextFactory.Sql2008Version
-#endif
-                                    );
+                                    fieldMetaData.SqlDbType,
+                                    fieldMetaData.IsMultiValued,
+                                    cellValue,
+                                    fieldMetaData.Type);
                         }
                         SetCompatibleValueV200(sink, setters, i, fieldMetaData, cellValue, cellTypes[i], 0, null);
                     }
