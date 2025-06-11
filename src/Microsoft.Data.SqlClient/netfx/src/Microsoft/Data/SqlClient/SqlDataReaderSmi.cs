@@ -125,17 +125,11 @@ namespace Microsoft.Data.SqlClient
                     _readerEventSink,
                     (SmiTypedGetterSetter)_currentColumnValuesV3,
                     ordinal,
-                    metaData,
-                    context: null);
+                    metaData);
             }
             else
             {
-                return ValueUtilsSmi.GetValue(
-                    _readerEventSink,
-                    _currentColumnValuesV3,
-                    ordinal,
-                    metaData,
-                    context: null);
+                return ValueUtilsSmi.GetValue(_readerEventSink, _currentColumnValuesV3, ordinal, metaData);
             }
         }
 
@@ -153,39 +147,27 @@ namespace Microsoft.Data.SqlClient
                         _readerEventSink,
                         (SmiTypedGetterSetter)_currentColumnValuesV3,
                         ordinal,
-                        metaData,
-                        context: null);
+                        metaData);
                 }
                 else
                 {
-                    return (T)ValueUtilsSmi.GetSqlValue(
-                        _readerEventSink,
-                        _currentColumnValuesV3,
-                        ordinal,
-                        metaData,
-                        context: null);
+                    return (T)ValueUtilsSmi.GetSqlValue(_readerEventSink, _currentColumnValuesV3, ordinal, metaData);
                 }
             }
             else
             {
-                // Otherwise Its a CLR or non-Nullable UDT
+                // Otherwise It's a CLR or non-Nullable UDT
                 if (_currentConnection.Is2008OrNewer)
                 {
                     return (T)ValueUtilsSmi.GetValue200(
                         _readerEventSink,
                         (SmiTypedGetterSetter)_currentColumnValuesV3,
                         ordinal,
-                        metaData,
-                        context: null);
+                        metaData);
                 }
                 else
                 {
-                    return (T)ValueUtilsSmi.GetValue(
-                        _readerEventSink,
-                        _currentColumnValuesV3,
-                        ordinal,
-                        metaData,
-                        context: null);
+                    return (T)ValueUtilsSmi.GetValue(_readerEventSink, _currentColumnValuesV3, ordinal, metaData);
                 }
             }
         }
@@ -914,34 +896,19 @@ namespace Microsoft.Data.SqlClient
         public override SqlChars GetSqlChars(int ordinal)
         {
             EnsureCanGetCol(ordinal);
-            return ValueUtilsSmi.GetSqlChars(
-                _readerEventSink,
-                _currentColumnValuesV3,
-                ordinal,
-                _currentMetaData[ordinal],
-                context: null);
+            return ValueUtilsSmi.GetSqlChars(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlBytes GetSqlBytes(int ordinal)
         {
             EnsureCanGetCol(ordinal);
-            return ValueUtilsSmi.GetSqlBytes(
-                _readerEventSink,
-                _currentColumnValuesV3,
-                ordinal,
-                _currentMetaData[ordinal],
-                context: null);
+            return ValueUtilsSmi.GetSqlBytes(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlXml GetSqlXml(int ordinal)
         {
             EnsureCanGetCol(ordinal);
-            return ValueUtilsSmi.GetSqlXml(
-                _readerEventSink,
-                _currentColumnValuesV3,
-                ordinal,
-                _currentMetaData[ordinal],
-                context: null);
+            return ValueUtilsSmi.GetSqlXml(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override TimeSpan GetTimeSpan(int ordinal)
@@ -967,16 +934,10 @@ namespace Microsoft.Data.SqlClient
                     _readerEventSink,
                     (SmiTypedGetterSetter)_currentColumnValuesV3,
                     ordinal,
-                    metaData,
-                    context: null);
+                    metaData);
             }
             
-            return ValueUtilsSmi.GetSqlValue(
-                _readerEventSink,
-                _currentColumnValuesV3,
-                ordinal,
-                metaData,
-                context: null);
+            return ValueUtilsSmi.GetSqlValue(_readerEventSink, _currentColumnValuesV3, ordinal, metaData);
         }
 
         public override int GetSqlValues(object[] values)

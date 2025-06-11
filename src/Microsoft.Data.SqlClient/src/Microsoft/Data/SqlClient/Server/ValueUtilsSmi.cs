@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDateTimeOffset_Unchecked(sink, getters, ordinal);
             }
-            return (DateTimeOffset)GetValue200(sink, getters, ordinal, metaData, null);
+            return (DateTimeOffset)GetValue200(sink, getters, ordinal, metaData);
         }
 
         internal static decimal GetDecimal(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
@@ -425,7 +425,11 @@ namespace Microsoft.Data.SqlClient.Server
             return (SqlByte)result;
         }
 
-        internal static SqlBytes GetSqlBytes(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
+        internal static SqlBytes GetSqlBytes(
+            SmiEventSink_Default sink,
+            ITypedGettersV3 getters,
+            int ordinal,
+            SmiMetaData metaData)
         {
             SqlBytes result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlBytes))
@@ -445,7 +449,7 @@ namespace Microsoft.Data.SqlClient.Server
                     else
                     {
                         Stream s = new SmiGettersStream(sink, getters, ordinal, metaData);
-                        s = CopyIntoNewSmiScratchStream(s, sink, context);
+                        s = CopyIntoNewSmiScratchStream(s, sink);
                         result = new SqlBytes(s);
                     }
                 }
@@ -471,7 +475,11 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlChars GetSqlChars(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
+        internal static SqlChars GetSqlChars(
+            SmiEventSink_Default sink,
+            ITypedGettersV3 getters,
+            int ordinal,
+            SmiMetaData metaData)
         {
             SqlChars result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlChars))
@@ -491,7 +499,7 @@ namespace Microsoft.Data.SqlClient.Server
                 SqlString stringValue;
                 if (metaData.SqlDbType == SqlDbType.Xml)
                 {
-                    SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal, null);
+                    SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal);
 
                     if (xmlValue.IsNull)
                     {
@@ -791,7 +799,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else if (SqlDbType.Xml == metaData.SqlDbType)
             {
-                SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal, null);
+                SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal);
 
                 if (xmlValue.IsNull)
                 {
@@ -815,7 +823,11 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlXml GetSqlXml(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
+        internal static SqlXml GetSqlXml(
+            SmiEventSink_Default sink,
+            ITypedGettersV3 getters,
+            int ordinal,
+            SmiMetaData metaData)
         {
             SqlXml result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlXml))
@@ -826,7 +838,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 else
                 {
-                    result = GetSqlXml_Unchecked(sink, getters, ordinal, context);
+                    result = GetSqlXml_Unchecked(sink, getters, ordinal);
                 }
             }
             else
@@ -865,7 +877,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetTimeSpan_Unchecked(sink, getters, ordinal);
             }
-            return (TimeSpan)GetValue200(sink, getters, ordinal, metaData, null);
+            return (TimeSpan)GetValue200(sink, getters, ordinal, metaData);
         }
 
         // GetValue() for v200 SMI (2008 Date/Time types)
@@ -873,9 +885,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
-            SmiMetaData metaData,
-            SmiContext context
-        )
+            SmiMetaData metaData)
         {
             object result;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -890,7 +900,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue200(sink, getters, ordinal, metaData, context);
+                        result = GetValue200(sink, getters, ordinal, metaData);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -903,7 +913,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetDateTimeOffset_Unchecked(sink, getters, ordinal);
                         break;
                     default:
-                        result = GetValue(sink, getters, ordinal, metaData, context);
+                        result = GetValue(sink, getters, ordinal, metaData);
                         break;
                 }
             }
@@ -918,9 +928,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
-            SmiMetaData metaData,
-            SmiContext context = null
-        )
+            SmiMetaData metaData)
         {
             object result = null;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1004,10 +1012,10 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue(sink, getters, ordinal, metaData, context);
+                        result = GetValue(sink, getters, ordinal, metaData);
                         break;
                     case SqlDbType.Xml:
-                        result = GetSqlXml_Unchecked(sink, getters, ordinal, context).Value;
+                        result = GetSqlXml_Unchecked(sink, getters, ordinal).Value;
                         break;
                     case SqlDbType.Udt:
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
@@ -1023,9 +1031,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
-            SmiMetaData metaData,
-            SmiContext context = null
-        )
+            SmiMetaData metaData)
         {
             object result;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1047,7 +1053,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetSqlValue200(sink, getters, ordinal, metaData, context);
+                        result = GetSqlValue200(sink, getters, ordinal, metaData);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -1060,7 +1066,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetDateTimeOffset_Unchecked(sink, getters, ordinal);
                         break;
                     default:
-                        result = GetSqlValue(sink, getters, ordinal, metaData, context);
+                        result = GetSqlValue(sink, getters, ordinal, metaData);
                         break;
                 }
             }
@@ -1073,9 +1079,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
-            SmiMetaData metaData,
-            SmiContext context = null
-        )
+            SmiMetaData metaData)
         {
             object result = null;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1166,10 +1170,10 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetSqlValue(sink, getters, ordinal, metaData, context);
+                        result = GetSqlValue(sink, getters, ordinal, metaData);
                         break;
                     case SqlDbType.Xml:
-                        result = GetSqlXml_Unchecked(sink, getters, ordinal, context);
+                        result = GetSqlXml_Unchecked(sink, getters, ordinal);
                         break;
                     case SqlDbType.Udt:
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
@@ -3159,16 +3163,15 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
         }
 
-        private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiContext context)
+        private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             // Note: must make a copy of getter stream, since it will be used beyond
             //  this method (valid lifetime of getters is limited).
             Stream s = new SmiGettersStream(sink, getters, ordinal, SmiMetaData.DefaultXml);
-            Stream copy = CopyIntoNewSmiScratchStream(s, sink, context);
-            SqlXml result = new(copy);
-            return result;
+            Stream copy = CopyIntoNewSmiScratchStream(s, sink);
+            return new SqlXml(copy);
         }
 
         private static string GetString_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
@@ -3881,19 +3884,9 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // spool a Stream into a scratch stream from the Smi interface and return it as a Stream
-        internal static Stream CopyIntoNewSmiScratchStream(Stream source, SmiEventSink_Default sink, SmiContext context)
+        internal static Stream CopyIntoNewSmiScratchStream(Stream source, SmiEventSink_Default sink)
         {
-            Stream dest = null;
-#if NETFRAMEWORK
-            if (context != null)
-            {
-                dest = new SqlClientWrapperSmiStream(sink, context.GetScratchStream(sink));
-            }
-#endif
-            if (dest == null)
-            {
-                dest = new MemoryStream();
-            }
+            Stream dest = new MemoryStream();
 
             int chunkSize;
             if (source.CanSeek && source.Length > MaxByteChunkSize)

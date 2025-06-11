@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
                         break;
                     case SqlDbType.Xml:
-                        targetBuffer.SqlXml = GetSqlXml_Unchecked(sink, getters, ordinal, null);
+                        targetBuffer.SqlXml = GetSqlXml_Unchecked(sink, getters, ordinal);
                         break;
                     default:
                         Debug.Assert(false, "Unexpected SqlDbType");
@@ -483,36 +483,6 @@ namespace Microsoft.Data.SqlClient.Server
                     }
                 }
             }
-        }
-
-        // spool a Stream into a scratch stream from the Smi interface and return it as a SqlStreamChars
-        internal static SqlStreamChars CopyIntoNewSmiScratchStreamChars(Stream source, SmiEventSink_Default sink, SmiContext context)
-        {
-            SqlClientWrapperSmiStreamChars dest = new(sink, context.GetScratchStream(sink));
-
-            int chunkSize;
-            if (source.CanSeek && source.Length < MaxByteChunkSize)
-            {
-                chunkSize = unchecked((int)source.Length);  // unchecked cast is safe due to check on line above
-            }
-            else
-            {
-                chunkSize = MaxByteChunkSize;
-            }
-
-            byte[] copyBuffer = new byte[chunkSize];
-            int bytesRead;
-            while (0 != (bytesRead = source.Read(copyBuffer, 0, chunkSize)))
-            {
-                dest.Write(copyBuffer, 0, bytesRead);
-            }
-            dest.Flush();
-
-            // SQLBU 494334
-            //  Need to re-wind scratch stream to beginning before returning
-            dest.Seek(0, SeekOrigin.Begin);
-
-            return dest;
         }
     }
 }
