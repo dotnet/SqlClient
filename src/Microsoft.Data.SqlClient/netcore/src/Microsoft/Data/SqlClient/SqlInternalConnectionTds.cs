@@ -1425,7 +1425,7 @@ namespace Microsoft.Data.SqlClient
                 requestedFeatures |= TdsEnums.FeatureExtension.AzureSQLSupport;
             }
 
-            // The SQLDNSCaching and JSON features are implicitly set
+            // The following features are implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;

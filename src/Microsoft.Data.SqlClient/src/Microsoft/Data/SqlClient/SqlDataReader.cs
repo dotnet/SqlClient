@@ -2835,6 +2835,22 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVectorFloat32/*' />
+        virtual public SqlVectorFloat32 GetSqlVectorFloat32(int i)
+        {
+            ReadColumn(i);
+            int elementCount = (_metaData[i].length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(_metaData[i].scale);
+
+            if (!_data[i].IsNull)
+            {
+                return new SqlVectorFloat32(_data[i].SqlBinary.Value);
+            }
+            else
+            {
+                return new SqlVectorFloat32(elementCount);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
@@ -2954,13 +2970,22 @@ namespace Microsoft.Data.SqlClient
         override public string GetString(int i)
         {
             ReadColumn(i);
-
+            if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+            {
+                switch (_metaData[i].scale)
+                {
+                    case 0:
+                        return GetSqlVectorFloat32(i).ToString();
+                    default:
+                        throw SQL.VectorTypeNotSupported(_metaData[i].scale.ToString());
+                }
+            }
             // Convert 2008 value to string if type system knob is 2005 or earlier
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 return _data[i].Sql2008DateTimeString;
             }
-
+            
             return _data[i].String;
         }
 
@@ -2990,6 +3015,16 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
+                if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                {
+                    switch (_metaData[i].scale)
+                    {
+                        case 0:
+                            return GetSqlVectorFloat32(i);
+                        default:
+                            throw SQL.VectorTypeNotSupported(_metaData[i].scale.ToString());
+                    }
+                }
                 return GetValueInternal(i);
             }
             finally
@@ -3187,6 +3222,25 @@ namespace Microsoft.Data.SqlClient
                 return (T)(object)data.TimeOnly;
             }
 #endif
+            else if (typeof(T) == typeof(SqlVectorFloat32))
+            {
+                MetaType metaType = metaData.metaType;
+                if (metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                {
+                    throw SQL.VectorNotSupportedOnColumnType(metaData.column);
+                }
+                int elementCount = (metaData.length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(metaData.scale);
+                object value;
+                if (!data.IsNull)
+                {
+                    value = new SqlVectorFloat32(data.SqlBinary.Value);
+                }
+                else
+                {
+                    value = new SqlVectorFloat32(elementCount);
+                }
+                return (T)value;
+            }
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
