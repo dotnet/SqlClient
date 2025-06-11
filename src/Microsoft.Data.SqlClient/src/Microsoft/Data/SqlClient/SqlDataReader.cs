@@ -2840,15 +2840,9 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             int elementCount = (_metaData[i].length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(_metaData[i].scale);
-
-            if (!_data[i].IsNull)
-            {
-                return new SqlVectorFloat32(_data[i].SqlBinary.Value);
-            }
-            else
-            {
-                return new SqlVectorFloat32(elementCount);
-            }
+            return !_data[i].IsNull
+             ? new SqlVectorFloat32(_data[i].SqlBinary.Value)
+             : new SqlVectorFloat32(elementCount);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
@@ -2985,7 +2979,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return _data[i].Sql2008DateTimeString;
             }
-            
+
             return _data[i].String;
         }
 
@@ -3015,16 +3009,6 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
-                if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
-                {
-                    switch (_metaData[i].scale)
-                    {
-                        case 0:
-                            return GetSqlVectorFloat32(i);
-                        default:
-                            throw SQL.VectorTypeNotSupported(_metaData[i].scale.ToString());
-                    }
-                }
                 return GetValueInternal(i);
             }
             finally
@@ -3118,6 +3102,24 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
+
+                if (metaData.type == SqlDbTypeExtensions.Vector)
+                {
+                    if (data.IsNull)
+                    {
+                        return DBNull.Value;
+                    }
+                    else
+                    {
+                        switch (metaData.scale)
+                        {
+                            case (byte)MetaType.SqlVectorElementType.Float32:
+                                return new SqlVectorFloat32(data.SqlBinary.Value);
+                            default:
+                                throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
+                        }
+                    }
+                }
 
                 if (metaData.type != SqlDbType.Udt)
                 {
@@ -3230,15 +3232,9 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.VectorNotSupportedOnColumnType(metaData.column);
                 }
                 int elementCount = (metaData.length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(metaData.scale);
-                object value;
-                if (!data.IsNull)
-                {
-                    value = new SqlVectorFloat32(data.SqlBinary.Value);
-                }
-                else
-                {
-                    value = new SqlVectorFloat32(elementCount);
-                }
+                object value = !data.IsNull
+                 ? new SqlVectorFloat32(data.SqlBinary.Value)
+                 : new SqlVectorFloat32(elementCount);
                 return (T)value;
             }
             else if (typeof(T) == typeof(XmlReader))
@@ -4766,7 +4762,7 @@ namespace Microsoft.Data.SqlClient
                     _metaDataConsumed = true;
 
                     if (_parser != null)
-                    { 
+                    {
                         // There is a valid case where parser is null
                         // Peek, and if row token present, set _hasRows true since there is a
                         // row in the result
