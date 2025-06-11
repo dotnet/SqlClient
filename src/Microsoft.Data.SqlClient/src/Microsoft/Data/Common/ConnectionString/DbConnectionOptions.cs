@@ -6,12 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
-#if NET
-using System.IO;
-#else
+#if NETFRAMEWORK
 using System.Runtime.Versioning;
 using System.Security;
 #endif
@@ -574,6 +573,50 @@ namespace Microsoft.Data.Common.ConnectionString
             constr = builder.ToString();
             return head;
         }
+
+        // SxS notes:
+        // * this method queries "DataDirectory" value from the current AppDomain.
+        //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
+        // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
+        #if NETFRAMEWORK
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+        #endif
+        internal static string ExpandDataDirectory(string keyword, string value)
+        {
+            string fullPath = null;
+            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
+            {
+                // find the replacement path
+                object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
+                var rootFolderPath = (rootFolderObject as string);
+                if (rootFolderObject != null && rootFolderPath == null)
+                {
+                    throw ADP.InvalidDataDirectory();
+                }
+
+                if (string.IsNullOrEmpty(rootFolderPath))
+                {
+                    rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
+                }
+
+                var fileName = value.Substring(DataDirectory.Length);
+
+                if (Path.IsPathRooted(fileName))
+                {
+                    fileName = fileName.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                }
+
+                fullPath = Path.Combine(rootFolderPath, fileName);
+
+                // verify root folder path is a real path without unexpected "..\"
+                if (!Path.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
+                {
+                    throw ADP.InvalidConnectionOptionValue(keyword);
+                }
+            }
+            return fullPath;
+        }
         
         #region NetCore Methods
         #if NET
@@ -597,46 +640,6 @@ namespace Microsoft.Data.Common.ConnectionString
             }
 
             return builder.ToString();
-        }
-        
-        // SxS notes:
-        // * this method queries "DataDirectory" value from the current AppDomain.
-        //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
-        // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
-        internal static string ExpandDataDirectory(string keyword, string value)
-        {
-            string fullPath = null;
-            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
-            {
-                // find the replacement path
-                object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
-                var rootFolderPath = (rootFolderObject as string);
-                if (rootFolderObject != null && rootFolderPath == null)
-                {
-                    throw ADP.InvalidDataDirectory();
-                }
-
-                if (string.IsNullOrEmpty(rootFolderPath))
-                {
-                    rootFolderPath = AppDomain.CurrentDomain.BaseDirectory ?? string.Empty;
-                }
-
-                var fileName = value.Substring(DataDirectory.Length);
-
-                if (Path.IsPathRooted(fileName))
-                {
-                    fileName = fileName.TrimStart(new char[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar });
-                }
-
-                fullPath = Path.Combine(rootFolderPath, fileName);
-
-                // verify root folder path is a real path without unexpected "..\"
-                if (!Path.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
-                {
-                    throw ADP.InvalidConnectionOptionValue(keyword);
-                }
-            }
-            return fullPath;
         }
         
         #endif
@@ -715,7 +718,7 @@ namespace Microsoft.Data.Common.ConnectionString
             return builder.ToString();
         }
 
-        internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue, bool useOdbcRules = false)
+        internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue)
         {
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
@@ -734,34 +737,12 @@ namespace Microsoft.Data.Common.ConnectionString
                 builder.Append(";");
             }
 
-            if (useOdbcRules)
-            {
-                builder.Append(keyName);
-            }
-            else
-            {
-                builder.Append(keyName.Replace("=", "=="));
-            }
+            builder.Append(keyName.Replace("=", "=="));
             builder.Append("=");
 
             if (keyValue != null)
             { // else <keyword>=;
-                if (useOdbcRules)
-                {
-                    if ((0 < keyValue.Length) &&
-                        (('{' == keyValue[0]) || (0 <= keyValue.IndexOf(';')) || (0 == string.Compare(DbConnectionStringKeywords.Driver, keyName, StringComparison.OrdinalIgnoreCase))) &&
-                        !s_connectionStringQuoteOdbcValueRegex.IsMatch(keyValue))
-                    {
-                        // always quote Driver value (required for ODBC Version 2.65 and earlier)
-                        // always quote values that contain a ';'
-                        builder.Append('{').Append(keyValue.Replace("}", "}}")).Append('}');
-                    }
-                    else
-                    {
-                        builder.Append(keyValue);
-                    }
-                }
-                else if (s_connectionStringQuoteValueRegex.IsMatch(keyValue))
+                if (s_connectionStringQuoteValueRegex.IsMatch(keyValue))
                 {
                     // <value> -> <value>
                     builder.Append(keyValue);
@@ -787,72 +768,6 @@ namespace Microsoft.Data.Common.ConnectionString
                 }
             }
         }
-
-        // SxS notes:
-        // * this method queries "DataDirectory" value from the current AppDomain.
-        //   This string is used for to replace "!DataDirectory!" values in the connection string, it is not considered as an "exposed resource".
-        // * This method uses GetFullPath to validate that root path is valid, the result is not exposed out.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal static string ExpandDataDirectory(string keyword, string value, ref string datadir)
-        {
-            string fullPath = null;
-            if (value != null && value.StartsWith(DataDirectory, StringComparison.OrdinalIgnoreCase))
-            {
-
-                string rootFolderPath = datadir;
-                if (rootFolderPath == null)
-                {
-                    // find the replacement path
-                    object rootFolderObject = AppDomain.CurrentDomain.GetData("DataDirectory");
-                    rootFolderPath = (rootFolderObject as string);
-                    if (rootFolderObject != null && rootFolderPath == null)
-                    {
-                        throw ADP.InvalidDataDirectory();
-                    }
-                    else if (string.IsNullOrEmpty(rootFolderPath))
-                    {
-                        rootFolderPath = AppDomain.CurrentDomain.BaseDirectory;
-                    }
-                    if (rootFolderPath == null)
-                    {
-                        rootFolderPath = "";
-                    }
-                    // cache the |DataDir| for ExpandDataDirectories
-                    datadir = rootFolderPath;
-                }
-
-                // We don't know if rootFolderpath ends with '\', and we don't know if the given name starts with onw
-                int fileNamePosition = DataDirectory.Length;    // filename starts right after the '|datadirectory|' keyword
-                bool rootFolderEndsWith = (0 < rootFolderPath.Length) && rootFolderPath[rootFolderPath.Length - 1] == '\\';
-                bool fileNameStartsWith = (fileNamePosition < value.Length) && value[fileNamePosition] == '\\';
-
-                // replace |datadirectory| with root folder path
-                if (!rootFolderEndsWith && !fileNameStartsWith)
-                {
-                    // need to insert '\'
-                    fullPath = rootFolderPath + '\\' + value.Substring(fileNamePosition);
-                }
-                else if (rootFolderEndsWith && fileNameStartsWith)
-                {
-                    // need to strip one out
-                    fullPath = rootFolderPath + value.Substring(fileNamePosition + 1);
-                }
-                else
-                {
-                    // simply concatenate the strings
-                    fullPath = rootFolderPath + value.Substring(fileNamePosition);
-                }
-
-                // verify root folder path is a real path without unexpected "..\"
-                if (!ADP.GetFullPath(fullPath).StartsWith(rootFolderPath, StringComparison.Ordinal))
-                {
-                    throw ADP.InvalidConnectionOptionValue(keyword);
-                }
-            }
-            return fullPath;
-        }
-        
         #endif
         #endregion
         
