@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient
                         byte[] byteBuffer = PrepareByteBuffer(charsNeeded, out int byteBufferUsed);
 
                         // Permit a 0 byte read in order to advance the reader to the correct column
-                        if ((byteBufferUsed < byteBuffer.Length) || (byteBuffer.Length == 0))
+                        if (byteBufferUsed <= byteBuffer.Length || byteBuffer.Length == 0)
                         {
                             SqlDataReader reader = _reader;
                             if (reader != null)
