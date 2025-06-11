@@ -985,27 +985,5 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
-
-#if NETFRAMEWORK
-
-        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
-        {
-            if (SmiContextFactory.LatestVersion == smiVersion)
-            {
-                return true;
-            }
-            else
-            {
-                // 2005 doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
-                return md.SqlDbType != SqlDbType.Structured &&
-                        md.SqlDbType != SqlDbType.Date &&
-                        md.SqlDbType != SqlDbType.DateTime2 &&
-                        md.SqlDbType != SqlDbType.DateTimeOffset &&
-                        md.SqlDbType != SqlDbType.Time;
-            }
-        }
-
-#endif
     }
 }

@@ -10,7 +10,6 @@ namespace Microsoft.Data.SqlClient.Server
     {
         internal const ulong Sql2005Version = 100;
         internal const ulong Sql2008Version = 210;
-        internal const ulong LatestVersion = Sql2008Version;
     }
 }
 

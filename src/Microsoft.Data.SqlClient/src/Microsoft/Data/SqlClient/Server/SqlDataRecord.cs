@@ -375,13 +375,6 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 _columnMetaData[i] = metaData[i];
                 _columnSmiMetaData[i] = MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(_columnMetaData[i]);
-
-                #if NETFRAMEWORK
-                if (!MetaDataUtilsSmi.IsValidForSmiVersion(_columnSmiMetaData[i], SmiContextFactory.Sql2008Version))
-                {
-                    throw ADP.VersionDoesNotSupportDataType(_columnSmiMetaData[i].TypeName);
-                }
-                #endif
             }
 
             _eventSink = new SmiEventSink_Default();
