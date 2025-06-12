@@ -31,18 +31,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
+        protected override DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        protected override DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection,
+            DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
+            
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
-            bool applyTransientFaultHandling = sqlOwningConnection != null ? sqlOwningConnection._applyTransientFaultHandling : false;
+            bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
             SqlConnectionString userOpt = null;
             if (userOptions != null)
@@ -51,7 +63,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (sqlOwningConnection != null)
             {
-                userOpt = (SqlConnectionString)(sqlOwningConnection.UserConnectionOptions);
+                userOpt = (SqlConnectionString)sqlOwningConnection.UserConnectionOptions;
             }
 
             if (sqlOwningConnection != null)
@@ -164,7 +176,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        override internal DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+        internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
         {
             DbConnectionPoolProviderInfo providerInfo = null;
 
@@ -234,11 +246,11 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion); //internalConnection.ServerVersionNormalized);
         }
 
-        override internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+        internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions)
         {
             return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
         }
-
 
         internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
