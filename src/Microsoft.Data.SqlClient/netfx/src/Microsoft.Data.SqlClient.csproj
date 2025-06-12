@@ -947,8 +947,6 @@
     <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netfx.cs" />
     <Compile Include="Microsoft\Data\Common\DBConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
@@ -962,7 +960,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->
