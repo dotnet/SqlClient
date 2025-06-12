@@ -7,12 +7,14 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Runtime.Loader;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
-using Microsoft.Data.SqlClient.Server;
+
+#if NET
+using System.Runtime.Loader;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -22,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         
         private SqlConnectionFactory() : base()
         {
-            #if NETFRAMEWORK
+            #if NET
             SubscribeToAssemblyLoadContextUnload();
             #endif
         }
@@ -56,12 +58,9 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
-            //netfx---
+
             SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
-            //---netfx|netcore---
-            SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
-            //---netcore
-            bool applyTransientFaultHandling = sqlOwningConnection != null ? sqlOwningConnection._applyTransientFaultHandling : false;
+            bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
             SqlConnectionString userOpt = null;
             if (userOptions != null)
@@ -213,18 +212,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     connectionTimeout = int.MaxValue;
                 }
-
-                //netcore---
-                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-                //---netcore|netfx---
-                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive)
-                //---netfx
+                
+                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
                 {
-                    //netcore---
                     // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
-                    //---netcore|netfx---
-                    // interactive mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
-                    //---netfx
                     if (connectionTimeout >= Int32.MaxValue / 10)
                     {
                         connectionTimeout = Int32.MaxValue;
@@ -235,6 +226,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     SqlClientEventSource.Log.TryTraceEvent("SqlConnectionFactory.CreateConnectionPoolGroupOptions | Set connection pool CreateTimeout '{0}' when Authentication mode '{1}' is used.", connectionTimeout, opt.Authentication);
                 }
+                
                 poolingOptions = new DbConnectionPoolGroupOptions(
                                                 //netcore---
                                                 opt.IntegratedSecurity,
@@ -270,6 +262,7 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions;
         }
 
+        // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
         override internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
@@ -360,7 +353,7 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion);
         }
 
-        //netcore---
+        #if NET
         private void Unload(object sender, EventArgs e)
         {
             try
@@ -383,7 +376,7 @@ namespace Microsoft.Data.SqlClient
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
         }
-        //---netcore
+        #endif
     }
 }
 
