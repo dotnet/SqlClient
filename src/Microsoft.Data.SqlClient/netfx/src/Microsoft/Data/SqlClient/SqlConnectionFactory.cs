@@ -138,13 +138,14 @@ namespace Microsoft.Data.SqlClient
                     instanceName,
                     userInstance: false,
                     setEnlistValue: null); // Do not modify the enlist value
+                poolGroupProviderInfo = null;
             }
 
             return new SqlInternalConnectionTds(
                 identity,
                 opt,
                 key.Credential,
-                providerInfo: null,
+                poolGroupProviderInfo,
                 newPassword: string.Empty,
                 newSecurePassword: null,
                 redirectedUserInstance,
