@@ -40,6 +40,7 @@
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
         <dependency id="System.Text.Encodings.Web" version="8.0.0" />
         <dependency id="System.Text.Json" version="8.0.5" />
+        <dependency id="System.Threading.Channels" version="9.0.6" />
       </group>
       <group targetFramework="net8.0">
         <dependency id="Azure.Identity" version="1.13.2" />
