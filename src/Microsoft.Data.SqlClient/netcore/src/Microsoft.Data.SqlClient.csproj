@@ -802,7 +802,6 @@
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
 
-    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
