@@ -25,6 +25,68 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// </summary>
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool
     {
+        #region Fields
+        // Prevents synchronous operations which depend on async operations on managed
+        // threads from blocking on all available threads, which would stop async tasks
+        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
+        // between sync and async tasks.
+        private static SemaphoreSlim _syncOverAsyncSemaphore = new(Math.Max(1, Environment.ProcessorCount / 2));
+
+        private static int _objectTypeCount; // EventSource counter
+
+        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+
+        /// <summary>
+        /// Tracks all connections currently managed by this pool, whether idle or busy.
+        /// Only updated rarely - when physical connections are opened/closed - but is read in perf-sensitive contexts.
+        /// </summary>
+        private readonly DbConnectionInternal?[] _connections;
+
+        /// <summary>
+        /// Reader side for the idle connection channel. Contains nulls in order to release waiting attempts after
+        /// a connection has been physically closed/broken.
+        /// </summary>
+        private readonly ChannelReader<DbConnectionInternal?> _idleConnectionReader;
+        private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
+
+        // Counts the total number of open connections tracked by the pool.
+        private volatile int _numConnections;
+        #endregion
+
+        /// <summary>
+        /// Initializes a new PoolingDataSource.
+        /// </summary>
+        internal ChannelDbConnectionPool(
+            DbConnectionFactory connectionFactory,
+            DbConnectionPoolGroup connectionPoolGroup,
+            DbConnectionPoolIdentity identity,
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+        {
+            State = Initializing;
+
+            ConnectionFactory = connectionFactory;
+            PoolGroup = connectionPoolGroup;
+            PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
+            ProviderInfo = connectionPoolProviderInfo;
+            Identity = identity;
+            AuthenticationContexts = new ConcurrentDictionary<
+                DbConnectionPoolAuthenticationContextKey,
+                DbConnectionPoolAuthenticationContext>(
+                    concurrencyLevel: 4 * Environment.ProcessorCount,
+                    capacity: 2);
+
+            _connections = new DbConnectionInternal[MaxPoolSize];
+
+            // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
+            // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
+            // On the producing side, we have connections being released back into the pool (both multiplexing and not)
+            var idleChannel = Channel.CreateUnbounded<DbConnectionInternal?>();
+            _idleConnectionReader = idleChannel.Reader;
+            _idleConnectionWriter = idleChannel.Writer;
+
+            State = Running;
+        }
+
         #region Properties
         /// <inheritdoc />
         public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts
@@ -96,69 +158,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
         #endregion
-
-        #region Fields
-        // Prevents synchronous operations which depend on async operations on managed
-        // threads from blocking on all available threads, which would stop async tasks
-        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
-        // between sync and async tasks.
-        private static SemaphoreSlim SyncOverAsyncSemaphore { get; } = new(Math.Max(1, Environment.ProcessorCount / 2));
-
-        private static int _objectTypeCount; // EventSource counter
-
-        private readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
-
-        /// <summary>
-        /// Tracks all connections currently managed by this pool, whether idle or busy.
-        /// Only updated rarely - when physical connections are opened/closed - but is read in perf-sensitive contexts.
-        /// </summary>
-        private readonly DbConnectionInternal?[] _connections;
-
-        /// <summary>
-        /// Reader side for the idle connection channel. Contains nulls in order to release waiting attempts after
-        /// a connection has been physically closed/broken.
-        /// </summary>
-        private readonly ChannelReader<DbConnectionInternal?> _idleConnectionReader;
-        private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
-
-        // Counts the total number of open connections tracked by the pool.
-        private volatile int _numConnections;
-        #endregion
-
-
-        /// <summary>
-        /// Initializes a new PoolingDataSource.
-        /// </summary>
-        internal ChannelDbConnectionPool(
-            DbConnectionFactory connectionFactory,
-            DbConnectionPoolGroup connectionPoolGroup,
-            DbConnectionPoolIdentity identity,
-            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
-        {
-            State = Initializing;
-
-            ConnectionFactory = connectionFactory;
-            PoolGroup = connectionPoolGroup;
-            PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
-            ProviderInfo = connectionPoolProviderInfo;
-            Identity = identity;
-            AuthenticationContexts = new ConcurrentDictionary<
-                DbConnectionPoolAuthenticationContextKey,
-                DbConnectionPoolAuthenticationContext>(
-                    concurrencyLevel: 4 * Environment.ProcessorCount,
-                    capacity: 2);
-
-            _connections = new DbConnectionInternal[MaxPoolSize];
-
-            // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
-            // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
-            // On the producing side, we have connections being released back into the pool (both multiplexing and not)
-            var idleChannel = Channel.CreateUnbounded<DbConnectionInternal?>();
-            _idleConnectionReader = idleChannel.Reader;
-            _idleConnectionWriter = idleChannel.Writer;
-
-            State = Running;
-        }
 
         #region Methods
         /// <inheritdoc />
@@ -418,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             // channel. We need to ensure that we don't block all available managed threads with these child
                             // tasks or we could deadlock. Prefer to block the current user-owned thread, and limit throughput
                             // to the managed threadpool.
-                            SyncOverAsyncSemaphore.Wait(finalToken);
+                            _syncOverAsyncSemaphore.Wait(finalToken);
                             try
                             {
                                 ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
@@ -432,7 +431,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
                             finally
                             {
-                                SyncOverAsyncSemaphore.Release();
+                                _syncOverAsyncSemaphore.Release();
                             }
                         }
 
