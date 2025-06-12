@@ -87,22 +87,22 @@
           The following features are supported when <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered" /> is set to <see langword="true" />:
         </para>
         <list type="bullet">
-          <item>The ability to create indexes on columns of this type.</item>
-          <item>The ability to create primary and foreign keys as well as CHECK and UNIQUE constraints on columns of this type.</item>
-          <item>The ability to use Transact-SQL ORDER BY, GROUP BY, and PARTITION BY clauses. In these cases, the binary representation of the type is used to determine the order.</item>
-          <item>The ability to use comparison operators in Transact-SQL statements.</item>
-          <item>The ability to persist computed columns of this type.</item>
+          <item><description>The ability to create indexes on columns of this type.</description></item>
+          <item><description>The ability to create primary and foreign keys as well as CHECK and UNIQUE constraints on columns of this type.</description></item>
+          <item><description>The ability to use Transact-SQL ORDER BY, GROUP BY, and PARTITION BY clauses. In these cases, the binary representation of the type is used to determine the order.</description></item>
+          <item><description>The ability to use comparison operators in Transact-SQL statements.</description></item>
+          <item><description>The ability to persist computed columns of this type.</description></item>
         </list>
         <para>
           Note that both the <c>Native</c> and <c>UserDefined</c> serialization formats support the following comparison operators when <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered" /> is set to <see langword="true" />:
         </para>
         <list type="bullet">
-          <item>Equal to (=)</item>
-          <item>Not equal to (!=)</item>
-          <item>Greater than (&gt;)</item>
-          <item>Less than (&lt;)</item>
-          <item>Greater than or equal to (&gt;=)</item>
-          <item>Less than or equal to (&lt;=)</item>
+          <item><description>Equal to (=)</description></item>
+          <item><description>Not equal to (!=)</description></item>
+          <item><description>Greater than (&gt;)</description></item>
+          <item><description>Less than (&lt;)</description></item>
+          <item><description>Greater than or equal to (&gt;=)</description></item>
+          <item><description>Less than or equal to (&lt;=)</description></item>
         </list>
       </remarks>
     </IsByteOrdered>

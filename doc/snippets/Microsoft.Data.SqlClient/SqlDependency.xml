@@ -83,12 +83,12 @@ Query notifications are supported only for SELECT statements that meet a list of
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object already has a <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> object assigned to its <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Notification" /> property and that <see cref="T:Microsoft.Data.Sql.SqlNotificationRequest" /> is not associated with this dependency.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             An attempt was made to create a <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> instance from within SQLCLR.
-          </item>
+          </description></item>
         </list>
       </exception>
     </ctorCommandOptionsTimeout>
@@ -165,15 +165,15 @@ Query notifications are supported only for SELECT statements that meet a list of
           Multiple calls to the <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> method can be made, subject to the following restrictions:
         </para>
         <list type="bullet">
-          <item>Multiple calls with identical parameters (the same connection string and Windows credentials in the calling thread) are valid.</item>
-          <item>
+          <item><description>Multiple calls with identical parameters (the same connection string and Windows credentials in the calling thread) are valid.</description></item>
+          <item><description>
             Multiple calls with different connection strings are valid as long as:
             <list type="bullet">
-              <item>Each connection string specifies a different database, or</item>
-              <item>Each connection string specifies a different user, or</item>
-              <item>The calls come from different application domains.</item>
+              <item><description>Each connection string specifies a different database, or</description></item>
+              <item><description>Each connection string specifies a different user, or</description></item>
+              <item><description>The calls come from different application domains.</description></item>
             </list>
-          </item>
+          </description></item>
         </list>
         <para>
           You can make the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> work correctly for applications that use multiple threads to represent different user credentials without giving the dbo role to the group, because different users can subscribe and listen (using <see cref="T:System.Web.Caching.SqlCacheDependency" /> or <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />) to a notification queue created by an administrator. When the relevant application domain starts, call Start with the (Windows) credentials of a user that has permission to initialize a service/queue (the CREATE QUEUE and CREATE SERVICE permissions for the database). Ensure that Start is only called once per AppDomain, otherwise an ambiguity exception is raised.  The user thread must have permission to subscribe to the notification (the <c>SUBSCRIBE QUERY NOTIFICATIONS</c> permission for the database). <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> will associate the subscription request of a non-administrator user to the service/queue created by the administrator.
@@ -184,8 +184,8 @@ Query notifications are supported only for SELECT statements that meet a list of
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The <paramref name="connectionString" /> parameter is the same as a previous call to this method, but the parameters are different.</item>
-          <item>The method was called from within the CLR.</item>
+          <item><description>The <paramref name="connectionString" /> parameter is the same as a previous call to this method, but the parameters are different.</description></item>
+          <item><description>The method was called from within the CLR.</description></item>
         </list>
       </exception>
       <exception cref="T:System.Security.SecurityException">
@@ -218,15 +218,15 @@ Query notifications are supported only for SELECT statements that meet a list of
           Multiple calls to the <see cref="M:Microsoft.Data.SqlClient.SqlDependency.Start(System.String)" /> method can be made, subject to the following restrictions:
         </para>
         <list type="bullet">
-          <item>Multiple calls with identical parameters (the same connection string and Windows credentials in the calling thread) are valid.</item>
-          <item>
+          <item><description>Multiple calls with identical parameters (the same connection string and Windows credentials in the calling thread) are valid.</description></item>
+          <item><description>
             Multiple calls with different connection strings are valid as long as:
             <list type="bullet">
-              <item>Each connection string specifies a different database, or</item>
-              <item>Each connection string specifies a different user, or</item>
-              <item>The calls come from different application domains.</item>
+              <item><description>Each connection string specifies a different database, or</description></item>
+              <item><description>Each connection string specifies a different user, or</description></item>
+              <item><description>The calls come from different application domains.</description></item>
             </list>
-          </item>
+          </description></item>
         </list>
         <para>
           You can make the <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> work correctly for applications that use multiple threads to represent different user credentials without giving the dbo role to the group, because different users can subscribe and listen (using <see cref="T:System.Web.Caching.SqlCacheDependency" /> or <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />) to a notification queue created by an administrator. When the relevant application domain starts, call Start with the (Windows) credentials of a user that has permission to initialize a service/queue (the CREATE QUEUE and CREATE SERVICE permissions for the database). Ensure that Start is only called once per AppDomain, otherwise an ambiguity exception is raised.  The user thread must have permission to subscribe to the notification (the <c>SUBSCRIBE QUERY NOTIFICATIONS</c> permission for the database). <see cref="T:Microsoft.Data.SqlClient.SqlDependency" /> will associate the subscription request of a non-administrator user to the service/queue created by the administrator.
@@ -237,8 +237,8 @@ Query notifications are supported only for SELECT statements that meet a list of
       </exception>
       <exception cref="T:System.InvalidOperationException">
         <list type="bullet">
-          <item>The <paramref name="connectionString" /> parameter is the same as a previous call to this method, but the parameters are different.</item>
-          <item>The method was called from within the CLR.</item>
+          <item><description>The <paramref name="connectionString" /> parameter is the same as a previous call to this method, but the parameters are different.</description></item>
+          <item><description>The method was called from within the CLR.</description></item>
         </list>
       </exception>
       <exception cref="T:System.Security.SecurityException">

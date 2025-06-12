@@ -26,8 +26,8 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
-    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
@@ -69,7 +69,7 @@
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
   </PropertyGroup>
-  
+
   <!-- NuGet Audit Settings -->
   <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
     <!--
@@ -100,11 +100,10 @@
 
   <!-- Provides Version properties -->
   <Import Project="$(ToolsDir)props\Versions.props" />
-  <Import Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))" Project="$(ToolsDir)props\VersionsNet9OrLater.props" />
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
-  <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
+  <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
   <Import Project="$(ToolsDir)props\AssemblyRef.props" />
   <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 

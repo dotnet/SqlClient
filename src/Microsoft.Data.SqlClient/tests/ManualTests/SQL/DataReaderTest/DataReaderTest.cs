@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -14,19 +15,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderTest
     {
         private static readonly object s_rowVersionLock = new();
-
-        // this enum must mirror the definition in LocalAppContextSwitches
-        private enum Tristate : byte
-        {
-            NotInitialized = 0,
-            False = 1,
-            True = 2
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
@@ -268,38 +263,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsBDNull()
+        public static void CheckNullRowVersionIsDBNull()
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
-                try
-                {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.True(reader.IsDBNull(0));
-                    Assert.Equal(DBNull.Value, reader[0]);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<DBNull>(result);
-                    Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
-                    Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.False;
 
-                    SqlBinary binary = reader.GetSqlBinary(0);
-                    Assert.True(binary.IsNull);
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.True(reader.IsDBNull(0));
+                Assert.Equal(DBNull.Value, reader[0]);
+                var result = reader.GetValue(0);
+                Assert.IsType<DBNull>(result);
+                Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
+                Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
 
-                    SqlBytes bytes = reader.GetSqlBytes(0);
-                    Assert.True(bytes.IsNull);
-                    Assert.Null(bytes.Buffer);
+                SqlBinary binary = reader.GetSqlBinary(0);
+                Assert.True(binary.IsNull);
 
-                }
-                finally
-                {
-                    SetLegacyRowVersionNullBehavior(originalValue);
-                }
+                SqlBytes bytes = reader.GetSqlBytes(0);
+                Assert.True(bytes.IsNull);
+                Assert.Null(bytes.Buffer);
             }
         }
 
@@ -713,44 +702,118 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanGetCharsSequentially()
+        {
+            const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
+            const int length = 32000;
+            const string sqlCharWithArg = "SELECT CONVERT(BIGINT, 1) AS [Id], CONVERT(NVARCHAR(MAX), @input) AS [Value];";
+
+            using (var sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await sqlConnection.OpenAsync();
+
+                StringBuilder inputBuilder = new StringBuilder(length);
+                Random random = new Random();
+                for (int i = 0; i < length; i++)
+                {
+                    inputBuilder.Append((char)random.Next(0x30, 0x5A));
+                }
+                string input = inputBuilder.ToString();
+
+                using (var sqlCommand = new SqlCommand())
+                {
+                    sqlCommand.Connection = sqlConnection;
+                    sqlCommand.CommandTimeout = 0;
+                    sqlCommand.CommandText = sqlCharWithArg;
+                    sqlCommand.Parameters.Add(new SqlParameter("@input", SqlDbType.NVarChar, -1) { Value = input });
+
+                    using (var sqlReader = await sqlCommand.ExecuteReaderAsync(commandBehavior))
+                    {
+                        if (await sqlReader.ReadAsync())
+                        {
+                            long id = sqlReader.GetInt64(0);
+                            if (id != 1)
+                            {
+                                Assert.Fail("Id not 1");
+                            }
+
+                            var sliced = GetPooledChars(sqlReader, 1, input);
+                            if (!sliced.SequenceEqual(input.ToCharArray()))
+                            {
+                                Assert.Fail("sliced != input");
+                            }
+                        }
+                    }
+                }
+            }
+
+            static char[] GetPooledChars(SqlDataReader sqlDataReader, int ordinal, string input)
+            {
+                var buffer = ArrayPool<char>.Shared.Rent(8192);
+                int offset = 0;
+                while (true)
+                {
+                    int read = (int)sqlDataReader.GetChars(ordinal, offset, buffer, offset, buffer.Length - offset);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    ReadOnlySpan<char> fetched = buffer.AsSpan(offset, read);
+                    ReadOnlySpan<char> origin = input.AsSpan(offset, read);
+
+                    if (!fetched.Equals(origin, StringComparison.Ordinal))
+                    {
+                        Assert.Fail($"chunk (start:{offset}, for:{read}), is not the same as the input");
+                    }
+
+                    offset += read;
+
+                    if (buffer.Length - offset < 128)
+                    {
+                        buffer = Resize(buffer);
+                    }
+                }
+
+                var sliced = buffer.AsSpan(0, offset).ToArray();
+                ArrayPool<char>.Shared.Return(buffer);
+                return sliced;
+
+                static char[] Resize(char[] buffer)
+                {
+                    var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                    Array.Copy(buffer, newBuffer, buffer.Length);
+                    ArrayPool<char>.Shared.Return(buffer);
+                    return newBuffer;
+                }
+            }
+        }
+
         // Synapse: Cannot find data type 'rowversion'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckLegacyNullRowVersionIsEmptyArray()
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
-                try
-                {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.False(reader.IsDBNull(0));
-                    SqlBinary value = reader.GetSqlBinary(0);
-                    Assert.False(value.IsNull);
-                    Assert.Equal(0, value.Length);
-                    Assert.NotNull(value.Value);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<byte[]>(result);
-                    Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
-                }
-                finally
-                {
-                    SetLegacyRowVersionNullBehavior(originalValue);
-                }
-            }
-        }
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.True;
 
-        private static Tristate SetLegacyRowVersionNullBehavior(Tristate value)
-        {
-            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Tristate originalValue = (Tristate)switchField.GetValue(null);
-            switchField.SetValue(null, value);
-            return originalValue;
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.False(reader.IsDBNull(0));
+                SqlBinary value = reader.GetSqlBinary(0);
+                Assert.False(value.IsNull);
+                Assert.Equal(0, value.Length);
+                Assert.NotNull(value.Value);
+                var result = reader.GetValue(0);
+                Assert.IsType<byte[]>(result);
+                Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
+            }
         }
     }
 }

@@ -86,8 +86,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
-        internal abstract bool IsFailedHandle();
-
         protected abstract void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async);
 
         protected abstract void FreeGcHandle(int remaining, bool release);
@@ -98,27 +96,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract void Dispose();
 
-        internal abstract void DisposePacketCache();
-
-        internal abstract bool IsPacketEmpty(PacketHandle readPacket);
-
-        internal abstract PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error);
-
-        internal abstract PacketHandle ReadAsync(SessionHandle handle, out uint error);
-
         internal abstract uint CheckConnection();
-
-        internal abstract void ReleasePacket(PacketHandle syncReadPacket);
-
-        protected abstract uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize);
-
-        internal abstract PacketHandle GetResetWritePacket(int dataSize);
-
-        internal abstract void ClearAllWritePackets();
-
-        internal abstract PacketHandle AddPacketToPendingList(PacketHandle packet);
-
-        protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
 
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -411,8 +389,6 @@ namespace Microsoft.Data.SqlClient
                 AssertValidState();
             }
         }
-
-        protected abstract bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source);
 
         public void WriteAsyncCallback(PacketHandle packet, uint sniError) =>
             WriteAsyncCallback(IntPtr.Zero, packet, sniError);
@@ -719,10 +695,6 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-        internal abstract bool IsValidPacket(PacketHandle packetPointer);
-
-        internal abstract uint WritePacket(PacketHandle packet, bool sync);
-
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
         {
@@ -871,7 +843,5 @@ namespace Microsoft.Data.SqlClient
                 statistics.RequestNetworkServerTimer();
             }
         }
-
-        protected abstract PacketHandle EmptyReadPacket { get; }
     }
 }

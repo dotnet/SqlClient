@@ -23,10 +23,8 @@ namespace Microsoft.Data.SqlClient
         protected SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         // SNI variables                                                     // multiple resultsets in one batch.
-        private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
+        protected SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
-        private readonly WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
-        private readonly Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
@@ -64,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCache, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
-            if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
+            if (IsFailedHandle())
             {
                 AddError(parser.ProcessSNIError(this));
                 ThrowExceptionAndWarning();
@@ -136,34 +134,7 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
-        internal bool IsPacketEmpty(PacketHandle readPacket)
-        {
-            Debug.Assert(readPacket.Type == PacketHandle.NativePointerType || readPacket.Type == 0, "unexpected packet type when requiring NativePointer");
-            return IntPtr.Zero == readPacket.NativePointer;
-        }
-
-        internal PacketHandle ReadSyncOverAsync(int timeoutRemaining, out uint error)
-        {
-            SNIHandle handle = Handle ?? throw ADP.ClosedConnectionError();
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadSyncOverAsync(handle, ref readPacketPtr, timeoutRemaining);
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
-        internal PacketHandle ReadAsync(SessionHandle handle, out uint error)
-        {
-            IntPtr readPacketPtr = IntPtr.Zero;
-            error = SniNativeWrapper.SniReadAsync(handle.NativeHandle, ref readPacketPtr);
-            return PacketHandle.FromNativePointer(readPacketPtr);
-        }
-
         internal uint CheckConnection() => SniNativeWrapper.SniCheckConnection(Handle);
-
-        internal void ReleasePacket(PacketHandle syncReadPacket)
-        {
-            Debug.Assert(syncReadPacket.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            SniNativeWrapper.SniPacketRelease(syncReadPacket.NativePointer);
-        }
 
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
@@ -224,20 +195,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (_writePacketCache != null)
-            {
-                lock (_writePacketLockObject)
-                {
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    { }
-                    finally
-                    {
-                        _writePacketCache.Dispose();
-                        // Do not set _writePacketCache to null, just in case a WriteAsyncCallback completes after this point
-                    }
-                }
-            }
+            DisposePacketCache();
         }
 
         /// <summary>
@@ -386,12 +344,6 @@ namespace Microsoft.Data.SqlClient
             return SniPacketGetData(packet, _inBuff, ref dataSize);
         }
 
-        private uint SniPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
-        {
-            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            return SniNativeWrapper.SniPacketGetData(packet.NativePointer, _inBuff, ref dataSize);
-        }
-
         public void ReadAsyncCallback(IntPtr key, PacketHandle packet, uint error)
         {
             // Key never used.
@@ -491,13 +443,6 @@ namespace Microsoft.Data.SqlClient
 
                 AssertValidState();
             }
-        }
-
-        private bool CheckPacket(PacketHandle packet, TaskCompletionSource<object> source)
-        {
-            Debug.Assert(packet.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            IntPtr ptr = packet.NativePointer;
-            return IntPtr.Zero == ptr || IntPtr.Zero != ptr && source != null;
         }
 
 #pragma warning disable 420 // a reference to a volatile field will not be treated as volatile
@@ -715,8 +660,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                Debug.Assert(packet.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
-                sniError = SniNativeWrapper.SniWritePacket(Handle, packet.NativePacket, sync);
+                sniError = WritePacket(packet, sync);
             }
 
             if (sniError == TdsEnums.SNI_SUCCESS_IO_PENDING)
@@ -810,16 +754,6 @@ namespace Microsoft.Data.SqlClient
 
 #pragma warning restore 420
 
-        internal bool IsValidPacket(PacketHandle packetPointer)
-        {
-            Debug.Assert(packetPointer.Type == PacketHandle.NativePointerType || packetPointer.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePointer");
-            return (
-                (packetPointer.Type == PacketHandle.NativePointerType && packetPointer.NativePointer != IntPtr.Zero)
-                ||
-                (packetPointer.Type == PacketHandle.NativePacketType && packetPointer.NativePacket != null)
-            );
-        }
-
         // Sends an attention signal - executing thread will consume attn.
         internal void SendAttention(bool mustTakeWriteLock = false, bool asyncClose = false)
         {
@@ -904,7 +838,7 @@ namespace Microsoft.Data.SqlClient
         private Task WriteSni(bool canAccumulate)
         {
             // Prepare packet, and write to packet.
-            PacketHandle packet = GetResetWritePacket();
+            PacketHandle packet = GetResetWritePacket(_outBytesUsed);
             SNIPacket nativePacket = packet.NativePacket;
             SniNativeWrapper.SniPacketSetData(nativePacket, _outBuff, _outBytesUsed, _securePasswords, _securePasswordOffsetsInBuffer);
 
@@ -957,73 +891,6 @@ namespace Microsoft.Data.SqlClient
             return task;
         }
 
-        internal PacketHandle GetResetWritePacket()
-        {
-            if (_sniPacket != null)
-            {
-                SniNativeWrapper.SniPacketReset(Handle, IoType.WRITE, _sniPacket, ConsumerNumber.SNI_Consumer_SNI);
-            }
-            else
-            {
-                lock (_writePacketLockObject)
-                {
-                    _sniPacket = _writePacketCache.Take(Handle);
-                }
-            }
-            return PacketHandle.FromNativePacket(_sniPacket);
-        }
-
-        internal void ClearAllWritePackets()
-        {
-            if (_sniPacket != null)
-            {
-                _sniPacket.Dispose();
-                _sniPacket = null;
-            }
-            lock (_writePacketLockObject)
-            {
-                Debug.Assert(_pendingWritePackets.Count == 0 && _asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
-                _writePacketCache.Clear();
-            }
-        }
-
-        private PacketHandle AddPacketToPendingList(PacketHandle packetToAdd)
-        {
-            Debug.Assert(packetToAdd.Type == PacketHandle.NativePacketType, "unexpected packet type when requiring NativePacket");
-            SNIPacket packet = packetToAdd.NativePacket;
-            Debug.Assert(packet == _sniPacket, "Adding a packet other than the current packet to the pending list");
-            _sniPacket = null;
-            IntPtr pointer = packet.DangerousGetHandle();
-
-            lock (_writePacketLockObject)
-            {
-                _pendingWritePackets.Add(pointer, packet);
-            }
-
-            return PacketHandle.FromNativePointer(pointer);
-        }
-
-        private void RemovePacketFromPendingList(PacketHandle ptr)
-        {
-            Debug.Assert(ptr.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
-            IntPtr pointer = ptr.NativePointer;
-
-            lock (_writePacketLockObject)
-            {
-                if (_pendingWritePackets.TryGetValue(pointer, out SNIPacket recoveredPacket))
-                {
-                    _pendingWritePackets.Remove(pointer);
-                    _writePacketCache.Add(recoveredPacket);
-                }
-#if DEBUG
-                else
-                {
-                    Debug.Assert(false, "Removing a packet from the pending list that was never added to it");
-                }
-#endif
-            }
-        }
-
         //////////////////////////////////////////////
         // Statistics, Tracing, and related methods //
         //////////////////////////////////////////////
@@ -1069,7 +936,5 @@ namespace Microsoft.Data.SqlClient
             }
             SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.WritePacket | INFO | ADV | State Object Id {0}, Packet sent. Out buffer: {1}, Out Bytes Used: {2}", ObjectID, _outBuff, _outBytesUsed);
         }
-
-        protected PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
     }
 }
