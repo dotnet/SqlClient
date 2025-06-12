@@ -157,6 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select 1 / 0;";
+                        conn.Open();
 
                         try
                         {
@@ -230,6 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
+                        conn.Open();
 
                         try
                         {
@@ -277,11 +279,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select 1 / 0;";
-
                         conn.Open();
 
                         try
-                        { var output = await cmd.ExecuteScalarAsync(); }
+                        {
+                            var output = await cmd.ExecuteScalarAsync();
+                        }
                         catch { }
                     }
                 }).GetAwaiter().GetResult();
@@ -322,10 +325,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select 1 / 0;";
-
                         conn.Open();
+
                         try
-                        { var output = await cmd.ExecuteNonQueryAsync(); }
+                        {
+                            var output = await cmd.ExecuteNonQueryAsync();
+                        }
                         catch { }
                     }
                 }).GetAwaiter().GetResult();
@@ -368,6 +373,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select 1 / 0;";
+                        conn.Open();
 
                         try
                         {
@@ -418,6 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
+                        conn.Open();
 
                         try
                         {
@@ -462,7 +469,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
                         try
-                        { sqlConnection.Open(); }
+                        {
+                            sqlConnection.Open();
+                        }
                         catch { }
                     }
                 });
@@ -496,7 +505,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
                         try
-                        { await sqlConnection.OpenAsync(); }
+                        {
+                            await sqlConnection.OpenAsync();
+                        }
                         catch { }
                     }
                 }).GetAwaiter().GetResult();
