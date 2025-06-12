@@ -1,0 +1,22 @@
+<Project>
+  <Import Project="..\..\Directory.Packages.props" />
+
+  <!-- Test Project Dependencies for all targets. -->
+  <ItemGroup>
+    <!--
+      Transitive dependencies with vulnerabilities, so we explicitly ask for
+      non-vulnerable versions.
+    -->
+    <PackageVersion Include="System.Formats.Asn1" Version="6.0.1" />
+  </ItemGroup>
+
+  <!-- Test Project Dependencies for NetFx only. -->
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageVersion Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
+  </ItemGroup>
+
+  <!-- MDS Package Dependency -->
+  <ItemGroup Condition="$(ReferenceType) == 'Package'">
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+  </ItemGroup>
+</Project>
