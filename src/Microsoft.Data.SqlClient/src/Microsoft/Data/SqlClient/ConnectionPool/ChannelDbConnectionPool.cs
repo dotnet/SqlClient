@@ -27,12 +27,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
         #region Properties
         /// <inheritdoc />
-        public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts => throw new NotImplementedException();
+        public ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> AuthenticationContexts
+        {
+            get;
+            init;
+        }
 
         /// <inheritdoc />
-        public DbConnectionFactory ConnectionFactory => _connectionFactory;
+        public DbConnectionFactory ConnectionFactory
+        {
+            get;
+            init;
+        }
 
         /// <inheritdoc />
+        /// Note: maintain _numConnections backing field to enable atomic operations
         public int Count => _numConnections;
 
         /// <inheritdoc />
@@ -42,7 +51,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int Id => _objectID;
 
         /// <inheritdoc />
-        public DbConnectionPoolIdentity Identity => _identity;
+        public DbConnectionPoolIdentity Identity
+        {
+            get;
+            private set;
+        }
 
         /// <inheritdoc />
         public bool IsRunning => State is Running;
@@ -51,19 +64,31 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public TimeSpan LoadBalanceTimeout => PoolGroupOptions.LoadBalanceTimeout;
 
         /// <inheritdoc />
-        public DbConnectionPoolGroup PoolGroup => _connectionPoolGroup;
+        public DbConnectionPoolGroup PoolGroup
+        {
+            get; 
+            init;
+        }
 
         /// <inheritdoc />
-        public DbConnectionPoolGroupOptions PoolGroupOptions => _connectionPoolGroupOptions;
+        public DbConnectionPoolGroupOptions PoolGroupOptions
+        {
+            get;
+            init;
+        }
 
         /// <inheritdoc />
-        public DbConnectionPoolProviderInfo ProviderInfo => _connectionPoolProviderInfo;
+        public DbConnectionPoolProviderInfo ProviderInfo
+        {
+            get;
+            init;
+        }
 
         /// <inheritdoc />
         public DbConnectionPoolState State
         {
             get;
-            set;
+            private set;
         }
 
         /// <inheritdoc />
@@ -73,18 +98,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         #endregion
 
         #region Fields
-        private readonly DbConnectionPoolIdentity _identity;
-
-        private readonly DbConnectionFactory _connectionFactory;
-        private readonly DbConnectionPoolGroup _connectionPoolGroup;
-        private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
-        private DbConnectionPoolProviderInfo _connectionPoolProviderInfo;
-
-        /// <summary>
-        /// The private member which carries the set of authenticationcontexts for this pool (based on the user's identity).
-        /// </summary>
-        private readonly ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext> _pooledDbAuthenticationContexts;
-
         // Prevents synchronous operations which depend on async operations on managed
         // threads from blocking on all available threads, which would stop async tasks
         // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
@@ -124,12 +137,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             State = Initializing;
 
-            _connectionFactory = connectionFactory;
-            _connectionPoolGroup = connectionPoolGroup;
-            _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
-            _connectionPoolProviderInfo = connectionPoolProviderInfo;
-            _identity = identity;
-            _pooledDbAuthenticationContexts = new ConcurrentDictionary<
+            ConnectionFactory = connectionFactory;
+            PoolGroup = connectionPoolGroup;
+            PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
+            ProviderInfo = connectionPoolProviderInfo;
+            Identity = identity;
+            AuthenticationContexts = new ConcurrentDictionary<
                 DbConnectionPoolAuthenticationContextKey,
                 DbConnectionPoolAuthenticationContext>(
                     concurrencyLevel: 4 * Environment.ProcessorCount,
@@ -512,8 +525,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     DbConnectionInternal? newConnection = ConnectionFactory.CreatePooledConnection(
                         this,
                         owningConnection,
-                        _connectionPoolGroup.ConnectionOptions,
-                        _connectionPoolGroup.PoolKey,
+                        PoolGroup.ConnectionOptions,
+                        PoolGroup.PoolKey,
                         userOptions);
 
                     if (newConnection == null)
