@@ -22,6 +22,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool IsEnabledTransientError { get; set; }
 
         /// <summary>
+        /// Routing destination protocol
+        /// </summary>
+        public string FailoverPartner { get; set; }
+
+        /// <summary>
         /// Constructor to initialize
         /// </summary>
         public TransientFaultTDSServerArguments()
@@ -29,6 +34,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             Number = 0;
             Message = string.Empty;
             IsEnabledTransientError = false;
+            FailoverPartner = string.Empty;
         }
     }
 }

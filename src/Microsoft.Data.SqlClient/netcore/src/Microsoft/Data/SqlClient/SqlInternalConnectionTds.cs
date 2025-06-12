@@ -1946,10 +1946,10 @@ namespace Microsoft.Data.SqlClient
                         throw;  // Caller will call LoginFailure()
                     }
 
-                    if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
+                    /*if (!ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource) && IsConnectionDoomed)
                     {
                         throw;
-                    }
+                    }*/
 
                     if (1 == attemptNumber % 2)
                     {
