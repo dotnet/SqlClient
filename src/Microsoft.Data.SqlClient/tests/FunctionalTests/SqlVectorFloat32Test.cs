@@ -26,14 +26,14 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void Constructor_WithEmptyValues_ShouldThrow()
         {
-            Assert.Throws<ArgumentException>(() => new SqlVectorFloat32(Array.Empty<float>()));
+            Assert.Throws<ArgumentException>(() => new SqlVectorFloat32(values: Array.Empty<float>()));
         }
 
         [Fact]
         public void Constructor_WithValues_ShouldSetProperties()
         {
             float[] data = new float[] { 1.1f, 2.2f };
-            var vec = new SqlVectorFloat32(data);
+            var vec = new SqlVectorFloat32(values: data);
             Assert.Equal(2, vec.Length);
             Assert.False(vec.IsNull);
             Assert.Equal(data, vec.Values);
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Constructor_WithReadOnlyMem_ShouldSetProperties()
         {
             ReadOnlyMemory<float> data = new float[] { 1.1f, 2.2f, 3.3f };
-            var vec = new SqlVectorFloat32(data);
+            var vec = new SqlVectorFloat32(values: data);
             Assert.Equal(3, vec.Length);
             Assert.False(vec.IsNull);
             Assert.Equal(data.ToArray(), vec.Values);
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ToString_ShouldReturnJsonString()
         {
             float[] data = new float[] { 3.14f };
-            var vec = new SqlVectorFloat32(data);
+            var vec = new SqlVectorFloat32(values: data);
             string json = vec.ToString();
             Assert.Contains("3.14", json);
         }

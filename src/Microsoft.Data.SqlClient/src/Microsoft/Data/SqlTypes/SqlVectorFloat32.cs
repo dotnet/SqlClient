@@ -59,7 +59,6 @@ namespace Microsoft.Data.SqlTypes
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ctor2/*' />
         public SqlVectorFloat32(ReadOnlyMemory<float> values)
-        : this()
         {
             if (values.IsEmpty)
             {
@@ -67,6 +66,8 @@ namespace Microsoft.Data.SqlTypes
             }
 
             _elementCount = values.Length;
+            _elementType = (byte)MetaType.SqlVectorElementType.Float32;
+            _elementSize = sizeof(float);
             _rawBytes = new byte[TdsEnums.VECTOR_HEADER_SIZE + _elementCount * sizeof(float)];
             InitializeVectorBytes(values);
         }
