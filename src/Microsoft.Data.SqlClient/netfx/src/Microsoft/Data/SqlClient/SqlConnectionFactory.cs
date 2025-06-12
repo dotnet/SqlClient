@@ -16,12 +16,11 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlConnectionFactory : DbConnectionFactory
     {
+        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
+        
         private SqlConnectionFactory() : base()
         {
         }
-
-        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
-        private const string _metaDataXml = "MetaDataXml";
 
         override public DbProviderFactory ProviderFactory
         {
@@ -232,6 +231,12 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
+        internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions)
+        {
+            return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
+        }
+        
         override protected DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             Debug.Assert(internalConnection != null, "internalConnection may not be null.");
@@ -244,12 +249,6 @@ namespace Microsoft.Data.SqlClient
             return new SqlMetaDataFactory(xmlStream,
                                           internalConnection.ServerVersion,
                                           internalConnection.ServerVersion); //internalConnection.ServerVersionNormalized);
-        }
-
-        internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
-            DbConnectionOptions connectionOptions)
-        {
-            return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
         }
 
         internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)

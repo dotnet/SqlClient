@@ -6,6 +6,8 @@ using System;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
@@ -15,15 +17,12 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal partial class SqlConnectionFactory : DbConnectionFactory
     {
-
-        private const string _metaDataXml = "MetaDataXml";
-
+        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
+        
         private SqlConnectionFactory() : base()
         {
             SubscribeToAssemblyLoadContextUnload();
         }
-
-        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
 
         override public DbProviderFactory ProviderFactory
         {
@@ -350,7 +349,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        partial void SubscribeToAssemblyLoadContextUnload();
+        private void SqlConnectionFactoryAssemblyLoadContext_Unloading(AssemblyLoadContext obj)
+        {
+            Unload(obj, EventArgs.Empty);
+        }
+        
+        private void SubscribeToAssemblyLoadContextUnload()
+        {
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
+                SqlConnectionFactoryAssemblyLoadContext_Unloading;
+        }
     }
 }
 
