@@ -208,8 +208,181 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             else
             {
                 var written = _idleConnectionWriter.TryWrite(obj);
-                Debug.Assert(written);
+                Debug.Assert(written, "Failed to write returning connection to the idle channel.");
             }
+        }
+
+        /// <inheritdoc />
+        public void Shutdown()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public void Startup()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <inheritdoc />
+        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection)
+        {
+            // If taskCompletionSource is not null, we are in an async context.
+            if (taskCompletionSource is not null)
+            {
+
+                // Early exit if the task is already completed.
+                if (taskCompletionSource.Task.IsCompleted)
+                {
+                    connection = null;
+                    return false;
+                }
+
+                /* 
+                 * This is ugly, but async anti-patterns above and below us in the stack necessitate a fresh task to be
+                 * created. Ideally we would just return the Task from GetInternalConnection and let the caller await 
+                 * it as needed, but instead we need to signal to the provided TaskCompletionSource when the connection
+                 * is established. This pattern has implications for connection open retry logic that are intricate 
+                 * enough to merit dedicated work. For now, callers that need to open many connections asynchronously 
+                 * and in parallel *must* pre-prevision threads in the managed thread pool to avoid exhaustion and 
+                 * timeouts.
+                 * 
+                 * Also note that we don't have access to the cancellation token passed by the caller to the original 
+                 * OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
+                 * is cancelled. We can only cancel based on our own timeout, which is set to the owningObject's 
+                 * ConnectionTimeout. 
+                 */
+                Task.Run(async () =>
+                {
+                    if (taskCompletionSource.Task.IsCompleted)
+                    {
+                        return;
+                    }
+
+                    // We're potentially on a new thread, so we need to properly set the ambient transaction.
+                    // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
+                    // so that we can access it here. Read: area for improvement.
+                    ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
+
+                    try
+                    {
+                        var connection = await GetInternalConnection(
+                            owningObject, 
+                            userOptions, 
+                            TimeSpan.FromSeconds(owningObject.ConnectionTimeout), 
+                            async: true, 
+                            CancellationToken.None
+                        ).ConfigureAwait(false);
+                        taskCompletionSource.SetResult(connection);
+                    }
+                    catch (Exception e)
+                    {
+                        taskCompletionSource.SetException(e);
+                    }
+                });
+
+                connection = null;
+                return false;
+            }
+            else
+            {
+                var task = GetInternalConnection(
+                    owningObject, 
+                    userOptions, 
+                    TimeSpan.FromSeconds(owningObject.ConnectionTimeout), 
+                    async: false, 
+                    CancellationToken.None);
+
+                // When running synchronously, we are guaranteed that the task is already completed.
+                // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
+                // to GetInternalConnection, which means it will not use Task.Run or any async-await logic that would
+                // schedule tasks on the managed threadpool.
+                connection = task.ConfigureAwait(false).GetAwaiter().GetResult();
+                return connection is not null;
+            }
+        }
+
+        /// <inheritdoc/>
+        internal Task<DbConnectionInternal?> OpenNewInternalConnection(DbConnection? owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
+        {
+            // As long as we're under max capacity, attempt to increase the connection count and open a new connection.
+            for (var numConnections = _numConnections; numConnections < MaxPoolSize; numConnections = _numConnections)
+            {
+                // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
+                if (Interlocked.CompareExchange(ref _numConnections, numConnections + 1, numConnections) != numConnections)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    // We've managed to increase the open counter, open a physical connection.
+                    var startTime = Stopwatch.GetTimestamp();
+
+                    /* TODO: This blocks the thread for several network calls!
+                     * When running async, the blocked thread is one allocated from the managed thread pool (due to use of Task.Run above).
+                     * This is why it's critical for async callers to pre-provision threads in the managed thread pool.
+                     * Our options are limited because DbConnectionInternal doesn't support an async open.
+                     * It's better to block this thread and keep throughput high than to queue all of our opens onto a single worker thread.
+                     * Add an async path when this support is added to DbConnectionInternal.
+                     */
+                    DbConnectionInternal? newConnection = ConnectionFactory.CreatePooledConnection(
+                        this,
+                        owningConnection,
+                        PoolGroup.ConnectionOptions,
+                        PoolGroup.PoolKey,
+                        userOptions);
+
+                    if (newConnection == null)
+                    {
+                        throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);
+                    }
+                    if (!newConnection.CanBePooled)
+                    {
+                        throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);
+                    }
+
+                    newConnection.PrePush(null);
+
+                    int i;
+                    for (i = 0; i < MaxPoolSize; i++)
+                    {
+                        if (Interlocked.CompareExchange(ref _connections[i], newConnection, null) == null)
+                        {
+                            break;
+                        }
+                    }
+
+                    Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connections} when opening.");
+                    if (i == MaxPoolSize)
+                    {
+                        //TODO: generic exception?
+                        throw new Exception($"Could not find free slot in {_connections} when opening. Please report a bug.");
+                    }
+
+                    return Task.FromResult<DbConnectionInternal?>(newConnection);
+                }
+                catch
+                {
+                    // Physical open failed, decrement the open and busy counter back down.
+                    Interlocked.Decrement(ref _numConnections);
+
+                    // In case there's a waiting attempt on the channel, we write a null to the idle connection channel
+                    // to wake it up, so it will try opening (and probably throw immediately)
+                    // Statement order is important since we have synchronous completions on the channel.
+                    _idleConnectionWriter.TryWrite(null);
+
+                    throw;
+                }
+            }
+
+            return Task.FromResult<DbConnectionInternal?>(null);
         }
 
         /// <summary>
@@ -274,102 +447,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
-        /// Sets connection state and activates the connection for use. Should always be called after a connection is created or retrieved from the pool.
+        /// Tries to read a connection from the idle connection channel.
         /// </summary>
-        /// <param name="owningObject">The owning DbConnection instance.</param>
-        /// <param name="obj">The DbConnectionInternal to be activated.</param>
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj)
+        /// <returns>Returns true if a valid idles connection is found, otherwise returns false.</returns>
+        private DbConnectionInternal? GetIdleConnection()
         {
-            lock (obj)
-            {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
-                obj.PostPop(owningObject);
-            }
-
-            try
+            while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
             {
-                //TODO: pass through transaction
-                obj.ActivateConnection(null);
-            }
-            catch
-            {
-                // if Activate throws an exception
-                // put it back in the pool or have it properly disposed of
-                this.ReturnInternalConnection(obj, owningObject);
-                throw;
-            }
-        }
-
-        /// <inheritdoc />
-        public void Shutdown()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public void Startup()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, DbConnectionOptions userOptions, out DbConnectionInternal? connection)
-        {
-            // If taskCompletionSource is not null, we are in an async context.
-            if (taskCompletionSource is not null)
-            {
-                /* This is ugly, but async anti-patterns above and below us in the stack necessitate a fresh task to be created.
-                 * Ideally we would just return the Task from GetInternalConnection and let the caller await it as needed,
-                 * but instead we need to signal to the provided TaskCompletionSource when the connection is established.
-                 * This pattern has implications for connection open retry logic that are intricate enough to merit
-                 * dedicated work. For now, callers that need to open many connections asynchronously and in parallel *must*
-                 * pre-prevision threads in the managed thread pool to avoid exhaustion and timeouts.
-                 * 
-                 * Also note that we don't have access to the cancellation token passed by the caller to the original OpenAsync call.
-                 * This means that we cannot cancel the connection open operation if the caller's token is cancelled. We can only cancel
-                 * based on our own timeout, which is set to the owningObject's ConnectionTimeout. Some 
-                 */
-                Task.Run(async () =>
+                if (CheckConnection(connection))
                 {
-                    if (taskCompletionSource.Task.IsCompleted)                     {
-                        // If the task is already completed, we don't need to do anything.
-                        return;
-                    }
-
-                    // We're potentially on a new thread, so we need to properly set the ambient transaction.
-                    // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
-                    // so that we can access it here. Read: area for improvement.
-                    ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
-
-                    try
-                    {
-                        var connection = await GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), true, CancellationToken.None).ConfigureAwait(false);
-                        taskCompletionSource.SetResult(connection);
-                    }
-                    catch (Exception e)
-                    {
-                        taskCompletionSource.SetException(e);
-                    }
-                });
-                connection = null;
-                return false;
+                    return connection;
+                }
             }
-            else
-            {
-                var task = GetInternalConnection(owningObject, userOptions, TimeSpan.FromSeconds(owningObject.ConnectionTimeout), false, CancellationToken.None);
 
-                // When running synchronously, we are guaranteed that the task is already completed.
-                // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
-                // to GetInternalConnection, which means it will not use Task.Run or any async-await logic that would
-                // schedule tasks on the managed threadpool.
-                connection = task.ConfigureAwait(false).GetAwaiter().GetResult();
-                return connection is not null;
-            }
+            return null;
         }
 
         private async Task<DbConnectionInternal> GetInternalConnection(DbConnection owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
@@ -377,13 +468,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // First pass
             //
             // Try to get an idle connection from the channel or open a new one.
-            DbConnectionInternal? connection = null;
-
-            connection ??= GetIdleConnection();
+            DbConnectionInternal? connection = GetIdleConnection();
 
             connection ??= await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
 
-            if (connection != null)
+            if (connection is not null)
             {
                 PrepareConnection(owningConnection, connection);
                 return connection;
@@ -401,7 +490,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             try
             {
                 // Continue looping around until we create/retrieve a connection or the timeout expires.
-                while (true)
+                while (true && !finalToken.IsCancellationRequested)
                 {
                     try
                     {
@@ -435,7 +524,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             }
                         }
 
-                        if (connection != null && CheckConnection(connection))
+                        if (connection is not null && CheckConnection(connection))
                         {
                             PrepareConnection(owningConnection, connection);
                             return connection;
@@ -465,113 +554,45 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // so try to open a new connection and if that fails, loop again.
                     connection ??= await OpenNewInternalConnection(owningConnection, userOptions, timeout, async, cancellationToken).ConfigureAwait(false);
 
-                    if (connection != null)
+                    if (connection is not null)
                     {
                         PrepareConnection(owningConnection, connection);
                         return connection;
                     }
                 }
+
+                throw ADP.PooledOpenTimeout();
             }
             finally
             {
-                //TODO: log error
+                //TODO: metrics
             }
         }
 
         /// <summary>
-        /// Tries to read a connection from the idle connection channel.
+        /// Sets connection state and activates the connection for use. Should always be called after a connection is created or retrieved from the pool.
         /// </summary>
-        /// <returns>Returns true if a valid idles connection is found, otherwise returns false.</returns>
-        /// TODO: profile the inlining to see if it's necessary (comment copied from npgsql implementation)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private DbConnectionInternal? GetIdleConnection()
+        /// <param name="owningObject">The owning DbConnection instance.</param>
+        /// <param name="obj">The DbConnectionInternal to be activated.</param>
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj)
         {
-            while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
-            {
-                if (CheckConnection(connection))
-                {
-                    return connection;
-                }
+            lock (obj)
+            {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
+                obj.PostPop(owningObject);
             }
 
-            return null;
-        }
-
-        /// <inheritdoc/>
-        internal Task<DbConnectionInternal?> OpenNewInternalConnection(DbConnection? owningConnection, DbConnectionOptions userOptions, TimeSpan timeout, bool async, CancellationToken cancellationToken)
-        {
-            // As long as we're under max capacity, attempt to increase the connection count and open a new connection.
-            for (var numConnections = _numConnections; numConnections < MaxPoolSize; numConnections = _numConnections)
+            try
             {
-                // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
-                if (Interlocked.CompareExchange(ref _numConnections, numConnections + 1, numConnections) != numConnections)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    // We've managed to increase the open counter, open a physical connection.
-                    var startTime = Stopwatch.GetTimestamp();
-
-                    /* TODO: This blocks the thread for several network calls!
-                     * When running async, the blocked thread is one allocated from the managed thread pool (due to use of Task.Run above).
-                     * This is why it's critical for async callers to pre-provision threads in the managed thread pool.
-                     * Our options are limited because DbConnectionInternal doesn't support an async open.
-                     * It's better to block this thread and keep throughput high than to queue all of our opens onto a single worker thread.
-                     * Add an async path when this support is added to DbConnectionInternal.
-                     */
-                    DbConnectionInternal? newConnection = ConnectionFactory.CreatePooledConnection(
-                        this,
-                        owningConnection,
-                        PoolGroup.ConnectionOptions,
-                        PoolGroup.PoolKey,
-                        userOptions);
-
-                    if (newConnection == null)
-                    {
-                        throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
-                    }
-                    if (!newConnection.CanBePooled)
-                    {
-                        throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);        // CreateObject succeeded, but non-poolable object
-                    }
-
-                    newConnection.PrePush(null);
-
-                    int i;
-                    for (i = 0; i < MaxPoolSize; i++)
-                    {
-                        if (Interlocked.CompareExchange(ref _connections[i], newConnection, null) == null)
-                        {
-                            break;
-                        }
-                    }
-
-                    Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connections} when opening.");
-                    if (i == MaxPoolSize)
-                    {
-                        //TODO: generic exception?
-                        throw new Exception($"Could not find free slot in {_connections} when opening. Please report a bug.");
-                    }
-
-                    return Task.FromResult<DbConnectionInternal?>(newConnection);
-                }
-                catch
-                {
-                    // Physical open failed, decrement the open and busy counter back down.
-                    Interlocked.Decrement(ref _numConnections);
-
-                    // In case there's a waiting attempt on the channel, we write a null to the idle connection channel
-                    // to wake it up, so it will try opening (and probably throw immediately)
-                    // Statement order is important since we have synchronous completions on the channel.
-                    _idleConnectionWriter.TryWrite(null);
-
-                    throw;
-                }
+                //TODO: pass through transaction
+                obj.ActivateConnection(null);
             }
-
-            return Task.FromResult<DbConnectionInternal?>(null);
+            catch
+            {
+                // if Activate throws an exception
+                // put it back in the pool or have it properly disposed of
+                this.ReturnInternalConnection(obj, owningObject);
+                throw;
+            }
         }
         #endregion
     }
