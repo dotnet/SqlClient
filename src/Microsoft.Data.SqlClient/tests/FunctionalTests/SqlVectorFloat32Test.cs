@@ -5,7 +5,7 @@ using System.Reflection;
 using Microsoft.Data.SqlTypes;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlVectorFloat32Test
     {
@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [Fact]
         public void Constructor_WithEmptyValues_ShouldThrow()
         {
-            Assert.Throws<ArgumentException>(() => new SqlVectorFloat32(ReadOnlyMemory<float>.Empty));
+            Assert.Throws<ArgumentException>(() => new SqlVectorFloat32(Array.Empty<float>()));
         }
 
         [Fact]
@@ -37,6 +37,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(2, vec.Length);
             Assert.False(vec.IsNull);
             Assert.Equal(data, vec.Values);
+        }
+
+        [Fact]
+        public void Constructor_WithReadOnlyMem_ShouldSetProperties()
+        {
+            ReadOnlyMemory<float> data = new float[] { 1.1f, 2.2f, 3.3f };
+            var vec = new SqlVectorFloat32(data);
+            Assert.Equal(3, vec.Length);
+            Assert.False(vec.IsNull);
+            Assert.Equal(data.ToArray(), vec.Values);
         }
 
         [Fact]
