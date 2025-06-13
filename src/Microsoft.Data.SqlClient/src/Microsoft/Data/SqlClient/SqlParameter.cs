@@ -739,6 +739,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ParameterIsSqlType)
                     {
+                        if (_sqlBufferReturnValue.VariantInternalStorageType == SqlBuffer.StorageType.Vector)
+                        {
+                            return GetVectorReturnValue();
+                        }
                         return _sqlBufferReturnValue.SqlValue;
                     }
                     return _sqlBufferReturnValue.Value;
@@ -755,6 +759,30 @@ namespace Microsoft.Data.SqlClient
                 SetFlag(SqlParameterFlags.IsNull, _value == null || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
+            }
+        }
+
+        private object GetVectorReturnValue()
+        {
+            byte elementType = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementCount;
+            
+            if (IsNull)
+            {
+                 switch (elementType)
+                 {
+                     case (byte)MetaType.SqlVectorElementType.Float32:
+                         return new SqlVectorFloat32(elementCount);
+                     default:
+                        throw SQL.VectorTypeNotSupported(elementType.ToString());
+                 }
+             }
+             switch (elementType)
+             {
+                case (byte)MetaType.SqlVectorElementType.Float32:
+                    return new SqlVectorFloat32((byte[])_sqlBufferReturnValue.Value);
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
         }
 
@@ -1603,6 +1631,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Image:
                         case SqlDbType.Timestamp:
+                        case SqlDbTypeExtensions.Vector:
                             coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                             _actualSize = (ShouldSerializeSize() ? Size : 0);
                             _actualSize = ((ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize);
@@ -1896,6 +1925,11 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_value == null || _value == DBNull.Value))
+                {
+                    _value = DBNull.Value;
+                    return MetaType.GetDefaultMetaType();
+                }
                 return _metaType;
             }
             if (_value != null && DBNull.Value != _value)
@@ -1998,6 +2032,11 @@ namespace Microsoft.Data.SqlClient
             if (metaType.SqlDbType != SqlDbType.Udt && Direction != ParameterDirection.Output)
             {
                 GetCoercedValue();
+            }
+
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && _value == null && (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
+            {
+                throw ADP.NullOutputParameterValueForVector();
             }
 
             //check if the UdtTypeName is specified for Udt params
@@ -2148,6 +2187,10 @@ namespace Microsoft.Data.SqlClient
                     return 0;
                 }
                 return sqlString.Value.Length;
+            }
+            if (value is ISqlVector sqlVector)
+            {
+                return TdsEnums.VECTOR_HEADER_SIZE + (sqlVector.Length * sqlVector.ElementSize);
             }
             if (value is SqlChars sqlChars)
             {
@@ -2320,6 +2363,10 @@ namespace Microsoft.Data.SqlClient
                         value = ((TimeOnly)value).ToTimeSpan();
                     }
 #endif
+                    else if (currentType == typeof(SqlVectorFloat32))
+                    {
+                        value = (value as ISqlVector).VectorPayload;
+                    }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
                         (
