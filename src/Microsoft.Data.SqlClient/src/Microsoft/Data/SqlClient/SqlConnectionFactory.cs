@@ -103,131 +103,59 @@ namespace Microsoft.Data.SqlClient
                 poolGroup?.Clear();
             }
         }
-        
-        #endregion
-        
-        protected override DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-            IDbConnectionPool pool,
+
+        internal SqlInternalConnectionTds CreateNonPooledConnection(
             DbConnection owningConnection,
+            DbConnectionPoolGroup poolGroup,
             DbConnectionOptions userOptions)
         {
-            SqlConnectionString opt = (SqlConnectionString)options;
-            SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
-            SessionData recoverySessionData = null;
+            Debug.Assert(owningConnection is not null, "null owningConnection?");
+            Debug.Assert(poolGroup is not null, "null poolGroup?");
 
-            SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
-            bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
-
-            SqlConnectionString userOpt = null;
-            if (userOptions != null)
+            SqlInternalConnectionTds newConnection = CreateConnection(
+                poolGroup.ConnectionOptions,
+                poolGroup.PoolKey,
+                poolGroup.ProviderInfo,
+                pool: null,
+                owningConnection,
+                userOptions);
+            if (newConnection is not null)
             {
-                userOpt = (SqlConnectionString)userOptions;
+                SqlClientEventSource.Metrics.HardConnectRequest();
+                newConnection.MakeNonPooledObject(owningConnection);
             }
-            else if (sqlOwningConnection != null)
-            {
-                userOpt = (SqlConnectionString)(sqlOwningConnection.UserConnectionOptions);
-            }
-
-            if (sqlOwningConnection != null)
-            {
-                recoverySessionData = sqlOwningConnection._recoverySessionData;
-            }
-
-            bool redirectedUserInstance = false;
-            DbConnectionPoolIdentity identity = null;
-
-            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security
-            // or active directory integrated security.
-            // Used by notifications.
-            if (opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated)
-            {
-                if (pool != null)
-                {
-                    identity = pool.Identity;
-                }
-                else
-                {
-                    identity = DbConnectionPoolIdentity.GetCurrent();
-                }
-            }
-
-            // FOLLOWING IF BLOCK IS ENTIRELY FOR SSE USER INSTANCES
-            // If "user instance=true" is in the connection string, we're using SSE user instances
-            if (opt.UserInstance)
-            {
-                // opt.DataSource is used to create the SSE connection
-                redirectedUserInstance = true;
-                string instanceName;
-
-                if (pool == null || (pool != null && pool.Count <= 0))
-                { // Non-pooled or pooled and no connections in the pool.
-                    SqlInternalConnectionTds sseConnection = null;
-                    try
-                    {
-                        // We throw an exception in case of a failure
-                        // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
-                        //       This first connection is established to SqlExpress to get the instance name
-                        //       of the UserInstance.
-                        SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
-                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling);
-                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
-                        instanceName = sseConnection.InstanceName;
-
-                        // Set future transient fault handling based on connection options
-                        sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
-
-                        if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
-                        {
-                            throw SQL.NonLocalSSEInstance();
-                        }
-
-                        if (pool != null)
-                        { // Pooled connection - cache result
-                            SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
-                            // No lock since we are already in creation mutex
-                            providerInfo.InstanceName = instanceName;
-                        }
-                    }
-                    finally
-                    {
-                        if (sseConnection != null)
-                        {
-                            sseConnection.Dispose();
-                        }
-                    }
-                }
-                else
-                { // Cached info from pool.
-                    SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
-                    // No lock since we are already in creation mutex
-                    instanceName = providerInfo.InstanceName;
-                }
-
-                // NOTE: Here connection option opt is cloned to set 'instanceName=<UserInstanceName>' that was
-                //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
-                // options immutable - stored in global hash - don't modify
-                opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
-                poolGroupProviderInfo = null; // null so we do not pass to constructor below...
-            }
-
-            return new SqlInternalConnectionTds(
-                identity,
-                opt,
-                key.Credential,
-                poolGroupProviderInfo,
-                newPassword: string.Empty,
-                newSecurePassword: null,
-                redirectedUserInstance,
-                userOpt,
-                recoverySessionData,
-                applyTransientFaultHandling,
-                key.AccessToken,
-                pool,
-                key.AccessTokenCallback);
+            
+            SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}, Non-pooled database connection created.", ObjectId);
+            return newConnection;
         }
+
+        internal SqlInternalConnectionTds CreatePooledConnection(
+            DbConnection owningConnection,
+            IDbConnectionPool pool,
+            DbConnectionPoolKey poolKey,
+            DbConnectionOptions options,
+            DbConnectionOptions userOptions)
+        {
+            Debug.Assert(pool != null, "null pool?");
+
+            SqlInternalConnectionTds newConnection = CreateConnection(
+                options,
+                poolKey, // @TODO: is pool.PoolGroup.Key the same thing?
+                pool.PoolGroup.ProviderInfo,
+                pool,
+                owningConnection,
+                userOptions);
+            if (newConnection is not null)
+            {
+                SqlClientEventSource.Metrics.HardConnectRequest();
+                newConnection.MakePooledConnection(pool);
+            }
+            
+            SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
+            return newConnection;
+        }
+        
+        #endregion
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
         {
@@ -404,6 +332,132 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion);
         }
 
+        #region Private Methods
+        
+        // @TODO: I think this could be broken down into methods more specific to use cases above
+        private static SqlInternalConnectionTds CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection,
+            DbConnectionOptions userOptions)
+        {
+            SqlConnectionString opt = (SqlConnectionString)options;
+            SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
+            SessionData recoverySessionData = null;
+
+            SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
+            bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
+
+            SqlConnectionString userOpt = null;
+            if (userOptions != null)
+            {
+                userOpt = (SqlConnectionString)userOptions;
+            }
+            else if (sqlOwningConnection != null)
+            {
+                userOpt = (SqlConnectionString)(sqlOwningConnection.UserConnectionOptions);
+            }
+
+            if (sqlOwningConnection != null)
+            {
+                recoverySessionData = sqlOwningConnection._recoverySessionData;
+            }
+
+            bool redirectedUserInstance = false;
+            DbConnectionPoolIdentity identity = null;
+
+            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security
+            // or active directory integrated security.
+            // Used by notifications.
+            if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+            {
+                if (pool != null)
+                {
+                    identity = pool.Identity;
+                }
+                else
+                {
+                    identity = DbConnectionPoolIdentity.GetCurrent();
+                }
+            }
+
+            // FOLLOWING IF BLOCK IS ENTIRELY FOR SSE USER INSTANCES
+            // If "user instance=true" is in the connection string, we're using SSE user instances
+            if (opt.UserInstance)
+            {
+                // opt.DataSource is used to create the SSE connection
+                redirectedUserInstance = true;
+                string instanceName;
+
+                if (pool == null || (pool != null && pool.Count <= 0))
+                { // Non-pooled or pooled and no connections in the pool.
+                    SqlInternalConnectionTds sseConnection = null;
+                    try
+                    {
+                        // We throw an exception in case of a failure
+                        // NOTE: Cloning connection option opt to set 'UserInstance=True' and 'Enlist=False'
+                        //       This first connection is established to SqlExpress to get the instance name
+                        //       of the UserInstance.
+                        SqlConnectionString sseopt = new SqlConnectionString(opt, opt.DataSource, userInstance: true, setEnlistValue: false);
+                        sseConnection = new SqlInternalConnectionTds(identity, sseopt, key.Credential, null, "", null, false, applyTransientFaultHandling: applyTransientFaultHandling);
+                        // NOTE: Retrieve <UserInstanceName> here. This user instance name will be used below to connect to the Sql Express User Instance.
+                        instanceName = sseConnection.InstanceName;
+
+                        // Set future transient fault handling based on connection options
+                        sqlOwningConnection._applyTransientFaultHandling = opt != null && opt.ConnectRetryCount > 0;
+
+                        if (!instanceName.StartsWith("\\\\.\\", StringComparison.Ordinal))
+                        {
+                            throw SQL.NonLocalSSEInstance();
+                        }
+
+                        if (pool != null)
+                        { // Pooled connection - cache result
+                            SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+                            // No lock since we are already in creation mutex
+                            providerInfo.InstanceName = instanceName;
+                        }
+                    }
+                    finally
+                    {
+                        if (sseConnection != null)
+                        {
+                            sseConnection.Dispose();
+                        }
+                    }
+                }
+                else
+                { // Cached info from pool.
+                    SqlConnectionPoolProviderInfo providerInfo = (SqlConnectionPoolProviderInfo)pool.ProviderInfo;
+                    // No lock since we are already in creation mutex
+                    instanceName = providerInfo.InstanceName;
+                }
+
+                // NOTE: Here connection option opt is cloned to set 'instanceName=<UserInstanceName>' that was
+                //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
+                // options immutable - stored in global hash - don't modify
+                opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
+                poolGroupProviderInfo = null; // null so we do not pass to constructor below...
+            }
+
+            return new SqlInternalConnectionTds(
+                identity,
+                opt,
+                key.Credential,
+                poolGroupProviderInfo,
+                newPassword: string.Empty,
+                newSecurePassword: null,
+                redirectedUserInstance,
+                userOpt,
+                recoverySessionData,
+                applyTransientFaultHandling,
+                key.AccessToken,
+                pool,
+                key.AccessTokenCallback);
+        }
+        
         #if NET
         private void Unload(object sender, EventArgs e)
         {
@@ -428,6 +482,8 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionFactoryAssemblyLoadContext_Unloading;
         }
         #endif
+        
+        #endregion
     }
 }
 

@@ -746,7 +746,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
+                newObj = _connectionFactory.CreatePooledConnection(
+                    owningObject,
+                    this,
+                    _connectionPoolGroup.PoolKey,
+                    _connectionPoolGroup.ConnectionOptions,
+                    userOptions);
                 if (newObj == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object

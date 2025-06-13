@@ -18,11 +18,8 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        
-
-        
-
-        
+        internal abstract DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions);
 
         internal abstract DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(
             DbConnectionOptions connectionOptions);
@@ -34,45 +31,7 @@ namespace Microsoft.Data.ProviderBase
             cacheMetaDataFactory = false;
             throw ADP.NotSupported();
         }
-
-        internal DbConnectionInternal CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, DbConnectionOptions userOptions)
-        {
-            Debug.Assert(owningConnection != null, "null owningConnection?");
-            Debug.Assert(poolGroup != null, "null poolGroup?");
-
-            DbConnectionOptions connectionOptions = poolGroup.ConnectionOptions;
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo = poolGroup.ProviderInfo;
-            DbConnectionPoolKey poolKey = poolGroup.PoolKey;
-
-            DbConnectionInternal newConnection = CreateConnection(connectionOptions, poolKey, poolGroupProviderInfo, null, owningConnection, userOptions);
-            if (newConnection != null)
-            {
-                SqlClientEventSource.Metrics.HardConnectRequest();
-                newConnection.MakeNonPooledObject(owningConnection);
-            }
-            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.CreateNonPooledConnection|RES|CPOOL> {0}, Non-pooled database connection created.", ObjectID);
-            return newConnection;
-        }
-
-        internal DbConnectionInternal CreatePooledConnection(IDbConnectionPool pool, DbConnection owningObject, DbConnectionOptions options, DbConnectionPoolKey poolKey, DbConnectionOptions userOptions)
-        {
-            Debug.Assert(pool != null, "null pool?");
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo = pool.PoolGroup.ProviderInfo;
-            DbConnectionInternal newConnection = CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningObject, userOptions);
-
-            if (newConnection != null)
-            {
-                SqlClientEventSource.Metrics.HardConnectRequest();
-
-                newConnection.MakePooledConnection(pool);
-            }
-            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectID);
-            return newConnection;
-        }
-
-        internal abstract DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
-            DbConnectionOptions connectionOptions);
-
+        
         protected DbConnectionOptions FindConnectionOptions(DbConnectionPoolKey key)
         {
             Debug.Assert(key != null, "key cannot be null");
@@ -567,14 +526,6 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
             SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
         }
-
-        protected abstract DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-            IDbConnectionPool pool,
-            DbConnection owningConnection,
-            DbConnectionOptions userOptions);
 
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
