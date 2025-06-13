@@ -161,6 +161,103 @@ namespace Microsoft.Data.SqlClient
             return newConnection;
         }
 
+        internal DbConnectionPoolGroup GetConnectionPoolGroup(
+            DbConnectionPoolKey key,
+            DbConnectionPoolGroupOptions poolOptions,
+            ref DbConnectionOptions userConnectionOptions)
+        {
+            if (string.IsNullOrEmpty(key.ConnectionString))
+            {
+                return null;
+            }
+            
+            if (!_connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup connectionPoolGroup) || 
+                (connectionPoolGroup.IsDisabled && connectionPoolGroup.PoolGroupOptions != null))
+            {
+                // If we can't find an entry for the connection string in
+                // our collection of pool entries, then we need to create a
+                // new pool entry and add it to our collection.
+
+                DbConnectionOptions connectionOptions = CreateConnectionOptions(
+                    key.ConnectionString,
+                    userConnectionOptions);
+                if (connectionOptions is null)
+                {
+                    throw ADP.InternalConnectionError(ADP.ConnectionError.ConnectionOptionsMissing);
+                }
+
+                if (userConnectionOptions is null)
+                {
+					// We only allow one expansion on the connection string
+                    userConnectionOptions = connectionOptions;
+                    string expandedConnectionString = connectionOptions.Expand();
+
+                    // if the expanded string is same instance (default implementation), then use the already created options
+                    if ((object)expandedConnectionString != (object)key.ConnectionString)
+                    {
+                        // CONSIDER: caching the original string to reduce future parsing
+                        DbConnectionPoolKey newKey = (DbConnectionPoolKey)key.Clone();
+                        newKey.ConnectionString = expandedConnectionString;
+                        return GetConnectionPoolGroup(newKey, null, ref userConnectionOptions);
+                    }
+                }
+
+                if (poolOptions is null)
+                {
+                    if (connectionPoolGroup is not null)
+                    {
+                        // reusing existing pool option in case user originally used SetConnectionPoolOptions
+                        poolOptions = connectionPoolGroup.PoolGroupOptions;
+                    }
+                    else
+                    {
+                        // Note: may return null for non-pooled connections
+                        poolOptions = CreateConnectionPoolGroupOptions(connectionOptions);
+                    }
+                }
+
+                lock (this)
+                {
+                    if (!_connectionPoolGroups.TryGetValue(key, out connectionPoolGroup))
+                    {
+                        DbConnectionPoolGroup newConnectionPoolGroup =
+                            new DbConnectionPoolGroup(connectionOptions, key, poolOptions)
+                            {
+                                ProviderInfo = CreateConnectionPoolGroupProviderInfo(connectionOptions)
+                            };
+
+                        // build new dictionary with space for new connection string
+                        Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = 
+                            new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>(1 + _connectionPoolGroups.Count);
+                        foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in _connectionPoolGroups)
+                        {
+                            newConnectionPoolGroups.Add(entry.Key, entry.Value);
+                        }
+
+                        // lock prevents race condition with PruneConnectionPoolGroups
+                        newConnectionPoolGroups.Add(key, newConnectionPoolGroup);
+
+                        SqlClientEventSource.Metrics.EnterActiveConnectionPoolGroup();
+                        connectionPoolGroup = newConnectionPoolGroup;
+                        _connectionPoolGroups = newConnectionPoolGroups;
+                    }
+                    else
+                    {
+                        Debug.Assert(!connectionPoolGroup.IsDisabled, "Disabled pool entry discovered");
+                    }
+                }
+                
+                Debug.Assert(connectionPoolGroup != null, "how did we not create a pool entry?");
+                Debug.Assert(userConnectionOptions != null, "how did we not have user connection options?");
+            }
+            else if (userConnectionOptions is null)
+            {
+                userConnectionOptions = connectionPoolGroup.ConnectionOptions;
+            }
+            
+            return connectionPoolGroup;
+        }
+        
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
         {
             // Queue the pool up for release -- we'll clear it out and dispose of it as the last
@@ -704,6 +801,8 @@ namespace Microsoft.Data.SqlClient
             IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool(this);
             return connectionPool;
         }
+        
+        
         
         private void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
         {
