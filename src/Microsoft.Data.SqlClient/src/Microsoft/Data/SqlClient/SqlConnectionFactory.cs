@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
                 return SqlClientFactory.Instance;
             }
         }
-
+        
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
