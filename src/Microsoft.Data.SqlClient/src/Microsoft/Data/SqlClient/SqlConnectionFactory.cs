@@ -668,6 +668,39 @@ namespace Microsoft.Data.SqlClient
                 TaskScheduler.Default
             );
         }
+
+        private void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
+        {
+            // Decompose the state into the parameters we want
+            (CancellationTokenSource cts, TaskCompletionSource<DbConnectionInternal> tcs) =
+                (Tuple<CancellationTokenSource, TaskCompletionSource<DbConnectionInternal>>)state;
+            
+            cts.Dispose();
+
+            if (task.IsCanceled)
+            {
+                tcs.TrySetException(ADP.ExceptionWithStackTrace(ADP.NonPooledOpenTimeout()));
+            }
+            else if (task.IsFaulted)
+            {
+                tcs.TrySetException(task.Exception.InnerException);
+            }
+            else
+            {
+                if (!tcs.TrySetResult(task.Result))
+                {
+                    // The outer TaskCompletionSource was already completed
+                    // Which means that we don't know if someone has messed with the outer connection in the middle of creation
+                    // So the best thing to do now is to destroy the newly created connection
+                    task.Result.DoomThisConnection();
+                    task.Result.Dispose();
+                }
+                else
+                {
+                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
+                }
+            }
+        }
         
         #if NET
         private void Unload(object sender, EventArgs e)

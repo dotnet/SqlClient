@@ -47,39 +47,6 @@ namespace Microsoft.Data.ProviderBase
             return s_completedTask ?? (s_completedTask = Task.FromResult<DbConnectionInternal>(null));
         }
 
-        protected void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
-        {
-            Tuple<CancellationTokenSource, TaskCompletionSource<DbConnectionInternal>> parameters = (Tuple<CancellationTokenSource, TaskCompletionSource<DbConnectionInternal>>)state;
-            CancellationTokenSource source = parameters.Item1;
-            source.Dispose();
-
-            TaskCompletionSource<DbConnectionInternal> retryCompletionSource = parameters.Item2;
-
-            if (task.IsCanceled)
-            {
-                retryCompletionSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.NonPooledOpenTimeout()));
-            }
-            else if (task.IsFaulted)
-            {
-                retryCompletionSource.TrySetException(task.Exception.InnerException);
-            }
-            else
-            {
-                if (!retryCompletionSource.TrySetResult(task.Result))
-                {
-                    // The outer TaskCompletionSource was already completed
-                    // Which means that we don't know if someone has messed with the outer connection in the middle of creation
-                    // So the best thing to do now is to destroy the newly created connection
-                    task.Result.DoomThisConnection();
-                    task.Result.Dispose();
-                }
-                else
-                {
-                    SqlClientEventSource.Metrics.EnterNonPooledConnection();
-                }
-            }
-        }
-
         protected IDbConnectionPool GetConnectionPool(DbConnection owningObject, DbConnectionPoolGroup connectionPoolGroup)
         {
             // if poolgroup is disabled, it will be replaced with a new entry
