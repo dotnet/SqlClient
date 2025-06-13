@@ -50,7 +50,7 @@ namespace Microsoft.Data.ProviderBase
 
         public void ClearAllPools()
         {
-            using (TryEventScope.Create(nameof(DbConnectionFactory)))
+            using (TryEventScope.Create(nameof(SqlConnectionFactory)))
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
                 foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
@@ -399,7 +399,7 @@ namespace Microsoft.Data.ProviderBase
                 Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup?");
                 SetConnectionPoolGroup(owningObject, connectionPoolGroup);
             }
-            IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool(this);
+            IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool((SqlConnectionFactory)this);
             return connectionPool;
         }
 

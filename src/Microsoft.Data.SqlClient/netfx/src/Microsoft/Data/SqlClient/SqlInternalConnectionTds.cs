@@ -3081,10 +3081,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool TryReplaceConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
-        {
-            return base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
-        }
+        internal override bool TryReplaceConnection(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions) =>
+            base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
     }
 
     internal sealed class ServerInfo

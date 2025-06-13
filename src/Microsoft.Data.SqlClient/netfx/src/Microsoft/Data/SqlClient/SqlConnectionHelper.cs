@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
 {
     public sealed partial class SqlConnection : DbConnection
     {
-        private static readonly DbConnectionFactory _connectionFactory = SqlConnectionFactory.SingletonInstance;
+        private static readonly SqlConnectionFactory _connectionFactory = SqlConnectionFactory.SingletonInstance;
         internal static readonly System.Security.CodeAccessPermission ExecutePermission = SqlConnection.CreateExecutePermission();
 
         private DbConnectionOptions _userConnectionOptions;
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal DbConnectionFactory ConnectionFactory
+        internal SqlConnectionFactory ConnectionFactory
         {
             get
             {
