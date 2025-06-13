@@ -3,10 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
@@ -20,22 +23,49 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed class SqlConnectionFactory : DbConnectionFactory
     {
-        internal static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
+        #region Member Variables
         
-        private SqlConnectionFactory() : base()
+        private static readonly TimeSpan PruningDueTime = TimeSpan.FromMinutes(4);
+        private static readonly TimeSpan PruningPeriod = TimeSpan.FromSeconds(30);
+        
+        // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled
+        // connections to a maximum of Environment.ProcessorCount at a time.
+        private static Task<DbConnectionInternal> s_completedTask;
+        private static int s_objectTypeCount;
+        private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled =
+            new Task<DbConnectionInternal>[Environment.ProcessorCount];
+        private static uint s_pendingOpenNonPooledNext = 0;
+
+        private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
+        private readonly List<IDbConnectionPool> _poolsToRelease;
+        private readonly Timer _pruningTimer;
+        private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
+
+        #endregion
+        
+        #region Constructors
+        
+        private SqlConnectionFactory()
         {
+            _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
+            _poolsToRelease = new List<IDbConnectionPool>();
+            _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
+            _pruningTimer = ADP.UnsafeCreateTimer(
+                new TimerCallback(PruneConnectionPoolGroups),
+                state: null,
+                PruningDueTime,
+                PruningPeriod);
+            
             #if NET
             SubscribeToAssemblyLoadContextUnload();
             #endif
         }
+        
+        #endregion
 
-        public override DbProviderFactory ProviderFactory
-        {
-            get
-            {
-                return SqlClientFactory.Instance;
-            }
-        }
+        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
+
+        public DbProviderFactory ProviderFactory => SqlClientFactory.Instance;
         
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,

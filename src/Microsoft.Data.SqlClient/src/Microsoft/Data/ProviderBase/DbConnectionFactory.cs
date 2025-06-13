@@ -18,35 +18,7 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        private Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> _connectionPoolGroups;
-        private readonly List<IDbConnectionPool> _poolsToRelease;
-        private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
-        private readonly Timer _pruningTimer;
-
-        private const int PruningDueTime = 4 * 60 * 1000;           // 4 minutes
-        private const int PruningPeriod = 30 * 1000;           // thirty seconds
-
-        private static int _objectTypeCount; // EventSource counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
-
-        // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled connections to
-        // a maximum of Environment.ProcessorCount at a time.
-        private static uint s_pendingOpenNonPooledNext = 0;
-        private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled = new Task<DbConnectionInternal>[Environment.ProcessorCount];
-        private static Task<DbConnectionInternal> s_completedTask;
-
-        protected DbConnectionFactory()
-        {
-            _connectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>();
-            _poolsToRelease = new List<IDbConnectionPool>();
-            _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
-            _pruningTimer = CreatePruningTimer();
-        }
-
-        public abstract DbProviderFactory ProviderFactory
-        {
-            get;
-        }
 
         public void ClearAllPools()
         {
@@ -139,13 +111,6 @@ namespace Microsoft.Data.ProviderBase
 
         internal abstract DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
             DbConnectionOptions connectionOptions);
-
-        private Timer CreatePruningTimer() =>
-            ADP.UnsafeCreateTimer(
-                new TimerCallback(PruneConnectionPoolGroups),
-                null,
-                PruningDueTime,
-                PruningPeriod);
 
         protected DbConnectionOptions FindConnectionOptions(DbConnectionPoolKey key)
         {
