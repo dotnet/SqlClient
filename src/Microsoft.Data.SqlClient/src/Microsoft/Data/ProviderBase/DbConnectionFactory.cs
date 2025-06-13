@@ -18,8 +18,6 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
-
         public void ClearAllPools()
         {
             using (TryEventScope.Create(nameof(SqlConnectionFactory)))
@@ -479,7 +477,7 @@ namespace Microsoft.Data.ProviderBase
             return metaDataFactory;
         }
 
-        private void PruneConnectionPoolGroups(object state)
+        protected void PruneConnectionPoolGroups(object state)
         {
             // when debugging this method, expect multiple threads at the same time
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}", ObjectID);

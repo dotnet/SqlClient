@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
             _poolsToRelease = new List<IDbConnectionPool>();
             _poolGroupsToRelease = new List<DbConnectionPoolGroup>();
             _pruningTimer = ADP.UnsafeCreateTimer(
-                new TimerCallback(PruneConnectionPoolGroups),
+                PruneConnectionPoolGroups,
                 state: null,
                 PruningDueTime,
                 PruningPeriod);
@@ -62,11 +62,17 @@ namespace Microsoft.Data.SqlClient
         }
         
         #endregion
-
-        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
-
-        public DbProviderFactory ProviderFactory => SqlClientFactory.Instance;
         
+        #region Properties
+
+        internal static DbProviderFactory ProviderFactory => SqlClientFactory.Instance;
+        
+        internal static SqlConnectionFactory Instance { get; } = new SqlConnectionFactory(); 
+        
+        internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
+        
+        #endregion
+
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
@@ -260,9 +266,9 @@ namespace Microsoft.Data.SqlClient
             return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
         }
 
-        internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
+        internal SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
-            SqlConnectionString connectionOptions = (SqlConnectionString)SingletonInstance.FindConnectionOptions(key);
+            SqlConnectionString connectionOptions = (SqlConnectionString)FindConnectionOptions(key);
             if (connectionOptions == null)
             {
                 connectionOptions = new SqlConnectionString(key.ConnectionString);
