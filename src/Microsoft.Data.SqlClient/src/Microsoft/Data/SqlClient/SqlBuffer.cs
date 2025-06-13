@@ -962,6 +962,8 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
 
+        internal SqlVectorFloat32 SqlVectorFloat32 => (StorageType.Vector == _type) ? (IsNull ? new SqlVectorFloat32(_value._vectorInfo._vectorElementCount) : new SqlVectorFloat32(SqlBinary.Value)) : (SqlVectorFloat32)SqlValue;
+
         internal object SqlValue
         {
             get
@@ -996,6 +998,15 @@ namespace Microsoft.Data.SqlClient
                         return SqlString;
                     case StorageType.Json:
                         return SqlJson;
+                    case StorageType.Vector:
+                        byte elementType = _value._vectorInfo._vectorElementType;
+                        switch (elementType)
+                        {
+                            case (byte)MetaType.SqlVectorElementType.Float32:
+                                return SqlVectorFloat32;
+                            default:
+                                throw SQL.VectorTypeNotSupported(elementType.ToString());
+                        }
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
@@ -1008,7 +1019,6 @@ namespace Microsoft.Data.SqlClient
 
                     case StorageType.SqlBinary:
                     case StorageType.SqlGuid:
-                    case StorageType.Vector:
                         return _object;
 
                     case StorageType.SqlXml:

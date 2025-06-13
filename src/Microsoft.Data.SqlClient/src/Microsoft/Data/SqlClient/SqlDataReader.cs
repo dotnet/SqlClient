@@ -2839,10 +2839,7 @@ namespace Microsoft.Data.SqlClient
         virtual public SqlVectorFloat32 GetSqlVectorFloat32(int i)
         {
             ReadColumn(i);
-            int elementCount = (_metaData[i].length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(_metaData[i].scale);
-            return !_data[i].IsNull
-             ? new SqlVectorFloat32(_data[i].SqlBinary.Value)
-             : new SqlVectorFloat32(elementCount);
+            return _data[i].SqlVectorFloat32;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
@@ -2968,8 +2965,8 @@ namespace Microsoft.Data.SqlClient
             {
                 switch (_metaData[i].scale)
                 {
-                    case 0:
-                        return GetSqlVectorFloat32(i).ToString();
+                    case (byte)MetaType.SqlVectorElementType.Float32:
+                        return _data[i].SqlVectorFloat32.ToString();
                     default:
                         throw SQL.VectorTypeNotSupported(_metaData[i].scale.ToString());
                 }
@@ -3114,7 +3111,7 @@ namespace Microsoft.Data.SqlClient
                         switch (metaData.scale)
                         {
                             case (byte)MetaType.SqlVectorElementType.Float32:
-                                return new SqlVectorFloat32(data.SqlBinary.Value);
+                                return data.SqlVectorFloat32;
                             default:
                                 throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
                         }
@@ -3231,11 +3228,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.VectorNotSupportedOnColumnType(metaData.column);
                 }
-                int elementCount = (metaData.length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(metaData.scale);
-                object value = !data.IsNull
-                 ? new SqlVectorFloat32(data.SqlBinary.Value)
-                 : new SqlVectorFloat32(elementCount);
-                return (T)value;
+                return (T)(object)data.SqlVectorFloat32;
             }
             else if (typeof(T) == typeof(XmlReader))
             {
