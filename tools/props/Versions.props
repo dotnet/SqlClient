@@ -29,8 +29,8 @@
   <PropertyGroup>
     <AzureIdentityVersion>1.13.2</AzureIdentityVersion>
     <MicrosoftIdentityClientVersion>4.71.1</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.35.1</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>6.35.1</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.6.3</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>7.6.3</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemTextEncodingsWebVersion>6.0.1</SystemTextEncodingsWebVersion>
     <MicrosoftSourceLinkGitHubVersion>8.0.0</MicrosoftSourceLinkGitHubVersion>
