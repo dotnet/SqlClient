@@ -18,12 +18,6 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        internal abstract DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
-            DbConnectionOptions connectionOptions);
-
-        internal abstract DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(
-            DbConnectionOptions connectionOptions);
-
         protected virtual DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             // providers that support GetSchema must override this with a method that creates a meta data
@@ -46,7 +40,7 @@ namespace Microsoft.Data.ProviderBase
             }
             return null;
         }
-
+        
         private static Task<DbConnectionInternal> GetCompletedTask()
         {
             Debug.Assert(Monitor.IsEntered(s_pendingOpenNonPooled), $"Expected {nameof(s_pendingOpenNonPooled)} lock to be held.");

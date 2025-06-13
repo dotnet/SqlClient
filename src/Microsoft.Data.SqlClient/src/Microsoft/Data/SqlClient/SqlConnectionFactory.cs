@@ -104,6 +104,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions) =>
+            ((SqlConnectionString)connectionOptions).UserInstance
+                ? new SqlConnectionPoolProviderInfo()
+                : null;
+        
         internal SqlInternalConnectionTds CreateNonPooledConnection(
             DbConnection owningConnection,
             DbConnectionPoolGroup poolGroup,
@@ -164,18 +169,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
-        {
-            DbConnectionPoolProviderInfo providerInfo = null;
-
-            if (((SqlConnectionString)connectionOptions).UserInstance)
-            {
-                providerInfo = new SqlConnectionPoolProviderInfo();
-            }
-
-            return providerInfo;
-        }
-
         protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)connectionOptions;
@@ -221,11 +214,9 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
-            DbConnectionOptions connectionOptions)
-        {
-            return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
-        }
+        internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions) =>
+            new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
 
         internal SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
