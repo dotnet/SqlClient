@@ -457,7 +457,7 @@ namespace Microsoft.Data.SqlClient
                 DbConnectionPoolIdentity identity,
                 SqlConnectionString connectionOptions,
                 SqlCredential credential,
-                object providerInfo,
+                DbConnectionPoolGroupProviderInfo providerInfo,
                 string newPassword,
                 SecureString newSecurePassword,
                 bool redirectedUserInstance,
@@ -467,7 +467,8 @@ namespace Microsoft.Data.SqlClient
                 string accessToken = null,
                 IDbConnectionPool pool = null,
                 Func<SqlAuthenticationParameters, CancellationToken,
-                Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+                Task<SqlAuthenticationToken>> accessTokenCallback = null) 
+            : base(connectionOptions)
         {
 #if DEBUG
             if (reconnectSessionData != null)
