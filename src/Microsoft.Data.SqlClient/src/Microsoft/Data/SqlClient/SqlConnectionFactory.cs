@@ -73,6 +73,39 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
+        #region Public Methods
+        
+        internal void ClearAllPools()
+        {
+            using TryEventScope scope = TryEventScope.Create(nameof(SqlConnectionFactory));
+            foreach ((DbConnectionPoolKey _, DbConnectionPoolGroup group) in _connectionPoolGroups)
+            {
+                group?.Clear();
+            }
+        }
+        
+        internal void ClearPool(DbConnection connection)
+        {
+            ADP.CheckArgumentNull(connection, nameof(connection));
+            
+            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> {0}", GetObjectId(connection));
+            DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
+            poolGroup?.Clear();
+        }
+        
+        internal void ClearPool(DbConnectionPoolKey key)
+        {
+            ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
+            
+            using TryEventScope scope = TryEventScope.Create("<prov.SqlConnectionFactory.ClearPool|API> connectionString");
+            if (_connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
+            {
+                poolGroup?.Clear();
+            }
+        }
+        
+        #endregion
+        
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,

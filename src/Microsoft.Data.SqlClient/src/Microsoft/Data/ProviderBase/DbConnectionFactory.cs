@@ -18,48 +18,11 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        public void ClearAllPools()
-        {
-            using (TryEventScope.Create(nameof(SqlConnectionFactory)))
-            {
-                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-                foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
-                {
-                    DbConnectionPoolGroup poolGroup = entry.Value;
-                    if (poolGroup != null)
-                    {
-                        poolGroup.Clear();
-                    }
-                }
-            }
-        }
+        
 
-        public void ClearPool(DbConnection connection)
-        {
-            ADP.CheckArgumentNull(connection, nameof(connection));
-            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearPool|API> {0}", GetObjectId(connection)))
-            {
-                DbConnectionPoolGroup poolGroup = GetConnectionPoolGroup(connection);
-                if (poolGroup != null)
-                {
-                    poolGroup.Clear();
-                }
-            }
-        }
+        
 
-        public void ClearPool(DbConnectionPoolKey key)
-        {
-            Debug.Assert(key != null, "key cannot be null");
-            ADP.CheckArgumentNull(key.ConnectionString, $"{nameof(key)}.{nameof(key.ConnectionString)}");
-            using (TryEventScope.Create("<prov.DbConnectionFactory.ClearPool|API> connectionString"))
-            {
-                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-                if (connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
-                {
-                    poolGroup.Clear();
-                }
-            }
-        }
+        
 
         internal abstract DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(
             DbConnectionOptions connectionOptions);
