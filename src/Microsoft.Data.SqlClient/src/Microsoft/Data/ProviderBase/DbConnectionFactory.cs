@@ -47,41 +47,6 @@ namespace Microsoft.Data.ProviderBase
             return s_completedTask ?? (s_completedTask = Task.FromResult<DbConnectionInternal>(null));
         }
 
-        protected IDbConnectionPool GetConnectionPool(DbConnection owningObject, DbConnectionPoolGroup connectionPoolGroup)
-        {
-            // if poolgroup is disabled, it will be replaced with a new entry
-
-            Debug.Assert(owningObject != null, "null owningObject?");
-            Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup?");
-
-            // It is possible that while the outer connection object has
-            // been sitting around in a closed and unused state in some long
-            // running app, the pruner may have come along and remove this
-            // the pool entry from the master list.  If we were to use a
-            // pool entry in this state, we would create "unmanaged" pools,
-            // which would be bad.  To avoid this problem, we automagically
-            // re-create the pool entry whenever it's disabled.
-
-            // however, don't rebuild connectionOptions if no pooling is involved - let new connections do that work
-            if (connectionPoolGroup.IsDisabled && connectionPoolGroup.PoolGroupOptions != null)
-            {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.GetConnectionPool|RES|INFO|CPOOL> {0}, DisabledPoolGroup={1}", ObjectID, connectionPoolGroup?.ObjectID);
-
-                // reusing existing pool option in case user originally used SetConnectionPoolOptions
-                DbConnectionPoolGroupOptions poolOptions = connectionPoolGroup.PoolGroupOptions;
-
-                // get the string to hash on again
-                DbConnectionOptions connectionOptions = connectionPoolGroup.ConnectionOptions;
-                Debug.Assert(connectionOptions != null, "prevent expansion of connectionString");
-
-                connectionPoolGroup = GetConnectionPoolGroup(connectionPoolGroup.PoolKey, poolOptions, ref connectionOptions);
-                Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup?");
-                SetConnectionPoolGroup(owningObject, connectionPoolGroup);
-            }
-            IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool((SqlConnectionFactory)this);
-            return connectionPool;
-        }
-
         internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolOptions, ref DbConnectionOptions userConnectionOptions)
         {
             if (string.IsNullOrEmpty(key.ConnectionString))
