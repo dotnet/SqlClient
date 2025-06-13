@@ -257,6 +257,30 @@ namespace Microsoft.Data.SqlClient
             
             return connectionPoolGroup;
         }
+
+        internal DbMetaDataFactory GetMetaDataFactory(
+            DbConnectionPoolGroup poolGroup,
+            DbConnectionInternal internalConnection)
+        {
+            Debug.Assert(poolGroup is not null, "connectionPoolGroup may not be null.");
+
+            // Get the matadatafactory from the pool entry. If it does not already have one
+            // create one and save it on the pool entry
+            DbMetaDataFactory metaDataFactory = poolGroup.MetaDataFactory;
+
+            // CONSIDER: serializing this so we don't construct multiple metadata factories
+            // if two threads happen to hit this at the same time. One will be GC'd
+            if (metaDataFactory is null)
+            {
+                metaDataFactory = CreateMetaDataFactory(internalConnection, out bool allowCache);
+                if (allowCache)
+                {
+                    poolGroup.MetaDataFactory = metaDataFactory;
+                }
+            }
+            
+            return metaDataFactory;
+        }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
         {
@@ -801,8 +825,94 @@ namespace Microsoft.Data.SqlClient
             IDbConnectionPool connectionPool = connectionPoolGroup.GetConnectionPool(this);
             return connectionPool;
         }
-        
-        
+
+        private void PruneConnectionPoolGroups(object state)
+        {
+            // When debugging this method, expect multiple threads at the same time
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}", ObjectId);
+
+            // First, walk the pool release list and attempt to clear each pool, when the pool is
+            // finally empty, we dispose of it. If the pool isn't empty, it's because there are
+            // active connections or distributed transactions that need it.
+            lock (_poolsToRelease)
+            {
+                if (_poolsToRelease.Count != 0)
+                {
+                    IDbConnectionPool[] poolsToRelease = _poolsToRelease.ToArray();
+                    foreach (IDbConnectionPool pool in poolsToRelease)
+                    {
+                        if (pool is not null)
+                        {
+                            pool.Clear();
+
+                            if (pool.Count == 0)
+                            {
+                                _poolsToRelease.Remove(pool);
+                                
+                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePool={1}", ObjectId, pool.Id);
+                                SqlClientEventSource.Metrics.ExitInactiveConnectionPool();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Next, walk the pool entry release list and dispose of each pool entry when it is
+            // finally empty.  If the pool entry isn't empty, it's because there are active pools
+            // that need it.
+            lock (_poolGroupsToRelease)
+            {
+                if (_poolGroupsToRelease.Count != 0)
+                {
+                    DbConnectionPoolGroup[] poolGroupsToRelease = _poolGroupsToRelease.ToArray();
+                    foreach (DbConnectionPoolGroup poolGroup in poolGroupsToRelease)
+                    {
+                        if (poolGroup != null)
+                        {
+                            int poolsLeft = poolGroup.Clear(); // may add entries to _poolsToRelease
+
+                            if (poolsLeft == 0)
+                            {
+                                _poolGroupsToRelease.Remove(poolGroup);
+                                SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.SqlConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}, ReleasePoolGroup={1}", ObjectId, poolGroup.ObjectID);
+
+                                SqlClientEventSource.Metrics.ExitInactiveConnectionPoolGroup();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Finally, we walk through the collection of connection pool entries and prune each
+            // one.  This will cause any empty pools to be put into the release list.
+            lock (this)
+            {
+                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
+                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> newConnectionPoolGroups = new Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup>(connectionPoolGroups.Count);
+
+                foreach (KeyValuePair<DbConnectionPoolKey, DbConnectionPoolGroup> entry in connectionPoolGroups)
+                {
+                    if (entry.Value != null)
+                    {
+                        Debug.Assert(!entry.Value.IsDisabled, "Disabled pool entry discovered");
+
+                        // entries start active and go idle during prune if all pools are gone
+                        // move idle entries from last prune pass to a queue for pending release
+                        // otherwise process entry which may move it from active to idle
+                        if (entry.Value.Prune())
+                        {
+                            // may add entries to _poolsToRelease
+                            QueuePoolGroupForRelease(entry.Value);
+                        }
+                        else
+                        {
+                            newConnectionPoolGroups.Add(entry.Key, entry.Value);
+                        }
+                    }
+                }
+                _connectionPoolGroups = newConnectionPoolGroups;
+            }
+        }
         
         private void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
         {

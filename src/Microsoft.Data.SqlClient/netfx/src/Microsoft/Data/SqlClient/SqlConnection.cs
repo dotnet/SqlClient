@@ -2197,7 +2197,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
@@ -2249,7 +2249,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
