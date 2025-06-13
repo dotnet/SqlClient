@@ -10,8 +10,8 @@ Consider instructions in the policy/ directory to understand our development pol
 
 We create the following NuGet packages as our release artifacts:
   - Microsoft.Data.SqlClient
-  - Microsoft.Data.SqlClient.SNI
   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+  - Microsoft.SqlServer.Server
 
 Our public API documentation is formatted as XML snippets in doc/ directory.
 
