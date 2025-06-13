@@ -14,7 +14,7 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
-using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {

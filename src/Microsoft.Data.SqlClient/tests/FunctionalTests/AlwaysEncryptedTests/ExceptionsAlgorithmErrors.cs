@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Xunit;
 using static Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests.Utility;
 
