@@ -47,34 +47,6 @@ namespace Microsoft.Data.ProviderBase
             return s_completedTask ?? (s_completedTask = Task.FromResult<DbConnectionInternal>(null));
         }
 
-        protected Task<DbConnectionInternal> CreateReplaceConnectionContinuation(Task<DbConnectionInternal> task, DbConnection owningConnection, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions, DbConnectionInternal oldConnection, DbConnectionPoolGroup poolGroup, CancellationTokenSource cancellationTokenSource)
-        {
-            return task.ContinueWith(
-                (_) =>
-                {
-                    System.Transactions.Transaction originalTransaction = ADP.GetCurrentTransaction();
-                    try
-                    {
-                        ADP.SetCurrentTransaction(retry.Task.AsyncState as System.Transactions.Transaction);
-                        var newConnection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
-                        if ((oldConnection != null) && (oldConnection.State == ConnectionState.Open))
-                        {
-                            oldConnection.PrepareForReplaceConnection();
-                            oldConnection.Dispose();
-                        }
-                        return newConnection;
-                    }
-                    finally
-                    {
-                        ADP.SetCurrentTransaction(originalTransaction);
-                    }
-                },
-                cancellationTokenSource.Token,
-                TaskContinuationOptions.LongRunning,
-                TaskScheduler.Default
-            );
-        }
-
         protected void TryGetConnectionCompletedContinuation(Task<DbConnectionInternal> task, object state)
         {
             Tuple<CancellationTokenSource, TaskCompletionSource<DbConnectionInternal>> parameters = (Tuple<CancellationTokenSource, TaskCompletionSource<DbConnectionInternal>>)state;

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
@@ -628,6 +629,44 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback);
+        }
+
+        private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
+            Task<DbConnectionInternal> task,
+            DbConnection owningConnection,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions,
+            DbConnectionInternal oldConnection,
+            DbConnectionPoolGroup poolGroup,
+            CancellationTokenSource cancellationTokenSource)
+        {
+            return task.ContinueWith(
+                _ =>
+                {
+                    System.Transactions.Transaction originalTransaction = ADP.GetCurrentTransaction();
+                    try
+                    {
+                        ADP.SetCurrentTransaction(retry.Task.AsyncState as System.Transactions.Transaction);
+                        
+                        DbConnectionInternal newConnection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+                        
+                        if (oldConnection?.State == ConnectionState.Open)
+                        {
+                            oldConnection.PrepareForReplaceConnection();
+                            oldConnection.Dispose();
+                        }
+                        
+                        return newConnection;
+                    }
+                    finally
+                    {
+                        ADP.SetCurrentTransaction(originalTransaction);
+                    }
+                },
+                cancellationTokenSource.Token,
+                TaskContinuationOptions.LongRunning,
+                TaskScheduler.Default
+            );
         }
         
         #if NET
