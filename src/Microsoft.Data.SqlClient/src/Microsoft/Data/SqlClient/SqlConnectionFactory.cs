@@ -42,16 +42,6 @@ namespace Microsoft.Data.SqlClient
             DbConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection)
-        {
-            return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
-        }
-
-        protected override DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-            IDbConnectionPool pool,
             DbConnection owningConnection,
             DbConnectionOptions userOptions)
         {
@@ -82,11 +72,7 @@ namespace Microsoft.Data.SqlClient
 
             // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
             // Used by notifications.
-            //netfx---
             if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
-            //---netfx|netcore---
-            if (opt.IntegratedSecurity)
-            //---netcore
             {
                 if (pool != null)
                 {
@@ -226,18 +212,14 @@ namespace Microsoft.Data.SqlClient
                     }
                     SqlClientEventSource.Log.TryTraceEvent("SqlConnectionFactory.CreateConnectionPoolGroupOptions | Set connection pool CreateTimeout '{0}' when Authentication mode '{1}' is used.", connectionTimeout, opt.Authentication);
                 }
-                
+
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                                                //netcore---
-                                                opt.IntegratedSecurity,
-                                                //---netcore|netfx---
-                                                opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                                                //---netfx
-                                                opt.MinPoolSize,
-                                                opt.MaxPoolSize,
-                                                connectionTimeout,
-                                                opt.LoadBalanceTimeout,
-                                                opt.Enlist);
+                    opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                    opt.MinPoolSize,
+                    opt.MaxPoolSize,
+                    connectionTimeout,
+                    opt.LoadBalanceTimeout,
+                    opt.Enlist);
             }
             return poolingOptions;
         }
