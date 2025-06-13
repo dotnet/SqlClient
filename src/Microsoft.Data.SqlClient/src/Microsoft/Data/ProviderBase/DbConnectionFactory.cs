@@ -483,44 +483,6 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
-        {
-            // Queue the pool up for release -- we'll clear it out and dispose
-            // of it as the last part of the pruning timer callback so we don't
-            // do it with the pool entry or the pool collection locked.
-            Debug.Assert(pool != null, "null pool?");
-
-            // set the pool to the shutdown state to force all active
-            // connections to be automatically disposed when they
-            // are returned to the pool
-            pool.Shutdown();
-
-            lock (_poolsToRelease)
-            {
-                if (clearing)
-                {
-                    pool.Clear();
-                }
-                _poolsToRelease.Add(pool);
-            }
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPool();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPool();
-        }
-
-        internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
-        {
-            Debug.Assert(poolGroup != null, "null poolGroup?");
-            SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionFactory.QueuePoolGroupForRelease|RES|INFO|CPOOL> {0}, poolGroup={1}", ObjectID, poolGroup.ObjectID);
-
-            lock (_poolGroupsToRelease)
-            {
-                _poolGroupsToRelease.Add(poolGroup);
-            }
-
-            SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
-            SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
-        }
-
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
         abstract protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options);

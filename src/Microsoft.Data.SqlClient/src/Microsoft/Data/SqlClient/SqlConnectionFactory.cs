@@ -159,6 +159,44 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.CreatePooledConnection|RES|CPOOL> {0}, Pooled database connection created.", ObjectId);
             return newConnection;
         }
+
+        internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
+        {
+            // Queue the pool up for release -- we'll clear it out and dispose of it as the last
+            // part of the pruning timer callback so we don't do it with the pool entry or the pool
+            // collection locked.
+            Debug.Assert(pool != null, "null pool?");
+
+            // Set the pool to the shutdown state to force all active connections to be
+            // automatically disposed when they are returned to the pool
+            pool.Shutdown();
+
+            lock (_poolsToRelease)
+            {
+                if (clearing)
+                {
+                    pool.Clear();
+                }
+                _poolsToRelease.Add(pool);
+            }
+            
+            SqlClientEventSource.Metrics.EnterInactiveConnectionPool();
+            SqlClientEventSource.Metrics.ExitActiveConnectionPool();
+        }
+
+        internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
+        {
+            Debug.Assert(poolGroup != null, "null poolGroup?");
+            SqlClientEventSource.Log.TryTraceEvent("<prov.SqlConnectionFactory.QueuePoolGroupForRelease|RES|INFO|CPOOL> {0}, poolGroup={1}", ObjectId, poolGroup.ObjectID);
+
+            lock (_poolGroupsToRelease)
+            {
+                _poolGroupsToRelease.Add(poolGroup);
+            }
+
+            SqlClientEventSource.Metrics.EnterInactiveConnectionPoolGroup();
+            SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
+        }
         
         #endregion
 
