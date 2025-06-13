@@ -642,23 +642,13 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
         }
 
-        protected virtual DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-            IDbConnectionPool pool,
-            DbConnection owningConnection,
-            DbConnectionOptions userOptions)
-        {
-            return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection);
-        }
-
         protected abstract DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
             DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
             IDbConnectionPool pool,
-            DbConnection owningConnection);
+            DbConnection owningConnection,
+            DbConnectionOptions userOptions);
 
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
