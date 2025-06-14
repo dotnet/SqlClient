@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// The current state of the connection pool.
         /// </summary>
-        DbConnectionPoolState State { get; set; }
+        DbConnectionPoolState State { get; }
 
         /// <summary>
         /// Indicates whether the connection pool is using load balancing.
