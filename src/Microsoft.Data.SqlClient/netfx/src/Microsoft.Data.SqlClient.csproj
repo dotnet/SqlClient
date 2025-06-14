@@ -654,6 +654,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBuffer.cs">
       <Link>Microsoft\Data\SqlClient\SqlBuffer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBulkCopy.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopy.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
@@ -951,7 +954,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Common\DBConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
