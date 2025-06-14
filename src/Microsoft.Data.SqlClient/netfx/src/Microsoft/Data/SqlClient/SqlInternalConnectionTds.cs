@@ -513,11 +513,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (connectionOptions.UserInstance && InOutOfProcHelper.InProc)
-            {
-                throw SQL.UserInstanceNotAvailableInProc();
-            }
-
             if (accessToken != null)
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
