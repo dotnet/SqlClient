@@ -22,7 +22,7 @@ using System.Runtime.Loader;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed class SqlConnectionFactory : DbConnectionFactory
+    internal sealed class SqlConnectionFactory
     {
         #region Member Variables
         
@@ -180,13 +180,7 @@ namespace Microsoft.Data.SqlClient
                 // our collection of pool entries, then we need to create a
                 // new pool entry and add it to our collection.
 
-                DbConnectionOptions connectionOptions = CreateConnectionOptions(
-                    key.ConnectionString,
-                    userConnectionOptions);
-                if (connectionOptions is null)
-                {
-                    throw ADP.InternalConnectionError(ADP.ConnectionError.ConnectionOptionsMissing);
-                }
+                SqlConnectionString connectionOptions = new SqlConnectionString(key.ConnectionString);
 
                 if (userConnectionOptions is null)
                 {
@@ -474,58 +468,6 @@ namespace Microsoft.Data.SqlClient
         
         #endregion
 
-        protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)
-        {
-            Debug.Assert(!string.IsNullOrEmpty(connectionString), "empty connectionString");
-            SqlConnectionString result = new SqlConnectionString(connectionString);
-            return result;
-        }
-
-        protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
-        {
-            SqlConnectionString opt = (SqlConnectionString)connectionOptions;
-
-            DbConnectionPoolGroupOptions poolingOptions = null;
-
-            if (opt.Pooling)
-            {    // never pool context connections.
-                int connectionTimeout = opt.ConnectTimeout;
-
-                if (connectionTimeout > 0 && connectionTimeout < int.MaxValue / 1000)
-                {
-                    connectionTimeout *= 1000;
-                }
-                else if (connectionTimeout >= int.MaxValue / 1000)
-                {
-                    connectionTimeout = int.MaxValue;
-                }
-                
-                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive
-                                       or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
-                {
-                    // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
-                    if (connectionTimeout >= Int32.MaxValue / 10)
-                    {
-                        connectionTimeout = Int32.MaxValue;
-                    }
-                    else
-                    {
-                        connectionTimeout *= 10;
-                    }
-                    SqlClientEventSource.Log.TryTraceEvent("SqlConnectionFactory.CreateConnectionPoolGroupOptions | Set connection pool CreateTimeout '{0}' when Authentication mode '{1}' is used.", connectionTimeout, opt.Authentication);
-                }
-
-                poolingOptions = new DbConnectionPoolGroupOptions(
-                    opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                    opt.MinPoolSize,
-                    opt.MaxPoolSize,
-                    connectionTimeout,
-                    opt.LoadBalanceTimeout,
-                    opt.Enlist);
-            }
-            return poolingOptions;
-        }
-
         internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
             DbConnectionOptions connectionOptions) =>
             new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
@@ -556,7 +498,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
-        internal override DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
+        internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
             if (c != null)
@@ -566,7 +508,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        internal override DbConnectionInternal GetInnerConnection(DbConnection connection)
+        internal DbConnectionInternal GetInnerConnection(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
             if (c != null)
@@ -576,7 +518,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        protected override int GetObjectId(DbConnection connection)
+        internal int GetObjectId(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
             if (c != null)
@@ -586,7 +528,7 @@ namespace Microsoft.Data.SqlClient
             return 0;
         }
 
-        internal override void PermissionDemand(DbConnection outerConnection)
+        internal void PermissionDemand(DbConnection outerConnection)
         {
             SqlConnection c = (outerConnection as SqlConnection);
             if (c != null)
@@ -595,7 +537,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
+        internal void SetConnectionPoolGroup(DbConnection outerConnection, DbConnectionPoolGroup poolGroup)
         {
             SqlConnection c = (outerConnection as SqlConnection);
             if (c != null)
@@ -604,7 +546,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
+        internal void SetInnerConnectionEvent(DbConnection owningObject, DbConnectionInternal to)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (c != null)
@@ -613,7 +555,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal override bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
+        internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (c != null)
@@ -623,7 +565,7 @@ namespace Microsoft.Data.SqlClient
             return false;
         }
 
-        internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
+        internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
         {
             SqlConnection c = (owningObject as SqlConnection);
             if (c != null)
@@ -755,6 +697,51 @@ namespace Microsoft.Data.SqlClient
                 key.AccessToken,
                 pool,
                 key.AccessTokenCallback);
+        }
+
+        private static DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(SqlConnectionString connectionOptions)
+        {
+            SqlConnectionString opt = (SqlConnectionString)connectionOptions;
+
+            DbConnectionPoolGroupOptions poolingOptions = null;
+
+            if (opt.Pooling)
+            {    // never pool context connections.
+                int connectionTimeout = opt.ConnectTimeout;
+
+                if (connectionTimeout > 0 && connectionTimeout < int.MaxValue / 1000)
+                {
+                    connectionTimeout *= 1000;
+                }
+                else if (connectionTimeout >= int.MaxValue / 1000)
+                {
+                    connectionTimeout = int.MaxValue;
+                }
+                
+                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive
+                                       or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+                {
+                    // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
+                    if (connectionTimeout >= Int32.MaxValue / 10)
+                    {
+                        connectionTimeout = Int32.MaxValue;
+                    }
+                    else
+                    {
+                        connectionTimeout *= 10;
+                    }
+                    SqlClientEventSource.Log.TryTraceEvent("SqlConnectionFactory.CreateConnectionPoolGroupOptions | Set connection pool CreateTimeout '{0}' when Authentication mode '{1}' is used.", connectionTimeout, opt.Authentication);
+                }
+
+                poolingOptions = new DbConnectionPoolGroupOptions(
+                    opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                    opt.MinPoolSize,
+                    opt.MaxPoolSize,
+                    connectionTimeout,
+                    opt.LoadBalanceTimeout,
+                    opt.Enlist);
+            }
+            return poolingOptions;
         }
 
         private static DbMetaDataFactory CreateMetaDataFactory(
