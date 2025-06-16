@@ -28,13 +28,15 @@ namespace Microsoft.Data.SqlClient
         
         private static readonly TimeSpan PruningDueTime = TimeSpan.FromMinutes(4);
         private static readonly TimeSpan PruningPeriod = TimeSpan.FromSeconds(30);
+        private static readonly Task<DbConnectionInternal> CompletedTask =
+            Task.FromResult<DbConnectionInternal>(null);
         
         // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled
         // connections to a maximum of Environment.ProcessorCount at a time.
-        private static Task<DbConnectionInternal> s_completedTask;
-        private static int s_objectTypeCount;
-        private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled =
+        private static readonly Task<DbConnectionInternal>[] s_pendingOpenNonPooled =
             new Task<DbConnectionInternal>[Environment.ProcessorCount];
+        
+        private static int s_objectTypeCount;
         private static uint s_pendingOpenNonPooledNext = 0;
 
         private readonly List<DbConnectionPoolGroup> _poolGroupsToRelease;
@@ -79,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         internal void ClearAllPools()
         {
             using TryEventScope scope = TryEventScope.Create(nameof(SqlConnectionFactory));
-            foreach ((DbConnectionPoolKey _, DbConnectionPoolGroup group) in _connectionPoolGroups)
+            foreach (DbConnectionPoolGroup group in _connectionPoolGroups.Values)
             {
                 group?.Clear();
             }
@@ -368,7 +370,7 @@ namespace Microsoft.Data.SqlClient
                                 Task task = s_pendingOpenNonPooled[idx];
                                 if (task is null)
                                 {
-                                    s_pendingOpenNonPooled[idx] = GetCompletedTask();
+                                    s_pendingOpenNonPooled[idx] = CompletedTask;
                                     break;
                                 }
                                 
@@ -390,7 +392,14 @@ namespace Microsoft.Data.SqlClient
 
                             // now that we have an antecedent task, schedule our work when it is completed.
                             // If it is a new slot or a completed task, this continuation will start right away.
-                            newTask = CreateReplaceConnectionContinuation(s_pendingOpenNonPooled[idx], owningConnection, retry, userOptions, oldConnection, poolGroup, cancellationTokenSource);
+                            newTask = CreateReplaceConnectionContinuation(
+                                s_pendingOpenNonPooled[idx],
+                                owningConnection,
+                                retry,
+                                userOptions,
+                                oldConnection,
+                                poolGroup,
+                                cancellationTokenSource);
 
                             // Place this new task in the slot so any future work will be queued behind it
                             s_pendingOpenNonPooled[idx] = newTask;
@@ -523,16 +532,27 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
-            SqlConnectionString connectionOptions = (SqlConnectionString)FindConnectionOptions(key);
-            if (connectionOptions == null)
+            Debug.Assert(key is not null, "Key cannot be null");
+
+            DbConnectionOptions connectionOptions = null;
+            
+            if (!string.IsNullOrEmpty(key.ConnectionString) &&
+                _connectionPoolGroups.TryGetValue(key, out DbConnectionPoolGroup poolGroup))
+            {
+                connectionOptions = poolGroup.ConnectionOptions;
+            }
+            
+            if (connectionOptions is null)
             {
                 connectionOptions = new SqlConnectionString(key.ConnectionString);
             }
+            
             if (connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }
-            return connectionOptions;
+            
+            return (SqlConnectionString)connectionOptions;
         }
 
         // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
@@ -612,20 +632,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        protected override DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
-        {
-            Debug.Assert(internalConnection != null, "internalConnection may not be null.");
-
-            Stream xmlStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
-            cacheMetaDataFactory = true;
-
-            Debug.Assert(xmlStream != null, nameof(xmlStream) + " may not be null.");
-
-            return new SqlMetaDataFactory(xmlStream,
-                                          internalConnection.ServerVersion,
-                                          internalConnection.ServerVersion);
-        }
-
         #region Private Methods
         
         // @TODO: I think this could be broken down into methods more specific to use cases above
@@ -662,8 +668,7 @@ namespace Microsoft.Data.SqlClient
             bool redirectedUserInstance = false;
             DbConnectionPoolIdentity identity = null;
 
-            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security
-            // or active directory integrated security.
+            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
             // Used by notifications.
             if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
@@ -752,6 +757,21 @@ namespace Microsoft.Data.SqlClient
                 key.AccessTokenCallback);
         }
 
+        private static DbMetaDataFactory CreateMetaDataFactory(
+            DbConnectionInternal internalConnection,
+            out bool cacheMetaDataFactory)
+        {
+            Debug.Assert(internalConnection is not null, "internalConnection may not be null.");
+
+            Stream xmlStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
+            Debug.Assert(xmlStream is not null, $"{nameof(xmlStream)} may not be null.");
+            
+            cacheMetaDataFactory = true;
+            return new SqlMetaDataFactory(xmlStream,
+                internalConnection.ServerVersion,
+                internalConnection.ServerVersion);
+        }
+        
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
             Task<DbConnectionInternal> task,
             DbConnection owningConnection,
@@ -884,7 +904,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Finally, we walk through the collection of connection pool entries and prune each
-            // one.  This will cause any empty pools to be put into the release list.
+            // one. This will cause any empty pools to be put into the release list.
             lock (this)
             {
                 Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
@@ -952,7 +972,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                Unload();
+                _pruningTimer.Dispose();
             }
             finally
             {

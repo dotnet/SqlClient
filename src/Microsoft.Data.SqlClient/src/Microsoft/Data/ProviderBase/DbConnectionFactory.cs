@@ -18,35 +18,6 @@ namespace Microsoft.Data.ProviderBase
 {
     internal abstract class DbConnectionFactory
     {
-        protected virtual DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
-        {
-            // providers that support GetSchema must override this with a method that creates a meta data
-            // factory appropriate for them.
-            cacheMetaDataFactory = false;
-            throw ADP.NotSupported();
-        }
-        
-        protected DbConnectionOptions FindConnectionOptions(DbConnectionPoolKey key)
-        {
-            Debug.Assert(key != null, "key cannot be null");
-            if (!string.IsNullOrEmpty(key.ConnectionString))
-            {
-                DbConnectionPoolGroup connectionPoolGroup;
-                Dictionary<DbConnectionPoolKey, DbConnectionPoolGroup> connectionPoolGroups = _connectionPoolGroups;
-                if (connectionPoolGroups.TryGetValue(key, out connectionPoolGroup))
-                {
-                    return connectionPoolGroup.ConnectionOptions;
-                }
-            }
-            return null;
-        }
-        
-        protected static Task<DbConnectionInternal> GetCompletedTask()
-        {
-            Debug.Assert(Monitor.IsEntered(s_pendingOpenNonPooled), $"Expected {nameof(s_pendingOpenNonPooled)} lock to be held.");
-            return s_completedTask ?? (s_completedTask = Task.FromResult<DbConnectionInternal>(null));
-        }
-
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
         abstract protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions options);
@@ -66,10 +37,5 @@ namespace Microsoft.Data.ProviderBase
         abstract internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from);
 
         abstract internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to);
-
-        virtual internal void Unload()
-        {
-            _pruningTimer.Dispose();
-        }
     }
 }
