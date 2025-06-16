@@ -75,6 +75,11 @@
     <ComCompatibleSideBySide>True</ComCompatibleSideBySide>
     <GenerateTargetFrameworkAttribute>False</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="../../../extensions/Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
+  </ItemGroup>
+  
   <!-- ********************** Configuration and Platform specific properties ********************* -->
   <!-- All Available Configurations-->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />

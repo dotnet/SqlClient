@@ -40,6 +40,11 @@
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="../../../extensions/Extensions/Microsoft.Data.SqlClient.Extensions.csproj" />
+  </ItemGroup>
+
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Sni\SniErrors.cs">

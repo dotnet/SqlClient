@@ -1055,22 +1055,6 @@ namespace Microsoft.Data.SqlClient
         DataClassificationInvalidInformationTypeIndex = 27
     }
 
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
-    public enum SqlConnectionAttestationProtocol
-    {
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
-        NotSpecified = 0,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
-        AAS = 1,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/None/*' />
-        None = 2,
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
-        HGS = 3
-    }
-
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />
     public enum SqlConnectionIPAddressPreference
     {

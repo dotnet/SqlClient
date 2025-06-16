@@ -1,3 +1,4 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
@@ -305,6 +306,17 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Microsoft.Data.SqlClient\tests\Common\Common.csproj", "{67128EC0-30F5-6A98-448B-55F88A1DE707}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient", "{7289C27E-D7DF-2C71-84B4-151F3A162493}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "extensions", "extensions", "{196BB8DD-9713-3515-BCF0-6C7FB63B5877}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extensions", "Extensions", "{2127477B-6290-8D81-D4B2-34EF74D33953}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Extensions", "Microsoft.Data.SqlClient\extensions\Extensions\Microsoft.Data.SqlClient.Extensions.csproj", "{49B85BBE-AFBC-446A-B3F5-40623921F193}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Azure", "Azure", "{EAD4F254-502B-1D81-E55F-C53F6D71E008}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.Extensions.Azure", "Microsoft.Data.SqlClient\extensions\Azure\Microsoft.Data.SqlClient.Extensions.Azure.csproj", "{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -596,6 +608,30 @@ Global
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.Build.0 = Release|x64
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.ActiveCfg = Release|x86
 		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.Build.0 = Release|x86
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|x64.Build.0 = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Debug|x86.Build.0 = Debug|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|x64.ActiveCfg = Release|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|x64.Build.0 = Release|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|x86.ActiveCfg = Release|Any CPU
+		{49B85BBE-AFBC-446A-B3F5-40623921F193}.Release|x86.Build.0 = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|x64.Build.0 = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Debug|x86.Build.0 = Debug|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|x64.ActiveCfg = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|x64.Build.0 = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|x86.ActiveCfg = Release|Any CPU
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -647,6 +683,11 @@ Global
 		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
 		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{67128EC0-30F5-6A98-448B-55F88A1DE707} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{196BB8DD-9713-3515-BCF0-6C7FB63B5877} = {7289C27E-D7DF-2C71-84B4-151F3A162493}
+		{2127477B-6290-8D81-D4B2-34EF74D33953} = {196BB8DD-9713-3515-BCF0-6C7FB63B5877}
+		{49B85BBE-AFBC-446A-B3F5-40623921F193} = {2127477B-6290-8D81-D4B2-34EF74D33953}
+		{EAD4F254-502B-1D81-E55F-C53F6D71E008} = {196BB8DD-9713-3515-BCF0-6C7FB63B5877}
+		{8B6FE3CA-C000-44C7-B97D-CF7BF8CF0616} = {EAD4F254-502B-1D81-E55F-C53F6D71E008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}
