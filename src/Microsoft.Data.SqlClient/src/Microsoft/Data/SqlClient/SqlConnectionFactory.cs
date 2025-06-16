@@ -70,9 +70,10 @@ namespace Microsoft.Data.SqlClient
             bool redirectedUserInstance = false;
             DbConnectionPoolIdentity identity = null;
 
-            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
+            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security
+            // or active directory integrated security.
             // Used by notifications.
-            if (opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
+            if (opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 if (pool != null)
                 {
@@ -140,9 +141,7 @@ namespace Microsoft.Data.SqlClient
                 //       retrieved from the previous SSE connection. For this UserInstance connection 'Enlist=True'.
                 // options immutable - stored in global hash - don't modify
                 opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
-                //netcore---
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
-                //---netcore
             }
 
             return new SqlInternalConnectionTds(
@@ -199,7 +198,8 @@ namespace Microsoft.Data.SqlClient
                     connectionTimeout = int.MaxValue;
                 }
                 
-                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive
+                                       or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
                 {
                     // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
                     if (connectionTimeout >= Int32.MaxValue / 10)
@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                    opt.IntegratedSecurity || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                    opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                     opt.MinPoolSize,
                     opt.MaxPoolSize,
                     connectionTimeout,

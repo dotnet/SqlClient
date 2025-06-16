@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal class SqlInternalConnectionTds
     {
-        internal SqlInternalConnetionTds(
+        internal SqlInternalConnectionTds(
             DbConnectionPoolIdentity identity,
             SqlConnectionString connectionOptions,
             SqlCredential credential,
