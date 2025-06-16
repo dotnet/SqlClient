@@ -799,9 +799,13 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             {
                 await cn.OpenAsync();
 
-                using (var cmd = cn.CreateCommand())
+                string tableName = DataTestUtility.GenerateObjectName();
+
+                try
                 {
-                    cmd.CommandText = $"""
+                    using (var cmd = cn.CreateCommand())
+                    {
+                        cmd.CommandText = $"""
                    if exists (select *
                                   from sysobjects
                                   where name = 'Expl_User_Global_Sets_'
@@ -811,7 +815,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         drop table dbo.Expl_User_Global_Sets_
                    end
 
-                   create table dbo.Expl_User_Global_Sets_
+                   create table {tableName}
                    (
                        User_ID            varchar(22)      not null,
                        StringName         varchar(255)     not null,
@@ -825,15 +829,15 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                        IsProtoCorrected   bit default 1
                    )
 
-                      insert into dbo.Expl_User_Global_Sets_(User_ID, StringName, IsGlobal, List, UseProtoSerializer, ModuleNameForUse,
+                      insert into {tableName}(User_ID, StringName, IsGlobal, List, UseProtoSerializer, ModuleNameForUse,
                                                              IsReadOnly, VersionNumber, UserGlobalSet_ID, IsProtoCorrected)
                       values ('80004Q4WZ1350KO8NT59RM', '_', 1, '{stringValue}', 1, 2, 1, 1, newid(), 1);
 
                    """;
 
-                    await cmd.ExecuteNonQueryAsync();
+                        await cmd.ExecuteNonQueryAsync();
 
-                    cmd.CommandText = $""""
+                        cmd.CommandText = $""""
                   SELECT
                   	--[gs].[UserGlobalSet_ID],
                   	--[gs].[User_ID],
@@ -846,16 +850,31 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                   	--[gs].[VersionNumber],
                   	--[gs].[IsProtoCorrected]
                   FROM
-                  	[dbo].[Expl_User_Global_Sets_] [gs]
+                  	{tableName} [gs]
                   WHERE
                   	([gs].[IsGlobal] = 1 OR [gs].[User_ID] = '{"80004Q4WZ1350KO8NT59RM"}') AND
                   	([gs].[ModuleNameForUse] IS NULL OR [gs].[ModuleNameForUse] = {2})
                   
                   """";
 
-                    var l = (string)await cmd.ExecuteScalarAsync();
-                    Assert.Equal(stringValue, l);
+                        var l = (string)await cmd.ExecuteScalarAsync();
+                        Assert.Equal(stringValue, l);
 
+                    }
+                }
+                finally
+                {
+                    try
+                    {
+                        using (var dropCommand = cn.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
                 }
             }
         }
