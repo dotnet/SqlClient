@@ -451,8 +451,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
 
-            State = Initializing;
-
             lock (s_random)
             {
                 // Random.Next is not thread-safe
@@ -854,10 +852,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             else
             {
-                // NOTE: constructor should ensure that current state cannot be State.Initializing, so it can only
-                //   be State.Running or State.ShuttingDown
-                Debug.Assert(State is Running or ShuttingDown);
-
                 lock (obj)
                 {
                     // A connection with a delegated transaction cannot currently
