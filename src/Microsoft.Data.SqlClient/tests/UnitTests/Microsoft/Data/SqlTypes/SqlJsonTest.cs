@@ -69,7 +69,6 @@ public class SqlJsonTest
                 "// comment {\"key\":\"value\"}"
             })
         {
-            Console.WriteLine($"Testing invalid JSON: {invalid}");
             Assert.ThrowsAny<JsonException>(() => new SqlJson(invalid));
         }
     }
