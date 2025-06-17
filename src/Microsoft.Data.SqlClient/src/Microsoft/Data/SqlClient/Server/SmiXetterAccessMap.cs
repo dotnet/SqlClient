@@ -103,16 +103,6 @@ namespace Microsoft.Data.SqlClient.Server
             /*DTOffset*/ { _,    _,    _,     _,     _,     _,     _,     _,     _,     _,     _,      _,     _,    _,     _,    _,    X, },
         };
         
-        #if NETFRAMEWORK
-        internal static bool IsGetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
-        {
-            // Make sure no-one adds a new xetter type without updating this file!
-            Debug.Assert(SmiXetterTypeCode.XetBoolean <= xetterType && SmiXetterTypeCode.XetDateTimeOffset >= xetterType);
-
-            return s_isGetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
-        }
-        #endif
-        
         internal static bool IsSetterAccessValid(SmiMetaData metaData, SmiXetterTypeCode xetterType)
         {
             // Make sure no-one adds a new xetter type without updating this file!

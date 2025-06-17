@@ -47,17 +47,6 @@ namespace Microsoft.Data.SqlClient.Server
         // Called for new resultset starting (COLMETADATA token)
         internal abstract void MetaDataAvailable(SmiQueryMetaData[] metaData, bool nextEventIsRow);
 
-
-        internal virtual void RowAvailable(SmiTypedGetterSetter rowData)
-        {
-            // Adding as of V200
-
-            // Implement body with throw because there are only a couple of ways to get to this code:
-            //  1) Client is calling this method even though the server negotiated for V3- and hasn't implemented V200 yet.
-            //  2) Server didn't implement V200 on some interface, but negotiated V200+.
-            Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
-        }
-
         // Called when any statement completes on server (DONE token)
         internal abstract void StatementCompleted(int rowsAffected);
 

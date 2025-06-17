@@ -163,10 +163,6 @@ namespace Microsoft.Data.SqlClient.Server
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
 
-        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
-                    type == SqlDbType.VarBinary ||
-                    type == SqlDbType.Image;
-
         // Does this type use PLP format values?
         internal static bool IsPlpFormat(SmiMetaData metaData) => 
                     metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||

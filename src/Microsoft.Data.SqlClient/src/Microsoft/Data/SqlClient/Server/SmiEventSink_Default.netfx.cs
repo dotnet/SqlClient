@@ -49,20 +49,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        internal void CleanMessages()
-        {
-            SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (parent != null)
-            {
-                parent.CleanMessages();
-            }
-            else
-            {
-                _errors = null;
-                _warnings = null;
-            }
-        }
-
         internal enum UnexpectedEventType
         {
             BatchCompleted,

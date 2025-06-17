@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.Server
     //        1) enforcing immutability.
     //        2) Inferring type from a value.
     //        3) Adjusting a value to match the metadata.
-    public sealed partial class SqlMetaData
+    public sealed class SqlMetaData
     {
         private const long MaxUnicodeLength = 4000;
         private const long MaxANSILength = 8000;
@@ -454,38 +454,6 @@ namespace Microsoft.Data.SqlClient.Server
         public SqlMetaData(string name, SqlDbType dbType, string database, string owningSchema, string objectName)
         {
             Construct(name, dbType, database, owningSchema, objectName, DefaultUseServerDefault, DefaultIsUniqueKey, DefaultColumnSortOrder, DefaultSortOrdinal);
-        }
-
-        // Most general constructor, should be able to initialize all SqlMetaData fields.(Used by SqlParameter)
-        internal SqlMetaData(
-            string name,
-            SqlDbType sqlDBType,
-            long maxLength,
-            byte precision,
-            byte scale,
-            long localeId,
-            SqlCompareOptions compareOptions,
-            string xmlSchemaCollectionDatabase,
-            string xmlSchemaCollectionOwningSchema,
-            string xmlSchemaCollectionName,
-            bool partialLength,
-            Type udtType
-        )
-        {
-            AssertNameIsValid(name);
-
-            _name = name;
-            _sqlDbType = sqlDBType;
-            _maxLength = maxLength;
-            _precision = precision;
-            _scale = scale;
-            _locale = localeId;
-            _compareOptions = compareOptions;
-            _xmlSchemaCollectionDatabase = xmlSchemaCollectionDatabase;
-            _xmlSchemaCollectionOwningSchema = xmlSchemaCollectionOwningSchema;
-            _xmlSchemaCollectionName = xmlSchemaCollectionName;
-            _partialLength = partialLength;
-            _udtType = udtType;
         }
 
         // Private constructor used to initialize default instance array elements.
@@ -2046,32 +2014,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             return value;
-        }
-
-
-        internal static SqlMetaData GetPartialLengthMetaData(SqlMetaData md)
-        {
-            if (md.IsPartialLength == true)
-            {
-                return md;
-            }
-            if (md.SqlDbType == SqlDbType.Xml)
-            {
-                ThrowInvalidType();     //Xml should always have IsPartialLength = true
-            }
-            if (
-                md.SqlDbType == SqlDbType.NVarChar ||
-                md.SqlDbType == SqlDbType.VarChar ||
-                md.SqlDbType == SqlDbType.VarBinary
-            )
-            {
-                return new SqlMetaData(md.Name, md.SqlDbType, SqlMetaData.Max, 0, 0, md.LocaleId,
-                    md.CompareOptions, null, null, null, true, md.Type);
-            }
-            else
-            {
-                return md;
-            }
         }
 
         private static void ThrowInvalidType()
