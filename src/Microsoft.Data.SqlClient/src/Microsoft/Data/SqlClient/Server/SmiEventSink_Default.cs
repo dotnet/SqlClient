@@ -17,53 +17,26 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
-        internal bool HasMessages
-        {
-            get
-            {
-#if NETFRAMEWORK
-                SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-                if (parent != null)
-                {
-                    return parent.HasMessages;
-                }
-                else
-#endif
-                {
-                    bool result = _errors != null || _warnings != null;
-                    return result;
-                }
-            }
-        }
+        internal bool HasMessages => _errors is not null || _warnings is not null;
 
         protected virtual void DispatchMessages(
-#if NETFRAMEWORK
+            #if NETFRAMEWORK
             bool ignoreNonFatalMessages
-#endif
+            #endif
             )
         {
             // virtual because we want a default implementation in the cases
             // where we don't have a connection to process stuff, but we want to
             // provide the connection the ability to fire info messages when it
             // hooks up.
-#if NETFRAMEWORK
-            SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (parent != null)
-            {
-                parent.DispatchMessages(ignoreNonFatalMessages);
-            }
-            else
-#endif
-            {
-                SqlException errors = ProcessMessages(true
-#if NETFRAMEWORK
+            SqlException errors = ProcessMessages(true
+                    #if NETFRAMEWORK
                     , ignoreNonFatalMessages
-#endif    
-                    );   // ignore warnings, because there's no place to send them...
-                if (errors != null)
-                {
-                    throw errors;
-                }
+                    #endif    
+            );   // ignore warnings, because there's no place to send them...
+            if (errors != null)
+            {
+                throw errors;
             }
 
         }
