@@ -88,10 +88,13 @@ When a new issue is created, follow these steps:
 - For issues labeled `Needs more info :information_source:`, ask for clarifications or additional details.
 - For issues labeled `Performance :chart_with_upwards_trend:`, prioritize performance-related improvements.
 - Use the issue description to understand the problem and identify the root cause.
-- If the issue is a bug, ensure you can reproduce it with the provided code sample.
-- If the issue is a feature request, review the proposal and assess its feasibility.
-- If the issue is a task, follow the instructions provided in the issue description.
-- If the issue is an epic, break it down into smaller tasks or bugs and create sub-issues as needed.
+    - If the issue is a bug, ensure you can reproduce it with the provided code sample.
+    - If the issue is a feature request, review the proposal and assess its feasibility.
+    - If the issue is a task, follow the instructions provided in the issue description.
+    - If the issue is an epic, break it down into smaller tasks or bugs and create sub-issues as needed.
+- Cross-reference issue descriptions with code in `src/` folders, especially in `netfx/src/` and `netcore/src/`.
+- If public APIs are changed, update corresponding `ref/` projects.
+- Add or update tests in `tests/` to validate the fix.
 
 ### 🧪 Writing Tests
 - For every bug fix, ensure there are unit tests and manual (integration) tests that cover the scenario.
@@ -105,12 +108,6 @@ When a new issue is created, follow these steps:
 ### 📝 Documentation
 - All public documentation for APIs should be updated in the `doc/` directories.
 - When adding or changing XML docs, ensure they are clear and follow the existing style.
-
-### 🔧 Fixing Bugs
-- Cross-reference issue descriptions with code in `src/` folders, especially in `netfx/src/` and `netcore/src/`.
-- If public APIs are changed, update corresponding `ref/` projects.
-- Add or update tests in `tests/` to validate the fix.
-- Follow coding standards from `policy/` directory.
 
 ### 🔁 Creating Pull Requests
 - Use the `Fixes #issue_number` syntax in the PR description to automatically close the issue when the PR is merged.
