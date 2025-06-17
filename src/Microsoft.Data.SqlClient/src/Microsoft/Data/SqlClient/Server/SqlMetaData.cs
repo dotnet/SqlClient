@@ -555,8 +555,6 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionOwningSchema/*' />
         public string XmlSchemaCollectionOwningSchema => _xmlSchemaCollectionOwningSchema;
 
-        internal bool IsPartialLength => _partialLength;
-
         internal string UdtTypeName
         {
             get

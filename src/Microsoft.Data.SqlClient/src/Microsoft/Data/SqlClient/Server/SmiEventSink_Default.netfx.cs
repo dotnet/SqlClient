@@ -22,12 +22,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        internal SmiEventSink Parent
-        {
-            get => _parent;
-            set => _parent = value;
-        }
-
         private SqlErrorCollection Warnings
         {
             get
