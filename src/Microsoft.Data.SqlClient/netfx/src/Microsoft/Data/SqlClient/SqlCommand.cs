@@ -491,8 +491,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _smiEventSink = new CommandEventSink(this);
                 }
-
-                _smiEventSink.Parent = InternalSmiConnection.CurrentEventSink;
+                
                 return _smiEventSink;
             }
         }
@@ -652,14 +651,6 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 Connection = (SqlConnection)value;
-            }
-        }
-
-        private SqlInternalConnectionSmi InternalSmiConnection
-        {
-            get
-            {
-                return (SqlInternalConnectionSmi)_activeConnection.InnerConnection;
             }
         }
 
