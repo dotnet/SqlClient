@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal partial class SmiEventSink_Default : SmiEventSink
+    internal class SmiEventSink_Default
     {
         private SqlErrorCollection _errors;
         private SqlErrorCollection _warnings;
@@ -41,11 +41,11 @@ namespace Microsoft.Data.SqlClient.Server
 
         }
 
-        protected SqlException ProcessMessages(bool ignoreWarnings
-#if NETFRAMEWORK
-            , bool ignoreNonFatalMessages
-#endif
-            )
+        #if NETFRAMEWORK
+        protected SqlException ProcessMessages(bool ignoreWarnings, bool ignoreNonFatalMessages)
+        #else
+        protected SqlException ProcessMessages(bool ignoreWarnings)
+        #endif
         {
             SqlException result = null;
             SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
@@ -109,14 +109,14 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal void ProcessMessagesAndThrow()
         {
-#if NETFRAMEWORK
-            ProcessMessagesAndThrow(false);
-#else
             if (HasMessages)
             {
+                #if NETFRAMEWORK
+                DispatchMessages(false);
+                #else
                 DispatchMessages();
+                #endif
             }
-#endif
         }
     }
 }
