@@ -258,6 +258,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringSynonyms.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionString.netfx.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionString.netfx.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringUtilities.cs</Link>
     </Compile>
@@ -951,10 +954,7 @@
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Microsoft\Data\Common\ConnectionString\DbConnectionOptions.netfx.cs" />
-    <Compile Include="Microsoft\Data\Common\DBConnectionString.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStreamChars.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
