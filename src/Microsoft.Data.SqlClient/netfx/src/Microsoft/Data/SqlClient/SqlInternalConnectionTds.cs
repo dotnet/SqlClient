@@ -457,7 +457,7 @@ namespace Microsoft.Data.SqlClient
                 DbConnectionPoolIdentity identity,
                 SqlConnectionString connectionOptions,
                 SqlCredential credential,
-                object providerInfo,
+                DbConnectionPoolGroupProviderInfo providerInfo,
                 string newPassword,
                 SecureString newSecurePassword,
                 bool redirectedUserInstance,
@@ -467,7 +467,8 @@ namespace Microsoft.Data.SqlClient
                 string accessToken = null,
                 IDbConnectionPool pool = null,
                 Func<SqlAuthenticationParameters, CancellationToken,
-                Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
+                Task<SqlAuthenticationToken>> accessTokenCallback = null) 
+            : base(connectionOptions)
         {
 #if DEBUG
             if (reconnectSessionData != null)
@@ -529,9 +530,7 @@ namespace Microsoft.Data.SqlClient
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");
             Debug.Assert(credential == null || (string.IsNullOrEmpty(connectionOptions.UserID) && string.IsNullOrEmpty(connectionOptions.Password)), "cannot mix the new secure password system and the connection string based password");
-
             Debug.Assert(credential == null || !connectionOptions.IntegratedSecurity, "Cannot use SqlCredential and Integrated Security");
-            Debug.Assert(credential == null || !connectionOptions.ContextConnection, "Cannot use SqlCredential with context connection");
 
             _poolGroupProviderInfo = (SqlConnectionPoolGroupProviderInfo)providerInfo;
             _fResetConnection = connectionOptions.ConnectionReset;

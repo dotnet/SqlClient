@@ -1058,6 +1058,7 @@ namespace Microsoft.Data.SqlClient
         private SqlSequentialStreamSmi _currentStream;             // The stream on the current column (if any)
         private SqlSequentialTextReaderSmi _currentTextReader;         // The text reader on the current column (if any)
 
+        // @TODO: No longer used -- delete!
         //  Assumes that if there were any results, the first chunk of them are in the data stream
         //      (up to the first actual row or the end of the resultsets).
         unsafe internal SqlDataReaderSmi(

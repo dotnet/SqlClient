@@ -108,6 +108,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: No longer used -- delete!
         internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions, SmiContext smiContext) : base(connectionOptions)
         {
             Debug.Assert(smiContext != null, "null smiContext?");
@@ -235,6 +236,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(false, "Activating an internal SMI connection?"); // we should never be activating, because that would indicate we're being pooled.
         }
 
+        // @TODO: No longer used -- delete
         internal void Activate()
         {
             int wasInUse = System.Threading.Interlocked.Exchange(ref _isInUse, 1);
@@ -424,6 +426,7 @@ namespace Microsoft.Data.SqlClient
             return whereAbouts;
         }
 
+        // @TODO: No longer used -- delete!
         internal void GetCurrentTransactionPair(out long transactionId, out Transaction transaction)
         {
             // SQLBU 214740: Transaction state could change between obtaining tranid and transaction
