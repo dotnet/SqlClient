@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.Server
     /// <summary>
     /// Formal encoding of SMI's metadata-to-ITypedSetter/-from-ITypedGetter validity rules
     /// </summary>
-    internal partial class SmiXetterAccessMap
+    internal static class SmiXetterAccessMap
     {
         // A couple of private constants to make the getter/setter access tables more readable
         private const bool X = true;

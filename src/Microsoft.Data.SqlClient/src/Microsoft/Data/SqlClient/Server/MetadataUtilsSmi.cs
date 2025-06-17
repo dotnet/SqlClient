@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Server
     ///  These are all based off of knowing the clr type of the value
     ///  as an ExtendedClrTypeCode enum for rapid access.
     /// </summary>
-    internal class MetaDataUtilsSmi
+    internal static class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
