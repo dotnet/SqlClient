@@ -12,8 +12,8 @@ namespace Microsoft.Data.SqlClient.Server
     {
         // SmiRecordBuffer defaults both CanGet and CanSet to true to support
         //  already-shipped SMIV3 record buffer classes. Sub-classes are free to override.
-        internal override bool CanGet => true;
+        protected override bool CanGet => true;
 
-        internal override bool CanSet => true;
+        protected override bool CanSet => true;
     }
 }
