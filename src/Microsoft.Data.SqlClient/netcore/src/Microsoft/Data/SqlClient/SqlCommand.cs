@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
     [DefaultEvent("RecordsAffected")]
     [ToolboxItem(true)]
     [DesignerCategory("")]
-    // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
+    [Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner)]
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter

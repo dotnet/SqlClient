@@ -1714,7 +1714,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken) 
+        public override Task OpenAsync(CancellationToken cancellationToken)
             => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
