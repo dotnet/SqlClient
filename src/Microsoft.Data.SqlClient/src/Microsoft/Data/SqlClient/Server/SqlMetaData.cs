@@ -97,80 +97,44 @@ namespace Microsoft.Data.SqlClient.Server
 
 
         // Array of default-valued metadata ordered by corresponding SqlDbType.
-        internal static SqlMetaData[] s_defaults =
-            {
-            //    new SqlMetaData(name, DbType, SqlDbType, MaxLen, Prec, Scale, Locale, DatabaseName, SchemaName, isPartialLength)
-            new SqlMetaData("bigint", SqlDbType.BigInt,
-                    8, 19, 0, 0, SqlCompareOptions.None,  false),            // SqlDbType.BigInt
-            new SqlMetaData("binary", SqlDbType.Binary,
-                    1, 0, 0, 0, SqlCompareOptions.None,  false),                // SqlDbType.Binary
-            new SqlMetaData("bit", SqlDbType.Bit,
-                    1, 1, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.Bit
-            new SqlMetaData("char", SqlDbType.Char,
-                    1, 0, 0, 0, DefaultStringCompareOptions,  false),                // SqlDbType.Char
-            new SqlMetaData("datetime", SqlDbType.DateTime,
-                    8, 23, 3, 0, SqlCompareOptions.None, false),            // SqlDbType.DateTime
-            new SqlMetaData("decimal", SqlDbType.Decimal,
-                    9, 18, 0, 0, SqlCompareOptions.None,  false),            // SqlDbType.Decimal
-            new SqlMetaData("float", SqlDbType.Float,
-                    8, 53, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.Float
-            new SqlMetaData("image", SqlDbType.Image,
-                    UnlimitedMaxLength, 0, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.Image
-            new SqlMetaData("int", SqlDbType.Int,
-                    4, 10, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.Int
-            new SqlMetaData("money", SqlDbType.Money,
-                    8, 19, 4, 0, SqlCompareOptions.None, false),            // SqlDbType.Money
-            new SqlMetaData("nchar", SqlDbType.NChar,
-                    1, 0, 0, 0, DefaultStringCompareOptions, false),                // SqlDbType.NChar
-            new SqlMetaData("ntext", SqlDbType.NText,
-                    UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions, false),                // SqlDbType.NText
-            new SqlMetaData("nvarchar", SqlDbType.NVarChar,
-                    MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions, false),                // SqlDbType.NVarChar
-            new SqlMetaData("real", SqlDbType.Real,
-                    4, 24, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.Real
-            new SqlMetaData("uniqueidentifier", SqlDbType.UniqueIdentifier,
-                    16, 0, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.UniqueIdentifier
-            new SqlMetaData("smalldatetime", SqlDbType.SmallDateTime,
-                    4, 16, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.SmallDateTime
-            new SqlMetaData("smallint", SqlDbType.SmallInt,
-                    2, 5, 0, 0, SqlCompareOptions.None, false),                                    // SqlDbType.SmallInt
-            new SqlMetaData("smallmoney", SqlDbType.SmallMoney,
-                    4, 10, 4, 0, SqlCompareOptions.None, false),                // SqlDbType.SmallMoney
-            new SqlMetaData("text", SqlDbType.Text,
-                    UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions, false),                // SqlDbType.Text
-            new SqlMetaData("timestamp", SqlDbType.Timestamp,
-                    8, 0, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.Timestamp
-            new SqlMetaData("tinyint", SqlDbType.TinyInt,
-                    1, 3, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.TinyInt
-            new SqlMetaData("varbinary", SqlDbType.VarBinary,
-                    MaxBinaryLength, 0, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.VarBinary
-            new SqlMetaData("varchar", SqlDbType.VarChar,
-                    MaxANSILength, 0, 0, 0, DefaultStringCompareOptions, false),                // SqlDbType.VarChar
-            new SqlMetaData("sql_variant", SqlDbType.Variant,
-                    8016, 0, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.Variant
-            new SqlMetaData("nvarchar", SqlDbType.NVarChar,
-                    1, 0, 0, 0, DefaultStringCompareOptions, false),                // Placeholder for value 24
-            new SqlMetaData("xml", SqlDbType.Xml,
-                    UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions, true),                // SqlDbType.Xml
-            new SqlMetaData("nvarchar", SqlDbType.NVarChar,
-                    1, 0, 0, 0, DefaultStringCompareOptions, false),                // Placeholder for value 26
-            new SqlMetaData("nvarchar", SqlDbType.NVarChar,
-                    MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions, false),                // Placeholder for value 27
-            new SqlMetaData("nvarchar", SqlDbType.NVarChar,
-                    MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions, false),                // Placeholder for value 28
-            new SqlMetaData("udt", SqlDbType.Udt,
-                    0, 0, 0, 0, SqlCompareOptions.None, false),            // SqlDbType.Udt = 29
-            new SqlMetaData("table", SqlDbType.Structured,
-                    0, 0, 0, 0, SqlCompareOptions.None, false),                // SqlDbType.Structured
-            new SqlMetaData("date", SqlDbType.Date,
-                    3, 10,0, 0, SqlCompareOptions.None, false),                // SqlDbType.Date
-            new SqlMetaData("time", SqlDbType.Time,
-                    5, 0, 7, 0, SqlCompareOptions.None, false),                // SqlDbType.Time
-            new SqlMetaData("datetime2", SqlDbType.DateTime2,
-                    8, 0, 7, 0, SqlCompareOptions.None, false),                // SqlDbType.DateTime2
-            new SqlMetaData("datetimeoffset", SqlDbType.DateTimeOffset,
-                   10, 0, 7, 0, SqlCompareOptions.None, false),                // SqlDbType.DateTimeOffset
-            };
+        private static readonly SqlMetaData[] s_defaults =
+        {
+            new SqlMetaData("bigint", SqlDbType.BigInt, 8, 19, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("binary", SqlDbType.Binary, 1, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("bit", SqlDbType.Bit, 1, 1, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("char", SqlDbType.Char, 1, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("datetime", SqlDbType.DateTime, 8, 23, 3, 0, SqlCompareOptions.None),
+            new SqlMetaData("decimal", SqlDbType.Decimal, 9, 18, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("float", SqlDbType.Float, 8, 53, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("image", SqlDbType.Image, UnlimitedMaxLength, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("int", SqlDbType.Int, 4, 10, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("money", SqlDbType.Money, 8, 19, 4, 0, SqlCompareOptions.None),
+            new SqlMetaData("nchar", SqlDbType.NChar, 1, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("ntext", SqlDbType.NText, UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("nvarchar", SqlDbType.NVarChar, MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("real", SqlDbType.Real, 4, 24, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("uniqueidentifier", SqlDbType.UniqueIdentifier, 16, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("smalldatetime", SqlDbType.SmallDateTime, 4, 16, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("smallint", SqlDbType.SmallInt, 2, 5, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("smallmoney", SqlDbType.SmallMoney, 4, 10, 4, 0, SqlCompareOptions.None),
+            new SqlMetaData("text", SqlDbType.Text, UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("timestamp", SqlDbType.Timestamp, 8, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("tinyint", SqlDbType.TinyInt, 1, 3, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("varbinary", SqlDbType.VarBinary, MaxBinaryLength, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("varchar", SqlDbType.VarChar, MaxANSILength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("sql_variant", SqlDbType.Variant, 8016, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("nvarchar", SqlDbType.NVarChar, 1, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("xml", SqlDbType.Xml, UnlimitedMaxLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("nvarchar", SqlDbType.NVarChar, 1, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("nvarchar", SqlDbType.NVarChar, MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("nvarchar", SqlDbType.NVarChar, MaxUnicodeLength, 0, 0, 0, DefaultStringCompareOptions),
+            new SqlMetaData("udt", SqlDbType.Udt, 0, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("table", SqlDbType.Structured, 0, 0, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("date", SqlDbType.Date, 3, 10, 0, 0, SqlCompareOptions.None),
+            new SqlMetaData("time", SqlDbType.Time, 5, 0, 7, 0, SqlCompareOptions.None),
+            new SqlMetaData("datetime2", SqlDbType.DateTime2, 8, 0, 7, 0, SqlCompareOptions.None),
+            new SqlMetaData("datetimeoffset", SqlDbType.DateTimeOffset, 10, 0, 7, 0, SqlCompareOptions.None),
+        };
 
         private string _name;
         private long _maxLength;
@@ -183,7 +147,6 @@ namespace Microsoft.Data.SqlClient.Server
         private string _xmlSchemaCollectionOwningSchema;
         private string _xmlSchemaCollectionName;
         private string _serverTypeName;
-        private bool _partialLength;
         private Type _udtType;
         private bool _useServerDefault;
         private bool _isUniqueKey;
@@ -458,16 +421,13 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Private constructor used to initialize default instance array elements.
         // DO NOT EXPOSE OUTSIDE THIS CLASS!  It performs no validation.
-        private SqlMetaData(
-            string name,
+        private SqlMetaData(string name,
             SqlDbType sqlDbType,
             long maxLength,
             byte precision,
             byte scale,
             long localeId,
-            SqlCompareOptions compareOptions,
-            bool partialLength
-        )
+            SqlCompareOptions compareOptions)
         {
             AssertNameIsValid(name);
 
@@ -478,7 +438,6 @@ namespace Microsoft.Data.SqlClient.Server
             _scale = scale;
             _locale = localeId;
             _compareOptions = compareOptions;
-            _partialLength = partialLength;
             _udtType = null;
         }
 
