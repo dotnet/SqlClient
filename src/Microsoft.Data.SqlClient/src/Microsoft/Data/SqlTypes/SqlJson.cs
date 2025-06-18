@@ -2,9 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System.Data.SqlTypes;
-using System.Text;
+#if NET
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Text.Json;
 
 #nullable enable
@@ -23,7 +24,11 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
-        public SqlJson(string? jsonString) 
+        public SqlJson(
+            #if NET
+            [StringSyntax(StringSyntaxAttribute.Json)]
+            #endif
+            string? jsonString)
         {
             if (jsonString == null)
             {
@@ -35,7 +40,7 @@ namespace Microsoft.Data.SqlTypes
             // Note that we do not support trailing commas or comments in the
             // JSON.
             //
-            JsonDocument.Parse(jsonString);
+            JsonDocument.Parse(jsonString).Dispose();
 
             _jsonString = jsonString;
         }
