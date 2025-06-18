@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
 
@@ -67,6 +68,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Certificate to use for encryption
         /// </summary>
         X509Certificate EncryptionCertificate { get; }
+
+        /// <summary>
+        /// SSL/TLS protocols to use for transport encryption
+        /// </summary>
+        SslProtocols EncryptionProtocols { get; }
 
         /// <summary>
         /// Counter of connection reset requests for this session

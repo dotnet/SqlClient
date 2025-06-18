@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.Serialization.Json;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient
@@ -72,8 +72,7 @@ namespace Microsoft.Data.SqlClient
 
                     using (Stream stream = s_client.GetStreamAsync(url).ConfigureAwait(false).GetAwaiter().GetResult())
                     {
-                        var deserializer = new DataContractJsonSerializer(typeof(byte[]));
-                        return (byte[])deserializer.ReadObject(stream);
+                        return JsonSerializer.Deserialize<List<byte>>(stream)?.ToArray();
                     }
                 }
                 catch (Exception e)
@@ -168,7 +167,11 @@ namespace Microsoft.Data.SqlClient
         public HealthReport(byte[] payload)
         {
             Size = payload.Length;
+#if NET9_0_OR_GREATER
             Certificate = X509CertificateLoader.LoadCertificate(payload);
+#else
+            Certificate = new X509Certificate2(payload);
+#endif
         }
 
         public int GetSizeInPayload()
@@ -455,7 +458,7 @@ namespace Microsoft.Data.SqlClient
         ENCLAVE_FLAG_DYNAMIC_DEBUG_ACTIVE = 0x00000004
     }
 
-    #endregion
+#endregion
 
     internal static class EnclaveHelpers
     {

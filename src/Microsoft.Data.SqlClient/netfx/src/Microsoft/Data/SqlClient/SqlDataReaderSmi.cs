@@ -736,32 +736,32 @@ namespace Microsoft.Data.SqlClient
                         schemaRow[IsRowVersion] = false;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.ColumnName))
+                    if (!string.IsNullOrEmpty(colMetaData.ColumnName))
                     {
                         schemaRow[BaseColumnName] = colMetaData.ColumnName;
                     }
-                    else if (!ADP.IsEmpty(colMetaData.Name))
+                    else if (!string.IsNullOrEmpty(colMetaData.Name))
                     {
                         // Use projection name if base column name is not present
                         schemaRow[BaseColumnName] = colMetaData.Name;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.TableName))
+                    if (!string.IsNullOrEmpty(colMetaData.TableName))
                     {
                         schemaRow[BaseTableName] = colMetaData.TableName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.SchemaName))
+                    if (!string.IsNullOrEmpty(colMetaData.SchemaName))
                     {
                         schemaRow[BaseSchemaName] = colMetaData.SchemaName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.CatalogName))
+                    if (!string.IsNullOrEmpty(colMetaData.CatalogName))
                     {
                         schemaRow[BaseCatalogName] = colMetaData.CatalogName;
                     }
 
-                    if (!ADP.IsEmpty(colMetaData.ServerName))
+                    if (!string.IsNullOrEmpty(colMetaData.ServerName))
                     {
                         schemaRow[BaseServerName] = colMetaData.ServerName;
                     }
@@ -1058,6 +1058,7 @@ namespace Microsoft.Data.SqlClient
         private SqlSequentialStreamSmi _currentStream;             // The stream on the current column (if any)
         private SqlSequentialTextReaderSmi _currentTextReader;         // The text reader on the current column (if any)
 
+        // @TODO: No longer used -- delete!
         //  Assumes that if there were any results, the first chunk of them are in the data stream
         //      (up to the first actual row or the end of the resultsets).
         unsafe internal SqlDataReaderSmi(

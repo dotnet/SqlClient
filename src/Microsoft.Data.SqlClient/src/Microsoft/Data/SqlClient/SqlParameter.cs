@@ -1614,12 +1614,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Udt:
                             if (!IsNull)
                             {
-#if NETFRAMEWORK
-                                //call the static function
-                                coercedSize = AssemblyCache.GetLength(val);
-#else
                                 coercedSize = SerializationHelperSql9.SizeInBytes(val);
-#endif
                             }
                             break;
                         case SqlDbType.Structured:
@@ -1993,7 +1988,7 @@ namespace Microsoft.Data.SqlClient
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
                 // NOTE: (VSTFDevDiv - 479609): Not Fixed for TEXT, NTEXT, IMAGE as these are deprecated LOB types.
-                (SqlDbType != SqlDbType.Xml) &&
+                (SqlDbType != SqlDbType.Xml && SqlDbType != SqlDbTypeExtensions.Json) &&
                 !metaType.IsVarTime
             )
             {

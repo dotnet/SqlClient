@@ -160,9 +160,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
-            Type sniProxyType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SNIProxy");
-            Type ssrpType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.SSRP");
-            Type dataSourceType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SNI.DataSource");
+            Type sniProxyType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SniProxy");
+            Type ssrpType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.SsrpClient");
+            Type dataSourceType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ManagedSni.DataSource");
             Type timeoutTimerType = sqlConnectionAssembly.GetType("Microsoft.Data.ProviderBase.TimeoutTimer");
 
             Type[] dataSourceConstructorTypesArray = new Type[] { typeof(string) };
@@ -212,9 +212,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string serverSPN = "";
             MethodInfo getSqlServerSPNs = sniProxyObj.GetType().GetMethod("GetSqlServerSPNs", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, getSqlServerSPNsTypesArray, null);
 
-            byte[][] result = (byte[][])getSqlServerSPNs.Invoke(sniProxyObj, new object[] { dataSrcInfo, serverSPN });
+            string[] result = (string[])getSqlServerSPNs.Invoke(sniProxyObj, new object[] { dataSrcInfo, serverSPN });
 
-            string spnInfo = Encoding.Unicode.GetString(result[0]);
+            string spnInfo = result[0];
 
             return spnInfo;
         }

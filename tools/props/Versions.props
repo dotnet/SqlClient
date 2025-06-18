@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="Build"
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>6.0.0</MdsVersionDefault>
+    <MdsVersionDefault>6.1.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
     <FileVersion>$(AssemblyFileVersion)</FileVersion>
@@ -20,58 +21,6 @@
     <SqlServerAssemblyFileVersion Condition="'$(SqlServerAssemblyFileVersion)' == ''">1.0.0.0</SqlServerAssemblyFileVersion>
     <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
-  </PropertyGroup>
-  <!-- NetFx project dependencies -->
-  <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSniVersion>
-    <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
-    <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
-    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
-  </PropertyGroup>
-  <!-- NetFx and NetCore project dependencies -->
-  <PropertyGroup>
-    <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftBclCryptographyVersion>9.0.0</MicrosoftBclCryptographyVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>9.0.0</MicrosoftExtensionsCachingMemoryVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
-    <SystemSecurityCryptographyPkcsVersion>9.0.0</SystemSecurityCryptographyPkcsVersion>
-  </PropertyGroup>
-  <!-- NetCore project dependencies -->
-  <PropertyGroup>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>9.0.0</SystemConfigurationConfigurationManagerVersion>
-    <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
-  </PropertyGroup>
-  <!-- AKV Provider project dependencies -->
-  <PropertyGroup>
-    <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
-    <AzureSecurityKeyVaultKeysVersion>[4.5.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
-  </PropertyGroup>
-  <!-- Test Project Dependencies -->
-  <PropertyGroup>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
-    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>10.0.0-beta.24564.1</MicrosoftDotNetRemoteExecutorVersion>
-    <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.24123.1</MicrosoftDotNetXUnitExtensionsVersion>
-    <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
-    <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
-    <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
-    <MicrosoftNETTestSdkVersion>17.8.0</MicrosoftNETTestSdkVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>172.52.0</MicrosoftSqlServerSqlManagementObjectsVersion>
-    <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
-    <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
-    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
-    <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
-    <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
-    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
-    <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
-    <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
-    <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <XunitVersion>2.6.3</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

@@ -50,23 +50,23 @@ namespace Microsoft.Data.Sql
                 { }
                 finally
                 {
-                    handle = SniNativeWrapper.SNIServerEnumOpen();
+                    handle = SniNativeWrapper.SniServerEnumOpen();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned handle = {3}.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
-                                                           nameof(SniNativeWrapper.SNIServerEnumOpen), handle);
+                                                           nameof(SniNativeWrapper.SniServerEnumOpen), handle);
                 }
 
                 if (handle != ADP.s_ptrZero)
                 {
                     while (more && !TdsParserStaticMethods.TimeoutHasExpired(s_timeoutTime))
                     {
-                        readLength = SniNativeWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
+                        readLength = SniNativeWrapper.SniServerEnumRead(handle, buffer, bufferSize, out more);
 
                         SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned 'readlength':{3}, and 'more':{4} with 'bufferSize' of {5}",
                                                                nameof(SqlDataSourceEnumeratorNativeHelper),
                                                                nameof(GetDataSources),
-                                                               nameof(SniNativeWrapper.SNIServerEnumRead),
+                                                               nameof(SniNativeWrapper.SniServerEnumRead),
                                                                readLength, more, bufferSize);
                         if (readLength > bufferSize)
                         {
@@ -84,21 +84,21 @@ namespace Microsoft.Data.Sql
             {
                 if (handle != ADP.s_ptrZero)
                 {
-                    SniNativeWrapper.SNIServerEnumClose(handle);
+                    SniNativeWrapper.SniServerEnumClose(handle);
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} called.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
-                                                           nameof(SniNativeWrapper.SNIServerEnumClose));
+                                                           nameof(SniNativeWrapper.SniServerEnumClose));
                 }
             }
 
             if (failure)
             {
-                Debug.Assert(false, $"{nameof(GetDataSources)}:{nameof(SniNativeWrapper.SNIServerEnumRead)} returned bad length");
+                Debug.Assert(false, $"{nameof(GetDataSources)}:{nameof(SniNativeWrapper.SniServerEnumRead)} returned bad length");
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR> {2} returned bad length, requested buffer {3}, received {4}",
                                                        nameof(SqlDataSourceEnumeratorNativeHelper),
                                                        nameof(GetDataSources),
-                                                       nameof(SniNativeWrapper.SNIServerEnumRead),
+                                                       nameof(SniNativeWrapper.SniServerEnumRead),
                                                        bufferSize, readLength);
 
                 throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, readLength), nameof(readLength));
@@ -158,7 +158,7 @@ namespace Microsoft.Data.Sql
 
                 string query = "ServerName='" + serverName + "'";
 
-                if (!ADP.IsEmpty(instanceName))
+                if (!string.IsNullOrEmpty(instanceName))
                 { // SQL BU DT 20006584: only append instanceName if present.
                     query += " AND InstanceName='" + instanceName + "'";
                 }

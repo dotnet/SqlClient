@@ -229,15 +229,15 @@
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -284,21 +284,21 @@
           You can also use <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> as the basis of a modified command. For example, you might call <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> and modify the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> value, and then explicitly set that on the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
         </para>
         <para>
-          After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
+          After the Transact-SQL statement is first generated, the application must explicitly call <see cref="M:System.Data.Common.DbCommandBuilder.RefreshSchema" /> if it changes the statement in any way. Otherwise, the <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" /> will still be using information from the previous statement, which might not be correct. The Transact-SQL statements are first generated when the application calls either <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> or <see cref="M:Microsoft.Data.SqlClient.SqlCommandBuilder.GetInsertCommand" />.
         </para>
         <para>
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -407,15 +407,15 @@
           The default behavior, when generating parameter names, is to use <c>@p1</c>, <c>@p2</c>, and so on for the various parameters. Passing <see langword="true" /> for the <paramref name="useColumnsForParameterNames" /> parameter lets you force the command builder to generate parameters based on the column names instead. This succeeds only if the following conditions are met:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNameMaxLength" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection has been specified and its length is equal to or greater than the generated parameter name.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The generated parameter name meets the criteria specified in the <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterNamePattern" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection regular expression.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             A <see cref="F:System.Data.Common.DbMetaDataColumnNames.ParameterMarkerFormat" /> returned from the <b>GetSchema</b> method call and found in the <see cref="F:System.Data.Common.DbMetaDataCollectionNames.DataSourceInformation" /> collection is specified.
-          </item>
+          </description></item>
         </list>
         <para>
           For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
@@ -458,9 +458,12 @@
         The starting character or characters to use. The default is an empty string.
       </value>
       <remarks>
-        <note type="note">
-          Although you cannot change the <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix" /> or <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix" /> properties after an insert, update, or delete command has been generated, you can change their settings after calling the <c>Update</c> method of a DataAdapter.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Although you cannot change the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix> or <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix> properties after an insert, update, or delete command has been generated, you can change their settings after calling the `Update` method of a DataAdapter.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         This property cannot be changed after an INSERT, UPDATE, or DELETE command has been generated.
@@ -474,9 +477,12 @@
         The ending character or characters to use. The default is an empty string.
       </value>
       <remarks>
-        <note type="note">
-          Although you cannot change the <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix" /> or <see cref="P:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix" /> properties after an insert, update, or delete operation has been generated, you can change their settings after calling the <c>Update</c> method of a DataAdapter.
-        </note>
+        <format type="text/markdown">
+          <![CDATA[
+> [!NOTE]
+> Although you cannot change the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuotePrefix> or <xref:Microsoft.Data.SqlClient.SqlCommandBuilder.QuoteSuffix> properties after an insert, update, or delete operation has been generated, you can change their settings after calling the `Update` method of a DataAdapter.
+          ]]>
+        </format>
       </remarks>
       <exception cref="T:System.InvalidOperationException">
         This property cannot be changed after an insert, update, or delete command has been generated.

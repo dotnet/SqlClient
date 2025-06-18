@@ -41,6 +41,18 @@ parameters:
   type: object
   default: [false, true]
 
+- name: SNIVersion
+  displayName: |
+    SNI Version Override
+  type: string
+  default: ''
+
+- name: SNIValidationFeed
+  displayName: |
+    SNI Version Override Nuget Feed
+  type: string
+  default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
+
 - name: codeCovTargetFrameworks
   displayName: 'Code Coverage Target Frameworks'
   type: object
@@ -59,7 +71,7 @@ parameters:
 
 variables:
   - template: libraries/ci-build-variables.yml@self
-
+  
   - name: artifactName
     value: Artifacts
 
@@ -73,6 +85,12 @@ stages:
     - template: common/templates/jobs/ci-build-nugets-job.yml@self
       parameters:
         artifactName: $(artifactName)
+        ${{if ne(parameters.SNIVersion, '')}}:
+          prebuildSteps:
+            - template: common/templates/steps/override-sni-version.yml@self
+              parameters:
+                SNIVersion: ${{parameters.SNIVersion}}
+                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
 
   - template: common/templates/stages/ci-run-tests-stage.yml@self
     parameters:
@@ -81,12 +99,24 @@ stages:
       ${{ if eq(parameters.buildType, 'Package') }}:
         dependsOn: build_nugets
 
-      prebuildSteps: # steps to run prior to building and running tests on each job
-      - template: common/templates/steps/ci-prebuild-step.yml@self
-        parameters:
-          debug: ${{ parameters.debug }}
-          artifactName: $(artifactName)
-          buildType: ${{ parameters.buildType }}
+      ${{if ne(parameters.SNIVersion, '')}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/override-sni-version.yml@self
+            parameters:
+              SNIVersion: ${{parameters.SNIVersion}}
+              SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
+      ${{else}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
 
       ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
         postTestJobs: # jobs to run after the tests are done
@@ -124,10 +154,6 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
@@ -142,7 +168,6 @@ stages:
             # instanceName: default: MSSQLSERVER
             # user: default: $(user)
             # saUser: default: $(saUser)
-            # password: default: $(password)
             # fileStreamDirectory: default: ''
             # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
             # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
@@ -171,10 +196,6 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
@@ -190,7 +211,6 @@ stages:
             # instanceName: default: MSSQLSERVER
             # user: default: $(user)
             # saUser: default: $(saUser)
-            # password: default: $(password)
             # fileStreamDirectory: default: ''
             # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
             # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
@@ -218,10 +238,6 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
@@ -251,10 +267,6 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
@@ -310,9 +322,14 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            # Note: Using the isFork variable to determine if secrets are available is not ideal since
+            # it's an indirect association. But everything else (referencing secret variables various
+            # ways to detect if they were present) won't run consistently across forks and non-forks.
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -337,9 +354,11 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
             AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
             AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -347,35 +366,36 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        windows_enclave_sql:
-          pool: ADO-CI-AE-1ES-Pool
-          images: 
-            Win22_Enclave_Sql19: ADO-MMS22-SQL19
-          TargetFrameworks: ${{parameters.targetFrameworks }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: ${{parameters.buildPlatforms }}
-          testSets: [AE]
-          useManagedSNI: ${{parameters.useManagedSNI }}
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: enclave
-          operatingSystem: Windows
-          configProperties:
-            # config.json properties
-            TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
-            TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
-            TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
-            EnclaveEnabled: true
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
-            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
-            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-            AliasName: $(SQLAliasName)            
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+          windows_enclave_sql:
+            pool: ADO-CI-AE-1ES-Pool
+            images: 
+              Win22_Enclave_Sql19: ADO-MMS22-SQL19
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: [AE]
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+            configSqlFor: enclave
+            operatingSystem: Windows
+            configProperties:
+              # config.json properties
+              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
+              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
+              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
+              EnclaveEnabled: true
+              AADAuthorityURL: $(AADAuthorityURL)
+              AADServicePrincipalId: $(AADServicePrincipalId)
+              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              AliasName: $(SQLAliasName)            
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
     # self hosted SQL Server on Linux
         linux_ub20_22_sql_22:
@@ -395,7 +415,6 @@ stages:
             # config.json properties
             TCPConnectionString: $(SQL_TCP_CONN_STRING)
             NPConnectionString: $(SQL_NP_CONN_STRING)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -422,9 +441,11 @@ stages:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
             AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
             AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -432,53 +453,53 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-        linux_enclave_sql:
-          pool: ADO-CI-AE-1ES-Pool
-          images:
-            Ubuntu22_Enclave_Sql22: ADO-UB22-SQL22
-          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: [AE]
-          useManagedSNI: [true]
-          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: enclave
-          operatingSystem: Linux
-          configProperties:
-            # config.json properties
-            TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
-            TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
-            TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
-            EnclaveEnabled: true
-            AADAuthorityURL: $(AADAuthorityURL)
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
-            AADServicePrincipalId: $(AADServicePrincipalId)
-            AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
-            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
-            SupportsIntegratedSecurity: false
-            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+          linux_enclave_sql:
+            pool: ADO-CI-AE-1ES-Pool
+            images:
+              Ubuntu20_Enclave_Sql19: ADO-UB22-Sql22
+            TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: [AnyCPU]
+            testSets: [AE]
+            useManagedSNI: [true]
+            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+            configSqlFor: enclave
+            operatingSystem: Linux
+            configProperties:
+              # config.json properties
+              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
+              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
+              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
+              EnclaveEnabled: true
+              AADServicePrincipalId: $(AADServicePrincipalId)
+              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: false
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
-    # Azure Sql Server - Mac
-        mac_azure_sql:
+        # Self hosted SQL Server on Mac
+        mac_sql_22:
           pool: $(defaultHostedPoolName)
           hostedPool: true
           images:
-            MacOSLatest_Azure_Sql: macos-latest
+            MacOSLatest_Sql22: macos-latest
           TargetFrameworks: ${{parameters.targetFrameworksLinux }}
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: [AnyCPU]
           testSets: ${{parameters.testSets }}
           useManagedSNI: [true]
           codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
-          configSqlFor: azure
+          configSqlFor: local
           operatingSystem: Mac
           configProperties:
             # config.json properties
-            TCPConnectionString: $(AZURE_DB_SP_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_SP_NP_CONN_STRING)
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
             SupportsIntegratedSecurity: false
             ManagedIdentitySupported: false
             LocalDbAppName: $(LocalDbAppName)

@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Inconvertible type mismatch between SourceColumn '{0}' of {1} and the DataColumn '{2}' of {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>Missing the DataColumn '{0}' for the SourceColumn '{2}'.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>Missing the DataColumn '{0}' in the DataTable '{1}' for the SourceColumn '{2}'.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Associating port with I/O completion mechanism failed</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket is null</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Timeout error</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Defines the blocking period behavior for a connection pool.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Defines whether query metadata caching is enabled.</value>
   </data>
@@ -4745,5 +4730,17 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Invalid attempt to get JsonDocument on column '{0}'. JsonDocument is only supported for columns of type json.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Buffer advanced too far {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Buffer maximum size exceeded: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>Missing the DataColumn '{0}' for the SourceColumn '{2}'.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>SqlBatchCommand list has not been initialized.</value>
   </data>
 </root>

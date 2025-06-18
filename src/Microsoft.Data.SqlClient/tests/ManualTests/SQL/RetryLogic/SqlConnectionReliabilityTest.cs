@@ -203,8 +203,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = InvalidInitialCatalog
             };
 
-            SqlConnection cnn = new SqlConnection(builder.ConnectionString);
-            cnn.RetryLogicProvider = provider;
+            SqlConnection cnn = new(builder.ConnectionString)
+            {
+                RetryLogicProvider = provider
+            };
             cnn.RetryLogicProvider.Retrying += (s, e) =>
             {
                 Assert.Equal(e.RetryCount, e.Exceptions.Count);

@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void CustomActiveDirectoryProviderTest()
         {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback);
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
             Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
@@ -69,15 +69,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
         {
-            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback, Guid.NewGuid().ToString());
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(static (result) => Task.CompletedTask, Guid.NewGuid().ToString());
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
             Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-        }
-
-        private Task CustomDeviceFlowCallback(DeviceCodeResult result)
-        {
-            Console.WriteLine(result.Message);
-            return Task.FromResult(0);
         }
     }
 }

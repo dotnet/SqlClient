@@ -33,7 +33,6 @@ parameters:
     default: MDS
     values:
     - MDS
-    - AKV
     - MSS
 
 steps:
@@ -75,23 +74,6 @@ steps:
         {
           Copy-Item "artifacts\Project\bin\Windows_NT\Release.AnyCPU\Microsoft.Data.SqlClient\netcore\$tf\Microsoft.Data.SqlClient.pdb" "$symbols\win\$tf" -recurse
         }
-            
-        Write-Host "Artifacts fetched for testing"
-        Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
-
-  - ${{ if eq(parameters.product, 'AKV') }}:
-    - powershell: |
-        $software = '${{parameters.softwareFolder}}'
-        $tf = '${{ targetFramework }}'
-        md $software\win\$tf
-        
-        Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\AzureKeyVaultProvider\$tf\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" "$software\win\$tf" -recurse
-        
-        $symbols = '${{parameters.symbolsFolder}}'
-        md $symbols\win\$tf
-        
-        Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\AzureKeyVaultProvider\$tf\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" "$symbols\win\$tf" -recurse
             
         Write-Host "Artifacts fetched for testing"
         Get-Location

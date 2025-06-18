@@ -3,27 +3,25 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
+
+using SwitchesHelper = Microsoft.Data.SqlClient.Tests.Common.LocalAppContextSwitchesHelper;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderTest
     {
         private static readonly object s_rowVersionLock = new();
-
-        // this enum must mirror the definition in LocalAppContextSwitches
-        private enum Tristate : byte
-        {
-            NotInitialized = 0,
-            False = 1,
-            True = 2
-        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
@@ -265,37 +263,529 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CheckNullRowVersionIsBDNull()
+        public static void CheckNullRowVersionIsDBNull()
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.False);
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.False;
+
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.True(reader.IsDBNull(0));
+                Assert.Equal(DBNull.Value, reader[0]);
+                var result = reader.GetValue(0);
+                Assert.IsType<DBNull>(result);
+                Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
+                Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
+
+                SqlBinary binary = reader.GetSqlBinary(0);
+                Assert.True(binary.IsNull);
+
+                SqlBytes bytes = reader.GetSqlBytes(0);
+                Assert.True(bytes.IsNull);
+                Assert.Null(bytes.Buffer);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static int CanReadEmployeesTableCompletely()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    conn.Open();
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!reader.IsDBNull(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadEmployeesTableCompletelyAsync()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    await conn.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!await reader.IsDBNullAsync(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadEmployeesTableCompletelyWithNullImageAsync()
+        {
+            int counter = 0;
+
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,convert(image,NULL) as Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
+                {
+                    cmd.Parameters.AddWithValue("@p0", 5);
+
+                    await conn.OpenAsync();
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            for (int index = 0; index < reader.FieldCount; index++)
+                            {
+                                if (!await reader.IsDBNullAsync(index))
+                                {
+                                    object value = reader[index];
+                                    counter += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return counter;
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task<int> CanReadXmlData()
+        {
+            const string xml = @"<catalog id1=""00000000-0000-0000-0000-000000000000"" id2=""00000000-0000-0000-0000-000000000000"" id3=""00000000-0000-0000-0000-000000000000"" id4=""00000000-0000-0000-0000-000000000000"" id5=""00000000-0000-0000-0000-000000000000"">
+   <book id=""bk101"">
+      <author>Gambardella, Matthew</author>
+      <title>XML Developer's Guide</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications 
+      with XML.</description>
+   </book>
+   <book id=""bk102"">
+      <author>Ralls, Kim</author>
+      <title>Midnight Rain</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2000-12-16</publish_date>
+      <description>A former architect battles corporate zombies, 
+      an evil sorceress, and her own childhood to become queen 
+      of the world.</description>
+   </book>
+   <book id=""bk103"">
+      <author>Corets, Eva</author>
+      <title>Maeve Ascendant</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2000-11-17</publish_date>
+      <description>After the collapse of a nanotechnology 
+      society in England, the young survivors lay the 
+      foundation for a new society.</description>
+   </book>
+   <book id=""bk104"">
+      <author>Corets, Eva</author>
+      <title>Oberon's Legacy</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2001-03-10</publish_date>
+      <description>In post-apocalypse England, the mysterious 
+      agent known only as Oberon helps to create a new life 
+      for the inhabitants of London. Sequel to Maeve 
+      Ascendant.</description>
+   </book>
+   <book id=""bk105"">
+      <author>Corets, Eva</author>
+      <title>The Sundered Grail</title>
+      <genre>Fantasy</genre>
+      <price>5.95</price>
+      <publish_date>2001-09-10</publish_date>
+      <description>The two daughters of Maeve, half-sisters, 
+      battle one another for control of England. Sequel to 
+      Oberon's Legacy.</description>
+   </book>
+   <book id=""bk106"">
+      <author>Randall, Cynthia</author>
+      <title>Lover Birds</title>
+      <genre>Romance</genre>
+      <price>4.95</price>
+      <publish_date>2000-09-02</publish_date>
+      <description>When Carla meets Paul at an ornithology 
+      conference, tempers fly as feathers get ruffled.</description>
+   </book>
+   <book id=""bk107"">
+      <author>Thurman, Paula</author>
+      <title>Splish Splash</title>
+      <genre>Romance</genre>
+      <price>4.95</price>
+      <publish_date>2000-11-02</publish_date>
+      <description>A deep sea diver finds true love twenty 
+      thousand leagues beneath the sea.</description>
+   </book>
+   <book id=""bk108"">
+      <author>Knorr, Stefan</author>
+      <title>Creepy Crawlies</title>
+      <genre>Horror</genre>
+      <price>4.95</price>
+      <publish_date>2000-12-06</publish_date>
+      <description>An anthology of horror stories about roaches,
+      centipedes, scorpions  and other insects.</description>
+   </book>
+   <book id=""bk109"">
+      <author>Kress, Peter</author>
+      <title>Paradox Lost</title>
+      <genre>Science Fiction</genre>
+      <price>6.95</price>
+      <publish_date>2000-11-02</publish_date>
+      <description>After an inadvertant trip through a Heisenberg
+      Uncertainty Device, James Salway discovers the problems 
+      of being quantum.</description>
+   </book>
+   <book id=""bk110"">
+      <author>O'Brien, Tim</author>
+      <title>Microsoft .NET: The Programming Bible</title>
+      <genre>Computer</genre>
+      <price>36.95</price>
+      <publish_date>2000-12-09</publish_date>
+      <description>Microsoft's .NET initiative is explored in 
+      detail in this deep programmer's reference.</description>
+   </book>
+   <book id=""bk111"">
+      <author>O'Brien, Tim</author>
+      <title>MSXML3: A Comprehensive Guide</title>
+      <genre>Computer</genre>
+      <price>36.95</price>
+      <publish_date>2000-12-01</publish_date>
+      <description>The Microsoft MSXML3 parser is covered in 
+      detail, with attention to XML DOM interfaces, XSLT processing, 
+      SAX and more.</description>
+   </book>
+   <book id=""bk112"">
+      <author>Galos, Mike</author>
+      <title>Visual Studio 7: A Comprehensive Guide</title>
+      <genre>Computer</genre>
+      <price>49.95</price>
+      <publish_date>2001-04-16</publish_date>
+      <description>Microsoft Visual Studio 7 is explored in depth,
+      looking at how Visual Basic, Visual C++, C#, and ASP+ are 
+      integrated into a comprehensive development 
+      environment.</description>
+   </book>
+</catalog>";
+
+            string tableName = DataTestUtility.GenerateObjectName();
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.PersistSecurityInfo = true;
+            builder.PacketSize = 3096; // should reproduce failure that this tests for in <100 reads
+
+            using (var connection = new SqlConnection(builder.ToString()))
+            {
+                await connection.OpenAsync();
+
                 try
                 {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.True(reader.IsDBNull(0));
-                    Assert.Equal(DBNull.Value, reader[0]);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<DBNull>(result);
-                    Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
-                    Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
+                    // setup
+                    using (var dropCommand = connection.CreateCommand())
+                    {
+                        dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                        dropCommand.ExecuteNonQuery();
+                    }
 
-                    SqlBinary binary = reader.GetSqlBinary(0);
-                    Assert.True(binary.IsNull);
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = $"CREATE TABLE [{tableName}] (Id int PRIMARY KEY, Data xml NOT NULL)";
+                        createCommand.ExecuteNonQuery();
+                    }
 
-                    SqlBytes bytes = reader.GetSqlBytes(0);
-                    Assert.True(bytes.IsNull);
-                    Assert.Null(bytes.Buffer);
+                    for (var i = 0; i < 100; i++)
+                    {
+                        using (var insertCommand = connection.CreateCommand())
+                        {
+                            insertCommand.CommandText = $"INSERT INTO [{tableName}] (Id, Data) VALUES (@id, @data)";
+                            insertCommand.Parameters.AddWithValue("@id", i);
+                            insertCommand.Parameters.AddWithValue("@data", xml);
+                            insertCommand.ExecuteNonQuery();
+                        }
+                    }
+
+                    // execute
+                    int id = 0;
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = $"SELECT Data FROM [{tableName}] ORDER BY Id";
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            string expectedResult = null;
+                            while (await reader.ReadAsync())
+                            {
+                                var result = reader.GetString(0);
+                                if (expectedResult == null)
+                                {
+                                    expectedResult = result;
+                                }
+                                else
+                                {
+                                    Assert.Equal(expectedResult, result);
+                                }
+                                id++;
+                            }
+                        }
+                    }
+                    return id;
 
                 }
                 finally
                 {
-                    SetLegacyRowVersionNullBehavior(originalValue);
+                    try
+                    {
+                        using (var dropCommand = connection.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadSequentialDecreasingChunks()
+        {
+            // pattern repeat input allows you to more easily identify if chunks are incorrectly
+            //  related to each other by seeing the start and end of sequential chunks and checking
+            //  if they correctly move to the next char while debugging
+            // simply repeating a single char can't tell you where in the string it went wrong.
+            const string baseString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            StringBuilder inputBuilder = new StringBuilder();
+            while (inputBuilder.Length < (64 * 1024))
+            {
+                inputBuilder.Append(baseString);
+                inputBuilder.Append(' ');
+            }
+
+            string input = inputBuilder.ToString();
+
+            StringBuilder resultBuilder = new StringBuilder();
+            CancellationTokenSource cts = new CancellationTokenSource();
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync(cts.Token);
+
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SELECT CONVERT(varchar(max),@str) as a";
+                    command.Parameters.AddWithValue("@str", input);
+
+                    using (var reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess, cts.Token))
+                    {
+                        if (await reader.ReadAsync(cts.Token))
+                        {
+                            using (var textReader = reader.GetTextReader(0))
+                            {
+                                var buffer = new char[4096];
+                                var charsReadCount = -1;
+                                var start = 0;
+                                while (charsReadCount != 0)
+                                {
+                                    charsReadCount = await textReader.ReadAsync(buffer, start, buffer.Length - start);
+                                    resultBuilder.Append(buffer, start, charsReadCount);
+                                    start++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            string result = resultBuilder.ToString();
+
+            Assert.Equal(input, result);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanReadBinaryData()
+        {
+            const int Size = 20_000;
+
+            byte[] data = Enumerable.Range(0, Size)
+                .Select(i => (byte)(i % 256))
+                .ToArray();
+            string tableName = DataTestUtility.GenerateObjectName();
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await connection.OpenAsync();
+
+                try
+                {
+                    using (var createCommand = connection.CreateCommand())
+                    {
+                        createCommand.CommandText = $@"
+DROP TABLE IF EXISTS [{tableName}]
+CREATE TABLE [{tableName}] (Id INT IDENTITY(1,1) PRIMARY KEY, Data VARBINARY(MAX));
+INSERT INTO [{tableName}] (Data) VALUES (@data);";
+                        createCommand.Parameters.Add(new SqlParameter("@data", SqlDbType.VarBinary, Size) { Value = data });
+                        await createCommand.ExecuteNonQueryAsync();
+                    }
+
+                    using (var command = connection.CreateCommand())
+                    {
+
+                        command.CommandText = $"SELECT Data FROM [{tableName}]";
+                        command.Parameters.Clear();
+                        var result = (byte[])await command.ExecuteScalarAsync();
+
+                        Assert.Equal(data, result);
+                    }
+
+                }
+                finally
+                {
+                    try
+                    {
+                        using (var dropCommand = connection.CreateCommand())
+                        {
+                            dropCommand.CommandText = $"DROP TABLE IF EXISTS [{tableName}]";
+                            dropCommand.ExecuteNonQuery();
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task CanGetCharsSequentially()
+        {
+            const CommandBehavior commandBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleResult;
+            const int length = 32000;
+            const string sqlCharWithArg = "SELECT CONVERT(BIGINT, 1) AS [Id], CONVERT(NVARCHAR(MAX), @input) AS [Value];";
+
+            using (var sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                await sqlConnection.OpenAsync();
+
+                StringBuilder inputBuilder = new StringBuilder(length);
+                Random random = new Random();
+                for (int i = 0; i < length; i++)
+                {
+                    inputBuilder.Append((char)random.Next(0x30, 0x5A));
+                }
+                string input = inputBuilder.ToString();
+
+                using (var sqlCommand = new SqlCommand())
+                {
+                    sqlCommand.Connection = sqlConnection;
+                    sqlCommand.CommandTimeout = 0;
+                    sqlCommand.CommandText = sqlCharWithArg;
+                    sqlCommand.Parameters.Add(new SqlParameter("@input", SqlDbType.NVarChar, -1) { Value = input });
+
+                    using (var sqlReader = await sqlCommand.ExecuteReaderAsync(commandBehavior))
+                    {
+                        if (await sqlReader.ReadAsync())
+                        {
+                            long id = sqlReader.GetInt64(0);
+                            if (id != 1)
+                            {
+                                Assert.Fail("Id not 1");
+                            }
+
+                            var sliced = GetPooledChars(sqlReader, 1, input);
+                            if (!sliced.SequenceEqual(input.ToCharArray()))
+                            {
+                                Assert.Fail("sliced != input");
+                            }
+                        }
+                    }
+                }
+            }
+
+            static char[] GetPooledChars(SqlDataReader sqlDataReader, int ordinal, string input)
+            {
+                var buffer = ArrayPool<char>.Shared.Rent(8192);
+                int offset = 0;
+                while (true)
+                {
+                    int read = (int)sqlDataReader.GetChars(ordinal, offset, buffer, offset, buffer.Length - offset);
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    ReadOnlySpan<char> fetched = buffer.AsSpan(offset, read);
+                    ReadOnlySpan<char> origin = input.AsSpan(offset, read);
+
+                    if (!fetched.Equals(origin, StringComparison.Ordinal))
+                    {
+                        Assert.Fail($"chunk (start:{offset}, for:{read}), is not the same as the input");
+                    }
+
+                    offset += read;
+
+                    if (buffer.Length - offset < 128)
+                    {
+                        buffer = Resize(buffer);
+                    }
+                }
+
+                var sliced = buffer.AsSpan(0, offset).ToArray();
+                ArrayPool<char>.Shared.Return(buffer);
+                return sliced;
+
+                static char[] Resize(char[] buffer)
+                {
+                    var newBuffer = ArrayPool<char>.Shared.Rent(buffer.Length * 2);
+                    Array.Copy(buffer, newBuffer, buffer.Length);
+                    ArrayPool<char>.Shared.Return(buffer);
+                    return newBuffer;
                 }
             }
         }
@@ -306,38 +796,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             lock (s_rowVersionLock)
             {
-                Tristate originalValue = SetLegacyRowVersionNullBehavior(Tristate.True);
-                try
-                {
-                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-                    con.Open();
-                    using SqlCommand command = con.CreateCommand();
-                    command.CommandText = "select cast(null as rowversion) rv";
-                    using SqlDataReader reader = command.ExecuteReader();
-                    reader.Read();
-                    Assert.False(reader.IsDBNull(0));
-                    SqlBinary value = reader.GetSqlBinary(0);
-                    Assert.False(value.IsNull);
-                    Assert.Equal(0, value.Length);
-                    Assert.NotNull(value.Value);
-                    var result = reader.GetValue(0);
-                    Assert.IsType<byte[]>(result);
-                    Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
-                }
-                finally
-                {
-                    SetLegacyRowVersionNullBehavior(originalValue);
-                }
-            }
-        }
+                using SwitchesHelper helper = new();
+                helper.LegacyRowVersionNullBehaviorField = SwitchesHelper.Tristate.True;
 
-        private static Tristate SetLegacyRowVersionNullBehavior(Tristate value)
-        {
-            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Tristate originalValue = (Tristate)switchField.GetValue(null);
-            switchField.SetValue(null, value);
-            return originalValue;
+                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                con.Open();
+                using SqlCommand command = con.CreateCommand();
+                command.CommandText = "select cast(null as rowversion) rv";
+                using SqlDataReader reader = command.ExecuteReader();
+                reader.Read();
+                Assert.False(reader.IsDBNull(0));
+                SqlBinary value = reader.GetSqlBinary(0);
+                Assert.False(value.IsNull);
+                Assert.Equal(0, value.Length);
+                Assert.NotNull(value.Value);
+                var result = reader.GetValue(0);
+                Assert.IsType<byte[]>(result);
+                Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
+            }
         }
     }
 }

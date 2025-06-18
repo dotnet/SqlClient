@@ -8,11 +8,20 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 {
     public abstract class CertificateFixtureBase : IDisposable
     {
+        /// <summary>
+        /// Certificates must be created using this provider. Certificates created by PowerShell
+        /// using another provider aren't accessible from RSACryptoServiceProvider, which means
+        /// that we could not roundtrip between SqlColumnEncryptionCertificateStoreProvider and
+        /// SqlColumnEncryptionCspProvider.
+        /// </summary>
+        private const string CspProviderName = "Microsoft Enhanced RSA and AES Cryptographic Provider";
+
         private sealed class CertificateStoreContext
         {
             public List<X509Certificate2> Certificates { get; }
@@ -31,7 +40,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 
         private readonly List<CertificateStoreContext> _certificateStoreModifications = new List<CertificateStoreContext>();
 
-        protected static X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses)
+        protected X509Certificate2 CreateCertificate(string subjectName, IEnumerable<string> dnsNames, IEnumerable<string> ipAddresses, bool forceCsp = false)
         {
             // This will always generate a certificate with:
             // * Start date: 24hrs ago
@@ -53,7 +62,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
 #if NET
             X500DistinguishedNameBuilder subjectBuilder = new X500DistinguishedNameBuilder();
             SubjectAlternativeNameBuilder sanBuilder = new SubjectAlternativeNameBuilder();
-            RSA rsaKey = RSA.Create(2048);
+            RSA rsaKey = CreateRSA(forceCsp);
             bool hasSans = false;
 
             subjectBuilder.AddCommonName(subjectName);
@@ -83,8 +92,22 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             // This is to ensure that it's imported into the certificate stores with its private key.
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
-                return X509CertificateLoader.LoadPkcs12(ephemeral.Export(X509ContentType.Pkcs12, password), password,
+                #if NET9_0_OR_GREATER
+                return X509CertificateLoader.LoadPkcs12(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
+                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+                    new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults) 
+                    {
+                        PreserveStorageProvider = true,
+                        PreserveKeyName = true
+                    });
+                #else
+                return new X509Certificate2(
+                    ephemeral.Export(X509ContentType.Pkcs12, password),
+                    password,
                     X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                #endif
             }
 #else
             // The CertificateRequest API is available in .NET Core, but was only added to .NET Framework 4.7.2; it thus can't be used in the test projects.
@@ -99,9 +122,9 @@ $sAN = @({3})
 
 try
 {{
-    $x509 = New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
+    $x509 = PKI\New-SelfSignedCertificate -Subject $subject -TextExtension $sAN -KeyLength 2048 -KeyAlgorithm RSA `
         -CertStoreLocation ""Cert:\CurrentUser\My"" -NotBefore $notBefore -NotAfter $notAfter `
-        -KeyExportPolicy Exportable -HashAlgorithm SHA256
+        -KeyExportPolicy Exportable -HashAlgorithm SHA256 -Provider ""{5}"" -KeySpec KeyExchange
 
     if ($x509 -eq $null)
     {{ throw ""Certificate was null!"" }}
@@ -122,8 +145,6 @@ catch [Exception]
 
             string sanString = string.Empty;
             bool hasSans = false;
-            string formattedCommand = null;
-            string commandOutput = null;
 
             foreach (string dnsName in dnsNames)
             {
@@ -138,22 +159,46 @@ catch [Exception]
 
             sanString = hasSans ? "\"2.5.29.17={text}" + sanString.Substring(0, sanString.Length - 1) + "\"" : string.Empty;
 
-            formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password);
+            string formattedCommand = string.Format(PowerShellCommandTemplate, notBefore.ToString("O"), notAfter.ToString("O"), subjectName, sanString, password, CspProviderName);
 
-            using (Process psProcess = new Process()
+            ProcessStartInfo startInfo = new()
             {
-                StartInfo = new ProcessStartInfo()
-                {
-                    FileName = "powershell.exe",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    // Pass the Base64-encoded command to remove the need to escape quote marks
-                    Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
-                    Verb = "runas"
-                }
-            })
+                FileName = "powershell.exe",
+                RedirectStandardOutput = true,
+                RedirectStandardError = false,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                // Pass the Base64-encoded command to remove the need to escape quote marks
+                Arguments = "-EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(formattedCommand)),
+                // Run as Administrator, since we're manipulating the system
+                // certificate store.
+                Verb = "RunAs",
+                LoadUserProfile = true
+            };
+
+            // This command sometimes fails with:
+            //
+            //   Access is denied. 0x80070005 (WIN32: 5 ERROR_ACCESS_DENIED)
+            //
+            // We will retry it a few times with a short delay to avoid spurious
+            // failures in CI pipeline runs.
+            //
+            // See ADO issue for more details:
+            //
+            //  Issue 34304: #3223 Fix Functional test failures in CI
+            //
+            //  https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/34304
+            //
+            // Delay 5 seconds between retries, and retry 3 times.
+            const int delay = 5;
+            const int retries = 3;
+
+            string commandOutput = string.Empty;
+
+            for (int attempt = 1; attempt <= retries; ++attempt)
             {
+                using Process psProcess = new() { StartInfo = startInfo };
+            
                 psProcess.Start();
                 commandOutput = psProcess.StandardOutput.ReadToEnd();
 
@@ -164,17 +209,37 @@ catch [Exception]
                 }
 
                 // Process completed successfully if it had an exit code of zero, the command output will be the base64-encoded certificate
-                if (psProcess.ExitCode == 0)
+                var code = psProcess.ExitCode;
+                if (code == 0)
                 {
-                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password);
+                    return new X509Certificate2(Convert.FromBase64String(commandOutput), password, X509KeyStorageFlags.Exportable);
                 }
-                else
-                {
-                    throw new Exception($"PowerShell command raised exception: {commandOutput}");
-                }
+                
+                Console.WriteLine(
+                    $"PowerShell command failed with exit code {code} on " +
+                    $"attempt {attempt} of {retries}; " +
+                    $"retrying in {delay} seconds...");
+                
+                Thread.Sleep(TimeSpan.FromSeconds(delay));
             }
+                
+            throw new Exception(
+                "PowerShell command raised exception: " +
+                $"{commandOutput}; command was: {formattedCommand}");
 #endif
         }
+
+#if NET
+        private static RSA CreateRSA(bool forceCsp)
+        {
+            const int KeySize = 2048;
+            const int CspProviderType = 24;
+
+            return forceCsp && OperatingSystem.IsWindows()
+                ? new RSACryptoServiceProvider(KeySize, new CspParameters(CspProviderType, CspProviderName, Guid.NewGuid().ToString()))
+                : RSA.Create(KeySize);
+        }
+#endif
 
         protected void AddToStore(X509Certificate2 cert, StoreLocation storeLocation, StoreName storeName)
         {
@@ -198,7 +263,13 @@ catch [Exception]
             storeContext.Certificates.Add(cert);
         }
 
-        public virtual void Dispose()
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             foreach (CertificateStoreContext storeContext in _certificateStoreModifications)
             {
