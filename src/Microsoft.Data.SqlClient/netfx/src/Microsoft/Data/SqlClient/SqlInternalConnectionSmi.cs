@@ -14,8 +14,6 @@ namespace Microsoft.Data.SqlClient
 {
     sealed internal class SqlInternalConnectionSmi : SqlInternalConnection
     {
-
-        private SmiContext _smiContext;
         private SmiConnection _smiConnection;
         private SmiEventSink_Default _smiEventSink;
         private int _isInUse;            // 1 = Connected to open outer connection, 0 = not connected
@@ -30,10 +28,8 @@ namespace Microsoft.Data.SqlClient
 
             override internal string ServerVersion
             {
-                get
-                {
-                    return SmiContextFactory.Instance.ServerVersion;
-                }
+                // @TODO: Will always throw
+                get => throw SQL.ContextUnavailableOutOfProc();
             }
 
             override protected void DispatchMessages(bool ignoreNonFatalMessages)
@@ -109,34 +105,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: No longer used -- delete!
-        internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions, SmiContext smiContext) : base(connectionOptions)
+        internal SqlInternalConnectionSmi(SqlConnectionString connectionOptions) : base(connectionOptions)
         {
-            Debug.Assert(smiContext != null, "null smiContext?");
-
-            _smiContext = smiContext;
-            _smiContext.OutOfScope += new EventHandler(OnOutOfScope);
-
-            _smiConnection = _smiContext.ContextConnection;
+            _smiConnection = null;
             Debug.Assert(_smiConnection != null, "null SmiContext.ContextConnection?");
 
             _smiEventSink = new EventSink(this);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.ctor|ADV> {0}, constructed new SMI internal connection", ObjectID);
-        }
-
-        internal SmiContext InternalContext
-        {
-            get
-            {
-                return _smiContext;
-            }
-        }
-
-        internal SmiConnection SmiConnection
-        {
-            get
-            {
-                return _smiConnection;
-            }
         }
 
         internal SmiEventSink CurrentEventSink
@@ -165,10 +140,8 @@ namespace Microsoft.Data.SqlClient
 
         override internal bool Is2008OrNewer
         {
-            get
-            {
-                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version;
-            }
+            // @TODO: Will always throw
+            get => throw SQL.ContextUnavailableOutOfProc();
         }
 
         override internal SqlInternalTransaction PendingTransaction
@@ -181,10 +154,8 @@ namespace Microsoft.Data.SqlClient
 
         override public string ServerVersion
         {
-            get
-            {
-                return SmiContextFactory.Instance.ServerVersion;
-            }
+            // @TODO: Will always throw
+            get => throw SQL.ContextUnavailableOutOfProc();
         }
 
         /// <summary>
@@ -253,8 +224,9 @@ namespace Microsoft.Data.SqlClient
         internal void AutomaticEnlistment()
         {
             Transaction currentSystemTransaction = ADP.GetCurrentTransaction();      // NOTE: Must be first to ensure _smiContext.ContextTransaction is set!
-            Transaction contextTransaction = _smiContext.ContextTransaction; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
-            long contextTransactionId = _smiContext.ContextTransactionId;
+            // @TODO: These referenced _sqlContext so they'd definitely break, but I can't prove this method isn't being used yet...
+            Transaction contextTransaction = null; // returns the transaction that was handed to SysTx that wraps the ContextTransactionId.
+            long contextTransactionId = 0;
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionSmi.AutomaticEnlistment|ADV> {0}, contextTransactionId=0x{1}, contextTransaction={2}, currentSystemTransaction={3}.",
                 ObjectID,
                 contextTransactionId,
@@ -336,12 +308,6 @@ namespace Microsoft.Data.SqlClient
             {
                 _currentTransaction = null;
             }
-        }
-
-        override public void Dispose()
-        {
-            _smiContext.OutOfScope -= new EventHandler(OnOutOfScope);
-            base.Dispose();
         }
 
         override internal void ExecuteTransaction(
