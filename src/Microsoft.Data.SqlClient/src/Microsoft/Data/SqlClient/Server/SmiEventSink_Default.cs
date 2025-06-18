@@ -19,21 +19,22 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal bool HasMessages => _errors is not null || _warnings is not null;
 
-        protected virtual void DispatchMessages(
-            #if NETFRAMEWORK
-            bool ignoreNonFatalMessages
-            #endif
-            )
+        #if NETFRAMEWORK
+        protected virtual void DispatchMessages(bool ignoreNonFatalMessages)
+        #else
+        protected virtual void DispatchMessages()
+        #endif
         {
             // virtual because we want a default implementation in the cases
             // where we don't have a connection to process stuff, but we want to
             // provide the connection the ability to fire info messages when it
             // hooks up.
-            SqlException errors = ProcessMessages(true
-                    #if NETFRAMEWORK
-                    , ignoreNonFatalMessages
-                    #endif    
-            );   // ignore warnings, because there's no place to send them...
+            #if NETFRAMEWORK
+            SqlException errors = ProcessMessages(true, ignoreNonFatalMessages);
+            #else
+            SqlException errors = ProcessMessages(true);
+            #endif
+            
             if (errors != null)
             {
                 throw errors;
