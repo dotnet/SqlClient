@@ -10460,7 +10460,10 @@ namespace Microsoft.Data.SqlClient
             {
                 value = param.GetCoercedValue();
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                    metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
+                    metaData.SqlDbType,
+                    metaData.IsMultiValued,
+                    value,
+                    udtType: null);
             }
 
             var sendDefaultValue = sendDefault ? 1 : 0;
