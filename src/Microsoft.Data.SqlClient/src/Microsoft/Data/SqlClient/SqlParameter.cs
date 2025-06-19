@@ -14,6 +14,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -2366,6 +2367,17 @@ namespace Microsoft.Data.SqlClient
                     else if (currentType == typeof(SqlVectorFloat32))
                     {
                         value = (value as ISqlVector).VectorPayload;
+                    }
+                    else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        try
+                        {
+                            value = (new SqlVectorFloat32(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                        }
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&

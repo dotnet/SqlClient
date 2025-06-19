@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             var vec = new SqlVectorFloat32(0);
             string nullStr = vec.ToString();
-            Assert.Contains("NULL", nullStr);
+            Assert.Contains("Null", nullStr);
         }
 
         [Fact]

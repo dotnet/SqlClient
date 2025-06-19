@@ -4761,4 +4761,7 @@
    <data name="ADP_EmptyVectorValues" xml:space="preserve">
     <value>Values cannot be null or empty.</value>
   </data>
+  <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
+    <value>{0} Invalid JSON string for vector.</value>
+  </data>
 </root>

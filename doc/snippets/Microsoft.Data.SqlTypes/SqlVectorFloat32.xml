@@ -27,6 +27,11 @@
         Indicates the count of the elements in the float vector.
       </summary>
     </Length>
+    <Size>
+      <summary>
+        Indicates the size in bytes for a SqlVectorFloat32 value for a vector column of <see cref="Length"/> elements of <see cref="T:System.Single"/> type.
+      </summary>
+    </Size>
     <Values>
       <summary>Returns the internal float array representing the float vector.</summary>
       <returns>An array of <see cref="T:System.Single"/> values.</returns>

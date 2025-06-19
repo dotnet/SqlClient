@@ -10885,6 +10885,18 @@ namespace System {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to {0} Invalid JSON string for vector...
+        /// </summary>
+        internal static string ADP_InvalidJsonStringForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidJsonStringForVector", resourceCulture);
+            }
+        }
+
+
+        /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
         /// </summary>
         internal static string SQL_WrongType

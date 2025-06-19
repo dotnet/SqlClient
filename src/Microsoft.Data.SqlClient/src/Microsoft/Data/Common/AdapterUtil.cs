@@ -1153,6 +1153,9 @@ namespace Microsoft.Data.Common
         internal static ArgumentException EmptyVectorValues(string arrayName)
             => Argument(StringsHelper.GetString(Strings.ADP_EmptyVectorValues, arrayName));
 
+        internal static Exception InvalidJsonStringForVector(string value, Exception inner)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidJsonStringForVector, value), inner);
+
         internal static Exception DeriveParametersNotSupported(IDbCommand value)
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 

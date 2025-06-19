@@ -9,7 +9,7 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.SqlTypes
 {
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/SqlVectorFloat32/*' />
-    public class SqlVectorFloat32 : INullable, ISqlVector
+    public sealed class SqlVectorFloat32 : INullable, ISqlVector
     {
         #region Constants
         private const byte VecHeaderMagicNo = 0xA9;
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlTypes
             _elementType = rawBytes[4];
             _elementSize = sizeof(float);
         }
-        
+
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/ctor1/*' />
         public SqlVectorFloat32(int length)
         {
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlTypes
         {
             if (IsNull || _rawBytes == null)
             {
-                return "NULL";
+                return SQLResource.NullString;
             }
             return JsonSerializer.Serialize(this.Values);
         }
@@ -94,9 +94,11 @@ namespace Microsoft.Data.SqlTypes
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/Length/*' />
         public int Length => _elementCount;
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/Size/*' />
+        public int Size => TdsEnums.VECTOR_HEADER_SIZE + _elementCount * sizeof(float);
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVectorFloat32.xml' path='docs/members[@name="SqlVectorFloat32"]/Values/*' />
-        public float[] Values 
+        public float[] Values
         {
             get
             {

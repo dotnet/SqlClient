@@ -2961,16 +2961,6 @@ namespace Microsoft.Data.SqlClient
         override public string GetString(int i)
         {
             ReadColumn(i);
-            if (_metaData[i].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
-            {
-                switch (_metaData[i].scale)
-                {
-                    case (byte)MetaType.SqlVectorElementType.Float32:
-                        return _data[i].SqlVectorFloat32.ToString();
-                    default:
-                        throw SQL.VectorTypeNotSupported(_metaData[i].scale.ToString());
-                }
-            }
             // Convert 2008 value to string if type system knob is 2005 or earlier
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
@@ -3368,6 +3358,13 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    if (typeof(T) == typeof(string) && metaData.metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        if (data.IsNull)
+                            return (T)(object)data.String;
+                        else
+                            return (T)(object)data.SqlVectorFloat32.ToString();
+                    }
                     // the requested type is likely to be one that isn't supported so try the cast and
                     // unless there is a null value conversion then feedback the cast exception with 
                     // type named to the user so they know what went wrong. Supported types are listed

@@ -507,7 +507,17 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-
+                if (StorageType.Vector == _type)
+                {
+                    byte elementType = _value._vectorInfo._vectorElementType;
+                    switch (elementType)
+                    {
+                        case (byte)MetaType.SqlVectorElementType.Float32:
+                            return SqlVectorFloat32.ToString();
+                        default:
+                            throw SQL.VectorTypeNotSupported(elementType.ToString());
+                    }
+                }
                 if (StorageType.String == _type || StorageType.Json == _type)
                 {
                     return (string)_object;
@@ -938,6 +948,14 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
+                if (StorageType.Vector == _type)
+                {
+                    if (IsNull)
+                    {
+                        return SqlString.Null;
+                    }
+                    return new SqlString(SqlVectorFloat32.ToString());
+                }
                 // String and Json storage type are both strings.
                 if (StorageType.String == _type || StorageType.Json == _type)
                 {
