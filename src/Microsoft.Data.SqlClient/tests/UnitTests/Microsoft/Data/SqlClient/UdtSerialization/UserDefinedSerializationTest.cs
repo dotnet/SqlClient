@@ -67,8 +67,8 @@ public class UserDefinedSerializationTest
             Assert.True(userObject.WriteInvoked);
         }
 
-        Assert.Equal(8, typeSize);
-        Assert.Equal(8, objectSize);
+        Assert.Equal(IntPtr.Size, typeSize);
+        Assert.Equal(IntPtr.Size, objectSize);
         Assert.Equal(11, maxTypeSize);
 
         Assert.Equal(IntPtr.Size, serializedValue.Length);
