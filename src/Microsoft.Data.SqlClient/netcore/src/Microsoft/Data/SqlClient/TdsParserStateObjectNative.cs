@@ -83,6 +83,9 @@ namespace Microsoft.Data.SqlClient
             _sessionHandle = new SNIHandle(myInfo, nativeSNIObject.Handle, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
         }
 
+        // Retrieve the IP and port number from native SNI for TCP protocol. The IP information is stored temporarily in the
+        // pendingSQLDNSObject but not in the DNS Cache at this point. We only add items to the DNS Cache after we receive the
+        // IsSupported flag as true in the feature ext ack from server.
         internal override void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo)
         {
             uint result;
@@ -159,7 +162,9 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool async,
             bool fParallel,
-            SqlConnectionIPAddressPreference ipPreference,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference iPAddressPreference,
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             string serverSPN,
@@ -188,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, ref serverSPN, timeout.MillisecondsRemainingInt, out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
+                flushCache, !async, fParallel, iPAddressPreference, cachedDNSInfo, hostNameInCertificate);
             spns = new[] { serverSPN.TrimEnd() };
         }
 
