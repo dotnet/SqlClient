@@ -24,11 +24,11 @@ namespace Microsoft.Data.SqlTypes
         }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
-        public SqlJson(
-            #if NET
-            [StringSyntax(StringSyntaxAttribute.Json)]
-            #endif
-            string? jsonString)
+        #if NET
+        public SqlJson([StringSyntax(StringSyntaxAttribute.Json)] string? jsonString)
+        #else
+        public SqlJson(string? jsonString)
+        #endif
         {
             if (jsonString == null)
             {
