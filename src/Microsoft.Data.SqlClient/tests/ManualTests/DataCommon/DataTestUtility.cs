@@ -92,8 +92,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //SQL Server EngineEdition
         private static string s_sqlServerEngineEdition;
 
-        // JSON Coloumn type
+        // JSON Column type
         public static readonly bool IsJsonSupported = false;
+
+        // VECTOR column type
+        public static readonly bool IsVectorSupported = false;
 
         // Azure Synapse EngineEditionId == 6
         // More could be read at https://learn.microsoft.com/en-us/sql/t-sql/functions/serverproperty-transact-sql?view=sql-server-ver16#propertyname

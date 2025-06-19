@@ -10821,10 +10821,88 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid attempt to get vector data from column '{0}'. Vectors are only supported for columns of type vector..
+        /// </summary>
+        internal static string SQL_VectorNotSupportedOnColumnType {
+            get {
+                return ResourceManager.GetString("SQL_VectorNotSupportedOnColumnType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unsupported Vector type '{0}'..
+        /// </summary>
+        internal static string SQL_VectorTypeNotSupported
+        {
+            get
+            {
+                return ResourceManager.GetString("SQL_VectorTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 'null' value not supported for output paramter of SqlDbtype Vector..
+        /// </summary>
+        internal static string ADP_NullOutputParameterValueForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_VectorTypeNotSupported", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid vector header received..
+        /// </summary>
+        internal static string ADP_InvalidVectorHeader
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidVectorHeader", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Vector column length must be non-negative..
+        /// </summary>
+        internal static string ADP_InvalidVectorColumnLength
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidVectorColumnLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Values {0} cannot be null or empty..
+        /// </summary>
+        internal static string ADP_EmptyVectorValues
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_EmptyVectorValues", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to {0} Invalid JSON string for vector...
+        /// </summary>
+        internal static string ADP_InvalidJsonStringForVector
+        {
+            get
+            {
+                return ResourceManager.GetString("ADP_InvalidJsonStringForVector", resourceCulture);
+            }
+        }
+
+
+        /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
         /// </summary>
-        internal static string SQL_WrongType {
-            get {
+        internal static string SQL_WrongType
+        {
+            get
+            {
                 return ResourceManager.GetString("SQL_WrongType", resourceCulture);
             }
         }
