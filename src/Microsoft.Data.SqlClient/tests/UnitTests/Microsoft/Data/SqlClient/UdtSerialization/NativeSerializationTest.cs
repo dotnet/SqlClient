@@ -260,14 +260,13 @@ public class NativeSerializationTest
     private static void RoundtripType(object inputValue, byte[] expectedValue)
     {
         using MemoryStream stream = new();
-        object readPrimitive;
         int typeSize = SerializationHelperSql9.SizeInBytes(inputValue.GetType());
         int objectSize = SerializationHelperSql9.SizeInBytes(inputValue);
         int maxTypeSize = SerializationHelperSql9.GetUdtMaxLength(inputValue.GetType());
 
         SerializationHelperSql9.Serialize(stream, inputValue);
         stream.Seek(0, SeekOrigin.Begin);
-        readPrimitive = SerializationHelperSql9.Deserialize(stream, inputValue.GetType());
+        object readPrimitive = SerializationHelperSql9.Deserialize(stream, inputValue.GetType());
 
         // For native formatting, the type size, the object size and the maximum object size will always be identical
         Assert.Equal(typeSize, objectSize);

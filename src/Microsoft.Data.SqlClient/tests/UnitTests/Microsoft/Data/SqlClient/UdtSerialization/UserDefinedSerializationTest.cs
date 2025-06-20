@@ -65,16 +65,14 @@ public class UserDefinedSerializationTest
         where T : IFormattingProgress
     {
         using MemoryStream stream = new();
-        byte[] serializedValue;
-        T readInstance;
         int typeSize = SerializationHelperSql9.SizeInBytes(userObject.GetType());
         int objectSize = SerializationHelperSql9.SizeInBytes(userObject);
         int maxTypeSize = SerializationHelperSql9.GetUdtMaxLength(userObject.GetType());
 
         SerializationHelperSql9.Serialize(stream, userObject);
-        serializedValue = stream.ToArray();
         stream.Seek(0, SeekOrigin.Begin);
-        readInstance = (T)SerializationHelperSql9.Deserialize(stream, userObject.GetType());
+        byte[] serializedValue = stream.ToArray();
+        T readInstance = (T)SerializationHelperSql9.Deserialize(stream, userObject.GetType());
 
         // If this is a struct, it will have been copied by value and the write to WriteInvoked will have been made
         // to another copy of our object
