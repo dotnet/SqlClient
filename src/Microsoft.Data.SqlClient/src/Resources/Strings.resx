@@ -4750,7 +4750,7 @@
     <value>Unsupported Vector type '{0}'.</value>
   </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
-    <value>'null' value not supported for output paramter of SqlDbtype Vector.</value>
+    <value>'null' value not supported for output paramter '{0}' of SqlDbtype Vector.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Invalid vector header received.</value>

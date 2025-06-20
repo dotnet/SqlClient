@@ -1926,7 +1926,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
-                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_value == null || _value == DBNull.Value))
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_direction == ParameterDirection.Input) && (_value == null || _value == DBNull.Value))
                 {
                     _value = DBNull.Value;
                     return MetaType.GetDefaultMetaType();
@@ -1958,6 +1958,7 @@ namespace Microsoft.Data.SqlClient
                     return MetaType.GetMetaTypeFromType(valueType);
                 }
             }
+
             return MetaType.GetDefaultMetaType();
         }
 
@@ -2035,9 +2036,9 @@ namespace Microsoft.Data.SqlClient
                 GetCoercedValue();
             }
 
-            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && _value == null && (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_value == null || _value == DBNull.Value) && (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
             {
-                throw ADP.NullOutputParameterValueForVector();
+                throw ADP.NullOutputParameterValueForVector(_parameterName);
             }
 
             //check if the UdtTypeName is specified for Udt params

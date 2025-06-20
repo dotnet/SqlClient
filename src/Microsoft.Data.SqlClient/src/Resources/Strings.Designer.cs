@@ -10841,13 +10841,13 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 'null' value not supported for output paramter of SqlDbtype Vector..
+        ///   Looks up a localized string similar to 'null' value not supported for output paramter {0} of SqlDbtype Vector..
         /// </summary>
         internal static string ADP_NullOutputParameterValueForVector
         {
             get
             {
-                return ResourceManager.GetString("ADP_VectorTypeNotSupported", resourceCulture);
+                return ResourceManager.GetString("ADP_NullOutputParameterValueForVector", resourceCulture);
             }
         }
 

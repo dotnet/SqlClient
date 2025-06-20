@@ -299,6 +299,7 @@
     <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
     <Compile Include="SQL\JsonTest\JsonTest.cs" />
     <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
+    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />

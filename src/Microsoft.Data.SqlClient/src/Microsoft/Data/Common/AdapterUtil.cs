@@ -1141,8 +1141,8 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static Exception NullOutputParameterValueForVector()
-            => InvalidOperation(StringsHelper.GetString(Strings.ADP_NullOutputParameterValueForVector));
+        internal static Exception NullOutputParameterValueForVector(string paramName)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_NullOutputParameterValueForVector, paramName));
 
         internal static ArgumentException InvalidVectorHeader()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidVectorHeader));
