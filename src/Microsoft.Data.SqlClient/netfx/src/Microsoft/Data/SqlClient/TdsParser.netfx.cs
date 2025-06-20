@@ -98,6 +98,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // @TODO: Consider adopting this pattern for all usages of Run and rename to Run.
         internal bool RunReliably(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj)
         {
             RuntimeHelpers.PrepareConstrainedRegions();

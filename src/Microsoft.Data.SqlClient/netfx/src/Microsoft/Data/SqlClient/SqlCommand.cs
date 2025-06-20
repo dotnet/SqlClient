@@ -463,8 +463,8 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version);
+                
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version)");
                 _command.OnParametersAvailableSmi(metaData, parameterValues);
             }
 
@@ -474,12 +474,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData?.GetType(), metaData?.TraceString());
                 }
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version);
+
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)");
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
             }
         }
 
-        private SmiContext _smiRequestContext; // context that _smiRequest came from
         private CommandEventSink _smiEventSink;
         private SmiEventSink_DeferredProcessing _outParamEventSink;
 
@@ -598,9 +598,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     _transaction = null;
                 }
-
-                // If the connection has changes, then the request context may have changed as well
-                _smiRequestContext = null;
 
                 // Command is no longer prepared on new connection, cleanup prepare status
                 if (IsPrepared)
@@ -1556,32 +1553,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlStatistics.StopTimer(statistics);
                     WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
-        // Handles in-proc execute-to-pipe functionality
-        //  Identical to ExecuteNonQuery
-        internal void ExecuteToPipe(SmiContext pipeContext)
-        {
-            SqlConnection.ExecutePermission.Demand();
-
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            SqlStatistics statistics = null;
-
-            using (TryEventScope.Create("<sc.SqlCommand.ExecuteToPipe|INFO> {0}", ObjectID))
-            {
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out _);
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
                 }
             }
         }
@@ -6199,12 +6170,20 @@ namespace Microsoft.Data.SqlClient
                     if (_activeConnection.Is2008OrNewer)
                     {
                         result = ValueUtilsSmi.GetOutputParameterV200Smi(
-                                OutParamEventSink, (SmiTypedGetterSetter)parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                OutParamEventSink,
+                                (SmiTypedGetterSetter)parameterValues,
+                                ordinal,
+                                metaData,
+                                buffer);
                     }
                     else
                     {
                         result = ValueUtilsSmi.GetOutputParameterV3Smi(
-                                    OutParamEventSink, parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                    OutParamEventSink,
+                                    parameterValues,
+                                    ordinal,
+                                    metaData,
+                                    buffer);
                     }
                     if (result != null)
                     {

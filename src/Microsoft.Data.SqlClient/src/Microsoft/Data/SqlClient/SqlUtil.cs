@@ -416,26 +416,30 @@ namespace Microsoft.Data.SqlClient
                 );
             }
         }
-
-#if NET
-        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
+        
+        internal static void SetTimeoutExceptionWithState(
+            TaskCompletionSource<object> completion,
+            int timeout,
+            object state,
+            Func<object, Exception> onFailure,
+            CancellationToken cancellationToken)
         {
-            if (timeout > 0)
+            if (timeout <= 0)
             {
-                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                    (Task task, object state) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure(state));
-                        }
-                    },
-                    state: state,
-                    cancellationToken: CancellationToken.None
-                );
+                return;
             }
+
+            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                (task, innerState) =>
+                {
+                    if (!task.IsCanceled && !completion.Task.IsCompleted)
+                    {
+                        completion.TrySetException(onFailure(innerState));
+                    }
+                },
+                state: state,
+                cancellationToken: CancellationToken.None);
         }
-#endif
     }
 
     internal static class SQL
@@ -2434,6 +2438,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
 
+        // @TODO: Check these methods for usage
         static internal Exception UserInstanceNotAvailableInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));
@@ -2465,9 +2470,6 @@ namespace Microsoft.Data.SqlClient
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return StringsHelper.GetResourceString(errorMessageId);
         }
-
-        // BulkLoad
-        internal const string WriteToServer = "WriteToServer";
 
         // Default values for SqlDependency and SqlNotificationRequest
         internal const int SqlDependencyTimeoutDefault = 0;
@@ -2759,12 +2761,6 @@ namespace Microsoft.Data.SqlClient
                 return _getPromotedToken.Value;
             }
         }
-    }
-
-    internal static class InOutOfProcHelper
-    {
-        internal static bool InProc
-            => false;
     }
 }
 
