@@ -525,6 +525,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBuffer.cs">
       <Link>Microsoft\Data\SqlClient\SqlBuffer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBulkCopy.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopy.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs</Link>
     </Compile>
@@ -804,8 +807,7 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-    
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />

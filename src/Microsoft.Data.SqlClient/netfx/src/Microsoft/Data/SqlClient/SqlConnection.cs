@@ -1909,6 +1909,7 @@ namespace Microsoft.Data.SqlClient
                 var tdsInnerConnection = (InnerConnection as SqlInternalConnectionTds);
                 if (tdsInnerConnection == null)
                 {
+                    // @TODO: This branch can't be called, because it'll automatically break. But I can't prove it isn't just yet....
                     SqlInternalConnectionSmi innerConnection = (InnerConnection as SqlInternalConnectionSmi);
                     innerConnection.AutomaticEnlistment();
                 }

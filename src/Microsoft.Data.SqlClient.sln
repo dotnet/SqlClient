@@ -174,8 +174,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml
 	EndProjectSection
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.TestUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj", "{89D6D382-9B36-43C9-A912-03802FDA8E36}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ExtUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.ExtUtilities\Microsoft.Data.SqlClient.ExtUtilities.csproj", "{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B}"
@@ -184,8 +182,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomRetryLogicProvider", 
 	ProjectSection(ProjectDependencies) = postProject
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.DockerLinuxTest", "Microsoft.Data.SqlClient\tests\Docker\DockerLinuxTest\Microsoft.Data.SqlClient.DockerLinuxTest.csproj", "{B93A3149-67E8-491E-A1E5-19D65F9D9E98}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.PerformanceTests", "Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj", "{599A336B-2A5F-473D-8442-1223ED37C93E}"
 EndProject
@@ -484,16 +480,6 @@ Global
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x64.Build.0 = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.ActiveCfg = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.Build.0 = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x64.Build.0 = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x86.Build.0 = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x64.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x64.Build.0 = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x86.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x86.Build.0 = Release|Any CPU
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -530,18 +516,6 @@ Global
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x64.Build.0 = Release|x64
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x86.ActiveCfg = Release|x86
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x86.Build.0 = Release|x86
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x64.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x86.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x64.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x64.Build.0 = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x86.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x86.Build.0 = Release|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|x64.ActiveCfg = Debug|x64
