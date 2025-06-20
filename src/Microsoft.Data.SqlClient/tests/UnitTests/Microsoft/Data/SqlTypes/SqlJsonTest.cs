@@ -7,15 +7,22 @@
 using System;
 using System.Data.SqlTypes;
 using System.Text.Json;
-
 using Microsoft.Data.SqlTypes;
-
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 public class SqlJsonTest
 {
+    #region Private Fields
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        WriteIndented = true
+    };
+
+    #endregion
+
     #region Tests
 
     // Test the static Null property.
@@ -88,7 +95,7 @@ public class SqlJsonTest
     [Fact]
     public void Constructor_JsonDocument_NotNull()
     {
-        JsonDocument doc = GenerateRandomJson();
+        using JsonDocument doc = GenerateRandomJson();
         SqlJson json = new(doc);
         Assert.False(json.IsNull);
         Assert.Equal(doc.RootElement.GetRawText(), json.Value);
@@ -98,7 +105,7 @@ public class SqlJsonTest
     [Fact]
     public void Constructor_JsonDocument_Disposed()
     {
-        JsonDocument doc = GenerateRandomJson();
+        using JsonDocument doc = GenerateRandomJson();
         doc.Dispose();
         Assert.Throws<ObjectDisposedException>(() => new SqlJson(doc));
     }
@@ -112,10 +119,10 @@ public class SqlJsonTest
     [Fact]
     public void RoundTrip()
     {
-        var doc = GenerateRandomJson();
+        using JsonDocument doc = GenerateRandomJson();
         SqlJson json = new(doc);
 
-        var outputDocument = JsonDocument.Parse(json.Value);
+        using var outputDocument = JsonDocument.Parse(json.Value);
         Assert.True(JsonElement.DeepEquals(
             doc.RootElement, outputDocument.RootElement));
     }
@@ -125,14 +132,8 @@ public class SqlJsonTest
 
     #region Helpers
 
-    private static JsonSerializerOptions _jsonOptions = new()
+    private static JsonDocument GenerateRandomJson()
     {
-        WriteIndented = true
-    };
-
-    static JsonDocument GenerateRandomJson()
-    {
-
         Random random = new();
 
         object jsonObject = new
@@ -149,8 +150,7 @@ public class SqlJsonTest
             }
         };
 
-        string jsonString = JsonSerializer.Serialize(jsonObject, _jsonOptions);
-        return JsonDocument.Parse(jsonString);
+        return JsonSerializer.SerializeToDocument(jsonObject, _jsonOptions);
     }
 
     #endregion
