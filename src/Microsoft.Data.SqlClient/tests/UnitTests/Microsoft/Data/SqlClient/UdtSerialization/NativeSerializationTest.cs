@@ -18,6 +18,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 /// <seealso href="https://learn.microsoft.com/en-us/openspecs/sql_server_protocols/ms-ssclrt/77460aa9-8c2f-4449-a65e-1d649ebd77fa"/>
 public class NativeSerializationTest
 {
+    /// <summary>
+    /// Provides a collection of test data representing non-null primitive type values and their corresponding
+    /// serialized byte arrays.
+    /// </summary>
+    /// <see cref="SerializePrimitiveType"/>
     public static IEnumerable<object[]> SerializedNonNullPrimitiveTypeValues()
     {
         yield return [new BoolWrapperStruct { Field1 = true },
@@ -62,6 +67,10 @@ public class NativeSerializationTest
             new byte[] { 0x01, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2A, 0xF8 }];
     }
 
+    /// <summary>
+    /// Provides a collection of test data representing serialized values of nested non-null primitive types.
+    /// </summary>
+    /// <see cref="SerializeNestedPrimitiveType"/>
     public static IEnumerable<object[]> SerializedNestedNonNullPrimitiveTypeValues()
     {
         yield return [new NestedBoolWrapperStruct { Field1 = true, Field2 = new BoolWrapperStruct { Field1 = false } },
@@ -126,6 +135,10 @@ public class NativeSerializationTest
                 0x01, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x9C, 0x64 }];
     }
 
+    /// <summary>
+    /// Provides a collection of test data representing serialized null values for various primitive types.
+    /// </summary>
+    /// <see cref="SerializeNullPrimitiveType"/>
     public static IEnumerable<object[]> SerializedNullPrimitiveTypeValues()
     {
         yield return [new SqlByteWrapperStruct { Field1 = SqlByte.Null },
@@ -182,7 +195,7 @@ public class NativeSerializationTest
         => RoundtripType(primitive, expectedValue);
 
     /// <summary>
-    /// Attempts to serializes an instance of a class.
+    /// Attempts to serialize an instance of a class.
     /// </summary>
     /// <seealso cref="CannotSerializeNestedClass"/>
     [Fact]
@@ -199,11 +212,10 @@ public class NativeSerializationTest
     }
 
     /// <summary>
-    /// Attempts to serializes a field referring to an instance of a class.
-    /// Verifies that this succeeds, and that Native format serialization only operates with primitive types
-    /// and value types containing these.
+    /// Attempts to serialize a field referring to an instance of a class.
+    /// Verifies that this fails, and that Native format serialization only operates with primitive types and value types containing these.
     /// </summary>
-    /// <seealso cref="CannotSerializeNestedClass"/>
+    /// <seealso cref="CanSerializeTopLevelClass"/>
     [Fact]
     public void CannotSerializeNestedClass()
     {

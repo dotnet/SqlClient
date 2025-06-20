@@ -11,8 +11,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 
+/// <summary>
+/// Attempts to serialize types which do not meet the requirements for either user-defined or native serialization.
+/// </summary>
 public class InvalidSerializationTest
 {
+    /// <summary>
+    /// Attempts to serialize a class that does not have the SqlUserDefinedType attribute. Verifies that this fails.
+    /// </summary>
     [Fact]
     public void RequiresSqlUserDefinedTypeAttribute()
     {
@@ -24,6 +30,10 @@ public class InvalidSerializationTest
         Assert.Equal($"'{typeof(ClassMissingSqlUserDefinedTypeAttribute).FullName}' is an invalid user defined type, reason: no UDT attribute.", exception.Message);
     }
 
+    /// <summary>
+    /// Attempts to serialize a class that has a SqlUserDefinedType attribute, but specifies a Format enumeration value of
+    /// Unknown. Verifies that this fails.
+    /// </summary>
     [Fact]
     public void CannotSerializeUnknownFormattedType()
     {

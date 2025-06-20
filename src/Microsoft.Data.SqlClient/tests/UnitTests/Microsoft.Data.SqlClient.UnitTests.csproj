@@ -7,6 +7,7 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <!-- Common references -->
   <ItemGroup>

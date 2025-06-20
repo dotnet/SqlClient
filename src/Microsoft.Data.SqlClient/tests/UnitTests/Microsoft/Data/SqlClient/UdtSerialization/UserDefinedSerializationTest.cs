@@ -16,14 +16,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 /// </summary>
 public class UserDefinedSerializationTest
 {
+    /// <summary>
+    /// Attempts to serialize and deserialize an instance of a struct with a user-defined serialization method.
+    /// </summary>
+    /// <seealso cref="CanSerializeClass"/>
     [Fact]
     public void CanSerializeStruct()
         => RoundtripType(new UserDefinedFormattedStruct((IntPtr)0x12345678));
 
+    /// <summary>
+    /// Attempts to serialize and deserialize an instance of a class with a user-defined serialization method.
+    /// </summary>
+    /// <seealso cref="CanSerializeStruct"/>
     [Fact]
     public void CanSerializeClass()
         => RoundtripType(new UserDefinedFormattedClass((IntPtr)0x12345678));
 
+    /// <summary>
+    /// Attempts to deserialize an instance of a type with a user-defined serialization method but without a public
+    /// parameterless constructor. Verifies that this fails.
+    /// </summary>
     [Fact]
     public void RequiresPublicParameterlessConstructor()
     {
@@ -36,6 +48,10 @@ public class UserDefinedSerializationTest
             () => SerializationHelperSql9.Deserialize(stream, typeof(UserDefinedMissingPublicConstructor)));
     }
 
+    /// <summary>
+    /// Attempts to deserialize an instance of a type with a user-defined serialization method but which does not,
+    /// implement IBinarySerialize. Verifies that this fails.
+    /// </summary>
     [Fact]
     public void RequiresIBinarySerializeImplementation()
     {
