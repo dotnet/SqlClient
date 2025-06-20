@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool
     {
         #region Fields
-        // Prevents synchronous operations which depend on async operations on managed
+        // Limits synchronous operations which depend on async operations on managed
         // threads from blocking on all available threads, which would stop async tasks
         // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
         // between sync and async tasks.
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private static int _instanceCount;
 
-        private readonly int _instanceID = Interlocked.Increment(ref _instanceCount);
+        private readonly int _instanceId = Interlocked.Increment(ref _instanceCount);
 
         /// <summary>
         /// Tracks all connections currently managed by this pool, whether idle or busy.
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public bool ErrorOccurred => throw new NotImplementedException();
 
         /// <inheritdoc />
-        public int Id => _instanceID;
+        public int Id => _instanceId;
 
         /// <inheritdoc />
         public DbConnectionPoolIdentity Identity
