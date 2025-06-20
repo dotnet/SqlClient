@@ -27,7 +27,7 @@ public class UserDefinedSerializationTest
     [Fact]
     public void RequiresPublicParameterlessConstructor()
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
         SerializationHelperSql9.Serialize(stream, new UserDefinedMissingPublicConstructor(true));
         stream.Seek(0, SeekOrigin.Begin);
@@ -39,7 +39,7 @@ public class UserDefinedSerializationTest
     [Fact]
     public void RequiresIBinarySerializeImplementation()
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
         Assert.Throws<InvalidCastException>(
             () => SerializationHelperSql9.Serialize(stream, new UserDefinedDoesNotImplementIBinarySerialize()));
@@ -48,7 +48,7 @@ public class UserDefinedSerializationTest
     private static void RoundtripType<T>(T userObject)
         where T : IFormattingProgress
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
         byte[] serializedValue;
         T readInstance;
         int typeSize = SerializationHelperSql9.SizeInBytes(userObject.GetType());

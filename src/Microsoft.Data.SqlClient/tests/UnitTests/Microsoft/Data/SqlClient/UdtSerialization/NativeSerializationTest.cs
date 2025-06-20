@@ -188,12 +188,12 @@ public class NativeSerializationTest
     [Fact]
     public void CanSerializeTopLevelClass()
     {
-        NestedBoolWrapperClass validWrapper = new NestedBoolWrapperClass()
+        NestedBoolWrapperClass validWrapper = new()
         {
             Field1 = true,
             Field2 = new BoolWrapperStruct() { Field1 = true }
         };
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
         SerializationHelperSql9.Serialize(stream, validWrapper);
     }
@@ -207,14 +207,14 @@ public class NativeSerializationTest
     [Fact]
     public void CannotSerializeNestedClass()
     {
-        InvalidNestedBoolWrapperClass invalidWrapper = new InvalidNestedBoolWrapperClass()
+        InvalidNestedBoolWrapperClass invalidWrapper = new()
         {
             Field1 = true,
             Field2 = new BoolWrapperClass() { Field1 = true }
         };
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
-        Exception ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
+        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
         string expectedException = StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, invalidWrapper.Field2.GetType().FullName);
 
         Assert.Equal(expectedException, ex.Message);
@@ -227,14 +227,14 @@ public class NativeSerializationTest
     [Fact]
     public void CannotSerializeNonPrimitiveType()
     {
-        InvalidIntPtrAndByteWrapperStruct invalidWrapper = new InvalidIntPtrAndByteWrapperStruct()
+        InvalidIntPtrAndByteWrapperStruct invalidWrapper = new()
         {
             Field1 = 1,
             Field2 = IntPtr.Zero
         };
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
-        Exception ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
+        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
         string expectedException = StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, invalidWrapper.Field2.GetType().FullName);
 
         Assert.Equal(expectedException, ex.Message);
@@ -247,7 +247,7 @@ public class NativeSerializationTest
     /// <param name="expectedValue">Expected serialization output.</param>
     private static void RoundtripType(object inputValue, byte[] expectedValue)
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
         object readPrimitive;
         int typeSize = SerializationHelperSql9.SizeInBytes(inputValue.GetType());
         int objectSize = SerializationHelperSql9.SizeInBytes(inputValue);

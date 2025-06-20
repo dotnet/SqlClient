@@ -16,9 +16,9 @@ public class InvalidSerializationTest
     [Fact]
     public void RequiresSqlUserDefinedTypeAttribute()
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
-        InvalidUdtException exception = Assert.Throws<InvalidUdtException>(
+        var exception = Assert.Throws<InvalidUdtException>(
             () => SerializationHelperSql9.Serialize(stream, new ClassMissingSqlUserDefinedTypeAttribute()));
 
         Assert.Equal($"'{typeof(ClassMissingSqlUserDefinedTypeAttribute).FullName}' is an invalid user defined type, reason: no UDT attribute.", exception.Message);
@@ -27,9 +27,9 @@ public class InvalidSerializationTest
     [Fact]
     public void CannotSerializeUnknownFormattedType()
     {
-        using MemoryStream stream = new MemoryStream();
+        using MemoryStream stream = new();
 
-        ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>("Format",
+        var exception = Assert.Throws<ArgumentOutOfRangeException>("Format",
             () => SerializationHelperSql9.Serialize(stream, new UnknownFormattedClass()));
 
 #if NET
