@@ -4,17 +4,42 @@
 
 // @TODO: This is only a stub class for clearing errors while merging other files.
 
+using System;
+using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.ConnectionPool;
+
 namespace Microsoft.Data.SqlClient
 {
     internal class SqlInternalConnectionTds
     {
         internal SyncAsyncLock _parserLock = null;
+
+        internal SqlInternalConnectionTds(
+            DbConnectionPoolIdentity identity,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential,
+            object providerInfo,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInterface,
+            SqlConnectionString userConnectionOptions = null,
+            SessionData reconnectSessionData = null,
+            bool applyTransientFaultHandling = false,
+            string accessToken = null,
+            IDbConnectionPool pool = null,
+            Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null)
+        {
+        }
+
+        internal string InstanceName => null;
         
         internal bool ThreadHasParserLockForClose { get; set; }
 
-        internal void DoomThisConnection()
-        {
-        }
+        internal void Dispose() { }
+        
+        internal void DoomThisConnection() { }
         
         internal class SyncAsyncLock
         {
