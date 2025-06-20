@@ -88,6 +88,7 @@ namespace Microsoft.Data.ProviderBase
             AllowSetConnectionString = allowSetConnectionString;
             ShouldHidePassword = hidePassword;
             State = state;
+            CreateTime = DateTime.UtcNow;
         }
 
         #region Properties
@@ -98,7 +99,7 @@ namespace Microsoft.Data.ProviderBase
         internal DateTime CreateTime
         {
             get;
-            private set;
+            init;
         }
 
         internal bool AllowSetConnectionString { get; }
@@ -705,7 +706,6 @@ namespace Microsoft.Data.ProviderBase
         /// <param name="connectionPool"></param>
         internal void MakePooledConnection(IDbConnectionPool connectionPool)
         {
-            CreateTime = DateTime.UtcNow;
             Pool = connectionPool;
         }
 
