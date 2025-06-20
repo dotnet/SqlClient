@@ -280,10 +280,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
                 // so that we can access it here. Read: area for improvement.
                 ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
+                DbConnectionInternal? connection = null;
 
                 try
                 {
-                    var connection = await GetInternalConnection(
+                    connection = await GetInternalConnection(
                         owningObject, 
                         userOptions, 
                         TimeSpan.FromSeconds(owningObject.ConnectionTimeout), 
@@ -292,8 +293,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     ).ConfigureAwait(false);
                     taskCompletionSource.SetResult(connection);
                 }
+                catch (InvalidOperationException)
+                {
+                    // We were able to get a connection, but the task was cancelled out from under us.
+                    // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
+                    if (connection != null)
+                    {
+                        this.ReturnInternalConnection(connection, owningObject);
+                    }
+                }
                 catch (Exception e)
                 {
+                    // It's possible to fail to set an exception on the TaskCompletionSource if the task is already
+                    // completed. In that case, this exception will be swallowed because nobody directly awaits this
+                    // task.
                     taskCompletionSource.SetException(e);
                 }
             });
