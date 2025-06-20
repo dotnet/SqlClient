@@ -1906,33 +1906,24 @@ namespace Microsoft.Data.SqlClient
                 // GetBestEffortCleanup must happen AFTER OpenConnection to get the correct target.
                 bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
 
-                var tdsInnerConnection = (InnerConnection as SqlInternalConnectionTds);
-                if (tdsInnerConnection == null)
+                var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
+                Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
+
+                if (!tdsInnerConnection.ConnectionOptions.Pooling)
                 {
-                    // @TODO: This branch can't be called, because it'll automatically break. But I can't prove it isn't just yet....
-                    SqlInternalConnectionSmi innerConnection = (InnerConnection as SqlInternalConnectionSmi);
-                    innerConnection.AutomaticEnlistment();
+                    // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
+                    GC.ReRegisterForFinalize(this);
+                }
+
+                if (StatisticsEnabled)
+                {
+                    _statistics._openTimestamp = ADP.TimerCurrent();
+                    tdsInnerConnection.Parser.Statistics = _statistics;
                 }
                 else
                 {
-                    Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
-
-                    if (!tdsInnerConnection.ConnectionOptions.Pooling)
-                    {
-                        // For non-pooled connections, we need to make sure that the finalizer does actually run to avoid leaking SNI handles
-                        GC.ReRegisterForFinalize(this);
-                    }
-
-                    if (StatisticsEnabled)
-                    {
-                        _statistics._openTimestamp = ADP.TimerCurrent();
-                        tdsInnerConnection.Parser.Statistics = _statistics;
-                    }
-                    else
-                    {
-                        tdsInnerConnection.Parser.Statistics = null;
-                        _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
-                    }
+                    tdsInnerConnection.Parser.Statistics = null;
+                    _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
                 }
             }
             catch (System.OutOfMemoryException e)

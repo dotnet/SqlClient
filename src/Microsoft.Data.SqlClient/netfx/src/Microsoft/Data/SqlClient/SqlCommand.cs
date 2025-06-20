@@ -420,101 +420,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal bool CachingQueryMetadataPostponed { get; set; }
 
-        //
-        //  Smi execution-specific stuff
-        //
-        sealed private class CommandEventSink : SmiEventSink_Default
-        {
-            private SqlCommand _command;
-
-            internal CommandEventSink(SqlCommand command) : base()
-            {
-                _command = command;
-            }
-
-            internal override void StatementCompleted(int rowsAffected)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.StatementCompleted|ADV> {0}, rowsAffected={1}.", _command.ObjectID, rowsAffected);
-                _command.InternalRecordsAffected = rowsAffected;
-
-                // UNDONE: need to fire events back to user code, but this may be called
-                //      while in a callback from the native server. Calling user code in
-                //      this situation is BAAAAD, because the user code could call back to
-                //      the server.
-                //                _command.OnStatementCompleted( rowsAffected );
-            }
-
-            internal override void BatchCompleted()
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.BatchCompleted|ADV> {0}.", _command.ObjectID);
-            }
-
-            internal override void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 parameterValues)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0} metaData.Length={1}.", _command.ObjectID, metaData?.Length);
-
-                if (SqlClientEventSource.Log.IsAdvancedTraceOn())
-                {
-                    if (metaData != null)
-                    {
-                        for (int i = 0; i < metaData.Length; i++)
-                        {
-                            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParametersAvailable|ADV> {0}, metaData[{1}] is {2}{3}", _command.ObjectID, i, metaData[i].GetType(), metaData[i].TraceString());
-                        }
-                    }
-                }
-                
-                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version)");
-                _command.OnParametersAvailableSmi(metaData, parameterValues);
-            }
-
-            internal override void ParameterAvailable(SmiParameterMetaData metaData, SmiTypedGetterSetter parameterValues, int ordinal)
-            {
-                if (SqlClientEventSource.Log.IsAdvancedTraceOn())
-                {
-                    SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData?.GetType(), metaData?.TraceString());
-                }
-
-                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)");
-                _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
-            }
-        }
-
-        private CommandEventSink _smiEventSink;
-        private SmiEventSink_DeferredProcessing _outParamEventSink;
-
-        private CommandEventSink EventSink
-        {
-            get
-            {
-                if (_smiEventSink == null)
-                {
-                    _smiEventSink = new CommandEventSink(this);
-                }
-
-                _smiEventSink.Parent = InternalSmiConnection.CurrentEventSink;
-                return _smiEventSink;
-            }
-        }
-
-        private SmiEventSink_DeferredProcessing OutParamEventSink
-        {
-            get
-            {
-                if (_outParamEventSink == null)
-                {
-                    _outParamEventSink = new SmiEventSink_DeferredProcessing(EventSink);
-                }
-                else
-                {
-                    _outParamEventSink.Parent = EventSink;
-                }
-
-                return _outParamEventSink;
-            }
-        }
-
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
         public SqlCommand() : base()
         {
@@ -652,14 +557,6 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 Connection = (SqlConnection)value;
-            }
-        }
-
-        private SqlInternalConnectionSmi InternalSmiConnection
-        {
-            get
-            {
-                return (SqlInternalConnectionSmi)_activeConnection.InnerConnection;
             }
         }
 
@@ -6135,66 +6032,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return;
-        }
-
-        internal void OnParametersAvailableSmi(SmiParameterMetaData[] paramMetaData, ITypedGettersV3 parameterValues)
-        {
-            Debug.Assert(paramMetaData != null);
-
-            for (int index = 0; index < paramMetaData.Length; index++)
-            {
-                OnParameterAvailableSmi(paramMetaData[index], parameterValues, index);
-            }
-        }
-
-        internal void OnParameterAvailableSmi(SmiParameterMetaData metaData, ITypedGettersV3 parameterValues, int ordinal)
-        {
-            if (ParameterDirection.Input != metaData.Direction)
-            {
-                string name = null;
-                if (ParameterDirection.ReturnValue != metaData.Direction)
-                {
-                    name = metaData.Name;
-                }
-
-                SqlParameterCollection parameters = GetCurrentParameterCollection();
-                int count = GetParameterCount(parameters);
-                SqlParameter param = GetParameterForOutputValueExtraction(parameters, name, count);
-
-                if (param != null)
-                {
-                    param.LocaleId = (int)metaData.LocaleId;
-                    param.CompareInfo = metaData.CompareOptions;
-                    SqlBuffer buffer = new SqlBuffer();
-                    object result;
-                    if (_activeConnection.Is2008OrNewer)
-                    {
-                        result = ValueUtilsSmi.GetOutputParameterV200Smi(
-                                OutParamEventSink,
-                                (SmiTypedGetterSetter)parameterValues,
-                                ordinal,
-                                metaData,
-                                buffer);
-                    }
-                    else
-                    {
-                        result = ValueUtilsSmi.GetOutputParameterV3Smi(
-                                    OutParamEventSink,
-                                    parameterValues,
-                                    ordinal,
-                                    metaData,
-                                    buffer);
-                    }
-                    if (result != null)
-                    {
-                        param.Value = result;
-                    }
-                    else
-                    {
-                        param.SetSqlBuffer(buffer);
-                    }
-                }
-            }
         }
 
         private SqlParameterCollection GetCurrentParameterCollection()

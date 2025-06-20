@@ -12,11 +12,8 @@ using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal sealed class SerializationHelperSql9
+    internal static class SerializationHelperSql9
     {
-        // Don't let anyone create an instance of this class.
-        private SerializationHelperSql9() { }
-
         // Get the m_size of the serialized stream for this type, in bytes.
         // This method creates an instance of the type using the public
         // no-argument constructor, serializes it, and returns the m_size

@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal partial class SmiEventSink_Default : SmiEventSink
+    internal class SmiEventSink_Default
     {
         private SqlErrorCollection _errors;
         private SqlErrorCollection _warnings;
@@ -17,62 +17,36 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
-        internal bool HasMessages
-        {
-            get
-            {
-#if NETFRAMEWORK
-                SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-                if (parent != null)
-                {
-                    return parent.HasMessages;
-                }
-                else
-#endif
-                {
-                    bool result = _errors != null || _warnings != null;
-                    return result;
-                }
-            }
-        }
+        internal bool HasMessages => _errors is not null || _warnings is not null;
 
-        protected virtual void DispatchMessages(
-#if NETFRAMEWORK
-            bool ignoreNonFatalMessages
-#endif
-            )
+        #if NETFRAMEWORK
+        protected virtual void DispatchMessages(bool ignoreNonFatalMessages)
+        #else
+        protected virtual void DispatchMessages()
+        #endif
         {
             // virtual because we want a default implementation in the cases
             // where we don't have a connection to process stuff, but we want to
             // provide the connection the ability to fire info messages when it
             // hooks up.
-#if NETFRAMEWORK
-            SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (parent != null)
+            #if NETFRAMEWORK
+            SqlException errors = ProcessMessages(true, ignoreNonFatalMessages);
+            #else
+            SqlException errors = ProcessMessages(true);
+            #endif
+            
+            if (errors != null)
             {
-                parent.DispatchMessages(ignoreNonFatalMessages);
-            }
-            else
-#endif
-            {
-                SqlException errors = ProcessMessages(true
-#if NETFRAMEWORK
-                    , ignoreNonFatalMessages
-#endif    
-                    );   // ignore warnings, because there's no place to send them...
-                if (errors != null)
-                {
-                    throw errors;
-                }
+                throw errors;
             }
 
         }
 
-        protected SqlException ProcessMessages(bool ignoreWarnings
-#if NETFRAMEWORK
-            , bool ignoreNonFatalMessages
-#endif
-            )
+        #if NETFRAMEWORK
+        protected SqlException ProcessMessages(bool ignoreWarnings, bool ignoreNonFatalMessages)
+        #else
+        protected SqlException ProcessMessages(bool ignoreWarnings)
+        #endif
         {
             SqlException result = null;
             SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
@@ -136,14 +110,14 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal void ProcessMessagesAndThrow()
         {
-#if NETFRAMEWORK
-            ProcessMessagesAndThrow(false);
-#else
             if (HasMessages)
             {
+                #if NETFRAMEWORK
+                DispatchMessages(false);
+                #else
                 DispatchMessages();
+                #endif
             }
-#endif
         }
     }
 }

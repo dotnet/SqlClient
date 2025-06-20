@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Server
     ///  These are all based off of knowing the clr type of the value
     ///  as an ExtendedClrTypeCode enum for rapid access.
     /// </summary>
-    internal class MetaDataUtilsSmi
+    internal static class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
@@ -162,10 +162,6 @@ namespace Microsoft.Data.SqlClient.Server
         internal static bool IsAnsiType(SqlDbType type) => type == SqlDbType.Char ||
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
-
-        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
-                    type == SqlDbType.VarBinary ||
-                    type == SqlDbType.Image;
 
         // Does this type use PLP format values?
         internal static bool IsPlpFormat(SmiMetaData metaData) => 

@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.Server
     //
     //  These are all based off of knowing the clr type of the value
     //  as an ExtendedClrTypeCode enum for rapid access (lookup in static array is best, if possible).
-    internal static partial class ValueUtilsSmi
+    internal static class ValueUtilsSmi
     {
         private const int MaxByteChunkSize = TdsEnums.MAXSIZE;
         private const int MaxCharChunkSize = TdsEnums.MAXSIZE / sizeof(char);
@@ -239,22 +239,6 @@ namespace Microsoft.Data.SqlClient.Server
             return (DateTime)result;
         }
 
-        // calling GetDateTimeOffset on possibly v100 SMI
-        internal static DateTimeOffset GetDateTimeOffset(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool gettersSupport2008DateTime)
-        {
-            if (gettersSupport2008DateTime)
-            {
-                return GetDateTimeOffset(sink, (SmiTypedGetterSetter)getters, ordinal, metaData);
-            }
-            ThrowIfITypedGettersIsNull(sink, getters, ordinal);
-            object result = GetValue(sink, getters, ordinal, metaData);
-            if (result == null)
-            {
-                throw ADP.InvalidCast();
-            }
-            return (DateTimeOffset)result;
-        }
-
         // dealing with v200 SMI
         internal static DateTimeOffset GetDateTimeOffset(SmiEventSink_Default sink, SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
         {
@@ -449,7 +433,7 @@ namespace Microsoft.Data.SqlClient.Server
                     else
                     {
                         Stream s = new SmiGettersStream(sink, getters, ordinal, metaData);
-                        s = CopyIntoNewSmiScratchStream(s, sink);
+                        s = CopyIntoNewSmiScratchStream(s);
                         result = new SqlBytes(s);
                     }
                 }
@@ -897,7 +881,7 @@ namespace Microsoft.Data.SqlClient.Server
                 switch (metaData.SqlDbType)
                 {
                     case SqlDbType.Variant:  // Handle variants specifically for v200, since they could contain v200 types
-                        metaData = getters.GetVariantType(sink, ordinal);
+                        metaData = getters.GetVariantType(ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue200(sink, getters, ordinal, metaData);
@@ -1009,7 +993,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetString_Unchecked(sink, getters, ordinal);
                         break;
                     case SqlDbType.Variant:
-                        metaData = getters.GetVariantType(sink, ordinal);
+                        metaData = getters.GetVariantType(ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue(sink, getters, ordinal, metaData);
@@ -1050,7 +1034,7 @@ namespace Microsoft.Data.SqlClient.Server
                 switch (metaData.SqlDbType)
                 {
                     case SqlDbType.Variant: // Handle variants specifically for v200, since they could contain v200 types
-                        metaData = getters.GetVariantType(sink, ordinal);
+                        metaData = getters.GetVariantType(ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue200(sink, getters, ordinal, metaData);
@@ -1167,7 +1151,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = new SqlString(GetString_Unchecked(sink, getters, ordinal));
                         break;
                     case SqlDbType.Variant:
-                        metaData = getters.GetVariantType(sink, ordinal);
+                        metaData = getters.GetVariantType(ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue(sink, getters, ordinal, metaData);
@@ -1285,7 +1269,7 @@ namespace Microsoft.Data.SqlClient.Server
                 length = metaData.MaxLength;
             }
 
-            setters.SetBytesLength(sink, ordinal, length);
+            setters.SetBytesLength(ordinal, length);
             sink.ProcessMessagesAndThrow();
 
             return length;
@@ -1732,133 +1716,6 @@ namespace Microsoft.Data.SqlClient.Server
                 default:
                     SetCompatibleValue(sink, setters, ordinal, metaData, value, typeCode, offset);
                     break;
-            }
-        }
-
-        // Copy multiple fields from reader to ITypedSettersV3
-        //  Assumes caller enforces that reader and setter metadata are compatible
-        internal static void FillCompatibleITypedSettersFromReader(SmiEventSink_Default sink, ITypedSettersV3 setters, SmiMetaData[] metaData, SqlDataReader reader)
-        {
-            for (int i = 0; i < metaData.Length; i++)
-            {
-                if (reader.IsDBNull(i))
-                {
-                    ValueUtilsSmi.SetDBNull_Unchecked(sink, setters, i);
-                }
-                else
-                {
-                    switch (metaData[i].SqlDbType)
-                    {
-                        case SqlDbType.BigInt:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Int64));
-                            ValueUtilsSmi.SetInt64_Unchecked(sink, setters, i, reader.GetInt64(i));
-                            break;
-                        case SqlDbType.Binary:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
-                            ValueUtilsSmi.SetSqlBytes_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlBytes(i), 0);
-                            break;
-                        case SqlDbType.Bit:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Boolean));
-                            SetBoolean_Unchecked(sink, setters, i, reader.GetBoolean(i));
-                            break;
-                        case SqlDbType.Char:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlChars));
-                            SetSqlChars_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlChars(i), 0);
-                            break;
-                        case SqlDbType.DateTime:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.DateTime));
-                            SetDateTime_Checked(sink, setters, i, metaData[i], reader.GetDateTime(i));
-                            break;
-                        case SqlDbType.Decimal:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlDecimal));
-                            SetSqlDecimal_Unchecked(sink, setters, i, reader.GetSqlDecimal(i));
-                            break;
-                        case SqlDbType.Float:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Double));
-                            SetDouble_Unchecked(sink, setters, i, reader.GetDouble(i));
-                            break;
-                        case SqlDbType.Image:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
-                            SetSqlBytes_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlBytes(i), 0);
-                            break;
-                        case SqlDbType.Int:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Int32));
-                            SetInt32_Unchecked(sink, setters, i, reader.GetInt32(i));
-                            break;
-                        case SqlDbType.Money:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlMoney));
-                            SetSqlMoney_Unchecked(sink, setters, i, metaData[i], reader.GetSqlMoney(i));
-                            break;
-                        case SqlDbType.NChar:
-                        case SqlDbType.NText:
-                        case SqlDbType.NVarChar:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlChars));
-                            SetSqlChars_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlChars(i), 0);
-                            break;
-                        case SqlDbType.Real:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Single));
-                            SetSingle_Unchecked(sink, setters, i, reader.GetFloat(i));
-                            break;
-                        case SqlDbType.UniqueIdentifier:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Guid));
-                            SetGuid_Unchecked(sink, setters, i, reader.GetGuid(i));
-                            break;
-                        case SqlDbType.SmallDateTime:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.DateTime));
-                            SetDateTime_Checked(sink, setters, i, metaData[i], reader.GetDateTime(i));
-                            break;
-                        case SqlDbType.SmallInt:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Int16));
-                            SetInt16_Unchecked(sink, setters, i, reader.GetInt16(i));
-                            break;
-                        case SqlDbType.SmallMoney:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlMoney));
-                            SetSqlMoney_Checked(sink, setters, i, metaData[i], reader.GetSqlMoney(i));
-                            break;
-                        case SqlDbType.Text:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlChars));
-                            SetSqlChars_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlChars(i), 0);
-                            break;
-                        case SqlDbType.Timestamp:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
-                            SetSqlBytes_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlBytes(i), 0);
-                            break;
-                        case SqlDbType.TinyInt:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.Byte));
-                            SetByte_Unchecked(sink, setters, i, reader.GetByte(i));
-                            break;
-                        case SqlDbType.VarBinary:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
-                            SetSqlBytes_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlBytes(i), 0);
-                            break;
-                        case SqlDbType.VarChar:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.String));
-                            SetSqlChars_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlChars(i), 0);
-                            break;
-                        case SqlDbType.Xml:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
-                            SetSqlXml_Unchecked(sink, setters, i, reader.GetSqlXml(i));
-                            break;
-                        case SqlDbType.Variant:
-                            object o = reader.GetSqlValue(i);
-                            ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCode(o);
-                            SetCompatibleValue(sink, setters, i, metaData[i], o, typeCode, 0);
-                            break;
-
-                        case SqlDbType.Udt:
-                            Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
-                            SetSqlBytes_LengthChecked(sink, setters, i, metaData[i], reader.GetSqlBytes(i), 0);
-                            break;
-
-                        default:
-                            // In order for us to get here we would have to have an 
-                            // invalid instance of SqlDbType, or one would have to add 
-                            // new member to SqlDbType without adding a case in this 
-                            // switch, hence the assert.
-                            Debug.Fail("unsupported DbType:" + metaData[i].SqlDbType.ToString());
-                            throw ADP.NotSupported();
-                    }
-                }
             }
         }
 
@@ -2406,7 +2263,7 @@ namespace Microsoft.Data.SqlClient.Server
                 bytesWritten != 0
             )
             {
-                bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
+                bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                 sink.ProcessMessagesAndThrow();
                 checked
                 {
@@ -2416,7 +2273,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Make sure to trim any left-over data
-            setters.SetBytesLength(sink, ordinal, currentOffset);
+            setters.SetBytesLength(ordinal, currentOffset);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -2441,7 +2298,7 @@ namespace Microsoft.Data.SqlClient.Server
                 bytesWritten != 0
             )
             {
-                bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
+                bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                 sink.ProcessMessagesAndThrow();
                 checked
                 {
@@ -2451,7 +2308,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
-            setters.SetBytesLength(sink, ordinal, currentOffset);
+            setters.SetBytesLength(ordinal, currentOffset);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -2512,7 +2369,7 @@ namespace Microsoft.Data.SqlClient.Server
                 charsWritten != 0
             )
             {
-                charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
+                charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                 sink.ProcessMessagesAndThrow();
                 checked
                 {
@@ -2522,7 +2379,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Make sure to trim any left-over data
-            setters.SetCharsLength(sink, ordinal, currentOffset);
+            setters.SetCharsLength(ordinal, currentOffset);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -2581,7 +2438,7 @@ namespace Microsoft.Data.SqlClient.Server
                 charsWritten != 0
             )
             {
-                charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
+                charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                 sink.ProcessMessagesAndThrow();
                 checked
                 {
@@ -2591,7 +2448,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
-            setters.SetCharsLength(sink, ordinal, currentOffset);
+            setters.SetCharsLength(ordinal, currentOffset);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -2600,7 +2457,7 @@ namespace Microsoft.Data.SqlClient.Server
             string value = reader.GetString(ordinal);
             int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, value.Length, fieldOffset: 0, bufferLength: NoLengthLimit, bufferOffset: offset, length: NoLengthLimit);
 
-            setters.SetString(sink, ordinal, value, offset, length);
+            setters.SetString(ordinal, value, offset, length);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -2647,7 +2504,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (ADP.IsNull(value))
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
                 sink.ProcessMessagesAndThrow();
             }
             else
@@ -2962,7 +2819,7 @@ namespace Microsoft.Data.SqlClient.Server
         //
         private static bool IsDBNull_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
         {
-            bool result = getters.IsDBNull(sink, ordinal);
+            bool result = getters.IsDBNull(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -2971,7 +2828,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            bool result = getters.GetBoolean(sink, ordinal);
+            bool result = getters.GetBoolean(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -2980,7 +2837,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            byte result = getters.GetByte(sink, ordinal);
+            byte result = getters.GetByte(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -2989,12 +2846,12 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long length = getters.GetBytesLength(sink, ordinal);
+            long length = getters.GetBytesLength(ordinal);
             sink.ProcessMessagesAndThrow();
             int len = checked((int)length);
 
             byte[] buffer = new byte[len];
-            getters.GetBytes(sink, ordinal, 0, buffer, 0, len);
+            getters.GetBytes(ordinal, 0, buffer, 0, len);
             sink.ProcessMessagesAndThrow();
             return buffer;
         }
@@ -3009,7 +2866,7 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(buffer != null, "Null buffer");
             Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
-            int result = getters.GetBytes(sink, ordinal, fieldOffset, buffer, bufferOffset, length);
+            int result = getters.GetBytes(ordinal, fieldOffset, buffer, bufferOffset, length);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3018,7 +2875,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long result = getters.GetBytesLength(sink, ordinal);
+            long result = getters.GetBytesLength(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3027,12 +2884,12 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long length = getters.GetCharsLength(sink, ordinal);
+            long length = getters.GetCharsLength(ordinal);
             sink.ProcessMessagesAndThrow();
             int len = checked((int)length);
 
             char[] buffer = new char[len];
-            getters.GetChars(sink, ordinal, 0, buffer, 0, len);
+            getters.GetChars(ordinal, 0, buffer, 0, len);
             sink.ProcessMessagesAndThrow();
             return buffer;
         }
@@ -3047,7 +2904,7 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(buffer != null, "Null buffer");
             Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
-            int result = getters.GetChars(sink, ordinal, fieldOffset, buffer, bufferOffset, length);
+            int result = getters.GetChars(ordinal, fieldOffset, buffer, bufferOffset, length);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3056,7 +2913,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long result = getters.GetCharsLength(sink, ordinal);
+            long result = getters.GetCharsLength(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3065,7 +2922,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            DateTime result = getters.GetDateTime(sink, ordinal);
+            DateTime result = getters.GetDateTime(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3074,7 +2931,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            DateTimeOffset result = getters.GetDateTimeOffset(sink, ordinal);
+            DateTimeOffset result = getters.GetDateTimeOffset(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3083,7 +2940,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            double result = getters.GetDouble(sink, ordinal);
+            double result = getters.GetDouble(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3092,7 +2949,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            Guid result = getters.GetGuid(sink, ordinal);
+            Guid result = getters.GetGuid(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3101,7 +2958,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            short result = getters.GetInt16(sink, ordinal);
+            short result = getters.GetInt16(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3110,7 +2967,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            int result = getters.GetInt32(sink, ordinal);
+            int result = getters.GetInt32(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3119,7 +2976,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long result = getters.GetInt64(sink, ordinal);
+            long result = getters.GetInt64(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3128,7 +2985,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            float result = getters.GetSingle(sink, ordinal);
+            float result = getters.GetSingle(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3145,7 +3002,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            SqlDecimal result = getters.GetSqlDecimal(sink, ordinal);
+            SqlDecimal result = getters.GetSqlDecimal(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3154,7 +3011,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            long temp = getters.GetInt64(sink, ordinal);
+            long temp = getters.GetInt64(ordinal);
             sink.ProcessMessagesAndThrow();
 #if NET
             return SqlMoney.FromTdsValue(temp);
@@ -3170,7 +3027,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Note: must make a copy of getter stream, since it will be used beyond
             //  this method (valid lifetime of getters is limited).
             Stream s = new SmiGettersStream(sink, getters, ordinal, SmiMetaData.DefaultXml);
-            Stream copy = CopyIntoNewSmiScratchStream(s, sink);
+            Stream copy = CopyIntoNewSmiScratchStream(s);
             return new SqlXml(copy);
         }
 
@@ -3182,7 +3039,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Inproc process, the getter is InProcRecordBuffer (implemented in SqlAcess), string will be
             // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data 
             // is not truncated. Please refer VSDD 479655 for more detailed information regarding the string length.
-            string result = getters.GetString(sink, ordinal);
+            string result = getters.GetString(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3191,14 +3048,14 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            TimeSpan result = getters.GetTimeSpan(sink, ordinal);
+            TimeSpan result = getters.GetTimeSpan(ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
 
         private static void SetBoolean_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, bool value)
         {
-            setters.SetBoolean(sink, ordinal, value);
+            setters.SetBoolean(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3206,10 +3063,10 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (length > 0)
             {
-                setters.SetBytes(sink, ordinal, 0, buffer, bufferOffset, length);
+                setters.SetBytes(ordinal, 0, buffer, bufferOffset, length);
                 sink.ProcessMessagesAndThrow();
             }
-            setters.SetBytesLength(sink, ordinal, length);
+            setters.SetBytesLength(ordinal, length);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3235,13 +3092,13 @@ namespace Microsoft.Data.SqlClient.Server
                     break;
                 }
 
-                setters.SetBytes(sink, ordinal, nWritten, buff, 0, nRead);
+                setters.SetBytes(ordinal, nWritten, buff, 0, nRead);
                 sink.ProcessMessagesAndThrow();
 
                 nWritten += nRead;
             } while (len <= 0 || nWritten < len);
 
-            setters.SetBytesLength(sink, ordinal, nWritten);
+            setters.SetBytesLength(ordinal, nWritten);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3267,25 +3124,25 @@ namespace Microsoft.Data.SqlClient.Server
                     break;
                 }
 
-                setters.SetChars(sink, ordinal, nWritten, buff, 0, nRead);
+                setters.SetChars(ordinal, nWritten, buff, 0, nRead);
                 sink.ProcessMessagesAndThrow();
 
                 nWritten += nRead;
             } while (len <= 0 || nWritten < len);
 
-            setters.SetCharsLength(sink, ordinal, nWritten);
+            setters.SetCharsLength(ordinal, nWritten);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetByte_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, byte value)
         {
-            setters.SetByte(sink, ordinal, value);
+            setters.SetByte(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static int SetBytes_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
-            int result = setters.SetBytes(sink, ordinal, fieldOffset, buffer, bufferOffset, length);
+            int result = setters.SetBytes(ordinal, fieldOffset, buffer, bufferOffset, length);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3294,99 +3151,99 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (length > 0)
             {
-                setters.SetChars(sink, ordinal, 0, buffer, bufferOffset, length);
+                setters.SetChars(ordinal, 0, buffer, bufferOffset, length);
                 sink.ProcessMessagesAndThrow();
             }
-            setters.SetCharsLength(sink, ordinal, length);
+            setters.SetCharsLength(ordinal, length);
             sink.ProcessMessagesAndThrow();
         }
 
         private static int SetChars_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
-            int result = setters.SetChars(sink, ordinal, fieldOffset, buffer, bufferOffset, length);
+            int result = setters.SetChars(ordinal, fieldOffset, buffer, bufferOffset, length);
             sink.ProcessMessagesAndThrow();
             return result;
         }
 
         private static void SetDBNull_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal)
         {
-            setters.SetDBNull(sink, ordinal);
+            setters.SetDBNull(ordinal);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDecimal_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, decimal value)
         {
-            setters.SetSqlDecimal(sink, ordinal, new SqlDecimal(value));
+            setters.SetSqlDecimal(ordinal, new SqlDecimal(value));
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTime_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, DateTime value)
         {
-            setters.SetDateTime(sink, ordinal, value);
+            setters.SetDateTime(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTime2_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
         {
             Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
-            setters.SetVariantMetaData(sink, ordinal, SmiMetaData.DefaultDateTime2);
-            setters.SetDateTime(sink, ordinal, value);
+            setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDateTime2);
+            setters.SetDateTime(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDate_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
         {
             Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
-            setters.SetVariantMetaData(sink, ordinal, SmiMetaData.DefaultDate);
-            setters.SetDateTime(sink, ordinal, value);
+            setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
+            setters.SetDateTime(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetTimeSpan_Unchecked(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, TimeSpan value)
         {
-            setters.SetTimeSpan(sink, ordinal, value);
+            setters.SetTimeSpan(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTimeOffset_Unchecked(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, DateTimeOffset value)
         {
-            setters.SetDateTimeOffset(sink, ordinal, value);
+            setters.SetDateTimeOffset(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDouble_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, double value)
         {
-            setters.SetDouble(sink, ordinal, value);
+            setters.SetDouble(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetGuid_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, Guid value)
         {
-            setters.SetGuid(sink, ordinal, value);
+            setters.SetGuid(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt16_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, short value)
         {
-            setters.SetInt16(sink, ordinal, value);
+            setters.SetInt16(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt32_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, int value)
         {
-            setters.SetInt32(sink, ordinal, value);
+            setters.SetInt32(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt64_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long value)
         {
-            setters.SetInt64(sink, ordinal, value);
+            setters.SetInt64(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSingle_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, float value)
         {
-            setters.SetSingle(sink, ordinal, value);
+            setters.SetSingle(ordinal, value);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3394,7 +3251,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
@@ -3407,11 +3264,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetBoolean(sink, ordinal, value.Value);
+                setters.SetBoolean(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3420,11 +3277,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetByte(sink, ordinal, value.Value);
+                setters.SetByte(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3434,7 +3291,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
                 sink.ProcessMessagesAndThrow();
             }
             else
@@ -3461,7 +3318,7 @@ namespace Microsoft.Data.SqlClient.Server
                     bytesWritten != 0
                 )
                 {
-                    bytesWritten = setters.SetBytes(sink, ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
+                    bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
                     sink.ProcessMessagesAndThrow();
                     checked
                     {
@@ -3474,7 +3331,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 // Make sure to trim any left-over data
-                setters.SetBytesLength(sink, ordinal, currentOffset);
+                setters.SetBytesLength(ordinal, currentOffset);
                 sink.ProcessMessagesAndThrow();
             }
         }
@@ -3483,7 +3340,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
                 sink.ProcessMessagesAndThrow();
             }
             else
@@ -3510,7 +3367,7 @@ namespace Microsoft.Data.SqlClient.Server
                     charsWritten != 0
                 )
                 {
-                    charsWritten = setters.SetChars(sink, ordinal, currentOffset, buffer, 0, checked((int)charsRead));
+                    charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
                     sink.ProcessMessagesAndThrow();
                     checked
                     {
@@ -3520,7 +3377,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 // Make sure to trim any left-over data
-                setters.SetCharsLength(sink, ordinal, currentOffset);
+                setters.SetCharsLength(ordinal, currentOffset);
                 sink.ProcessMessagesAndThrow();
             }
         }
@@ -3529,11 +3386,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetDateTime(sink, ordinal, value.Value);
+                setters.SetDateTime(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3542,11 +3399,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetSqlDecimal(sink, ordinal, value);
+                setters.SetSqlDecimal(ordinal, value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3555,11 +3412,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetDouble(sink, ordinal, value.Value);
+                setters.SetDouble(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3568,11 +3425,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetGuid(sink, ordinal, value.Value);
+                setters.SetGuid(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3581,11 +3438,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetInt16(sink, ordinal, value.Value);
+                setters.SetInt16(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3594,11 +3451,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetInt32(sink, ordinal, value.Value);
+                setters.SetInt32(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3607,11 +3464,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetInt64(sink, ordinal, value.Value);
+                setters.SetInt64(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3620,20 +3477,20 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
                 if (metaData.SqlDbType == SqlDbType.Variant)
                 {
-                    setters.SetVariantMetaData(sink, ordinal, SmiMetaData.DefaultMoney);
+                    setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultMoney);
                     sink.ProcessMessagesAndThrow();
                 }
 
 #if NET
-                setters.SetInt64(sink, ordinal, value.GetTdsValue());
+                setters.SetInt64(ordinal, value.GetTdsValue());
 #else
-                setters.SetInt64(sink, ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
+                setters.SetInt64(ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
 #endif
             }
             sink.ProcessMessagesAndThrow();
@@ -3643,11 +3500,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
             }
             else
             {
-                setters.SetSingle(sink, ordinal, value.Value);
+                setters.SetSingle(ordinal, value.Value);
             }
             sink.ProcessMessagesAndThrow();
         }
@@ -3656,7 +3513,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
                 sink.ProcessMessagesAndThrow();
             }
             else
@@ -3673,7 +3530,7 @@ namespace Microsoft.Data.SqlClient.Server
                         value.SqlCompareOptions,
                         userDefinedType: null
                     );
-                    setters.SetVariantMetaData(sink, ordinal, metaData);
+                    setters.SetVariantMetaData(ordinal, metaData);
                     sink.ProcessMessagesAndThrow();
                 }
                 SetString_Unchecked(sink, setters, ordinal, value.Value, offset, length);
@@ -3684,7 +3541,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (value.IsNull)
             {
-                setters.SetDBNull(sink, ordinal);
+                setters.SetDBNull(ordinal);
                 sink.ProcessMessagesAndThrow();
             }
             else
@@ -3720,7 +3577,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetString_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, string value, int offset, int length)
         {
-            setters.SetString(sink, ordinal, value, offset, length);
+            setters.SetString(ordinal, value, offset, length);
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3735,19 +3592,19 @@ namespace Microsoft.Data.SqlClient.Server
         )
         {
             // Get the target gettersetter
-            setters = setters.GetTypedGetterSetter(sink, ordinal);
+            setters = setters.GetTypedGetterSetter(ordinal);
             sink.ProcessMessagesAndThrow();
 
             // Iterate over all rows in the current set of results
             while (value.Read())
             {
-                setters.NewElement(sink);
+                setters.NewElement();
                 sink.ProcessMessagesAndThrow();
 
                 FillCompatibleSettersFromReader(sink, setters, metaData.FieldMetaData, value);
             }
 
-            setters.EndElements(sink);
+            setters.EndElements();
             sink.ProcessMessagesAndThrow();
         }
 
@@ -3761,7 +3618,7 @@ namespace Microsoft.Data.SqlClient.Server
         )
         {
             // Get target gettersetter
-            setters = setters.GetTypedGetterSetter(sink, ordinal);
+            setters = setters.GetTypedGetterSetter(ordinal);
             sink.ProcessMessagesAndThrow();
 
             IEnumerator<SqlDataRecord> enumerator = null;
@@ -3782,7 +3639,7 @@ namespace Microsoft.Data.SqlClient.Server
                     enumerator = peekAhead.Enumerator;
 
                     // send the first record that was obtained earlier
-                    setters.NewElement(sink);
+                    setters.NewElement();
                     sink.ProcessMessagesAndThrow();
                     FillCompatibleSettersFromRecord(sink, setters, mdFields, peekAhead.FirstRecord, defaults);
                     recordNumber++;
@@ -3794,7 +3651,7 @@ namespace Microsoft.Data.SqlClient.Server
 
                 while (enumerator.MoveNext())
                 {
-                    setters.NewElement(sink);
+                    setters.NewElement();
                     sink.ProcessMessagesAndThrow();
 
                     SqlDataRecord record = enumerator.Current;
@@ -3816,7 +3673,7 @@ namespace Microsoft.Data.SqlClient.Server
                     recordNumber++;
                 }
 
-                setters.EndElements(sink);
+                setters.EndElements();
                 sink.ProcessMessagesAndThrow();
   
             }
@@ -3838,7 +3695,7 @@ namespace Microsoft.Data.SqlClient.Server
         )
         {
             // Get the target gettersetter
-            setters = setters.GetTypedGetterSetter(sink, ordinal);
+            setters = setters.GetTypedGetterSetter(ordinal);
             sink.ProcessMessagesAndThrow();
 
             // iterate over all records
@@ -3850,7 +3707,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             foreach (DataRow row in value.Rows)
             {
-                setters.NewElement(sink);
+                setters.NewElement();
                 sink.ProcessMessagesAndThrow();
 
                 // Set all columns in the record
@@ -3879,12 +3736,12 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
 
-            setters.EndElements(sink);
+            setters.EndElements();
             sink.ProcessMessagesAndThrow();
         }
 
         // spool a Stream into a scratch stream from the Smi interface and return it as a Stream
-        internal static Stream CopyIntoNewSmiScratchStream(Stream source, SmiEventSink_Default sink)
+        internal static Stream CopyIntoNewSmiScratchStream(Stream source)
         {
             Stream dest = new MemoryStream();
 

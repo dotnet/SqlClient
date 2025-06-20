@@ -194,10 +194,6 @@ namespace Microsoft.Data.SqlClient
         private DataRowState _rowStateToSkip;
         private IEnumerator _rowEnumerator;
 
-        #if NETFRAMEWORK
-        private bool _rowSourceIsSqlDataReaderSmi;
-        #endif
-        
         private int RowNumber
         {
             get
@@ -1206,19 +1202,6 @@ namespace Microsoft.Data.SqlClient
 
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
-            bool IsMetadataDataStream(_SqlMetaData metadata)
-            {
-                #if NETFRAMEWORK
-                if (_rowSourceIsSqlDataReaderSmi)
-                {
-                    return false;
-                }
-                #endif
-
-                return _enableStreaming &&
-                       (metadata.length == MAX_LENGTH || metadata.type is SqlDbTypeExtensions.Json);
-            }
-            
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
             _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
 
@@ -1269,7 +1252,8 @@ namespace Microsoft.Data.SqlClient
                     method = ValueMethod.GetValue;
                 }
             }
-            else if (IsMetadataDataStream(metadata))
+            // Check for data streams
+            else if (_enableStreaming && (metadata.length == MAX_LENGTH || metadata.metaType.SqlDbType == SqlDbTypeExtensions.Json))
             {
                 isSqlType = false;
 
@@ -1709,18 +1693,11 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _dbDataReaderRowSource = reader;
                 _sqlDataReaderRowSource = reader as SqlDataReader;
-
-                #if NETFRAMEWORK
-                if (_sqlDataReaderRowSource != null)
-                {
-                    _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
-                }
-                #endif
-
                 _rowSourceType = ValueSourceType.DbDataReader;
 
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
@@ -1752,19 +1729,13 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                
                 ResetWriteToServerGlobalVariables();
                 _rowSource = reader;
                 _sqlDataReaderRowSource = _rowSource as SqlDataReader;
-
-                #if NETFRAMEWORK
-                if (_sqlDataReaderRowSource != null)
-                {
-                    _rowSourceIsSqlDataReaderSmi = _sqlDataReaderRowSource is SqlDataReaderSmi;
-                }
-                #endif
-
                 _dbDataReaderRowSource = _rowSource as DbDataReader;
                 _rowSourceType = ValueSourceType.IDataReader;
+                
                 WriteRowSourceToServerAsync(reader.FieldCount, CancellationToken.None); //It returns null since _isAsyncBulkCopy = false;
             }
             finally
@@ -1875,7 +1846,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.BulkLoadPendingOperation();
             }
-            
+
             SqlStatistics statistics = Statistics;
             try
             {
