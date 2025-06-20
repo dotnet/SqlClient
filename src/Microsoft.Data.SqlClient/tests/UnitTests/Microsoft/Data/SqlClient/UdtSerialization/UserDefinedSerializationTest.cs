@@ -14,8 +14,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 /// <summary>
 /// Tests the user-defined UDT serialization method. Verifies that custom types round-trip.
 /// </summary>
-public class UserDefinedSerializationTest
+public sealed class UserDefinedSerializationTest : IDisposable
 {
+    private readonly MemoryStream _stream;
+
+    /// <summary>
+    /// Initializes the MemoryStream used for all tests in this class.
+    /// </summary>
+    public UserDefinedSerializationTest()
+    {
+        _stream = new MemoryStream();
+    }
+
+    void IDisposable.Dispose()
+    {
+        _stream.Dispose();
+    }
+
     /// <summary>
     /// Attempts to serialize and deserialize an instance of a struct with a user-defined serialization method.
     /// </summary>
@@ -39,13 +54,11 @@ public class UserDefinedSerializationTest
     [Fact]
     public void RequiresPublicParameterlessConstructor()
     {
-        using MemoryStream stream = new();
-
-        SerializationHelperSql9.Serialize(stream, new UserDefinedMissingPublicConstructor(true));
-        stream.Seek(0, SeekOrigin.Begin);
+        SerializationHelperSql9.Serialize(_stream, new UserDefinedMissingPublicConstructor(true));
+        _stream.Seek(0, SeekOrigin.Begin);
 
         Assert.Throws<MissingMethodException>(
-            () => SerializationHelperSql9.Deserialize(stream, typeof(UserDefinedMissingPublicConstructor)));
+            () => SerializationHelperSql9.Deserialize(_stream, typeof(UserDefinedMissingPublicConstructor)));
     }
 
     /// <summary>
@@ -55,24 +68,21 @@ public class UserDefinedSerializationTest
     [Fact]
     public void RequiresIBinarySerializeImplementation()
     {
-        using MemoryStream stream = new();
-
         Assert.Throws<InvalidCastException>(
-            () => SerializationHelperSql9.Serialize(stream, new UserDefinedDoesNotImplementIBinarySerialize()));
+            () => SerializationHelperSql9.Serialize(_stream, new UserDefinedDoesNotImplementIBinarySerialize()));
     }
 
-    private static void RoundtripType<T>(T userObject)
+    private void RoundtripType<T>(T userObject)
         where T : IFormattingProgress
     {
-        using MemoryStream stream = new();
         int typeSize = SerializationHelperSql9.SizeInBytes(userObject.GetType());
         int objectSize = SerializationHelperSql9.SizeInBytes(userObject);
         int maxTypeSize = SerializationHelperSql9.GetUdtMaxLength(userObject.GetType());
 
-        SerializationHelperSql9.Serialize(stream, userObject);
-        stream.Seek(0, SeekOrigin.Begin);
-        byte[] serializedValue = stream.ToArray();
-        T readInstance = (T)SerializationHelperSql9.Deserialize(stream, userObject.GetType());
+        SerializationHelperSql9.Serialize(_stream, userObject);
+        _stream.Seek(0, SeekOrigin.Begin);
+        byte[] serializedValue = _stream.ToArray();
+        T readInstance = (T)SerializationHelperSql9.Deserialize(_stream, userObject.GetType());
 
         // If this is a struct, it will have been copied by value and the write to WriteInvoked will have been made
         // to another copy of our object

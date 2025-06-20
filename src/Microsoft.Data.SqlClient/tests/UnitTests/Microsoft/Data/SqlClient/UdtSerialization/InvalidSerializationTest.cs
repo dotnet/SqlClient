@@ -14,18 +14,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 /// <summary>
 /// Attempts to serialize types which do not meet the requirements for either user-defined or native serialization.
 /// </summary>
-public class InvalidSerializationTest
+public sealed class InvalidSerializationTest : IDisposable
 {
+    private readonly MemoryStream _stream;
+
+    /// <summary>
+    /// Initializes the MemoryStream used for all tests in this class.
+    /// </summary>
+    public InvalidSerializationTest()
+    {
+        _stream = new MemoryStream();
+    }
+
+    void IDisposable.Dispose()
+    {
+        _stream.Dispose();
+    }
+
     /// <summary>
     /// Attempts to serialize a class that does not have the SqlUserDefinedType attribute. Verifies that this fails.
     /// </summary>
     [Fact]
     public void RequiresSqlUserDefinedTypeAttribute()
     {
-        using MemoryStream stream = new();
-
         var exception = Assert.Throws<InvalidUdtException>(
-            () => SerializationHelperSql9.Serialize(stream, new ClassMissingSqlUserDefinedTypeAttribute()));
+            () => SerializationHelperSql9.Serialize(_stream, new ClassMissingSqlUserDefinedTypeAttribute()));
 
         Assert.Equal($"'{typeof(ClassMissingSqlUserDefinedTypeAttribute).FullName}' is an invalid user defined type, reason: no UDT attribute.", exception.Message);
     }
@@ -37,10 +50,8 @@ public class InvalidSerializationTest
     [Fact]
     public void CannotSerializeUnknownFormattedType()
     {
-        using MemoryStream stream = new();
-
         var exception = Assert.Throws<ArgumentOutOfRangeException>("Format",
-            () => SerializationHelperSql9.Serialize(stream, new UnknownFormattedClass()));
+            () => SerializationHelperSql9.Serialize(_stream, new UnknownFormattedClass()));
 
 #if NET
         Assert.Equal("The Format enumeration value, 0, is not supported by the format method. (Parameter 'Format')", exception.Message);

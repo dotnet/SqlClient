@@ -16,8 +16,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.UdtSerialization;
 /// Tests the serialization method defined by MS-SSCLRT. Ensures that combinations of primitives and custom types round-trip.
 /// </summary>
 /// <seealso href="https://learn.microsoft.com/en-us/openspecs/sql_server_protocols/ms-ssclrt/77460aa9-8c2f-4449-a65e-1d649ebd77fa"/>
-public class NativeSerializationTest
+public sealed class NativeSerializationTest : IDisposable
 {
+    private readonly MemoryStream _stream;
+
+    /// <summary>
+    /// Initializes the MemoryStream used for all tests in this class.
+    /// </summary>
+    public NativeSerializationTest()
+    {
+        _stream = new MemoryStream();
+    }
+
+    void IDisposable.Dispose()
+    {
+        _stream.Dispose();
+    }
+
     /// <summary>
     /// Provides a collection of test data representing non-null primitive type values and their corresponding
     /// serialized byte arrays.
@@ -206,9 +221,8 @@ public class NativeSerializationTest
             Field1 = true,
             Field2 = new BoolWrapperStruct() { Field1 = true }
         };
-        using MemoryStream stream = new();
 
-        SerializationHelperSql9.Serialize(stream, validWrapper);
+        SerializationHelperSql9.Serialize(_stream, validWrapper);
     }
 
     /// <summary>
@@ -224,9 +238,8 @@ public class NativeSerializationTest
             Field1 = true,
             Field2 = new BoolWrapperClass() { Field1 = true }
         };
-        using MemoryStream stream = new();
 
-        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
+        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(_stream, invalidWrapper));
         string expectedException = StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, invalidWrapper.Field2.GetType().FullName);
 
         Assert.Equal(expectedException, ex.Message);
@@ -244,9 +257,8 @@ public class NativeSerializationTest
             Field1 = 1,
             Field2 = IntPtr.Zero
         };
-        using MemoryStream stream = new();
 
-        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(stream, invalidWrapper));
+        var ex = Assert.Throws<Exception>(() => SerializationHelperSql9.Serialize(_stream, invalidWrapper));
         string expectedException = StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, invalidWrapper.Field2.GetType().FullName);
 
         Assert.Equal(expectedException, ex.Message);
@@ -257,23 +269,22 @@ public class NativeSerializationTest
     /// </summary>
     /// <param name="inputValue">Object to serialize.</param>
     /// <param name="expectedValue">Expected serialization output.</param>
-    private static void RoundtripType(object inputValue, byte[] expectedValue)
+    private void RoundtripType(object inputValue, byte[] expectedValue)
     {
-        using MemoryStream stream = new();
         int typeSize = SerializationHelperSql9.SizeInBytes(inputValue.GetType());
         int objectSize = SerializationHelperSql9.SizeInBytes(inputValue);
         int maxTypeSize = SerializationHelperSql9.GetUdtMaxLength(inputValue.GetType());
 
-        SerializationHelperSql9.Serialize(stream, inputValue);
-        stream.Seek(0, SeekOrigin.Begin);
-        object readPrimitive = SerializationHelperSql9.Deserialize(stream, inputValue.GetType());
+        SerializationHelperSql9.Serialize(_stream, inputValue);
+        _stream.Seek(0, SeekOrigin.Begin);
+        object readPrimitive = SerializationHelperSql9.Deserialize(_stream, inputValue.GetType());
 
         // For native formatting, the type size, the object size and the maximum object size will always be identical
         Assert.Equal(typeSize, objectSize);
         Assert.Equal(expectedValue.Length, typeSize);
         Assert.Equal(typeSize, maxTypeSize);
 
-        Assert.Equal(expectedValue, stream.ToArray());
+        Assert.Equal(expectedValue, _stream.ToArray());
         Assert.Equal(inputValue, readPrimitive);
     }
 }
