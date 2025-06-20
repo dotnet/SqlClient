@@ -187,7 +187,7 @@ internal class NestedBoolWrapperClass { public bool Field1; public BoolWrapperSt
 // Failure case: a struct or a class containing one designated primitive type and a nested class
 [SqlUserDefinedType(Format.Native)]
 [StructLayout(LayoutKind.Sequential)]
-internal class InvalidNestedBoolWrapperClass { public bool Field1; public BoolWrapperClass Field2; }
+internal class InvalidNestedBoolWrapperClass { public bool Field1; public BoolWrapperClass? Field2; }
 
 // Failure case: a struct or a class containing a field which is not a designated primitive type
 [SqlUserDefinedType(Format.Native)]
@@ -302,7 +302,7 @@ internal class UserDefinedFormattedClass : IBinarySerialize, IFormattingProgress
         WriteInvoked = true;
     }
 
-    public bool Equals(UserDefinedFormattedClass other)
+    public bool Equals(UserDefinedFormattedClass? other)
         => other is not null && other.Field1 == Field1;
 }
 
