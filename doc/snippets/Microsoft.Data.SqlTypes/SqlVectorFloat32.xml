@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlVectorFloat32">
+    <SqlVectorFloat32>
+      <summary>Represents the vector of float datatype in SQL Server.</summary>
+    </SqlVectorFloat32>
+    <ctor1>
+      <param name="length"></param>
+      <summary>
+        Takes a <see cref="int"/> as input and represents null value for vector column of float element type.
+      </summary>
+    </ctor1>
+    <ctor2>
+      <param name="values"></param>
+      <summary>
+        Takes an array of float values as input and initializes a new instance of the SqlVectorFloat32 class.
+      </summary>
+    </ctor2>
+    <IsNull>
+      <inheritdoc/>
+    </IsNull>
+    <Null>
+        <inheritdoc/>
+    </Null>
+    <Length>
+      <summary>
+        Indicates the count of the elements in the float vector.
+      </summary>
+    </Length>
+    <Size>
+      <summary>
+        Indicates the size in bytes for a SqlVectorFloat32 value for a vector column of <see cref="Length"/> elements of <see cref="T:System.Single"/> type.
+      </summary>
+    </Size>
+    <Values>
+      <summary>Returns the internal float array representing the float vector.</summary>
+      <returns>An array of <see cref="T:System.Single"/> values.</returns>
+    </Values>
+    <ToString>
+      <summary>Returns a JSON string representing the internal float array representing the float vector.</summary>
+      <returns>A JSON <see cref="T:System.String"/> value.</returns>
+    </ToString>
+  </members>
+</docs>
