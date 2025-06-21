@@ -806,16 +806,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     using (var cmd = cn.CreateCommand())
                     {
                         cmd.CommandText = $"""
-                   if exists (select *
-                                  from sysobjects
-                                  where name = 'Expl_User_Global_Sets_'
-                                    and xtype = 'U')
-                                    
-                   begin
-                        drop table dbo.Expl_User_Global_Sets_
-                   end
-
-                   create table {tableName}
+                   create table [{tableName}]
                    (
                        User_ID            varchar(22)      not null,
                        StringName         varchar(255)     not null,
@@ -829,7 +820,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                        IsProtoCorrected   bit default 1
                    )
 
-                      insert into {tableName}(User_ID, StringName, IsGlobal, List, UseProtoSerializer, ModuleNameForUse,
+                      insert into [{tableName}](User_ID, StringName, IsGlobal, List, UseProtoSerializer, ModuleNameForUse,
                                                              IsReadOnly, VersionNumber, UserGlobalSet_ID, IsProtoCorrected)
                       values ('80004Q4WZ1350KO8NT59RM', '_', 1, '{stringValue}', 1, 2, 1, 1, newid(), 1);
 
@@ -839,18 +830,10 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
 
                         cmd.CommandText = $""""
                   SELECT
-                  	--[gs].[UserGlobalSet_ID],
-                  	--[gs].[User_ID],
-                  	--[gs].[StringName],
-                  	--[gs].[IsGlobal],
                   	[gs].[List],
-                  	[gs].[UseProtoSerializer]--,
-                  	--[gs].[ModuleNameForUse],
-                  	--[gs].[IsReadOnly],
-                  	--[gs].[VersionNumber],
-                  	--[gs].[IsProtoCorrected]
+                  	[gs].[UseProtoSerializer],
                   FROM
-                  	{tableName} [gs]
+                  	[{tableName}] [gs]
                   WHERE
                   	([gs].[IsGlobal] = 1 OR [gs].[User_ID] = '{"80004Q4WZ1350KO8NT59RM"}') AND
                   	([gs].[ModuleNameForUse] IS NULL OR [gs].[ModuleNameForUse] = {2})
