@@ -88,11 +88,15 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
             // This is to ensure that it's imported into the certificate stores with its private key.
             using (X509Certificate2 ephemeral = request.CreateSelfSigned(notBefore, notAfter))
             {
+                X509KeyStorageFlags keyStorageFlags = OperatingSystem.IsMacOS() 
+                    ? X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.Exportable 
+                    : X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable;
+
                 #if NET9_0_OR_GREATER
                 return X509CertificateLoader.LoadPkcs12(
                     ephemeral.Export(X509ContentType.Pkcs12, password),
                     password,
-                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable,
+                    keyStorageFlags,
                     new Pkcs12LoaderLimits(Pkcs12LoaderLimits.Defaults) 
                     {
                         PreserveStorageProvider = true,
@@ -102,7 +106,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities.Fixtures
                 return new X509Certificate2(
                     ephemeral.Export(X509ContentType.Pkcs12, password),
                     password,
-                    X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                    keyStorageFlags);
                 #endif
             }
 #else
