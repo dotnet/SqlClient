@@ -14,10 +14,11 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public sealed class ConversionTests : IDisposable
+    public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -28,8 +29,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private static X509Certificate2 certificate;
-        private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
         private List<DbObject> _databaseObjects = new List<DbObject>();
@@ -53,18 +52,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             public bool UseMax { get; set; }
         }
 
-        public ConversionTests()
+        public ConversionTests(ColumnMasterKeyCertificateFixture fixture)
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
-            columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
-            _databaseObjects.Add(columnMasterKey);
+            X509Certificate2 certificate = fixture.ColumnMasterKeyCertificate;
+            ColumnMasterKey columnMasterKey1 = new CspColumnMasterKey(
+                DatabaseHelper.GenerateUniqueName("CMK"),
+                certificate.Thumbprint,
+                certStoreProvider,
+                DataTestUtility.EnclaveEnabled);
+            _databaseObjects.Add(columnMasterKey1);
 
-            columnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("CEK"),
-                                                          columnMasterKey,
-                                                          certStoreProvider);
+            columnEncryptionKey = new ColumnEncryptionKey(
+                DatabaseHelper.GenerateUniqueName("CEK"),
+                columnMasterKey1,
+                certStoreProvider);
             _databaseObjects.Add(columnEncryptionKey);
 
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)

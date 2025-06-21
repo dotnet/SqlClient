@@ -12,41 +12,41 @@
           The requirements for the <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> format are:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The <see cref="T:System.Runtime.InteropServices.StructLayoutAttribute" /> with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> property value of <see cref="F:System.Runtime.InteropServices.LayoutKind.Sequential" /> must be applied to the aggregate or UDT if it is defined in a class and not a structure. This controls the physical layout of the data fields and is used to force the members to be laid out sequentially in the order they appear. SQL Server uses this attribute to determine the field order for UDTs with multiple fields.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The type must contain at least one member (serialized values cannot be zero bytes in size).
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             All the fields of the aggregate must be <i>blittable</i>; that is, they must have a common representation in both managed and unmanaged memory and not require special handling by the interop marshaller.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             All the fields of the UDT should be of one of the following types that can be serialized: <c>bool</c>, <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>, <c>int</c>, <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>float</c>, <c>double</c>, <see cref="T:System.Data.SqlTypes.SqlByte" />, <see cref="T:System.Data.SqlTypes.SqlInt16" />, <see cref="T:System.Data.SqlTypes.SqlInt32" />, <see cref="T:System.Data.SqlTypes.SqlInt64" />, <see cref="T:System.Data.SqlTypes.SqlDateTime" />, <see cref="T:System.Data.SqlTypes.SqlSingle" />, <see cref="T:System.Data.SqlTypes.SqlDouble" />, <see cref="T:System.Data.SqlTypes.SqlMoney" />, or other value types defined by the user that contain fields of one of these types.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The aggregate must not specify a value for <c>MaxByteSize</c>
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             The aggregate must not have any <c>[NonSerialized]</c> fields.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             Fields must not be marked as an explicit layout (with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> of <see cref="F:System.Runtime.InteropServices.LayoutKind.Explicit" /> ).
-          </item>
+          </description></item>
         </list>
         <para>
           The requirements for the <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" /> format are:
         </para>
         <list type="bullet">
-          <item>
+          <item><description>
             The aggregate must specify a value for <c>MaxByteSize</c>
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             Specify the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered" /> attribute property. The default value is <see langword="false" />.
-          </item>
-          <item>
+          </description></item>
+          <item><description>
             If you omit any field in the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> or <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> methods, the state of that field is not serialized.
-          </item>
+          </description></item>
         </list>
       </remarks>
       <example>

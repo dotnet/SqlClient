@@ -187,14 +187,10 @@ namespace Microsoft.Data.SqlClient.Server
         //      must instantiate a Type object.  The typecode switch also degenerates into a large if-then-else for
         //      all but the primitive clr types.
         internal static ExtendedClrTypeCode DetermineExtendedTypeCodeForUseWithSqlDbType(
-                SqlDbType dbType,
-                bool isMultiValued,
-                object value,
-                Type udtType
-#if NETFRAMEWORK
-                ,ulong smiVersion
-#endif
-            )
+            SqlDbType dbType,
+            bool isMultiValued,
+            object value,
+            Type udtType)
         {
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
@@ -266,15 +262,8 @@ namespace Microsoft.Data.SqlClient.Server
 
                         break;
 #endif
-                    case SqlDbType.DateTime2:
-#if NETFRAMEWORK
-                        if (smiVersion >= SmiContextFactory.Sql2008Version)
-                        {
-                            goto case SqlDbType.DateTime;
-                        }
-                        break;
-#endif
                     case SqlDbType.DateTime:
+                    case SqlDbType.DateTime2:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
                             extendedCode = ExtendedClrTypeCode.DateTime;
@@ -361,20 +350,12 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
 #else
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
-#endif
-                            )
+                        if (value.GetType() == typeof(TimeSpan))
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
 #endif
                     case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
-#endif
-                            )
+                        if (value.GetType() == typeof(DateTimeOffset))
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
                         break;
                     case SqlDbType.Xml:
@@ -985,27 +966,5 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
-
-#if NETFRAMEWORK
-
-        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
-        {
-            if (SmiContextFactory.LatestVersion == smiVersion)
-            {
-                return true;
-            }
-            else
-            {
-                // 2005 doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
-                return md.SqlDbType != SqlDbType.Structured &&
-                        md.SqlDbType != SqlDbType.Date &&
-                        md.SqlDbType != SqlDbType.DateTime2 &&
-                        md.SqlDbType != SqlDbType.DateTimeOffset &&
-                        md.SqlDbType != SqlDbType.Time;
-            }
-        }
-
-#endif
     }
 }

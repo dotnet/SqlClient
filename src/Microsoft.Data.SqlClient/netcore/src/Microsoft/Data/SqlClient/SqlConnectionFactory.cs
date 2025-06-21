@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
@@ -32,19 +33,30 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
+        protected override DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
         }
 
-        override protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        protected override DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection,
+            DbConnectionOptions userOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)options;
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
 
             SqlConnection sqlOwningConnection = (SqlConnection)owningConnection;
-            bool applyTransientFaultHandling = sqlOwningConnection != null ? sqlOwningConnection._applyTransientFaultHandling : false;
+            bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
             SqlConnectionString userOpt = null;
             if (userOptions != null)
@@ -136,7 +148,20 @@ namespace Microsoft.Data.SqlClient
                 opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
-            return new SqlInternalConnectionTds(identity, opt, key.Credential, poolGroupProviderInfo, "", null, redirectedUserInstance, userOpt, recoverySessionData, applyTransientFaultHandling, key.AccessToken, pool, key.AccessTokenCallback);
+            return new SqlInternalConnectionTds(
+                identity,
+                opt,
+                key.Credential,
+                poolGroupProviderInfo,
+                newPassword: string.Empty,
+                newSecurePassword: null,
+                redirectedUserInstance,
+                userOpt,
+                recoverySessionData,
+                applyTransientFaultHandling,
+                key.AccessToken,
+                pool,
+                key.AccessTokenCallback);
         }
 
         protected override DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous)

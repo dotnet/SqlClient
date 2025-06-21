@@ -1011,7 +1011,7 @@ namespace Microsoft.Data.SqlClient
             string warningMessage = ((System.Security.Authentication.SslProtocols)protocolVersion).GetProtocolWarning();
             if (!string.IsNullOrEmpty(warningMessage))
             {
-                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTlsWarning)
                 {
                     // Skip console warning
                     SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);
@@ -2865,7 +2865,7 @@ namespace Microsoft.Data.SqlClient
                             // UTF8 collation
                             if (env._newCollation.IsUTF8)
                             {
-                                _defaultEncoding = Encoding.UTF8;
+                                _defaultEncoding = s_utf8EncodingWithoutBom;
                             }
                             else
                             {
@@ -4376,7 +4376,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (rec.collation.IsUTF8)
                 { // UTF8 collation
-                    rec.encoding = Encoding.UTF8;
+                    rec.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -5297,7 +5297,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.collation.IsUTF8)
                 { // UTF8 collation
-                    col.encoding = Encoding.UTF8;
+                    col.encoding = s_utf8EncodingWithoutBom;
                 }
                 else
                 {
@@ -6183,7 +6183,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.SQLJSON:
-                    encoding = Encoding.UTF8;
+                    encoding = s_utf8EncodingWithoutBom;
                     string jsonStringValue;
                     result = stateObj.TryReadStringWithEncoding(length, encoding, isPlp, out jsonStringValue);
                     if (result != TdsOperationStatus.Done)
@@ -10460,7 +10460,10 @@ namespace Microsoft.Data.SqlClient
             {
                 value = param.GetCoercedValue();
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                    metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
+                    metaData.SqlDbType,
+                    metaData.IsMultiValued,
+                    value,
+                    udtType: null);
             }
 
             var sendDefaultValue = sendDefault ? 1 : 0;
@@ -11240,7 +11243,7 @@ namespace Microsoft.Data.SqlClient
                     // Replace encoding if it is UTF8
                     if (metadata.collation.IsUTF8)
                     {
-                        _defaultEncoding = Encoding.UTF8;
+                        _defaultEncoding = s_utf8EncodingWithoutBom;
                     }
 
                     _defaultCollation = metadata.collation;
@@ -11554,39 +11557,37 @@ namespace Microsoft.Data.SqlClient
 
             int notificationHeaderSize = GetNotificationHeaderSize(notificationRequest);
 
-            const int marsHeaderSize = 18; // 4 + 2 + 8 + 4
+            const int MarsHeaderSize = 18; // 4 + 2 + 8 + 4
 
             // Header Length (DWORD)
             // Header Type (ushort)
             // Trace Data Guid
             // Trace Data Sequence Number (uint)
-            const int traceHeaderSize = 26;  // 4 + 2 + GUID_SIZE + sizeof(UInt32);
+            const int TraceHeaderSize = 26;  // 4 + 2 + sizeof(Guid) + sizeof(uint);
 
             // TotalLength  - DWORD  - including all headers and lengths, including itself
-            int totalHeaderLength = this.IncludeTraceHeader ? (4 + marsHeaderSize + notificationHeaderSize + traceHeaderSize) : (4 + marsHeaderSize + notificationHeaderSize);
+            int totalHeaderLength = IncludeTraceHeader ? (4 + MarsHeaderSize + notificationHeaderSize + TraceHeaderSize) : (4 + MarsHeaderSize + notificationHeaderSize);
             Debug.Assert(stateObj._outBytesUsed == stateObj._outputHeaderLen, "Output bytes written before total header length");
             // Write total header length
             WriteInt(totalHeaderLength, stateObj);
 
-            // Write Mars header length
-            WriteInt(marsHeaderSize, stateObj);
-            // Write Mars header data
+            // Write MARS header length and data
+            WriteInt(MarsHeaderSize, stateObj);
             WriteMarsHeaderData(stateObj, CurrentTransaction);
 
-            if (0 != notificationHeaderSize)
+            if (notificationHeaderSize != 0)
             {
-                // Write Notification header length
+                // Write notification header length and data
+                // MS-TDS 2.2.5.3.1: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/e168d373-a7b7-41aa-b6ca-25985466a7e0
                 WriteInt(notificationHeaderSize, stateObj);
-                // Write notificaiton header data
                 WriteQueryNotificationHeaderData(notificationRequest, stateObj);
             }
 
             if (IncludeTraceHeader)
             {
-
-                // Write trace header length
-                WriteInt(traceHeaderSize, stateObj);
-                // Write trace header data
+                // Write trace header length and data
+                // MS-TDS 2.2.5.3.3: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/6e9f106b-df6e-4cbe-a6eb-45ceb10c63be
+                WriteInt(TraceHeaderSize, stateObj);
                 WriteTraceHeaderData(stateObj);
             }
         }
@@ -13267,7 +13268,7 @@ namespace Microsoft.Data.SqlClient
         {
             int charsRead = 0;
             int charsLeft = 0;
-            
+
             if (stateObj._longlen == 0)
             {
                 Debug.Assert(stateObj._longlenleft == 0);
@@ -13277,11 +13278,11 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((ulong)stateObj._longlen != TdsEnums.SQL_PLP_NULL, "Out of sync plp read request");
             Debug.Assert(
-                (buff == null && offst == 0) 
-                || 
+                (buff == null && offst == 0)
+                ||
                 (buff.Length >= offst + len)
                 ||
-                (buff.Length == (startOffsetByteCount >> 1) + 1), 
+                (buff.Length >= (startOffsetByteCount >> 1) + 1),
                 "Invalid length sent to ReadPlpUnicodeChars()!"
             );
             charsLeft = len;
@@ -13289,9 +13290,9 @@ namespace Microsoft.Data.SqlClient
             // If total length is known up front, the length isn't specified as unknown 
             // and the caller doesn't pass int.max/2 indicating that it doesn't know the length
             // allocate the whole buffer in one shot instead of realloc'ing and copying over each time
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && len < (int.MaxValue >> 1))
+            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
             {
-                if (supportRentedBuff && len < 1073741824) // 1 Gib
+                if (supportRentedBuff && stateObj._longlen < 1073741824) // 1 Gib
                 {
                     buff = ArrayPool<char>.Shared.Rent((int)Math.Min((int)stateObj._longlen, len));
                     rentedBuff = true;
@@ -13326,9 +13327,9 @@ namespace Microsoft.Data.SqlClient
 
             totalCharsRead = (startOffsetByteCount >> 1);
             charsLeft -= totalCharsRead;
-            offst = totalCharsRead;
-            
-            
+            offst += totalCharsRead;
+
+
             while (charsLeft > 0)
             {
                 if (!partialReadInProgress)
@@ -13345,7 +13346,10 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            newbuf = new char[offst + charsRead];
+                            // grow by an arbitrary number of packets to avoid needing to reallocate
+                            //  the newbuf on each loop iteration of long packet sequences which causes
+                            //  a performance problem as we spend large amounts of time copying and in gc
+                            newbuf = new char[offst + charsRead + (stateObj.GetPacketSize() * 8)];
                             rentedBuff = false;
                         }
 
@@ -13385,7 +13389,7 @@ namespace Microsoft.Data.SqlClient
                     && (charsLeft > 0)
                 )
                 {
-                    byte b1 = 0; 
+                    byte b1 = 0;
                     byte b2 = 0;
                     if (partialReadInProgress)
                     {

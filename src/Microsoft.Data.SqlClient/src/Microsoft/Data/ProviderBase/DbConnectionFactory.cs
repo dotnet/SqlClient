@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
@@ -90,10 +91,8 @@ namespace Microsoft.Data.ProviderBase
             }
         }
 
-        internal virtual DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
-        {
-            return null;
-        }
+        internal abstract DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(
+            DbConnectionOptions connectionOptions);
 
         protected virtual DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
@@ -138,10 +137,8 @@ namespace Microsoft.Data.ProviderBase
             return newConnection;
         }
 
-        internal virtual DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
-        {
-            return null;
-        }
+        internal abstract DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions);
 
         private Timer CreatePruningTimer() =>
             ADP.UnsafeCreateTimer(
@@ -645,12 +642,23 @@ namespace Microsoft.Data.ProviderBase
             SqlClientEventSource.Metrics.ExitActiveConnectionPoolGroup();
         }
 
-        virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
+        protected virtual DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection,
+            DbConnectionOptions userOptions)
         {
             return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection);
         }
 
-        abstract protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection);
+        protected abstract DbConnectionInternal CreateConnection(
+            DbConnectionOptions options,
+            DbConnectionPoolKey poolKey,
+            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+            IDbConnectionPool pool,
+            DbConnection owningConnection);
 
         abstract protected DbConnectionOptions CreateConnectionOptions(string connectionString, DbConnectionOptions previous);
 
