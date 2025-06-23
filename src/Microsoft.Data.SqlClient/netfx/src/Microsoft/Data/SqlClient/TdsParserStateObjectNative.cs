@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        public TdsParserStateObjectNative(TdsParser parser)
+        internal TdsParserStateObjectNative(TdsParser parser)
             : base(parser)
         {
         }
