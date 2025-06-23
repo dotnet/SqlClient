@@ -57,9 +57,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        ////////////////
-        // Properties //
-        ////////////////
+        #region Properties
 
         internal SNIHandle Handle => _sessionHandle;
 
@@ -70,6 +68,8 @@ namespace Microsoft.Data.SqlClient
         protected override PacketHandle EmptyReadPacket => PacketHandle.FromNativePointer(default);
 
         internal override Guid? SessionId => default;
+
+        #endregion
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
