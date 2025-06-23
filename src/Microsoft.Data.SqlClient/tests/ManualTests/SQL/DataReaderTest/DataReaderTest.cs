@@ -831,7 +831,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                         cmd.CommandText = $""""
                   SELECT
                   	[gs].[List],
-                  	[gs].[UseProtoSerializer],
+                  	[gs].[UseProtoSerializer] 
                   FROM
                   	[{tableName}] [gs]
                   WHERE
