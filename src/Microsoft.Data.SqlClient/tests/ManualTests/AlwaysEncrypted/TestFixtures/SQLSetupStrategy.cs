@@ -287,47 +287,4 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             base.Dispose(disposing);
         }
     }
-
-    // Use this class as the fixture for AE tests to ensure only one platform-specific fixture
-    // is created for each test class
-    public class PlatformSpecificTestContext : IDisposable
-    {
-        private SQLSetupStrategy certStoreFixture = null;
-        private SQLSetupStrategy akvFixture = null;
-        public SQLSetupStrategy Fixture => certStoreFixture ?? akvFixture;
-
-        public PlatformSpecificTestContext()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                certStoreFixture = new SQLSetupStrategyCertStoreProvider();
-            }
-            else
-            {
-                akvFixture = new SQLSetupStrategyAzureKeyVault();
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-
-            try
-            {
-                if (disposing)
-                {
-                    akvFixture?.Dispose();
-                }
-            }
-            finally
-            {
-                certStoreFixture?.Dispose();
-            }
-        }
-    }
 }
