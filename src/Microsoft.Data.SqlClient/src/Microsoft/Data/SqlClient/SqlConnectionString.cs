@@ -453,12 +453,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // expand during construction so that CreatePermissionSet and Expand are consistent
-#if NETFRAMEWORK
-            string datadir = null;
-            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName, ref datadir);
-#else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
-#endif // NETFRAMEWORK
             if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
@@ -697,9 +692,6 @@ namespace Microsoft.Data.SqlClient
         internal ApplicationIntent ApplicationIntent => _applicationIntent;
         internal string ApplicationName => _applicationName;
         internal string AttachDBFilename => _attachDBFileName;
-        // Return a constant value rather than _contextConnection. This allows the JIT to trim
-        // the code paths referencing it.
-        internal bool ContextConnection => false;
         internal string CurrentLanguage => _currentLanguage;
         internal string DataSource => _dataSource;
         internal string LocalDBInstance => _localDBInstance;

@@ -16,22 +16,22 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-        private Type GetFieldTypeFrameworkSpecific(int ordinal) 
-            => MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
+        private Type GetFieldTypeFrameworkSpecific(int ordinal) =>
+            MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
 
-        private object GetValueFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
-        private object GetSqlValueFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
+        private object GetValueFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        private object GetSqlValueFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
     
-        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
+        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
-        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
+        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
-        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) 
-            => ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), null);
+        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) =>
+            ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
         private int SetValuesFrameworkSpecific(params object[] values)
         {
             if (values == null)

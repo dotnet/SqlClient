@@ -463,8 +463,8 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version);
+                
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version)");
                 _command.OnParametersAvailableSmi(metaData, parameterValues);
             }
 
@@ -474,12 +474,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData?.GetType(), metaData?.TraceString());
                 }
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version);
+
+                Debug.Fail("NegotiatedSmiVersion will always throw (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)");
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
             }
         }
 
-        private SmiContext _smiRequestContext; // context that _smiRequest came from
         private CommandEventSink _smiEventSink;
         private SmiEventSink_DeferredProcessing _outParamEventSink;
 
@@ -598,9 +598,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     _transaction = null;
                 }
-
-                // If the connection has changes, then the request context may have changed as well
-                _smiRequestContext = null;
 
                 // Command is no longer prepared on new connection, cleanup prepare status
                 if (IsPrepared)
@@ -1072,29 +1069,18 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            // Context connection's prepare is a no-op
-            if (_activeConnection != null && _activeConnection.IsContextConnection)
-            {
-                return;
-            }
-
-            SqlStatistics statistics = null;
             using (TryEventScope.Create("<sc.SqlCommand.Prepare|API> {0}", ObjectID))
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-                statistics = SqlStatistics.StartTimer(Statistics);
+                SqlStatistics statistics = SqlStatistics.StartTimer(Statistics);
 
                 // only prepare if batch with parameters
                 // MDAC BUG #'s 73776 & 72101
                 if (
-                    this.IsPrepared && !this.IsDirty
-                    || (this.CommandType == CommandType.StoredProcedure)
-                    || (
-                            (System.Data.CommandType.Text == this.CommandType)
-                            && (0 == GetParameterCount(_parameters))
-                        )
-
+                    IsPrepared && !IsDirty
+                    || CommandType == CommandType.StoredProcedure
+                    || (CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
                 )
                 {
                     if (Statistics != null)
@@ -1203,12 +1189,6 @@ namespace Microsoft.Data.SqlClient
         // SqlInternalConnectionTds needs to be able to unprepare a statement
         internal void Unprepare()
         {
-            // Context connection's prepare is a no-op
-            if (_activeConnection.IsContextConnection)
-            {
-                return;
-            }
-
             Debug.Assert(true == IsPrepared, "Invalid attempt to Unprepare a non-prepared command!");
             Debug.Assert(_activeConnection != null, "must have an open connection to UnPrepare");
             Debug.Assert(false == _inPrepare, "_inPrepare should be false!");
@@ -1573,32 +1553,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlStatistics.StopTimer(statistics);
                     WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                }
-            }
-        }
-
-        // Handles in-proc execute-to-pipe functionality
-        //  Identical to ExecuteNonQuery
-        internal void ExecuteToPipe(SmiContext pipeContext)
-        {
-            SqlConnection.ExecutePermission.Demand();
-
-            // Reset _pendingCancel upon entry into any Execute - used to synchronize state
-            // between entry into Execute* API and the thread obtaining the stateObject.
-            _pendingCancel = false;
-
-            SqlStatistics statistics = null;
-
-            using (TryEventScope.Create("<sc.SqlCommand.ExecuteToPipe|INFO> {0}", ObjectID))
-            {
-                try
-                {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out _);
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
                 }
             }
         }
@@ -2041,25 +1995,14 @@ namespace Microsoft.Data.SqlClient
 
                 Task task = null;
 
-                // only send over SQL Batch command if we are not a stored proc and have no parameters and not in batch RPC mode
-                if (_activeConnection.IsContextConnection)
-                {
-                    if (statistics != null)
-                    {
-                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
-                    }
-
-                    RunExecuteNonQuerySmi(sendToPipe);
-                }
-
                 //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
                 //We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-                else if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (System.Data.CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
+                if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && CommandType == CommandType.Text && GetParameterCount(_parameters) == 0)
                 {
                     Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
                     if (statistics != null)
                     {
-                        if (!this.IsDirty && this.IsPrepared)
+                        if (!IsDirty && IsPrepared)
                         {
                             statistics.SafeIncrement(ref statistics._preparedExecs);
                         }
@@ -4045,83 +3988,6 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        // Smi-specific logic for ExecuteNonQuery
-        private void RunExecuteNonQuerySmi(bool sendToPipe)
-        {
-            SqlInternalConnectionSmi innerConnection = InternalSmiConnection;
-
-            // Set it up, process all of the events, and we're done!
-            SmiRequestExecutor requestExecutor = null;
-            try
-            {
-                requestExecutor = SetUpSmiRequest(innerConnection);
-                SmiExecuteType execType;
-                if (sendToPipe)
-                    execType = SmiExecuteType.ToPipe;
-                else
-                    execType = SmiExecuteType.NonQuery;
-
-
-                SmiEventStream eventStream = null;
-                // Don't need a CER here because caller already has one that will doom the
-                //  connection if it's a finally-skipping type of problem.
-                bool processFinallyBlock = true;
-                try
-                {
-                    long transactionId;
-                    Transaction transaction;
-                    innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
-
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, cmdBehavior={3}.", ObjectID, innerConnection.ObjectID, transactionId, (int)CommandBehavior.Default);
-
-                    if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)
-                    {
-                        eventStream = requestExecutor.Execute(
-                                                          innerConnection.SmiConnection,
-                                                          transactionId,
-                                                          transaction,
-                                                          CommandBehavior.Default,
-                                                          execType);
-                    }
-                    else
-                    {
-                        eventStream = requestExecutor.Execute(
-                                                          innerConnection.SmiConnection,
-                                                          transactionId,
-                                                          CommandBehavior.Default,
-                                                          execType);
-                    }
-
-                    while (eventStream.HasEvents)
-                    {
-                        eventStream.ProcessEvent(EventSink);
-                    }
-                }
-                catch (Exception e)
-                {
-                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                    throw;
-                }
-                finally
-                {
-                    if (eventStream != null && processFinallyBlock)
-                    {
-                        eventStream.Close(EventSink);
-                    }
-                }
-
-                EventSink.ProcessMessagesAndThrow();
-            }
-            finally
-            {
-                if (requestExecutor != null)
-                {
-                    requestExecutor.Close(EventSink);
-                    EventSink.ProcessMessagesAndThrow(ignoreNonFatalMessages: true);
-                }
-            }
-        }
-
         /// <summary>
         /// Resets the encryption related state of the command object and each of the parameters.
         /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and 
@@ -5160,11 +5026,7 @@ namespace Microsoft.Data.SqlClient
                 // Reset the encryption related state of the command and its parameters.
                 ResetEncryptionState();
 
-                if (_activeConnection.IsContextConnection)
-                {
-                    return RunExecuteReaderSmi(cmdBehavior, runBehavior, returnStream);
-                }
-                else if (IsColumnEncryptionEnabled)
+                if (IsColumnEncryptionEnabled)
                 {
                     Task returnTask = null;
                     PrepareForTransparentEncryption(cmdBehavior, returnStream, async, timeout, completion, out returnTask, asyncWrite && async, out usedCache, inRetry);
@@ -5635,89 +5497,6 @@ namespace Microsoft.Data.SqlClient
             return ds;
         }
 
-        private SqlDataReader RunExecuteReaderSmi(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream)
-        {
-            SqlInternalConnectionSmi innerConnection = InternalSmiConnection;
-
-            SmiEventStream eventStream = null;
-            SqlDataReader ds = null;
-            SmiRequestExecutor requestExecutor = null;
-            try
-            {
-                // Set it up, process all of the events, and we're done!
-                requestExecutor = SetUpSmiRequest(innerConnection);
-
-                long transactionId;
-                Transaction transaction;
-                innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
-
-                if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)
-                {
-                    eventStream = requestExecutor.Execute(
-                                                    innerConnection.SmiConnection,
-                                                    transactionId,
-                                                    transaction,
-                                                    cmdBehavior,
-                                                    SmiExecuteType.Reader
-                                                    );
-                }
-                else
-                {
-                    eventStream = requestExecutor.Execute(
-                                                    innerConnection.SmiConnection,
-                                                    transactionId,
-                                                    cmdBehavior,
-                                                    SmiExecuteType.Reader
-                                                    );
-                }
-
-                if ((runBehavior & RunBehavior.UntilDone) != 0)
-                {
-
-                    // Consume the results
-                    while (eventStream.HasEvents)
-                    {
-                        eventStream.ProcessEvent(EventSink);
-                    }
-                    eventStream.Close(EventSink);
-                }
-
-                if (returnStream)
-                {
-                    ds = new SqlDataReaderSmi(eventStream, this, cmdBehavior, innerConnection, EventSink, requestExecutor);
-                    ds.NextResult();    // Position on first set of results
-                    _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
-                }
-
-                EventSink.ProcessMessagesAndThrow();
-            }
-            catch (Exception e)
-            {
-                // VSTS 159716 - we do not want to handle ThreadAbort, OutOfMemory or similar critical exceptions
-                // because the state of used objects might remain invalid in this case
-                if (!ADP.IsCatchableOrSecurityExceptionType(e))
-                {
-                    throw;
-                }
-
-                if (eventStream != null)
-                {
-                    eventStream.Close(EventSink);     // UNDONE: should cancel instead!
-                }
-
-                if (requestExecutor != null)
-                {
-                    requestExecutor.Close(EventSink);
-                    EventSink.ProcessMessagesAndThrow(ignoreNonFatalMessages: true);
-                }
-
-                throw;
-            }
-
-            return ds;
-        }
-
         private SqlDataReader CompleteAsyncExecuteReader(bool isInternal = false, bool forDescribeParameterEncryption = false)
         {
             SqlDataReader ds = cachedAsyncState.CachedAsyncReader; // should not be null
@@ -5984,12 +5763,6 @@ namespace Microsoft.Data.SqlClient
             if (string.IsNullOrEmpty(this.CommandText))
             {
                 throw ADP.CommandTextRequired(method);
-            }
-
-            if ((async) && (_activeConnection.IsContextConnection))
-            {
-                // Async not supported on Context Connections
-                throw SQL.NotAvailableOnContextConnection();
             }
         }
 
@@ -6397,12 +6170,20 @@ namespace Microsoft.Data.SqlClient
                     if (_activeConnection.Is2008OrNewer)
                     {
                         result = ValueUtilsSmi.GetOutputParameterV200Smi(
-                                OutParamEventSink, (SmiTypedGetterSetter)parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                OutParamEventSink,
+                                (SmiTypedGetterSetter)parameterValues,
+                                ordinal,
+                                metaData,
+                                buffer);
                     }
                     else
                     {
                         result = ValueUtilsSmi.GetOutputParameterV3Smi(
-                                    OutParamEventSink, parameterValues, ordinal, metaData, _smiRequestContext, buffer);
+                                    OutParamEventSink,
+                                    parameterValues,
+                                    ordinal,
+                                    metaData,
+                                    buffer);
                     }
                     if (result != null)
                     {
@@ -7422,190 +7203,6 @@ namespace Microsoft.Data.SqlClient
                 result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId, innerException: null, batchCommand: null);
             }
             return result;
-        }
-
-        // Allocates and initializes a new SmiRequestExecutor based on the current command state
-        private SmiRequestExecutor SetUpSmiRequest(SqlInternalConnectionSmi innerConnection)
-        {
-
-            // General Approach To Ensure Security of Marshalling:
-            //        Only touch each item in the command once
-            //        (i.e. only grab a reference to each param once, only
-            //        read the type from that param once, etc.).  The problem is
-            //        that if the user changes something on the command in the
-            //        middle of marshaling, it can overwrite the native buffers
-            //        set up.  For example, if max length is used to allocate
-            //        buffers, but then re-read from the parameter to truncate
-            //        strings, the user could extend the length and overwrite
-            //        the buffer.
-
-            if (Notification != null)
-            {
-                throw SQL.NotificationsNotAvailableOnContextConnection();
-            }
-
-            SmiParameterMetaData[] requestMetaData = null;
-            ParameterPeekAheadValue[] peekAheadValues = null;
-
-            //    Length of rgMetadata becomes *the* official count of parameters to use,
-            //      don't rely on Parameters.Count after this point, as the user could change it.
-            int count = GetParameterCount(Parameters);
-            if (0 < count)
-            {
-                requestMetaData = new SmiParameterMetaData[count];
-                peekAheadValues = new ParameterPeekAheadValue[count];
-
-                // set up the metadata
-                for (int index = 0; index < count; index++)
-                {
-                    SqlParameter param = Parameters[index];
-                    param.Validate(index, CommandType.StoredProcedure == CommandType);
-                    requestMetaData[index] = param.MetaDataForSmi(out peekAheadValues[index]);
-
-                    // Check for valid type for version negotiated
-                    if (!innerConnection.Is2008OrNewer)
-                    {
-                        MetaType mt = MetaType.GetMetaTypeFromSqlDbType(requestMetaData[index].SqlDbType, requestMetaData[index].IsMultiValued);
-                        if (!mt.Is90Supported)
-                        {
-                            throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
-                        }
-                    }
-                }
-            }
-
-            // Allocate the new request
-            CommandType cmdType = CommandType;
-            _smiRequestContext = innerConnection.InternalContext;
-            SmiRequestExecutor requestExecutor = _smiRequestContext.CreateRequestExecutor(
-                                    CommandText,
-                                    cmdType,
-                                    requestMetaData,
-                                    EventSink
-                                );
-
-            // deal with errors
-            EventSink.ProcessMessagesAndThrow();
-
-            // Now assign param values
-            for (int index = 0; index < count; index++)
-            {
-                if (ParameterDirection.Output != requestMetaData[index].Direction &&
-                        ParameterDirection.ReturnValue != requestMetaData[index].Direction)
-                {
-                    SqlParameter param = Parameters[index];
-                    // going back to command for parameter is ok, since we'll only pick up values now.
-                    object value = param.GetCoercedValue();
-                    if (value is XmlDataFeed && requestMetaData[index].SqlDbType != SqlDbType.Xml)
-                    {
-                        value = MetaType.GetStringFromXml(((XmlDataFeed)value)._source);
-                    }
-                    ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(requestMetaData[index].SqlDbType, requestMetaData[index].IsMultiValued, value, null /* parameters don't use CLR Type for UDTs */, SmiContextFactory.Instance.NegotiatedSmiVersion);
-
-                    // Handle null reference as special case for parameters
-                    if (CommandType.StoredProcedure == cmdType &&
-                                ExtendedClrTypeCode.Empty == typeCode)
-                    {
-                        requestExecutor.SetDefault(index);
-                    }
-                    else
-                    {
-                        // SQLBU 402391 & 403631: Exception to prevent Parameter.Size data corruption cases from working.
-                        //  This should be temporary until changing to correct behavior can be safely implemented.
-                        // initial size criteria is the same for all affected types
-                        // NOTE: assumes size < -1 is handled by SqlParameter.Size setter
-                        int size = param.Size;
-                        if (size != 0 && size != SmiMetaData.UnlimitedMaxLengthIndicator && !param.SizeInferred)
-                        {
-                            switch (requestMetaData[index].SqlDbType)
-                            {
-                                case SqlDbType.Image:
-                                case SqlDbType.Text:
-                                    if (size != Int32.MaxValue)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                case SqlDbType.NText:
-                                    if (size != Int32.MaxValue / 2)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                case SqlDbType.VarBinary:
-                                case SqlDbType.VarChar:
-                                    // Allow size==Int32.MaxValue because of DeriveParameters
-                                    if (size > 0 && size != Int32.MaxValue && requestMetaData[index].MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                case SqlDbType.NVarChar:
-                                    // Allow size==Int32.MaxValue/2 because of DeriveParameters
-                                    if (size > 0 && size != Int32.MaxValue / 2 && requestMetaData[index].MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                case SqlDbType.Timestamp:
-                                    // Size limiting for larger values will happen due to MaxLength
-                                    if (size < SmiMetaData.DefaultTimestamp.MaxLength)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                case SqlDbType.Variant:
-                                    // Variant problems happen when Size is less than maximums for character and binary values
-                                    // Size limiting for larger values will happen due to MaxLength
-                                    // NOTE: assumes xml and udt types are handled in parameter value coercion
-                                    //      since server does not allow these types in a variant
-                                    if (value != null)
-                                    {
-                                        MetaType mt = MetaType.GetMetaTypeFromValue(value);
-
-                                        if ((mt.IsNCharType && size < SmiMetaData.MaxUnicodeCharacters) ||
-                                                (mt.IsBinType && size < SmiMetaData.MaxBinaryLength) ||
-                                                (mt.IsAnsiType && size < SmiMetaData.MaxANSICharacters))
-                                        {
-                                            throw SQL.ParameterSizeRestrictionFailure(index);
-                                        }
-                                    }
-                                    break;
-
-                                case SqlDbType.Xml:
-                                    // Xml is an issue for non-SqlXml types
-                                    if (value != null && ExtendedClrTypeCode.SqlXml != typeCode)
-                                    {
-                                        throw SQL.ParameterSizeRestrictionFailure(index);
-                                    }
-                                    break;
-
-                                // NOTE: Char, NChar, Binary and UDT do not need restricting because they are always 8k or less, 
-                                //         so the metadata MaxLength will match the Size setting.
-
-                                default:
-                                    break;
-                            }
-                        }
-
-                        if (innerConnection.Is2008OrNewer)
-                        {
-                            ValueUtilsSmi.SetCompatibleValueV200(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset, peekAheadValues[index]);
-                        }
-                        else
-                        {
-                            ValueUtilsSmi.SetCompatibleValue(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset);
-                        }
-                    }
-                }
-            }
-
-            return requestExecutor;
         }
 
         private void WriteBeginExecuteEvent()
