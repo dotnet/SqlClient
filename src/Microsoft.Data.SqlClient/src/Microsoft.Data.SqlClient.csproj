@@ -5,9 +5,10 @@
     <RootNamespace />
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Configuration" Condition="'$(TargetFramework)' == 'net462'" />
 	  <Reference Include="System.Transactions" Condition="'$(TargetFramework)' == 'net462'" />
+    <PackageReference Include="System.Threading.Channels" />
 	</ItemGroup>
 	<ItemGroup>
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
