@@ -20,9 +20,9 @@ namespace Microsoft.Data.SqlClient.Server
             MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
 
         private object GetValueFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            ValueUtilsSmi.GetValue200(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
         private object GetSqlValueFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            ValueUtilsSmi.GetSqlValue200(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
     
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
             ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));

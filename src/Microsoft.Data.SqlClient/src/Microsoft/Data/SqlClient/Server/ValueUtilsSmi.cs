@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.Server
                 return GetBoolean_Unchecked(getters, ordinal);
             }
 
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetByte_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.Server
                 return length;
             }
 
-            string value = (string)GetValue(sink, getters, ordinal, metaData);
+            string value = (string)GetValue(getters, ordinal, metaData);
             if (value == null)
             {
                 throw ADP.InvalidCast();
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDateTime_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDateTimeOffset_Unchecked(getters, ordinal);
             }
-            return (DateTimeOffset)GetValue200(sink, getters, ordinal, metaData);
+            return (DateTimeOffset)GetValue200(getters, ordinal, metaData);
         }
 
         internal static decimal GetDecimal(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDecimal_PossiblyMoney(getters, ordinal, metaData);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDouble_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetGuid_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -302,7 +302,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt16_Unchecked(getters, ordinal);
             }
-            object obj = GetValue(sink, getters, ordinal, metaData);
+            object obj = GetValue(getters, ordinal, metaData);
             if (obj == null)
             {
                 throw ADP.InvalidCast();
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt32_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt64_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetSingle_Unchecked(getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData);
+            object result = GetValue(getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -845,7 +845,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetString_Unchecked(getters, ordinal);
             }
-            object obj = GetValue(sink, getters, ordinal, metaData);
+            object obj = GetValue(getters, ordinal, metaData);
             if (obj == null)
             {
                 throw ADP.InvalidCast();
@@ -861,12 +861,11 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetTimeSpan_Unchecked(getters, ordinal);
             }
-            return (TimeSpan)GetValue200(sink, getters, ordinal, metaData);
+            return (TimeSpan)GetValue200(getters, ordinal, metaData);
         }
 
         // GetValue() for v200 SMI (2008 Date/Time types)
         internal static object GetValue200(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
             SmiMetaData metaData)
@@ -883,7 +882,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Variant:  // Handle variants specifically for v200, since they could contain v200 types
                         metaData = getters.GetVariantType(ordinal);
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue200(sink, getters, ordinal, metaData);
+                        result = GetValue200(getters, ordinal, metaData);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -896,7 +895,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetDateTimeOffset_Unchecked(getters, ordinal);
                         break;
                     default:
-                        result = GetValue(sink, getters, ordinal, metaData);
+                        result = GetValue(getters, ordinal, metaData);
                         break;
                 }
             }
@@ -908,7 +907,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         //  implements SqlClient 1.1-compatible GetValue() semantics for everything except output parameters
         internal static object GetValue(
-            SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
@@ -994,7 +992,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Variant:
                         metaData = getters.GetVariantType(ordinal);
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue(sink, getters, ordinal, metaData);
+                        result = GetValue(getters, ordinal, metaData);
                         break;
                     case SqlDbType.Xml:
                         result = GetSqlXml_Unchecked(getters, ordinal).Value;
@@ -1010,7 +1008,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         // dealing with v200 SMI
         internal static object GetSqlValue200(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
             SmiMetaData metaData)
@@ -1034,7 +1031,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.Variant: // Handle variants specifically for v200, since they could contain v200 types
                         metaData = getters.GetVariantType(ordinal);
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetSqlValue200(sink, getters, ordinal, metaData);
+                        result = GetSqlValue200(getters, ordinal, metaData);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:

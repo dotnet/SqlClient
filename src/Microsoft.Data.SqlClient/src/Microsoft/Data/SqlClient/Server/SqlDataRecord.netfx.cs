@@ -28,13 +28,13 @@ namespace Microsoft.Data.SqlClient.Server
         private object GetValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData);
+            return ValueUtilsSmi.GetValue200(_recordBuffer, ordinal, metaData);
         }
     
         private object GetSqlValueFrameworkSpecific(int ordinal)
         {
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, metaData);
+            return ValueUtilsSmi.GetSqlValue200(_recordBuffer, ordinal, metaData);
         }
 
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
