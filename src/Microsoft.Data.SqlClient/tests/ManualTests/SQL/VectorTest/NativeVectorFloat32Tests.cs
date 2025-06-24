@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Drawing;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlTypes;
@@ -120,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(reader.Read(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVectorFloat32 object
-            ValidateSqlVectorFloat32Object(reader.IsDBNull(0), reader.GetSqlVectorFloat32(0), expectedData, expectedSize, expectedLength);
+            ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVectorFloat32)reader.GetSqlVectorFloat32(0), expectedData, expectedSize, expectedLength);
             ValidateSqlVectorFloat32Object(reader.IsDBNull(0), reader.GetFieldValue<SqlVectorFloat32>(0), expectedData, expectedSize, expectedLength);
             ValidateSqlVectorFloat32Object(reader.IsDBNull(0), (SqlVectorFloat32)reader.GetSqlValue(0), expectedData, expectedSize, expectedLength);
 
@@ -186,7 +185,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.True(await reader.ReadAsync(), "No data found in the table.");
 
             //For both null and non-null cases, validate the SqlVectorFloat32 object
-            ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), reader.GetSqlVectorFloat32(0), expectedData, expectedSize, expectedLength);
+            ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVectorFloat32)reader.GetSqlVectorFloat32(0), expectedData, expectedSize, expectedLength);
             ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), await reader.GetFieldValueAsync<SqlVectorFloat32>(0), expectedData, expectedSize, expectedLength);
             ValidateSqlVectorFloat32Object(await reader.IsDBNullAsync(0), (SqlVectorFloat32)reader.GetSqlValue(0), expectedData, expectedSize, expectedLength);
 
@@ -448,18 +447,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate first non-null value.
             Assert.True(!verifyReader.IsDBNull(0), "First row in the table is null.");
-            Assert.Equal(VectorFloat32TestData.testData, verifyReader.GetSqlVectorFloat32(0).Values);
-            Assert.Equal(VectorFloat32TestData.testData.Length, verifyReader.GetSqlVectorFloat32(0).Length);
-            Assert.Equal(VectorFloat32TestData.sizeInbytes, verifyReader.GetSqlVectorFloat32(0).Size);
+            Assert.Equal(VectorFloat32TestData.testData, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values);
+            Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Length);
+            Assert.Equal(VectorFloat32TestData.sizeInbytes, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Size);
 
             // Verify that we have another row
             Assert.True(verifyReader.Read(), "Second row not found in the table");
 
             // Verify that we have encountered null.
             Assert.True(verifyReader.IsDBNull(0));
-            Assert.Equal(Array.Empty<float>(), verifyReader.GetSqlVectorFloat32(0).Values);
-            Assert.Equal(VectorFloat32TestData.testData.Length, verifyReader.GetSqlVectorFloat32(0).Length);
-            Assert.Equal(VectorFloat32TestData.sizeInbytes, verifyReader.GetSqlVectorFloat32(0).Size);
+            Assert.Equal(Array.Empty<float>(), ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values);
+            Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Length);
+            Assert.Equal(VectorFloat32TestData.sizeInbytes, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Size);
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsVectorSupported))]

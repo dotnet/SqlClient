@@ -16,7 +16,7 @@ namespace Microsoft.Data
         public const SqlDbType Json = (SqlDbType)35;
 #endif
         /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlVector[@name="default"]' />
-#if NET10_0
+#if NET10_0_OR_GREATER
         public const SqlDbType Vector = SqlDbType.Vector;
 #else
         public const SqlDbType Vector = (SqlDbType)36;

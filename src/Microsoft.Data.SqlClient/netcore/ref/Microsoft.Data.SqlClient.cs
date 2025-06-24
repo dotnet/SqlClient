@@ -21,6 +21,8 @@ namespace Microsoft.Data
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
         public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
+        /// <include file='../../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlVector[@name="default"]' />
+        public const System.Data.SqlDbType Vector = (System.Data.SqlDbType)36;
     }
 }
 
