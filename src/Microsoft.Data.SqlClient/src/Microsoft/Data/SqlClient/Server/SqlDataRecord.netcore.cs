@@ -88,10 +88,10 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
          private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) 
-            => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
+            => ValueUtilsSmi.SetTimeSpan(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
          private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) 
-            => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
+            => ValueUtilsSmi.SetDateTimeOffset(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
     }
 }

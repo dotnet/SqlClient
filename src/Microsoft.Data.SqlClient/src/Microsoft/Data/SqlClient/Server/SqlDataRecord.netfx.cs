@@ -117,7 +117,6 @@ namespace Microsoft.Data.SqlClient.Server
   
         private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => 
             ValueUtilsSmi.SetTimeSpan(
-                _eventSink,
                 _recordBuffer,
                 ordinal,
                 GetSmiMetaData(ordinal),
@@ -126,7 +125,6 @@ namespace Microsoft.Data.SqlClient.Server
         
         private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) =>
             ValueUtilsSmi.SetDateTimeOffset(
-                _eventSink,
                 _recordBuffer,
                 ordinal,
                 GetSmiMetaData(ordinal),
