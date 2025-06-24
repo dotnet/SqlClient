@@ -96,11 +96,7 @@ namespace Microsoft.Data.ProviderBase
         /// <summary>
         /// When the connection was created.
         /// </summary>
-        internal DateTime CreateTime
-        {
-            get;
-            init;
-        }
+        internal DateTime CreateTime { get; init; }
 
         internal bool AllowSetConnectionString { get; }
 

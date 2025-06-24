@@ -658,9 +658,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void TestStateSetter()
         {
             Setup(SuccessfulConnectionFactory);
-            pool.State = DbConnectionPoolState.ShuttingDown;
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
-            pool.State = DbConnectionPoolState.Running;
             Assert.Equal(DbConnectionPoolState.Running, pool.State);
         }
 
