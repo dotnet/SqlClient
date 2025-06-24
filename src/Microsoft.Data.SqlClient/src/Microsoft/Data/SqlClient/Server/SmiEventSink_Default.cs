@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
-        internal bool HasMessages => _errors is not null || _warnings is not null;
+        internal bool HasMessages => false;
 
         #if NETFRAMEWORK
         protected virtual void DispatchMessages(bool ignoreNonFatalMessages)
