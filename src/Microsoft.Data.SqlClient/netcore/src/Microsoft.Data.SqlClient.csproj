@@ -423,9 +423,6 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiGettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiGettersStream.cs</Link>
     </Compile>
