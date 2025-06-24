@@ -25,21 +25,6 @@ namespace Microsoft.Data.SqlClient.Server
         protected virtual void DispatchMessages()
         #endif
         {
-            // virtual because we want a default implementation in the cases
-            // where we don't have a connection to process stuff, but we want to
-            // provide the connection the ability to fire info messages when it
-            // hooks up.
-            #if NETFRAMEWORK
-            SqlException errors = ProcessMessages(true, ignoreNonFatalMessages);
-            #else
-            SqlException errors = ProcessMessages(true);
-            #endif
-            
-            if (errors != null)
-            {
-                throw errors;
-            }
-
         }
 
         #if NETFRAMEWORK
@@ -48,24 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
         protected SqlException ProcessMessages(bool ignoreWarnings)
         #endif
         {
-            SqlException result = null;
-            SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
-
-            {
-                Debug.Assert(_warnings == null || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
-
-                if (!ignoreWarnings)
-                {
-                    temp = _warnings;
-                }
-                _warnings = null;
-            }
-
-            if (temp != null)
-            {
-                result = SqlException.CreateException(temp, ServerVersion);
-            }
-            return result;
+            return null;
         }
 
         internal void ProcessMessagesAndThrow()
