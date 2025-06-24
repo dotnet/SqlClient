@@ -1928,7 +1928,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
                     _direction == ParameterDirection.Input &&
-                    _value == null || _value == DBNull.Value)
+                    (_value == null || _value == DBNull.Value))
                 {
                     _value = DBNull.Value;
                     return MetaType.GetDefaultMetaType();
