@@ -16,7 +16,6 @@ namespace Microsoft.Data.SqlClient.Server
     {
         private readonly SmiRecordBuffer _recordBuffer;
         private readonly SmiExtendedMetaData[] _columnSmiMetaData;
-        private readonly SmiEventSink_Default _eventSink;
         private readonly SqlMetaData[] _columnMetaData;
         private FieldNameLookup _fieldNameLookup;
         private readonly bool _usesStringStorageForXml = false;
@@ -101,37 +100,37 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual object this[string name] => GetValue(GetOrdinal(name));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBoolean/*' />
-        public virtual bool GetBoolean(int ordinal) => ValueUtilsSmi.GetBoolean(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual bool GetBoolean(int ordinal) => ValueUtilsSmi.GetBoolean(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetByte/*' />
-        public virtual byte GetByte(int ordinal) => ValueUtilsSmi.GetByte(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual byte GetByte(int ordinal) => ValueUtilsSmi.GetByte(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBytes/*' />
-        public virtual long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) => ValueUtilsSmi.GetBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length, throwOnNull: true);
+        public virtual long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) => ValueUtilsSmi.GetBytes(_recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length, throwOnNull: true);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChar/*' />
         public virtual char GetChar(int ordinal) => throw ADP.NotSupported();
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChars/*' />
-        public virtual long GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) => ValueUtilsSmi.GetChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length);
+        public virtual long GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) => ValueUtilsSmi.GetChars(_recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetGuid/*' />
-        public virtual Guid GetGuid(int ordinal) => ValueUtilsSmi.GetGuid(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual Guid GetGuid(int ordinal) => ValueUtilsSmi.GetGuid(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt16/*' />
-        public virtual short GetInt16(int ordinal) => ValueUtilsSmi.GetInt16(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual short GetInt16(int ordinal) => ValueUtilsSmi.GetInt16(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt32/*' />
-        public virtual int GetInt32(int ordinal) => ValueUtilsSmi.GetInt32(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual int GetInt32(int ordinal) => ValueUtilsSmi.GetInt32(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt64/*' />
-        public virtual long GetInt64(int ordinal) => ValueUtilsSmi.GetInt64(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual long GetInt64(int ordinal) => ValueUtilsSmi.GetInt64(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFloat/*' />
-        public virtual float GetFloat(int ordinal) => ValueUtilsSmi.GetSingle(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual float GetFloat(int ordinal) => ValueUtilsSmi.GetSingle(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDouble/*' />
-        public virtual double GetDouble(int ordinal) => ValueUtilsSmi.GetDouble(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual double GetDouble(int ordinal) => ValueUtilsSmi.GetDouble(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetString/*' />
         public virtual string GetString(int ordinal)
@@ -139,25 +138,25 @@ namespace Microsoft.Data.SqlClient.Server
             SmiMetaData colMeta = GetSmiMetaData(ordinal);
             if (_usesStringStorageForXml && colMeta.SqlDbType == SqlDbType.Xml)
             {
-                return ValueUtilsSmi.GetString(_eventSink, _recordBuffer, ordinal, s_maxNVarCharForXml);
+                return ValueUtilsSmi.GetString(_recordBuffer, ordinal, s_maxNVarCharForXml);
             }
             else
             {
-                return ValueUtilsSmi.GetString(_eventSink, _recordBuffer, ordinal, colMeta);
+                return ValueUtilsSmi.GetString(_recordBuffer, ordinal, colMeta);
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDecimal/*' />
-        public virtual decimal GetDecimal(int ordinal) => ValueUtilsSmi.GetDecimal(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual decimal GetDecimal(int ordinal) => ValueUtilsSmi.GetDecimal(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTime/*' />
-        public virtual DateTime GetDateTime(int ordinal) => ValueUtilsSmi.GetDateTime(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual DateTime GetDateTime(int ordinal) => ValueUtilsSmi.GetDateTime(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTimeOffset/*' />
-        public virtual DateTimeOffset GetDateTimeOffset(int ordinal) => ValueUtilsSmi.GetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual DateTimeOffset GetDateTimeOffset(int ordinal) => ValueUtilsSmi.GetDateTimeOffset(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetTimeSpan/*' />
-        public virtual TimeSpan GetTimeSpan(int ordinal) => ValueUtilsSmi.GetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual TimeSpan GetTimeSpan(int ordinal) => ValueUtilsSmi.GetTimeSpan(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/IsDBNull/*' />
         public virtual bool IsDBNull(int ordinal)
@@ -198,7 +197,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBinary/*' />
-        public virtual SqlBinary GetSqlBinary(int ordinal) => ValueUtilsSmi.GetSqlBinary(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlBinary GetSqlBinary(int ordinal) => ValueUtilsSmi.GetSqlBinary(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBytes/*' />
         public virtual SqlBytes GetSqlBytes(int ordinal) => GetSqlBytesFrameworkSpecific(ordinal);
@@ -207,43 +206,43 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual SqlXml GetSqlXml(int ordinal) => GetSqlXmlFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBoolean/*' />
-        public virtual SqlBoolean GetSqlBoolean(int ordinal) => ValueUtilsSmi.GetSqlBoolean(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlBoolean GetSqlBoolean(int ordinal) => ValueUtilsSmi.GetSqlBoolean(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlByte/*' />
-        public virtual SqlByte GetSqlByte(int ordinal) => ValueUtilsSmi.GetSqlByte(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlByte GetSqlByte(int ordinal) => ValueUtilsSmi.GetSqlByte(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlChars/*' />
         public virtual SqlChars GetSqlChars(int ordinal) => GetSqlCharsFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt16/*' />
-        public virtual SqlInt16 GetSqlInt16(int ordinal) => ValueUtilsSmi.GetSqlInt16(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlInt16 GetSqlInt16(int ordinal) => ValueUtilsSmi.GetSqlInt16(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt32/*' />
-        public virtual SqlInt32 GetSqlInt32(int ordinal) => ValueUtilsSmi.GetSqlInt32(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlInt32 GetSqlInt32(int ordinal) => ValueUtilsSmi.GetSqlInt32(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt64/*' />
-        public virtual SqlInt64 GetSqlInt64(int ordinal) => ValueUtilsSmi.GetSqlInt64(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlInt64 GetSqlInt64(int ordinal) => ValueUtilsSmi.GetSqlInt64(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlSingle/*' />
-        public virtual SqlSingle GetSqlSingle(int ordinal) => ValueUtilsSmi.GetSqlSingle(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlSingle GetSqlSingle(int ordinal) => ValueUtilsSmi.GetSqlSingle(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDouble/*' />
-        public virtual SqlDouble GetSqlDouble(int ordinal) => ValueUtilsSmi.GetSqlDouble(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlDouble GetSqlDouble(int ordinal) => ValueUtilsSmi.GetSqlDouble(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlMoney/*' />
-        public virtual SqlMoney GetSqlMoney(int ordinal) => ValueUtilsSmi.GetSqlMoney(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlMoney GetSqlMoney(int ordinal) => ValueUtilsSmi.GetSqlMoney(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDateTime/*' />
-        public virtual SqlDateTime GetSqlDateTime(int ordinal) => ValueUtilsSmi.GetSqlDateTime(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlDateTime GetSqlDateTime(int ordinal) => ValueUtilsSmi.GetSqlDateTime(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDecimal/*' />
-        public virtual SqlDecimal GetSqlDecimal(int ordinal) => ValueUtilsSmi.GetSqlDecimal(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlDecimal GetSqlDecimal(int ordinal) => ValueUtilsSmi.GetSqlDecimal(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlString/*' />
-        public virtual SqlString GetSqlString(int ordinal) => ValueUtilsSmi.GetSqlString(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlString GetSqlString(int ordinal) => ValueUtilsSmi.GetSqlString(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlGuid/*' />
-        public virtual SqlGuid GetSqlGuid(int ordinal) => ValueUtilsSmi.GetSqlGuid(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+        public virtual SqlGuid GetSqlGuid(int ordinal) => ValueUtilsSmi.GetSqlGuid(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*' />
         // ISqlUpdateableRecord Implementation
@@ -377,7 +376,6 @@ namespace Microsoft.Data.SqlClient.Server
                 _columnSmiMetaData[i] = MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(_columnMetaData[i]);
             }
 
-            _eventSink = new SmiEventSink_Default();
             #if NETFRAMEWORK
             _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
             _usesStringStorageForXml = true;

@@ -25,13 +25,13 @@ namespace Microsoft.Data.SqlClient.Server
             ValueUtilsSmi.GetSqlValue200(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
     
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            ValueUtilsSmi.GetSqlBytes(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            ValueUtilsSmi.GetSqlXml(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlChars(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
+            ValueUtilsSmi.GetSqlChars(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
         private int SetValuesFrameworkSpecific(params object[] values)
         {
             if (values == null)

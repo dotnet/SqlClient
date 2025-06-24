@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.Server
             return IsDBNull_Unchecked(getters, ordinal);
         }
 
-        internal static bool GetBoolean(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static bool GetBoolean(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Boolean))
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (bool)result;
         }
 
-        internal static byte GetByte(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static byte GetByte(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Byte))
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient.Server
             return length;
         }
 
-        internal static long GetBytes(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiExtendedMetaData metaData, long fieldOffset, byte[] buffer, int bufferOffset, int length, bool throwOnNull)
+        internal static long GetBytes(ITypedGettersV3 getters, int ordinal, SmiExtendedMetaData metaData, long fieldOffset, byte[] buffer, int bufferOffset, int length, bool throwOnNull)
         {
             // Additional exclusions not caught by GetBytesInternal
             if (
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.Server
             return GetBytesConversion(getters, ordinal, metaData, fieldOffset, buffer, bufferOffset, length, throwOnNull);
         }
 
-        internal static long GetChars(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, long fieldOffset, char[] buffer, int bufferOffset, int length)
+        internal static long GetChars(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.CharArray))
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.Server
             return length;
         }
 
-        internal static DateTime GetDateTime(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static DateTime GetDateTime(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.DateTime))
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // dealing with v200 SMI
-        internal static DateTimeOffset GetDateTimeOffset(SmiEventSink_Default sink, SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
+        internal static DateTimeOffset GetDateTimeOffset(SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.DateTimeOffset))
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (DateTimeOffset)GetValue200(getters, ordinal, metaData);
         }
 
-        internal static decimal GetDecimal(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static decimal GetDecimal(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Decimal))
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (decimal)result;
         }
 
-        internal static double GetDouble(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static double GetDouble(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Double))
@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (double)result;
         }
 
-        internal static Guid GetGuid(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static Guid GetGuid(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Guid))
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (Guid)result;
         }
 
-        internal static short GetInt16(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static short GetInt16(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Int16))
@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (short)obj;
         }
 
-        internal static int GetInt32(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static int GetInt32(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Int32))
@@ -325,7 +325,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (int)result;
         }
 
-        internal static long GetInt64(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static long GetInt64(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Int64))
@@ -340,7 +340,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (long)result;
         }
 
-        internal static float GetSingle(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static float GetSingle(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.Single))
@@ -355,7 +355,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (float)result;
         }
 
-        internal static SqlBinary GetSqlBinary(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlBinary GetSqlBinary(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlBinary))
             {
@@ -373,7 +373,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (SqlBinary)result;
         }
 
-        internal static SqlBoolean GetSqlBoolean(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlBoolean GetSqlBoolean(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlBoolean))
             {
@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (SqlBoolean)result;
         }
 
-        internal static SqlByte GetSqlByte(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlByte GetSqlByte(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlByte))
             {
@@ -410,7 +410,6 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal static SqlBytes GetSqlBytes(
-            SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
@@ -460,7 +459,6 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal static SqlChars GetSqlChars(
-            SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
@@ -517,7 +515,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlDateTime GetSqlDateTime(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlDateTime GetSqlDateTime(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlDateTime result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlDateTime))
@@ -545,7 +543,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlDecimal GetSqlDecimal(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlDecimal GetSqlDecimal(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlDecimal result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlDecimal))
@@ -572,7 +570,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlDouble GetSqlDouble(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlDouble GetSqlDouble(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlDouble result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlDouble))
@@ -600,7 +598,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlGuid GetSqlGuid(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlGuid GetSqlGuid(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlGuid result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlGuid))
@@ -628,7 +626,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlInt16 GetSqlInt16(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlInt16 GetSqlInt16(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlInt16 result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlInt16))
@@ -656,7 +654,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlInt32 GetSqlInt32(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlInt32 GetSqlInt32(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlInt32 result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlInt32))
@@ -683,7 +681,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlInt64 GetSqlInt64(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlInt64 GetSqlInt64(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlInt64 result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlInt64))
@@ -711,7 +709,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlMoney GetSqlMoney(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlMoney GetSqlMoney(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlMoney result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlMoney))
@@ -738,7 +736,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlSingle GetSqlSingle(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlSingle GetSqlSingle(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlSingle result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlSingle))
@@ -766,7 +764,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlString GetSqlString(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static SqlString GetSqlString(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             SqlString result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlString))
@@ -808,7 +806,6 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         internal static SqlXml GetSqlXml(
-            SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
             SmiMetaData metaData)
@@ -838,7 +835,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static string GetString(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal static string GetString(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.String))
@@ -854,7 +851,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
          // dealing with v200 SMI
-        internal static TimeSpan GetTimeSpan(SmiEventSink_Default sink, SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
+        internal static TimeSpan GetTimeSpan(SmiTypedGetterSetter getters, int ordinal, SmiMetaData metaData)
         {
             ThrowIfITypedGettersIsNull(getters, ordinal);
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.TimeSpan))
