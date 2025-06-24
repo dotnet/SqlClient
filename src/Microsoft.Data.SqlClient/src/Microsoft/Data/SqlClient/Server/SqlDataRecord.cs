@@ -383,7 +383,6 @@ namespace Microsoft.Data.SqlClient.Server
             _usesStringStorageForXml = true;
             #else
             _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
-            _eventSink.ProcessMessagesAndThrow();
             #endif
         }
 

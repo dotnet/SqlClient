@@ -35,9 +35,5 @@ namespace Microsoft.Data.SqlClient.Server
         {
             return null;
         }
-
-        internal void ProcessMessagesAndThrow()
-        {
-        }
     }
 }

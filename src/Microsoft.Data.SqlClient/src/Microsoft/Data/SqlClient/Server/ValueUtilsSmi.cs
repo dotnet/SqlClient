@@ -882,7 +882,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     case SqlDbType.Variant:  // Handle variants specifically for v200, since they could contain v200 types
                         metaData = getters.GetVariantType(ordinal);
-                        sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue200(sink, getters, ordinal, metaData);
                         break;
@@ -994,7 +993,6 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Variant:
                         metaData = getters.GetVariantType(ordinal);
-                        sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetValue(sink, getters, ordinal, metaData);
                         break;
@@ -1035,7 +1033,6 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     case SqlDbType.Variant: // Handle variants specifically for v200, since they could contain v200 types
                         metaData = getters.GetVariantType(ordinal);
-                        sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue200(sink, getters, ordinal, metaData);
                         break;
@@ -1152,7 +1149,6 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Variant:
                         metaData = getters.GetVariantType(ordinal);
-                        sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
                         result = GetSqlValue(sink, getters, ordinal, metaData);
                         break;
@@ -1270,7 +1266,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             setters.SetBytesLength(ordinal, length);
-            sink.ProcessMessagesAndThrow();
 
             return length;
         }
@@ -2264,7 +2259,6 @@ namespace Microsoft.Data.SqlClient.Server
             )
             {
                 bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
-                sink.ProcessMessagesAndThrow();
                 checked
                 {
                     currentOffset += bytesWritten;
@@ -2274,7 +2268,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             // Make sure to trim any left-over data
             setters.SetBytesLength(ordinal, currentOffset);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetBytes_FromReader(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
@@ -2299,7 +2292,6 @@ namespace Microsoft.Data.SqlClient.Server
             )
             {
                 bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
-                sink.ProcessMessagesAndThrow();
                 checked
                 {
                     currentOffset += bytesWritten;
@@ -2309,7 +2301,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
             setters.SetBytesLength(ordinal, currentOffset);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlBytes_LengthChecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlBytes value, int offset)
@@ -2370,7 +2361,6 @@ namespace Microsoft.Data.SqlClient.Server
             )
             {
                 charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
-                sink.ProcessMessagesAndThrow();
                 checked
                 {
                     currentOffset += charsWritten;
@@ -2380,7 +2370,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             // Make sure to trim any left-over data
             setters.SetCharsLength(ordinal, currentOffset);
-            sink.ProcessMessagesAndThrow();
         }
 
         // Transfer a character value from a reader when we're not sure which GetXXX method the reader will support.
@@ -2439,7 +2428,6 @@ namespace Microsoft.Data.SqlClient.Server
             )
             {
                 charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
-                sink.ProcessMessagesAndThrow();
                 checked
                 {
                     currentOffset += charsWritten;
@@ -2449,7 +2437,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             // Make sure to trim any left-over data (remember to trim at end of offset, not just the amount written
             setters.SetCharsLength(ordinal, currentOffset);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetString_FromReader(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
@@ -2458,7 +2445,6 @@ namespace Microsoft.Data.SqlClient.Server
             int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, value.Length, fieldOffset: 0, bufferLength: NoLengthLimit, bufferOffset: offset, length: NoLengthLimit);
 
             setters.SetString(ordinal, value, offset, length);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlChars_LengthChecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlChars value, int offset)
@@ -2505,7 +2491,6 @@ namespace Microsoft.Data.SqlClient.Server
             if (ADP.IsNull(value))
             {
                 setters.SetDBNull(ordinal);
-                sink.ProcessMessagesAndThrow();
             }
             else
             {
@@ -2820,7 +2805,6 @@ namespace Microsoft.Data.SqlClient.Server
         private static bool IsDBNull_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
         {
             bool result = getters.IsDBNull(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2829,7 +2813,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             bool result = getters.GetBoolean(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2838,7 +2821,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             byte result = getters.GetByte(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2847,12 +2829,10 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long length = getters.GetBytesLength(ordinal);
-            sink.ProcessMessagesAndThrow();
             int len = checked((int)length);
 
             byte[] buffer = new byte[len];
             getters.GetBytes(ordinal, 0, buffer, 0, len);
-            sink.ProcessMessagesAndThrow();
             return buffer;
         }
 
@@ -2867,7 +2847,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
             int result = getters.GetBytes(ordinal, fieldOffset, buffer, bufferOffset, length);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2876,7 +2855,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long result = getters.GetBytesLength(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2885,12 +2863,10 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long length = getters.GetCharsLength(ordinal);
-            sink.ProcessMessagesAndThrow();
             int len = checked((int)length);
 
             char[] buffer = new char[len];
             getters.GetChars(ordinal, 0, buffer, 0, len);
-            sink.ProcessMessagesAndThrow();
             return buffer;
         }
 
@@ -2905,7 +2881,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(bufferOffset >= 0 && length >= 0 && bufferOffset + length <= buffer.Length, $"Bad offset or length. bufferOffset: {bufferOffset}, length: {length}, buffer.Length{buffer.Length}");
 
             int result = getters.GetChars(ordinal, fieldOffset, buffer, bufferOffset, length);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2914,7 +2889,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long result = getters.GetCharsLength(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2923,7 +2897,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             DateTime result = getters.GetDateTime(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2932,7 +2905,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             DateTimeOffset result = getters.GetDateTimeOffset(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2941,7 +2913,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             double result = getters.GetDouble(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2950,7 +2921,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             Guid result = getters.GetGuid(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2959,7 +2929,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             short result = getters.GetInt16(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2968,7 +2937,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             int result = getters.GetInt32(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2977,7 +2945,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long result = getters.GetInt64(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -2986,7 +2953,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             float result = getters.GetSingle(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -3003,7 +2969,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             SqlDecimal result = getters.GetSqlDecimal(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -3012,7 +2977,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             long temp = getters.GetInt64(ordinal);
-            sink.ProcessMessagesAndThrow();
 #if NET
             return SqlMoney.FromTdsValue(temp);
 #else
@@ -3040,7 +3004,6 @@ namespace Microsoft.Data.SqlClient.Server
             // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data 
             // is not truncated. Please refer VSDD 479655 for more detailed information regarding the string length.
             string result = getters.GetString(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -3049,14 +3012,12 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
             TimeSpan result = getters.GetTimeSpan(ordinal);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
         private static void SetBoolean_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, bool value)
         {
             setters.SetBoolean(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetByteArray_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, byte[] buffer, int bufferOffset, int length)
@@ -3064,10 +3025,8 @@ namespace Microsoft.Data.SqlClient.Server
             if (length > 0)
             {
                 setters.SetBytes(ordinal, 0, buffer, bufferOffset, length);
-                sink.ProcessMessagesAndThrow();
             }
             setters.SetBytesLength(ordinal, length);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetStream_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metadata, StreamDataFeed feed)
@@ -3093,13 +3052,11 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 setters.SetBytes(ordinal, nWritten, buff, 0, nRead);
-                sink.ProcessMessagesAndThrow();
 
                 nWritten += nRead;
             } while (len <= 0 || nWritten < len);
 
             setters.SetBytesLength(ordinal, nWritten);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetTextReader_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metadata, TextDataFeed feed)
@@ -3125,25 +3082,21 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 setters.SetChars(ordinal, nWritten, buff, 0, nRead);
-                sink.ProcessMessagesAndThrow();
 
                 nWritten += nRead;
             } while (len <= 0 || nWritten < len);
 
             setters.SetCharsLength(ordinal, nWritten);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetByte_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, byte value)
         {
             setters.SetByte(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static int SetBytes_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             int result = setters.SetBytes(ordinal, fieldOffset, buffer, bufferOffset, length);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
@@ -3152,35 +3105,29 @@ namespace Microsoft.Data.SqlClient.Server
             if (length > 0)
             {
                 setters.SetChars(ordinal, 0, buffer, bufferOffset, length);
-                sink.ProcessMessagesAndThrow();
             }
             setters.SetCharsLength(ordinal, length);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static int SetChars_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             int result = setters.SetChars(ordinal, fieldOffset, buffer, bufferOffset, length);
-            sink.ProcessMessagesAndThrow();
             return result;
         }
 
         private static void SetDBNull_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal)
         {
             setters.SetDBNull(ordinal);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDecimal_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, decimal value)
         {
             setters.SetSqlDecimal(ordinal, new SqlDecimal(value));
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTime_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, DateTime value)
         {
             setters.SetDateTime(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTime2_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
@@ -3188,7 +3135,6 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
             setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDateTime2);
             setters.SetDateTime(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDate_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
@@ -3196,55 +3142,46 @@ namespace Microsoft.Data.SqlClient.Server
             Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
             setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
             setters.SetDateTime(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetTimeSpan_Unchecked(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, TimeSpan value)
         {
             setters.SetTimeSpan(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDateTimeOffset_Unchecked(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, DateTimeOffset value)
         {
             setters.SetDateTimeOffset(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetDouble_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, double value)
         {
             setters.SetDouble(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetGuid_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, Guid value)
         {
             setters.SetGuid(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt16_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, short value)
         {
             setters.SetInt16(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt32_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, int value)
         {
             setters.SetInt32(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetInt64_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, long value)
         {
             setters.SetInt64(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSingle_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, float value)
         {
             setters.SetSingle(ordinal, value);
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlBinary_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlBinary value, int offset, int length)
@@ -3257,7 +3194,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 SetByteArray_Unchecked(sink, setters, ordinal, value.Value, offset, length);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlBoolean_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlBoolean value)
@@ -3270,7 +3206,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetBoolean(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlByte_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlByte value)
@@ -3283,7 +3218,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetByte(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         // note: length < 0 indicates write everything
@@ -3292,7 +3226,6 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.IsNull)
             {
                 setters.SetDBNull(ordinal);
-                sink.ProcessMessagesAndThrow();
             }
             else
             {
@@ -3319,7 +3252,6 @@ namespace Microsoft.Data.SqlClient.Server
                 )
                 {
                     bytesWritten = setters.SetBytes(ordinal, currentOffset, buffer, 0, checked((int)bytesRead));
-                    sink.ProcessMessagesAndThrow();
                     checked
                     {
                         currentOffset += bytesWritten;
@@ -3332,7 +3264,6 @@ namespace Microsoft.Data.SqlClient.Server
 
                 // Make sure to trim any left-over data
                 setters.SetBytesLength(ordinal, currentOffset);
-                sink.ProcessMessagesAndThrow();
             }
         }
 
@@ -3341,7 +3272,6 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.IsNull)
             {
                 setters.SetDBNull(ordinal);
-                sink.ProcessMessagesAndThrow();
             }
             else
             {
@@ -3368,7 +3298,6 @@ namespace Microsoft.Data.SqlClient.Server
                 )
                 {
                     charsWritten = setters.SetChars(ordinal, currentOffset, buffer, 0, checked((int)charsRead));
-                    sink.ProcessMessagesAndThrow();
                     checked
                     {
                         currentOffset += charsWritten;
@@ -3378,7 +3307,6 @@ namespace Microsoft.Data.SqlClient.Server
 
                 // Make sure to trim any left-over data
                 setters.SetCharsLength(ordinal, currentOffset);
-                sink.ProcessMessagesAndThrow();
             }
         }
 
@@ -3392,7 +3320,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetDateTime(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlDecimal_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlDecimal value)
@@ -3405,7 +3332,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetSqlDecimal(ordinal, value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlDouble_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlDouble value)
@@ -3418,7 +3344,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetDouble(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlGuid_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlGuid value)
@@ -3431,7 +3356,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetGuid(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlInt16_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlInt16 value)
@@ -3444,7 +3368,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetInt16(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlInt32_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlInt32 value)
@@ -3457,7 +3380,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetInt32(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlInt64_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlInt64 value)
@@ -3470,7 +3392,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetInt64(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlMoney_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlMoney value)
@@ -3484,7 +3405,6 @@ namespace Microsoft.Data.SqlClient.Server
                 if (metaData.SqlDbType == SqlDbType.Variant)
                 {
                     setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultMoney);
-                    sink.ProcessMessagesAndThrow();
                 }
 
 #if NET
@@ -3493,7 +3413,6 @@ namespace Microsoft.Data.SqlClient.Server
                 setters.SetInt64(ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
 #endif
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlSingle_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlSingle value)
@@ -3506,7 +3425,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.SetSingle(ordinal, value.Value);
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetSqlString_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlString value, int offset, int length)
@@ -3514,7 +3432,6 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.IsNull)
             {
                 setters.SetDBNull(ordinal);
-                sink.ProcessMessagesAndThrow();
             }
             else
             {
@@ -3531,7 +3448,6 @@ namespace Microsoft.Data.SqlClient.Server
                         userDefinedType: null
                     );
                     setters.SetVariantMetaData(ordinal, metaData);
-                    sink.ProcessMessagesAndThrow();
                 }
                 SetString_Unchecked(sink, setters, ordinal, value.Value, offset, length);
             }
@@ -3542,7 +3458,6 @@ namespace Microsoft.Data.SqlClient.Server
             if (value.IsNull)
             {
                 setters.SetDBNull(ordinal);
-                sink.ProcessMessagesAndThrow();
             }
             else
             {
@@ -3572,13 +3487,11 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 xmlWriter.Flush();
             }
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetString_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, string value, int offset, int length)
         {
             setters.SetString(ordinal, value, offset, length);
-            sink.ProcessMessagesAndThrow();
         }
 
          // Set a DbDataReader to a Structured+MultiValued setter (table type)
@@ -3593,19 +3506,16 @@ namespace Microsoft.Data.SqlClient.Server
         {
             // Get the target gettersetter
             setters = setters.GetTypedGetterSetter(ordinal);
-            sink.ProcessMessagesAndThrow();
 
             // Iterate over all rows in the current set of results
             while (value.Read())
             {
                 setters.NewElement();
-                sink.ProcessMessagesAndThrow();
 
                 FillCompatibleSettersFromReader(sink, setters, metaData.FieldMetaData, value);
             }
 
             setters.EndElements();
-            sink.ProcessMessagesAndThrow();
         }
 
         private static void SetIEnumerableOfSqlDataRecord_Unchecked(
@@ -3619,7 +3529,6 @@ namespace Microsoft.Data.SqlClient.Server
         {
             // Get target gettersetter
             setters = setters.GetTypedGetterSetter(ordinal);
-            sink.ProcessMessagesAndThrow();
 
             IEnumerator<SqlDataRecord> enumerator = null;
             try
@@ -3640,7 +3549,6 @@ namespace Microsoft.Data.SqlClient.Server
 
                     // send the first record that was obtained earlier
                     setters.NewElement();
-                    sink.ProcessMessagesAndThrow();
                     FillCompatibleSettersFromRecord(sink, setters, mdFields, peekAhead.FirstRecord, defaults);
                     recordNumber++;
                 }
@@ -3652,7 +3560,6 @@ namespace Microsoft.Data.SqlClient.Server
                 while (enumerator.MoveNext())
                 {
                     setters.NewElement();
-                    sink.ProcessMessagesAndThrow();
 
                     SqlDataRecord record = enumerator.Current;
 
@@ -3674,7 +3581,6 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 setters.EndElements();
-                sink.ProcessMessagesAndThrow();
   
             }
             finally
@@ -3696,7 +3602,6 @@ namespace Microsoft.Data.SqlClient.Server
         {
             // Get the target gettersetter
             setters = setters.GetTypedGetterSetter(ordinal);
-            sink.ProcessMessagesAndThrow();
 
             // iterate over all records
             //  if first record was obtained earlier, use it prior to pulling more
@@ -3708,7 +3613,6 @@ namespace Microsoft.Data.SqlClient.Server
             foreach (DataRow row in value.Rows)
             {
                 setters.NewElement();
-                sink.ProcessMessagesAndThrow();
 
                 // Set all columns in the record
                 for (int i = 0; i < metaData.FieldMetaData.Count; i++)
@@ -3737,7 +3641,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             setters.EndElements();
-            sink.ProcessMessagesAndThrow();
         }
 
         // spool a Stream into a scratch stream from the Smi interface and return it as a Stream
