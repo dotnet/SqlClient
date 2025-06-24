@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.Server
             //      the validation loop and here, or if an invalid UDT was sent).
             for (int i = 0; i < copyLength; i++)
             {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
+                ValueUtilsSmi.SetCompatibleValueV200(_recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, peekAhead: null);
             }
 
             return copyLength;
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InvalidCast();
             }
 
-            ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
+            ValueUtilsSmi.SetCompatibleValueV200(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, peekAhead: null);
         }
 
          private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) 

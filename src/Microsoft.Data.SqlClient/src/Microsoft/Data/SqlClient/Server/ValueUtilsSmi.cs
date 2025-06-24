@@ -1440,10 +1440,10 @@ namespace Microsoft.Data.SqlClient.Server
             SetSqlString_LengthChecked(setters, ordinal, metaData, value, 0);
         }
 
-        internal static void SetSqlXml(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlXml value)
+        internal static void SetSqlXml(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlXml value)
         {
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.SqlXml);
-            SetSqlXml_Unchecked(sink, setters, ordinal, value);
+            SetSqlXml_Unchecked(setters, ordinal, value);
         }
 
         internal static void SetString(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, string value)
@@ -1465,7 +1465,6 @@ namespace Microsoft.Data.SqlClient.Server
         //  Implements SqlClient 2.0-compatible SetValue() semantics
         //      Assumes caller already validated type against the metadata, other than trimming lengths
         internal static void SetCompatibleValue(
-            SmiEventSink_Default sink,
             ITypedSettersV3 setters,
             int ordinal,
             SmiMetaData metaData,       // metadata for target setter column
@@ -1502,7 +1501,7 @@ namespace Microsoft.Data.SqlClient.Server
                     {
                         char[] charsValue = new char[] { (char)value };
                         // recur with array type
-                        SetCompatibleValue(sink, setters, ordinal, metaData, charsValue, ExtendedClrTypeCode.CharArray, 0);
+                        SetCompatibleValue(setters, ordinal, metaData, charsValue, ExtendedClrTypeCode.CharArray, 0);
                         break;
                     }
 #if NET
@@ -1552,7 +1551,7 @@ namespace Microsoft.Data.SqlClient.Server
                 case ExtendedClrTypeCode.UInt64:
                     throw ADP.InvalidCast();
                 case ExtendedClrTypeCode.Object:
-                    SetUdt_LengthChecked(sink, setters, ordinal, metaData, value);
+                    SetUdt_LengthChecked(setters, ordinal, metaData, value);
                     break;
                 case ExtendedClrTypeCode.ByteArray:
                     SetByteArray_LengthChecked(setters, ordinal, metaData, (byte[])value, offset);
@@ -1609,7 +1608,7 @@ namespace Microsoft.Data.SqlClient.Server
                     SetSqlBytes_LengthChecked(setters, ordinal, metaData, (SqlBytes)value, offset);
                     break;
                 case ExtendedClrTypeCode.SqlXml:
-                    SetSqlXml_Unchecked(sink, setters, ordinal, (SqlXml)value);
+                    SetSqlXml_Unchecked(setters, ordinal, (SqlXml)value);
                     break;
                 case ExtendedClrTypeCode.Stream:
                     SetStream_Unchecked(setters, ordinal, metaData, (StreamDataFeed)value);
@@ -1618,7 +1617,7 @@ namespace Microsoft.Data.SqlClient.Server
                     SetTextReader_Unchecked(setters, ordinal, metaData, (TextDataFeed)value);
                     break;
                 case ExtendedClrTypeCode.XmlReader:
-                    SetXmlReader_Unchecked(sink, setters, ordinal, ((XmlDataFeed)value)._source);
+                    SetXmlReader_Unchecked(setters, ordinal, ((XmlDataFeed)value)._source);
                     break;
                 default:
                     Debug.Fail("Unvalidated extendedtypecode: " + typeCode);
@@ -1629,7 +1628,6 @@ namespace Microsoft.Data.SqlClient.Server
         // VSTFDevDiv#479681 - Data corruption when sending 2008 Date types to the server via TVP
         // Ensures proper handling on DateTime2 sub type for Sql_Variants and TVPs.
         internal static void SetCompatibleValueV200(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter setters,
             int ordinal,
             SmiMetaData metaData,
@@ -1662,7 +1660,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                SetCompatibleValueV200(sink, setters, ordinal, metaData, value, typeCode, offset, peekAhead);
+                SetCompatibleValueV200(setters, ordinal, metaData, value, typeCode, offset, peekAhead);
             }
         }
 
@@ -1670,7 +1668,6 @@ namespace Microsoft.Data.SqlClient.Server
         //      Assumes caller already validated basic type against the metadata, other than trimming lengths and 
         //      checking individual field values (TVPs)
         internal static void SetCompatibleValueV200(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter setters,
             int ordinal,
             SmiMetaData metaData,
@@ -1694,13 +1691,13 @@ namespace Microsoft.Data.SqlClient.Server
             switch (typeCode)
             {
                 case ExtendedClrTypeCode.DataTable:
-                    SetDataTable_Unchecked(sink, setters, ordinal, metaData, (DataTable)value);
+                    SetDataTable_Unchecked(setters, ordinal, metaData, (DataTable)value);
                     break;
                 case ExtendedClrTypeCode.DbDataReader:
-                    SetDbDataReader_Unchecked(sink, setters, ordinal, metaData, (DbDataReader)value);
+                    SetDbDataReader_Unchecked(setters, ordinal, metaData, (DbDataReader)value);
                     break;
                 case ExtendedClrTypeCode.IEnumerableOfSqlDataRecord:
-                    SetIEnumerableOfSqlDataRecord_Unchecked(sink, setters, ordinal, metaData, (IEnumerable<SqlDataRecord>)value, peekAhead);
+                    SetIEnumerableOfSqlDataRecord_Unchecked(setters, ordinal, metaData, (IEnumerable<SqlDataRecord>)value, peekAhead);
                     break;
                 case ExtendedClrTypeCode.TimeSpan:
                     SetTimeSpan_Checked(setters, ordinal, metaData, (TimeSpan)value);
@@ -1709,7 +1706,7 @@ namespace Microsoft.Data.SqlClient.Server
                     SetDateTimeOffset_Unchecked(setters, ordinal, (DateTimeOffset)value);
                     break;
                 default:
-                    SetCompatibleValue(sink, setters, ordinal, metaData, value, typeCode, offset);
+                    SetCompatibleValue(setters, ordinal, metaData, value, typeCode, offset);
                     break;
             }
         }
@@ -1718,7 +1715,7 @@ namespace Microsoft.Data.SqlClient.Server
         //  Supports V200 code path, without damaging backward compat for V100 code.
         //  Main differences are supporting DbDataReader, and for binary, character, decimal and Udt types.
         //  Assumes caller enforces that reader and setter metadata are compatible
-        internal static void FillCompatibleSettersFromReader(SmiEventSink_Default sink, SmiTypedGetterSetter setters, IList<SmiExtendedMetaData> metaData, DbDataReader reader)
+        internal static void FillCompatibleSettersFromReader(SmiTypedGetterSetter setters, IList<SmiExtendedMetaData> metaData, DbDataReader reader)
         {
             for (int i = 0; i < metaData.Count; i++)
             {
@@ -1831,7 +1828,7 @@ namespace Microsoft.Data.SqlClient.Server
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
                                 if (reader is SqlDataReader sqlReader)
                                 {
-                                    SetSqlXml_Unchecked(sink, setters, i, sqlReader.GetSqlXml(i));
+                                    SetSqlXml_Unchecked(setters, i, sqlReader.GetSqlXml(i));
                                 }
                                 else
                                 {
@@ -1860,11 +1857,11 @@ namespace Microsoft.Data.SqlClient.Server
                                     udtType: null);
                                 if ((storageType == SqlBuffer.StorageType.DateTime2) || (storageType == SqlBuffer.StorageType.Date))
                                 {
-                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null, storageType);
+                                    SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null, storageType);
                                 }
                                 else
                                 {
-                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null);
+                                    SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null);
                                 }
                             }
                             break;
@@ -1925,7 +1922,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        internal static void FillCompatibleSettersFromRecord(SmiEventSink_Default sink, SmiTypedGetterSetter setters, SmiMetaData[] metaData, SqlDataRecord record, SmiDefaultFieldsProperty useDefaultValues)
+        internal static void FillCompatibleSettersFromRecord(SmiTypedGetterSetter setters, SmiMetaData[] metaData, SqlDataRecord record, SmiDefaultFieldsProperty useDefaultValues)
         {
             for (int i = 0; i < metaData.Length; ++i)
             {
@@ -2029,12 +2026,12 @@ namespace Microsoft.Data.SqlClient.Server
                             break;
                         case SqlDbType.Xml:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
-                            SetSqlXml_Unchecked(sink, setters, i, record.GetSqlXml(i));    // perf improvement?
+                            SetSqlXml_Unchecked(setters, i, record.GetSqlXml(i));    // perf improvement?
                             break;
                         case SqlDbType.Variant:
                             object o = record.GetSqlValue(i);
                             ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCode(o);
-                            SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */);
+                            SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */);
                             break;
                         case SqlDbType.Udt:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
@@ -2486,7 +2483,7 @@ namespace Microsoft.Data.SqlClient.Server
             SetString_Unchecked(setters, ordinal, value, offset, length);
         }
 
-        private static void SetUdt_LengthChecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, object value)
+        private static void SetUdt_LengthChecked(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, object value)
         {
             if (ADP.IsNull(value))
             {
@@ -3451,7 +3448,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        private static void SetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SqlXml value)
+        private static void SetSqlXml_Unchecked(ITypedSettersV3 setters, int ordinal, SqlXml value)
         {
             if (value.IsNull)
             {
@@ -3459,11 +3456,11 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                SetXmlReader_Unchecked(sink, setters, ordinal, value.CreateReader());
+                SetXmlReader_Unchecked(setters, ordinal, value.CreateReader());
             }
         }
 
-        private static void SetXmlReader_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, XmlReader xmlReader)
+        private static void SetXmlReader_Unchecked(ITypedSettersV3 setters, int ordinal, XmlReader xmlReader)
         {
             // set up writer
             XmlWriterSettings WriterSettings = new XmlWriterSettings
@@ -3495,7 +3492,6 @@ namespace Microsoft.Data.SqlClient.Server
          // Set a DbDataReader to a Structured+MultiValued setter (table type)
         //  Assumes metaData correctly describes the reader's shape, and consumes only the current resultset
         private static void SetDbDataReader_Unchecked(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter setters,
             int ordinal,
             SmiMetaData metaData,
@@ -3510,14 +3506,13 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 setters.NewElement();
 
-                FillCompatibleSettersFromReader(sink, setters, metaData.FieldMetaData, value);
+                FillCompatibleSettersFromReader(setters, metaData.FieldMetaData, value);
             }
 
             setters.EndElements();
         }
 
         private static void SetIEnumerableOfSqlDataRecord_Unchecked(
-            SmiEventSink_Default sink,
             SmiTypedGetterSetter setters,
             int ordinal,
             SmiMetaData metaData,
@@ -3547,7 +3542,7 @@ namespace Microsoft.Data.SqlClient.Server
 
                     // send the first record that was obtained earlier
                     setters.NewElement();
-                    FillCompatibleSettersFromRecord(sink, setters, mdFields, peekAhead.FirstRecord, defaults);
+                    FillCompatibleSettersFromRecord(setters, mdFields, peekAhead.FirstRecord, defaults);
                     recordNumber++;
                 }
                 else
@@ -3574,7 +3569,7 @@ namespace Microsoft.Data.SqlClient.Server
                         }
                     }
 
-                    FillCompatibleSettersFromRecord(sink, setters, mdFields, record, defaults);
+                    FillCompatibleSettersFromRecord(setters, mdFields, record, defaults);
                     recordNumber++;
                 }
 
@@ -3591,7 +3586,6 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         private static void SetDataTable_Unchecked(
-           SmiEventSink_Default sink,
            SmiTypedGetterSetter setters,
            int ordinal,
            SmiMetaData metaData,
@@ -3633,7 +3627,7 @@ namespace Microsoft.Data.SqlClient.Server
                                     cellValue,
                                     fieldMetaData.Type);
                         }
-                        SetCompatibleValueV200(sink, setters, i, fieldMetaData, cellValue, cellTypes[i], 0, null);
+                        SetCompatibleValueV200(setters, i, fieldMetaData, cellValue, cellTypes[i], 0, null);
                     }
                 }
             }

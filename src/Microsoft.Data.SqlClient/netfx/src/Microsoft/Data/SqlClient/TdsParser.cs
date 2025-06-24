@@ -10482,7 +10482,6 @@ namespace Microsoft.Data.SqlClient
             //
             TdsParameterSetter paramSetter = new TdsParameterSetter(stateObj, metaData);
             ValueUtilsSmi.SetCompatibleValueV200(
-                                        new SmiEventSink_Default(),  // TDS Errors/events dealt with at lower level for now, just need an object for processing
                                         paramSetter,
                                         0,          // ordinal.  TdsParameterSetter only handles one parameter at a time
                                         metaData,

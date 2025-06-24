@@ -334,7 +334,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual void SetSqlDateTime(int ordinal, SqlDateTime value) => ValueUtilsSmi.SetSqlDateTime(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlXml/*' />
-        public virtual void SetSqlXml(int ordinal, SqlXml value) => ValueUtilsSmi.SetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
+        public virtual void SetSqlXml(int ordinal, SqlXml value) => ValueUtilsSmi.SetSqlXml(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDecimal/*' />
         public virtual void SetSqlDecimal(int ordinal, SqlDecimal value) => ValueUtilsSmi.SetSqlDecimal(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);

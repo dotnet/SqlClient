@@ -78,7 +78,6 @@ namespace Microsoft.Data.SqlClient.Server
             for (int i = 0; i < copyLength; i++)
             {
                 ValueUtilsSmi.SetCompatibleValueV200(
-                    _eventSink,
                     _recordBuffer,
                     ordinal: i,
                     GetSmiMetaData(i),
@@ -105,7 +104,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
             
             ValueUtilsSmi.SetCompatibleValueV200(
-                _eventSink,
                 _recordBuffer,
                 ordinal,
                 GetSmiMetaData(ordinal),
