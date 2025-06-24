@@ -6,24 +6,28 @@ using System;
 using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 
+#if NET
+using System.Runtime.Loader;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal partial class SqlConnectionFactory : DbConnectionFactory
+    sealed internal class SqlConnectionFactory : DbConnectionFactory
     {
-
-        private const string _metaDataXml = "MetaDataXml";
-
+        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
+        
         private SqlConnectionFactory() : base()
         {
+            #if NET
             SubscribeToAssemblyLoadContextUnload();
+            #endif
         }
-
-        public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
 
         override public DbProviderFactory ProviderFactory
         {
@@ -32,17 +36,7 @@ namespace Microsoft.Data.SqlClient
                 return SqlClientFactory.Instance;
             }
         }
-
-        protected override DbConnectionInternal CreateConnection(
-            DbConnectionOptions options,
-            DbConnectionPoolKey poolKey,
-            DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
-            IDbConnectionPool pool,
-            DbConnection owningConnection)
-        {
-            return CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, userOptions: null);
-        }
-
+        
         protected override DbConnectionInternal CreateConnection(
             DbConnectionOptions options,
             DbConnectionPoolKey poolKey,
@@ -55,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionPoolKey key = (SqlConnectionPoolKey)poolKey;
             SessionData recoverySessionData = null;
 
-            SqlConnection sqlOwningConnection = (SqlConnection)owningConnection;
+            SqlConnection sqlOwningConnection = owningConnection as SqlConnection;
             bool applyTransientFaultHandling = sqlOwningConnection?._applyTransientFaultHandling ?? false;
 
             SqlConnectionString userOpt = null;
@@ -76,9 +70,10 @@ namespace Microsoft.Data.SqlClient
             bool redirectedUserInstance = false;
             DbConnectionPoolIdentity identity = null;
 
-            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security.
+            // Pass DbConnectionPoolIdentity to SqlInternalConnectionTds if using integrated security
+            // or active directory integrated security.
             // Used by notifications.
-            if (opt.IntegratedSecurity)
+            if (opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 if (pool != null)
                 {
@@ -148,6 +143,7 @@ namespace Microsoft.Data.SqlClient
                 opt = new SqlConnectionString(opt, instanceName, userInstance: false, setEnlistValue: null);
                 poolGroupProviderInfo = null; // null so we do not pass to constructor below...
             }
+
             return new SqlInternalConnectionTds(
                 identity,
                 opt,
@@ -171,7 +167,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        override internal DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+        internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
         {
             DbConnectionPoolProviderInfo providerInfo = null;
 
@@ -183,7 +179,7 @@ namespace Microsoft.Data.SqlClient
             return providerInfo;
         }
 
-        override protected DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
+        protected override DbConnectionPoolGroupOptions CreateConnectionPoolGroupOptions(DbConnectionOptions connectionOptions)
         {
             SqlConnectionString opt = (SqlConnectionString)connectionOptions;
 
@@ -193,7 +189,7 @@ namespace Microsoft.Data.SqlClient
             {    // never pool context connections.
                 int connectionTimeout = opt.ConnectTimeout;
 
-                if ((0 < connectionTimeout) && (connectionTimeout < int.MaxValue / 1000))
+                if (connectionTimeout > 0 && connectionTimeout < int.MaxValue / 1000)
                 {
                     connectionTimeout *= 1000;
                 }
@@ -201,8 +197,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     connectionTimeout = int.MaxValue;
                 }
-
-                if (opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive || opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+                
+                if (opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryInteractive
+                                       or SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
                 {
                     // interactive/device code flow mode will always have pool's CreateTimeout = 10 x ConnectTimeout.
                     if (connectionTimeout >= Int32.MaxValue / 10)
@@ -215,23 +212,23 @@ namespace Microsoft.Data.SqlClient
                     }
                     SqlClientEventSource.Log.TryTraceEvent("SqlConnectionFactory.CreateConnectionPoolGroupOptions | Set connection pool CreateTimeout '{0}' when Authentication mode '{1}' is used.", connectionTimeout, opt.Authentication);
                 }
+
                 poolingOptions = new DbConnectionPoolGroupOptions(
-                                                opt.IntegratedSecurity,
-                                                opt.MinPoolSize,
-                                                opt.MaxPoolSize,
-                                                connectionTimeout,
-                                                opt.LoadBalanceTimeout,
-                                                opt.Enlist);
+                    opt.IntegratedSecurity || opt.Authentication is SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                    opt.MinPoolSize,
+                    opt.MaxPoolSize,
+                    connectionTimeout,
+                    opt.LoadBalanceTimeout,
+                    opt.Enlist);
             }
             return poolingOptions;
         }
 
-
-        override internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+        internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(
+            DbConnectionOptions connectionOptions)
         {
             return new SqlConnectionPoolGroupProviderInfo((SqlConnectionString)connectionOptions);
         }
-
 
         internal static SqlConnectionString FindSqlConnectionOptions(SqlConnectionPoolKey key)
         {
@@ -247,7 +244,7 @@ namespace Microsoft.Data.SqlClient
             return connectionOptions;
         }
 
-
+        // @TODO: All these methods seem redundant ... shouldn't we always have a SqlConnection?
         override internal DbConnectionPoolGroup GetConnectionPoolGroup(DbConnection connection)
         {
             SqlConnection c = (connection as SqlConnection);
@@ -338,6 +335,7 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion);
         }
 
+        #if NET
         private void Unload(object sender, EventArgs e)
         {
             try
@@ -350,7 +348,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        partial void SubscribeToAssemblyLoadContextUnload();
+        private void SqlConnectionFactoryAssemblyLoadContext_Unloading(AssemblyLoadContext obj)
+        {
+            Unload(obj, EventArgs.Empty);
+        }
+        
+        private void SubscribeToAssemblyLoadContextUnload()
+        {
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += 
+                SqlConnectionFactoryAssemblyLoadContext_Unloading;
+        }
+        #endif
     }
 }
 

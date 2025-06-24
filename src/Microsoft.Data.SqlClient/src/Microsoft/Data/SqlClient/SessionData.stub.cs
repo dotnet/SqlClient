@@ -2,17 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETFRAMEWORK
+// @TODO: This is only a stub class for removing clearing errors while merging other files.
 
-namespace Microsoft.Data.SqlClient.Server
+namespace Microsoft.Data.SqlClient
 {
-    // Enum representing the type of execution requested
-    internal enum SmiExecuteType
+    internal class SessionData
     {
-        NonQuery = 0,
-        Reader = 1,
-        ToPipe = 2,
     }
 }
-
-#endif

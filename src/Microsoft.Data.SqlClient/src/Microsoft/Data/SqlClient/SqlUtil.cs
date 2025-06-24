@@ -416,26 +416,30 @@ namespace Microsoft.Data.SqlClient
                 );
             }
         }
-
-#if NET
-        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
+        
+        internal static void SetTimeoutExceptionWithState(
+            TaskCompletionSource<object> completion,
+            int timeout,
+            object state,
+            Func<object, Exception> onFailure,
+            CancellationToken cancellationToken)
         {
-            if (timeout > 0)
+            if (timeout <= 0)
             {
-                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                    (Task task, object state) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure(state));
-                        }
-                    },
-                    state: state,
-                    cancellationToken: CancellationToken.None
-                );
+                return;
             }
+
+            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                (task, innerState) =>
+                {
+                    if (!task.IsCanceled && !completion.Task.IsCompleted)
+                    {
+                        completion.TrySetException(onFailure(innerState));
+                    }
+                },
+                state: state,
+                cancellationToken: CancellationToken.None);
         }
-#endif
     }
 
     internal static class SQL
@@ -2477,9 +2481,6 @@ namespace Microsoft.Data.SqlClient
             return StringsHelper.GetResourceString(errorMessageId);
         }
 
-        // BulkLoad
-        internal const string WriteToServer = "WriteToServer";
-
         // Default values for SqlDependency and SqlNotificationRequest
         internal const int SqlDependencyTimeoutDefault = 0;
         internal const int SqlDependencyServerTimeout = 5 * 24 * 3600; // 5 days - used to compute default TTL of the dependency
@@ -2517,11 +2518,6 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
-        }
-        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
-        {
-            Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
         }
 #endif
 

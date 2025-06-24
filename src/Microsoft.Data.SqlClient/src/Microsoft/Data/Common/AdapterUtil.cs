@@ -1386,13 +1386,6 @@ namespace Microsoft.Data.Common
             return completion.Task;
         }
 
-        internal static Task<T> CreatedTaskWithCancellation<T>()
-        {
-            TaskCompletionSource<T> completion = new();
-            completion.SetCanceled();
-            return completion.Task;
-        }
-
         //
         // Helper Functions
         //
