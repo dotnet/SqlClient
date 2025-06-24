@@ -51,46 +51,6 @@ namespace Microsoft.Data.SqlClient.Server
             SqlException result = null;
             SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
 
-            if (_errors != null)
-            {
-                Debug.Assert(0 != _errors.Count, "empty error collection?"); // must be something in the collection
-#if NETFRAMEWORK
-                if (ignoreNonFatalMessages)
-                {
-                    temp = new SqlErrorCollection();
-                    foreach (SqlError error in _errors)
-                    {
-                        if (error.Class >= TdsEnums.FATAL_ERROR_CLASS)
-                        {
-                            temp.Add(error);
-                        }
-                    }
-                    if (temp.Count <= 0)
-                    {
-                        temp = null;
-                    }
-                }
-                else
-#endif
-                {
-                    if (_warnings != null)
-                    {
-                        // When we throw an exception we place all the warnings that
-                        // occurred at the end of the collection - after all the errors.
-                        // That way the user can see all the errors AND warnings that
-                        // occurred for the exception.
-                        foreach (SqlError warning in _warnings)
-                        {
-                            _errors.Add(warning);
-                        }
-                    }
-                    temp = _errors;
-                }
-
-                _errors = null;
-                _warnings = null;
-            }
-            else
             {
                 Debug.Assert(_warnings == null || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
 
@@ -110,14 +70,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal void ProcessMessagesAndThrow()
         {
-            if (HasMessages)
-            {
-                #if NETFRAMEWORK
-                DispatchMessages(false);
-                #else
-                DispatchMessages();
-                #endif
-            }
         }
     }
 }
