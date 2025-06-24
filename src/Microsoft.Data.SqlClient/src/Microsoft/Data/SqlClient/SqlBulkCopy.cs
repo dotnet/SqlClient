@@ -689,7 +689,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                     updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                 }
-                                else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                                else if (metadata.metaType.IsPlp && !(metadata.metaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
                                 {
                                     // Partial length column prefix (max)
                                     updateBulkCommandText.Append("(max)");

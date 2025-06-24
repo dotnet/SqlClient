@@ -6437,6 +6437,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
                 {
+                    // The validate function for SqlParameters would
+                    // have already thrown InvalidCastException if an incompatible
+                    // value is specified for SqlDbType Vector.
                     var sqlVectorProps = (ISqlVector)sqlParam.Value;
                     paramList.Append('(');
                     paramList.Append(sqlVectorProps.Length);

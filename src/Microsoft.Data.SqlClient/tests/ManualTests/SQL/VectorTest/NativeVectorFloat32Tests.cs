@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         private void ValidateSqlVectorFloat32Object(bool isNull, SqlVectorFloat32 sqlVectorFloat32, float[] expectedData, int expectedSize, int expectedLength)
         {
-            Assert.Equal(expectedData, sqlVectorFloat32.Values);
+            Assert.Equal(expectedData, sqlVectorFloat32.Values.ToArray());
             Assert.Equal(expectedSize, sqlVectorFloat32.Size);
             Assert.Equal(expectedLength, sqlVectorFloat32.Length);
             if (!isNull)
@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Validate first non-null value.
             Assert.True(!verifyReader.IsDBNull(0), "First row in the table is null.");
-            Assert.Equal(VectorFloat32TestData.testData, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values);
+            Assert.Equal(VectorFloat32TestData.testData, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values.ToArray());
             Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Length);
             Assert.Equal(VectorFloat32TestData.sizeInbytes, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Size);
 
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             // Verify that we have encountered null.
             Assert.True(verifyReader.IsDBNull(0));
-            Assert.Equal(Array.Empty<float>(), ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values);
+            Assert.Equal(Array.Empty<float>(), ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Values.ToArray());
             Assert.Equal(VectorFloat32TestData.testData.Length, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Length);
             Assert.Equal(VectorFloat32TestData.sizeInbytes, ((SqlVectorFloat32)verifyReader.GetSqlVectorFloat32(0)).Size);
         }
@@ -548,7 +548,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Validate first non-null value.
             Assert.True(!await verifyReader.IsDBNullAsync(0), "First row in the table is null.");
             var vector = await verifyReader.GetFieldValueAsync<SqlVectorFloat32>(0);
-            Assert.Equal(VectorFloat32TestData.testData, vector.Values);
+            Assert.Equal(VectorFloat32TestData.testData, vector.Values.ToArray());
             Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
             Assert.Equal(VectorFloat32TestData.sizeInbytes, vector.Size);
 
@@ -558,7 +558,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // Verify that we have encountered null.
             Assert.True(await verifyReader.IsDBNullAsync(0));
             vector = await verifyReader.GetFieldValueAsync<SqlVectorFloat32>(0);
-            Assert.Equal(Array.Empty<float>(), vector.Values);
+            Assert.Equal(Array.Empty<float>(), vector.Values.ToArray());
             Assert.Equal(VectorFloat32TestData.testData.Length, vector.Length);
             Assert.Equal(VectorFloat32TestData.sizeInbytes, vector.Size);
         }
@@ -583,7 +583,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             while (reader.Read())
             {
                 float[] expectedData = new float[] { rowcnt + 0.1f, rowcnt + 0.2f, rowcnt + 0.3f };
-                float[] dbData = JsonSerializer.Deserialize<float[]>(reader.GetString(0))!;
+                float[] dbData = reader.GetSqlVectorFloat32(0).Values.ToArray();
                 Assert.Equal(expectedData, dbData);
                 rowcnt++;
             }

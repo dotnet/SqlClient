@@ -79,8 +79,8 @@ namespace Microsoft.Data.SqlClient
 
         internal struct VectorInfo
         {
-            internal int _vectorElementCount;
-            internal byte _vectorElementType;
+            internal int _elementCount;
+            internal byte _elementType;
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
 
         internal Storage GetVectorInfo()
         {
-            if (StorageType.Vector == _type)
+            if (_type == StorageType.Vector)
             {
                 return _value;
             }
@@ -241,16 +241,16 @@ namespace Microsoft.Data.SqlClient
                         // Only removing trailing zeros from a decimal part won't hit its value!
                         if (_value._numericInfo._scale > 0)
                         {
-                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2, 
-                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4, 
+                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2,
+                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4,
                                                                    _value._numericInfo._scale, out int precision);
 
                             int minScale = _value._numericInfo._scale - zeroCnt; // minimum possible sacle after removing the trailing zeros.
 
                             if (zeroCnt > 0 && minScale <= 28 && precision <= 29)
                             {
-                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive, 
-                                                          _value._numericInfo._data1, _value._numericInfo._data2, 
+                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive,
+                                                          _value._numericInfo._data1, _value._numericInfo._data2,
                                                           _value._numericInfo._data3, _value._numericInfo._data4);
 
                                 int integral = precision - minScale;
@@ -507,12 +507,12 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-                if (StorageType.Vector == _type)
+                if (_type == StorageType.Vector)
                 {
-                    byte elementType = _value._vectorInfo._vectorElementType;
+                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
                     switch (elementType)
                     {
-                        case (byte)MetaType.SqlVectorElementType.Float32:
+                        case MetaType.SqlVectorElementType.Float32:
                             return SqlVectorFloat32.ToString();
                         default:
                             throw SQL.VectorTypeNotSupported(elementType.ToString());
@@ -685,7 +685,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.SqlBinary == _type || StorageType.Vector == _type)
+                if (_type is StorageType.SqlBinary or StorageType.Vector)
                 {
                     if (IsNull)
                     {
@@ -948,7 +948,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.Vector == _type)
+                if (_type is StorageType.Vector)
                 {
                     if (IsNull)
                     {
@@ -957,7 +957,7 @@ namespace Microsoft.Data.SqlClient
                     return new SqlString(SqlVectorFloat32.ToString());
                 }
                 // String and Json storage type are both strings.
-                if (StorageType.String == _type || StorageType.Json == _type)
+                if (_type is StorageType.String or StorageType.Json)
                 {
                     if (IsNull)
                     {
@@ -980,7 +980,14 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
 
-        internal SqlVectorFloat32 SqlVectorFloat32 => (StorageType.Vector == _type) ? (IsNull ? new SqlVectorFloat32(_value._vectorInfo._vectorElementCount) : new SqlVectorFloat32(SqlBinary.Value)) : (SqlVectorFloat32)SqlValue;
+        internal SqlVectorFloat32 SqlVectorFloat32 =>
+                _type is StorageType.Vector
+                    ? (
+                        IsNull
+                        ? new SqlVectorFloat32(_value._vectorInfo._elementCount)
+                        : new SqlVectorFloat32(SqlBinary.Value)
+                       )
+                : (SqlVectorFloat32)SqlValue;
 
         internal object SqlValue
         {
@@ -1017,10 +1024,10 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Json:
                         return SqlJson;
                     case StorageType.Vector:
-                        byte elementType = _value._vectorInfo._vectorElementType;
+                        var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
                         switch (elementType)
                         {
-                            case (byte)MetaType.SqlVectorElementType.Float32:
+                            case MetaType.SqlVectorElementType.Float32:
                                 return SqlVectorFloat32;
                             default:
                                 throw SQL.VectorTypeNotSupported(elementType.ToString());
@@ -1292,7 +1299,7 @@ namespace Microsoft.Data.SqlClient
             _object = null;
         }
 
-#if NETFRAMEWORK
+        #if NETFRAMEWORK
         internal void SetToDate(DateTime date)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
@@ -1305,8 +1312,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetVectorInfo(int elementCount, byte elementType, bool isNull)
         {
-            _value._vectorInfo._vectorElementCount = elementCount;
-            _value._vectorInfo._vectorElementType = elementType;
+            _value._vectorInfo._elementCount = elementCount;
+            _value._vectorInfo._elementType = elementType;
             _type = StorageType.Vector;
             _isNull = isNull;
         }
@@ -1319,8 +1326,8 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.DateTime;
             _isNull = false;
         }
-        
-        #if NETFRAMEWORK
+
+#if NETFRAMEWORK
         internal void SetToDateTime2(DateTime dateTime, byte scale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
@@ -1331,7 +1338,7 @@ namespace Microsoft.Data.SqlClient
             _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
             _isNull = false;
         }
-        #endif
+#endif
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
         {

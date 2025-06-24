@@ -66,10 +66,7 @@ namespace Microsoft.Data.SqlClient
         // SqlVector Element Types
         internal enum SqlVectorElementType : byte
         {
-            Float32 = 0
-            // Future values:
-            // Half = 1,
-            // Int32 = 2, etc.
+            Float32 = 0x0
         }
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,

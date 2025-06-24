@@ -172,7 +172,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml
-		..\doc\snippets\Microsoft.Data.SqlTypes\SqlFloatVector.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlFloatVector.xml
+		..\doc\snippets\Microsoft.Data.SqlTypes\SqlVectorFloat32.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlVectorFloat32.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.TestUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj", "{89D6D382-9B36-43C9-A912-03802FDA8E36}"

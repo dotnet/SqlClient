@@ -6471,12 +6471,21 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.SQLVECTOR:
+                    // Vector data is read as non-plp binary value.
+                    // This is same as reading varbinary(8000).
                     result = TryReadByteArrayWithContinue(stateObj, length, out b);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
                     }
+
+                    // Internally, we use Sqlbinary to deal with varbinary data and store it in 
+                    // SqlBuffer as SqlBinary value.
                     value.SqlBinary = SqlBinary.WrapBytes(b);
+
+                    // Extract the metadata from the payload and set it as the vector attributes
+                    // in the SqlBuffer. This metadata is further used when constructing a SqlVector
+                    // object from binary payload.
                     int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
                     byte elementType = b[4];
                     value.SetVectorInfo(elementCount, elementType, false);
@@ -9696,6 +9705,9 @@ namespace Microsoft.Data.SqlClient
             if (param.Direction == ParameterDirection.Output)
             {
                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
+
+                // Output parameter of SqlDbType vector are defined through SqlParameter.Value. 
+                // This check ensures that we do not discard the parameter value when SqlDbType is vector.
                 if (mt.SqlDbType != SqlDbTypeExtensions.Vector)
                 {
                     param.Value = null;
@@ -10034,9 +10046,11 @@ namespace Microsoft.Data.SqlClient
 
                     if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
+                        // For vector type we need to write the size in bytes required to represent
+                        // vector value when communicating with SQL Server.
                         var sqlVectorProps = ((ISqlVector)param.Value);
-                        maxsize = TdsEnums.VECTOR_HEADER_SIZE + sqlVectorProps.Length * sqlVectorProps.ElementSize;
-                    }
+                        maxsize = sqlVectorProps.Size;
+                    }   
 
                     WriteParameterVarLen(mt, maxsize, false /*IsNull*/, stateObj);
                 }
@@ -10062,6 +10076,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
             {
+                // For vector type we need to write scale as the element type of the vector.
                 stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
             }
             // write out collation or xml metadata
@@ -10142,6 +10157,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // for codePageEncoded types, WriteValue simply expects the number of characters
                     // For plp types, we also need the encoded byte size
+                    // For vector type we need to write scale as the element type of the vector.
                     byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? ((ISqlVector)param.Value).ElementType : param.GetActualScale();
                     writeParamTask = WriteValue(value, mt, isParameterEncrypted ? (byte)0 : writeScale, actualSize, codePageByteSize, isParameterEncrypted ? 0 : param.Offset, stateObj, isParameterEncrypted ? 0 : param.Size, isDataFeed);
                 }

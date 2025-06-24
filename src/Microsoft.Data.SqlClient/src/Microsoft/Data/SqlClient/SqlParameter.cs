@@ -765,22 +765,22 @@ namespace Microsoft.Data.SqlClient
 
         private object GetVectorReturnValue()
         {
-            byte elementType = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementType;
-            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._vectorElementCount;
-            
+            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementCount;
+
             if (IsNull)
             {
-                 switch (elementType)
-                 {
-                     case (byte)MetaType.SqlVectorElementType.Float32:
-                         return new SqlVectorFloat32(elementCount);
-                     default:
+                switch (elementType)
+                {
+                    case MetaType.SqlVectorElementType.Float32:
+                        return new SqlVectorFloat32(elementCount);
+                    default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
-                 }
-             }
-             switch (elementType)
-             {
-                case (byte)MetaType.SqlVectorElementType.Float32:
+                }
+            }
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
                     return new SqlVectorFloat32((byte[])_sqlBufferReturnValue.Value);
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
@@ -1926,7 +1926,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
-                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_direction == ParameterDirection.Input) && (_value == null || _value == DBNull.Value))
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
+                    _direction == ParameterDirection.Input &&
+                    _value == null || _value == DBNull.Value)
                 {
                     _value = DBNull.Value;
                     return MetaType.GetDefaultMetaType();
@@ -2036,7 +2038,9 @@ namespace Microsoft.Data.SqlClient
                 GetCoercedValue();
             }
 
-            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && (_value == null || _value == DBNull.Value) && (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+                (_value == null || _value == DBNull.Value) &&
+                (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
             {
                 throw ADP.NullOutputParameterValueForVector(_parameterName);
             }
@@ -2192,7 +2196,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (value is ISqlVector sqlVector)
             {
-                return TdsEnums.VECTOR_HEADER_SIZE + (sqlVector.Length * sqlVector.ElementSize);
+                return sqlVector.Size;
             }
             if (value is SqlChars sqlChars)
             {
@@ -2367,7 +2371,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                     else if (currentType == typeof(SqlVectorFloat32))
                     {
-                        value = (value as ISqlVector).VectorPayload;
+                        value = ((ISqlVector)value).VectorPayload;
                     }
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
@@ -2375,7 +2379,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             value = (new SqlVectorFloat32(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
                         }
-                        catch (Exception ex)
+                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
                             throw ADP.InvalidJsonStringForVector(value as string, ex);
                         }

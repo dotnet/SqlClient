@@ -23,9 +23,11 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void Constructor_WithEmptyValues_ShouldThrow()
+        public void Constructor_WithEmptyValues_ShouldNotThrow()
         {
-            Assert.Throws<ArgumentException>(() => new SqlVectorFloat32(values: Array.Empty<float>()));
+            var vec = new SqlVectorFloat32(values: Array.Empty<float>());
+            Assert.Equal(0, vec.Length);
+            Assert.False(vec.IsNull);
         }
 
         [Fact]
@@ -35,7 +37,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var vec = new SqlVectorFloat32(values: data);
             Assert.Equal(2, vec.Length);
             Assert.False(vec.IsNull);
-            Assert.Equal(data, vec.Values);
+            Assert.Equal(data, vec.Values.ToArray());
         }
 
         [Fact]
@@ -45,7 +47,7 @@ namespace Microsoft.Data.SqlClient.Tests
             var vec = new SqlVectorFloat32(values: data);
             Assert.Equal(3, vec.Length);
             Assert.False(vec.IsNull);
-            Assert.Equal(data.ToArray(), vec.Values);
+            Assert.Equal(data.ToArray(), vec.Values.ToArray());
         }
 
         [Fact]
@@ -83,7 +85,7 @@ namespace Microsoft.Data.SqlClient.Tests
         public void Values_WhenNull_ShouldReturnEmptyArray()
         {
             var vec = new SqlVectorFloat32(0);
-            Assert.Empty(vec.Values);
+            Assert.Empty(vec.Values.ToArray());
         }
     }
 }

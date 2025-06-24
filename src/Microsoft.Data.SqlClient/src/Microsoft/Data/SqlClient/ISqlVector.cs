@@ -11,7 +11,9 @@ namespace Microsoft.Data.SqlClient
         int Length { get; }
 
         /// <summary>
-        /// Gets the type of the elements in vector.
+        /// Gets the type of the elements in vector as a 
+        /// TDS Vector Header DimensionType value.
+        /// Refer TDS section 2.2.5.5.7.4
         /// </summary>
         byte ElementType { get; }
 
@@ -24,5 +26,10 @@ namespace Microsoft.Data.SqlClient
         /// Gets the raw vector data formatted for TDS payload.
         /// </summary>
         byte[] VectorPayload { get; }
+
+        /// <summary>
+        /// Gets the raw vector data formatted for TDS payload.
+        /// </summary>
+        int Size { get; }
     }
 }
