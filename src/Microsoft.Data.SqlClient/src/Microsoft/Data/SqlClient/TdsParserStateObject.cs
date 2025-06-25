@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             public readonly string Function;
             public readonly Exception Exception;
 
-            internal SniErrorDetails(string errorMessage, uint nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function, Exception exception)
+            internal SniErrorDetails(string errorMessage, uint nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function, Exception exception = null)
             {
                 ErrorMessage = errorMessage;
                 NativeError = nativeError;
@@ -71,16 +71,6 @@ namespace Microsoft.Data.SqlClient
                 LineNumber = lineNumber;
                 Function = function;
                 Exception = exception;
-            }
-
-            internal SniErrorDetails(string errorMessage, uint nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function)
-            {
-                ErrorMessage = errorMessage;
-                NativeError = nativeError;
-                SniErrorNumber = sniErrorNumber;
-                Provider = provider;
-                LineNumber = lineNumber;
-                Function = function;
             }
         }
 
