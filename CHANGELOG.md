@@ -6,6 +6,132 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
+## [Preiew Release 6.1.0-preview2.TODO] - 2025-06-26
+
+This update brings the following changes since the [6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
+
+### Added
+
+- Revived .NET Standard 2.0 target support.
+  [#3381](https://github.com/dotnet/SqlClient/pull/3381)
+- Added dedicated SQL Server vector datatype support.
+- Added `ToString()` override to `SqlJson`.
+  [#3427](https://github.com/dotnet/SqlClient/pull/3427)
+
+### Fixed
+
+- Fixed missing &lt;NeutralLanguage&gt; property.
+  [#3325](https://github.com/dotnet/SqlClient/pull/3325)
+- Fixed injection of UTF-8 BOM during bulk copy.
+  [#3399](https://github.com/dotnet/SqlClient/pull/3399)
+- Fixed `SqlCachedBuffer` async read edge case.
+  [#3329](https://github.com/dotnet/SqlClient/pull/3329)
+- Fixed `SqlSequentialTextReader` edge case with single-byte reads.
+  [#3383](https://github.com/dotnet/SqlClient/pull/3383)
+- Fixed an incorrect error message when parsing connection string `PoolBlockingPeriod`.
+  [#3411](https://github.com/dotnet/SqlClient/pull/3411)
+
+### Changed
+
+- Reduced allocations when opening a connection.
+  [#3364](https://github.com/dotnet/SqlClient/pull/3364)
+- Various performance improvements related to TDS parsing.
+  [#3337](https://github.com/dotnet/SqlClient/pull/3337)
+  [#3377](https://github.com/dotnet/SqlClient/pull/3377)
+  [#3422](https://github.com/dotnet/SqlClient/pull/3422)
+- Improved native AOT support.
+  [#3364](https://github.com/dotnet/SqlClient/pull/3364)
+  [#3369](https://github.com/dotnet/SqlClient/pull/3369)
+  [#3401](https://github.com/dotnet/SqlClient/pull/3401)
+- Progress towards SSPI extensibility
+  [Issue #2253](https://github.com/dotnet/SqlClient/issues/2253).
+  [#2454](https://github.com/dotnet/SqlClient/pull/2454)
+- Progress towards connection pooling improvements
+  [Issue #3356](https://github.com/dotnet/SqlClient/issues/3356).
+  [#3352](https://github.com/dotnet/SqlClient/pull/3352)
+  [#3396](https://github.com/dotnet/SqlClient/pull/3396)
+- Expanded/clarified SqlConnection's
+  [AccessToken](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlconnection.accesstoken) and
+  [AccessTokenCallback](https://learn.microsoft.com/en-us/dotnet/api/microsoft.data.sqlclient.sqlconnection.accesstokencallback)
+  documentation.
+  [#3339](https://github.com/dotnet/SqlClient/pull/3339)
+- Fixed some poorly formatted tables in the API docs.
+  [#3391](https://github.com/dotnet/SqlClient/pull/3391)
+- Code merge towards a unified SqlClient project, aligning .NET Framework and
+  .NET Core implementations.
+  [#3262](https://github.com/dotnet/SqlClient/pull/3262)
+  [#3291](https://github.com/dotnet/SqlClient/pull/3291)
+  [#3305](https://github.com/dotnet/SqlClient/pull/3305)
+  [#3306](https://github.com/dotnet/SqlClient/pull/3306)
+  [#3310](https://github.com/dotnet/SqlClient/pull/3310)
+  [#3323](https://github.com/dotnet/SqlClient/pull/3323)
+  [#3326](https://github.com/dotnet/SqlClient/pull/3326)
+  [#3335](https://github.com/dotnet/SqlClient/pull/3335)
+  [#3338](https://github.com/dotnet/SqlClient/pull/3338)
+  [#3340](https://github.com/dotnet/SqlClient/pull/3340)
+  [#3341](https://github.com/dotnet/SqlClient/pull/3341)
+  [#3343](https://github.com/dotnet/SqlClient/pull/3343)
+  [#3345](https://github.com/dotnet/SqlClient/pull/3345)
+  [#3353](https://github.com/dotnet/SqlClient/pull/3353)
+  [#3355](https://github.com/dotnet/SqlClient/pull/3355)
+  [#3368](https://github.com/dotnet/SqlClient/pull/3368)
+  [#3373](https://github.com/dotnet/SqlClient/pull/3373)
+  [#3376](https://github.com/dotnet/SqlClient/pull/3376)
+  [#3388](https://github.com/dotnet/SqlClient/pull/3388)
+  [#3389](https://github.com/dotnet/SqlClient/pull/3389)
+  [#3393](https://github.com/dotnet/SqlClient/pull/3393)
+  [#3405](https://github.com/dotnet/SqlClient/pull/3405)
+  [#3414](https://github.com/dotnet/SqlClient/pull/3414)
+  [#3416](https://github.com/dotnet/SqlClient/pull/3416)
+  [#3417](https://github.com/dotnet/SqlClient/pull/3417)
+  [#3420](https://github.com/dotnet/SqlClient/pull/3420)
+  [#3431](https://github.com/dotnet/SqlClient/pull/3431)
+- Test improvements include a new unit test project, updates to test
+  dependencies, removal of hardcoded credentials, and improved robustness.
+  [#3204](https://github.com/dotnet/SqlClient/pull/3204)
+  [#3379](https://github.com/dotnet/SqlClient/pull/3379)
+  [#3380](https://github.com/dotnet/SqlClient/pull/3380)
+  [#3402](https://github.com/dotnet/SqlClient/pull/3402)
+- Added dependency on `System.Text.Json`
+  [8.0.5](https://www.nuget.org/packages/System.Text.Json/8.0.5) (.NET 8.0) and
+  [9.0.5](https://www.nuget.org/packages/System.Text.Json/9.0.5) (.NET Standard 2.0, .NET 9.0)
+  to avoid transitive vulnerabilities ([CVE-2024-43485](https://github.com/advisories/GHSA-8g4q-xg66-9fp4)).
+  [#3403](https://github.com/dotnet/SqlClient/pull/3403)
+
+## [Preview Release 6.1.0-preview1.25120.4] - 2025-04-30
+
+This update brings the following changes over the previous release:
+
+### Added
+
+- Added packet multiplexing support to improve large data read performance. [#2714](https://github.com/dotnet/SqlClient/pull/2714) [#3161](https://github.com/dotnet/SqlClient/pull/3161) [#3202](https://github.com/dotnet/SqlClient/pull/3202)
+- Added support for special casing with Fabric endpoints. [#3084](https://github.com/dotnet/SqlClient/pull/3084)
+
+### Fixed
+
+- Fixed distributed transactions to be preserved during pooled connection resets. [#3019](https://github.com/dotnet/SqlClient/pull/3019).
+- Fixed application crash when the `Data Source` parameter begins with a comma. [#3250](https://github.com/dotnet/SqlClient/pull/3250).
+- Resolved synonym count discrepancies in debug mode. [#3098](https://github.com/dotnet/SqlClient/pull/3098).
+- Addressed warnings for down-level SSL/TLS versions. [#3126](https://github.com/dotnet/SqlClient/pull/3126).
+
+### Changed
+
+- Optimized binary size for AOT. [#3091](https://github.com/dotnet/SqlClient/pull/3091)
+- Refined bulk copy operations to handle unmatched column names more effectively. [#3205](https://github.com/dotnet/SqlClient/pull/3205).
+- Enhanced `SqlBulkCopy` to explicitly identify mismatched column names. [#3183](https://github.com/dotnet/SqlClient/pull/3183).
+- Optimized outgoing SSPI blob handling using `IBufferWriter<byte>`. [#2452](https://github.com/dotnet/SqlClient/pull/2452).
+- Replaced `byte[]` with `string` for SNI to improve efficiency. [#2790](https://github.com/dotnet/SqlClient/pull/2790).
+- Code cleanup to remove SQL 2000 support. [#2839](https://github.com/dotnet/SqlClient/pull/2839), [#3206](https://github.com/dotnet/SqlClient/pull/3206), [#3217](https://github.com/dotnet/SqlClient/pull/3217)
+- Connection pool design refactor for a modular connection pool design. [#3199](https://github.com/dotnet/SqlClient/pull/3199)
+- Updated various dependencies [#3229](https://github.com/dotnet/SqlClient/pull/3229), primarily:
+  - System.Text.Encodings.Web to v8.0.0
+  - System.Text.Json to v8.0.5
+  - Azure.Identity to v1.13.2
+  - Microsoft.Identity.Model.Json.Web.Tokens to v7.7.1
+  - Microsoft.Identity.Model.Protocols.OpenIdConnect to v7.7.1
+- Code merge towards a unified SqlClient project, aligning .NET Framework and .NET Core implementations. ([#2957](https://github.com/dotnet/sqlclient/pull/2957), [#2963](https://github.com/dotnet/sqlclient/pull/2963), [#2984](https://github.com/dotnet/sqlclient/pull/2984), [#2982](https://github.com/dotnet/sqlclient/pull/2982), [#3023](https://github.com/dotnet/sqlclient/pull/3023), [#3015](https://github.com/dotnet/sqlclient/pull/3015), [#2967](https://github.com/dotnet/sqlclient/pull/2967), [#3164](https://github.com/dotnet/sqlclient/pull/3164), [#3163](https://github.com/dotnet/sqlclient/pull/3163), [#3171](https://github.com/dotnet/sqlclient/pull/3171), [#3182](https://github.com/dotnet/sqlclient/pull/3182), [#3179](https://github.com/dotnet/sqlclient/pull/3179), [#3156](https://github.com/dotnet/sqlclient/pull/3156), [#3213](https://github.com/dotnet/sqlclient/pull/3213), [#3232](https://github.com/dotnet/sqlclient/pull/3232), [#3236](https://github.com/dotnet/sqlclient/pull/3236), [#3231](https://github.com/dotnet/sqlclient/pull/3231), [#3241](https://github.com/dotnet/sqlclient/pull/3241), [#3246](https://github.com/dotnet/sqlclient/pull/3246), [#3247](https://github.com/dotnet/sqlclient/pull/3247), [#3222](https://github.com/dotnet/sqlclient/pull/3222), [#3255](https://github.com/dotnet/sqlclient/pull/3255), [#3254](https://github.com/dotnet/sqlclient/pull/3254), [#3259](https://github.com/dotnet/sqlclient/pull/3259), [#3264](https://github.com/dotnet/sqlclient/pull/3264), [#3256](https://github.com/dotnet/sqlclient/pull/3256), [#3251](https://github.com/dotnet/sqlclient/pull/3251), [#3275](https://github.com/dotnet/sqlclient/pull/3275), [#3277](https://github.com/dotnet/sqlclient/pull/3277), [#3263](https://github.com/dotnet/sqlclient/pull/3263), [#3292](https://github.com/dotnet/sqlclient/pull/3292), [#3208](https://github.com/dotnet/sqlclient/pull/3208)).
+- Test improvements include updates to test references, removal of hardcoded certificates, improved stability, and better coverage ([#3041](https://github.com/dotnet/sqlclient/pull/3041), [#3034](https://github.com/dotnet/sqlclient/pull/3034), [#3130](https://github.com/dotnet/sqlclient/pull/3130), [#3128](https://github.com/dotnet/sqlclient/pull/3128), [#3181](https://github.com/dotnet/sqlclient/pull/3181), [#3060](https://github.com/dotnet/sqlclient/pull/3060), [#3184](https://github.com/dotnet/sqlclient/pull/3184), [#3033](https://github.com/dotnet/sqlclient/pull/3033), [#3186](https://github.com/dotnet/sqlclient/pull/3186), [#3025](https://github.com/dotnet/sqlclient/pull/3025), [#3230](https://github.com/dotnet/sqlclient/pull/3230), [#3237](https://github.com/dotnet/sqlclient/pull/3237), [#3059](https://github.com/dotnet/sqlclient/pull/3059), [#3061](https://github.com/dotnet/sqlclient/pull/3061)).
+
 ## [Stable release 6.0.2] - 2025-04-25
 
 This update brings the below changes over the previous release:
@@ -17,11 +143,12 @@ This update brings the below changes over the previous release:
 - Fixed an error reading the output parameter of type JSON while executing stored procedure [#3173](https://github.com/dotnet/SqlClient/pull/3173)
 
 ### Changed
+
 - Updated the below dependencies:
-    - Updated [Microsoft.Bcl.Cryptography](https://www.nuget.org/packages/Microsoft.Bcl.Cryptography/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
-    - Updated [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
-    - Updated [System.Configuration.ConfigurationManager](https://www.nuget.org/packages/System.Configuration.ConfigurationManager/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
-    - Updated [System.Security.Cryptography.Pkcs](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+  - Updated [Microsoft.Bcl.Cryptography](https://www.nuget.org/packages/Microsoft.Bcl.Cryptography/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+  - Updated [Microsoft.Extensions.Caching.Memory](https://www.nuget.org/packages/Microsoft.Extensions.Caching.Memory/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+  - Updated [System.Configuration.ConfigurationManager](https://www.nuget.org/packages/System.Configuration.ConfigurationManager/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
+  - Updated [System.Security.Cryptography.Pkcs](https://www.nuget.org/packages/System.Security.Cryptography.Pkcs/9.0.4) from 9.0.0 to 9.0.4 for .NET 9 targeted dll. [#3281](https://github.com/dotnet/SqlClient/pull/3281)
 
 ## [Stable release 6.0.1] - 2025-01-23
 
