@@ -130,8 +130,16 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period) =>
-            UnsafeCreateTimer(callback, state, TimeSpan.FromSeconds(dueTime), TimeSpan.FromSeconds(period));
+        internal static Timer UnsafeCreateTimer(
+            TimerCallback callback,
+            object state,
+            int dueTimeMilliseconds,
+            int periodMilliseconds) =>
+            UnsafeCreateTimer(
+                callback,
+                state,
+                TimeSpan.FromMilliseconds(dueTimeMilliseconds),
+                TimeSpan.FromMilliseconds(periodMilliseconds));
         
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
         {
