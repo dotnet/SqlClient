@@ -82,6 +82,8 @@ extends:
   template: v2/OneBranch.${{parameters.oneBranchType }}.CrossPlat.yml@templates # https://aka.ms/obpipelines/templates
   parameters:
     featureFlags:
+      # Suggested by MerlinBot (https://sqlclientdrivers.visualstudio.com/ADO.Net/_git/dotnet-sqlclient/pullrequest/4882)
+      EnableCDPxPAT: false
       WindowsHostVersion: 1ESWindows2022
     globalSdl: # https://aka.ms/obpipelines/sdl
       tsa:
