@@ -3368,7 +3368,7 @@ namespace Microsoft.Data.SqlClient
                         if (data.IsNull)
                             return (T)(object)data.String;
                         else
-                            return (T)(object)data.GetSqlVector<float>().ToString();
+                            return (T)(object)data.GetSqlVector<float>().GetString();
                     }
                     // the requested type is likely to be one that isn't supported so try the cast and
                     // unless there is a null value conversion then feedback the cast exception with 

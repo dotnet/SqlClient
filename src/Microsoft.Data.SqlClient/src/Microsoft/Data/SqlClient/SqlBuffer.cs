@@ -513,7 +513,7 @@ namespace Microsoft.Data.SqlClient
                     switch (elementType)
                     {
                         case MetaType.SqlVectorElementType.Float32:
-                            return GetSqlVector<float>().ToString();
+                            return GetSqlVector<float>().GetString();
                         default:
                             throw SQL.VectorTypeNotSupported(elementType.ToString());
                     }
@@ -958,7 +958,7 @@ namespace Microsoft.Data.SqlClient
                     switch (elementType)
                     {
                         case MetaType.SqlVectorElementType.Float32:
-                            return new SqlString(GetSqlVector<float>().ToString());
+                            return new SqlString(GetSqlVector<float>().GetString());
                         default:
                             throw SQL.VectorTypeNotSupported(elementType.ToString());
                     }

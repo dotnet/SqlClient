@@ -31,8 +31,7 @@ where T : unmanaged
     private readonly byte _elementType;
     private readonly byte _elementSize;
     private readonly byte[] _tdsBytes;
-    private T[] _array;
-
+    
     #endregion
 
     #region Constructors
@@ -53,7 +52,6 @@ where T : unmanaged
         Size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
 
         _tdsBytes = Array.Empty<byte>();
-        _array = Array.Empty<T>();
         Memory = new();
     }
 
@@ -68,7 +66,6 @@ where T : unmanaged
         Size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
 
         _tdsBytes = MakeTdsBytes(memory);
-        _array = memory.ToArray();
         Memory = memory;
     }
 
@@ -81,28 +78,20 @@ where T : unmanaged
         IsNull = false;
 
         _tdsBytes = tdsBytes;
-        _array = MakeArray();
-        Memory = new(_array);
+        Memory = new(MakeArray());
     }
 
     #endregion
 
     #region Methods
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToString/*' />
-    public override string ToString()
+    internal string GetString()
     {
         if (IsNull)
         {
             return SQLResource.NullString;
         }
         return JsonSerializer.Serialize(Memory);
-    }
-
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToArray/*' />
-    public T[] ToArray()
-    {
-        return _array;
     }
 
     #endregion

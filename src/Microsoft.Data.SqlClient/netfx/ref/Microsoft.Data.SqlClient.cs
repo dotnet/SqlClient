@@ -2434,9 +2434,5 @@ namespace Microsoft.Data.SqlTypes
         public int Size { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Memory/*' />
         public System.ReadOnlyMemory<T> Memory { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToString/*' />
-        public override string ToString() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToArray/*' />
-        public T[] ToArray() { throw null; }
     }
 }

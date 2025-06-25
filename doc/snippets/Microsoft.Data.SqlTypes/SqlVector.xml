@@ -45,12 +45,5 @@
     <Memory>
       <summary>Returns the vector values as a memory region. No copies are made.</summary>
     </Memory>
-    <ToArray>
-      <summary>Returns an array representing the vector values.</summary>
-    </ToArray>
-    <ToString>
-      <summary>Returns a JSON string representation of the vector. A new string is generated each time you call this method.</summary>
-      <returns>A JSON <see cref="T:System.String"/> value.</returns>
-    </ToString>
   </members>
 </docs>

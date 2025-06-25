@@ -40,8 +40,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(Array.Empty<float>(), vec.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.ToString());
+        Assert.Equal(SQLResource.NullString, vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -60,8 +59,7 @@ public class SqlVectorTest
         // to the same memory.  We want to check memory content equality, so we
         // compare their arrays instead.
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(Array.Empty<float>(), vec.ToArray());
-        Assert.Equal(SQLResource.NullString, vec.ToString());
+        Assert.Equal(SQLResource.NullString, vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -77,8 +75,7 @@ public class SqlVectorTest
         Assert.Equal(0, vec.Length);
         Assert.Equal(8, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
-        Assert.Equal(Array.Empty<float>(), vec.ToArray());
-        Assert.Equal("[]", vec.ToString());
+        Assert.Equal("[]", vec.GetString());
 
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -98,11 +95,11 @@ public class SqlVectorTest
         Assert.Equal(2, vec.Length);
         Assert.Equal(16, vec.Size);
         Assert.Equal(memory.ToArray(), vec.Memory.ToArray());
-        Assert.Equal(data, vec.ToArray());
+        Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
-        Assert.Equal("[1.10000002,2.20000005]", vec.ToString());
+        Assert.Equal("[1.10000002,2.20000005]", vec.GetString());
         #else
-        Assert.Equal("[1.1,2.2]", vec.ToString());
+        Assert.Equal("[1.1,2.2]", vec.GetString());
         #endif
         var ivec = vec as ISqlVector;
         Assert.Equal(0x00, ivec.ElementType);
@@ -123,11 +120,11 @@ public class SqlVectorTest
         Assert.Equal(3, vec.Length);
         Assert.Equal(20, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>(data).ToArray(), vec.Memory.ToArray());
-        Assert.Equal(data, vec.ToArray());
+        Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
-        Assert.Equal("[3.29999995,4.4000001,5.5]", vec.ToString());
+        Assert.Equal("[3.29999995,4.4000001,5.5]", vec.GetString());
         #else
-        Assert.Equal("[3.3,4.4,5.5]", vec.ToString());
+        Assert.Equal("[3.3,4.4,5.5]", vec.GetString());
         #endif
 
         var ivec = vec as ISqlVector;
@@ -154,11 +151,11 @@ public class SqlVectorTest
         Assert.Equal(2, vec.Length);
         Assert.Equal(16, vec.Size);
         Assert.Equal(new ReadOnlyMemory<float>(data).ToArray(), vec.Memory.ToArray());
-        Assert.Equal(data, vec.ToArray());
+        Assert.Equal(data, vec.Memory.ToArray());
         #if NETFRAMEWORK
-        Assert.Equal("[6.5999999,7.69999981]", vec.ToString());
+        Assert.Equal("[6.5999999,7.69999981]", vec.GetString());
         #else
-        Assert.Equal("[6.6,7.7]", vec.ToString());
+        Assert.Equal("[6.6,7.7]", vec.GetString());
         #endif
 
         var ivec = vec as ISqlVector;

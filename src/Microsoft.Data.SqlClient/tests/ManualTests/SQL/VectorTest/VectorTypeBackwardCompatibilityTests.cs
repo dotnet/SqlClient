@@ -275,11 +275,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             dbData = JsonSerializer.Deserialize<float[]>(result)!;
             Assert.Equal(data, dbData);
 
-            //Read using GetValue.ToString()
-            result = reader.GetValue(0).ToString()!;
-            dbData = JsonSerializer.Deserialize<float[]>(result)!;
-            Assert.Equal(data, dbData);
-
             //Read using GetFieldValue<string>
             result = reader.GetFieldValue<string>(0);
             dbData = JsonSerializer.Deserialize<float[]>(result)!;
@@ -302,10 +297,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             //Read using GetSqlString
             Assert.Throws<SqlNullValueException>(() => reader.GetString(0));
-
-            //Read using GetValue.ToString()
-            result = reader.GetValue(0).ToString();
-            Assert.Equal(string.Empty, result);
 
             //Read using GetFieldValue<string>
             Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<string>(0));
@@ -341,11 +332,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             dbData = JsonSerializer.Deserialize<float[]>(result)!;
             Assert.Equal(data, dbData);
 
-            //Read using GetValue.ToString()
-            result = reader.GetValue(0).ToString()!;
-            dbData = JsonSerializer.Deserialize<float[]>(result)!;
-            Assert.Equal(data, dbData);
-
             //Read using GetFieldValue<string>
             result = await reader.GetFieldValueAsync<string>(0);
             dbData = JsonSerializer.Deserialize<float[]>(result)!;
@@ -368,10 +354,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             //Read using GetSqlString
             Assert.Throws<SqlNullValueException>(() => reader2.GetString(0));
-
-            //Read using GetValue.ToString()
-            result = reader2.GetValue(0).ToString();
-            Assert.Equal(string.Empty, result);
 
             //Read using GetFieldValueAsync<string>
             await Assert.ThrowsAsync<SqlNullValueException>(async () => await reader2.GetFieldValueAsync<string>(0));
