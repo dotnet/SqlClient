@@ -6437,7 +6437,7 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(unencryptedBytes);
                         break;
                     }
 
@@ -6662,7 +6662,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                     }
                     break;
 
@@ -7006,8 +7006,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
-
+                        
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                         break;
                     }
 

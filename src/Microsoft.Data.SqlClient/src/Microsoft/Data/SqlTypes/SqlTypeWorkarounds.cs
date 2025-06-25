@@ -10,6 +10,10 @@ using System.Runtime.CompilerServices;
 using System.Xml;
 using Microsoft.Data.SqlClient;
 
+#if NETFRAMEWORK
+using System.Reflection;
+#endif
+
 namespace Microsoft.Data.SqlTypes
 {
     /// <summary>
@@ -21,6 +25,7 @@ namespace Microsoft.Data.SqlTypes
     internal static partial class SqlTypeWorkarounds
     {
         #region Work around inability to access SqlXml.CreateSqlXmlReader
+        
         private static readonly XmlReaderSettings s_defaultXmlReaderSettings = new() { ConformanceLevel = ConformanceLevel.Fragment };
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsCloseInput = new() { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
@@ -40,17 +45,7 @@ namespace Microsoft.Data.SqlTypes
 
             return XmlReader.Create(stream, settingsToUse);
         }
-
-        internal static XmlReader SqlXmlCreateSqlXmlReader(TextReader textReader, bool closeInput, bool async)
-        {
-            Debug.Assert(closeInput || !async, "Currently we do not have pre-created settings for !closeInput+async");
-
-            XmlReaderSettings settingsToUse = closeInput ?
-               (async ? s_defaultXmlReaderSettingsAsyncCloseInput : s_defaultXmlReaderSettingsCloseInput) :
-               s_defaultXmlReaderSettings;
-
-            return XmlReader.Create(textReader, settingsToUse);
-        }
+        
         #endregion
 
         #region Work around inability to access SqlDateTime.ToDateTime
@@ -90,5 +85,140 @@ namespace Microsoft.Data.SqlTypes
         private static Exception ThrowOverflowException() => throw SQL.DateTimeOverflow();
 
         #endregion
+        
+        #if NETFRAMEWORK
+        #region Work around inability to access `new SqlBinary(byte[], bool)`
+
+        private static readonly Func<byte[], SqlBinary> ByteArrayToSqlBinaryFactory =
+            CreateFactory<SqlBinary, byte[], bool>(value => new SqlBinary(value));
+
+        internal static SqlBinary ByteArrayToSqlBinary(byte[] value) =>
+            ByteArrayToSqlBinaryFactory(value);
+        
+        #endregion
+        
+        #region Work around inability to access SqlDecimal internal representation
+        #endregion
+        
+        #region Work around inability to access `new SqlGuid(byte[], bool)`
+        #endregion
+        
+        #region Work around inability to access `new SqlMoney(long, int)` and `SqlMoney.ToSqlInternalRepresentation`
+
+        private static readonly Func<long, SqlMoney> LongToSqlMoneyFactory =
+            CreateFactory<SqlMoney, long, int>(value => new SqlMoney((decimal)value / 10000));
+
+        private static readonly Func<SqlMoney, long> SqlMoneyToLongFactory =
+            CreateSqlMoneyToLongFactory();
+
+        /// <summary>
+        /// Constructs a SqlMoney from a long value without scaling.
+        /// </summary>
+        /// <param name="value">Internal representation of SqlMoney value.</param>
+        internal static SqlMoney LongToSqlMoney(long value) =>
+            LongToSqlMoneyFactory(value);
+
+        /// <summary>
+        /// Deconstructs a SqlMoney into a long value with scaling.
+        /// </summary>
+        /// <param name="value">SqlMoney value</param>
+        internal static long SqlMoneyToLong(SqlMoney value) =>
+            SqlMoneyToLongFactory(value);
+
+        private static Func<SqlMoney, long> CreateSqlMoneyToLongFactory()
+        {
+            try
+            {
+                // Look for SqlMoney.ToInternalRepresentation method
+                MethodInfo method = typeof(SqlMoney).GetMethod(
+                    "ToSqlInternalRepresentation",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                if (method is not null && method.ReturnType == typeof(long))
+                {
+                    // Use CreateDelegate for instance methods - it's faster than MethodInfo.Invoke
+                    // but function pointers are more complex for instance methods, especially with
+                    // struct types (like SqlMoney), so a delegate is a decent compromise
+                    var dgate = (Func<SqlMoney, long>)method.CreateDelegate(typeof(Func<SqlMoney, long>));
+
+                    // Force JIT compilation
+                    dgate(default);
+
+                    return dgate;
+                }
+            }
+            catch
+            {
+                // Reflection failed, fall through to using conversion via decimal
+            }
+            
+            SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlMoneyToLongFactory | Info | SqlMoney.ToInternalRepresentation(SqlMoney) not found. Less efficient fallback method will be used.");
+            return value => value.IsNull ? 0 : (long)(value.ToDecimal() * 10000);
+        }
+            
+        #endregion
+
+        private static unsafe Func<TValue, TInstance> CreateFactory<TInstance, TValue, TIgnored>(
+            Func<TValue, TInstance> fallbackFactory)
+            where TInstance : struct
+        {
+            // The logic of this method is that there are special internal methods that can create
+            // Sql* types without the need for copying. These methods are internal to System.Data,
+            // so we cannot access them, even they are so much faster. To get around this, we
+            // take a small perf hit to discover them via reflection in exchange for the faster
+            // perf. If reflection fails, we fall back and use the publicly available ctor, but
+            // it will be much slower.
+            // The TIgnored type is an extra argument to the ctor that differentiates this internal
+            // ctor from the public ctor.
+            
+            try
+            {
+                // Look for TInstance constructor that takes TValue, TIgnored
+                ConstructorInfo ctor = typeof(TInstance).GetConstructor(
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    binder: null,
+                    types: new[] { typeof(TValue), typeof(TIgnored) },
+                    modifiers: null);
+
+                if (ctor is not null)
+                {
+                    // Use function pointer for maximum performance on repeated calls.
+                    // This avoids delegate allocation overhead and is nearly as fast as direct
+                    // calls to the constructor
+                    IntPtr fnPtr;
+
+                    TInstance FastFactory(TValue value)
+                    {
+                        TInstance result = default;
+                        ((delegate* managed<ref TInstance, TValue, TIgnored, void>)fnPtr)(
+                            ref result,
+                            value,
+                            default /*ignored*/);
+                        return result;
+                    }
+
+                    // Force JIT compilation with a dummy function pointer first
+                    static void DummyNoOp(ref TInstance @this, TValue value, TIgnored ignored) { }
+                    fnPtr = (IntPtr)(delegate* managed<ref TInstance, TValue, TIgnored, void>)(&DummyNoOp);
+                    FastFactory(default);
+
+                    // Replace with real constructor function pointer
+                    fnPtr = ctor.MethodHandle.GetFunctionPointer();
+                    return FastFactory;
+                }
+            }
+            catch
+            {
+                // Reflection failed, fall through to use the slow conversion.
+            }
+            
+            // If reflection failed, or the ctor couldn't be found, fallback to construction using
+            // the fallback factory. This will be much slower, but ensures conversion can still
+            // happen.
+            SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateFactory | Info | {0}..ctor({1}, {2}) not found. Less efficient fallback method will be used.", typeof(TInstance).Name, typeof(TValue).Name, typeof(TIgnored).Name);
+            return fallbackFactory;
+        }
+        
+        #endif
     }
 }

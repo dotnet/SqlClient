@@ -19,100 +19,6 @@ namespace Microsoft.Data.SqlTypes
     /// </summary>
     internal static partial class SqlTypeWorkarounds
     {
-        #region Work around inability to access SqlMoney.ctor(long, int) and SqlMoney.ToSqlInternalRepresentation
-        private static readonly Func<long, SqlMoney> s_sqlMoneyfactory = CtorHelper.CreateFactory<SqlMoney, long, int>(); // binds to SqlMoney..ctor(long, int) if it exists
-
-        /// <summary>
-        /// Constructs a SqlMoney from a long value without scaling. The ignored parameter exists
-        /// only to distinguish this constructor from the constructor that takes a long.
-        /// Used only internally.
-        /// </summary>
-        internal static SqlMoney SqlMoneyCtor(long value, int ignored)
-        {
-            SqlMoney val;
-            if (s_sqlMoneyfactory is not null)
-            {
-                val = s_sqlMoneyfactory(value);
-            }
-            else
-            {
-                // SqlMoney is a long internally. Dividing by 10,000 gives us the decimal representation
-                val = new SqlMoney(((decimal)value) / 10000);
-            }
-
-            return val;
-        }
-
-        internal static long SqlMoneyToSqlInternalRepresentation(SqlMoney money)
-        {
-            return SqlMoneyHelper.s_sqlMoneyToLong(ref money);
-        }
-
-        private static class SqlMoneyHelper
-        {
-            internal delegate long SqlMoneyToLongDelegate(ref SqlMoney @this);
-            internal static readonly SqlMoneyToLongDelegate s_sqlMoneyToLong = GetSqlMoneyToLong();
-
-            internal static SqlMoneyToLongDelegate GetSqlMoneyToLong()
-            {
-                SqlMoneyToLongDelegate del = null;
-                    try
-                    {
-                        del = GetFastSqlMoneyToLong();
-                    }
-                    catch
-                    {
-                        // If an exception occurs for any reason, swallow & use the fallback code path.
-                    }
-
-                return del ?? FallbackSqlMoneyToLong;
-            }
-
-            private static SqlMoneyToLongDelegate GetFastSqlMoneyToLong()
-            {
-                MethodInfo toSqlInternalRepresentation = typeof(SqlMoney).GetMethod("ToSqlInternalRepresentation",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
-                    null, CallingConventions.Any, new Type[] { }, null);
-
-                if (toSqlInternalRepresentation is not null && toSqlInternalRepresentation.ReturnType == typeof(long))
-                {
-                    // On Full Framework, invoking the MethodInfo first before wrapping
-                    // a delegate around it will produce better codegen. We don't need
-                    // to inspect the return value; we just need to call the method.
-
-                    _ = toSqlInternalRepresentation.Invoke(new SqlMoney(0), new object[0]);
-
-                    // Now create the delegate. This is an open delegate, meaning the
-                    // "this" parameter will be provided as arg0 on each call.
-
-                    var del = (SqlMoneyToLongDelegate)toSqlInternalRepresentation.CreateDelegate(typeof(SqlMoneyToLongDelegate), target: null);
-
-                    // Now we can cache the delegate and invoke it over and over again.
-                    // Note: the first parameter to the delegate is provided *byref*.
-
-                    return del;
-                }
-
-                SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.GetFastSqlMoneyToLong | Info | SqlMoney.ToSqlInternalRepresentation() not found. Less efficient fallback method will be used.");
-                return null; // missing the expected method - cannot use fast path
-            }
-
-            // Used in case we can't use a [Serializable]-like mechanism.
-            private static long FallbackSqlMoneyToLong(ref SqlMoney value)
-            {
-                if (value.IsNull)
-                {
-                    return default;
-                }
-                else
-                {
-                    decimal data = value.ToDecimal();
-                    return (long)(data * 10000);
-                }
-            }
-        }
-        #endregion
-
         #region Work around inability to access SqlDecimal._data1/2/3/4
         internal static void SqlDecimalExtractData(SqlDecimal d, out uint data1, out uint data2, out uint data3, out uint data4)
         {
@@ -247,25 +153,6 @@ namespace Microsoft.Data.SqlTypes
                     data1 = (uint)data[0];
                 }
             }
-        }
-        #endregion
-
-        #region Work around inability to access SqlBinary.ctor(byte[], bool)
-        private static readonly Func<byte[], SqlBinary> s_sqlBinaryfactory = CtorHelper.CreateFactory<SqlBinary, byte[], bool>(); // binds to SqlBinary..ctor(byte[], bool) if it exists
-
-        internal static SqlBinary SqlBinaryCtor(byte[] value, bool ignored)
-        {
-            SqlBinary val;
-            if (s_sqlBinaryfactory is not null)
-            {
-                val = s_sqlBinaryfactory(value);
-            }
-            else
-            {
-                val = new SqlBinary(value);
-            }
-
-            return val;
         }
         #endregion
 

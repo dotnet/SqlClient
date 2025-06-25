@@ -3013,11 +3013,12 @@ namespace Microsoft.Data.SqlClient.Server
 
             long temp = getters.GetInt64(ordinal);
             sink.ProcessMessagesAndThrow();
-#if NET
+
+            #if NET
             return SqlMoney.FromTdsValue(temp);
-#else
-            return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
-#endif
+            #else
+            return SqlTypeWorkarounds.LongToSqlMoney(temp);
+            #endif
         }
 
         private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
@@ -3487,12 +3488,15 @@ namespace Microsoft.Data.SqlClient.Server
                     sink.ProcessMessagesAndThrow();
                 }
 
-#if NET
-                setters.SetInt64(ordinal, value.GetTdsValue());
-#else
-                setters.SetInt64(ordinal, SqlTypeWorkarounds.SqlMoneyToSqlInternalRepresentation(value));
-#endif
+                #if NET
+                long longValue = value.GetTdsValue();
+                #else
+                long longValue = SqlTypeWorkarounds.SqlMoneyToLong(value);
+                #endif
+                
+                setters.SetInt64(sink, ordinal, longValue);
             }
+            
             sink.ProcessMessagesAndThrow();
         }
 
