@@ -11,7 +11,7 @@
       </summary>
     </ctor1>
     <ctor2>
-      <param name="values"></param>
+      <param name="memory"></param>
       <summary>
         Takes an array of values as input and initializes a new instance of the SqlVector class.
       </summary>
@@ -20,7 +20,14 @@
       <inheritdoc/>
     </IsNull>
     <Null>
-        <inheritdoc/>
+    <summary>
+      Represents a null instance without any attributes.
+    </summary>
+      <remarks>
+        This property is provided for compatibility with DataTable.
+        In most cases, prefer using <c>IsNull</c> to check if a SqlVector instance is a null vector.
+        This is equivalent to <c>null</c> value.
+      </remarks>
     </Null>
     <Length>
       <summary>

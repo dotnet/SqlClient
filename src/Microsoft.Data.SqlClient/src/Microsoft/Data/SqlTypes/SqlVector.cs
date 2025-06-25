@@ -27,7 +27,7 @@ where T : unmanaged
     private readonly byte _elementType;
     private readonly byte _elementSize;
     private readonly byte[] _tdsBytes;
-    private T[]? _array;
+    private T[] _array;
 
     #endregion
 
@@ -54,29 +54,29 @@ where T : unmanaged
     }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor2/*' />
-    public SqlVector(ReadOnlyMemory<T> values)
+    public SqlVector(ReadOnlyMemory<T> memory)
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
 
         IsNull = false;
 
-        Length = values.Length;
+        Length = memory.Length;
         Size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * Length);
 
-        _tdsBytes = MakeTdsBytes(values);
-        _array = values.ToArray();
-        Memory = values;
+        _tdsBytes = MakeTdsBytes(memory);
+        _array = memory.ToArray();
+        Memory = memory;
     }
 
-    internal SqlVector(byte[] rawBytes)
+    internal SqlVector(byte[] tdsBytes)
     {
         (_elementType, _elementSize) = GetTypeFieldsOrThrow();
 
-        (Length, Size) = GetCountsOrThrow(rawBytes);
+        (Length, Size) = GetCountsOrThrow(tdsBytes);
 
         IsNull = false;
 
-        _tdsBytes = rawBytes;
+        _tdsBytes = tdsBytes;
         _array = MakeArray();
         Memory = new(_array);
     }
@@ -96,7 +96,7 @@ where T : unmanaged
     }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ToArray/*' />
-    public T[]? ToArray()
+    public T[] ToArray()
     {
         return _array;
     }
@@ -158,7 +158,7 @@ where T : unmanaged
         // | Number of Dimensions   | 2               | NN                    | Number of vector elements                                   |
         // | Dimension Type         | 1               | 0x00                  | Element type indicator (e.g. 0x00 for float32)              |
         // | Reserved               | 3               | 0x00 0x00 0x00        | Reserved for future use                                     |
-        // | Stream of Values       | NN * sizeof(T)  | [float bytes...]      | Raw bytes for vector elements                               |
+        // | Stream of Values       | NN * sizeof(T)  | [element bytes...]    | Raw bytes for vector elements                               |
         // +------------------------+-----------------+----------------------+--------------------------------------------------------------+
 
         byte[] result = new byte[Size];

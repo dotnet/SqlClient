@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
         public SqlVector(int length) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor2/*' />
-        public SqlVector(System.ReadOnlyMemory<T> values) { }
+        public SqlVector(System.ReadOnlyMemory<T> memory) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/IsNull/*' />
         public bool IsNull => throw null;
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/Null/*' />
