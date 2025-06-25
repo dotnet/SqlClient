@@ -773,7 +773,7 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return new SqlVectorFloat32(elementCount);
+                        return new SqlVector<float>(elementCount);
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -781,7 +781,7 @@ namespace Microsoft.Data.SqlClient
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVectorFloat32((byte[])_sqlBufferReturnValue.Value);
+                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -2369,7 +2369,7 @@ namespace Microsoft.Data.SqlClient
                         value = ((TimeOnly)value).ToTimeSpan();
                     }
 #endif
-                    else if (currentType == typeof(SqlVectorFloat32))
+                    else if (currentType == typeof(SqlVector<float>))
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
@@ -2377,7 +2377,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = (new SqlVectorFloat32(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {

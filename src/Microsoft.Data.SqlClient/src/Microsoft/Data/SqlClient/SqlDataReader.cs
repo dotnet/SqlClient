@@ -2835,11 +2835,16 @@ namespace Microsoft.Data.SqlClient
             return json;
         }
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVectorFloat32/*' />
-        virtual public SqlVectorFloat32 GetSqlVectorFloat32(int i)
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
+        virtual public SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged
         {
+            if (typeof(T) != typeof(float))
+            {
+                throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+            }
+
             ReadColumn(i);
-            return _data[i].SqlVectorFloat32;
+            return _data[i].GetSqlVector<T>();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
@@ -3101,7 +3106,7 @@ namespace Microsoft.Data.SqlClient
                         switch (metaData.scale)
                         {
                             case (byte)MetaType.SqlVectorElementType.Float32:
-                                return data.SqlVectorFloat32;
+                                return data.GetSqlVector<float>();
                             default:
                                 throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
                         }
@@ -3211,14 +3216,14 @@ namespace Microsoft.Data.SqlClient
                 return (T)(object)data.TimeOnly;
             }
 #endif
-            else if (typeof(T) == typeof(SqlVectorFloat32))
+            else if (typeof(T) == typeof(SqlVector<float>))
             {
                 MetaType metaType = metaData.metaType;
                 if (metaType.SqlDbType != SqlDbTypeExtensions.Vector)
                 {
                     throw SQL.VectorNotSupportedOnColumnType(metaData.column);
                 }
-                return (T)(object)data.SqlVectorFloat32;
+                return (T)(object)data.GetSqlVector<float>();
             }
             else if (typeof(T) == typeof(XmlReader))
             {
@@ -3363,7 +3368,7 @@ namespace Microsoft.Data.SqlClient
                         if (data.IsNull)
                             return (T)(object)data.String;
                         else
-                            return (T)(object)data.SqlVectorFloat32.ToString();
+                            return (T)(object)data.GetSqlVector<float>().ToString();
                     }
                     // the requested type is likely to be one that isn't supported so try the cast and
                     // unless there is a null value conversion then feedback the cast exception with 

@@ -10863,28 +10863,6 @@ namespace System {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Vector column length must be non-negative..
-        /// </summary>
-        internal static string ADP_InvalidVectorColumnLength
-        {
-            get
-            {
-                return ResourceManager.GetString("ADP_InvalidVectorColumnLength", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Values {0} cannot be null or empty..
-        /// </summary>
-        internal static string ADP_EmptyVectorValues
-        {
-            get
-            {
-                return ResourceManager.GetString("ADP_EmptyVectorValues", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to {0} Invalid JSON string for vector...
         /// </summary>
         internal static string ADP_InvalidJsonStringForVector
@@ -10894,7 +10872,6 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidJsonStringForVector", resourceCulture);
             }
         }
-
 
         /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..

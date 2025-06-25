@@ -4755,12 +4755,6 @@
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Invalid vector header received.</value>
   </data>
-  <data name="ADP_InvalidVectorColumnLength" xml:space="preserve">
-    <value>Vector column length must be non-negative.</value>
-  </data>
-   <data name="ADP_EmptyVectorValues" xml:space="preserve">
-    <value>Values cannot be null or empty.</value>
-  </data>
   <data name="ADP_InvalidJsonStringForVector" xml:space="preserve">
     <value>{0} Invalid JSON string for vector.</value>
   </data>

@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         byte[] VectorPayload { get; }
 
         /// <summary>
-        /// Gets the raw vector data formatted for TDS payload.
+        /// Returns the total size in bytes for sending SqlVector value on TDS.
         /// </summary>
         int Size { get; }
     }
