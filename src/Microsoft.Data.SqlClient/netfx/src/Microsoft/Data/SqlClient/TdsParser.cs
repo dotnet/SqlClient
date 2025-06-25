@@ -6416,7 +6416,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
-                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlGuid = SqlTypeWorkarounds.ByteArrayToSqlGuid(unencryptedBytes);
                         break;
                     }
 
@@ -6677,7 +6677,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Internally, we use Sqlbinary to deal with varbinary data and store it in 
                     // SqlBuffer as SqlBinary value.
-                    value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
+                    value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
 
                     // Extract the metadata from the payload and set it as the vector attributes
                     // in the SqlBuffer. This metadata is further used when constructing a SqlVector

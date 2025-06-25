@@ -101,6 +101,13 @@ namespace Microsoft.Data.SqlTypes
         #endregion
         
         #region Work around inability to access `new SqlGuid(byte[], bool)`
+
+        private static readonly Func<byte[], SqlGuid> ByteArrayToSqlGuidFactory =
+            CreateFactory<SqlGuid, byte[], bool>(value => new SqlGuid(value));
+
+        internal static SqlGuid ByteArrayToSqlGuid(byte[] value) =>
+            ByteArrayToSqlGuidFactory(value);
+        
         #endregion
         
         #region Work around inability to access `new SqlMoney(long, int)` and `SqlMoney.ToSqlInternalRepresentation`

@@ -3494,7 +3494,7 @@ namespace Microsoft.Data.SqlClient.Server
                 long longValue = SqlTypeWorkarounds.SqlMoneyToLong(value);
                 #endif
                 
-                setters.SetInt64(sink, ordinal, longValue);
+                setters.SetInt64(ordinal, longValue);
             }
             
             sink.ProcessMessagesAndThrow();
