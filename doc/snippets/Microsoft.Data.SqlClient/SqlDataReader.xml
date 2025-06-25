@@ -415,6 +415,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <item><description>SqlMoney</description></item>
           <item><description>SqlSingle</description></item>
           <item><description>SqlString</description></item>
+          <item><description>SqlVectorFloat32</description></item>
           <item><description>Stream</description></item>
           <item><description>String</description></item>
           <item><description>TextReader</description></item>
@@ -489,6 +490,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <item><description>SqlMoney</description></item>
           <item><description>SqlSingle</description></item>
           <item><description>SqlString</description></item>
+          <item><description>SqlVectorFloat32</description></item>
           <item><description>Stream</description></item>
           <item><description>String</description></item>
           <item><description>TextReader</description></item>

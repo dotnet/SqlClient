@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.Data.SqlTypes;
-using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlTypes
                 throw ADP.InvalidVectorHeader();
             }
             _rawBytes = rawBytes;
-            _elementCount = GetElementCountFromRawBytes(rawBytes);
+            _elementCount = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(2));
             var floatArray = new float[_elementCount];
             Buffer.BlockCopy(_rawBytes, 8, floatArray, 0, _elementCount * _elementSize);
             Values = new ReadOnlyMemory<float>(floatArray);
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlTypes
         {
             if (length < 0)
                 throw ADP.InvalidVectorColumnLength(nameof(length));
-                
+
             _elementCount = length;
             _rawBytes = Array.Empty<byte>();
             Values = new ReadOnlyMemory<float>(Array.Empty<float>());
@@ -127,27 +127,35 @@ namespace Microsoft.Data.SqlTypes
 
             _rawBytes[0] = VecHeaderMagicNo;
             _rawBytes[1] = VecVersionNo;
-            _rawBytes[2] = (byte)(_elementCount & 0xFF);
-            _rawBytes[3] = (byte)((_elementCount >> 8) & 0xFF);
+            BinaryPrimitives.WriteUInt16LittleEndian(_rawBytes.AsSpan(2), (ushort)_elementCount);
             _rawBytes[4] = VecTypeFloat32;
             _rawBytes[5] = 0x00;
             _rawBytes[6] = 0x00;
             _rawBytes[7] = 0x00;
 
-            // Copy data
+
+            // Write float data in little-endian format
+            Span<byte> dest = _rawBytes.AsSpan(TdsEnums.VECTOR_HEADER_SIZE);
+
 #if NETFRAMEWORK
-            if (MemoryMarshal.TryGetArray(values, out ArraySegment<float> segment))
+            // .NET Framework: Use BitConverter with endianness check
+            ReadOnlySpan<float> floatSpan = values.Span;
+            for (int i = 0; i < floatSpan.Length; i++)
             {
-                Buffer.BlockCopy(segment.Array, segment.Offset * sizeof(float), _rawBytes, TdsEnums.VECTOR_HEADER_SIZE, segment.Count * _elementSize);
-            }
-            else
-            {
-                Buffer.BlockCopy(values.ToArray(), 0, _rawBytes, TdsEnums.VECTOR_HEADER_SIZE, values.Length * _elementSize);
+                byte[] bytes = BitConverter.GetBytes(floatSpan[i]);
+                if (!BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(bytes);
+                }
+                bytes.CopyTo(dest.Slice(i * sizeof(float)));
             }
 #else
-            // Fast span-based copy
-            var byteSpan = MemoryMarshal.AsBytes(values.Span);
-            byteSpan.CopyTo(_rawBytes.AsSpan(TdsEnums.VECTOR_HEADER_SIZE));
+            // .NET 8.0+: Use BinaryPrimitives for high-performance little-endian writing
+            ReadOnlySpan<float> floatSpan = values.Span;
+            for (int i = 0; i < floatSpan.Length; i++)
+            {
+                BinaryPrimitives.WriteSingleLittleEndian(dest.Slice(i * sizeof(float)), floatSpan[i]);
+            }
 #endif
         }
 
@@ -155,21 +163,17 @@ namespace Microsoft.Data.SqlTypes
         {
             if (rawBytes.Length == 0 || rawBytes.Length < TdsEnums.VECTOR_HEADER_SIZE)
                 return false;
-            
+
             if (rawBytes[0] != VecHeaderMagicNo || rawBytes[1] != VecVersionNo || rawBytes[4] != VecTypeFloat32)
-                 return false;
-            
-            int elementCount = GetElementCountFromRawBytes(rawBytes);
+                return false;
+
+            int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(2));
             if (rawBytes.Length != TdsEnums.VECTOR_HEADER_SIZE + elementCount * _elementSize)
                 return false;
 
             return true;
         }
 
-        private int GetElementCountFromRawBytes(byte[] rawBytes)
-        {
-            return rawBytes[2] | (rawBytes[3] << 8);
-        }
         #endregion
     }
 }
