@@ -585,6 +585,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\IsqlVector.cs">
+      <Link>Microsoft\Data\SqlClient\ISqlVector.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.Windows.cs</Link>
     </Compile>
@@ -905,6 +908,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVectorFloat32.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlVectorFloat32.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>

@@ -633,6 +633,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
                     }
+                    else if (metadata.type == SqlDbTypeExtensions.Vector)
+                    {
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "vector");
+                    }
                     else
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
@@ -677,12 +681,15 @@ namespace Microsoft.Data.SqlClient
                                         case TdsEnums.SQLNTEXT:
                                             size /= 2;
                                             break;
+                                        case TdsEnums.SQLVECTOR:
+                                            size = MetaType.GetVectorElementCount(metadata.length, metadata.scale);
+                                            break;
                                         default:
                                             break;
                                     }
                                     updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
                                 }
-                                else if (metadata.metaType.IsPlp && metadata.metaType.SqlDbType != SqlDbType.Xml && metadata.metaType.SqlDbType != SqlDbTypeExtensions.Json)
+                                else if (metadata.metaType.IsPlp && !(metadata.metaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
                                 {
                                     // Partial length column prefix (max)
                                     updateBulkCommandText.Append("(max)");
@@ -1592,6 +1599,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLTIME:
                     case TdsEnums.SQLDATETIME2:
                     case TdsEnums.SQLDATETIMEOFFSET:
+                    case TdsEnums.SQLVECTOR:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
                         break;

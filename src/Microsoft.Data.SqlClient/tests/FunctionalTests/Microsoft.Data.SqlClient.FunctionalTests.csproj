@@ -65,6 +65,7 @@
     <Compile Include="SqlConnectionTest.RetrieveStatistics.cs" />
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
+    <Compile Include="SqlVectorFloat32Test.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
     <Compile Include="TdsParserStateObject.TestHarness.cs" />
     <Compile Include="TestTdsServer.cs" />
