@@ -7,13 +7,16 @@
     <ctor1>
       <param name="length"></param>
       <summary>
-        Takes a <see cref="int"/> as input and represents a null vector value.
+        Constructs a null vector of the given length. SQL Server requires vector arguments to specify their length even when null.
       </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        Vector length must be non-negative.
+      </exception>
     </ctor1>
     <ctor2>
       <param name="memory"></param>
       <summary>
-        Takes an array of values as input and initializes a new instance of the SqlVector class.
+        Constructs a vector with the given values.
       </summary>
     </ctor2>
     <IsNull>
@@ -31,22 +34,22 @@
     </Null>
     <Length>
       <summary>
-        Indicates the count of the elements in the vector.
+        Returns the number of elements in the vector.
       </summary>
     </Length>
     <Size>
       <summary>
-        Indicates the size in bytes for a SqlVector value.
+        Returns the number of bytes required to represent this vector when communicating with SQL Server.
       </summary>
     </Size>
     <Memory>
-      <summary>Returns the values as a <see cref="T:System.ReadOnlyMemory"/> instance.</summary>
+      <summary>Returns the vector values as a memory region. No copies are made.</summary>
     </Memory>
     <ToArray>
       <summary>Returns an array representing the vector values.</summary>
     </ToArray>
     <ToString>
-      <summary>Returns the string representation of a JSON array of the values.</summary>
+      <summary>Returns a JSON string representation of the vector. A new string is generated each time you call this method.</summary>
       <returns>A JSON <see cref="T:System.String"/> value.</returns>
     </ToString>
   </members>

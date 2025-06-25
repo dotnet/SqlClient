@@ -50,6 +50,26 @@ public class SqlVectorTest
     }
 
     [Fact]
+    public void Construct_WithLengthZero()
+    {
+        var vec = new SqlVector<float>(0);
+        Assert.True(vec.IsNull);
+        Assert.Equal(0, vec.Length);
+        Assert.Equal(8, vec.Size);
+        // Note that ReadOnlyMemory<> equality checks that both instances point
+        // to the same memory.  We want to check memory content equality, so we
+        // compare their arrays instead.
+        Assert.Equal(new ReadOnlyMemory<float>().ToArray(), vec.Memory.ToArray());
+        Assert.Equal(Array.Empty<float>(), vec.ToArray());
+        Assert.Equal(SQLResource.NullString, vec.ToString());
+
+        var ivec = vec as ISqlVector;
+        Assert.Equal(0x00, ivec.ElementType);
+        Assert.Equal(0x04, ivec.ElementSize);
+        Assert.Empty(ivec.VectorPayload);
+    }
+
+    [Fact]
     public void Construct_Memory_Empty()
     {
         SqlVector<float> vec = new(new ReadOnlyMemory<float>());
