@@ -54,7 +54,8 @@ namespace Microsoft.Data.SqlClient
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
         
-        private static readonly Dictionary<string, string> s_keywordMap = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> s_keywordMap =
+            new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         private readonly bool _integratedSecurity;
 
