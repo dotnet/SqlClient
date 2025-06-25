@@ -376,11 +376,10 @@ namespace Microsoft.Data.SqlClient.Server
                 _columnSmiMetaData[i] = MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(_columnMetaData[i]);
             }
 
+            _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
+
             #if NETFRAMEWORK
-            _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
             _usesStringStorageForXml = true;
-            #else
-            _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
             #endif
         }
 
