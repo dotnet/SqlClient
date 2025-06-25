@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<docs>
+  <members name="SqlVector">
+    <SqlVector>
+      <summary>Represents a vector value in SQL Server.</summary>
+    </SqlVector>
+    <ctor1>
+      <param name="length"></param>
+      <summary>
+        Takes a <see cref="int"/> as input and represents a null vector value.
+      </summary>
+    </ctor1>
+    <ctor2>
+      <param name="values"></param>
+      <summary>
+        Takes an array of values as input and initializes a new instance of the SqlVector class.
+      </summary>
+    </ctor2>
+    <IsNull>
+      <inheritdoc/>
+    </IsNull>
+    <Null>
+        <inheritdoc/>
+    </Null>
+    <Length>
+      <summary>
+        Indicates the count of the elements in the vector.
+      </summary>
+    </Length>
+    <Size>
+      <summary>
+        Indicates the size in bytes for a SqlVector value.
+      </summary>
+    </Size>
+    <Memory>
+      <summary>Returns the values as a <see cref="T:System.ReadOnlyMemory"/> instance.</summary>
+    </Memory>
+    <ToArray>
+      <summary>Returns an array representing the vector values.</summary>
+    </ToArray>
+    <ToString>
+      <summary>Returns the string representation of a JSON array of the values.</summary>
+      <returns>A JSON <see cref="T:System.String"/> value.</returns>
+    </ToString>
+  </members>
+</docs>

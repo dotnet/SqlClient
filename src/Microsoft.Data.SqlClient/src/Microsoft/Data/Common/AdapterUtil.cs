@@ -1147,12 +1147,6 @@ namespace Microsoft.Data.Common
         internal static ArgumentException InvalidVectorHeader()
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidVectorHeader));
 
-        internal static ArgumentOutOfRangeException InvalidVectorColumnLength(string paramName)
-            => ArgumentOutOfRange(paramName, StringsHelper.GetString(Strings.ADP_InvalidVectorColumnLength));
-
-        internal static ArgumentException EmptyVectorValues(string arrayName)
-            => Argument(StringsHelper.GetString(Strings.ADP_EmptyVectorValues, arrayName));
-
         internal static Exception InvalidJsonStringForVector(string value, Exception inner)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidJsonStringForVector, value), inner);
 
