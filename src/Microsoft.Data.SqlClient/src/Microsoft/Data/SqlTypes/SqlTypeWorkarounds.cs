@@ -147,10 +147,10 @@ namespace Microsoft.Data.SqlTypes
                     {
                         byte* bytePtr = (byte*)&value;
                         return (
-                            *(uint*)(&value + data1Offset.Value),
-                            *(uint*)(&value + data2Offset.Value),
-                            *(uint*)(&value + data3Offset.Value),
-                            *(uint*)(&value + data4Offset.Value)
+                            *(uint*)(bytePtr + data1Offset.Value),
+                            *(uint*)(bytePtr + data2Offset.Value),
+                            *(uint*)(bytePtr + data3Offset.Value),
+                            *(uint*)(bytePtr + data4Offset.Value)
                         );
                     };
 
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlTypes
                 }
 
                 int[] data = value.Data;
-                return ((uint)data[3], (uint)data[2], (uint)data[1], (uint)data[0]);
+                return ((uint)data[0], (uint)data[1], (uint)data[2], (uint)data[3]);
             };
         }
         
