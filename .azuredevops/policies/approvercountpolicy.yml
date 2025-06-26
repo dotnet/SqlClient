@@ -16,7 +16,7 @@ configuration:
     creatorVoteCounts: false
     allowDownvotes: false
     sourcePushOptions:
-      resetOnSourcePush: true
+      resetOnSourcePush: false
       requireVoteOnLastIteration: true
       requireVoteOnEachIteration: false
       resetRejectionsOnSourcePush: false
