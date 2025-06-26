@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Tracks all connections currently managed by this pool, whether idle or busy.
         /// Only updated rarely - when physical connections are opened/closed - but is read in perf-sensitive contexts.
         /// </summary>
-        private readonly DbConnectionInternal?[] _connections;
+        private readonly BoundedConcurrentDictionary<DbConnectionInternal> _connections;
 
         /// <summary>
         /// Reader side for the idle connection channel. Contains nulls in order to release waiting attempts after
@@ -52,9 +52,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         private readonly ChannelReader<DbConnectionInternal?> _idleConnectionReader;
         private readonly ChannelWriter<DbConnectionInternal?> _idleConnectionWriter;
-
-        // Counts the total number of open connections tracked by the pool.
-        private volatile int _numConnections;
         #endregion
 
         /// <summary>
@@ -73,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
 
-            _connections = new DbConnectionInternal[MaxPoolSize];
+            _connections = new(MaxPoolSize);
 
             // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
             // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
@@ -96,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         /// Note: maintain _numConnections backing field to enable atomic operations
-        public int Count => _numConnections;
+        public int Count => _connections.Count;
 
         /// <inheritdoc />
         public bool ErrorOccurred => throw new NotImplementedException();
@@ -306,19 +303,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             bool async, 
             CancellationToken cancellationToken)
         {
-            // As long as we're under max capacity, attempt to increase the connection count and open a new connection.
-            for (var numConnections = _numConnections; numConnections < MaxPoolSize; numConnections = _numConnections)
+            if(_connections.TryReserve())
             {
-                // Try to reserve a spot in the pool by incrementing _numConnections.
-                // If _numConnections changed underneath us, then another thread already reserved a spot.
-                // Cycle back through the check above to reset our expected numConnections and to make sure we don't go
-                // over MaxPoolSize.
-                // Note that we purposefully don't use SpinWait for this: https://github.com/dotnet/coreclr/pull/21437
-                if (Interlocked.CompareExchange(ref _numConnections, numConnections + 1, numConnections) != numConnections)
-                {
-                    continue;
-                }
-
                 try
                 {
                     // We've managed to increase the open counter, open a physical connection.
@@ -350,20 +336,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     newConnection.PrePush(null);
 
-                    int i;
-                    for (i = 0; i < MaxPoolSize; i++)
-                    {
-                        if (Interlocked.CompareExchange(ref _connections[i], newConnection, null) == null)
-                        {
-                            break;
-                        }
-                    }
-
-                    Debug.Assert(i < MaxPoolSize, $"Could not find free slot in {_connections} when opening.");
-                    if (i == MaxPoolSize)
-                    {
-                        //TODO: generic exception?
-                        throw new Exception($"Could not find free slot in {_connections} when opening. Please report a bug.");
+                    if (!_connections.TryAdd(newConnection) {
+                        // If we failed to add the connection to the pool, it means that another thread has already
+                        // added it. We need to decrement the open counter.
+                        throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectInPoolMoreThanOnce);
                     }
 
                     return Task.FromResult<DbConnectionInternal?>(newConnection);
@@ -371,7 +347,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 catch
                 {
                     // Physical open failed, decrement the open and busy counter back down.
-                    Interlocked.Decrement(ref _numConnections);
+                    _connections.ReleaseReservation();
 
                     // In case there's a waiting attempt on the channel, we write a null to the idle connection channel
                     // to wake it up, so it will try opening (and probably throw immediately)
@@ -413,36 +389,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="connection">The connection to be closed.</param>
         private void RemoveConnection(DbConnectionInternal connection)
         {
-            // Remove the connection from the pool first to ensure any exception thrown during disposal doesn't leave
-            // the pool in an inconsistent state.
-            bool found = false;
-            for (int i = 0; i < _connections.Length; i++)
+            if(_connections.TryRemove(connection))
             {
-                if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
-                {
-                    found = true;
-                    break;
-                }
+                // This connection was tracked by the pool, so closing it has opened a free spot in the pool.
+                // Write a null to the idle connection channel to wake up a waiter, who can now open a new
+                // connection. Statement order is important since we have synchronous completions on the channel.
+                _idleConnectionWriter.TryWrite(null);
             }
 
             connection.Dispose();
-
-            // If CloseConnection is being called from within OpenNewConnection (e.g. an error happened during a
-            // connection initializer which causes the connection to Break, and therefore return the connection), then
-            // we haven't yet added the connection to Connections. In this case, there's no state to revert here
-            // (that's all taken care of in OpenNewConnection), skip it.
-            if (!found)
-            {
-                return;
-            }
-
-            var numConnections = Interlocked.Decrement(ref _numConnections);
-            Debug.Assert(numConnections >= 0);
-
-            // This connection was tracked by the pool, so closing it has opened a free spot in the pool.
-            // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-            // connection. Statement order is important since we have synchronous completions on the channel.
-            _idleConnectionWriter.TryWrite(null);
         }
 
         /// <summary>
