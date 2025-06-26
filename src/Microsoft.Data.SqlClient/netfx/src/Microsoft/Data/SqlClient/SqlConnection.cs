@@ -685,7 +685,7 @@ namespace Microsoft.Data.SqlClient
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
                 SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
-                return InnerConnection.ShouldHidePassword&& connectionOptions != null && !connectionOptions.PersistSecurityInfo ? null : _accessToken;
+                return InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo ? null : _accessToken;
             }
             set
             {

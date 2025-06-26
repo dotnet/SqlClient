@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Add keywords and synonyms to the keyword map.
             // @TODO: About half of these synonyms are just the same as the keyword but with spaces
-            //    removed. However, not all multiword keywords are supported without spaced. We
+            //    removed. However, not all multiword keywords are supported without spaces. We
             //    should just add support for all keywords w/ or w/o spaces, then remove them from
             //    synonyms.
             AddKeywordToMap(DbConnectionStringKeywords.ApplicationIntent,
