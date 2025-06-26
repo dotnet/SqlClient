@@ -43,7 +43,9 @@ namespace Microsoft.Data.ProviderBase
             DbConnection outerConnection,
             string collectionName,
             string[] restrictions)
-            => throw ADP.ClosedConnectionError();
+        {
+            throw ADP.ClosedConnectionError();
+        }
 
         protected override DbReferenceCollection CreateReferenceCollection() => throw ADP.ClosedConnectionError();
 

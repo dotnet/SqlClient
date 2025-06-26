@@ -3085,8 +3085,10 @@ namespace Microsoft.Data.SqlClient
             DbConnection outerConnection,
             SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
-            DbConnectionOptions userOptions) =>
-            base.TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+            DbConnectionOptions userOptions)
+        {
+            return TryOpenConnectionInternal(outerConnection, connectionFactory, retry, userOptions);
+        }
     }
 
     internal sealed class ServerInfo
