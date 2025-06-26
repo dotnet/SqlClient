@@ -12,6 +12,7 @@ using Microsoft.Data.SqlClient;
 
 #if NETFRAMEWORK
 using System.Reflection;
+using System.Runtime.InteropServices;
 #endif
 
 namespace Microsoft.Data.SqlTypes
@@ -31,17 +32,22 @@ namespace Microsoft.Data.SqlTypes
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
 
         internal const SqlCompareOptions SqlStringValidSqlCompareOptionMask =
-            SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreWidth |
-            SqlCompareOptions.IgnoreNonSpace | SqlCompareOptions.IgnoreKanaType |
-            SqlCompareOptions.BinarySort | SqlCompareOptions.BinarySort2;
+            SqlCompareOptions.BinarySort |
+            SqlCompareOptions.BinarySort2 |
+            SqlCompareOptions.IgnoreCase |
+            SqlCompareOptions.IgnoreWidth |
+            SqlCompareOptions.IgnoreNonSpace |
+            SqlCompareOptions.IgnoreKanaType;
 
         internal static XmlReader SqlXmlCreateSqlXmlReader(Stream stream, bool closeInput, bool async)
         {
             Debug.Assert(closeInput || !async, "Currently we do not have pre-created settings for !closeInput+async");
 
-            XmlReaderSettings settingsToUse = closeInput ?
-                (async ? s_defaultXmlReaderSettingsAsyncCloseInput : s_defaultXmlReaderSettingsCloseInput) :
-                s_defaultXmlReaderSettings;
+            XmlReaderSettings settingsToUse = closeInput
+                ? async 
+                    ? s_defaultXmlReaderSettingsAsyncCloseInput
+                    : s_defaultXmlReaderSettingsCloseInput
+                : s_defaultXmlReaderSettings;
 
             return XmlReader.Create(stream, settingsToUse);
         }
@@ -87,6 +93,7 @@ namespace Microsoft.Data.SqlTypes
         #endregion
         
         #if NETFRAMEWORK
+        
         #region Work around inability to access `new SqlBinary(byte[], bool)`
 
         private static readonly Func<byte[], SqlBinary> ByteArrayToSqlBinaryFactory =
@@ -98,6 +105,82 @@ namespace Microsoft.Data.SqlTypes
         #endregion
         
         #region Work around inability to access SqlDecimal internal representation
+
+        private static readonly Func<SqlDecimal, (uint, uint, uint, uint)> SqlDecimalToInternalRepresentationFactory = 
+                CreateSqlToInternalRepresentationFactory();
+
+        internal static (uint, uint, uint, uint) SqlDecimalToInternalRepresentation(SqlDecimal value) =>
+            SqlDecimalToInternalRepresentationFactory(value);
+
+        private static unsafe Func<SqlDecimal, (uint, uint, uint, uint)> CreateSqlToInternalRepresentationFactory()
+        {
+            try
+            {
+                // Look up the offsets in the SqlDecimal for the internal data members
+                static int? GetFieldOffset(string fieldName)
+                {
+                    FieldInfo field = typeof(SqlDecimal).GetField(
+                        fieldName,
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+
+                    return field is not null && field.FieldType == typeof(uint)
+                        ? (int)Marshal.OffsetOf<SqlDecimal>(fieldName)
+                        : null;
+                }
+
+                int? data1Offset = GetFieldOffset("m_data1");
+                int? data2Offset = GetFieldOffset("m_data2");
+                int? data3Offset = GetFieldOffset("m_data3");
+                int? data4Offset = GetFieldOffset("m_data4");
+
+                if (data1Offset is not null &&
+                    data2Offset is not null &&
+                    data3Offset is not null &&
+                    data4Offset is not null)
+                {
+                    // Get the address of the value and read the data fields directly from memory
+                    // Note: Just a reminder since we don't mess with pointers often in C#, the
+                    //    address of value is being cast to a byte* b/c pointer arithmetic adds/
+                    //    subtracts sizeof(ptrType) * offset. Since we want to increment by single
+                    //    bytes, we use byte*.
+                    var func = (SqlDecimal value) =>
+                    {
+                        byte* bytePtr = (byte*)&value;
+                        return (
+                            *(uint*)(&value + data1Offset.Value),
+                            *(uint*)(&value + data2Offset.Value),
+                            *(uint*)(&value + data3Offset.Value),
+                            *(uint*)(&value + data4Offset.Value)
+                        );
+                    };
+
+                    // Force JIT compilation of the function
+                    func(default);
+
+                    return func;
+                }
+            }
+            catch
+            {
+                // Reflection failed, fall through to use the slow conversion.
+            }
+            
+            // If reflection failed, or the ctor couldn't be found, fallback to construction using
+            // the fallback factory. This will be much slower, but ensures conversion can still
+            // happen.
+            SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlToInternalRepresentationFactory | Info | One ore more of the SqlDecimal.m_data[1-4] was not found. Less efficient fallback method will be used.");
+            return value =>
+            {
+                if (value.IsNull)
+                {
+                    return (0, 0, 0, 0);
+                }
+
+                int[] data = value.Data;
+                return ((uint)data[3], (uint)data[2], (uint)data[1], (uint)data[0]);
+            };
+        }
+        
         #endregion
         
         #region Work around inability to access `new SqlGuid(byte[], bool)`

@@ -7891,8 +7891,7 @@ namespace Microsoft.Data.SqlClient
             else
                 bytes[current++] = 0;
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
+            (uint data1, uint data2, uint data3, uint data4) = SqlTypeWorkarounds.SqlDecimalToInternalRepresentation(d);
             byte[] bytesPart = SerializeUnsignedInt(data1, stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
@@ -7912,12 +7911,15 @@ namespace Microsoft.Data.SqlClient
         {
             // sign
             if (d.IsPositive)
+            {
                 stateObj.WriteByte(1);
+            }
             else
+            {
                 stateObj.WriteByte(0);
+            }
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
+            (uint data1, uint data2, uint data3, uint data4) = SqlTypeWorkarounds.SqlDecimalToInternalRepresentation(d);
             WriteUnsignedInt(data1, stateObj);
             WriteUnsignedInt(data2, stateObj);
             WriteUnsignedInt(data3, stateObj);
