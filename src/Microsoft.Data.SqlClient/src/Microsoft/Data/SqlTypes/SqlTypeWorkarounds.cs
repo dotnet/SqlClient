@@ -117,21 +117,10 @@ namespace Microsoft.Data.SqlTypes
             try
             {
                 // Look up the offsets in the SqlDecimal for the internal data members
-                static int? GetFieldOffset(string fieldName)
-                {
-                    FieldInfo field = typeof(SqlDecimal).GetField(
-                        fieldName,
-                        BindingFlags.Instance | BindingFlags.NonPublic);
-
-                    return field is not null && field.FieldType == typeof(uint)
-                        ? (int)Marshal.OffsetOf<SqlDecimal>(fieldName)
-                        : null;
-                }
-
-                int? data1Offset = GetFieldOffset("m_data1");
-                int? data2Offset = GetFieldOffset("m_data2");
-                int? data3Offset = GetFieldOffset("m_data3");
-                int? data4Offset = GetFieldOffset("m_data4");
+                int? data1Offset = GetFieldOffset<SqlDecimal, uint>("m_data1");
+                int? data2Offset = GetFieldOffset<SqlDecimal, uint>("m_data2");
+                int? data3Offset = GetFieldOffset<SqlDecimal, uint>("m_data3");
+                int? data4Offset = GetFieldOffset<SqlDecimal, uint>("m_data4");
 
                 if (data1Offset is not null &&
                     data2Offset is not null &&
@@ -193,7 +182,7 @@ namespace Microsoft.Data.SqlTypes
         
         #endregion
         
-        #region Work around inability to access `new SqlMoney(long, int)` and `SqlMoney.ToSqlInternalRepresentation`
+        #region Work around inability to access `new SqlMoney(long, int)` and internal representation
 
         private static readonly Func<long, SqlMoney> LongToSqlMoneyFactory =
             CreateFactory<SqlMoney, long, int>(value => new SqlMoney((decimal)value / 10000));
@@ -215,26 +204,38 @@ namespace Microsoft.Data.SqlTypes
         internal static long SqlMoneyToLong(SqlMoney value) =>
             SqlMoneyToLongFactory(value);
 
-        private static Func<SqlMoney, long> CreateSqlMoneyToLongFactory()
+        private static unsafe Func<SqlMoney, long> CreateSqlMoneyToLongFactory()
         {
             try
             {
-                // Look for SqlMoney.ToInternalRepresentation method
-                MethodInfo method = typeof(SqlMoney).GetMethod(
-                    "ToSqlInternalRepresentation",
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                if (method is not null && method.ReturnType == typeof(long))
+                // Look up the offsets in SqlMoney for the internal representation member
+                int? valueOffset = GetFieldOffset<SqlMoney, long>("m_value");
+                
+                if (valueOffset is not null)
                 {
-                    // Use CreateDelegate for instance methods - it's faster than MethodInfo.Invoke
-                    // but function pointers are more complex for instance methods, especially with
-                    // struct types (like SqlMoney), so a delegate is a decent compromise
-                    var dgate = (Func<SqlMoney, long>)method.CreateDelegate(typeof(Func<SqlMoney, long>));
+                    // Get the address of the value and read the field directly from memory
+                    // Note: Just a reminder since we don't mess with pointers often in C#, the
+                    //    address of value is being cast to a byte* b/c pointer arithmetic adds/
+                    //    subtracts sizeof(ptrType) * offset. Since we want to increment by single
+                    //    bytes, we use byte*.
+                    var func = (SqlMoney value) =>
+                    {
+                        // Note: An older version of this workaround called into
+                        //     ToSqlInternalRepresentation which would throw an exception on null
+                        //     SqlMoney. This check maintains the behavior.
+                        if (value.IsNull)
+                        {
+                            throw new SqlNullValueException();
+                        }
 
-                    // Force JIT compilation
-                    dgate(default);
+                        byte* bytePtr = (byte*)&value;
+                        return *(long*)(bytePtr + valueOffset.Value);
+                    };
+                    
+                    // Force JIT compilation of the function
+                    func(SqlMoney.Zero);
 
-                    return dgate;
+                    return func;
                 }
             }
             catch
@@ -242,6 +243,7 @@ namespace Microsoft.Data.SqlTypes
                 // Reflection failed, fall through to using conversion via decimal
             }
             
+            // @TODO: SqlMoney.ToSqlInternalRepresentation will throw on SqlMoney.IsNull, the fallback will not.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlMoneyToLongFactory | Info | SqlMoney.ToInternalRepresentation(SqlMoney) not found. Less efficient fallback method will be used.");
             return value => value.IsNull ? 0 : (long)(value.ToDecimal() * 10000);
         }
@@ -307,6 +309,18 @@ namespace Microsoft.Data.SqlTypes
             // happen.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateFactory | Info | {0}..ctor({1}, {2}) not found. Less efficient fallback method will be used.", typeof(TInstance).Name, typeof(TValue).Name, typeof(TIgnored).Name);
             return fallbackFactory;
+        }
+        
+        private static int? GetFieldOffset<TInstance, TValue>(string fieldName)
+            where TInstance : struct
+        {
+            FieldInfo field = typeof(TInstance).GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            return field is not null && field.FieldType == typeof(TValue)
+                ? (int)Marshal.OffsetOf<TInstance>(fieldName)
+                : null;
         }
         
         #endif
