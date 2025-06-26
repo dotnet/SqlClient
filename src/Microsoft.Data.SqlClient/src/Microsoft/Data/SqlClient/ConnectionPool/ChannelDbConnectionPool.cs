@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Tracks all connections currently managed by this pool, whether idle or busy.
         /// Only updated rarely - when physical connections are opened/closed - but is read in perf-sensitive contexts.
         /// </summary>
-        private readonly BoundedConcurrentDictionary<DbConnectionInternal> _connections;
+        private readonly ConnectionPoolSlots _connectionSlots;
 
         /// <summary>
         /// Reader side for the idle connection channel. Contains nulls in order to release waiting attempts after
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             Identity = identity;
             AuthenticationContexts = new();
 
-            _connections = new(MaxPoolSize);
+            _connectionSlots = new(MaxPoolSize);
 
             // We enforce Max Pool Size, so no need to create a bounded channel (which is less efficient)
             // On the consuming side, we have the multiplexing write loop but also non-multiplexing Rents
@@ -92,8 +92,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public DbConnectionFactory ConnectionFactory { get; init; }
 
         /// <inheritdoc />
-        /// Note: maintain _numConnections backing field to enable atomic operations
-        public int Count => _connections.Count;
+        public int Count => _connectionSlots.ReservationCount;
 
         /// <inheritdoc />
         public bool ErrorOccurred => throw new NotImplementedException();
@@ -296,28 +295,37 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return false;
         }
 
-        /// <inheritdoc/>
-        internal Task<DbConnectionInternal?> OpenNewInternalConnection(
+        /// <summary>
+        /// Opens a new internal connection to the database.
+        /// </summary>
+        /// <param name="owningConnection">The owning connection.</param>
+        /// <param name="userOptions">The options for the connection.</param>
+        /// <param name="async">Whether to open the connection asynchronously.</param>
+        /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+        /// <returns>A task representing the asynchronous operation, with a result of the new internal connection.</returns>
+        /// <throws>InvalidOperationException - when the newly created connection is invalid or already in the pool.</throws>
+        private Task<DbConnectionInternal?> OpenNewInternalConnection(
             DbConnection? owningConnection, 
             DbConnectionOptions userOptions, 
             bool async, 
             CancellationToken cancellationToken)
         {
-            if(_connections.TryReserve())
+            // Opening a connection can be a slow operation and we don't want to hold a lock for the duration.
+            // Instead, we reserve a connection slot prior to attempting to open a new connection and release the slot
+            // in case of an exception. 
+            if (_connectionSlots.TryReserve())
             {
                 try
                 {
-                    // We've managed to increase the open counter, open a physical connection.
                     var startTime = Stopwatch.GetTimestamp();
 
-                    /* TODO: This blocks the thread for several network calls!
-                     * When running async, the blocked thread is one allocated from the managed thread pool (due to 
-                     * use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
-                     * pre-provision threads in the managed thread pool. Our options are limited because 
-                     * DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
-                     * throughput high than to queue all of our opens onto a single worker thread. Add an async path 
-                     * when this support is added to DbConnectionInternal.
-                     */
+                    // TODO: This blocks the thread for several network calls!
+                    // When running async, the blocked thread is one allocated from the managed thread pool (due to 
+                    // use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
+                    // pre-provision threads in the managed thread pool. Our options are limited because 
+                    // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
+                    // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
+                    // when this support is added to DbConnectionInternal.
                     DbConnectionInternal? newConnection = ConnectionFactory.CreatePooledConnection(
                         this,
                         owningConnection,
@@ -325,6 +333,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         PoolGroup.PoolKey,
                         userOptions);
 
+                    // We don't expect these conditions to happen, but we need to check them to be thorough.
                     if (newConnection == null)
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);
@@ -336,24 +345,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     newConnection.PrePush(null);
 
-                    if (!_connections.TryAdd(newConnection) {
-                        // If we failed to add the connection to the pool, it means that another thread has already
-                        // added it. We need to decrement the open counter.
-                        throw ADP.InternalError(ADP.InternalErrorCode.PooledObjectInPoolMoreThanOnce);
-                    }
+                    _connectionSlots.Add(newConnection);
 
                     return Task.FromResult<DbConnectionInternal?>(newConnection);
                 }
                 catch
                 {
-                    // Physical open failed, decrement the open and busy counter back down.
-                    _connections.ReleaseReservation();
+                    _connectionSlots.ReleaseReservation();
 
                     // In case there's a waiting attempt on the channel, we write a null to the idle connection channel
                     // to wake it up, so it will try opening (and probably throw immediately)
-                    // Statement order is important since we have synchronous completions on the channel.
                     _idleConnectionWriter.TryWrite(null);
-
+                    
                     throw;
                 }
             }
@@ -389,8 +392,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="connection">The connection to be closed.</param>
         private void RemoveConnection(DbConnectionInternal connection)
         {
-            if(_connections.TryRemove(connection))
+            if(_connectionSlots.TryRemove(connection))
             {
+                _connectionSlots.ReleaseReservation();
                 // This connection was tracked by the pool, so closing it has opened a free spot in the pool.
                 // Write a null to the idle connection channel to wake up a waiter, who can now open a new
                 // connection. Statement order is important since we have synchronous completions on the channel.
