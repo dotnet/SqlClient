@@ -64,9 +64,12 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is100Supported;
 
         // SqlVector Element Types
+        //
+        // These underlying values must match the vector "dimension type" values
+        // in the TDS protocol.
         internal enum SqlVectorElementType : byte
         {
-            Float32 = 0x0
+            Float32 = 0x00
         }
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
@@ -377,7 +380,7 @@ namespace Microsoft.Data.SqlClient
                         return MetaXml;
                     else if (dataType == typeof(SqlJson))
                         return s_MetaJson;
-                    else if (dataType == typeof(SqlVectorFloat32))
+                    else if (dataType == typeof(SqlVector<float>))
                         return s_MetaVector;
                     else if (dataType == typeof(SqlString))
                     {

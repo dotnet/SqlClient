@@ -585,7 +585,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SqlSer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\IsqlVector.cs">
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ISqlVector.cs">
       <Link>Microsoft\Data\SqlClient\ISqlVector.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
@@ -909,8 +909,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVectorFloat32.cs">
-      <Link>Microsoft\Data\SqlTypes\SqlVectorFloat32.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
@@ -921,7 +921,10 @@
     <Compile Include="$(CommonSourceRoot)System\IO\StreamExtensions.netfx.cs">
       <Link>System\IO\StreamExtensions.netfx.cs</Link>
     </Compile>
-
+    <Compile Include="$(CommonSourceRoot)System\Runtime\CompilerServices\IsExternalInit.netfx.cs">
+      <Link>System\Runtime\CompilerServices\IsExternalInit.netfx.cs</Link>
+    </Compile>
+    
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
