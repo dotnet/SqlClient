@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlTypes
     /// this class provides ways to do that.  We must review and update this implementation any time the
     /// implementation of the corresponding types in System.Data.Common change.
     /// </summary>
-    internal static partial class SqlTypeWorkarounds
+    internal static class SqlTypeWorkarounds
     {
         #region Work around inability to access SqlXml.CreateSqlXmlReader
         
