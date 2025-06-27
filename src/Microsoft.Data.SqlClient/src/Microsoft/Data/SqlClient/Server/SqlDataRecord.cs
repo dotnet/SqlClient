@@ -54,7 +54,21 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET
         [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
 #endif
-        public virtual Type GetFieldType(int ordinal) => GetFieldTypeFrameworkSpecific(ordinal);
+        public virtual Type GetFieldType(int ordinal)
+        {
+            SqlMetaData md = GetSqlMetaData(ordinal);
+
+#if NETFRAMEWORK
+            if (md.SqlDbType == SqlDbType.Udt)
+            {
+                return md.Type;
+            }
+            else
+#endif
+            {
+                return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, false).ClassType;
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
         public virtual object GetValue(int ordinal) => ValueUtilsSmi.GetValue200(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
@@ -246,10 +260,73 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*' />
         // ISqlUpdateableRecord Implementation
-        public virtual int SetValues(params object[] values) => SetValuesFrameworkSpecific(values);
+        public virtual int SetValues(params object[] values)
+        {
+            if (values == null)
+            {
+                throw ADP.ArgumentNull(nameof(values));
+            }
+
+            // Allow values array longer than FieldCount, just ignore the extra cells.
+            int copyLength = (values.Length > FieldCount) ? FieldCount : values.Length;
+
+            ExtendedClrTypeCode[] typeCodes = new ExtendedClrTypeCode[copyLength];
+
+            // Verify all data values as acceptable before changing current state.
+            for (int i = 0; i < copyLength; i++)
+            {
+                SqlMetaData metaData = GetSqlMetaData(i);
+                typeCodes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
+                    metaData.SqlDbType,
+                    isMultiValued: false,
+                    values[i],
+                    metaData.Type);
+                if (typeCodes[i] == ExtendedClrTypeCode.Invalid)
+                {
+                    throw ADP.InvalidCast();
+                }
+            }
+
+            // Now move the data (it'll only throw if someone plays with the values array between
+            //      the validation loop and here, or if an invalid UDT was sent).
+            for (int i = 0; i < copyLength; i++)
+            {
+                ValueUtilsSmi.SetCompatibleValueV200(
+                    _recordBuffer,
+                    ordinal: i,
+                    GetSmiMetaData(i),
+                    values[i],
+                    typeCodes[i],
+                    offset: 0,
+                    peekAhead: null);
+            }
+
+            return copyLength;
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValue/*' />
-        public virtual void SetValue(int ordinal, object value) => SetValueFrameworkSpecific(ordinal, value);
+        public virtual void SetValue(int ordinal, object value)
+        {
+            SqlMetaData metaData = GetSqlMetaData(ordinal);
+            ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
+                metaData.SqlDbType,
+                isMultiValued: false,
+                value,
+                metaData.Type);
+            if (typeCode == ExtendedClrTypeCode.Invalid)
+            {
+                throw ADP.InvalidCast();
+            }
+
+            ValueUtilsSmi.SetCompatibleValueV200(
+                _recordBuffer,
+                ordinal,
+                GetSmiMetaData(ordinal),
+                value,
+                typeCode,
+                offset: 0,
+                peekAhead: null);
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*' />
         public virtual void SetBoolean(int ordinal, bool value) => ValueUtilsSmi.SetBoolean(_recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
