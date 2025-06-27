@@ -2,45 +2,47 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-
 using System.Data.SqlTypes;
-using System.Text;
+#if NET
+using System.Diagnostics.CodeAnalysis;
+#endif
 using System.Text.Json;
 
 #nullable enable
 
 namespace Microsoft.Data.SqlTypes
 {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/SqlJson/*' />
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/SqlJson/*' />
     public class SqlJson : INullable
     {
-
-        /// <summary>
-        /// True if null.
-        /// </summary>
-        private bool _isNull;         
-        
-        private readonly string? _jsonString;
+        // Our serialized JSON string, or null.
+        private readonly string? _jsonString = null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor1/*' />
         public SqlJson()
         {
-            SetNull();
         }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
-        public SqlJson(string? jsonString) 
+        #if NET
+        public SqlJson([StringSyntax(StringSyntaxAttribute.Json)] string? jsonString)
+        #else
+        public SqlJson(string? jsonString)
+        #endif
         {
             if (jsonString == null)
             {
-                SetNull();
+                return;
             }
-            else
-            {
-                // TODO: We need to validate the Json before storing it.
-                ValidateJson(jsonString);
-                _jsonString = jsonString;
-            }
+
+            // Ask JsonDocument to parse it for validity, or throw.
+            //
+            // Note that we do not support trailing commas or comments in the
+            // JSON.
+            //
+            JsonDocument.Parse(jsonString).Dispose();
+
+            _jsonString = jsonString;
         }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
@@ -48,16 +50,15 @@ namespace Microsoft.Data.SqlTypes
         {
             if (jsonDoc == null)
             {
-                SetNull();
+                return;
             }
-            else
-            {
-                _jsonString = jsonDoc.RootElement.GetRawText();
-            }
+
+            // Save the serialized JSON string from the document, or throw.
+            _jsonString = jsonDoc.RootElement.GetRawText();
         }
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
-        public bool IsNull => _isNull;
+        public bool IsNull => _jsonString is null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/Null/*' />
         public static SqlJson Null => new();
@@ -71,33 +72,15 @@ namespace Microsoft.Data.SqlTypes
                 {
                     throw new SqlNullValueException();
                 }
-                else
-                {
-                    return _jsonString!;
-                }
+
+                return _jsonString!;
             }
         }
 
-        private void SetNull()
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ToString/*' />
+        public override string? ToString()
         {
-            _isNull = true;
-        }
-
-        private static void ValidateJson(string jsonString)
-        {
-            // Convert the JSON string to a UTF-8 byte array
-            byte[] jsonBytes = Encoding.UTF8.GetBytes(jsonString);
-
-            // Create a Utf8JsonReader instance
-            var reader = new Utf8JsonReader(jsonBytes, isFinalBlock: true, state: default);
-
-            // Read through the JSON data
-            while (reader.Read())
-            {
-                // The Read method advances the reader to the next token
-                // If the JSON is invalid, an exception will be thrown
-            }
-            // If we reach here, the JSON is valid
+            return _jsonString;
         }
     }
 }

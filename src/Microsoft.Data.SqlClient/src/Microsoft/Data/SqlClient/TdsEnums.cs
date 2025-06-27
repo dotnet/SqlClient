@@ -240,7 +240,11 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
         public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
         public const byte FEATUREEXT_JSONSUPPORT = 0x0D;
+<<<<<<< HEAD
         public const byte FEATUREEXT_USERAGENT = 0x0F;
+=======
+        public const byte FEATUREEXT_VECTORSUPPORT = 0x0E;
+>>>>>>> origin/main
 
         [Flags]
         public enum FeatureExtension : uint
@@ -255,7 +259,11 @@ namespace Microsoft.Data.SqlClient
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
             SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1),
             JsonSupport = 1 << (TdsEnums.FEATUREEXT_JSONSUPPORT - 1),
+<<<<<<< HEAD
             UserAgent = 1 << (TdsEnums.FEATUREEXT_USERAGENT - 1)
+=======
+            VectorSupport = 1 << (TdsEnums.FEATUREEXT_VECTORSUPPORT - 1)
+>>>>>>> origin/main
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -487,6 +495,7 @@ namespace Microsoft.Data.SqlClient
         public const int SQLDATETIMEOFFSET = 0x2b;
 
         public const int SQLJSON = 0xF4;
+        public const int SQLVECTOR = 0xF5;
 
         public const int DEFAULT_VARTIME_SCALE = 7;
 
@@ -980,8 +989,14 @@ namespace Microsoft.Data.SqlClient
         // JSON Support constants
         internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
 
+<<<<<<< HEAD
         // User Agent constants
         internal const byte SUPPORTED_USER_AGENT_VERSION = 0x01;
+=======
+        // Vector Support constants
+        internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
+        internal const int VECTOR_HEADER_SIZE = 8;
+>>>>>>> origin/main
 
         // TCE Related constants
         internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version

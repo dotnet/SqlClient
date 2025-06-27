@@ -14,23 +14,23 @@ namespace Microsoft.Data.SqlClient.Server
     internal abstract class SmiTypedGetterSetter : ITypedGettersV3, ITypedSettersV3
     {
         #region Read/Write
-        // Are calls to Get methods allowed?
-        internal abstract bool CanGet
-        {
-            get;
-        }
+        
+        /// <summary>
+        /// Are calls to Get methods allowed?
+        /// </summary>
+        protected abstract bool CanGet { get; }
 
-        // Are calls to Set methods allowed?
-        internal abstract bool CanSet
-        {
-            get;
-        }
+        /// <summary>
+        /// Are calls to Set methods allowed?
+        /// </summary>
+        protected abstract bool CanSet { get; }
+        
         #endregion
 
         #region Getters
         // Null test
         //      valid for all types
-        public virtual bool IsDBNull(SmiEventSink sink, int ordinal)
+        public virtual bool IsDBNull(int ordinal)
         {
             if (!CanGet)
             {
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // Check what type current sql_variant value is
         //      valid for SqlDbType.Variant
-        public virtual SmiMetaData GetVariantType(SmiEventSink sink, int ordinal)
+        public virtual SmiMetaData GetVariantType(int ordinal)
         {
             if (!CanGet)
             {
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         //  valid for SqlDbType.Bit
-        public virtual bool GetBoolean(SmiEventSink sink, int ordinal)
+        public virtual bool GetBoolean(int ordinal)
         {
             if (!CanGet)
             {
@@ -70,7 +70,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         //  valid for SqlDbType.TinyInt
-        public virtual byte GetByte(SmiEventSink sink, int ordinal)
+        public virtual byte GetByte(int ordinal)
         {
             if (!CanGet)
             {
@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml, Char, VarChar, Text, NChar, NVarChar, NText
         //  (Character type support needed for ExecuteXmlReader handling)
-        public virtual long GetBytesLength(SmiEventSink sink, int ordinal)
+        public virtual long GetBytesLength(int ordinal)
         {
             if (!CanGet)
             {
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual int GetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
+        public virtual int GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             if (!CanGet)
             {
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        public virtual long GetCharsLength(SmiEventSink sink, int ordinal)
+        public virtual long GetCharsLength(int ordinal)
         {
             if (!CanGet)
             {
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual int GetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
+        public virtual int GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             if (!CanGet)
             {
@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual string GetString(SmiEventSink sink, int ordinal)
+        public virtual string GetString(int ordinal)
         {
             if (!CanGet)
             {
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.SmallInt
-        public virtual short GetInt16(SmiEventSink sink, int ordinal)
+        public virtual short GetInt16(int ordinal)
         {
             if (!CanGet)
             {
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Int
-        public virtual int GetInt32(SmiEventSink sink, int ordinal)
+        public virtual int GetInt32(int ordinal)
         {
             if (!CanGet)
             {
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        public virtual long GetInt64(SmiEventSink sink, int ordinal)
+        public virtual long GetInt64(int ordinal)
         {
             if (!CanGet)
             {
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Real
-        public virtual float GetSingle(SmiEventSink sink, int ordinal)
+        public virtual float GetSingle(int ordinal)
         {
             if (!CanGet)
             {
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Float
-        public virtual double GetDouble(SmiEventSink sink, int ordinal)
+        public virtual double GetDouble(int ordinal)
         {
             if (!CanGet)
             {
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Numeric (uses SqlDecimal since Decimal cannot hold full range)
-        public virtual SqlDecimal GetSqlDecimal(SmiEventSink sink, int ordinal)
+        public virtual SqlDecimal GetSqlDecimal(int ordinal)
         {
             if (!CanGet)
             {
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for DateTime, SmallDateTime, Date, and DateTime2
-        public virtual DateTime GetDateTime(SmiEventSink sink, int ordinal)
+        public virtual DateTime GetDateTime(int ordinal)
         {
             if (!CanGet)
             {
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for UniqueIdentifier
-        public virtual Guid GetGuid(SmiEventSink sink, int ordinal)
+        public virtual Guid GetGuid(int ordinal)
         {
             if (!CanGet)
             {
@@ -247,7 +247,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Time
-        public virtual TimeSpan GetTimeSpan(SmiEventSink sink, int ordinal)
+        public virtual TimeSpan GetTimeSpan(int ordinal)
         {
             if (!CanGet)
             {
@@ -260,7 +260,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for DateTimeOffset
-        public virtual DateTimeOffset GetDateTimeOffset(SmiEventSink sink, int ordinal)
+        public virtual DateTimeOffset GetDateTimeOffset(int ordinal)
         {
             if (!CanGet)
             {
@@ -274,31 +274,18 @@ namespace Microsoft.Data.SqlClient.Server
 
         // valid for structured types
         //  This method called for both get and set.
-        internal virtual SmiTypedGetterSetter GetTypedGetterSetter(SmiEventSink sink, int ordinal)
+        internal virtual SmiTypedGetterSetter GetTypedGetterSetter(int ordinal)
         {
             throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
-#if NETFRAMEWORK
-        // valid for multi-valued types only
-        internal virtual bool NextElement(SmiEventSink sink)
-        {
-            if (!CanGet)
-            {
-                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
-            }
-            else
-            {
-                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
-            }
-        }
-#endif
-#endregion
+        
+        #endregion
 
-#region Setters
+        #region Setters
 
         // Set value to null
         //  valid for all types
-        public virtual void SetDBNull(SmiEventSink sink, int ordinal)
+        public virtual void SetDBNull(int ordinal)
         {
             if (!CanSet)
             {
@@ -311,7 +298,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         //  valid for SqlDbType.Bit
-        public virtual void SetBoolean(SmiEventSink sink, int ordinal, bool value)
+        public virtual void SetBoolean(int ordinal, bool value)
         {
             if (!CanSet)
             {
@@ -324,7 +311,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         //  valid for SqlDbType.TinyInt
-        public virtual void SetByte(SmiEventSink sink, int ordinal, byte value)
+        public virtual void SetByte(int ordinal, byte value)
         {
             if (!CanSet)
             {
@@ -340,7 +327,7 @@ namespace Microsoft.Data.SqlClient.Server
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml
         //      (VarBinary assumed for variants)
-        public virtual int SetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
+        public virtual int SetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             if (!CanSet)
             {
@@ -351,7 +338,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual void SetBytesLength(SmiEventSink sink, int ordinal, long length)
+        public virtual void SetBytesLength(int ordinal, long length)
         {
             if (!CanSet)
             {
@@ -367,7 +354,7 @@ namespace Microsoft.Data.SqlClient.Server
         //  Use in combination with SetLength to ensure overwriting when necessary
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
         //      (NVarChar and global clr collation assumed for variants)
-        public virtual int SetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
+        public virtual int SetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             if (!CanSet)
             {
@@ -378,7 +365,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual void SetCharsLength(SmiEventSink sink, int ordinal, long length)
+        public virtual void SetCharsLength(int ordinal, long length)
         {
             if (!CanSet)
             {
@@ -391,7 +378,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        public virtual void SetString(SmiEventSink sink, int ordinal, string value, int offset, int length)
+        public virtual void SetString(int ordinal, string value, int offset, int length)
         {
             if (!CanSet)
             {
@@ -404,7 +391,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.SmallInt
-        public virtual void SetInt16(SmiEventSink sink, int ordinal, short value)
+        public virtual void SetInt16(int ordinal, short value)
         {
             if (!CanSet)
             {
@@ -417,7 +404,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Int
-        public virtual void SetInt32(SmiEventSink sink, int ordinal, int value)
+        public virtual void SetInt32(int ordinal, int value)
         {
             if (!CanSet)
             {
@@ -430,7 +417,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        public virtual void SetInt64(SmiEventSink sink, int ordinal, long value)
+        public virtual void SetInt64(int ordinal, long value)
         {
             if (!CanSet)
             {
@@ -443,7 +430,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Real
-        public virtual void SetSingle(SmiEventSink sink, int ordinal, float value)
+        public virtual void SetSingle(int ordinal, float value)
         {
             if (!CanSet)
             {
@@ -456,7 +443,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Float
-        public virtual void SetDouble(SmiEventSink sink, int ordinal, double value)
+        public virtual void SetDouble(int ordinal, double value)
         {
             if (!CanSet)
             {
@@ -469,7 +456,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Numeric (uses SqlDecimal since Decimal cannot hold full range)
-        public virtual void SetSqlDecimal(SmiEventSink sink, int ordinal, SqlDecimal value)
+        public virtual void SetSqlDecimal(int ordinal, SqlDecimal value)
         {
             if (!CanSet)
             {
@@ -482,7 +469,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for DateTime, SmallDateTime, Date, and DateTime2
-        public virtual void SetDateTime(SmiEventSink sink, int ordinal, DateTime value)
+        public virtual void SetDateTime(int ordinal, DateTime value)
         {
             if (!CanSet)
             {
@@ -495,7 +482,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for UniqueIdentifier
-        public virtual void SetGuid(SmiEventSink sink, int ordinal, Guid value)
+        public virtual void SetGuid(int ordinal, Guid value)
         {
             if (!CanSet)
             {
@@ -508,7 +495,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for SqlDbType.Time
-        public virtual void SetTimeSpan(SmiEventSink sink, int ordinal, TimeSpan value)
+        public virtual void SetTimeSpan(int ordinal, TimeSpan value)
         {
             if (!CanSet)
             {
@@ -521,7 +508,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // valid for DateTimeOffset
-        public virtual void SetDateTimeOffset(SmiEventSink sink, int ordinal, DateTimeOffset value)
+        public virtual void SetDateTimeOffset(int ordinal, DateTimeOffset value)
         {
             if (!CanSet)
             {
@@ -533,7 +520,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        public virtual void SetVariantMetaData(SmiEventSink sink, int ordinal, SmiMetaData metaData)
+        public virtual void SetVariantMetaData(int ordinal, SmiMetaData metaData)
         {
             // ******** OBSOLETING from SMI -- this should have been removed from ITypedSettersV3
             //  Intended to be removed prior to RTM.  Sub-classes need not implement
@@ -544,8 +531,8 @@ namespace Microsoft.Data.SqlClient.Server
             throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
-        // valid for multi-valued types only
-        internal virtual void NewElement(SmiEventSink sink)
+        // valid for multivalued types only
+        internal virtual void NewElement()
         {
             if (!CanSet)
             {
@@ -557,7 +544,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        internal virtual void EndElements(SmiEventSink sink)
+        internal virtual void EndElements()
         {
             if (!CanSet)
             {
@@ -568,7 +555,8 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-#endregion
+
+        #endregion
 
     }
 }

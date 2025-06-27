@@ -27,27 +27,20 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region TypedGetterSetter overrides
-        // Are calls to Get methods allowed?
-        internal override bool CanGet
-        {
-            get
-            {
-                return false;
-            }
-        }
 
-        // Are calls to Set methods allowed?
-        internal override bool CanSet
-        {
-            get
-            {
-                return true;
-            }
-        }
+        /// <summary>
+        /// Are calls to Get methods allowed?
+        /// </summary>
+        protected override bool CanGet => false;
+
+        /// <summary>
+        /// Are calls to Set methods allowed?
+        /// </summary>
+        protected override bool CanSet => true;
 
         // valid for structured types
         //  This method called for both get and set.
-        internal override SmiTypedGetterSetter GetTypedGetterSetter(SmiEventSink sink, int ordinal)
+        internal override SmiTypedGetterSetter GetTypedGetterSetter(int ordinal)
         {
             Debug.Assert(0 == ordinal, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
             return _target;
@@ -55,11 +48,10 @@ namespace Microsoft.Data.SqlClient
 
         // Set value to null
         //  valid for all types
-        public override void SetDBNull(SmiEventSink sink, int ordinal)
+        public override void SetDBNull(int ordinal)
         {
             Debug.Assert(0 == ordinal, "TdsParameterSetter only supports 0 for ordinal.  Actual = " + ordinal);
-
-            _target.EndElements(sink);
+            _target.EndElements();
         }
         #endregion
     }
