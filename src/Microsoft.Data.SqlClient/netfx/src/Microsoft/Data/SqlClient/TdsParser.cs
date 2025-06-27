@@ -8732,15 +8732,6 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-<<<<<<< HEAD
-        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
-                                                  bool write /* if false just calculates the length */)
-        {
-            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
-            int dataLen = 1 + userAgentJsonPayload.Length;
-            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
-            int totalLen = 1 + 4 + dataLen;
-=======
         /// <summary>
         /// Writes the Vector Support feature request to the physical state object.
         /// The request includes the feature ID, feature data length, and version number.
@@ -8756,12 +8747,32 @@ namespace Microsoft.Data.SqlClient
         internal int WriteVectorSupportFeatureRequest(bool write)
         {
             const int len = 6; 
->>>>>>> origin/main
 
             if (write)
             {
                 // Write Feature ID
-<<<<<<< HEAD
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_VECTORSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+            }
+
+            return len;
+        }
+
+        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+                                                  bool write /* if false just calculates the length */)
+        {
+            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
+            int dataLen = 1 + userAgentJsonPayload.Length;
+            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
+            int totalLen = 1 + 4 + dataLen;
+
+            if (write)
+            {
+                // Write Feature ID
                 _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
 
                 // Feature Data Length
@@ -8775,17 +8786,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return totalLen;
-=======
-                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_VECTORSUPPORT);
-
-                // Feature Data Length
-                WriteInt(1, _physicalStateObj);
-
-                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
-            }
-
-            return len;
->>>>>>> origin/main
         }
 
         private void WriteLoginData(SqlLogin rec,

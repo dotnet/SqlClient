@@ -207,13 +207,11 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
-<<<<<<< HEAD
         // User Agent Flag
         internal bool IsUserAgentEnabled = true;
-=======
+
         // Vector Support Flag
         internal bool IsVectorSupportEnabled = false;
->>>>>>> origin/main
 
         // TCE flags
         internal byte _tceVersionSupported;
