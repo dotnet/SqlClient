@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// 
     /// </code>
     /// </example>
-    internal class ConnectionPoolSlots
+    internal sealed class ConnectionPoolSlots
     {
         private readonly DbConnectionInternal?[] _connections;
         private readonly int _capacity;
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Constructs a ConnectionPoolSlots instance with the given capacity.
         /// </summary>
         /// <param name="capacity">The capacity of the collection.</param>
-        public ConnectionPoolSlots(int capacity)
+        internal ConnectionPoolSlots(int capacity)
         {
             _capacity = capacity;
             _reservations = 0;
@@ -58,10 +58,65 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Gets the total number of reservations.
+        /// </summary>
+        internal int ReservationCount => _reservations;
+
+        /// <summary>
+        /// Adds a connection to the collection. Can only be called after a reservation has been made.
+        /// </summary>
+        /// <param name="connection">The connection to add to the collection.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when unable to find an empty slot. 
+        /// This can occur if a reservation is not taken before adding a connection.
+        /// </exception>
+        internal void Add(DbConnectionInternal connection)
+        {
+            int i;
+            for (i = 0; i < _capacity; i++)
+            {
+                if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
+                {
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException("Couldn't find an empty slot.");
+        }
+
+        /// <summary>
+        /// Releases a reservation that was previously obtained.
+        /// Must be called after removing a connection from the collection or if an exception occurs.
+        /// </summary>
+        internal void ReleaseReservation()
+        {
+            Interlocked.Decrement(ref _reservations);
+            Debug.Assert(_reservations >= 0, "Released a reservation that wasn't held");
+        }
+
+        /// <summary>
+        /// Removes a connection from the collection.
+        /// </summary>
+        /// <param name="connection">The connection to remove from the collection.</param>
+        /// <returns>True if the connection was found and removed; otherwise, false.</returns>
+        internal bool TryRemove(DbConnectionInternal connection)
+        {
+            for (int i = 0; i < _connections.Length; i++)
+            {
+                if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Attempts to reserve a spot in the collection.
         /// </summary>
         /// <returns>True if a reservation was successfully obtained.</returns>
-        public bool TryReserve()
+        internal bool TryReserve()
         {
             for (var expected = _reservations; expected < _capacity; expected = _reservations)
             {
@@ -79,60 +134,5 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             return false;
         }
-
-        /// <summary>
-        /// Releases a reservation that was previously obtained.
-        /// Must be called after removing an connection from the collection or if an exception occurs.
-        /// </summary>
-        public void ReleaseReservation()
-        {
-            Interlocked.Decrement(ref _reservations);
-            Debug.Assert(_reservations >= 0, "Released a reservation that wasn't held");
-        }
-
-        /// <summary>
-        /// Adds a connection to the collection. Can only be called after a reservation has been made.
-        /// </summary>
-        /// <param name="connection">The connection to add to the collection.</param>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown when unable to find an empty slot. 
-        /// This can occur if a reservation is not taken before adding a connection.
-        /// </exception>
-        public void Add(DbConnectionInternal connection)
-        {
-            int i;
-            for (i = 0; i < _capacity; i++)
-            {
-                if (Interlocked.CompareExchange(ref _connections[i], connection, null) == null)
-                {
-                    return;
-                }
-            }
-
-            throw new InvalidOperationException("Couldn't find an empty slot.");
-        }
-
-        /// <summary>
-        /// Removes a connection from the collection.
-        /// </summary>
-        /// <param name="connection">The connection to remove from the collection.</param>
-        /// <returns>True if the connection was found and removed; otherwise, false.</returns>
-        public bool TryRemove(DbConnectionInternal connection)
-        {
-            for (int i = 0; i < _connections.Length; i++)
-            {
-                if (Interlocked.CompareExchange(ref _connections[i], null, connection) == connection)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Gets the total number of reservations.
-        /// </summary>
-        public int ReservationCount => _reservations;
     }
 }

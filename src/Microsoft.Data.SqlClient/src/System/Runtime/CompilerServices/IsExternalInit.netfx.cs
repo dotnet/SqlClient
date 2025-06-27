@@ -6,7 +6,7 @@
 
 using System.ComponentModel;
 
-
+// The `init` accessor was introduced in C# 9.0 and is not natively supported in .NET Framework.
 // This class enables the use of the `init` property accessor in .NET framework.
 namespace System.Runtime.CompilerServices
 {
