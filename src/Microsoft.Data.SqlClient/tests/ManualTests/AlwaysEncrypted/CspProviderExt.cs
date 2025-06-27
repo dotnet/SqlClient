@@ -8,7 +8,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using System.Security.Cryptography;
-using Microsoft.Data.SqlClient.TestUtilities.Fixtures;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.Win32;
 
 #if NET

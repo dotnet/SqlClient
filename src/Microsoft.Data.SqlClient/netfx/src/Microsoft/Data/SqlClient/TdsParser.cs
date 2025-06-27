@@ -4304,6 +4304,15 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            if (tdsType == TdsEnums.SQLVECTOR)
+            {
+                result = stateObj.TryReadByte(out rec.scale);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
             if (rec.type == SqlDbType.Xml)
             {
                 // Read schema info
@@ -4423,6 +4432,11 @@ namespace Microsoft.Data.SqlClient
             if (rec.metaType.IsPlp)
             {
                 intlen = int.MaxValue;    // If plp data, read it all
+            }
+
+            if (rec.type == SqlDbTypeExtensions.Vector)
+            {
+                rec.length = tdsLen;
             }
 
             if (isNull)
@@ -5316,6 +5330,15 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            if (col.type == SqlDbTypeExtensions.Vector)
+            {
+                result = stateObj.TryReadByte(out col.scale);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+
             return TdsOperationStatus.Done;
         }
 
@@ -6033,6 +6056,11 @@ namespace Microsoft.Data.SqlClient
                     nullVal.SetToNullOfType(SqlBuffer.StorageType.Json);
                     break;
 
+                case SqlDbTypeExtensions.Vector:
+                    nullVal.SetToNullOfType(SqlBuffer.StorageType.Vector);
+                    nullVal.SetVectorInfo(MetaType.GetVectorElementCount(md.length, md.scale), md.scale, true);
+                    break;
+
                 default:
                     Debug.Fail("unknown null sqlType!" + md.type.ToString());
                     break;
@@ -6570,7 +6598,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        result = TryReadByteArrayWithContinue(stateObj, length, out b);
+                        result = stateObj.TryReadByteArrayWithContinue(length, out b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -6638,6 +6666,27 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
+                case TdsEnums.SQLVECTOR:
+                    // Vector data is read as non-plp binary value.
+                    // This is same as reading varbinary(8000).
+                    result = stateObj.TryReadByteArrayWithContinue(length, out b);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+
+                    // Internally, we use Sqlbinary to deal with varbinary data and store it in 
+                    // SqlBuffer as SqlBinary value.
+                    value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
+
+                    // Extract the metadata from the payload and set it as the vector attributes
+                    // in the SqlBuffer. This metadata is further used when constructing a SqlVector
+                    // object from binary payload.
+                    int elementCount = BinaryPrimitives.ReadUInt16LittleEndian(b.AsSpan(2));
+                    byte elementType = b[4];
+                    value.SetVectorInfo(elementCount, elementType, false);
+                    break;
+
                 case TdsEnums.SQLCHAR:
                 case TdsEnums.SQLBIGCHAR:
                 case TdsEnums.SQLVARCHAR:
@@ -6689,48 +6738,6 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert((stateObj._longlen == 0) && (stateObj._longlenleft == 0), "ReadSqlValue did not read plp field completely, longlen =" + stateObj._longlen.ToString((IFormatProvider)null) + ",longlenleft=" + stateObj._longlenleft.ToString((IFormatProvider)null));
             return TdsOperationStatus.Done;
-        }
-
-        private TdsOperationStatus TryReadByteArrayWithContinue(TdsParserStateObject stateObj, int length, out byte[] bytes)
-        {
-            bytes = null;
-            int offset = 0;
-            byte[] temp = null;
-            (bool canContinue, bool isStarting, bool isContinuing) = stateObj.GetSnapshotStatuses();
-            if (canContinue)
-            {
-                if (isContinuing || isStarting)
-                {
-                    temp = stateObj.TryTakeSnapshotStorage() as byte[];
-                    Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
-                }
-                if (temp != null)
-                {
-                    offset = stateObj.GetSnapshotTotalSize();
-                }
-            }
-
-            
-            if (temp == null)
-            {
-                temp = new byte[length];
-            }
-
-            TdsOperationStatus result = stateObj.TryReadByteArray(temp, length, out _, offset, isStarting || isContinuing);
-
-            if (result == TdsOperationStatus.Done)
-            {
-                bytes = temp;
-            }
-            else if (result == TdsOperationStatus.NeedMoreData)
-            {
-                if (isStarting || isContinuing)
-                {
-                    stateObj.SetSnapshotStorage(temp);
-                }
-            }
-
-            return result;
         }
 
         private TdsOperationStatus TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
@@ -6989,6 +6996,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARBINARY:
                 case TdsEnums.SQLVARBINARY:
                 case TdsEnums.SQLIMAGE:
+                case TdsEnums.SQLVECTOR:
                     {
                         // Note: Better not come here with plp data!!
                         Debug.Assert(length <= TdsEnums.MAXSIZE);
@@ -8275,6 +8283,18 @@ namespace Microsoft.Data.SqlClient
                 tokenLength = -1;
                 return TdsOperationStatus.Done;
             }
+            else if (token == TdsEnums.SQLVECTOR)
+            {
+                ushort value;
+                result = stateObj.TryReadUInt16(out value);
+                if (result != TdsOperationStatus.Done)
+                {
+                    tokenLength = 0;
+                    return result;
+                }
+                tokenLength = value;
+                return TdsOperationStatus.Done;
+            }
 
             switch (token & TdsEnums.SQLLenMask)
             {
@@ -8712,6 +8732,36 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        /// <summary>
+        /// Writes the Vector Support feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, and version number.
+        /// </summary>
+        /// <param name="write">If true, writes the feature request to the physical state object.</param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// </remarks>
+        internal int WriteVectorSupportFeatureRequest(bool write)
+        {
+            const int len = 6; 
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_VECTORSUPPORT);
+
+                // Feature Data Length
+                WriteInt(1, _physicalStateObj);
+
+                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+            }
+
+            return len;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                     TdsEnums.FeatureExtension requestedFeatures,
                                     SessionData recoverySessionData,
@@ -9042,6 +9092,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.JsonSupport) != 0)
                     {
                         length += WriteJsonSupportFeatureRequest(write);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
+                    {
+                        length += WriteVectorSupportFeatureRequest(write);
                     }
 
                     length++; // for terminator
@@ -9795,7 +9850,13 @@ namespace Microsoft.Data.SqlClient
             if (param.Direction == ParameterDirection.Output)
             {
                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
-                param.Value = null;
+
+                // Output parameter of SqlDbType vector are defined through SqlParameter.Value. 
+                // This check ensures that we do not discard the parameter value when SqlDbType is vector.
+                if (mt.SqlDbType != SqlDbTypeExtensions.Vector)
+                {
+                    param.Value = null;
+                }
                 param.ParameterIsSqlType = isSqlVal;
             }
             else
@@ -10128,6 +10189,14 @@ namespace Microsoft.Data.SqlClient
                             maxsize = 1;
                     }
 
+                    if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        // For vector type we need to write the size in bytes required to represent
+                        // vector value when communicating with SQL Server.
+                        var sqlVectorProps = ((ISqlVector)param.Value);
+                        maxsize = sqlVectorProps.Size;
+                    }
+
                     WriteParameterVarLen(mt, maxsize, false/*IsNull*/, stateObj);
                 }
             }
@@ -10149,6 +10218,11 @@ namespace Microsoft.Data.SqlClient
             else if (mt.IsVarTime)
             {
                 stateObj.WriteByte(param.GetActualScale());
+            }
+            // For vector type we need to write scale as the element type of the vector.
+            else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
+            {
+                stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
             }
 
             // write out collation or xml metadata
@@ -10229,7 +10303,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     // for codePageEncoded types, WriteValue simply expects the number of characters
                     // For plp types, we also need the encoded byte size
-                    writeParamTask = WriteValue(value, mt, isParameterEncrypted ? (byte)0 : param.GetActualScale(), actualSize, codePageByteSize, isParameterEncrypted ? 0 : param.Offset, stateObj, isParameterEncrypted ? 0 : param.Size, isDataFeed);
+                    // For vector type we need to write scale as the element type of the vector.
+                    byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? ((ISqlVector)param.Value).ElementType : param.GetActualScale();
+                    writeParamTask = WriteValue(value, mt, isParameterEncrypted ? (byte)0 : writeScale, actualSize, codePageByteSize, isParameterEncrypted ? 0 : param.Offset, stateObj, isParameterEncrypted ? 0 : param.Size, isDataFeed);
                 }
             }
 
@@ -10460,7 +10536,10 @@ namespace Microsoft.Data.SqlClient
             {
                 value = param.GetCoercedValue();
                 typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                    metaData.SqlDbType, metaData.IsMultiValued, value, null, SmiContextFactory.Sql2008Version);
+                    metaData.SqlDbType,
+                    metaData.IsMultiValued,
+                    value,
+                    udtType: null);
             }
 
             var sendDefaultValue = sendDefault ? 1 : 0;
@@ -10479,7 +10558,6 @@ namespace Microsoft.Data.SqlClient
             //
             TdsParameterSetter paramSetter = new TdsParameterSetter(stateObj, metaData);
             ValueUtilsSmi.SetCompatibleValueV200(
-                                        new SmiEventSink_Default(),  // TDS Errors/events dealt with at lower level for now, just need an object for processing
                                         paramSetter,
                                         0,          // ordinal.  TdsParameterSetter only handles one parameter at a time
                                         metaData,
@@ -11063,6 +11141,11 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbTypeExtensions.Json:
                             stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_xmlMetadataSubstituteSequence.Length, 0);
                             break;
+                        case SqlDbTypeExtensions.Vector:
+                            stateObj.WriteByte(md.tdsType);
+                            WriteTokenLength(md.tdsType, md.length, stateObj);
+                            stateObj.WriteByte(md.scale);
+                            break;
                         default:
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
@@ -11278,6 +11361,7 @@ namespace Microsoft.Data.SqlClient
                         case TdsEnums.SQLBIGVARBINARY:
                         case TdsEnums.SQLIMAGE:
                         case TdsEnums.SQLUDT:
+                        case TdsEnums.SQLVECTOR:
                             ccb = (isSqlType) ? ((SqlBinary)value).Length : ((byte[])value).Length;
                             break;
                         case TdsEnums.SQLUNIQUEID:
@@ -11609,6 +11693,12 @@ namespace Microsoft.Data.SqlClient
             else if (token == TdsEnums.SQLXMLTYPE)
             {
                 tokenLength = 8;
+            }
+            else if (token == TdsEnums.SQLVECTOR)
+            {
+                tokenLength = 2;
+                WriteShort(length, stateObj);
+                return;
             }
 
             if (tokenLength == 0)
@@ -12435,6 +12525,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLBIGVARBINARY:
                 case TdsEnums.SQLIMAGE:
                 case TdsEnums.SQLUDT:
+                case TdsEnums.SQLVECTOR:
                     {
                         // An array should be in the object
                         Debug.Assert(isDataFeed || value is byte[], "Value should be an array of bytes");
