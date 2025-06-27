@@ -8712,6 +8712,32 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+                                                  bool write /* if false just calculates the length */)
+        {
+            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
+            int dataLen = 1 + userAgentJsonPayload.Length;
+            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
+            int totalLen = 1 + 4 + dataLen;
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
+
+                // Feature Data Length
+                WriteInt(dataLen, _physicalStateObj);
+
+                // Write Feature Version
+                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
+
+                // Write encoded JSON payload
+                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+            }
+
+            return totalLen;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                     TdsEnums.FeatureExtension requestedFeatures,
                                     SessionData recoverySessionData,

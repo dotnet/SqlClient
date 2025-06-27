@@ -207,6 +207,9 @@ namespace Microsoft.Data.SqlClient
         // Json Support Flag
         internal bool IsJsonSupportEnabled = false;
 
+        // User Agent Flag
+        internal bool IsUserAgentEnabled = true;
+
         // TCE flags
         internal byte _tceVersionSupported;
 
@@ -1425,6 +1428,10 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching and JSON features are implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
+
+        #if DEBUG
+            requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
+        #endif
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
