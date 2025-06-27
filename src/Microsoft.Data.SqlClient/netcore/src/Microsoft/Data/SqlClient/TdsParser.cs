@@ -8579,6 +8579,49 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        /// <summary>
+        /// Writes the User Agent feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        /// </summary>
+        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <param name="write">
+        /// If true, writes the feature request to the physical state object.
+        /// If false, just calculates the length.
+        /// </param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// - N bytes for the JSON payload
+        /// </remarks>
+        internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
+                                                  bool write)
+        {
+            // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
+            int dataLen = 1 + userAgentJsonPayload.Length;
+            // 1byte (Feature ID) + 4bytes (Feature Data Length) + 1byte (Version) + N(JSON payload size)
+            int totalLen = 1 + 4 + dataLen;
+            
+            if (write)
+            {   
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_USERAGENT);
+
+                // Feature Data Length
+                WriteInt(dataLen, _physicalStateObj);
+
+                // Write Feature Version
+                _physicalStateObj.WriteByte(TdsEnums.SUPPORTED_USER_AGENT_VERSION);
+
+                // Write encoded JSON payload
+                _physicalStateObj.WriteByteArray(userAgentJsonPayload, userAgentJsonPayload.Length, 0);
+            }
+
+            return totalLen;
+        }
+
         private void WriteLoginData(SqlLogin rec,
                                      TdsEnums.FeatureExtension requestedFeatures,
                                      SessionData recoverySessionData,
