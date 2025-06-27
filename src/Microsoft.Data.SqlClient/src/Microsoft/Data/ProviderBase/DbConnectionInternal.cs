@@ -47,11 +47,6 @@ namespace Microsoft.Data.ProviderBase
         private bool _cannotBePooled;
 
         /// <summary>
-        /// When the connection was created.
-        /// </summary>
-        private DateTime _createTime;
-
-        /// <summary>
         /// [usage must be thread-safe] the transaction that we're enlisted in, either manually or automatically.
         /// </summary>
         private Transaction _enlistedTransaction;
@@ -93,9 +88,15 @@ namespace Microsoft.Data.ProviderBase
             AllowSetConnectionString = allowSetConnectionString;
             ShouldHidePassword = hidePassword;
             State = state;
+            CreateTime = DateTime.UtcNow;
         }
 
         #region Properties
+
+        /// <summary>
+        /// When the connection was created.
+        /// </summary>
+        internal DateTime CreateTime { get; init; }
 
         internal bool AllowSetConnectionString { get; }
 
@@ -531,7 +532,7 @@ namespace Microsoft.Data.ProviderBase
                 // If we're not already doomed, check the connection's lifetime and
                 // doom it if it's lifetime has elapsed.
                 DateTime now = DateTime.UtcNow;
-                if (now.Ticks - _createTime.Ticks > Pool.LoadBalanceTimeout.Ticks)
+                if (now.Ticks - CreateTime.Ticks > Pool.LoadBalanceTimeout.Ticks)
                 {
                     DoNotPoolThisConnection();
                 }
@@ -701,7 +702,6 @@ namespace Microsoft.Data.ProviderBase
         /// <param name="connectionPool"></param>
         internal void MakePooledConnection(IDbConnectionPool connectionPool)
         {
-            _createTime = DateTime.UtcNow;
             Pool = connectionPool;
         }
 
