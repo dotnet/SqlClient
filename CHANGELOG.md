@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 # Release Notes
 
-## [Preiew Release 6.1.0-preview2.TODO] - 2025-06-27
+## [Preview Release 6.1.0-preview2.25178.5] - 2025-06-27
 
 This update brings the following changes since the [6.1.0-preview1](release-notes/6.1/6.1.0-preview1.md) release:
 
