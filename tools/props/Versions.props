@@ -14,7 +14,7 @@
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
     <!--
       This sets the version of the Microsoft.Data.SqlClient assembly.  It
-      shoudl only be updated when the major version of the MDS package changes
+      should only be updated when the major version of the MDS package changes
       and introduces breaking changes.  Only ever update the major version
       number.  All other version parts must be set to 0.
     -->
