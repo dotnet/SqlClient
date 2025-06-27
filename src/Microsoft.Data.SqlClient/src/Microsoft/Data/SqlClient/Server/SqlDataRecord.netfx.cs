@@ -24,27 +24,6 @@ namespace Microsoft.Data.SqlClient.Server
                 return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, false).ClassType;
             }
         }
-   
-        private object GetValueFrameworkSpecific(int ordinal)
-        {
-            SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetValue200(_recordBuffer, ordinal, metaData);
-        }
-    
-        private object GetSqlValueFrameworkSpecific(int ordinal)
-        {
-            SmiMetaData metaData = GetSmiMetaData(ordinal);
-            return ValueUtilsSmi.GetSqlValue200(_recordBuffer, ordinal, metaData);
-        }
-
-        private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlBytes(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
- 
-        private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlXml(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
-        
-        private SqlChars GetSqlCharsFrameworkSpecific(int ordinal) =>
-            ValueUtilsSmi.GetSqlChars(_recordBuffer, ordinal, GetSmiMetaData(ordinal));
  
         private int SetValuesFrameworkSpecific(params object[] values)
         {
@@ -112,21 +91,5 @@ namespace Microsoft.Data.SqlClient.Server
                 offset: 0,
                 peekAhead: null);
         }
-  
-        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => 
-            ValueUtilsSmi.SetTimeSpan(
-                _recordBuffer,
-                ordinal,
-                GetSmiMetaData(ordinal),
-                value,
-                settersSupport2008DateTime: true);
-        
-        private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) =>
-            ValueUtilsSmi.SetDateTimeOffset(
-                _recordBuffer,
-                ordinal,
-                GetSmiMetaData(ordinal),
-                value,
-                settersSupport2008DateTime: true);
     }
 }

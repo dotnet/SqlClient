@@ -1290,12 +1290,8 @@ namespace Microsoft.Data.SqlClient.Server
             SetDateTime_Checked(setters, ordinal, metaData, value);
         }
 
-        internal static void SetDateTimeOffset(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value, bool settersSupport2008DateTime = true)
+        internal static void SetDateTimeOffset(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value)
         {
-            if (!settersSupport2008DateTime)
-            {
-                throw ADP.InvalidCast();
-            }
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.DateTimeOffset);
             SetDateTimeOffset_Unchecked((SmiTypedGetterSetter)setters, ordinal, value);
         }
@@ -1445,12 +1441,8 @@ namespace Microsoft.Data.SqlClient.Server
             SetString_LengthChecked(setters, ordinal, metaData, value, 0);
         }
 
-        internal static void SetTimeSpan(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value, bool settersSupport2008DateTime = true)
+        internal static void SetTimeSpan(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value)
         {
-            if (!settersSupport2008DateTime)
-            {
-                throw ADP.InvalidCast();
-            }
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.TimeSpan);
             SetTimeSpan_Checked((SmiTypedGetterSetter)setters, ordinal, metaData, value);
         }
