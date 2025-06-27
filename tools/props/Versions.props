@@ -4,12 +4,23 @@
   <PropertyGroup>
     <MdsVersionDefault>6.1.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+
+    <!--
+      GOTCHA: These two properties must appear in the first <PropertyGroup> in
+      this file due to hardcoded XML processing in:
+
+      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
+    -->
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
-    <FileVersion>$(AssemblyFileVersion)</FileVersion>
-    <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient Assembly. -->
-    <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
-    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
+    <!--
+      This sets the version of the Microsoft.Data.SqlClient assembly.  It
+      shoudl only be updated when the major version of the MDS package changes
+      and introduces breaking changes.  Only ever update the major version
+      number.  All other version parts must be set to 0.
+    -->
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
+
+    <FileVersion>$(AssemblyFileVersion)</FileVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault)-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
@@ -24,6 +35,15 @@
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
+
+    <!--
+      GOTCHA: This property must appear in the last <PropertyGroup> in this file
+      due to hardcoded XML processing in:
+
+      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
+
+      See the 'Modify TestMicrosoftDataSqlClientVersion' step.
+    -->
     <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
 </Project>
