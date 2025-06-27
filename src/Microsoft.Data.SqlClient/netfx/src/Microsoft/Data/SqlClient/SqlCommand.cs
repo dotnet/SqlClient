@@ -989,7 +989,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Validate the command outside of the try\catch to avoid putting the _stateObj on error
-                    ValidateCommand(nameof(Prepare), false /*not async*/);
+                    ValidateCommand(isAsync: false);
 
                     bool processFinallyBlock = true;
                     TdsParser bestEffortCleanupTarget = null;
@@ -1250,8 +1250,16 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
-        private SqlDataReader RunExecuteReaderWithRetry(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method)
-            => RetryLogicProvider.Execute(this, () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+        private SqlDataReader RunExecuteReaderWithRetry(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            [CallerMemberName] string method = "")
+        {
+            return RetryLogicProvider.Execute(
+                this,
+                () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
@@ -1274,10 +1282,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
-                    SqlDataReader ds;
-                    ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar)) :
-                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar));
+                    SqlDataReader ds = IsProviderRetriable
+                        ? RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true)
+                        : RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
                     object result = CompleteExecuteScalar(ds, _batchRPCMode);
                     success = true;
                     return result;
@@ -1401,10 +1408,25 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
-        private Task InternalExecuteNonQueryWithRetry(string methodName, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry)
+        private Task InternalExecuteNonQueryWithRetry(
+            bool sendToPipe,
+            int timeout,
+            out bool usedCache,
+            bool asyncWrite,
+            bool inRetry,
+            [CallerMemberName] string methodName = "")
         {
             bool innerUsedCache = false;
-            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, methodName, sendToPipe, timeout, out innerUsedCache, asyncWrite, inRetry));
+            Task result = RetryLogicProvider.Execute(
+                this,
+                () => InternalExecuteNonQuery(
+                    completion: null,
+                    sendToPipe,
+                    timeout,
+                    out innerUsedCache,
+                    asyncWrite,
+                    inRetry,
+                    methodName));
             usedCache = innerUsedCache;
             return result;
         }
@@ -1432,11 +1454,16 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(
+                            sendToPipe: false,
+                            CommandTimeout,
+                            out _,
+                            asyncWrite: false,
+                            inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out _);
+                        InternalExecuteNonQuery(completion: null, sendToPipe: false, CommandTimeout, out _);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1502,8 +1529,17 @@ namespace Microsoft.Data.SqlClient
 
                 bool usedCache;
                 try
-                { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    Task execNQ = InternalExecuteNonQuery(localCompletion, nameof(BeginExecuteNonQuery), false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
+                {
+                    // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
+                    Task execNQ = InternalExecuteNonQuery(
+                        localCompletion,
+                        sendToPipe: false,
+                        timeout,
+                        out usedCache,
+                        asyncWrite,
+                        inRetry,
+                        methodName: nameof(BeginExecuteNonQuery));
+                    
                     if (execNQ != null)
                     {
                         AsyncHelper.ContinueTaskWithState(execNQ, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteNonQueryInternalReadStage(localCompletion));
@@ -1731,7 +1767,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                int result = (int)InternalEndExecuteNonQuery(asyncResult, nameof(EndExecuteNonQuery), isInternal: false);
+                int result = (int)InternalEndExecuteNonQuery(asyncResult, isInternal: false, endMethod: nameof(EndExecuteNonQuery));
                 success = true;
                 return result;
             }
@@ -1760,7 +1796,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private object InternalEndExecuteNonQuery(IAsyncResult asyncResult, string endMethod, bool isInternal)
+        private object InternalEndExecuteNonQuery(
+            IAsyncResult asyncResult,
+            bool isInternal,
+            [CallerMemberName] string endMethod = "")
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
                                                     _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
@@ -1867,7 +1906,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task InternalExecuteNonQuery(TaskCompletionSource<object> completion, string methodName, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite = false, bool inRetry = false)
+        private Task InternalExecuteNonQuery(
+            TaskCompletionSource<object> completion,
+            bool sendToPipe,
+            int timeout,
+            out bool usedCache,
+            bool asyncWrite = false,
+            bool inRetry = false,
+            [CallerMemberName] string methodName = "")
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
                                                     _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
@@ -1886,7 +1932,7 @@ namespace Microsoft.Data.SqlClient
                 // @devnote: returns false for empty command text
                 if (!inRetry)
                 {
-                    ValidateCommand(methodName, async);
+                    ValidateCommand(async, methodName);
                 }
                 CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
 
@@ -1920,7 +1966,18 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(!sendToPipe, "trying to send non-context command to pipe");
                     SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.ExecuteNonQuery|INFO> {0}, Command executed as RPC.", ObjectID);
 
-                    SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, methodName, completion, timeout, out task, out usedCache, asyncWrite, inRetry);
+                    SqlDataReader reader = RunExecuteReader(
+                        CommandBehavior.Default,
+                        RunBehavior.UntilDone,
+                        returnStream: false,
+                        completion,
+                        timeout,
+                        out task,
+                        out usedCache,
+                        asyncWrite,
+                        inRetry,
+                        methodName);
+                    
                     if (reader != null)
                     {
                         if (task != null)
@@ -1977,10 +2034,9 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
 
                     // use the reader to consume metadata
-                    SqlDataReader ds;
-                    ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader)) :
-                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader));
+                    SqlDataReader ds = IsProviderRetriable
+                        ? RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true)
+                        : RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                     XmlReader result = CompleteXmlReader(ds);
                     success = true;
                     return result;
@@ -2047,8 +2103,18 @@ namespace Microsoft.Data.SqlClient
                 bool usedCache;
                 Task writeTask;
                 try
-                { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteXmlReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                {
+                    // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
+                    RunExecuteReader(
+                        behavior,
+                        RunBehavior.ReturnImmediately,
+                        returnStream: true,
+                        localCompletion,
+                        timeout,
+                        out writeTask,
+                        out usedCache,
+                        asyncWrite,
+                        inRetry);
                 }
                 catch (Exception e)
                 {
@@ -2524,7 +2590,17 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                    RunExecuteReader(
+                        behavior,
+                        RunBehavior.ReturnImmediately,
+                        returnStream: true,
+                        localCompletion,
+                        timeout,
+                        out writeTask,
+                        out usedCache,
+                        asyncWrite,
+                        inRetry,
+                        nameof(BeginExecuteReader));
                 }
                 catch (Exception e)
                 {
@@ -3428,7 +3504,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // validate that we have a valid connection
-            ValidateCommand(nameof(DeriveParameters), false /*not async*/);
+            ValidateCommand(isAsync: false);
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
@@ -4866,16 +4942,39 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method)
+        internal SqlDataReader RunExecuteReader(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            [CallerMemberName] string method = "")
         {
             Task unused; // sync execution 
-            SqlDataReader reader = RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion: null, timeout: CommandTimeout, task: out unused, out _);
+            SqlDataReader reader = RunExecuteReader(
+                cmdBehavior,
+                runBehavior,
+                returnStream,
+                completion: null,
+                timeout: CommandTimeout,
+                task: out unused,
+                usedCache: out _,
+                method: method);
+            
             Debug.Assert(unused == null, "returned task during synchronous execution");
             return reader;
         }
 
         // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete 
-        internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method, TaskCompletionSource<object> completion, int timeout, out Task task, out bool usedCache, bool asyncWrite = false, bool inRetry = false)
+        internal SqlDataReader RunExecuteReader(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            TaskCompletionSource<object> completion,
+            int timeout,
+            out Task task,
+            out bool usedCache,
+            bool asyncWrite = false,
+            bool inRetry = false,
+            [CallerMemberName] string method = "")
         {
             bool async = completion != null;
             usedCache = false;
@@ -4895,7 +4994,7 @@ namespace Microsoft.Data.SqlClient
             // returns false for empty command text
             if (!inRetry)
             {
-                ValidateCommand(method, async);
+                ValidateCommand(async, method);
             }
 
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
@@ -4950,7 +5049,17 @@ namespace Microsoft.Data.SqlClient
 
                         InvalidateEnclaveSession();
 
-                        return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
+                        return RunExecuteReader(
+                            cmdBehavior,
+                            runBehavior,
+                            returnStream,
+                            completion,
+                            TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                            out task,
+                            out usedCache,
+                            async,
+                            inRetry: true,
+                            method: method);
                     }
 
                     catch (SqlException ex)
@@ -4988,7 +5097,17 @@ namespace Microsoft.Data.SqlClient
 
                             InvalidateEnclaveSession();
 
-                            return RunExecuteReader(cmdBehavior, runBehavior, returnStream, method, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, async, inRetry: true);
+                            return RunExecuteReader(
+                                cmdBehavior,
+                                runBehavior,
+                                returnStream,
+                                completion,
+                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                out task,
+                                out usedCache,
+                                async,
+                                inRetry: true,
+                                method: method);
                         }
                     }
                 }
@@ -5567,7 +5686,7 @@ namespace Microsoft.Data.SqlClient
 
         // validates that a command has commandText and a non-busy open connection
         // throws exception for error case, returns false if the commandText is empty
-        private void ValidateCommand(string method, bool async)
+        private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
             if (_activeConnection == null)
             {
