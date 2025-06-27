@@ -1092,6 +1092,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public readonly ref struct XEventScope // : IDisposable
         {
+            private const int MaxXEventsLatencyS = 5;
+
             private readonly SqlConnection _connection;
             private readonly bool _useDatabaseSession;
 
@@ -1126,6 +1128,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (SqlCommand command = new SqlCommand(xEventQuery, _connection))
                 {
+                    Thread.Sleep(MaxXEventsLatencyS * 1000);
+
                     if (_connection.State == ConnectionState.Closed)
                     {
                         _connection.Open();
@@ -1148,7 +1152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         WITH (
                             MAX_MEMORY=4096 KB,
                             EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY=30 SECONDS,
+                            MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
                             MAX_EVENT_SIZE=0 KB,
                             MEMORY_PARTITION_MODE=NONE,
                             TRACK_CAUSALITY=ON,
