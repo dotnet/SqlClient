@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.Server
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
     {
-        private readonly SmiRecordBuffer _recordBuffer;
+        private readonly MemoryRecordBuffer _recordBuffer;
         private readonly SmiExtendedMetaData[] _columnSmiMetaData;
         private readonly SqlMetaData[] _columnMetaData;
         private FieldNameLookup _fieldNameLookup;
