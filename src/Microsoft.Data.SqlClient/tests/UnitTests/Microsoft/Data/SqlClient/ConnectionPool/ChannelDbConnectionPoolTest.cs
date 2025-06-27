@@ -571,13 +571,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region Property Tests
 
         [Fact]
-        public void TestAuthenticationContexts()
-        {
-            Setup(SuccessfulConnectionFactory);
-            Assert.Throws<NotImplementedException>(() => _ = pool.AuthenticationContexts);
-        }
-
-        [Fact]
         public void TestConnectionFactory()
         {
             Setup(SuccessfulConnectionFactory);

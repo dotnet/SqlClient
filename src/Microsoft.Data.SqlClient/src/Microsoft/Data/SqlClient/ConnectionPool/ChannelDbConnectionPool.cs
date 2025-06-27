@@ -212,7 +212,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             out DbConnectionInternal? connection)
         {
             var timeout = TimeSpan.FromSeconds(owningObject.ConnectionTimeout);
-            using CancellationTokenSource cancellationTokenSource = new(timeout);
 
             // If taskCompletionSource is null, we are in a sync context.
             if (taskCompletionSource is null)
@@ -221,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         owningObject,
                         userOptions,
                         async: false,
-                        cancellationTokenSource.Token);
+                        timeout);
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -269,21 +268,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         owningObject, 
                         userOptions, 
                         async: true,
-                        cancellationTokenSource.Token
+                        timeout
                     ).ConfigureAwait(false);
                     taskCompletionSource.SetResult(connection);
                 }
-                catch (InvalidOperationException)
-                {
-                    // We were able to get a connection, but the task was cancelled out from under us.
-                    // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
-                    if (connection != null)
-                    {
-                        this.ReturnInternalConnection(connection, owningObject);
-                    }
-                }
                 catch (Exception e)
                 {
+                    if (connection != null)
+                    {
+                        // We were able to get a connection, but the task was cancelled out from under us.
+                        // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
+                        this.ReturnInternalConnection(connection, owningObject);
+                    }
+
                     // It's possible to fail to set an exception on the TaskCompletionSource if the task is already
                     // completed. In that case, this exception will be swallowed because nobody directly awaits this
                     // task.
@@ -428,15 +425,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningConnection">The DbConnection that will own this internal connection</param>
         /// <param name="userOptions">The user options to set on the internal connection</param>
         /// <param name="async">A boolean indicating whether the operation should be asynchronous.</param>
-        /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+        /// <param name="timeout">The timeout for the operation.</param>
         /// <returns>Returns a DbConnectionInternal that is retrieved from the pool.</returns>
         private async Task<DbConnectionInternal> GetInternalConnection(
             DbConnection owningConnection, 
             DbConnectionOptions userOptions, 
             bool async, 
-            CancellationToken cancellationToken)
+            TimeSpan timeout)
         {
             DbConnectionInternal? connection = null;
+            using CancellationTokenSource cancellationTokenSource = new(timeout);
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
 
             // Continue looping until we create or retrieve a connection
             do
