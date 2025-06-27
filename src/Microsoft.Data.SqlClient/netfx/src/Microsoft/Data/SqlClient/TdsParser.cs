@@ -8762,8 +8762,25 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        /// <summary>
+        /// Writes the User Agent feature request to the physical state object.
+        /// The request includes the feature ID, feature data length, version number and encoded JSON payload.
+        /// </summary>
+        /// <param name="userAgentJsonPayload"> Byte array of UTF-8 encoded JSON payload for User Agent</param>
+        /// <param name="write">
+        /// If true, writes the feature request to the physical state object.
+        /// If false, just calculates the length.
+        /// </param>
+        /// <returns>The length of the feature request in bytes.</returns>
+        /// <remarks>
+        /// The feature request consists of:
+        /// - 1 byte for the feature ID.
+        /// - 4 bytes for the feature data length.
+        /// - 1 byte for the version number.
+        /// - N bytes for the JSON payload
+        /// </remarks>
         internal int WriteUserAgentFeatureRequest(byte[] userAgentJsonPayload,
-                                                  bool write /* if false just calculates the length */)
+                                                  bool write)
         {
             // 1byte (Feature Version) + size of UTF-8 encoded JSON payload 
             int dataLen = 1 + userAgentJsonPayload.Length;
