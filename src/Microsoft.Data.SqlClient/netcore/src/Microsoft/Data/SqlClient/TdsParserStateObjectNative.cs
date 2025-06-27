@@ -441,6 +441,13 @@ namespace Microsoft.Data.SqlClient
             return returnValue;
         }
 
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniNativeWrapper.SniGetLastError(out SniError sniError);
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError, (int)sniError.provider, sniError.lineNumber, sniError.function);
+        }
+
         internal override void DisposePacketCache()
         {
             lock (_writePacketLockObject)

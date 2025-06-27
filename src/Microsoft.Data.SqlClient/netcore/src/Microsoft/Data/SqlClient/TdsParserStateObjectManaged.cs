@@ -392,6 +392,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             return 0;
         }
 
+        internal override SniErrorDetails GetErrorDetails()
+        {
+            SniError sniError = SniProxy.Instance.GetLastError();
+
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError, (int)sniError.provider, sniError.lineNumber, sniError.function, sniError.exception);
+        }
+
         private SniHandle GetSessionSNIHandleHandleOrThrow()
         {
             SniHandle? sessionHandle = _sessionHandle;
