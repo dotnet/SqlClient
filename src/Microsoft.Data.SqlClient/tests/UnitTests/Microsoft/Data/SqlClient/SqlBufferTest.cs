@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// Several methods in this class are internal. This is because their parameters are of SqlBuffer.StorageType,
     /// which is non-public.
     /// </remarks>
-    public sealed class SqlBufferTests
+    public sealed class SqlBufferTest
     {
         private readonly SqlBuffer _target = new();
 
