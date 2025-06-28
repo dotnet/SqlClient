@@ -47,7 +47,12 @@ namespace Microsoft.Data.Common
         readonly private string _encryptedActualConnectionString;
 #pragma warning restore 169
 
-        internal DbConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
+        internal DbConnectionString(
+            string value,
+            string restrictions,
+            KeyRestrictionBehavior behavior,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool useOdbcRules)
             : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
             // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
@@ -61,8 +66,14 @@ namespace Microsoft.Data.Common
             // since backward compatibility requires Everett level classes
         }
 
-        private DbConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
-        { // used by DBDataPermission
+        private DbConnectionString(
+            DbConnectionOptions connectionOptions,
+            string restrictions,
+            KeyRestrictionBehavior behavior,
+            IReadOnlyDictionary<string, string> synonyms,
+            bool mustCloneDictionary)
+        {
+            // used by DBDataPermission
             Debug.Assert(connectionOptions != null, "null connectionOptions");
             switch (behavior)
             {
@@ -117,7 +128,10 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private DbConnectionString(DbConnectionString connectionString, string[] restrictionValues, KeyRestrictionBehavior behavior)
+        private DbConnectionString(
+            DbConnectionString connectionString,
+            string[] restrictionValues,
+            KeyRestrictionBehavior behavior)
         {
             // used by intersect for two equal connection strings with different restrictions
             _encryptedUsersConnectionString = connectionString._encryptedUsersConnectionString;

@@ -1799,7 +1799,7 @@ namespace Microsoft.Data.SqlClient
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
-            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(SqlConnectionString.KEY.TransparentNetworkIPResolution);
+            bool isTnirExplicitlySpecifiedInConnectionOptions = connectionOptions.Parsetable.ContainsKey(DbConnectionStringKeywords.TransparentNetworkIpResolution);
 
             return isTnirExplicitlySpecifiedInConnectionOptions ? false : (isAzureEndPoint || isFedAuthEnabled);
         }

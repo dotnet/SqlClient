@@ -5,6 +5,7 @@
 using System;
 using System.ComponentModel;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -41,7 +42,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Encrypt);
             }
         }
 
