@@ -8,26 +8,26 @@ namespace Microsoft.Data.SqlClient.UnitTests
 {
     public class SqlCommandSetTest
     {
-        private static Assembly mds = Assembly.GetAssembly(typeof(SqlConnection));
-
         [Theory]
         [InlineData("BatchCommand")]
         [InlineData("CommandList")]
         public void GetDisposedProperty_Throws(string propertyName)
         {
-            var cmdSet = CreateInstance();
-            CallMethod(cmdSet, "Dispose");
-            Exception ex = GetProperty_Throws(cmdSet, propertyName);
-            VerifyException<ObjectDisposedException>(ex, "disposed");
+            SqlCommandSet cmdSet = new();
+            cmdSet.Dispose();
+
+            ObjectDisposedException ode = GetProperty_Throws<ObjectDisposedException>(cmdSet, propertyName);
+            Assert.Contains("disposed", ode.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void AppendCommandWithEmptyString_Throws()
         {
-            var cmdSet = CreateInstance();
-            SqlCommand cmd = new SqlCommand("");
-            Exception ex = CallMethod_Throws(cmdSet, "Append", cmd);
-            VerifyException<InvalidOperationException>(ex, "CommandText property has not been initialized");
+            SqlCommandSet cmdSet = new();
+            SqlCommand cmd = new("");
+
+            InvalidOperationException ioe = Assert.Throws<InvalidOperationException>(() => cmdSet.Append(cmd));
+            Assert.Contains("CommandText property has not been initialized", ioe.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         public static IEnumerable<object[]> CommandTypeData()
@@ -52,21 +52,23 @@ namespace Microsoft.Data.SqlClient.UnitTests
             )]
         public void AppendBadCommandType_Throws(CommandType commandType)
         {
-            var cmdSet = CreateInstance();
+            SqlCommandSet cmdSet = new();
             SqlCommand cmd = GenerateBadCommand(commandType);
-            Exception ex = CallMethod_Throws(cmdSet, "Append", cmd);
-            VerifyException<ArgumentOutOfRangeException>(ex, "CommandType");
+
+            ArgumentOutOfRangeException aoore = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.Append(cmd));
+            Assert.Contains("CommandType", aoore.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void AppendBadParameterName_Throws()
         {
-            var cmdSet = CreateInstance();
-            SqlCommand cmd = new SqlCommand("Test");
+            SqlCommandSet cmdSet = new();
+            SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("Test1;=", "1"));
-            Exception ex = CallMethod_Throws(cmdSet, "Append", cmd);
-            VerifyException<ArgumentException>(ex, "not valid");
+
+            ArgumentException ae = Assert.Throws<ArgumentException>(() => cmdSet.Append(cmd));
+            Assert.Contains("not valid", ae.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Theory]
@@ -74,15 +76,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(new char[] { '1', '2', '3' })]
         public void AppendParameterArrayWithSize(object array)
         {
-            var cmdSet = CreateInstance();
-            SqlCommand cmd = new SqlCommand("Test");
+            SqlCommandSet cmdSet = new();
+            SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.StoredProcedure;
-            SqlParameter parameter = new SqlParameter("@array", array);
+            SqlParameter parameter = new("@array", array);
             parameter.Size = 2;
             cmd.Parameters.Add(parameter);
-            CallMethod(cmdSet, "Append", cmd);
-            object p = CallMethod(cmdSet, "GetParameter", 0, 0);
-            SqlParameter result = p as SqlParameter;
+            cmdSet.Append(cmd);
+            SqlParameter result = cmdSet.GetParameter(0, 0);
             Assert.NotNull(result);
             Assert.Equal("@array", result.ParameterName);
             Assert.Equal(2, result.Size);
@@ -91,13 +92,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void GetParameter()
         {
-            var cmdSet = CreateInstance();
-            SqlCommand cmd = new SqlCommand("Test");
+            SqlCommandSet cmdSet = new();
+            SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("@text", "value"));
-            CallMethod(cmdSet, "Append", cmd);
-            object p = CallMethod(cmdSet, "GetParameter", 0, 0);
-            SqlParameter result = p as SqlParameter;
+            cmdSet.Append(cmd);
+            SqlParameter result = cmdSet.GetParameter(0, 0);
             Assert.NotNull(result);
             Assert.Equal("@text", result.ParameterName);
             Assert.Equal("value", (string)result.Value);
@@ -106,94 +106,75 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void GetParameterCount()
         {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            var cmdSet = Activator.CreateInstance(commandSetType, true);
-            SqlCommand cmd = new SqlCommand("Test");
+            SqlCommandSet cmdSet = new();
+            SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("@abc", "1"));
             cmd.Parameters.Add(new SqlParameter("@test", "2"));
-            commandSetType.GetMethod("Append", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(cmdSet, new object[] { cmd });
+            cmdSet.Append(cmd);
             int index = 0;
-            int count = (int)commandSetType.GetMethod("GetParameterCount", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(cmdSet, new object[] { index });
+            int count = cmdSet.GetParameterCount(index);
             Assert.Equal(2, count);
         }
 
         [Fact]
         public void InvalidCommandBehaviorValidateCommandBehavior_Throws()
         {
-            var cmdSet = CreateInstance();
-            Exception ex = CallMethod_Throws(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", (CommandBehavior)64);
-            VerifyException<ArgumentOutOfRangeException>(ex, "CommandBehavior");
+            SqlCommandSet cmdSet = new();
+
+            ArgumentOutOfRangeException aoore = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", (CommandBehavior)64);
+            Assert.Contains("CommandBehavior", aoore.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void NotSupportedCommandBehaviorValidateCommandBehavior_Throws()
         {
-            var cmdSet = CreateInstance();
-            Exception ex = CallMethod_Throws(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", CommandBehavior.KeyInfo);
-            VerifyException<ArgumentOutOfRangeException>(ex, "not supported");
+            SqlCommandSet cmdSet = new();
+
+            ArgumentOutOfRangeException aoore = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", CommandBehavior.KeyInfo);
+            Assert.Contains("not supported", aoore.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         #region private methods
 
-        private object CallMethod(object instance, string methodName, params object[] values)
-        {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            object returnValue = commandSetType.GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(instance, values);
-            return returnValue;
-        }
+        private static T GetProperty_Throws<T>(SqlCommandSet instance, string propertyName)
+            where T : Exception
+            => InvokeMethod_Throws<T>(instance,
+                typeof(SqlCommandSet)
+                    .GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance)
+                    .GetGetMethod(true),
+                []);
 
-        private object CallMethod(object instance, string methodName)
-        {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            object returnValue = commandSetType.GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(instance, new object[] { });
-            return returnValue;
-        }
+        private static T InvokeMethod_Throws<T>(SqlCommandSet instance, string methodName, params object[] values)
+            where T : Exception
+            => InvokeMethod_Throws<T>(instance,
+                typeof(SqlCommandSet)
+                    .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance),
+                values);
 
-        private Exception CallMethod_Throws(object instance, string methodName, params object[] values)
+        private static T InvokeMethod_Throws<T>(SqlCommandSet instance, MethodInfo methodInfo, params object[] values)
+            where T : Exception
         {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            Exception ex = Assert.ThrowsAny<Exception>(() =>
+            return Assert.Throws<T>(() =>
             {
-                commandSetType.GetMethod(methodName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Invoke(instance, values);
+                try
+                {
+                    methodInfo.Invoke(instance, values);
+                }
+                catch (TargetInvocationException e)
+                {
+                    throw e.InnerException;
+                }
             });
-            return ex;
-        }
-
-        private object CreateInstance()
-        {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            object cmdSet = Activator.CreateInstance(commandSetType, true);
-            return cmdSet;
-        }
-
-        private Exception GetProperty_Throws(object instance, string propertyName)
-        {
-            var commandSetType = mds.GetType("Microsoft.Data.SqlClient.SqlCommandSet");
-            var cmdSet = instance;
-            Exception ex = Assert.ThrowsAny<Exception>(() =>
-            {
-                commandSetType.GetProperty(propertyName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetGetMethod(true).Invoke(cmdSet, new object[] { });
-            });
-
-            return ex;
         }
 
         private SqlCommand GenerateBadCommand(CommandType cType)
         {
-            SqlCommand cmd = new SqlCommand("Test");
-            Type sqlCommandType = cmd.GetType();
+            SqlCommand cmd = new("Test");
             // There's validation done on the CommandType property, but we need to create one that avoids the check for the test case.
-            sqlCommandType.GetField("_commandType", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(cmd, cType);
+            typeof(SqlCommand).GetField("_commandType", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(cmd, cType);
 
             return cmd;
-        }
-
-        private void VerifyException<T>(Exception ex, string contains)
-        {
-            Assert.NotNull(ex);
-            Assert.IsType<T>(ex.InnerException);
-            Assert.Contains(contains, ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
         }
         #endregion
     }
