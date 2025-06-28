@@ -9,7 +9,7 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.UnitTests
 {
     public sealed class SqlBufferTests
     {
