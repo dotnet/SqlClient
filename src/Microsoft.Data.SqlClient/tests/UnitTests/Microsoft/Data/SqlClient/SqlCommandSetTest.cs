@@ -6,8 +6,17 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
+    /// <summary>
+    /// Provides unit tests for verifying the behavior of the SqlCommandSet class.
+    /// </summary>
     public class SqlCommandSetTest
     {
+        /// <summary>
+        /// Verifies that key properties throw an ObjectDisposedException after the SqlCommandSet has been disposed.
+        /// </summary>
+        /// <remarks>
+        /// These properties are private, requiring reflection to access.
+        /// </remarks>
         [Theory]
         [InlineData("BatchCommand")]
         [InlineData("CommandList")]
@@ -20,6 +29,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Contains("disposed", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that adding a SqlCommand with an empty CommandText to a SqlCommandSet throws an InvalidOperationException.
+        /// </summary>
         [Fact]
         public void AppendCommandWithEmptyString_Throws()
         {
@@ -30,20 +42,24 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Contains("CommandText property has not been initialized", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        public static IEnumerable<object[]> CommandTypeData()
-        {
-            yield return [CommandType.TableDirect];
-            yield return [(CommandType)5];
-        }
+        /// <summary>
+        /// Returns a set of invalid CommandType values.
+        /// </summary>
+        /// <see cref="AppendBadCommandType_Throws(CommandType)"/>
+        /// <remarks>
+        /// .NET Framework puts system enums in the Global Assembly Cache (GAC), and xUnit refuses to serialize enums that live there.
+        /// We make these system enum values a method, then disable enumeration of the test data to avoid warnings on the console when running tests.
+        /// </remarks>
+        public static TheoryData<CommandType> CommandTypeData()
+            => new(CommandType.TableDirect, (CommandType)5);
 
+        /// <summary>
+        /// Verifies that adding a SqlCommand with an invalid CommandType to a SqlCommandSet throws an ArgumentOutOfRangeException.
+        /// </summary>
         [Theory]
         [MemberData(
             nameof(CommandTypeData)
 #if NETFRAMEWORK
-            // .NET Framework puts system enums in something called the Global
-            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
-            // live there.  So for .NET Framework, we disable enumeration of the
-            // test data to avoid warnings on the console when running tests.
             , DisableDiscoveryEnumeration = true
 #endif
             )]
@@ -56,6 +72,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Contains("CommandType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that adding a SqlCommand containing a SqlParameter with an invalid name to a SqlCommandSet throws an ArgumentException.
+        /// </summary>
         [Fact]
         public void AppendBadParameterName_Throws()
         {
@@ -68,6 +87,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Contains("not valid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that a SqlParameter containing an array round-trips through a SqlCommandSet correctly.
+        /// </summary>
         [Theory]
         [InlineData(new byte[] { 1, 2, 3 })]
         [InlineData(new char[] { '1', '2', '3' })]
@@ -84,6 +106,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(2, result.Size);
         }
 
+        /// <summary>
+        /// Verifies that a SqlParameter containing a scalar value round-trips through a SqlCommandSet correctly.
+        /// </summary>
         [Fact]
         public void GetParameter()
         {
@@ -98,6 +123,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal("value", (string)result.Value);
         }
 
+        /// <summary>
+        /// Verifies that SqlCommandSet.GetParameterCount returns the correct number of parameters for a command
+        /// at the correct index.
+        /// </summary>
         [Fact]
         public void GetParameterCount()
         {
@@ -112,6 +141,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(2, count);
         }
 
+        /// <summary>
+        /// Verifies that SqlCommandSet.ValidateCommandBehavior throws an ArgumentOutOfRangeException when an invalid CommandBehavior is specified.
+        /// </summary>
         [Fact]
         public void InvalidCommandBehaviorValidateCommandBehavior_Throws()
         {
@@ -121,6 +153,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Contains("CommandBehavior", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that SqlCommandSet.ValidateCommandBehavior throws an ArgumentOutOfRangeException when a valid but unsupported CommandBehavior is specified.
+        /// </summary>
         [Fact]
         public void NotSupportedCommandBehaviorValidateCommandBehavior_Throws()
         {
