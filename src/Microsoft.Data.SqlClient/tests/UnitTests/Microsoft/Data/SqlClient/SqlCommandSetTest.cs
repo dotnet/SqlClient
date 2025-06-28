@@ -16,27 +16,24 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlCommandSet cmdSet = new();
             cmdSet.Dispose();
 
-            ObjectDisposedException ode = GetProperty_Throws<ObjectDisposedException>(cmdSet, propertyName);
-            Assert.Contains("disposed", ode.Message, StringComparison.OrdinalIgnoreCase);
+            ObjectDisposedException ex = GetProperty_Throws<ObjectDisposedException>(cmdSet, propertyName);
+            Assert.Contains("disposed", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void AppendCommandWithEmptyString_Throws()
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = new("");
+            using SqlCommand cmd = new("");
 
-            InvalidOperationException ioe = Assert.Throws<InvalidOperationException>(() => cmdSet.Append(cmd));
-            Assert.Contains("CommandText property has not been initialized", ioe.Message, StringComparison.OrdinalIgnoreCase);
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmdSet.Append(cmd));
+            Assert.Contains("CommandText property has not been initialized", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         public static IEnumerable<object[]> CommandTypeData()
         {
-            return new object[][]
-            {
-                new object[] { CommandType.TableDirect },
-                new object[] { (CommandType)5 }
-            };
+            yield return [CommandType.TableDirect];
+            yield return [(CommandType)5];
         }
 
         [Theory]
@@ -53,22 +50,22 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void AppendBadCommandType_Throws(CommandType commandType)
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = GenerateBadCommand(commandType);
+            using SqlCommand cmd = GenerateBadCommand(commandType);
 
-            ArgumentOutOfRangeException aoore = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.Append(cmd));
-            Assert.Contains("CommandType", aoore.Message, StringComparison.OrdinalIgnoreCase);
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.Append(cmd));
+            Assert.Contains("CommandType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
         public void AppendBadParameterName_Throws()
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = new("Test");
+            using SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("Test1;=", "1"));
 
-            ArgumentException ae = Assert.Throws<ArgumentException>(() => cmdSet.Append(cmd));
-            Assert.Contains("not valid", ae.Message, StringComparison.OrdinalIgnoreCase);
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => cmdSet.Append(cmd));
+            Assert.Contains("not valid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Theory]
@@ -77,11 +74,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void AppendParameterArrayWithSize(object array)
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = new("Test");
+            using SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.StoredProcedure;
-            SqlParameter parameter = new("@array", array);
-            parameter.Size = 2;
-            cmd.Parameters.Add(parameter);
+            cmd.Parameters.Add(new SqlParameter("@array", array) { Size = 2 });
             cmdSet.Append(cmd);
             SqlParameter result = cmdSet.GetParameter(0, 0);
             Assert.NotNull(result);
@@ -93,7 +88,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void GetParameter()
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = new("Test");
+            using SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("@text", "value"));
             cmdSet.Append(cmd);
@@ -107,7 +102,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void GetParameterCount()
         {
             SqlCommandSet cmdSet = new();
-            SqlCommand cmd = new("Test");
+            using SqlCommand cmd = new("Test");
             cmd.CommandType = CommandType.Text;
             cmd.Parameters.Add(new SqlParameter("@abc", "1"));
             cmd.Parameters.Add(new SqlParameter("@test", "2"));
@@ -122,8 +117,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             SqlCommandSet cmdSet = new();
 
-            ArgumentOutOfRangeException aoore = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", (CommandBehavior)64);
-            Assert.Contains("CommandBehavior", aoore.Message, StringComparison.OrdinalIgnoreCase);
+            ArgumentOutOfRangeException ex = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", (CommandBehavior)64);
+            Assert.Contains("CommandBehavior", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
@@ -131,8 +126,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             SqlCommandSet cmdSet = new();
 
-            ArgumentOutOfRangeException aoore = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", CommandBehavior.KeyInfo);
-            Assert.Contains("not supported", aoore.Message, StringComparison.OrdinalIgnoreCase);
+            ArgumentOutOfRangeException ex = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", CommandBehavior.KeyInfo);
+            Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         #region private methods
@@ -168,7 +163,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             });
         }
 
-        private SqlCommand GenerateBadCommand(CommandType cType)
+        private static SqlCommand GenerateBadCommand(CommandType cType)
         {
             SqlCommand cmd = new("Test");
             // There's validation done on the CommandType property, but we need to create one that avoids the check for the test case.
