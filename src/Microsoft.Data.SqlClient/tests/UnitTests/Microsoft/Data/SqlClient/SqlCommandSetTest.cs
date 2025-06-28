@@ -4,7 +4,7 @@ using System.Data;
 using System.Reflection;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.UnitTests
 {
     public class SqlCommandSetTest
     {
