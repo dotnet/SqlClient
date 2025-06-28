@@ -8,10 +8,22 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
+    /// <summary>
+    /// Tests that null and non-null values assigned to the SqlBuffer round-trip correctly to their CLR and their
+    /// their SqlTypes representations.
+    /// </summary>
+    /// <remarks>
+    /// Several methods in this class are internal. This is because their parameters are of SqlBuffer.StorageType,
+    /// which is non-public.
+    /// </remarks>
     public sealed class SqlBufferTests
     {
         private readonly SqlBuffer _target = new();
 
+        /// <summary>
+        /// Verifies that if a SqlBuffer is directly assigned the value of SqlGuid.Null, accessing its Guid property
+        /// throws a SqlNullValueException.
+        /// </summary>
         [Fact]
         public void GuidShouldThrowWhenSqlGuidNullIsSet()
         {
@@ -20,6 +32,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Throws<SqlNullValueException>(() => _target.Guid);
         }
 
+        /// <summary>
+        /// Verifies that if a SqlBuffer is set to null of type Guid or SqlGuid, accessing its Guid property throws
+        /// a SqlNullValueException.
+        /// </summary>
         [Theory]
         [InlineData(SqlBuffer.StorageType.Guid)]
         [InlineData(SqlBuffer.StorageType.SqlGuid)]
@@ -30,6 +46,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Throws<SqlNullValueException>(() => _target.Guid);
         }
 
+        /// <summary>
+        /// Verifies that the Guid property round-trips correctly.
+        /// </summary>
         [Fact]
         public void GuidShouldReturnWhenGuidIsSet()
         {
@@ -39,6 +58,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, _target.Guid);
         }
 
+        /// <summary>
+        /// Verifies that the SqlGuid property round-trips to the Guid property correctly.
+        /// </summary>
         [Fact]
         public void GuidShouldReturnExpectedWhenSqlGuidIsSet()
         {
@@ -48,6 +70,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, _target.Guid);
         }
 
+        /// <summary>
+        /// Verifies that if a SqlBuffer is set to null of type Guid or SqlGuid, accessing its SqlGuid property returns
+        /// SqlGuid.Null.
+        /// </summary>
         [Theory]
         [InlineData(SqlBuffer.StorageType.Guid)]
         [InlineData(SqlBuffer.StorageType.SqlGuid)]
@@ -58,6 +84,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SqlGuid.Null, _target.SqlGuid);
         }
 
+        /// <summary>
+        /// Verifies that if a SqlBuffer is directly assigned the value of SqlGuid.Null, accessing its SqlGuid property
+        /// returns SqlGuid.Null.
+        /// </summary>
         [Fact]
         public void SqlGuidShouldReturnSqlGuidNullWhenSqlGuidNullIsSet()
         {
@@ -66,6 +96,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SqlGuid.Null, _target.SqlGuid);
         }
         
+        /// <summary>
+        /// Verifies that the Guid property round-trips to the SqlGuid property correctly.
+        /// </summary>
         [Fact]
         public void SqlGuidShouldReturnExpectedWhenGuidIsSet()
         {
@@ -76,6 +109,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, _target.SqlGuid);
         }
 
+        /// <summary>
+        /// Verifies that the SqlGuid property round-trips correctly.
+        /// </summary>
         [Fact]
         public void SqlGuidShouldReturnExpectedWhenSqlGuidIsSet()
         {
@@ -85,6 +121,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, _target.SqlGuid);
         }
 
+        /// <summary>
+        /// Verifies that the Guid property round-trips to the SqlValue property correctly.
+        /// </summary>
         [Fact]
         public void SqlValueShouldReturnExpectedWhenGuidIsSet()
         {
@@ -95,6 +134,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expected, _target.SqlValue);
         }
 
+        /// <summary>
+        /// Verifies that the SqlGuid property round-trips to the SqlValue property correctly.
+        /// </summary>
         [Fact]
         public void SqlValueShouldReturnExpectedWhenSqlGuidIsSet()
         {
