@@ -9,7 +9,7 @@ using System.Diagnostics;
 namespace Microsoft.Data.SqlClient.Server
 {
     // Class for implementing a record object used in out-of-proc scenarios.
-    internal sealed class MemoryRecordBuffer : SmiRecordBuffer
+    internal sealed class MemoryRecordBuffer : SmiTypedGetterSetter
     {
         private SqlRecordBuffer[] _buffer;
 
@@ -24,6 +24,12 @@ namespace Microsoft.Data.SqlClient.Server
                 _buffer[i] = new SqlRecordBuffer(metaData[i]);
             }
         }
+
+        #region Read/Write
+        protected override bool CanGet => true;
+
+        protected override bool CanSet => true;
+        #endregion
 
         #region Getters
         // Null test

@@ -1988,11 +1988,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                SqlInternalConnectionTds tdsConnection = (GetOpenConnection() as SqlInternalConnectionTds);
-                if (tdsConnection == null)
-                {
-                    throw SQL.NotAvailableOnContextConnection();
-                }
+                SqlInternalConnectionTds tdsConnection = GetOpenTdsConnection();
                 return tdsConnection.Parser;
             }
         }

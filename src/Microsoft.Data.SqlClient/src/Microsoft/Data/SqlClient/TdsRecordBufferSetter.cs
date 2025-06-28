@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient.Server;
 namespace Microsoft.Data.SqlClient
 {
     // TdsRecordBufferSetter handles writing a structured value out to a TDS stream
-    internal class TdsRecordBufferSetter : SmiRecordBuffer
+    internal class TdsRecordBufferSetter : SmiTypedGetterSetter
     {
         #region Fields (private)
 
