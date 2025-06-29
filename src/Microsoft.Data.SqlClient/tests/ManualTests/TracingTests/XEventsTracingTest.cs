@@ -21,37 +21,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // where it can be recorded in an XEvent session. This is documented at:
             // https://learn.microsoft.com/en-us/sql/relational-databases/native-client/features/accessing-diagnostic-information-in-the-extended-events-log
 
-            using (SqlConnection xEventManagementConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (DataTestUtility.XEventScope xEventSession = new DataTestUtility.XEventScope(xEventManagementConnection,
-                @"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id)),
-                ADD EVENT RPC_STARTING (ACTION (client_connection_id))",
-                "ADD TARGET ring_buffer"))
+            using SqlConnection activityConnection = new(DataTestUtility.TCPConnectionString);
+            activityConnection.Open();
+
+            Guid connectionId = activityConnection.ClientConnectionId;
+            HashSet<string> ids;
+
+            using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
+            using DataTestUtility.XEventScope xEventSession = new(xEventManagementConnection,
+                $@"ADD EVENT SQL_STATEMENT_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}')),
+                    ADD EVENT RPC_STARTING (ACTION (client_connection_id) WHERE (client_connection_id='{connectionId}'))",
+                    "ADD TARGET ring_buffer");
+
+            using (DataTestUtility.MDSEventListener TraceListener = new())
             {
-                Guid connectionId;
-                HashSet<string> ids;
-
-                using (DataTestUtility.MDSEventListener TraceListener = new())
-                using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
+                using SqlCommand command = new(query, activityConnection) { CommandType = commandType };
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    connection.Open();
-                    connectionId = connection.ClientConnectionId;
-
-                    using SqlCommand command = new(query, connection) { CommandType = commandType };
-                    using SqlDataReader reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        // Flush data
-                    }
-
-                    ids = TraceListener.ActivityIDs;
+                    // Flush data
                 }
 
-                XmlDocument eventList = xEventSession.GetEvents();
-                // Get the associated activity ID from the XEvent session. We expect to see the same ID in the trace as well.
-                string activityId = GetCommandActivityId(query, xEvent, connectionId, eventList);
-
-                Assert.Contains(activityId, ids);
+                ids = TraceListener.ActivityIDs;
             }
+
+            XmlDocument eventList = xEventSession.GetEvents();
+            // Get the associated activity ID from the XEvent session. We expect to see the same ID in the trace as well.
+            string activityId = GetCommandActivityId(query, xEvent, connectionId, eventList);
+
+            Assert.Contains(activityId, ids);
         }
 
         private static string GetCommandActivityId(string commandText, string eventName, Guid connectionId, XmlDocument xEvents)
