@@ -5,30 +5,29 @@
 using System;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests
+namespace Microsoft.Data.SqlClient.UnitTests;
+
+/// <summary>
+/// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
+/// </summary>
+public class LocalAppContextSwitchesTest
 {
     /// <summary>
-    /// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
+    /// Tests the default values of every AppContext switch used by SqlClient.
     /// </summary>
-    public class LocalAppContextSwitchesTest
+    [Fact]
+    public void TestDefaultAppContextSwitchValues()
     {
-        /// <summary>
-        /// Tests the default values of every AppContext switch used by SqlClient.
-        /// </summary>
-        [Fact]
-        public void TestDefaultAppContextSwitchValues()
-        {
-            Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
-            Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
-            Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
-            Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
-            Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
-            Assert.False(LocalAppContextSwitches.UseCompatibilityProcessSni);
-            Assert.False(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
-            Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
-            #if NETFRAMEWORK
-            Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
-            #endif
-        }
+        Assert.False(LocalAppContextSwitches.LegacyRowVersionNullBehavior);
+        Assert.False(LocalAppContextSwitches.SuppressInsecureTlsWarning);
+        Assert.False(LocalAppContextSwitches.MakeReadAsyncBlocking);
+        Assert.True(LocalAppContextSwitches.UseMinimumLoginTimeout);
+        Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
+        Assert.False(LocalAppContextSwitches.UseCompatibilityProcessSni);
+        Assert.False(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
+        #if NETFRAMEWORK
+        Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
+        #endif
     }
 }
