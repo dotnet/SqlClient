@@ -1150,7 +1150,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {eventSpecification}
                         {targetSpecification}
                         WITH (
-                            MAX_MEMORY=4096 KB,
+                            MAX_MEMORY=16 MB,
                             EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
                             MAX_DISPATCH_LATENCY={MaxXEventsLatencyS} SECONDS,
                             MAX_EVENT_SIZE=0 KB,
