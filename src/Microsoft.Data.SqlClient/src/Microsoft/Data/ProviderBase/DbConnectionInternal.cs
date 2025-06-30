@@ -398,7 +398,7 @@ namespace Microsoft.Data.ProviderBase
             pool?.TransactionEnded(transaction, this);
         }
 
-        internal virtual void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
+        internal virtual void CloseConnection(DbConnection owningObject, SqlConnectionFactory connectionFactory)
         {
             // The implementation here is the implementation required for the
             // "open" internal connections, since our own private "closed"
@@ -708,7 +708,7 @@ namespace Microsoft.Data.ProviderBase
         internal void NotifyWeakReference(int message) =>
             ReferenceCollection?.Notify(message);
 
-        internal virtual void OpenConnection(DbConnection outerConnection, DbConnectionFactory connectionFactory)
+        internal virtual void OpenConnection(DbConnection outerConnection, SqlConnectionFactory connectionFactory)
         {
             if (!TryOpenConnection(outerConnection, connectionFactory, null, null))
             {
@@ -814,7 +814,7 @@ namespace Microsoft.Data.ProviderBase
         /// </remarks>
         internal virtual bool TryOpenConnection(
             DbConnection outerConnection,
-            DbConnectionFactory connectionFactory,
+            SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionOptions userOptions)
         {
@@ -823,7 +823,7 @@ namespace Microsoft.Data.ProviderBase
 
         internal virtual bool TryReplaceConnection(
             DbConnection outerConnection,
-            DbConnectionFactory connectionFactory,
+            SqlConnectionFactory connectionFactory,
             TaskCompletionSource<DbConnectionInternal> retry,
             DbConnectionOptions userOptions)
         {
@@ -871,7 +871,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         protected internal virtual DataTable GetSchema(
-            DbConnectionFactory factory,
+            SqlConnectionFactory factory,
             DbConnectionPoolGroup poolGroup,
             DbConnection outerConnection,
             string collectionName,
@@ -901,7 +901,11 @@ namespace Microsoft.Data.ProviderBase
             // No additional locks in default implementation
         }
 
-        protected bool TryOpenConnectionInternal(DbConnection outerConnection, DbConnectionFactory connectionFactory, TaskCompletionSource<DbConnectionInternal> retry, DbConnectionOptions userOptions)
+        protected bool TryOpenConnectionInternal(
+            DbConnection outerConnection,
+            SqlConnectionFactory connectionFactory,
+            TaskCompletionSource<DbConnectionInternal> retry,
+            DbConnectionOptions userOptions)
         {
             // ?->Connecting: prevent set_ConnectionString during Open
             if (connectionFactory.SetInnerConnectionFrom(outerConnection, DbConnectionClosedConnecting.SingletonInstance, this))

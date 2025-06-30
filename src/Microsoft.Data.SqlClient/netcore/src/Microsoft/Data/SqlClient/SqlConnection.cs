@@ -1272,7 +1272,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*' />
         public static void ClearAllPools()
         {
-            SqlConnectionFactory.SingletonInstance.ClearAllPools();
+            SqlConnectionFactory.Instance.ClearAllPools();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*' />
@@ -1283,7 +1283,7 @@ namespace Microsoft.Data.SqlClient
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
             if (connectionOptions != null)
             {
-                SqlConnectionFactory.SingletonInstance.ClearPool(connection);
+                SqlConnectionFactory.Instance.ClearPool(connection);
             }
         }
 
@@ -2265,7 +2265,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity)
                 {
                     throw SQL.ChangePasswordConflictsWithSSPI();
@@ -2314,7 +2314,7 @@ namespace Microsoft.Data.SqlClient
 
                 SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-                SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
+                SqlConnectionString connectionOptions = SqlConnectionFactory.Instance.FindSqlConnectionOptions(key);
 
                 // Check for connection string values incompatible with SqlCredential
                 if (!string.IsNullOrEmpty(connectionOptions.UserID) || !string.IsNullOrEmpty(connectionOptions.Password))
@@ -2352,7 +2352,7 @@ namespace Microsoft.Data.SqlClient
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
-            SqlConnectionFactory.SingletonInstance.ClearPool(key);
+            SqlConnectionFactory.Instance.ClearPool(key);
         }
 
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)

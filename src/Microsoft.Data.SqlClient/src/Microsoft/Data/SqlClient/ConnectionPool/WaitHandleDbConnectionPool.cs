@@ -403,7 +403,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly int _cleanupWait;
         private readonly DbConnectionPoolIdentity _identity;
 
-        private readonly DbConnectionFactory _connectionFactory;
+        private readonly SqlConnectionFactory _connectionFactory;
         private readonly DbConnectionPoolGroup _connectionPoolGroup;
         private readonly DbConnectionPoolGroupOptions _connectionPoolGroupOptions;
         private DbConnectionPoolProviderInfo _connectionPoolProviderInfo;
@@ -439,10 +439,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         // only created by DbConnectionPoolGroup.GetConnectionPool
         internal WaitHandleDbConnectionPool(
-                            DbConnectionFactory connectionFactory,
-                            DbConnectionPoolGroup connectionPoolGroup,
-                            DbConnectionPoolIdentity identity,
-                            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
+            SqlConnectionFactory connectionFactory,
+            DbConnectionPoolGroup connectionPoolGroup,
+            DbConnectionPoolIdentity identity,
+            DbConnectionPoolProviderInfo connectionPoolProviderInfo)
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public int Count => _totalObjects;
 
-        public DbConnectionFactory ConnectionFactory => _connectionFactory;
+        public SqlConnectionFactory ConnectionFactory => _connectionFactory;
 
         public bool ErrorOccurred => _errorOccurred;
 
@@ -746,7 +746,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                newObj = _connectionFactory.CreatePooledConnection(this, owningObject, _connectionPoolGroup.ConnectionOptions, _connectionPoolGroup.PoolKey, userOptions);
+                newObj = _connectionFactory.CreatePooledConnection(
+                    owningObject,
+                    this,
+                    _connectionPoolGroup.PoolKey,
+                    _connectionPoolGroup.ConnectionOptions,
+                    userOptions);
                 if (newObj == null)
                 {
                     throw ADP.InternalError(ADP.InternalErrorCode.CreateObjectReturnedNull);    // CreateObject succeeded, but null object
