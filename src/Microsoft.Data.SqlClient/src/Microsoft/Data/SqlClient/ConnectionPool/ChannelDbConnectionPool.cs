@@ -259,32 +259,37 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // We're potentially on a new thread, so we need to properly set the ambient transaction.
                 // We rely on the caller to capture the ambient transaction in the TaskCompletionSource's AsyncState
                 // so that we can access it here. Read: area for improvement.
-                ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
+                // TODO: ADP.SetCurrentTransaction(taskCompletionSource.Task.AsyncState as Transaction);
                 DbConnectionInternal? connection = null;
 
                 try
                 {
                     connection = await GetInternalConnection(
-                        owningObject, 
-                        userOptions, 
+                        owningObject,
+                        userOptions,
                         async: true,
                         timeout
                     ).ConfigureAwait(false);
-                    taskCompletionSource.SetResult(connection);
+
+                    if (!taskCompletionSource.TrySetResult(connection))
+                    {
+                        // We were able to get a connection, but the task was cancelled out from under us.
+                        // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
+                        // Check the success to avoid an unnecessary exception.
+                        this.ReturnInternalConnection(connection, owningObject);
+                    }
                 }
                 catch (Exception e)
                 {
                     if (connection != null)
                     {
-                        // We were able to get a connection, but the task was cancelled out from under us.
-                        // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
                         this.ReturnInternalConnection(connection, owningObject);
                     }
 
                     // It's possible to fail to set an exception on the TaskCompletionSource if the task is already
                     // completed. In that case, this exception will be swallowed because nobody directly awaits this
                     // task.
-                    taskCompletionSource.SetException(e);
+                    taskCompletionSource.TrySetException(e);
                 }
             });
 

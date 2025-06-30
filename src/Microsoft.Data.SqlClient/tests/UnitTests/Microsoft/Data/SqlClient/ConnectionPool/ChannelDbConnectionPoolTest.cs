@@ -711,7 +711,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region Test classes
         internal class SuccessfulDbConnectionFactory : DbConnectionFactory
         {
-            protected override DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
+            protected override DbConnectionInternal CreateConnection(
+                DbConnectionOptions options, 
+                DbConnectionPoolKey poolKey, 
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, 
+                IDbConnectionPool pool, 
+                DbConnection owningConnection,
+                DbConnectionOptions userOptions)
             {
                 return new StubDbConnectionInternal();
             }
@@ -768,12 +774,28 @@ namespace Microsoft.Data.SqlClient.UnitTests
             {
                 throw new NotImplementedException();
             }
+
+            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
             #endregion
         }
 
         internal class TimeoutDbConnectionFactory : DbConnectionFactory
         {
-            protected override DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection)
+            protected override DbConnectionInternal CreateConnection(
+                                DbConnectionOptions options,
+                DbConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo,
+                IDbConnectionPool pool,
+                DbConnection owningConnection,
+                DbConnectionOptions userOptions)
             {
                 throw ADP.PooledOpenTimeout();
             }
@@ -827,6 +849,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
 
             internal override void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolProviderInfo CreateConnectionPoolProviderInfo(DbConnectionOptions connectionOptions)
+            {
+                throw new NotImplementedException();
+            }
+
+            internal override DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
             {
                 throw new NotImplementedException();
             }
