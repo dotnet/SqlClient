@@ -58,16 +58,14 @@ namespace Microsoft.Data.SqlClient.Server
         {
             SqlMetaData md = GetSqlMetaData(ordinal);
 
-#if NETFRAMEWORK
+            #if NETFRAMEWORK
             if (md.SqlDbType == SqlDbType.Udt)
             {
                 return md.Type;
             }
-            else
-#endif
-            {
-                return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, false).ClassType;
-            }
+            #endif
+
+            return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, isMultiValued: false).ClassType;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
