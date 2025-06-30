@@ -756,7 +756,7 @@ namespace Microsoft.Data.ProviderBase
             // By default, there is no preparation required
         }
 
-        internal void PrePush(object expectedOwner)
+        internal void PrePush(DbConnection expectedOwner)
         {
             // Called by IDbConnectionPool when we're about to be put into it's pool, we take this
             // opportunity to ensure ownership and pool counts are legit.

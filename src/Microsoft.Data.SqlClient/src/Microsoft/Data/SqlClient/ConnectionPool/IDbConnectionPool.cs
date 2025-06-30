@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="obj">The internal connection to return to the pool.</param>
         /// <param name="owningObject">The connection that currently owns this internal connection. Used to verify ownership.</param>
-        void ReturnInternalConnection(DbConnectionInternal obj, object owningObject);
+        void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject);
 
         /// <summary>
         /// Puts an internal connection from a transacted pool back into the general pool.

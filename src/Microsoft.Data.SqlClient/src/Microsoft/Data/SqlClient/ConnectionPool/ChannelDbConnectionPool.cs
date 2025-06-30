@@ -150,17 +150,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public void ReturnInternalConnection(DbConnectionInternal connection, object owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
         {
-            lock (connection)
-            {
-                // Calling PrePush prevents the object from being reclaimed
-                // once we leave the lock, because it sets _pooledCount such
-                // that it won't appear to be out of the pool.  What that
-                // means, is that we're now responsible for this connection:
-                // it won't get reclaimed if it gets lost.
-                connection.PrePush(owningObject);
-            }
+            // Calling PrePush prevents the object from being reclaimed
+            // once we leave the lock, because it sets _pooledCount such
+            // that it won't appear to be out of the pool.  What that
+            // means, is that we're now responsible for this connection:
+            // it won't get reclaimed if it gets lost.
+            ValidateOwnershipAndPoolingState(owningObject, connection);
 
             if (!IsLiveConnection(connection))
             {
@@ -345,7 +342,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);
                     }
 
-                    newConnection.PrePush(null);
+                    ValidateOwnershipAndPoolingState(null, newConnection);
 
                     _connectionSlots.Add(newConnection);
 
@@ -548,6 +545,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 throw;
             }
         }
-#endregion
+
+        /// <summary>
+        /// Validates that the connection is owned by the provided DbConnection and that it is in a valid state to be returned to the pool.
+        /// </summary>
+        /// <param name="owningObject">The owning DbConnection instance.</param>
+        /// <param name="connection">The DbConnectionInternal to be validated.</param>
+        private void ValidateOwnershipAndPoolingState(DbConnection? owningObject, DbConnectionInternal connection)
+        {
+            lock (connection)
+            {
+                connection.PrePush(owningObject);
+            }
+        }
+        #endregion
     }
 }

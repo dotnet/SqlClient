@@ -1655,7 +1655,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         }
 
-        public void ReturnInternalConnection(DbConnectionInternal obj, object owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal obj, DbConnection owningObject)
         {
             Debug.Assert(obj != null, "null obj?");
 
