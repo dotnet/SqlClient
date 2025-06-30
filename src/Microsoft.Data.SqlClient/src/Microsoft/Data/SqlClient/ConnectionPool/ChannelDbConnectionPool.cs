@@ -317,6 +317,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     var startTime = Stopwatch.GetTimestamp();
 
+                    // https://github.com/dotnet/SqlClient/issues/3459
                     // TODO: This blocks the thread for several network calls!
                     // When running async, the blocked thread is one allocated from the managed thread pool (due to 
                     // use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
