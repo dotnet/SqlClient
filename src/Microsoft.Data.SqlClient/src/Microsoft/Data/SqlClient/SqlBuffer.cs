@@ -513,7 +513,7 @@ namespace Microsoft.Data.SqlClient
                     switch (elementType)
                     {
                         case MetaType.SqlVectorElementType.Float32:
-                            return SqlVectorFloat32.ToString();
+                            return GetSqlVector<float>().GetString();
                         default:
                             throw SQL.VectorTypeNotSupported(elementType.ToString());
                     }
@@ -955,7 +955,14 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    return new SqlString(SqlVectorFloat32.ToString());
+                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+                    switch (elementType)
+                    {
+                        case MetaType.SqlVectorElementType.Float32:
+                            return new SqlString(GetSqlVector<float>().GetString());
+                        default:
+                            throw SQL.VectorTypeNotSupported(elementType.ToString());
+                    }
                 }
                 // String and Json storage type are both strings.
                 if (_type is StorageType.String or StorageType.Json)
@@ -981,14 +988,18 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
 
-        internal SqlVectorFloat32 SqlVectorFloat32 =>
-                _type is StorageType.Vector
-                    ? (
-                        IsNull
-                        ? new SqlVectorFloat32(_value._vectorInfo._elementCount)
-                        : new SqlVectorFloat32(SqlBinary.Value)
-                       )
-                : (SqlVectorFloat32)SqlValue;
+        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
+        {
+            if (_type is StorageType.Vector)
+            {
+                if (IsNull)
+                {
+                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                }
+                return new SqlVector<T>(SqlBinary.Value);
+            }
+            return (SqlVector<T>)SqlValue;
+        }
 
         internal object SqlValue
         {
@@ -1029,7 +1040,7 @@ namespace Microsoft.Data.SqlClient
                         switch (elementType)
                         {
                             case MetaType.SqlVectorElementType.Float32:
-                                return SqlVectorFloat32;
+                                return GetSqlVector<float>();
                             default:
                                 throw SQL.VectorTypeNotSupported(elementType.ToString());
                         }

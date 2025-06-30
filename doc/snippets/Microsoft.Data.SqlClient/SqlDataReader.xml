@@ -415,7 +415,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <item><description>SqlMoney</description></item>
           <item><description>SqlSingle</description></item>
           <item><description>SqlString</description></item>
-          <item><description>SqlVectorFloat32</description></item>
+          <item><description>SqlVector</description></item>
           <item><description>Stream</description></item>
           <item><description>String</description></item>
           <item><description>TextReader</description></item>
@@ -490,7 +490,7 @@ No conversions are performed; therefore. the data retrieved must already be a ch
           <item><description>SqlMoney</description></item>
           <item><description>SqlSingle</description></item>
           <item><description>SqlString</description></item>
-          <item><description>SqlVectorFloat32</description></item>
+          <item><description>SqlVector</description></item>
           <item><description>Stream</description></item>
           <item><description>String</description></item>
           <item><description>TextReader</description></item>
@@ -964,13 +964,13 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         No conversions are performed; therefore, the data retrieved must already be a JSON string, or an exception is generated.
       </remarks>
     </GetSqlJson>
-    <GetSqlVectorFloat32>
+    <GetSqlVector>
       <param name="i"></param>
       <summary>
-        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlVectorFloat32"/>.
+        Gets the value of the specified column as a <see cref="T:Microsoft.Data.SqlTypes.SqlVector"/>.
       </summary>
       <returns>
-        A <see cref="T:Microsoft.Data.SqlTypes.SqlVectorFloat32"/> object representing the column at the given ordinal.
+        A <see cref="T:Microsoft.Data.SqlTypes.SqlVector"/> object representing the column at the given ordinal.
       </returns>
       <exception cref="T:System.ArgumentOutOfRangeException">
         The index passed was outside the range of 0 to <see cref="P:System.Data.DataTableReader.FieldCount" /> - 1
@@ -979,12 +979,12 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         An attempt was made to read or access columns in a closed <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </exception>
       <exception cref="T:System.InvalidCastException">
-        The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVectorFloat32" /> type.
+        The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVector" /> type.
       </exception>
       <remarks>
         No conversions are performed; therefore, the data retrieved must already be a vector value, or an exception is generated.
       </remarks>
-    </GetSqlVectorFloat32>
+    </GetSqlVector>
     <GetSqlMoney>
       <param name="i">
         The zero-based column ordinal.
