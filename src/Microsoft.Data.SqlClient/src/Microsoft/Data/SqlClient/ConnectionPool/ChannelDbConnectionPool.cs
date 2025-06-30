@@ -5,7 +5,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
@@ -157,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // that it won't appear to be out of the pool.  What that
             // means, is that we're now responsible for this connection:
             // it won't get reclaimed if it gets lost.
-            ValidateOwnershipAndPoolingState(owningObject, connection);
+            ValidateOwnershipAndSetPoolingState(owningObject, connection);
 
             if (!IsLiveConnection(connection))
             {
@@ -342,7 +341,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);
                     }
 
-                    ValidateOwnershipAndPoolingState(null, newConnection);
+                    ValidateOwnershipAndSetPoolingState(null, newConnection);
 
                     _connectionSlots.Add(newConnection);
 
@@ -551,7 +550,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be validated.</param>
-        private void ValidateOwnershipAndPoolingState(DbConnection? owningObject, DbConnectionInternal connection)
+        private void ValidateOwnershipAndSetPoolingState(DbConnection? owningObject, DbConnectionInternal connection)
         {
             lock (connection)
             {
