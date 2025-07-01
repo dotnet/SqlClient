@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -149,17 +150,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection? owningObject)
         {
             // Calling PrePush prevents the object from being reclaimed
             // once we leave the lock, because it sets _pooledCount such
             // that it won't appear to be out of the pool.  What that
             // means, is that we're now responsible for this connection:
             // it won't get reclaimed if it gets lost.
-            ValidateOwnershipAndSetPoolingState(owningObject, connection);
+            ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
             if (!IsLiveConnection(connection))
             {
+                RemoveConnection(connection);
                 return;
             }
 
@@ -313,6 +315,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // in case of an exception. 
             if (_connectionSlots.TryReserve())
             {
+                DbConnectionInternal? newConnection = null;
                 try
                 {
                     var startTime = Stopwatch.GetTimestamp();
@@ -325,7 +328,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
                     // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
                     // when this support is added to DbConnectionInternal.
-                    DbConnectionInternal? newConnection = ConnectionFactory.CreatePooledConnection(
+                    newConnection = ConnectionFactory.CreatePooledConnection(
                         this,
                         owningConnection,
                         PoolGroup.ConnectionOptions,
@@ -342,7 +345,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         throw ADP.InternalError(ADP.InternalErrorCode.NewObjectCannotBePooled);
                     }
 
-                    ValidateOwnershipAndSetPoolingState(null, newConnection);
+                    ValidateOwnershipAndSetPoolingState(newConnection, null);
 
                     _connectionSlots.Add(newConnection);
 
@@ -350,12 +353,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch
                 {
-                    _connectionSlots.ReleaseReservation();
+                    // If we failed to open a new connection, we need to reset any state we modified.
+                    // Clear the reservation we made, dispose of the connection if it was created, and wake up any waiting
+                    // attempts on the idle connection channel.
+                    if (newConnection is not null)
+                    {
+                        RemoveConnection(newConnection, trackedInSlots: false);
+                    }
 
-                    // In case there's a waiting attempt on the channel, we write a null to the idle connection channel
-                    // to wake it up, so it will try opening (and probably throw immediately)
-                    _idleConnectionWriter.TryWrite(null);
-                    
                     throw;
                 }
             }
@@ -372,13 +377,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             if (!connection.IsConnectionAlive())
             {
-                RemoveConnection(connection);
                 return false;
             }
 
             if (LoadBalanceTimeout != TimeSpan.Zero && DateTime.UtcNow > connection.CreateTime + LoadBalanceTimeout)
             {
-                RemoveConnection(connection);
                 return false;
             }
 
@@ -389,16 +392,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Closes the provided connection and removes it from the pool.
         /// </summary>
         /// <param name="connection">The connection to be closed.</param>
-        private void RemoveConnection(DbConnectionInternal connection)
+        /// <param name="trackedInSlots">Indicates whether the connection is currently pooled. May be false
+        /// if we just created the connection and it's not tracked in the pool slots.</param>
+        private void RemoveConnection(DbConnectionInternal connection, bool trackedInSlots = true)
         {
-            if(_connectionSlots.TryRemove(connection))
-            {
-                _connectionSlots.ReleaseReservation();
-                // This connection was tracked by the pool, so closing it has opened a free spot in the pool.
-                // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-                // connection. Statement order is important since we have synchronous completions on the channel.
-                _idleConnectionWriter.TryWrite(null);
+            if (trackedInSlots) {
+                _connectionSlots.TryRemove(connection);
             }
+            
+            _connectionSlots.ReleaseReservation();
+            // Closing a connection opens a free spot in the pool.
+            // Write a null to the idle connection channel to wake up a waiter, who can now open a new
+            // connection. Statement order is important since we have synchronous completions on the channel.
+            _idleConnectionWriter.TryWrite(null);
 
             connection.Dispose();
         }
@@ -412,10 +418,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // The channel may contain nulls. Read until we find a non-null connection or exhaust the channel.
             while (_idleConnectionReader.TryRead(out DbConnectionInternal? connection))
             {
-                if (connection is not null && IsLiveConnection(connection))
+                if (connection is null) 
                 {
-                    return connection;
+                    continue;
                 }
+
+                if (!IsLiveConnection(connection))
+                {
+                    RemoveConnection(connection);
+                    continue;
+                }
+
+                return connection;
             }
 
             return null;
@@ -477,8 +491,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     //TODO: exceptions from resource file
                     throw new Exception("The connection pool has been shut down.");
                 }
+
+                if (connection is not null && !IsLiveConnection(connection))
+                {
+                    // If the connection is not live, we need to remove it from the pool and try again.
+                    RemoveConnection(connection);
+                    connection = null;
+                }
             }
-            while (connection is null || !IsLiveConnection(connection));
+            while (connection is null);
 
             PrepareConnection(owningConnection, connection);
             return connection;
@@ -551,7 +572,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be validated.</param>
-        private void ValidateOwnershipAndSetPoolingState(DbConnection? owningObject, DbConnectionInternal connection)
+        private void ValidateOwnershipAndSetPoolingState(DbConnectionInternal connection, DbConnection? owningObject)
         {
             lock (connection)
             {
