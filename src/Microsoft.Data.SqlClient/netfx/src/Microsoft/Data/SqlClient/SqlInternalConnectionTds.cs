@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsVectorSupportEnabled = false;
 
         // User Agent Flag
-        internal bool IsUserAgentEnabled = true;
+        internal bool IsUserAgentSupportEnabled = true;
 
         // TCE flags
         internal byte _tceVersionSupported;
@@ -1438,10 +1438,8 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
-
-        #if DEBUG    
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
-        #endif
+
 
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, encrypt);
         }
@@ -3069,6 +3067,24 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
                         IsVectorSupportEnabled = true;
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_USERAGENT:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for USERAGENT", ObjectID);
+                        if (data.Length != 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for USERAGENT", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        byte userAgentSupportVersion = data[0];
+                        if (userAgentSupportVersion == 0 || userAgentSupportVersion > TdsEnums.SUPPORTED_USER_AGENT_VERSION)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Invalid version number {1} for USERAGENT, Max supported version is {2}", ObjectID, userAgentSupportVersion, TdsEnums.SUPPORTED_USER_AGENT_VERSION);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+                        IsUserAgentSupportEnabled = true;
                         break;
                     }
 

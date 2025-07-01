@@ -191,8 +191,10 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 int feOffset = length;
+                // TODO: User Agent Json Payload will go here
+                byte[] emptyBytes = new byte[0];
                 // calculate and reserve the required bytes for the featureEx
-                length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length);
+                length = ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData,emptyBytes, useFeatureExt, length);
 
                 WriteLoginData(rec,
                                requestedFeatures,

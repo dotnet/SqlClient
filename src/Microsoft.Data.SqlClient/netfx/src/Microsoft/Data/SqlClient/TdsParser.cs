@@ -9068,8 +9068,9 @@ namespace Microsoft.Data.SqlClient
                         _physicalStateObj.WriteByteArray(encryptedChangePassword, encryptedChangePasswordLengthInBytes, 0);
                     }
                 }
-
-                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, useFeatureExt, length, true);
+                // TODO: User Agent Json Payload will go here
+                byte[] emptyBytes = new byte[0];
+                ApplyFeatureExData(requestedFeatures, recoverySessionData, fedAuthFeatureExtensionData, emptyBytes, useFeatureExt, length, true);
             }
             catch (Exception e)
             {
@@ -9088,6 +9089,7 @@ namespace Microsoft.Data.SqlClient
         private int ApplyFeatureExData(TdsEnums.FeatureExtension requestedFeatures,
                                        SessionData recoverySessionData,
                                        FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                                       byte[] userAgentJsonPayload,
                                        bool useFeatureExt,
                                        int length,
                                        bool write = false)
@@ -9140,6 +9142,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.VectorSupport) != 0)
                     {
                         length += WriteVectorSupportFeatureRequest(write);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.UserAgent) != 0)
+                    {
+                        length += WriteUserAgentFeatureRequest(userAgentJsonPayload, write);
                     }
 
                     length++; // for terminator
