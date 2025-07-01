@@ -106,68 +106,25 @@ namespace Microsoft.Data.SqlTypes
         
         #region Work around inability to access SqlDecimal internal representation
 
-        private static readonly Func<SqlDecimal, (uint, uint, uint, uint)> SqlDecimalToInternalRepresentationFactory = 
-                CreateSqlToInternalRepresentationFactory();
-
-        internal static (uint, uint, uint, uint) SqlDecimalToInternalRepresentation(SqlDecimal value) =>
-            SqlDecimalToInternalRepresentationFactory(value);
-
-        private static unsafe Func<SqlDecimal, (uint, uint, uint, uint)> CreateSqlToInternalRepresentationFactory()
+        /// <summary>
+        /// Implementation that mimics netcore's WriteTdsValue method.
+        /// </summary>
+        /// <remarks>
+        /// Although calls to this method could just be replaced with calls to
+        /// <see cref="SqlDecimal.Data"/>, using this mimic method allows netfx and netcore
+        /// implementations to be more cleanly switched.
+        /// </remarks>
+        /// <param name="value">SqlDecimal value to get data from.</param>
+        /// <param name="outSpan">Span to write data to.</param>
+        internal static void SqlDecimalWriteTdsValue(SqlDecimal value, Span<uint> outSpan)
         {
-            try
-            {
-                // Look up the offsets in the SqlDecimal for the internal data members
-                int? data1Offset = GetFieldOffset<SqlDecimal, uint>("m_data1");
-                int? data2Offset = GetFieldOffset<SqlDecimal, uint>("m_data2");
-                int? data3Offset = GetFieldOffset<SqlDecimal, uint>("m_data3");
-                int? data4Offset = GetFieldOffset<SqlDecimal, uint>("m_data4");
-
-                if (data1Offset is not null &&
-                    data2Offset is not null &&
-                    data3Offset is not null &&
-                    data4Offset is not null)
-                {
-                    // Get the address of the value and read the data fields directly from memory
-                    // Note: Just a reminder since we don't mess with pointers often in C#, the
-                    //    address of value is being cast to a byte* b/c pointer arithmetic adds/
-                    //    subtracts sizeof(ptrType) * offset. Since we want to increment by single
-                    //    bytes, we use byte*.
-                    var func = (SqlDecimal value) =>
-                    {
-                        byte* bytePtr = (byte*)&value;
-                        return (
-                            *(uint*)(bytePtr + data1Offset.Value),
-                            *(uint*)(bytePtr + data2Offset.Value),
-                            *(uint*)(bytePtr + data3Offset.Value),
-                            *(uint*)(bytePtr + data4Offset.Value)
-                        );
-                    };
-
-                    // Force JIT compilation of the function
-                    func(default);
-
-                    return func;
-                }
-            }
-            catch
-            {
-                // Reflection failed, fall through to use the slow conversion.
-            }
+            Debug.Assert(outSpan.Length == 4, "Output span must be 4 elements long.");
             
-            // If reflection failed, or the ctor couldn't be found, fallback to construction using
-            // the fallback factory. This will be much slower, but ensures conversion can still
-            // happen.
-            SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlToInternalRepresentationFactory | Info | One ore more of the SqlDecimal.m_data[1-4] was not found. Less efficient fallback method will be used.");
-            return value =>
-            {
-                if (value.IsNull)
-                {
-                    return (0, 0, 0, 0);
-                }
-
-                int[] data = value.Data;
-                return ((uint)data[0], (uint)data[1], (uint)data[2], (uint)data[3]);
-            };
+            int[] data = value.Data;
+            outSpan[0] = (uint)data[0];
+            outSpan[1] = (uint)data[1];
+            outSpan[2] = (uint)data[2];
+            outSpan[3] = (uint)data[3];
         }
         
         #endregion

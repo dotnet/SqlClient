@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         
         #region SqlDecimal
         
-        public static TheoryData<SqlDecimal> SqlDecimalToInternalRepresentation_NonNullInput_Data =>
+        public static TheoryData<SqlDecimal> SqlDecimalWriteTdsValue_NonNullInput_Data =>
             new TheoryData<SqlDecimal>
             {
                 SqlDecimal.MinValue,
@@ -63,34 +63,38 @@ namespace Microsoft.Data.SqlClient.UnitTests
             };
         
         [Theory]
-        [MemberData(nameof(SqlDecimalToInternalRepresentation_NonNullInput_Data))]
-        public void SqlDecimalToInternalRepresentation_NonNullInput(SqlDecimal input)
+        [MemberData(nameof(SqlDecimalWriteTdsValue_NonNullInput_Data))]
+        public void SqlDecimalWriteTdsValue_NonNullInput(SqlDecimal input)
         {
+            // Arrange
+            Span<uint> output = stackalloc uint[4];
+            
             // Act
-            (uint d1, uint d2, uint d3, uint d4) = SqlTypeWorkarounds.SqlDecimalToInternalRepresentation(input);
+            SqlTypeWorkarounds.SqlDecimalWriteTdsValue(input, output);
             
             // Assert
             int[] expected = input.Data;
-            Assert.Equal(expected[0], (int)d1);
-            Assert.Equal(expected[1], (int)d2);
-            Assert.Equal(expected[2], (int)d3);
-            Assert.Equal(expected[3], (int)d4);
+            Assert.Equal(expected[0], (int)output[0]);
+            Assert.Equal(expected[1], (int)output[1]);
+            Assert.Equal(expected[2], (int)output[2]);
+            Assert.Equal(expected[3], (int)output[3]);
         }
         
         [Fact]
         public void SqlDecimalToInternalRepresentation_NullInput()
         {
-            // Arrange
-            SqlDecimal input = SqlDecimal.Null;
-            
-            // Act
-            (uint d1, uint d2, uint d3, uint d4) = SqlTypeWorkarounds.SqlDecimalToInternalRepresentation(input);
+            Action action = () =>
+            {
+                // Arrange
+                SqlDecimal input = SqlDecimal.Null;
+                Span<uint> output = stackalloc uint[4];
+                
+                // Act
+                SqlTypeWorkarounds.SqlDecimalWriteTdsValue(input, output);
+            };
             
             // Assert
-            Assert.Equal(0u, d1);
-            Assert.Equal(0u, d2);
-            Assert.Equal(0u, d3);
-            Assert.Equal(0u, d4);
+            Assert.Throws<SqlNullValueException>(action);
         }
         
         #endregion
