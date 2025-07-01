@@ -20,7 +20,8 @@
     <Reference Include="System.Configuration.ConfigurationManager" />
     <Reference Include="System.Transactions" />
     <PackageReference Include="System.Data.Common" />
-	</ItemGroup>
+    <PackageReference Include="System.Threading.Channels" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <!-- References that only apply to netcore -->
     <PackageReference Include="System.Configuration.ConfigurationManager" />
