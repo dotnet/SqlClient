@@ -6416,7 +6416,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
-                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlGuid = SqlTypeWorkarounds.ByteArrayToSqlGuid(unencryptedBytes);
                         break;
                     }
 
@@ -6437,7 +6437,7 @@ namespace Microsoft.Data.SqlClient
                             unencryptedBytes = bytes;
                         }
 
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(unencryptedBytes, true);   // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(unencryptedBytes);
                         break;
                     }
 
@@ -6662,7 +6662,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                     }
                     break;
 
@@ -6677,7 +6677,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Internally, we use Sqlbinary to deal with varbinary data and store it in 
                     // SqlBuffer as SqlBinary value.
-                    value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true);
+                    value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
 
                     // Extract the metadata from the payload and set it as the vector attributes
                     // in the SqlBuffer. This metadata is further used when constructing a SqlVector
@@ -7006,8 +7006,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             return result;
                         }
-                        value.SqlBinary = SqlTypeWorkarounds.SqlBinaryCtor(b, true); // doesn't copy the byte array
-
+                        
+                        value.SqlBinary = SqlTypeWorkarounds.ByteArrayToSqlBinary(b);
                         break;
                     }
 
@@ -7887,22 +7887,27 @@ namespace Microsoft.Data.SqlClient
 
             // sign
             if (d.IsPositive)
+            {
                 bytes[current++] = 1;
+            }
             else
+            {
                 bytes[current++] = 0;
+            }
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
-            byte[] bytesPart = SerializeUnsignedInt(data1, stateObj);
+            Span<uint> data = stackalloc uint[4];
+            SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
+            
+            byte[] bytesPart = SerializeUnsignedInt(data[0], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data2, stateObj);
+            bytesPart = SerializeUnsignedInt(data[1], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data3, stateObj);
+            bytesPart = SerializeUnsignedInt(data[2], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
             current += 4;
-            bytesPart = SerializeUnsignedInt(data4, stateObj);
+            bytesPart = SerializeUnsignedInt(data[3], stateObj);
             Buffer.BlockCopy(bytesPart, 0, bytes, current, 4);
 
             return bytes;
@@ -7912,16 +7917,21 @@ namespace Microsoft.Data.SqlClient
         {
             // sign
             if (d.IsPositive)
+            {
                 stateObj.WriteByte(1);
+            }
             else
+            {
                 stateObj.WriteByte(0);
+            }
 
-            uint data1, data2, data3, data4;
-            SqlTypeWorkarounds.SqlDecimalExtractData(d, out data1, out data2, out data3, out data4);
-            WriteUnsignedInt(data1, stateObj);
-            WriteUnsignedInt(data2, stateObj);
-            WriteUnsignedInt(data3, stateObj);
-            WriteUnsignedInt(data4, stateObj);
+            Span<uint> data = stackalloc uint[4];
+            SqlTypeWorkarounds.SqlDecimalWriteTdsValue(d, data);
+
+            WriteUnsignedInt(data[0], stateObj);
+            WriteUnsignedInt(data[1], stateObj);
+            WriteUnsignedInt(data[2], stateObj);
+            WriteUnsignedInt(data[3], stateObj);
         }
 
         private byte[] SerializeDecimal(decimal value, TdsParserStateObject stateObj)
