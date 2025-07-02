@@ -5554,6 +5554,17 @@ namespace Microsoft.Data.SqlClient
         }
 
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
+        public SqlCommand Clone()
+        {
+            SqlCommand clone = new SqlCommand(this);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Clone | API | Object Id {0}, Clone Object Id {1}, Client Connection Id {2}", ObjectID, clone.ObjectID, Connection?.ClientConnectionId);
+            return clone;
+        }
+
+        object ICloneable.Clone() =>
+            Clone();
+
         private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask)
         {
             SqlConnection connection = _activeConnection;
@@ -7011,17 +7022,6 @@ namespace Microsoft.Data.SqlClient
             {
                 _sqlDep.StartTimer(Notification);
             }
-        }
-
-        object ICloneable.Clone() => Clone();
-
-
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
-        public SqlCommand Clone()
-        {
-            SqlCommand clone = new SqlCommand(this);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Clone | API | Object Id {0}, Clone Object Id {1}, Client Connection Id {2}", ObjectID, clone.ObjectID, Connection?.ClientConnectionId);
-            return clone;
         }
 
         private void WriteBeginExecuteEvent()

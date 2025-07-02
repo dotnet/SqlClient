@@ -5674,14 +5674,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void NotifyDependency()
-        {
-            if (_sqlDep != null)
-            {
-                _sqlDep.StartTimer(Notification);
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public SqlCommand Clone()
         {
@@ -5690,10 +5682,8 @@ namespace Microsoft.Data.SqlClient
             return clone;
         }
 
-        object ICloneable.Clone()
-        {
-            return Clone();
-        }
+        object ICloneable.Clone() =>
+            Clone();
 
         private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outterTask)
         {
@@ -7210,6 +7200,14 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception)
             {
+            }
+        }
+        
+        private void NotifyDependency()
+        {
+            if (_sqlDep != null)
+            {
+                _sqlDep.StartTimer(Notification);
             }
         }
         
