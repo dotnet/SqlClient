@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
         
         [Fact]
-        public void SqlDecimalToInternalRepresentation_NullInput()
+        public void SqlDecimalWriteTdsValue_NullInput()
         {
             Action action = () =>
             {

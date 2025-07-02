@@ -96,6 +96,8 @@ namespace Microsoft.Data.SqlTypes
         
         #region Work around inability to access `new SqlBinary(byte[], bool)`
 
+        // Documentation of internal constructor:
+        // https://learn.microsoft.com/en-us/dotnet/framework/additional-apis/system.data.sqltypes.sqlbinary.-ctor
         private static readonly Func<byte[], SqlBinary> ByteArrayToSqlBinaryFactory =
             CreateFactory<SqlBinary, byte[], bool>(value => new SqlBinary(value));
 
@@ -104,7 +106,7 @@ namespace Microsoft.Data.SqlTypes
         
         #endregion
         
-        #region Work around inability to access SqlDecimal internal representation
+        #region Work around SqlDecimal.WriteTdsValue not existing in netfx
 
         /// <summary>
         /// Implementation that mimics netcore's WriteTdsValue method.
@@ -118,6 +120,9 @@ namespace Microsoft.Data.SqlTypes
         /// <param name="outSpan">Span to write data to.</param>
         internal static void SqlDecimalWriteTdsValue(SqlDecimal value, Span<uint> outSpan)
         {
+            // Note: Although it would be faster to use the m_data[1-4] member variables in
+            //    SqlDecimal, we cannot use them because they are not documented. The Data property
+            //    is less ideal, but is documented.
             Debug.Assert(outSpan.Length == 4, "Output span must be 4 elements long.");
             
             int[] data = value.Data;
@@ -131,6 +136,8 @@ namespace Microsoft.Data.SqlTypes
         
         #region Work around inability to access `new SqlGuid(byte[], bool)`
 
+        // Documentation for internal constructor:
+        // https://learn.microsoft.com/en-us/dotnet/framework/additional-apis/system.data.sqltypes.sqlguid.-ctor
         private static readonly Func<byte[], SqlGuid> ByteArrayToSqlGuidFactory =
             CreateFactory<SqlGuid, byte[], bool>(value => new SqlGuid(value));
 
@@ -139,14 +146,17 @@ namespace Microsoft.Data.SqlTypes
         
         #endregion
         
-        #region Work around inability to access `new SqlMoney(long, int)` and internal representation
+        #region Work around inability to access `new SqlMoney(long, int)` and `SqlMoney.ToInternalRepresentation()`
 
+        // Documentation for internal ctor:
+        // https://learn.microsoft.com/en-us/dotnet/framework/additional-apis/system.data.sqltypes.sqlmoney.-ctor
         private static readonly Func<long, SqlMoney> LongToSqlMoneyFactory =
             CreateFactory<SqlMoney, long, int>(value => new SqlMoney((decimal)value / 10000));
 
-        private static readonly Func<SqlMoney, long> SqlMoneyToLongFactory =
+        private delegate long SqlMoneyToLongDelegate(ref SqlMoney @this);
+        private static readonly SqlMoneyToLongDelegate SqlMoneyToLongFactory =
             CreateSqlMoneyToLongFactory();
-
+        
         /// <summary>
         /// Constructs a SqlMoney from a long value without scaling.
         /// </summary>
@@ -159,40 +169,39 @@ namespace Microsoft.Data.SqlTypes
         /// </summary>
         /// <param name="value">SqlMoney value</param>
         internal static long SqlMoneyToLong(SqlMoney value) =>
-            SqlMoneyToLongFactory(value);
+            SqlMoneyToLongFactory(ref value);
 
-        private static unsafe Func<SqlMoney, long> CreateSqlMoneyToLongFactory()
+        private static SqlMoneyToLongDelegate CreateSqlMoneyToLongFactory()
         {
             try
             {
-                // Look up the offsets in SqlMoney for the internal representation member
-                int? valueOffset = GetFieldOffset<SqlMoney, long>("m_value");
+                // Note: Although it would be faster to use the m_value member variable in
+                //    SqlMoney, but because it is not documented, we cannot use it. The method
+                //    we are calling below *is* documented, despite it being internal.
+                // Documentation for internal method:
+                // https://learn.microsoft.com/en-us/dotnet/framework/additional-apis/system.data.sqltypes.sqlmoney.tosqlinternalrepresentation
                 
-                if (valueOffset is not null)
+                MethodInfo method = typeof(SqlMoney).GetMethod(
+                    "ToSqlInternalRepresentation",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.ExactBinding,
+                    binder: null,
+                    types: Array.Empty<Type>(),
+                    modifiers: null);
+
+                if (method is not null && method.ReturnType == typeof(long))
                 {
-                    // Get the address of the value and read the field directly from memory
-                    // Note: Just a reminder since we don't mess with pointers often in C#, the
-                    //    address of value is being cast to a byte* b/c pointer arithmetic adds/
-                    //    subtracts sizeof(ptrType) * offset. Since we want to increment by single
-                    //    bytes, we use byte*.
-                    var func = (SqlMoney value) =>
-                    {
-                        // Note: An older version of this workaround called into
-                        //     ToSqlInternalRepresentation which would throw an exception on null
-                        //     SqlMoney. This check maintains the behavior.
-                        if (value.IsNull)
-                        {
-                            throw new SqlNullValueException();
-                        }
-
-                        byte* bytePtr = (byte*)&value;
-                        return *(long*)(bytePtr + valueOffset.Value);
-                    };
+                    // Force warming up the JIT by calling it once. Allegedly doing this *before*
+                    // wrapping in a delegate will give better codegen.
+                    // Note: We must use something other than default since this cannot be used on
+                    //    Null SqlMoney structs.
+                    _ = method.Invoke(SqlMoney.Zero, Array.Empty<object>());
                     
-                    // Force JIT compilation of the function
-                    func(SqlMoney.Zero);
+                    // Create a delegate for the method. This will be an "open" delegate, meaning
+                    // the instance to call the method on will be provided as arg0 on each call.
+                    // Note the first parameter to the delegate is provided *by reference*.
+                    var del = (SqlMoneyToLongDelegate)method.CreateDelegate(typeof(SqlMoneyToLongDelegate), target: null);
 
-                    return func;
+                    return del;
                 }
             }
             catch
@@ -202,7 +211,7 @@ namespace Microsoft.Data.SqlTypes
             
             // @TODO: SqlMoney.ToSqlInternalRepresentation will throw on SqlMoney.IsNull, the fallback will not.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateSqlMoneyToLongFactory | Info | SqlMoney.ToInternalRepresentation(SqlMoney) not found. Less efficient fallback method will be used.");
-            return value => value.IsNull ? 0 : (long)(value.ToDecimal() * 10000);
+            return (ref SqlMoney value) => value.IsNull ? 0 : (long)(value.ToDecimal() * 10000);
         }
             
         #endregion
@@ -266,18 +275,6 @@ namespace Microsoft.Data.SqlTypes
             // happen.
             SqlClientEventSource.Log.TryTraceEvent("SqlTypeWorkarounds.CreateFactory | Info | {0}..ctor({1}, {2}) not found. Less efficient fallback method will be used.", typeof(TInstance).Name, typeof(TValue).Name, typeof(TIgnored).Name);
             return fallbackFactory;
-        }
-        
-        private static int? GetFieldOffset<TInstance, TValue>(string fieldName)
-            where TInstance : struct
-        {
-            FieldInfo field = typeof(TInstance).GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-
-            return field is not null && field.FieldType == typeof(TValue)
-                ? (int)Marshal.OffsetOf<TInstance>(fieldName)
-                : null;
         }
         
         #endif
