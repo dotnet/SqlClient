@@ -27,12 +27,12 @@ parameters:
     default:
     - net462
     - net8.0
+    - net9.0
 
   - name: product
     default: MDS
     values:
     - MDS
-    - AKV
     - MSS
 
 steps:
@@ -77,24 +77,7 @@ steps:
             
         Write-Host "Artifacts fetched for testing"
         Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
-
-  - ${{ if eq(parameters.product, 'AKV') }}:
-    - powershell: |
-        $software = '${{parameters.softwareFolder}}'
-        $tf = '${{ targetFramework }}'
-        md $software\win\$tf
-        
-        Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\AzureKeyVaultProvider\$tf\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.dll" "$software\win\$tf" -recurse
-        
-        $symbols = '${{parameters.symbolsFolder}}'
-        md $symbols\win\$tf
-        
-        Copy-Item "artifacts\${{parameters.referenceType }}\bin\Windows_NT\${{parameters.Configuration }}.AnyCPU\AzureKeyVaultProvider\$tf\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.pdb" "$symbols\win\$tf" -recurse
-            
-        Write-Host "Artifacts fetched for testing"
-        Get-Location
-      displayName: 'Prepare ${{ targetFramework }} Arifacts for Testing'
+      displayName: 'Prepare ${{ targetFramework }} Artifacts for Testing'
 
 - powershell: |
     $software = '${{parameters.softwareFolder}}'

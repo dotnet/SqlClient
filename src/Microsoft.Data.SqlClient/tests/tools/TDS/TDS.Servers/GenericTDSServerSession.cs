@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
@@ -79,6 +80,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public X509Certificate EncryptionCertificate { get; set; }
 
         /// <summary>
+        /// SSL/TLS protocols to use for transport encryption
+        /// </summary>
+        public SslProtocols EncryptionProtocols { get; set; }
+
+        /// <summary>
         /// Nonce option sent by client
         /// </summary>
         public byte[] ClientNonce { get; set; }
@@ -112,6 +118,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Indicates whether this session supports Json column type
         /// </summary>
         public bool IsJsonSupportEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether this session supports Vector column type
+        /// </summary>
+        public bool IsVectorSupportEnabled { get; set; }
 
         #region Session Options
 

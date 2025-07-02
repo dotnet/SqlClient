@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Globalization;
@@ -15,7 +16,12 @@ namespace Microsoft.Data.SqlClient.Tests
     public class SqlMetaDataTest
     {
         [Theory]
-        [MemberData(nameof(SqlMetaDataAdjustValues))]
+        [MemberData(
+            nameof(SqlMetaDataAdjustValues),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         [MemberData(nameof(SqlMetaDataDateTimeValues))]
         public void Adjust(SqlDbType dbType, object expected)
         {
@@ -37,7 +43,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataMaxLengthTrimValues))]
+        [MemberData(
+            nameof(SqlMetaDataMaxLengthTrimValues),
+            DisableDiscoveryEnumeration = true)]
         public void AdjustWithGreaterThanMaxLengthValues(SqlDbType dbType, object value)
         {
             int maxLength = 4;
@@ -59,7 +67,9 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [MemberData(nameof(SqlMetaDataInvalidValues))]
+        [MemberData(
+            nameof(SqlMetaDataInvalidValues),
+            DisableDiscoveryEnumeration = true)]
         public void AdjustWithInvalidType_Throws(SqlDbType dbType, object expected)
         {
             SqlMetaData metaData = new SqlMetaData(
@@ -229,11 +239,28 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        public static IEnumerable<object[]> ConstructorCharData()
+        {
+            return new object[][]
+            {
+                new object[] { SqlDbType.Char },
+                new object[] { SqlDbType.VarChar },
+                new object[] { SqlDbType.NChar },
+                new object[] { SqlDbType.NVarChar }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar)]
+        [MemberData(
+            nameof(ConstructorCharData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithMaxLengthAndDefaultLocale(SqlDbType dbType)
         {
             const int maxLength = 5;
@@ -257,10 +284,12 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar)]
+        [MemberData(
+            nameof(ConstructorCharData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithMaxLengthAndLocale(SqlDbType dbType)
         {
             long maxLength = 5L;
@@ -286,9 +315,22 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        public static IEnumerable<object[]> ConstructorTextData()
+        {
+            return new object[][]
+            {
+                new object[] { SqlDbType.NText },
+                new object[] { SqlDbType.Text }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.NText)]
-        [InlineData(SqlDbType.Text)]
+        [MemberData(
+            nameof(ConstructorTextData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithMaxLengthTextAndDefaultLocale(SqlDbType dbType)
         {
             long maxLength = SqlMetaData.Max;
@@ -302,8 +344,12 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(SqlDbType.NText)]
-        [InlineData(SqlDbType.Text)]
+        [MemberData(
+            nameof(ConstructorTextData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithMaxLengthTextAndLocale(SqlDbType dbType)
         {
             long maxLength = SqlMetaData.Max;
@@ -319,11 +365,18 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.NText)]
+        [MemberData(
+            nameof(ConstructorCharData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
+        [MemberData(
+            nameof(ConstructorTextData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithInvalidMaxLengthAndLocale_Throws(SqlDbType dbType)
         {
             int invalidMaxLength = -2;
@@ -348,15 +401,35 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        public static IEnumerable<object[]> ConstructorBinaryData()
+        {
+            return new object[][]
+            {
+                new object[] { SqlDbType.Binary },
+                new object[] { SqlDbType.VarBinary },
+                new object[] { SqlDbType.Image }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.Char)]
-        [InlineData(SqlDbType.VarChar)]
-        [InlineData(SqlDbType.NChar)]
-        [InlineData(SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.NText)]
-        [InlineData(SqlDbType.Binary)]
-        [InlineData(SqlDbType.VarBinary)]
-        [InlineData(SqlDbType.Image)]
+        [MemberData(
+            nameof(ConstructorCharData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
+        [MemberData(
+            nameof(ConstructorTextData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
+        [MemberData(
+            nameof(ConstructorBinaryData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void ConstructorWithInvalidMaxLengthDefaultLocale_Throws(SqlDbType dbType)
         {
             int invalidMaxLength = -2;
@@ -506,9 +579,22 @@ namespace Microsoft.Data.SqlClient.Tests
         //    Assert.Contains("scale", ex.Message, StringComparison.OrdinalIgnoreCase);
         //}
 
+        public static IEnumerable<object[]> ConstructorGenericData()
+        {
+            return new object[][]
+            {
+                new object[] { SqlDbType.Variant, null },
+                new object[] { SqlDbType.Udt, typeof(Address) }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.Variant, null)]
-        [InlineData(SqlDbType.Udt, typeof(Address))]
+        [MemberData(
+            nameof(ConstructorGenericData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void GenericConstructorWithoutXmlSchema(SqlDbType dbType, Type udt)
         {
             if (udt != null)
@@ -534,50 +620,10 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        [Fact]
-        public void GetPartialLengthWithXmlSqlMetaDataType_Throws()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Xml);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Exception ex = Assert.ThrowsAny<Exception>(() =>
-            {
-                SqlMetaData metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            });
-            Assert.NotNull(ex.InnerException);
-            Assert.IsType<ArgumentException>(ex.InnerException);
-            Assert.NotEmpty(ex.InnerException.Message);
-            Assert.Contains("metadata", ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
-        }
-
         [Theory]
-        [InlineData(SqlDbType.NVarChar)]
-        [InlineData(SqlDbType.VarChar)]
-        [InlineData(SqlDbType.VarBinary)]
-        public void GetPartialLengthWithVarSqlMetaDataType(SqlDbType sqlDbType)
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", sqlDbType, 16);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", BindingFlags.NonPublic | BindingFlags.Static);
-            SqlMetaData metaData = metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData.Name, metaData.Name);
-            Assert.Equal(exampleMetaData.SqlDbType, metaData.SqlDbType);
-            Assert.Equal(SqlMetaData.Max, metaData.MaxLength);
-            Assert.Equal(0, metaData.Precision);
-            Assert.Equal(0, metaData.Scale);
-            Assert.Equal(exampleMetaData.LocaleId, metaData.LocaleId);
-            Assert.Equal(exampleMetaData.CompareOptions, metaData.CompareOptions);
-            Assert.Null(metaData.XmlSchemaCollectionDatabase);
-            Assert.Null(metaData.XmlSchemaCollectionName);
-            Assert.Null(metaData.XmlSchemaCollectionOwningSchema);
-            // PartialLength is an interal property which is why reflection is required.
-            PropertyInfo isPartialLengthProp = sqlMetaDataType.GetProperty("IsPartialLength", BindingFlags.NonPublic | BindingFlags.Instance);
-            Assert.True((bool)isPartialLengthProp.GetValue(metaData));
-            Assert.Equal(exampleMetaData.Type, metaData.Type);
-        }
-
-        [Theory]
-        [MemberData(nameof(SqlMetaDataInferredValues))]
+        [MemberData(
+            nameof(SqlMetaDataInferredValues),
+            DisableDiscoveryEnumeration = true)]
         public void InferFromValue(SqlDbType expectedDbType, object value)
         {
             SqlMetaData metaData = SqlMetaData.InferFromValue(value, "col1");
@@ -622,18 +668,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        public void IsPartialLengthTrueGetPartialLengthMetaData()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Int);
-            FieldInfo isPartialLengthField = sqlMetaDataType.GetField("_partialLength", BindingFlags.NonPublic | BindingFlags.Instance);
-            isPartialLengthField.SetValue(exampleMetaData, true);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            SqlMetaData metaData =  (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData, metaData);
-        }
-
-        [Fact]
         public void NameDbTypeDatabaseOwningSchemaObjectNameConstructor()
         {
             SqlMetaData metaData = new SqlMetaData("col2", SqlDbType.Xml, "NorthWindDb", "schema", "name");
@@ -643,16 +677,6 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("schema", metaData.XmlSchemaCollectionOwningSchema);
             Assert.Equal("name", metaData.XmlSchemaCollectionName);
             Assert.Equal("xml", metaData.TypeName);
-        }
-
-        [Fact]
-        public void NonVarTypeGetPartialLengthMetaData()
-        {
-            Type sqlMetaDataType = typeof(SqlMetaData);
-            SqlMetaData exampleMetaData = new SqlMetaData("col2", SqlDbType.Int);
-            MethodInfo method = sqlMetaDataType.GetMethod("GetPartialLengthMetaData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            SqlMetaData metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
-            Assert.Equal(exampleMetaData, metaData);
         }
 
         [Fact]
@@ -672,10 +696,23 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(1, metaData.SortOrdinal);
         }
 
+        public static IEnumerable<object[]> ConstructorTimeData()
+        {
+            return new object[][]
+            {
+                new object[] { SqlDbType.Time },
+                new object[] { SqlDbType.DateTime2 },
+                new object[] { SqlDbType.DateTimeOffset }
+            };
+        }
+
         [Theory]
-        [InlineData(SqlDbType.Time)]
-        [InlineData(SqlDbType.DateTime2)]
-        [InlineData(SqlDbType.DateTimeOffset)]
+        [MemberData(
+            nameof(ConstructorTimeData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+            )]
         public void TimeConstructorWithOutOfRange_Throws(SqlDbType dbType)
         {
             byte precision = 8;

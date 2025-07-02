@@ -25,6 +25,11 @@ namespace Microsoft.SqlServer.TDS
         JsonSupport = 0x0D,
 
         /// <summary>
+        /// Vector Support
+        /// </summary>
+        VectorSupport = 0x0E,
+
+        /// <summary>
         /// End of the list
         /// </summary>
         Terminator = 0xFF

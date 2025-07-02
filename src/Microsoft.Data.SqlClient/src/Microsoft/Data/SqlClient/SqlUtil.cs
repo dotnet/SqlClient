@@ -183,21 +183,7 @@ namespace Microsoft.Data.SqlClient
                             RuntimeHelpers.PrepareConstrainedRegions();
                             try
                             {
-#if DEBUG
-                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                                RuntimeHelpers.PrepareConstrainedRegions();
-                                try
-                                {
-                                    tdsReliabilitySection.Start();
-#endif //DEBUG
-                                    onSuccess();
-#if DEBUG
-                                }
-                                finally
-                                {
-                                    tdsReliabilitySection.Stop();
-                                }
-#endif //DEBUG
+                                onSuccess();
                             }
                             catch (System.OutOfMemoryException e)
                             {
@@ -279,12 +265,12 @@ namespace Microsoft.Data.SqlClient
             Action<Exception, object> onFailure = null,
             Action<object> onCancellation = null,
 #if NET
-            Func<Exception, Exception> exceptionConverter = null
+            Func<Exception, Exception> exceptionConverter = null,
 #else
             Func<Exception, object, Exception> exceptionConverter = null,
+#endif
             SqlInternalConnectionTds connectionToDoom = null,
             SqlConnection connectionToAbort = null
-#endif
         )
         {
 #if NETFRAMEWORK
@@ -324,27 +310,14 @@ namespace Microsoft.Data.SqlClient
                             completion.TrySetCanceled();
                         }
                     }
-#if NETFRAMEWORK
                     else if (connectionToDoom != null || connectionToAbort != null)
                     {
+#if NETFRAMEWORK
                         RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                         try
                         {
-#if DEBUG
-                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            try
-                            {
-                                tdsReliabilitySection.Start();
-#endif //DEBUG
-                                onSuccess(state2);
-#if DEBUG
-                            }
-                            finally
-                            {
-                                tdsReliabilitySection.Stop();
-                            }
-#endif //DEBUG
+                            onSuccess(state2);
                         }
                         catch (System.OutOfMemoryException e)
                         {
@@ -390,7 +363,6 @@ namespace Microsoft.Data.SqlClient
                             completion.SetException(e);
                         }
                     }
-#endif
                     else
                     {
                         try
@@ -444,26 +416,30 @@ namespace Microsoft.Data.SqlClient
                 );
             }
         }
-
-#if NET
-        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
+        
+        internal static void SetTimeoutExceptionWithState(
+            TaskCompletionSource<object> completion,
+            int timeout,
+            object state,
+            Func<object, Exception> onFailure,
+            CancellationToken cancellationToken)
         {
-            if (timeout > 0)
+            if (timeout <= 0)
             {
-                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                    (Task task, object state) =>
-                    {
-                        if (!task.IsCanceled && !completion.Task.IsCompleted)
-                        {
-                            completion.TrySetException(onFailure(state));
-                        }
-                    },
-                    state: state,
-                    cancellationToken: CancellationToken.None
-                );
+                return;
             }
+
+            Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                (task, innerState) =>
+                {
+                    if (!task.IsCanceled && !completion.Task.IsCompleted)
+                    {
+                        completion.TrySetException(onFailure(innerState));
+                    }
+                },
+                state: state,
+                cancellationToken: CancellationToken.None);
         }
-#endif
     }
 
     internal static class SQL
@@ -520,7 +496,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringUtilities.AuthenticationTypeToString(auth)));
         }
         static internal Exception InvalidCertAuth()
         {
@@ -1012,6 +988,16 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_TextReaderNotSupportOnColumnType, columnName));
         }
 
+        internal static Exception VectorNotSupportedOnColumnType(string columnName)
+        {
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_VectorNotSupportedOnColumnType, columnName));
+        }
+
+        internal static Exception VectorTypeNotSupported(string value)
+        {
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_VectorTypeNotSupported, value));
+        }
+
         internal static Exception XmlReaderNotSupportOnColumnType(string columnName)
         {
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_XmlReaderNotSupportOnColumnType, columnName));
@@ -1285,6 +1271,10 @@ namespace Microsoft.Data.SqlClient
         {
             return BulkLoadNonMatchingColumnName(columnName, null);
         }
+        internal static Exception BulkLoadNonMatchingColumnNames(IEnumerable<string> columnNames)
+        {
+            return BulkLoadNonMatchingColumnName(string.Join(",", columnNames), null);
+        }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
@@ -1421,22 +1411,19 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MultiSubnetFailoverWithMoreThan64IPs()
         {
-            // @TODO: This can be uint
-            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithMoreThan64IPs);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithMoreThan64IPs);
             return ADP.InvalidOperation(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithInstanceSpecified()
         {
-            // @TODO: This can be uint
-            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithInstanceSpecified);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithInstanceSpecified);
             return ADP.Argument(msg);
         }
 
         internal static Exception MultiSubnetFailoverWithNonTcpProtocol()
         {
-            // @TODO: This can be uint
-            string msg = GetSNIErrorMessage((int)SniErrors.MultiSubnetFailoverWithNonTcpProtocol);
+            string msg = GetSNIErrorMessage(SniErrors.MultiSubnetFailoverWithNonTcpProtocol);
             return ADP.Argument(msg);
         }
 
@@ -1551,7 +1538,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVersionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException: null, batchCommand: null);
             return exc;
         }
@@ -2461,6 +2448,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NotificationsNotAvailableOnContextConnection));
         }
 
+        // @TODO: Check these methods for usage
         static internal Exception UserInstanceNotAvailableInProc()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UserInstanceNotAvailableInProc));
@@ -2485,17 +2473,13 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// gets a message for SNI error (sniError must be valid, non-zero error code)
         /// </summary>
-        // @TODO: This can be uint
-        internal static string GetSNIErrorMessage(int sniError)
+        internal static string GetSNIErrorMessage(uint sniError)
         {
-            Debug.Assert(sniError > 0 && sniError <= (int)SniErrors.MaxErrorValue, "SNI error is out of range");
+            Debug.Assert(sniError > 0 && sniError <= SniErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
             return StringsHelper.GetResourceString(errorMessageId);
         }
-
-        // BulkLoad
-        internal const string WriteToServer = "WriteToServer";
 
         // Default values for SqlDependency and SqlNotificationRequest
         internal const int SqlDependencyTimeoutDefault = 0;
@@ -2534,11 +2518,6 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SnapshotNotSupported(System.Data.IsolationLevel level)
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SnapshotNotSupported, typeof(System.Data.IsolationLevel), level.ToString()));
-        }
-        static internal Exception UnexpectedSmiEvent(Microsoft.Data.SqlClient.Server.SmiEventSink_Default.UnexpectedEventType eventType)
-        {
-            Debug.Assert(false, "UnexpectedSmiEvent: " + eventType.ToString());    // Assert here, because these exceptions will most likely be eaten by the server.
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnexpectedSmiEvent, (int)eventType));
         }
 #endif
 
@@ -2691,7 +2670,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escapes the name with [], also escapes the last close bracket with double-bracket</returns>
         internal static string EscapeIdentifier(string name)
         {
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
             return "[" + name.Replace("]", "]]") + "]";
         }
 
@@ -2701,7 +2680,7 @@ namespace Microsoft.Data.SqlClient
         internal static void EscapeIdentifier(StringBuilder builder, string name)
         {
             Debug.Assert(builder != null, "builder cannot be null");
-            Debug.Assert(!ADP.IsEmpty(name), "null or empty identifiers are not allowed");
+            Debug.Assert(!string.IsNullOrEmpty(name), "null or empty identifiers are not allowed");
 
             builder.Append("[");
             builder.Append(name.Replace("]", "]]"));
@@ -2726,7 +2705,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>escaped and quoted literal string</returns>
         internal static string MakeStringLiteral(string input)
         {
-            if (ADP.IsEmpty(input))
+            if (string.IsNullOrEmpty(input))
             {
                 return "''";
             }
@@ -2787,12 +2766,6 @@ namespace Microsoft.Data.SqlClient
                 return _getPromotedToken.Value;
             }
         }
-    }
-
-    internal static class InOutOfProcHelper
-    {
-        internal static bool InProc
-            => false;
     }
 }
 

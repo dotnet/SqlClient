@@ -10,7 +10,7 @@ class Program
         try
         {
             string connectString =
-                "Data Source=(local);User ID=ab;Password=MyPassword;" +
+                "Data Source=(local);User ID=ab;Password=********;" +
                 "Initial Catalog=AdventureWorks";
 
             SqlConnectionStringBuilder builder =

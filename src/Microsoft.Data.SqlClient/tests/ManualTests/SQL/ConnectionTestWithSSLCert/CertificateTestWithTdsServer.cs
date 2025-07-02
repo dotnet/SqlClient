@@ -92,7 +92,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
+        [MemberData(
+            nameof(ConnectionTestParametersData.GetConnectionTestParameters),
+            MemberType = typeof(ConnectionTestParametersData),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void BeginWindowsConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
@@ -105,7 +111,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost))]
-        [MemberData(nameof(ConnectionTestParametersData.GetConnectionTestParameters), MemberType = typeof(ConnectionTestParametersData))]
+        [MemberData(
+            nameof(ConnectionTestParametersData.GetConnectionTestParameters),
+            MemberType = typeof(ConnectionTestParametersData),
+            DisableDiscoveryEnumeration = true)]
         [PlatformSpecific(TestPlatforms.Linux)]
         public void BeginLinuxConnectionTest(ConnectionTestParameters connectionTestParameters)
         {
@@ -121,7 +130,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
             using TestTdsServer server = TestTdsServer.StartTestServer(enableFedAuth: false, enableLog: false, connectionTimeout: 15,
-                methodName: "", new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                methodName: "",
+#if NET9_0_OR_GREATER
+                X509CertificateLoader.LoadPkcs12FromFile(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+#else
+                new X509Certificate2(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+#endif
+                encryptionProtocols: connectionTestParameters.EncryptionProtocols,
                 encryptionType: connectionTestParameters.TdsEncryptionType);
 
             builder = new(server.ConnectionString)

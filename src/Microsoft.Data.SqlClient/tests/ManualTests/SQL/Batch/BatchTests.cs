@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -21,6 +22,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connection.Open();
                 Assert.Throws<InvalidOperationException>(() => batch.ExecuteNonQuery());
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task MissingCommandsThrows()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var batch = new SqlBatch { Connection = connection })
+            {
+                connection.Open();
+                await Assert.ThrowsAsync<InvalidOperationException>(() => batch.ExecuteReaderAsync());
             }
         }
 
@@ -74,9 +86,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void StoredProcedureBatchSupported()
         {
+            SqlRetryLogicOption rto = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(100), TransientErrors = new[] { 1205 } }; // Retry on 1205 / Deadlock
+            SqlRetryLogicBaseProvider prov = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(rto);
+
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var batch = new SqlBatch { Connection = connection, BatchCommands = { new SqlBatchCommand("sp_help", CommandType.StoredProcedure) } })
+            using (var batch = new SqlBatch { Connection = connection, BatchCommands = { new SqlBatchCommand("sp_help", CommandType.StoredProcedure, new List<SqlParameter> { new("@objname", "sys.indexes") }) } })
             {
+                connection.RetryLogicProvider = prov;
                 connection.Open();
                 batch.ExecuteNonQuery();
             }
@@ -102,19 +118,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MixedBatchSupported()
         {
+            SqlRetryLogicOption rto = new() { NumberOfTries = 3, DeltaTime = TimeSpan.FromMilliseconds(100), TransientErrors = new[] { 1205 } }; // Retry on 1205 / Deadlock
+            SqlRetryLogicBaseProvider prov = SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(rto);
+
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (var batch = new SqlBatch
+                   {
+                       Connection = connection,
+                       BatchCommands =
+                       {
+                           new SqlBatchCommand("select @@SPID", CommandType.Text),
+                           new SqlBatchCommand("sp_help", CommandType.StoredProcedure, new List<SqlParameter> { new("@objname", "sys.indexes") })
+                       }
+                   })
             {
-                Connection = connection,
-                BatchCommands =
-                {
-                    new SqlBatchCommand("select @@SPID", CommandType.Text),
-                    new SqlBatchCommand("sp_help",CommandType.StoredProcedure)
-            }
-            })
-            {
+                connection.RetryLogicProvider = prov;
                 connection.Open();
                 batch.ExecuteNonQuery();
+                return;
             }
         }
 

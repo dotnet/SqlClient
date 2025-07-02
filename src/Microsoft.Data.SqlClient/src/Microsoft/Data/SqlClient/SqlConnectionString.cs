@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -14,6 +13,8 @@ using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient.LocalDb;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -23,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
+        // @TODO: Remove this in favor of using DbConnectionStringDefaults??
         internal static class DEFAULT
         {
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
@@ -71,6 +73,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor of DbConnectionStringKeywords
         // SqlConnection ConnectionString Options
         internal static class KEY
         {
@@ -126,6 +129,7 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         }
 
+        // @TODO: Remove in favor DbConnectionStringSynonyms
         // Constant for the number of duplicate options in the connection string
         private static class SYNONYM
         {
@@ -326,7 +330,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
             _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
             _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
             _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
@@ -396,12 +400,12 @@ namespace Microsoft.Data.SqlClient
             if (_networkLibrary != null)
             { // MDAC 83525
                 string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
-                Hashtable netlib = NetlibMapping();
+                Dictionary<string, string> netlib = NetlibMapping();
                 if (!netlib.ContainsKey(networkLibrary))
                 {
                     throw ADP.InvalidConnectionOptionValue(KEY.Network_Library);
                 }
-                _networkLibrary = (string)netlib[networkLibrary];
+                _networkLibrary = netlib[networkLibrary];
             }
             else
             {
@@ -449,12 +453,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // expand during construction so that CreatePermissionSet and Expand are consistent
-#if NETFRAMEWORK
-            string datadir = null;
-            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName, ref datadir);
-#else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
-#endif // NETFRAMEWORK
             if (_expandedAttachDBFilename != null)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
@@ -575,22 +574,22 @@ namespace Microsoft.Data.SqlClient
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryMSIString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity && _hasPasswordKeyword)
             {
-                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryWorkloadIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
             }
         }
 
@@ -628,7 +627,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = connectionOptions._contextConnection;
             _currentLanguage = connectionOptions._currentLanguage;
             _dataSource = dataSource;
-            _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
+            _localDBInstance = LocalDbApi.GetLocalDbInstanceNameFromServerName(_dataSource);
             _failoverPartner = connectionOptions._failoverPartner;
             _initialCatalog = connectionOptions._initialCatalog;
             _password = connectionOptions._password;
@@ -693,9 +692,6 @@ namespace Microsoft.Data.SqlClient
         internal ApplicationIntent ApplicationIntent => _applicationIntent;
         internal string ApplicationName => _applicationName;
         internal string AttachDBFilename => _attachDBFileName;
-        // Return a constant value rather than _contextConnection. This allows the JIT to trim
-        // the code paths referencing it.
-        internal bool ContextConnection => false;
         internal string CurrentLanguage => _currentLanguage;
         internal string DataSource => _dataSource;
         internal string LocalDBInstance => _localDBInstance;
@@ -772,55 +768,51 @@ namespace Microsoft.Data.SqlClient
             {
 
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#if NET
-                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount;
-#endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
-                    { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
+                    { KEY.AttestationProtocol, KEY.AttestationProtocol},
+                    { KEY.Authentication, KEY.Authentication },
+                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
                     { KEY.Command_Timeout, KEY.Command_Timeout },
+                    { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
+                    { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Connect_Timeout, KEY.Connect_Timeout },
-                    { KEY.Connection_Reset, KEY.Connection_Reset },
                     { KEY.Context_Connection, KEY.Context_Connection },
                     { KEY.Current_Language, KEY.Current_Language },
                     { KEY.Data_Source, KEY.Data_Source },
+                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
                     { KEY.Encrypt, KEY.Encrypt },
                     { KEY.Enlist, KEY.Enlist },
                     { KEY.FailoverPartner, KEY.FailoverPartner },
+                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
                     { KEY.HostNameInCertificate, KEY.HostNameInCertificate },
                     { KEY.ServerCertificate, KEY.ServerCertificate},
                     { KEY.Initial_Catalog, KEY.Initial_Catalog },
                     { KEY.Integrated_Security, KEY.Integrated_Security },
+                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
                     { KEY.Load_Balance_Timeout, KEY.Load_Balance_Timeout },
                     { KEY.MARS, KEY.MARS },
                     { KEY.Max_Pool_Size, KEY.Max_Pool_Size },
                     { KEY.Min_Pool_Size, KEY.Min_Pool_Size },
                     { KEY.MultiSubnetFailover, KEY.MultiSubnetFailover },
-                    { KEY.Network_Library, KEY.Network_Library },
                     { KEY.Packet_Size, KEY.Packet_Size },
                     { KEY.Password, KEY.Password },
                     { KEY.Persist_Security_Info, KEY.Persist_Security_Info },
                     { KEY.Pooling, KEY.Pooling },
+                    { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod },
                     { KEY.Replication, KEY.Replication },
+                    { KEY.Server_SPN, KEY.Server_SPN },
                     { KEY.TrustServerCertificate, KEY.TrustServerCertificate },
                     { KEY.TransactionBinding, KEY.TransactionBinding },
                     { KEY.Type_System_Version, KEY.Type_System_Version },
-                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
-                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
-                    { KEY.AttestationProtocol, KEY.AttestationProtocol},
                     { KEY.User_ID, KEY.User_ID },
                     { KEY.User_Instance, KEY.User_Instance },
                     { KEY.Workstation_Id, KEY.Workstation_Id },
-                    { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
-                    { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
-                    { KEY.Authentication, KEY.Authentication },
-                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
-                    { KEY.Server_SPN, KEY.Server_SPN },
-                    { KEY.Failover_Partner_SPN, KEY.Failover_Partner_SPN },
 
+                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference },
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
@@ -841,24 +833,25 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.SERVER, KEY.Data_Source },
                     { SYNONYM.DATABASE, KEY.Initial_Catalog },
                     { SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security },
+                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.Connection_Lifetime, KEY.Load_Balance_Timeout },
-                    { SYNONYM.NET, KEY.Network_Library },
-                    { SYNONYM.NETWORK, KEY.Network_Library },
                     { SYNONYM.Pwd, KEY.Password },
                     { SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info },
-                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
                     { SYNONYM.ServerSPN, KEY.Server_SPN },
                     { SYNONYM.FailoverPartnerSPN, KEY.Failover_Partner_SPN },
 #if NETFRAMEWORK
+                    { KEY.Connection_Reset, KEY.Connection_Reset },
+                    { KEY.Network_Library, KEY.Network_Library },
                     { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
+                    { SYNONYM.NET, KEY.Network_Library },
+                    { SYNONYM.NETWORK, KEY.Network_Library },
                     { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
 #endif // NETFRAMEWORK
-                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
-                Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
+                Debug.Assert(synonyms.Count == count, $"incorrect initial ParseSynonyms size {count} v/s {synonyms.Count}");
                 Interlocked.CompareExchange(ref s_sqlClientSynonyms, synonyms, null);
             }
             return synonyms;
@@ -944,7 +937,7 @@ namespace Microsoft.Data.SqlClient
             // wrap Format and Overflow exceptions with Argument one, to be consistent with rest of the keyword types (like int and bool)
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
+                return DbConnectionStringUtilities.ConvertToApplicationIntent(KEY.ApplicationIntent, value);
             }
             catch (FormatException e)
             {
@@ -976,7 +969,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(KEY.Authentication, value);
+                return DbConnectionStringUtilities.ConvertToAuthenticationType(KEY.Authentication, value);
             }
             catch (FormatException e)
             {
@@ -1001,7 +994,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
+                return DbConnectionStringUtilities.ConvertToColumnEncryptionSetting(KEY.ColumnEncryptionSetting, value);
             }
             catch (FormatException e)
             {
@@ -1026,7 +1019,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
+                return AttestationProtocolUtilities.ConvertToAttestationProtocol(KEY.AttestationProtocol, value);
             }
             catch (FormatException e)
             {
@@ -1051,7 +1044,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
+                return IpAddressPreferenceUtilities.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
             }
             catch (FormatException e)
             {
@@ -1072,7 +1065,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
+                return PoolBlockingUtilities.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
             }
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
@@ -1089,7 +1082,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
+                return AttestationProtocolUtilities.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
             }
             catch (FormatException e)
             {
@@ -1101,14 +1094,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal Hashtable NetlibMapping()
+        static internal Dictionary<string, string> NetlibMapping()
         {
             const int NetLibCount = 8;
 
-            Hashtable hash = s_netlibMapping;
+            Dictionary<string, string> hash = s_netlibMapping;
             if (hash == null)
             {
-                hash = new Hashtable(NetLibCount)
+                hash = new Dictionary<string, string>(NetLibCount)
                 {
                     { NETLIB.TCPIP, TdsEnums.TCP },
                     { NETLIB.NamedPipes, TdsEnums.NP },
@@ -1150,7 +1143,7 @@ namespace Microsoft.Data.SqlClient
             internal const string VIA = "dbmsgnet";
         }
 
-        private static Hashtable s_netlibMapping;
+        private static Dictionary<string, string> s_netlibMapping;
 
 #if NETFRAMEWORK
         protected internal override PermissionSet CreatePermissionSet()
@@ -1158,12 +1151,6 @@ namespace Microsoft.Data.SqlClient
             PermissionSet permissionSet = new(PermissionState.None);
             permissionSet.AddPermission(new SqlClientPermission(this));
             return permissionSet;
-        }
-
-        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
-        {
-            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
-            return ConvertValueToSqlConnectionEncrypt();
         }
 
         private readonly bool _connectionReset;

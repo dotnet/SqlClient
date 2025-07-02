@@ -141,13 +141,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
+                DescriptorContext descriptorContext = new DescriptorContext(descriptor, builder);
 
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
 
+                Assert.True(descriptor.Converter.GetStandardValuesSupported(descriptorContext));
+                Assert.False(descriptor.Converter.GetStandardValuesExclusive());
+
                 // GetStandardValues of this converter calls GetSchema("DATABASES")
-                var dbNames = descriptor.Converter.GetStandardValues(new DescriptorContext(descriptor, builder));
+                var dbNames = descriptor.Converter.GetStandardValues(descriptorContext);
                 HashSet<string> searchSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 foreach (string name in dbNames)
                 {

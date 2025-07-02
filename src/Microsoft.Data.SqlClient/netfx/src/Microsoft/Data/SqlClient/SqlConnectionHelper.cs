@@ -2,18 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Runtime.ConstrainedExecution;
+using System.Threading;
+using System.Transactions;
+using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
+
 namespace Microsoft.Data.SqlClient
 {
-    using System;
-    using System.Data;
-    using System.Data.Common;
-    using System.Diagnostics;
-    using System.Runtime.ConstrainedExecution;
-    using System.Threading;
-    using Microsoft.Data.Common;
-    using Microsoft.Data.ProviderBase;
-    using System.Transactions;
-
     public sealed partial class SqlConnection : DbConnection
     {
         private static readonly DbConnectionFactory _connectionFactory = SqlConnectionFactory.SingletonInstance;
@@ -79,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
+                DbConnectionPoolGroup poolGroup = PoolGroup;
                 return poolGroup != null ? poolGroup.ConnectionOptions : null;
             }
         }
@@ -102,7 +104,7 @@ namespace Microsoft.Data.SqlClient
         private void ConnectionString_Set(DbConnectionPoolKey key)
         {
             DbConnectionOptions connectionOptions = null;
-            Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
+            DbConnectionPoolGroup poolGroup = ConnectionFactory.GetConnectionPoolGroup(key, null, ref connectionOptions);
             DbConnectionInternal connectionInternal = InnerConnection;
             bool flag = connectionInternal.AllowSetConnectionString;
             if (flag)
@@ -144,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Microsoft.Data.ProviderBase.DbConnectionPoolGroup PoolGroup
+        internal DbConnectionPoolGroup PoolGroup
         {
             get
             {
@@ -320,7 +322,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
 
-            Microsoft.Data.ProviderBase.DbConnectionPoolGroup poolGroup = PoolGroup;
+            DbConnectionPoolGroup poolGroup = PoolGroup;
             DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
             if (connectionOptions == null || connectionOptions.IsEmpty)
             {

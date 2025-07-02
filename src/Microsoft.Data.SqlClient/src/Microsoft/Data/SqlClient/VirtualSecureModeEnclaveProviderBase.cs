@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Pkcs;
 using System.Threading;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -200,7 +202,9 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    certificateCollection.Import(data);
+                    SignedCms s = new SignedCms();
+                    s.Decode(data);
+                    certificateCollection.AddRange(s.Certificates);
                 }
                 catch (CryptographicException exception)
                 {

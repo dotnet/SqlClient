@@ -33,7 +33,7 @@ namespace Microsoft.DotNet.GenAPI
 
         private static int Main(string[] args)
         {
-            var app = new CommandLineApplication
+            using var app = new CommandLineApplication
             {
                 Name = "GenAPI",
                 FullName = "A command line tool to generate code for the API surface of an assembly.",

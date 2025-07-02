@@ -20,7 +20,6 @@ parameters:
     default: MDS
     values:
     - MDS
-    - AKV
     - MSS
 
 steps:
@@ -30,6 +29,18 @@ steps:
     secureFile: netfxKeypair.snk
     retryCount: 5
 
+- task: UseDotNet@2
+  displayName: 'Use .NET 9.x sdk'
+  inputs:
+    packageType: sdk
+    version: '9.x'
+
+- task: UseDotNet@2
+  displayName: 'Install .NET 8.x runtime'
+  inputs:
+    packageType: runtime
+    version: '8.x'
+
 - ${{ if eq(parameters.product, 'MDS') }}:
   - task: MSBuild@1
     displayName: 'BuildAllConfigurations using build.proj'
@@ -37,18 +48,3 @@ steps:
       solution: '**/build.proj'
       configuration: '${{parameters.Configuration }}'
       msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAllConfigurations -p:GenerateNuget=false -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
-
-- ${{ if eq(parameters.product, 'AKV') }}:
-  - task: MSBuild@1
-    displayName: 'BuildAKVNetFx using build.proj'
-    inputs:
-      solution: '**/build.proj'
-      configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetFx -p:NugetPackageVersion=${{parameters.packageRefMdsVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'
-
-  - task: MSBuild@1
-    displayName: 'BuildAKVNetCoreAllOS using build.proj'
-    inputs:
-      solution: '**/build.proj'
-      configuration: '${{parameters.Configuration }}'
-      msbuildArguments: '-p:AssemblyFileVersion=${{parameters.AssemblyFileVersion }} -t:BuildAKVNetCoreAllOS -p:NugetPackageVersion=${{parameters.packageRefMdsVersion }} -p:ReferenceType=Package -p:SigningKeyPath=$(Agent.TempDirectory)\netfxKeypair.snk'

@@ -20,14 +20,6 @@
         {
             "file": "TDSServerArguments.cs",
             "_justification": "Contains dummy passwords used for internal testing"
-        },
-        {
-            "file": "Program.cs",
-            "_justification": "Contains dummy passwords used for docker testing"
-        },
-        {
-            "file": "docker-compose.yml",
-            "_justification": "Contains dummy passwords used for docker testing"
         }
     ]
 }

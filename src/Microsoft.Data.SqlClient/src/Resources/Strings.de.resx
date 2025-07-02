@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Nicht konvertierbarer Typenkonflikt zwischen SourceColumn '{0}' von {1} und DataColumn '{2}' von {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>DataColumn '{0}' für SourceColumn '{2}' ist nicht vorhanden.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>DataColumn '{0}' in der DataTable '{1}' für SourceColumn '{2}' ist nicht vorhanden.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Zuordnung des Anschlusses mit E/A-Abschlussmechanismus fehlgeschlagen</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>Socket ist NULL.</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Timeoutfehler</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiert das Verhalten im Blockierungszeitraum für einen Verbindungspool.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Definiert, ob das Zwischenspeichern von Abfragemetadaten aktiviert ist.</value>
   </data>
@@ -4745,5 +4730,17 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Ungültiger Versuch, „JsonDocument“ für Spalte „{0}“ abzurufen. „JsonDocument“ wird nur für Spalten vom Typ JSON unterstützt.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>Puffer wurde zu weit erweitert {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Maximale Puffergröße überschritten: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>DataColumn '{0}' für SourceColumn '{2}' ist nicht vorhanden.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>Die SqlBatchCommand-Liste wurde nicht initialisiert.</value>
   </data>
 </root>

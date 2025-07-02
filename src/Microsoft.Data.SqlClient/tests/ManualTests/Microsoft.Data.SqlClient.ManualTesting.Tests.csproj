@@ -8,8 +8,6 @@
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType.Contains('Package')) AND !$(Platform.Contains('AnyCPU'))">win-$(Platform)</RuntimeIdentifier>
-    <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <IsTestProject>true</IsTestProject>
@@ -32,9 +30,8 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspProvider.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
@@ -51,6 +48,7 @@
     <Compile Include="AlwaysEncrypted\End2EndSmokeTests.cs" />
     <Compile Include="AlwaysEncrypted\SqlBulkCopyTruncation.cs" />
     <Compile Include="AlwaysEncrypted\SqlNullValues.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\AzureKeyVaultKeyFixture.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\DatabaseHelper.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategy.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCertStoreProvider.cs" />
@@ -147,8 +145,10 @@
     <Compile Include="SQL\SqlBulkCopyTest\FireTrigger.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Helpers.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\MissingTargetColumns.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\MissingTargetTable.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SqlBulkCopyTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TestBulkCopyWithUTF8.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction1.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\Transaction2.cs" />
@@ -178,6 +178,7 @@
     <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
     <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="TracingTests\XEventsTracingTest.cs" />
     <Compile Include="SQL\AADFedAuthTokenRefreshTest\AADFedAuthTokenRefreshTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
@@ -202,7 +203,7 @@
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
     <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
-    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.cs" />
+    <Compile Include="SQL\TransactionTest\DistributedTransactionTest.Windows.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -245,26 +246,25 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>data.xml</Link>
     </Content>
-    <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>MultipleResultsTest.bsl</Link>
-    </Content>
-    <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
+    <Compile Include="TracingTests\MetricsTest.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
-    <Compile Include="TracingTests\EventCounterTest.cs" />
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\Batch\BatchTests.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
@@ -280,7 +280,7 @@
     <Compile Include="DataCommon\ProxyServer.cs" />
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
-    <Compile Include="Json\SqlJsonTest.cs" />
+    <Compile Include="Extensions\StreamExtensions.netfx.cs" />
     <Compile Include="SQL\Common\AsyncDebugScope.cs" />
     <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
     <Compile Include="SQL\Common\InternalConnectionWrapper.cs" />
@@ -297,11 +297,16 @@
     <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
     <Compile Include="SQL\JsonTest\JsonStreamTest.cs" />
     <Compile Include="SQL\JsonTest\JsonTest.cs" />
+    <Compile Include="SQL\VectorTest\VectorTypeBackwardCompatibilityTests.cs" />
+    <Compile Include="SQL\VectorTest\NativeVectorFloat32Tests.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="$(TestsPath)Common\Common.csproj">
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
@@ -321,46 +326,47 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="!$(ReferenceType.Contains('Package'))" Include="$(SqlServerSource)Microsoft.SqlServer.Server.csproj" />
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
   <!-- XUnit and XUnit extensions -->
   <ItemGroup>
-    <PackageReference Condition="$(TargetGroup) == 'netfx'" Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
-    <PackageReference Include="xunit" Version="$(XunitVersion)" />
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="$(MicrosoftNETFrameworkReferenceAssembliesVersion)" Condition="'$(TargetGroup)' == 'netfx'">
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitrunnervisualstudioVersion)">
+    <PackageReference Include="xunit.runner.console">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="xunit.runner.console" Version="$(XunitVersion)">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="xunit.runner.utility" Version="$(XunitVersion)" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="$(MicrosoftDotNetXUnitExtensionsVersion)" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
+    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Win32.Registry" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.SqlServer.Types" Version="$(MicrosoftSqlServerTypesVersionNet)" />
-    <PackageReference Condition="'$(TargetGroup)'=='netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
-    <PackageReference Condition="'$(TargetGroup)'!='netfx'" Include="System.ServiceProcess.ServiceController" Version="$(SystemServiceProcessServiceControllerVersion)" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.SqlServer.Types" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" />
   </ItemGroup>
-  <ItemGroup>
-    <ContentWithTargetPath Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
+  <ItemGroup Condition="'$(TargetGroup)'=='netfx'">
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <ContentWithTargetPath Condition="$(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\$(TargetFramework)\*SNI*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>%(Filename)%(Extension)</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
   </ItemGroup>
   <ItemGroup>
     <None Update="makepfxcert.ps1">

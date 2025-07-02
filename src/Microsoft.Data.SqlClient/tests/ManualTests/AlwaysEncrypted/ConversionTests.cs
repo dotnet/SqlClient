@@ -14,11 +14,12 @@ using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public sealed class ConversionTests : IDisposable
+    public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -29,8 +30,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private static X509Certificate2 certificate;
-        private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
         private List<DbObject> _databaseObjects = new List<DbObject>();
@@ -54,23 +53,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             public bool UseMax { get; set; }
         }
 
-        public ConversionTests()
+        public ConversionTests(ColumnMasterKeyCertificateFixture fixture)
         {
-            if (certificate == null)
-            {
-                certificate = CertificateUtility.CreateCertificate();
-            }
-            columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
-            _databaseObjects.Add(columnMasterKey);
+            X509Certificate2 certificate = fixture.ColumnMasterKeyCertificate;
+            ColumnMasterKey columnMasterKey1 = new CspColumnMasterKey(
+                DatabaseHelper.GenerateUniqueName("CMK"),
+                certificate.Thumbprint,
+                certStoreProvider,
+                DataTestUtility.EnclaveEnabled);
+            _databaseObjects.Add(columnMasterKey1);
 
-            columnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("CEK"),
-                                                          columnMasterKey,
-                                                          certStoreProvider);
+            columnEncryptionKey = new ColumnEncryptionKey(
+                DatabaseHelper.GenerateUniqueName("CEK"),
+                columnMasterKey1,
+                certStoreProvider);
             _databaseObjects.Add(columnEncryptionKey);
 
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
+                var connectionString = new SqlConnectionStringBuilder(connectionStr);
+                connectionString.ConnectTimeout = Math.Max(connectionString.ConnectTimeout, 30); // The AE tests often fail with a connect timeout in this constructor. Making sure we have a reasonable timeout.
+
+                using (SqlConnection sqlConnection = new SqlConnection(connectionString.ConnectionString))
                 {
                     sqlConnection.Open();
                     _databaseObjects.ForEach(o => o.Create(sqlConnection));
@@ -79,7 +83,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectData))]
+        [MemberData(
+            nameof(ConversionSmallerToLargerInsertAndSelectData)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void ConversionSmallerToLargerInsertAndSelect(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
@@ -159,7 +172,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(ConversionSmallerToLargerInsertAndSelectBulkData))]
+        [MemberData(
+            nameof(ConversionSmallerToLargerInsertAndSelectBulkData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void ConversionSmallerToLargerInsertAndSelectBulk(string connString, SqlDbType smallDbType, SqlDbType largeDbType)
         {
             ColumnMetaData largeColumnInfo = new ColumnMetaData(largeDbType, 0, 1, 1, false);
@@ -248,7 +266,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
-        [ClassData(typeof(TestOutOfRangeValuesData))]
+        [MemberData(
+            nameof(TestOutOfRangeValuesData)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public void TestOutOfRangeValues(string connString, SqlDbType currentDbType)
         {
             ColumnMetaData currentColumnInfo = new ColumnMetaData(currentDbType, 0, 1, 1, false);
@@ -562,7 +585,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 try
                 {
                     sqlCmd.ExecuteNonQuery();
-                    Assert.Fail("We should have gotten an error but passed instead.");
+                    StringBuilder builder = new(
+                        "We should have gotten an error but passed instead; " +
+                        $"command: {sqlCmd.CommandText}; parameters: ");
+                    foreach (SqlParameter param in sqlCmd.Parameters)
+                    {
+                        builder.Append('(');
+                        builder.Append(param.ParameterName);
+                        builder.Append(' ');
+                        builder.Append(param.SqlDbType);
+                        builder.Append(' ');
+                        builder.Append(param.Value);
+                        builder.Append(") ");
+                    }
+                    Assert.Fail(builder.ToString());
                 }
                 catch (Exception e)
                 {
@@ -1333,11 +1369,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
-    }
 
-    public class ConversionSmallerToLargerInsertAndSelectData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> ConversionSmallerToLargerInsertAndSelectData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1371,12 +1404,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real };
             }
         }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
 
-    public class ConversionSmallerToLargerInsertAndSelectBulkData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> ConversionSmallerToLargerInsertAndSelectBulkData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1411,13 +1440,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-
-    public class TestOutOfRangeValuesData : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+        public static IEnumerable<object[]> TestOutOfRangeValuesData()
         {
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
@@ -1446,7 +1469,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, SqlDbType.VarChar };
             }
         }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
