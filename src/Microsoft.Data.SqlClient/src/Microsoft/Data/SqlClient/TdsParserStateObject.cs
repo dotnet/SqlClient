@@ -1526,6 +1526,48 @@ namespace Microsoft.Data.SqlClient
             return TdsOperationStatus.Done;
         }
 
+        public TdsOperationStatus TryReadByteArrayWithContinue(int length, out byte[] bytes)
+        {
+            bytes = null;
+            int offset = 0;
+            byte[] temp = null;
+            (bool canContinue, bool isStarting, bool isContinuing) = GetSnapshotStatuses();
+            if (canContinue)
+            {
+                if (isContinuing || isStarting)
+                {
+                    temp = TryTakeSnapshotStorage() as byte[];
+                    Debug.Assert(bytes == null || bytes.Length == length, "stored buffer length must be null or must have been created with the correct length");
+                }
+                if (temp != null)
+                {
+                    offset = GetSnapshotTotalSize();
+                }
+            }
+
+
+            if (temp == null)
+            {
+                temp = new byte[length];
+            }
+
+            TdsOperationStatus result = TryReadByteArray(temp, length, out _, offset, isStarting || isContinuing);
+
+            if (result == TdsOperationStatus.Done)
+            {
+                bytes = temp;
+            }
+            else if (result == TdsOperationStatus.NeedMoreData)
+            {
+                if (isStarting || isContinuing)
+                {
+                    SetSnapshotStorage(temp);
+                }
+            }
+
+            return result;
+        }
+
         // Takes no arguments and returns a byte from the buffer.  If the buffer is empty, it is filled
         // before the byte is returned.
         internal TdsOperationStatus TryReadByte(out byte value)
@@ -1872,20 +1914,12 @@ namespace Microsoft.Data.SqlClient
 
             if (((_inBytesUsed + cBytes) > _inBytesRead) || (_inBytesPacket < cBytes))
             {
-                if (_bTmp == null || _bTmp.Length < cBytes)
-                {
-                    _bTmp = new byte[cBytes];
-                }
-
-                TdsOperationStatus result = TryReadByteArray(_bTmp, cBytes);
+                TdsOperationStatus result = TryReadByteArrayWithContinue(cBytes, out buf);
                 if (result != TdsOperationStatus.Done)
                 {
                     value = null;
                     return result;
                 }
-
-                // assign local to point to parser scratch buffer
-                buf = _bTmp;
 
                 AssertValidState();
             }
