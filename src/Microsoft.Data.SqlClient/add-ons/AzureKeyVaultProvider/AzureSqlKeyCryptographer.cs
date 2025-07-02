@@ -7,7 +7,6 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using System;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -29,7 +28,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// These tasks will be used for returning the key in the event that the fetch task has not finished depositing the 
         /// key into the key dictionary.
         /// </summary>
-        private readonly ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>> _keyFetchTaskDictionary = new();
+        private readonly ConcurrentDictionary<string, KeyVaultKey> _keyFetchTaskDictionary = new();
 
         /// <summary>
         /// Holds references to the Azure Key Vault keys and maps them to their corresponding Azure Key Vault Key Identifier (URI).
@@ -79,10 +78,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return key;
             }
 
-            if (_keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out Task<Azure.Response<KeyVaultKey>> task))
+            if (_keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey keyVaultKey))
             {
                 AKVEventSource.Log.TryTraceEvent("New Master key fetched.");
-                return Task.Run(() => task).GetAwaiter().GetResult();
+                return keyVaultKey;
             }
 
             // Not a public exception - not likely to occur.
@@ -155,14 +154,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyResourceUri">The Azure Key Vault key identifier</param>
         private void FetchKey(Uri vaultUri, string keyName, string keyVersion, string keyResourceUri)
         {
-            Task<Azure.Response<KeyVaultKey>> fetchKeyTask = FetchKeyFromKeyVault(vaultUri, keyName, keyVersion);
-            _keyFetchTaskDictionary.AddOrUpdate(keyResourceUri, fetchKeyTask, (k, v) => fetchKeyTask);
+            KeyVaultKey key = FetchKeyFromKeyVault(vaultUri, keyName, keyVersion);
+            _keyFetchTaskDictionary.AddOrUpdate(keyResourceUri, key, (k, v) => key);
 
-            fetchKeyTask
-                .ContinueWith(k => ValidateRsaKey(k.GetAwaiter().GetResult()))
-                .ContinueWith(k => _keyDictionary.AddOrUpdate(keyResourceUri, k.GetAwaiter().GetResult(), (key, v) => k.GetAwaiter().GetResult()));
-
-            Task.Run(() => fetchKeyTask);
+            ValidateRsaKey(key);
+            _keyDictionary.AddOrUpdate(keyResourceUri, key, (k, v) => key);
         }
 
         /// <summary>
@@ -172,27 +168,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="keyName">Then name of the key</param>
         /// <param name="keyVersion">Then version of the key</param>
         /// <returns></returns>
-        private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
+        private KeyVaultKey FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
         {
             _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
             AKVEventSource.Log.TryTraceEvent("Fetching requested master key: {0}", keyName);
-            return keyClient?.GetKeyAsync(keyName, keyVersion);
-        }
-
-        /// <summary>
-        /// Validates that a key is of type RSA
-        /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        private KeyVaultKey ValidateRsaKey(KeyVaultKey key)
-        {
-            if (key.KeyType != KeyType.Rsa && key.KeyType != KeyType.RsaHsm)
-            {
-                AKVEventSource.Log.TryTraceEvent("Non-RSA KeyType received: {0}", key.KeyType);
-                throw ADP.NonRsaKeyFormat(key.KeyType.ToString());
-            }
-
-            return key;
+            return keyClient?.GetKey(keyName, keyVersion);
         }
 
         /// <summary>
@@ -208,13 +188,29 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
+        /// Validates that a key is of type RSA
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private static KeyVaultKey ValidateRsaKey(KeyVaultKey key)
+        {
+            if (key.KeyType != KeyType.Rsa && key.KeyType != KeyType.RsaHsm)
+            {
+                AKVEventSource.Log.TryTraceEvent("Non-RSA KeyType received: {0}", key.KeyType);
+                throw ADP.NonRsaKeyFormat(key.KeyType.ToString());
+            }
+
+            return key;
+        }
+
+        /// <summary>
         /// Validates and parses the Azure Key Vault URI and key name.
         /// </summary>
         /// <param name="masterKeyPath">The Azure Key Vault key identifier</param>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="masterKeyName">The name of the key</param>
         /// <param name="masterKeyVersion">The version of the key</param>
-        private void ParseAKVPath(string masterKeyPath, out Uri vaultUri, out string masterKeyName, out string masterKeyVersion)
+        private static void ParseAKVPath(string masterKeyPath, out Uri vaultUri, out string masterKeyName, out string masterKeyVersion)
         {
             Uri masterKeyPathUri = new(masterKeyPath);
             vaultUri = new Uri(masterKeyPathUri.GetLeftPart(UriPartial.Authority));
