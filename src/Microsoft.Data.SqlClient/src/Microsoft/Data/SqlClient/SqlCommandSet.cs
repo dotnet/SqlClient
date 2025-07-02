@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient
             _commandList = new List<SqlBatchCommand>();
         }
 
-        private SqlCommand BatchCommand
+        internal SqlCommand BatchCommand
         {
             get
             {
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int CommandCount => CommandList.Count;
 
-        private List<SqlBatchCommand> CommandList
+        internal List<SqlBatchCommand> CommandList
         {
             get
             {
@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient
         internal int GetParameterCount(int commandIndex)
             => CommandList[commandIndex].Parameters.Count;
 
-        private void ValidateCommandBehavior(string method, CommandBehavior behavior)
+        internal void ValidateCommandBehavior(string method, CommandBehavior behavior)
         {
             if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))
             {

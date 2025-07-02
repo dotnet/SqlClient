@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using System.Reflection;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -17,18 +16,16 @@ public class SqlCommandSetTest
     /// <summary>
     /// Verifies that key properties throw an ObjectDisposedException after the SqlCommandSet has been disposed.
     /// </summary>
-    /// <remarks>
-    /// These properties are private, requiring reflection to access.
-    /// </remarks>
-    [Theory]
-    [InlineData("BatchCommand")]
-    [InlineData("CommandList")]
-    public void GetDisposedProperty_Throws(string propertyName)
+    [Fact]
+    public void GetDisposedProperty_Throws()
     {
         SqlCommandSet cmdSet = new();
         cmdSet.Dispose();
 
-        ObjectDisposedException ex = GetProperty_Throws<ObjectDisposedException>(cmdSet, propertyName);
+        ObjectDisposedException ex = Assert.Throws<ObjectDisposedException>(() => _ = cmdSet.BatchCommand);
+        Assert.Contains("disposed", ex.Message, StringComparison.OrdinalIgnoreCase);
+
+        ex = Assert.Throws<ObjectDisposedException>(() => _ = cmdSet.CommandList);
         Assert.Contains("disposed", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -152,7 +149,7 @@ public class SqlCommandSetTest
     {
         SqlCommandSet cmdSet = new();
 
-        ArgumentOutOfRangeException ex = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", (CommandBehavior)64);
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.ValidateCommandBehavior("ExecuteNonQuery", (CommandBehavior)64));
         Assert.Contains("CommandBehavior", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -164,50 +161,16 @@ public class SqlCommandSetTest
     {
         SqlCommandSet cmdSet = new();
 
-        ArgumentOutOfRangeException ex = InvokeMethod_Throws<ArgumentOutOfRangeException>(cmdSet, "ValidateCommandBehavior", "ExecuteNonQuery", CommandBehavior.KeyInfo);
+        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.ValidateCommandBehavior("ExecuteNonQuery", CommandBehavior.KeyInfo));
         Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    #region private methods
-
-    private static T GetProperty_Throws<T>(SqlCommandSet instance, string propertyName)
-        where T : Exception
-        => InvokeMethod_Throws<T>(instance,
-            typeof(SqlCommandSet)
-                .GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance)
-                .GetGetMethod(true),
-            []);
-
-    private static T InvokeMethod_Throws<T>(SqlCommandSet instance, string methodName, params object[] values)
-        where T : Exception
-        => InvokeMethod_Throws<T>(instance,
-            typeof(SqlCommandSet)
-                .GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance),
-            values);
-
-    private static T InvokeMethod_Throws<T>(SqlCommandSet instance, MethodInfo methodInfo, params object[] values)
-        where T : Exception
-    {
-        return Assert.Throws<T>(() =>
-        {
-            try
-            {
-                methodInfo.Invoke(instance, values);
-            }
-            catch (TargetInvocationException e)
-            {
-                throw e.InnerException;
-            }
-        });
     }
 
     private static SqlCommand GenerateBadCommand(CommandType cType)
     {
         SqlCommand cmd = new("Test");
         // There's validation done on the CommandType property, but we need to create one that avoids the check for the test case.
-        typeof(SqlCommand).GetField("_commandType", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(cmd, cType);
+        cmd._commandType = cType;
 
         return cmd;
     }
-    #endregion
 }
