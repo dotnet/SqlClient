@@ -6983,7 +6983,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-#if DEBUG
+        #if DEBUG
         internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
         {
             var stateObj = _stateObj;
@@ -7025,14 +7025,15 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-#endif
-        internal static void CancelIgnoreFailureCallback(object state)
+        #endif
+
+        private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
             command.CancelIgnoreFailure();
         }
 
-        internal void CancelIgnoreFailure()
+        private void CancelIgnoreFailure()
         {
             // This method is used to route CancellationTokens to the Cancel method.
             // Cancellation is a suggestion, and exceptions should be ignored

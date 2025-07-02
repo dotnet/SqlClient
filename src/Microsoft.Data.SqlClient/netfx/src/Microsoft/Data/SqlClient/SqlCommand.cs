@@ -839,29 +839,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void CancelIgnoreFailureCallback(object state)
-        {
-            SqlCommand command = (SqlCommand)state;
-            command.CancelIgnoreFailure();
-        }
-
-        internal void CancelIgnoreFailure()
-        {
-            // This method is used to route CancellationTokens to the Cancel method.
-            // Cancellation is a suggestion, and exceptions should be ignored
-            // rather than allowed to be unhandled, as there is no way to route
-            // them to the caller.  It would be expected that the error will be
-            // observed anyway from the regular method.  An example is cancelling
-            // an operation on a closed connection.
-            try
-            {
-                Cancel();
-            }
-            catch (Exception)
-            {
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [DefaultValue(UpdateRowSource.Both)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
@@ -7246,7 +7223,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if DEBUG
+        #if DEBUG
         internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
         {
             var stateObj = _stateObj;
@@ -7288,6 +7265,29 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-#endif
+        #endif
+        
+        private static void CancelIgnoreFailureCallback(object state)
+        {
+            SqlCommand command = (SqlCommand)state;
+            command.CancelIgnoreFailure();
+        }
+
+        private void CancelIgnoreFailure()
+        {
+            // This method is used to route CancellationTokens to the Cancel method.
+            // Cancellation is a suggestion, and exceptions should be ignored
+            // rather than allowed to be unhandled, as there is no way to route
+            // them to the caller.  It would be expected that the error will be
+            // observed anyway from the regular method.  An example is cancelling
+            // an operation on a closed connection.
+            try
+            {
+                Cancel();
+            }
+            catch (Exception)
+            {
+            }
+        }
     }
 }
