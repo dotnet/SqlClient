@@ -6982,51 +6982,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-
-        #if DEBUG
-        internal void CompletePendingReadWithSuccess(bool resetForcePendingReadsToWait)
-        {
-            var stateObj = _stateObj;
-            if (stateObj != null)
-            {
-                stateObj.CompletePendingReadWithSuccess(resetForcePendingReadsToWait);
-            }
-            else
-            {
-                var tempCachedAsyncState = cachedAsyncState;
-                if (tempCachedAsyncState != null)
-                {
-                    var reader = tempCachedAsyncState.CachedAsyncReader;
-                    if (reader != null)
-                    {
-                        reader.CompletePendingReadWithSuccess(resetForcePendingReadsToWait);
-                    }
-                }
-            }
-        }
-
-        internal void CompletePendingReadWithFailure(int errorCode, bool resetForcePendingReadsToWait)
-        {
-            var stateObj = _stateObj;
-            if (stateObj != null)
-            {
-                stateObj.CompletePendingReadWithFailure(errorCode, resetForcePendingReadsToWait);
-            }
-            else
-            {
-                var tempCachedAsyncState = _cachedAsyncState;
-                if (tempCachedAsyncState != null)
-                {
-                    var reader = tempCachedAsyncState.CachedAsyncReader;
-                    if (reader != null)
-                    {
-                        reader.CompletePendingReadWithFailure(errorCode, resetForcePendingReadsToWait);
-                    }
-                }
-            }
-        }
-        #endif
-
         private static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
