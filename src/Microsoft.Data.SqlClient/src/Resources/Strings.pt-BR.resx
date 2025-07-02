@@ -1845,9 +1845,6 @@
   <data name="ADP_ColumnSchemaMismatch" xml:space="preserve">
     <value>Tipos não conversíveis incompatíveis entre SourceColumn '{0}' de {1} e DataColumn '{2}' de {3}.</value>
   </data>
-  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
-    <value>DataColumn '{0}' de SourceColumn '{2}' inexistente.</value>
-  </data>
   <data name="ADP_ColumnSchemaMissing2" xml:space="preserve">
     <value>DataColumn '{0}' em DataTable '{1}' de SourceColumn '{2}' inexistente.</value>
   </data>
@@ -3808,7 +3805,7 @@
     <value>Falha ao associar porta e mecanismo de conclusão de E/S</value>
   </data>
   <data name="SNI_ERROR_10" xml:space="preserve">
-    <value />
+    <value>O soquete é nulo</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
     <value>Erro de tempo limite</value>
@@ -4446,18 +4443,6 @@
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Define o comportamento de período de bloqueio para um pool de conexões.</value>
   </data>
-  <data name="AZURESQL_GenericEndpoint" xml:space="preserve">
-    <value>.database.windows.net</value>
-  </data>
-  <data name="AZURESQL_GermanEndpoint" xml:space="preserve">
-    <value>.database.cloudapi.de</value>
-  </data>
-  <data name="AZURESQL_UsGovEndpoint" xml:space="preserve">
-    <value>.database.usgovcloudapi.net</value>
-  </data>
-  <data name="AZURESQL_ChinaEndpoint" xml:space="preserve">
-    <value>.database.chinacloudapi.cn</value>
-  </data>
   <data name="TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled" xml:space="preserve">
     <value>Define se o cache de metadados de consulta está habilitado.</value>
   </data>
@@ -4745,5 +4730,17 @@
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativa inválida de obter JsonDocument na coluna ''{0}''. Só há suporte para JsonDocument em colunas do tipo json.</value>
+  </data>
+  <data name="ArrayBufferWriterAdvancedTooFar" xml:space="preserve">
+    <value>O armazenamento em buffer avançou demais {0}</value>
+  </data>
+  <data name="ArrayBufferWriterMaximumSizeExceeded" xml:space="preserve">
+    <value>Tamanho máximo do buffer excedido: {0}</value>
+  </data>
+  <data name="ADP_ColumnSchemaMissing1" xml:space="preserve">
+    <value>DataColumn '{0}' de SourceColumn '{2}' inexistente.</value>
+  </data>
+  <data name="ADP_NoSqlBatchCommandList" xml:space="preserve">
+    <value>A lista SqlBatchCommand não foi inicializada.</value>
   </data>
 </root>

@@ -30,6 +30,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`RunTests`|Runs the functional and manual tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
+|`BuildAkv`|Builds the Azure Key Vault Provider package for all supported platforms.|
 
 
 ### Parameters
@@ -288,26 +289,6 @@ When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a s
 
 `Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning`
 
-## Debugging SqlClient on Linux from Windows
-
-For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.
-
-This project is also included in `docker-compose.yml` to demonstrate connectivity with SQL Server docker image.
-
-To run the same:
-
-1. Build the Solution in Visual Studio
-2. Set  `docker-compose` as Startup Project
-3. Run "Docker-Compose" launch configuration.
-4. You will see similar message in Debug window:
-
-    ```log
-    Connected to SQL Server v15.00.4023 from Unix 4.19.76.0
-    The program 'dotnet' has exited with code 0 (0x0).
-    ```
-
-5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
-
 ### Troubleshooting Docker issues
 
 There may be times where connection cannot be made to SQL Server, we found below ideas helpful:
@@ -338,14 +319,118 @@ dotnet test <test_properties...> --collect:"XPlat Code Coverage"
 
 ## Run Performance Tests
 
-### Running Performance test project directly
+The performance tests live here:
+`src\Microsoft.Data.SqlClient\tests\PerformanceTests\`
 
-Project location from Root: `src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj`
-Configure `runnerconfig.json` file with connection string and preferred settings to run Benchmark Jobs.
+They can be run from the command line by following the instructions below.
 
-```bash
-cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
-dotnet run -c Release -f net8.0
+Launch a shell and change into the project directory:
+
+PowerShell:
+
+```pwsh
+> cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
 ```
 
-_Only "**Release** Configuration" applies to Performance Tests_
+Bash:
+
+```bash
+$ cd src/Microsoft.Data.SqlClient/tests/PerformanceTests
+```
+
+### Create Database
+
+Create an empty database for the benchmarks to use.  This example assumes
+a local SQL server instance using SQL authentication:
+
+```bash
+$ sqlcmd -S localhost -U sa -P password
+1> create database [sqlclient-perf-db]
+2> go
+1> quit
+```
+
+The default `runnerconfig.json` expects a database named `sqlclient-perf-db`,
+but you may change the config to use any existing database.  All tables in
+the database will be dropped when running the benchmarks.
+
+### Configure Runner
+
+Configure the benchmarks by editing the `runnerconfig.json` file directly in the
+`PerformanceTests` directory with an appropriate connection string and benchmark
+settings:
+
+```json
+{
+  "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
+  "UseManagedSniOnWindows": false,
+  "Benchmarks":
+  {
+    "SqlConnectionRunnerConfig":
+    {
+      "Enabled": true,
+      "LaunchCount": 1,
+      "IterationCount": 50,
+      "InvocationCount":30,
+      "WarmupCount": 5,
+      "RowCount": 0
+    },
+    ...
+  }
+}
+```
+
+Individual benchmarks may be enabled or disabled, and each has several
+benchmarking options for fine tuning.
+
+After making edits to `runnerconfig.json` you must perform a build which will
+copy the file into the `artifacts` directory alongside the benchmark DLL.  By
+default, the benchmarks look for `runnerconfig.json` in the same directory as
+the DLL.
+
+Optionally, to avoid polluting your git workspace and requring a build after
+each config change, copy `runnerconfig.json` to a new file, make your edits
+there, and then specify the new file with the RUNNER_CONFIG environment
+variable.
+
+PowerShell:
+
+```pwsh
+> copy runnerconfig.json $HOME\.configs\runnerconfig.json
+
+# Make edits to $HOME\.configs\runnerconfig.json
+
+# You must set the RUNNER_CONFIG environment variable for the current shell.
+> $env:RUNNER_CONFIG="${HOME}\.configs\runnerconfig.json"
+```
+
+Bash:
+
+```bash
+$ cp runnerconfig.json ~/.configs/runnerconfig.json
+
+# Make edits to ~/.configs/runnerconfig.json
+
+# Optionally export RUNNER_CONFIG.
+$ export RUNNER_CONFIG=~/.configs/runnerconfig.json
+```
+
+### Run Benchmarks
+
+All benchmarks must be compiled and run in **Release** configuration.
+
+PowerShell:
+
+```pwsh
+> dotnet run -c Release -f net9.0
+```
+
+Bash:
+
+```bash
+# Omit RUNNER_CONFIG if you exported it earlier, or if you're using the
+# copy prepared by the build.
+$ dotnet run -c Release -f net9.0
+
+$ RUNNER_CONFIG=~/.configs/runnerconfig.json dotnet run -c Release -f net9.0
+```

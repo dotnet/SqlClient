@@ -1,14 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="Build"
+  xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <MdsVersionDefault>6.0.0</MdsVersionDefault>
+    <MdsVersionDefault>6.1.0</MdsVersionDefault>
     <BuildNumber Condition="'$(BuildNumber)' == ''">0</BuildNumber>
+
+    <!--
+      GOTCHA: These two properties must appear in the first <PropertyGroup> in
+      this file due to hardcoded XML processing in:
+
+      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
+    -->
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">$(MdsVersionDefault).$(BuildNumber)</AssemblyFileVersion>
-    <FileVersion>$(AssemblyFileVersion)</FileVersion>
-    <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient Assembly. -->
-    <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
-    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
+    <!--
+      This sets the version of the Microsoft.Data.SqlClient assembly.  It
+      should only be updated when the major version of the MDS package changes
+      and introduces breaking changes.  Only ever update the major version
+      number.  All other version parts must be set to 0.
+    -->
     <AssemblyVersion>6.0.0.0</AssemblyVersion>
+
+    <FileVersion>$(AssemblyFileVersion)</FileVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">$(MdsVersionDefault)-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
@@ -21,57 +33,17 @@
     <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
     <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
-  <!-- NetFx project dependencies -->
-  <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSniVersion>
-    <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
-    <SystemMemoryVersion>4.5.5</SystemMemoryVersion>
-    <SystemTextEncodingsWebVersion>6.0.0</SystemTextEncodingsWebVersion>
-  </PropertyGroup>
-  <!-- NetFx and NetCore project dependencies -->
-  <PropertyGroup>
-    <AzureIdentityVersion>1.11.4</AzureIdentityVersion>
-    <MicrosoftExtensionsCachingMemoryVersion>6.0.3</MicrosoftExtensionsCachingMemoryVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>7.5.0</MicrosoftIdentityModelJsonWebTokensVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>7.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <SystemTextJsonVersion>6.0.10</SystemTextJsonVersion>
-  </PropertyGroup>
-  <!-- NetCore project dependencies -->
-  <PropertyGroup>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>6.0.0-preview1.24226.4</MicrosoftDataSqlClientSNIRuntimeVersion>
-    <SystemConfigurationConfigurationManagerVersion>6.0.1</SystemConfigurationConfigurationManagerVersion>
-    <MicrosoftSqlServerServerVersion>1.0.0</MicrosoftSqlServerServerVersion>
-  </PropertyGroup>
-  <!-- AKV Provider project dependencies -->
-  <PropertyGroup>
-    <AzureCoreVersion>[1.38.0,2.0.0)</AzureCoreVersion>
-    <AzureSecurityKeyVaultKeysVersion>[4.5.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
-  </PropertyGroup>
-  <!-- Test Project Dependencies -->
-  <PropertyGroup>
-    <BenchmarkDotNetVersion>0.13.2</BenchmarkDotNetVersion>
-    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
-    <MicrosoftDotNetRemoteExecutorVersion>7.0.0-beta.22316.1</MicrosoftDotNetRemoteExecutorVersion>
-    <MicrosoftDotNetXUnitExtensionsVersion>8.0.0-beta.24123.1</MicrosoftDotNetXUnitExtensionsVersion>
-    <MicrosoftExtensionsHosting>6.0.1</MicrosoftExtensionsHosting>
-    <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
-    <MicrosoftNETFrameworkReferenceAssembliesVersion>1.0.3</MicrosoftNETFrameworkReferenceAssembliesVersion>
-    <MicrosoftNETTestSdkVersion>17.8.0</MicrosoftNETTestSdkVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>170.8.0</MicrosoftSqlServerSqlManagementObjectsVersion>
-    <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
-    <MicrosoftSqlServerTypesVersionNet>160.1000.6</MicrosoftSqlServerTypesVersionNet>
-    <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
-    <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
-    <SystemDataOdbcVersion>6.0.1</SystemDataOdbcVersion>
-    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
-    <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
-    <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
-    <SystemTextEncodingCodePagesVersion>6.0.0</SystemTextEncodingCodePagesVersion>
-    <XunitVersion>2.4.2</XunitVersion>
-    <XunitrunnervisualstudioVersion>2.5.5</XunitrunnervisualstudioVersion>
-  </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>
+
+    <!--
+      GOTCHA: This property must appear in the last <PropertyGroup> in this file
+      due to hardcoded XML processing in:
+
+      eng/pipelines/common/templates/jobs/validate-signed-package-job.yml
+
+      See the 'Modify TestMicrosoftDataSqlClientVersion' step.
+    -->
     <TestMicrosoftDataSqlClientVersion>$(NugetPackageVersion)</TestMicrosoftDataSqlClientVersion>
   </PropertyGroup>
 </Project>

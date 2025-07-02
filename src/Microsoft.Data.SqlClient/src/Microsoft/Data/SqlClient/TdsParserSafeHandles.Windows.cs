@@ -5,10 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading;
+using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.LocalDb;
+
 #if NETFRAMEWORK
+using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 #endif
 
@@ -18,8 +20,8 @@ namespace Microsoft.Data.SqlClient
     {
         internal static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(ReadDispatcher);
-        internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(WriteDispatcher);
+        internal readonly SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SqlAsyncCallbackDelegate(ReadDispatcher);
+        internal readonly SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SqlAsyncCallbackDelegate(WriteDispatcher);
 
         private readonly uint _sniStatus = TdsEnums.SNI_UNINITIALIZED;
         private readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
@@ -34,7 +36,7 @@ namespace Microsoft.Data.SqlClient
             { }
             finally
             {
-                _sniStatus = SNINativeMethodWrapper.SNIInitialize();
+                _sniStatus = SniNativeWrapper.SniInitialize();
                 base.handle = (IntPtr)1; // Initialize to non-zero dummy variable.
             }
         }
@@ -55,7 +57,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             uint value = 0;
                             // Query OS to find out whether encryption is supported.
-                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
+                            SniNativeWrapper.SniQueryInfo(QueryType.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
                             _clientOSEncryptionSupport = value != 0;
                         }
                         catch (Exception e)
@@ -76,8 +78,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (TdsEnums.SNI_SUCCESS == _sniStatus)
                 {
-                    LocalDBAPI.ReleaseDLLHandles();
-                    SNINativeMethodWrapper.SNITerminate();
+                    LocalDbApi.ReleaseDllHandles();
+                    SniNativeWrapper.SniTerminate();
                 }
                 base.handle = IntPtr.Zero;
             }
@@ -105,11 +107,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (stateObj != null)
                 {
-#if NETFRAMEWORK
-                    stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
-#else
                     stateObj.ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
-#endif // NETFRAMEWORK
                 }
             }
         }
@@ -130,11 +128,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (stateObj != null)
                 {
-#if NETFRAMEWORK
-                    stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);
-#else
                     stateObj.WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
-#endif // NETFRAMEWORK
                 }
             }
         }
@@ -147,9 +141,9 @@ namespace Microsoft.Data.SqlClient
 
         // creates a physical connection
         internal SNIHandle(
-            SNINativeMethodWrapper.ConsumerInfo myInfo,
+            ConsumerInfo myInfo,
             string serverName,
-            byte[] spnBuffer,
+            ref string spn,
             int timeout,
             out byte[] instanceName,
             bool flushCache,
@@ -182,26 +176,49 @@ namespace Microsoft.Data.SqlClient
                 //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
                 //}
 
-#if NETFRAMEWORK
+                #if NETFRAMEWORK
                 int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
-                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
-                            ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo, hostNameInCertificate);
-#else
-                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo, hostNameInCertificate);
-#endif // NETFRAMEWORK
+                _status = SniNativeWrapper.SniOpenSyncEx(
+                    myInfo,
+                    serverName,
+                    ref base.handle,
+                    ref spn,
+                    instanceName,
+                    flushCache,
+                    fSync,
+                    timeout,
+                    fParallel,
+                    transparentNetworkResolutionStateNo,
+                    totalTimeout,
+                    ipPreference,
+                    cachedDNSInfo,
+                    hostNameInCertificate);
+                #else
+                _status = SniNativeWrapper.SniOpenSyncEx(
+                    myInfo,
+                    serverName,
+                    ref base.handle,
+                    ref spn,
+                    instanceName,
+                    flushCache,
+                    fSync,
+                    timeout,
+                    fParallel,
+                    ipPreference,
+                    cachedDNSInfo,
+                    hostNameInCertificate);
+                #endif
             }
         }
 
         // constructs SNI Handle for MARS session
-        internal SNIHandle(SNINativeMethodWrapper.ConsumerInfo myInfo, SNIHandle parent, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo) : base(IntPtr.Zero, true)
+        internal SNIHandle(ConsumerInfo myInfo, SNIHandle parent, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo) : base(IntPtr.Zero, true)
         {
             try
             { }
             finally
             {
-                _status = SNINativeMethodWrapper.SNIOpenMarsSession(myInfo, parent, ref base.handle, parent._fSync, ipPreference, cachedDNSInfo);
+                _status = SniNativeWrapper.SniOpenMarsSession(myInfo, parent, ref base.handle, parent._fSync, ipPreference, cachedDNSInfo);
             }
         }
 
@@ -220,7 +237,7 @@ namespace Microsoft.Data.SqlClient
             base.handle = IntPtr.Zero;
             if (IntPtr.Zero != ptr)
             {
-                if (0 != SNINativeMethodWrapper.SNIClose(ptr))
+                if (0 != SniNativeWrapper.SniClose(ptr))
                 {
                     return false;   // SNIClose should never fail.
                 }
@@ -241,7 +258,7 @@ namespace Microsoft.Data.SqlClient
     {
         internal SNIPacket(SafeHandle sniHandle) : base(IntPtr.Zero, true)
         {
-            SNINativeMethodWrapper.SNIPacketAllocate(sniHandle, SNINativeMethodWrapper.IOType.WRITE, ref base.handle);
+            SniNativeWrapper.SniPacketAllocate(sniHandle, IoType.WRITE, ref base.handle);
             if (IntPtr.Zero == base.handle)
             {
                 throw SQL.SNIPacketAllocationFailure();
@@ -263,7 +280,7 @@ namespace Microsoft.Data.SqlClient
             base.handle = IntPtr.Zero;
             if (IntPtr.Zero != ptr)
             {
-                SNINativeMethodWrapper.SNIPacketRelease(ptr);
+                SniNativeWrapper.SniPacketRelease(ptr);
             }
             return true;
         }
@@ -287,7 +304,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Success - reset the packet
                 packet = _packets.Pop();
-                SNINativeMethodWrapper.SNIPacketReset(sniHandle, SNINativeMethodWrapper.IOType.WRITE, packet, SNINativeMethodWrapper.ConsumerNumber.SNI_Consumer_SNI);
+                SniNativeWrapper.SniPacketReset(sniHandle, IoType.WRITE, packet, ConsumerNumber.SNI_Consumer_SNI);
             }
             else
             {

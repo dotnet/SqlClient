@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 ﻿using System;
+using System.Diagnostics;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInternals;
 using Xunit;
 using Xunit.Abstractions;
@@ -66,6 +67,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [Conditional("DEBUG")]
         private void LogInfo(string message)
         {
             _testOutputHelper.WriteLine(message);

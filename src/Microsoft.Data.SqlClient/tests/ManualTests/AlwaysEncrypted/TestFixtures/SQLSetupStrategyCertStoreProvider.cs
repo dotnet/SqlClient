@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.using System;
 
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
@@ -20,12 +19,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SetupDatabase();
         }
 
-        protected SQLSetupStrategyCertStoreProvider(string customKeyPath) => keyPath = customKeyPath;
-
         internal override void SetupDatabase()
         {
-            CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
-            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, false);
+            CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), ColumnMasterKeyCertificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), ColumnMasterKeyCertificate.Thumbprint, CertStoreProvider, false);
             databaseObjects.Add(CspColumnMasterKey);
             databaseObjects.Add(DummyMasterKey);
 

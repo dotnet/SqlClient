@@ -1,0 +1,9 @@
+<!-- Licensed to the .NET Foundation under one or more agreements. 
+The .NET Foundation licenses this file to you under the MIT license. -->
+<Project>
+  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <Target Name="TrimDocsForIntelliSense" AfterTargets="Build" Condition="'$(GenerateDocumentationFile)' == 'true'">
+    <Exec Command="powershell.exe -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile &apos;$(OutputPath)\Microsoft.Data.SqlClient.xml&apos; -outputFile &apos;$(OutputPath)\Microsoft.Data.SqlClient.xml&apos;&quot;" Condition=" '$(OS)' == 'Windows_NT' " />
+    <Exec Command="pwsh -NonInteractive -ExecutionPolicy Unrestricted -Command &quot;$(ToolsDir)intellisense\TrimDocs.ps1 -inputFile &apos;$(OutputPath)\Microsoft.Data.SqlClient.xml&apos; -outputFile &apos;$(OutputPath)\Microsoft.Data.SqlClient.xml&apos;&quot;" Condition=" '$(OS)' != 'Windows_NT' " />
+  </Target>
+</Project>

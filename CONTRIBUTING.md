@@ -7,13 +7,14 @@ General contribution guidance is included in this document. Additional guidance 
 
 ## Up for Grabs
 
-The team marks the most straightforward issues as "up for grabs". This set of issues is the place to start if you are interested in contributing but new to the codebase.
+The team marks the most straightforward issues as "up for grabs" and issues that are well suited to get you started as "Good first issue". This set of issues is the place to start if you are interested in contributing but new to the codebase.
 
-- [dotnet/sqlclient - "up for grabs"](https://github.com/dotnet/sqlclient/labels/Up-for-Grabs)
+- [dotnet/sqlclient - :raised_hands: Up-for-Grabs](https://github.com/dotnet/sqlclient/labels/%3Araised_hands%3A%20Up-for-Grabs)
+- [dotnet/sqlclient - :sparkles: Good first issue](https://github.com/dotnet/sqlclient/labels/%3Asparkles%3A%20Good%20first%20issue)
 
 ## Contribution "Bar"
 
-Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](https://github.com/dotnet/sqlclient/blob/master/roadmap.md).
+Project maintainers will merge changes that improve the product significantly and broadly and that align with the [Microsoft.Data.SqlClient roadmap](roadmap.md).
 
 Contributions must also satisfy the other published guidelines defined in this document.
 
@@ -23,7 +24,7 @@ Please do:
 - **DO** report each issue as a new issue (but check first if it's already been reported)
 - **DO** respect Issue Templates and provide detailed information. It will make the process to reproduce the issue and provide a fix faster.
 - **DO** provide a minimal repro app demonstrating the problem in isolation will greatly speed up the process of identifying and fixing problems.
-- **DO** follow our [coding style](coding-style.md) (C# code-specific) when working on a Pull Request.
+- **DO** follow our [coding style](/policy/coding-style.md) (C# code-specific) when working on a Pull Request.
 - **DO** give priority to the current style of the project or file you're changing even if it diverges from the general guidelines.
 - **DO** consider cross-platform compatibility and supportability for all supported SQL and Azure Servers and client configurations.
 - **DO** include tests when adding new features. When fixing bugs, start with adding a test that highlights how the current behavior is broken.
@@ -42,19 +43,21 @@ Please do not:
 
 ## Using Labels
 
-We encourage adding appropriate labels to issues and pull requests to allow filtering and analysis effectively. The below variables are required for new Pull Requests if applicable:
+As adding labels [is not possible](https://stackoverflow.com/questions/13829466/how-to-put-a-label-on-an-issue-in-github-if-you-are-not-a-contributor-owner/13829505#13829505) for contributors, please comment in the issue and pull request on what labels should be added.
+The below variables are required for new Pull Requests if applicable:
 
 | Label | Description |
 | ----- | ----------- |
-| [Public API](https://github.com/dotnet/SqlClient/labels/Public%20API) | Use this variable if a new Public API is added to the Pull Request.
-| [Breaking Change](https://github.com/dotnet/SqlClient/labels/Breaking%20Change) | Use this variable if the Pull Request breaks an existing API. |
-| [Backport to CoreFx](https://github.com/dotnet/SqlClient/labels/Backport%20to%20CoreFx) | Use this variable if the Issue/Pull Request needs to be backported to System.Data.SqlClient in [dotnet/corefx](https://github.com/dotnet/corefx) |
-| [Managed SNI](https://github.com/dotnet/SqlClient/labels/Managed%20SNI) | Use this label if the issue/PR relates to issues in Managed SNI |
-| [Tests](https://github.com/dotnet/SqlClient/labels/Tests) | Use this label for pull requests that add only tests to the repository. |
+| [:new: Public API](https://github.com/dotnet/SqlClient/labels/%3Anew%3A%20Public%20API) | Use this variable if a new Public API is added to the Pull Request.
+| [:hammer: Breaking Change](https://github.com/dotnet/SqlClient/labels/%3Ahammer%3A%20Breaking%20Change) | Use this variable if the Pull Request breaks an existing API. |
+| [Area\Managed SNI](https://github.com/dotnet/SqlClient/labels/Area%5cManaged%20SNI) | Use this label if the issue/PR relates to issues in Managed SNI |
+| [Area\Tests](https://github.com/dotnet/SqlClient/labels/Area%5cTests) | Use this label for pull requests that add only tests to the repository. |
+
+You can find all possible labels [here](https://github.com/dotnet/SqlClient/labels)
 
 ## Reporting security issues and security bugs
 
-Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC) [secure@microsoft.com](mailto:secure@microsoft.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [Security TechCenter](https://technet.microsoft.com/en-us/security/ff852094.aspx).
+Security issues and bugs should be reported privately, via email, to the Microsoft Security Response Center (MSRC) [secure@microsoft.com](mailto:secure@microsoft.com). You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Further information, including the MSRC PGP key, can be found in the [MSRC FAQ](https://www.microsoft.com/en-us/msrc/faqs-report-an-issue?rtc=1&oneroute=true).
 
 ## File Headers
 
@@ -70,7 +73,7 @@ The following file header is used for Microsoft.Data.SqlClient. Please use it fo
 
 You must sign a [.NET Foundation Contribution License Agreement (CLA)](https://cla.dotnetfoundation.org) before your PR will be merged. This is a one-time requirement for projects in the .NET Foundation. You can read more about [Contribution License Agreements (CLA)](http://en.wikipedia.org/wiki/Contributor_License_Agreement) on Wikipedia.
 
-The agreement: [net-foundation-contribution-license-agreement.pdf](https://github.com/dotnet/home/blob/master/guidance/net-foundation-contribution-license-agreement.pdf)
+The agreement: [contribution-license-agreement.pdf](https://cla.dotnetfoundation.org)
 
 You don't have to do this up-front. You can simply clone, fork, and submit your pull-request as usual. When your pull-request is created, it is classified by a CLA bot. If the change is trivial (for example, you just fixed a typo), then the PR is labelled with `cla-not-required`. Otherwise it's classified as `cla-required`. Once you signed a CLA, the current and all future pull-requests will be labelled as `cla-signed`.
 

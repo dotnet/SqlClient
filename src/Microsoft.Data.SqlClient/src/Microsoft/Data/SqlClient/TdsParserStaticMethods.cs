@@ -23,12 +23,12 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         static internal void AliasRegistryLookup(ref string host, ref string protocol)
         {
-            if (!ADP.IsEmpty(host))
+            if (!string.IsNullOrEmpty(host))
             {
                 const String folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
                 // Put a try...catch... around this so we don't abort ANY connection if we can't read the registry.
                 string aliasLookup = (string)ADP.LocalMachineRegistryValue(folder, host);
-                if (!ADP.IsEmpty(aliasLookup))
+                if (!string.IsNullOrEmpty(aliasLookup))
                 {
                     /* Result will be in the form of: "DBNMPNTW,\\server\pipe\sql\query". or
                          Result will be in the form of: "DBNETLIB, via:\\server\pipe\sql\query".
@@ -139,10 +139,14 @@ namespace Microsoft.Data.SqlClient
                 // Pick up the process Id from the current process instead of randomly generating it.
                 // This would be helpful while tracing application related issues.
                 int processId;
+#if NET
+                processId = Environment.ProcessId;
+#else
                 using (System.Diagnostics.Process p = System.Diagnostics.Process.GetCurrentProcess())
                 {
                     processId = p.Id;
                 }
+#endif
                 System.Threading.Volatile.Write(ref s_currentProcessId, processId);
             }
             return s_currentProcessId;

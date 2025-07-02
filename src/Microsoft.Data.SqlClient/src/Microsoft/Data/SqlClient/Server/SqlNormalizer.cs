@@ -152,7 +152,8 @@ namespace Microsoft.Data.SqlClient.Server
                 if (nullByte == 0)
                 {
                     result = _nullInstance;
-                    s.Read(_padBuffer, 0, _padBuffer.Length);
+                    s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
+
                     return result;
                 }
             }
@@ -288,7 +289,7 @@ namespace Microsoft.Data.SqlClient.Server
         protected object GetValue(FieldInfo fi, object obj) => fi.GetValue(obj);
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
-#endif 
+#endif
         protected void SetValue(FieldInfo fi, object recvr, object value) => fi.SetValue(recvr, value);
 
         internal abstract int Size { get; }
@@ -379,7 +380,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[2];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 b[0] ^= 0x80;
@@ -406,7 +407,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[2];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 Array.Reverse(b);
@@ -433,7 +434,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[4];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 b[0] ^= 0x80;
@@ -460,7 +461,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[4];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 Array.Reverse(b);
@@ -487,7 +488,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[8];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 b[0] ^= 0x80;
@@ -514,7 +515,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[8];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 Array.Reverse(b);
@@ -559,7 +560,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[4];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 if ((b[0] & 0x80) > 0)
@@ -614,7 +615,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal override void DeNormalize(FieldInfo fi, object recvr, Stream s)
         {
             byte[] b = new byte[8];
-            s.Read(b, 0, b.Length);
+            s.ReadExactly(b, 0, b.Length);
             if (!_skipNormalize)
             {
                 if ((b[0] & 0x80) > 0)
