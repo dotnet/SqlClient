@@ -1256,86 +1256,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
-        {
-            return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
-            {
-                TaskCompletionSource<object> source = new TaskCompletionSource<object>();
-                if (executeTask.IsCanceled)
-                {
-                    source.SetCanceled();
-                }
-                else if (executeTask.IsFaulted)
-                {
-                    source.SetException(executeTask.Exception.InnerException);
-                }
-                else
-                {
-                    SqlDataReader reader = executeTask.Result;
-                    ExecuteScalarUntilEndAsync(reader, cancellationToken).ContinueWith(
-                        (readTask) =>
-                        {
-                            try
-                            {
-                                if (readTask.IsCanceled)
-                                {
-                                    reader.Dispose();
-                                    source.SetCanceled();
-                                }
-                                else if (readTask.IsFaulted)
-                                {
-                                    reader.Dispose();
-                                    source.SetException(readTask.Exception.InnerException);
-                                }
-                                else
-                                {
-                                    Exception exception = null;
-                                    object result = null;
-                                    try
-                                    {
-                                        result = readTask.Result;
-                                    }
-                                    finally
-                                    {
-                                        reader.Dispose();
-                                    }
-                                    if (exception != null)
-                                    {
-                                        source.SetException(exception);
-                                    }
-                                    else
-                                    {
-                                        source.SetResult(result);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                // exception thrown by Dispose...
-                                source.SetException(e);
-                            }
-                        },
-                        TaskScheduler.Default
-                    );
-                }
-                return source.Task;
-            }, TaskScheduler.Default).Unwrap();
-        }
-
-        private async Task<object> ExecuteScalarUntilEndAsync(SqlDataReader reader, CancellationToken cancellationToken)
-        {
-            object retval = null;
-            do
-            {
-                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
-                {
-                    retval = reader.GetValue(0); // no async untyped value getter, this will work ok as long as the value is in the current packet
-                }
-            }
-            while (_batchRPCMode && !cancellationToken.IsCancellationRequested && await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
-            return retval;
-        }
-
         private object CompleteExecuteScalar(SqlDataReader ds, bool returnLastResult)
         {
             object retResult = null;
@@ -3189,19 +3109,20 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
-        public Task<XmlReader> ExecuteXmlReaderAsync()
-        {
-            return ExecuteXmlReaderAsync(CancellationToken.None);
-        }
-
-        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+        public Task<XmlReader> ExecuteXmlReaderAsync() => 
+            ExecuteXmlReaderAsync(CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
-        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
-                InternalExecuteXmlReaderAsync(cancellationToken);
+        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteXmlReaderWithRetryAsync(cancellationToken)
+                : InternalExecuteXmlReaderAsync(cancellationToken);
+
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
+            RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                () => InternalExecuteXmlReaderAsync(cancellationToken),
+                cancellationToken);
 
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {

@@ -3079,19 +3079,20 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
-        public Task<XmlReader> ExecuteXmlReaderAsync()
-        {
-            return ExecuteXmlReaderAsync(CancellationToken.None);
-        }
+        public Task<XmlReader> ExecuteXmlReaderAsync() => 
+            ExecuteXmlReaderAsync(CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
-        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
-                InternalExecuteXmlReaderAsync(cancellationToken);
+        public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteXmlReaderWithRetryAsync(cancellationToken)
+                : InternalExecuteXmlReaderAsync(cancellationToken);
 
-        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken) =>
+            RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                () => InternalExecuteXmlReaderAsync(cancellationToken),
+                cancellationToken);
 
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
