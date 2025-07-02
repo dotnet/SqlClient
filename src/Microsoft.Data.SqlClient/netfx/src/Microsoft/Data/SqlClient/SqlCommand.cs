@@ -30,17 +30,15 @@ using System.Collections.Concurrent;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
-    [
-    DefaultEvent("RecordsAffected"),
-    ToolboxItem(true),
-    DesignerCategory("")
+    [DefaultEvent("RecordsAffected")]
+    [ToolboxItem(true)]
+    [DesignerCategory("")]
     // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
-    ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
@@ -291,7 +289,7 @@ namespace Microsoft.Data.SqlClient
             }
             internal bool PendingAsyncOperation
             {
-                get { return (_cachedAsyncResult != null); }
+                get { return _cachedAsyncResult != null; }
             }
             internal string EndMethodName
             {
@@ -474,12 +472,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*' />
-        [
-        DefaultValue(null),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection),
-        ]
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
+        [DefaultValue(null)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
         new public SqlConnection Connection
         {
             get
@@ -532,7 +528,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception)
                         {
-                            // we do not really care about errors in unprepare (may be the old connection went bad)                                        
+                            // we do not really care about errors in unprepare (may be the old connection went bad)
                         }
                         finally
                         {
@@ -571,10 +567,8 @@ namespace Microsoft.Data.SqlClient
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
-        ]
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get
@@ -592,11 +586,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
-        [
-        DefaultValue(true),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist),
-        ]
+        [DefaultValue(true)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescription(StringsHelper.ResourceNames.SqlCommand_NotificationAutoEnlist)]
         public bool NotificationAutoEnlist
         {
             get
@@ -610,12 +602,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden), // MDAC 90471
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_Notification),
-        ]
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // MDAC 90471
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
         public SqlNotificationRequest Notification
         {
             get
@@ -646,11 +636,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction),
-        ]
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
         new public SqlTransaction Transaction
         {
             get
@@ -693,12 +681,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
-        [
-        DefaultValue(""),
-        RefreshProperties(RefreshProperties.All), // MDAC 67707
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText),
-        ]
+        [DefaultValue("")]
+        [RefreshProperties(RefreshProperties.All)] // MDAC 67707
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
             get => _commandText ?? "";
@@ -715,19 +701,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
-        [
-        Browsable(false),
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting),
-        ]
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandTimeout),
-        ]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
         public override int CommandTimeout
         {
             get
@@ -769,12 +751,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-        [
-        DefaultValue(System.Data.CommandType.Text),
-        RefreshProperties(RefreshProperties.All),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandType),
-        ]
+        [DefaultValue(CommandType.Text)]
+        [RefreshProperties(RefreshProperties.All)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
         public override CommandType CommandType
         {
             get
@@ -808,12 +788,10 @@ namespace Microsoft.Data.SqlClient
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
         // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
-        [
-        DefaultValue(true),
-        DesignOnly(true),
-        Browsable(false),
-        EditorBrowsableAttribute(EditorBrowsableState.Never),
-        ]
+        [DefaultValue(true)]
+        [DesignOnly(true)]
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool DesignTimeVisible
         {
             get
@@ -831,11 +809,9 @@ namespace Microsoft.Data.SqlClient
         public bool EnableOptimizedParameterBinding { get; set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
-        [
-        DesignerSerializationVisibility(DesignerSerializationVisibility.Content),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Parameters),
-        ]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
         new public SqlParameterCollection Parameters
         {
             get
@@ -883,11 +859,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-        [
-        DefaultValue(System.Data.UpdateRowSource.Both),
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource),
-        ]
+        [DefaultValue(UpdateRowSource.Both)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
         public override UpdateRowSource UpdatedRowSource
         {
             get
@@ -911,10 +885,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
-        [
-        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_StatementCompleted),
-        ]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
         public event StatementCompletedEventHandler StatementCompleted
         {
             add
@@ -1240,7 +1212,8 @@ namespace Microsoft.Data.SqlClient
         protected override void Dispose(bool disposing)
         {
             if (disposing)
-            { // release managed objects
+            {
+                // release managed objects
                 _cachedMetaData = null;
 
                 // reset async cache information to allow a second async execute
@@ -1564,7 +1537,19 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteNonQuery, BeginExecuteNonQueryInternal, nameof(EndExecuteNonQuery)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        InternalEndExecuteNonQuery,
+                        BeginExecuteNonQueryInternal,
+                        nameof(EndExecuteNonQuery)))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2140,7 +2125,19 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteXmlReaderInternal, nameof(EndExecuteXmlReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        InternalEndExecuteReader,
+                        BeginExecuteXmlReaderInternal,
+                        nameof(EndExecuteXmlReader)))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2194,10 +2191,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
-                if (_cachedAsyncState != null)
-                {
-                    _cachedAsyncState.ResetAsyncState();
-                }
+                _cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 completion.TrySetException(e);
             }
@@ -2254,7 +2248,9 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
-                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, isInternal: false, nameof(EndExecuteXmlReader)), true);
+                XmlReader result = CompleteXmlReader(
+                    InternalEndExecuteReader(asyncResult, isInternal: false,  nameof(EndExecuteXmlReader)),
+                    isAsync: true);
                 success = true;
                 return result;
             }
@@ -2288,7 +2284,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader CompleteXmlReader(SqlDataReader ds, bool async = false)
+        private XmlReader CompleteXmlReader(SqlDataReader ds, bool isAsync = false)
         {
             XmlReader xr = null;
 
@@ -2302,7 +2298,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     SqlStream sqlBuf = new SqlStream(ds, true /*addByteOrderMark*/, (md[0].SqlDbType == SqlDbType.Xml) ? false : true /*process all rows*/);
-                    xr = sqlBuf.ToXmlReader(async);
+                    xr = sqlBuf.ToXmlReader(isAsync);
                 }
                 catch (Exception e)
                 {
@@ -2323,17 +2319,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader()
-        {
-            return BeginExecuteReader(null, null, CommandBehavior.Default);
-        }
+        public IAsyncResult BeginExecuteReader() => BeginExecuteReader(null, null, CommandBehavior.Default);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
-        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject)
-        {
-            return BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
-        }
+        public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) => BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
@@ -2489,7 +2479,10 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                SqlDataReader result = InternalEndExecuteReader(asyncResult, isInternal: false, nameof(EndExecuteReader));
+                SqlDataReader result = InternalEndExecuteReader(
+                    asyncResult,
+                    isInternal: false,
+                    nameof(EndExecuteReader));
                 success = true;
                 return result;
             }
@@ -2614,7 +2607,19 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteReaderInternal, nameof(EndExecuteReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        InternalEndExecuteReader,
+                        BeginExecuteReaderInternal,
+                        nameof(EndExecuteReader)))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2680,7 +2685,7 @@ namespace Microsoft.Data.SqlClient
                             // lock on _stateObj prevents races with close/cancel.
                             lock (_stateObj)
                             {
-                                endFunc(tsk, true/*inInternal*/, endMethod);
+                                endFunc(tsk, /*isInternal:*/ true, endMethod);
                             }
                             globalCompletion.TrySetResult(tsk.Result);
                         }
@@ -2837,10 +2842,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
                 // and reset async cache information to allow a second async execute
-                if (_cachedAsyncState != null)
-                {
-                    _cachedAsyncState.ResetAsyncState();
-                }
+                _cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 completion.TrySetException(e);
             }
@@ -3146,61 +3148,62 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     SqlDataReader reader = executeTask.Result;
-                    reader.ReadAsync(cancellationToken).ContinueWith((readTask) =>
-                    {
-                        try
+                    reader.ReadAsync(cancellationToken)
+                        .ContinueWith((Task<bool> readTask) =>
                         {
-                            if (readTask.IsCanceled)
+                            try
                             {
-                                reader.Dispose();
-                                source.SetCanceled();
-                            }
-                            else if (readTask.IsFaulted)
-                            {
-                                reader.Dispose();
-                                source.SetException(readTask.Exception.InnerException);
-                            }
-                            else
-                            {
-                                Exception exception = null;
-                                object result = null;
-                                try
-                                {
-                                    bool more = readTask.Result;
-                                    if (more && reader.FieldCount > 0)
-                                    {
-                                        try
-                                        {
-                                            result = reader.GetValue(0);
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            exception = e;
-                                        }
-                                    }
-                                }
-                                finally
+                                if (readTask.IsCanceled)
                                 {
                                     reader.Dispose();
+                                    source.SetCanceled();
                                 }
-                                if (exception != null)
+                                else if (readTask.IsFaulted)
                                 {
-                                    source.SetException(exception);
+                                    reader.Dispose();
+                                    source.SetException(readTask.Exception.InnerException);
                                 }
                                 else
                                 {
-                                    source.SetResult(result);
+                                    Exception exception = null;
+                                    object result = null;
+                                    try
+                                    {
+                                        bool more = readTask.Result;
+                                        if (more && reader.FieldCount > 0)
+                                        {
+                                            try
+                                            {
+                                                result = reader.GetValue(0);
+                                            }
+                                            catch (Exception e)
+                                            {
+                                                exception = e;
+                                            }
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        reader.Dispose();
+                                    }
+                                    if (exception != null)
+                                    {
+                                        source.SetException(exception);
+                                    }
+                                    else
+                                    {
+                                        source.SetResult(result);
+                                    }
                                 }
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            // exception thrown by Dispose...
-                            source.SetException(e);
-                        }
-                    },
-                    TaskScheduler.Default
-                );
+                            catch (Exception e)
+                            {
+                                // exception thrown by Dispose...
+                                source.SetException(e);
+                            }
+                        },
+                        TaskScheduler.Default
+                    );
                 }
                 return source.Task;
             }, TaskScheduler.Default).Unwrap();
@@ -3507,7 +3510,7 @@ namespace Microsoft.Data.SqlClient
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
-            if (parsedSProc[3] == null || string.IsNullOrEmpty(parsedSProc[3]))
+            if (string.IsNullOrEmpty(parsedSProc[3]))
             {
                 throw ADP.NoStoredProcedureExists(CommandText);
             }
@@ -3962,7 +3965,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Resets the encryption related state of the command object and each of the parameters.
-        /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and 
+        /// BatchRPC doesn't need special handling to cleanup the state of each RPC object and its parameters since a new RPC object and
         /// parameters are generated on every execution.
         /// </summary>
         private void ResetEncryptionState()
@@ -4450,16 +4453,17 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 // Execute the RPC.
-                return RunExecuteReaderTds(CommandBehavior.Default,
-                                            runBehavior: RunBehavior.ReturnImmediately, // Other RunBehavior modes will skip reading rows.
-                                            returnStream: true,
-                                            async: async,
-                                            timeout: timeout,
-                                            task: out task,
-                                            asyncWrite: asyncWrite,
-                                            inRetry: false,
-                                            ds: null,
-                                            describeParameterEncryptionRequest: true);
+                return RunExecuteReaderTds(
+                    CommandBehavior.Default,
+                    runBehavior: RunBehavior.ReturnImmediately, // Other RunBehavior modes will skip reading rows.
+                    returnStream: true,
+                    async: async,
+                    timeout: timeout,
+                    task: out task,
+                    asyncWrite: asyncWrite,
+                    inRetry: false,
+                    ds: null,
+                    describeParameterEncryptionRequest: true);
             }
             else
             {
@@ -4494,7 +4498,7 @@ namespace Microsoft.Data.SqlClient
 
             // Construct the RPC request for sp_describe_parameter_encryption
             // sp_describe_parameter_encryption always has 2 parameters (stmt, paramlist).
-            //sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParametes), used to identify and execute attestation protocol
+            // sp_describe_parameter_encryption can have an optional 3rd parameter (attestationParameters), used to identify and execute attestation protocol
             GetRPCObject(attestationParameters == null ? 2 : 3, 0, ref describeParameterEncryptionRequest, forSpDescribeParameterEncryption: true);
             describeParameterEncryptionRequest.rpcName = "sp_describe_parameter_encryption";
 
@@ -4861,7 +4865,7 @@ namespace Microsoft.Data.SqlClient
                         SqlParameter sqlParameter = rpc.userParams[index];
                         if (!sqlParameter.HasReceivedMetadata && sqlParameter.Direction != ParameterDirection.ReturnValue)
                         {
-                            // Encryption MD wasn't sent by the server - we expect the metadata to be sent for all the parameters 
+                            // Encryption MD wasn't sent by the server - we expect the metadata to be sent for all the parameters
                             // that were sent in the original sp_describe_parameter_encryption but not necessarily for return values,
                             // since there might be multiple return values but server will only send for one of them.
                             // For parameters that don't need encryption, the encryption type is set to plaintext.
@@ -4947,7 +4951,7 @@ namespace Microsoft.Data.SqlClient
             bool returnStream,
             [CallerMemberName] string method = "")
         {
-            Task unused; // sync execution 
+            Task unused; // sync execution
             SqlDataReader reader = RunExecuteReader(
                 cmdBehavior,
                 runBehavior,
@@ -4962,7 +4966,7 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-        // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete 
+        // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
         internal SqlDataReader RunExecuteReader(
             CommandBehavior cmdBehavior,
             RunBehavior runBehavior,
@@ -6405,7 +6409,6 @@ namespace Microsoft.Data.SqlClient
             return rpc;
         }
 
-
         //
         // returns true if the parameter is not a return value
         // and it's value is not DBNull (for a nullable parameter)
@@ -6428,7 +6431,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private int CountSendableParameters(SqlParameterCollection parameters)
+        private static int CountSendableParameters(SqlParameterCollection parameters)
         {
             int cParams = 0;
 
@@ -6461,11 +6464,12 @@ namespace Microsoft.Data.SqlClient
             int userParameterCount = CountSendableParameters(parameters);
             GetRPCObject(0, userParameterCount, ref rpc);
 
+            rpc.ProcID = 0;
+
             // TDS Protocol allows rpc name with maximum length of 1046 bytes for ProcName
             // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
             // each char takes 2 bytes. 523 * 2 = 1046
             int commandTextLength = ADP.CharSize * CommandText.Length;
-            rpc.ProcID = 0;
             if (commandTextLength <= MaxRPCNameLength)
             {
                 rpc.rpcName = CommandText; // just get the raw command text
@@ -6500,8 +6504,8 @@ namespace Microsoft.Data.SqlClient
             //@handle
             SqlParameter sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
-            sqlParam.Value = _prepareHandle;
             sqlParam.Size = 4;
+            sqlParam.Value = _prepareHandle;
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema, _parameters);
@@ -6629,7 +6633,7 @@ namespace Microsoft.Data.SqlClient
                     parameter = parameters[index];
                     // Possibility of a SQL Injection issue through parameter names and how to construct valid identifier for parameters.
                     // Since the parameters comes from application itself, there should not be a security vulnerability.
-                    // Also since the query is not executed, but only analyzed there is no possibility for elevation of priviledge, but only for 
+                    // Also since the query is not executed, but only analyzed there is no possibility for elevation of privilege, but only for
                     // incorrect results which would only affect the user that attempts the injection.
                     execStatement.Append(' ');
                     SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
@@ -6637,10 +6641,8 @@ namespace Microsoft.Data.SqlClient
                     SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
 
                     // InputOutput and Output parameters need to be marked as such.
-                    if (
-                        parameter.Direction == ParameterDirection.Output ||
-                        parameter.Direction == ParameterDirection.InputOutput
-                    )
+                    if (parameter.Direction == ParameterDirection.Output ||
+                        parameter.Direction == ParameterDirection.InputOutput)
                     {
                         execStatement.AppendFormat(@" OUTPUT");
                     }
@@ -6699,6 +6701,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     paramList.Append(',');
                 }
+
                 SqlParameter.AppendPrefixedParameterName(paramList, sqlParam.ParameterName);
 
                 MetaType mt = sqlParam.InternalMetaType;
@@ -6732,7 +6735,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // func will change type to that with a 4 byte length if the type has a two
-                    // byte length and a parameter length > than that expressable in 2 bytes
+                    // byte length and a parameter length > than that expressible in 2 bytes
                     mt = sqlParam.ValidateTypeLengths();
                     if ((!mt.IsPlp) && (sqlParam.Direction != ParameterDirection.Output))
                     {
@@ -6770,6 +6773,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
                 {
+                    // The validate function for SqlParameters would
+                    // have already thrown InvalidCastException if an incompatible
+                    // value is specified for SqlDbType Vector.
                     var sqlVectorProps = (ISqlVector)sqlParam.Value;
                     paramList.Append('(');
                     paramList.Append(sqlVectorProps.Length);
@@ -7070,17 +7076,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private void SetColumnEncryptionSetting(SqlCommandColumnEncryptionSetting newColumnEncryptionSetting)
         {
-            if (!this._wasBatchModeColumnEncryptionSettingSetOnce)
+            if (!_wasBatchModeColumnEncryptionSettingSetOnce)
             {
-                this._columnEncryptionSetting = newColumnEncryptionSetting;
-                this._wasBatchModeColumnEncryptionSettingSetOnce = true;
+                _columnEncryptionSetting = newColumnEncryptionSetting;
+                _wasBatchModeColumnEncryptionSettingSetOnce = true;
             }
-            else
+            else if (_columnEncryptionSetting != newColumnEncryptionSetting)
             {
-                if (this._columnEncryptionSetting != newColumnEncryptionSetting)
-                {
-                    throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
-                }
+                throw SQL.BatchedUpdateColumnEncryptionSettingMismatch();
             }
         }
 

@@ -474,9 +474,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
-        ///  [
         [DefaultValue(null)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
         new public SqlConnection Connection
         {
@@ -654,7 +653,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [DefaultValue("")]
         [RefreshProperties(RefreshProperties.All)] // MDAC 67707
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
@@ -673,12 +672,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
         public override int CommandTimeout
         {
@@ -720,9 +719,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-        [DefaultValue(System.Data.CommandType.Text)]
+        [DefaultValue(CommandType.Text)]
         [RefreshProperties(RefreshProperties.All)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
         public override CommandType CommandType
         {
@@ -752,7 +751,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // @devnote: By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
+        // By default, the cmd object is visible on the design surface (i.e. VS7 Server Tray)
         // to limit the number of components that clutter the design surface,
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
         // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
@@ -760,7 +759,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(true)]
         [DesignOnly(true)]
         [Browsable(false)]
-        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public override bool DesignTimeVisible
         {
             get
@@ -778,7 +777,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
         new public SqlParameterCollection Parameters
         {
@@ -804,8 +803,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-        [DefaultValue(System.Data.UpdateRowSource.Both)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
+        [DefaultValue(UpdateRowSource.Both)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
         public override UpdateRowSource UpdatedRowSource
         {
@@ -831,7 +830,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
         [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
         public event StatementCompletedEventHandler StatementCompleted
         {
@@ -2418,8 +2417,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<object> localCompletion,
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
-            string endMethod
-        )
+            string endMethod)
         {
             // We shouldn't be using the cache if we are in retry.
             Debug.Assert(!usedCache || !inRetry);
@@ -2479,7 +2477,7 @@ namespace Microsoft.Data.SqlClient
                         // lock on _stateObj prevents races with close/cancel.
                         lock (_stateObj)
                         {
-                            endFunc(this, tsk, true, endMethod /*inInternal*/);
+                            endFunc(this, tsk, /*isInternal:*/ true, endMethod);
                         }
 
                         globalCompletion.TrySetResult(tsk.Result);
@@ -4325,7 +4323,17 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 // Execute the RPC.
-                return RunExecuteReaderTds(CommandBehavior.Default, runBehavior: RunBehavior.ReturnImmediately, returnStream: true, isAsync: isAsync, timeout: timeout, task: out task, asyncWrite: asyncWrite, inRetry: false, ds: null, describeParameterEncryptionRequest: true);
+                return RunExecuteReaderTds(
+                    CommandBehavior.Default,
+                    runBehavior: RunBehavior.ReturnImmediately,
+                    returnStream: true,
+                    isAsync: isAsync,
+                    timeout: timeout,
+                    task: out task,
+                    asyncWrite: asyncWrite,
+                    inRetry: false,
+                    ds: null,
+                    describeParameterEncryptionRequest: true);
             }
             else
             {
@@ -4346,7 +4354,14 @@ namespace Microsoft.Data.SqlClient
             return sqlParam;
         }
 
-
+        /// <summary>
+        /// Constructs the sp_describe_parameter_encryption request with the values from the original RPC call.	
+        /// Prototype for &lt;sp_describe_parameter_encryption&gt; is 	
+        /// exec sp_describe_parameter_encryption @tsql=N'[SQL Statement]', @params=N'@p1 varbinary(256)'
+        /// </summary>
+        /// <param name="originalRpcRequest"></param>
+        /// <param name="describeParameterEncryptionRequest"></param>
+        /// <param name="attestationParameters"></param>
         private void PrepareDescribeParameterEncryptionRequest(_SqlRPC originalRpcRequest, ref _SqlRPC describeParameterEncryptionRequest, byte[] attestationParameters = null)
         {
             Debug.Assert(originalRpcRequest != null);
@@ -4459,8 +4474,6 @@ namespace Microsoft.Data.SqlClient
 
                 parameterList = BuildParamList(tdsParser, tempCollection, includeReturnValue: true);
             }
-
-            //@parameters
 
             SqlParameter paramsParam = describeParameterEncryptionRequest.systemParams[1];
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
@@ -4627,8 +4640,6 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.UnexpectedDescribeParamFormatParameterMetadata();
                 }
 
-
-
                 // Find the RPC command that generated this tce request
                 if (_batchRPCMode)
                 {
@@ -4655,7 +4666,6 @@ namespace Microsoft.Data.SqlClient
                 int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
-
                     // Iterate over the parameter names to read the encryption type info
                     while (ds.Read())
                     {
@@ -4667,7 +4677,6 @@ namespace Microsoft.Data.SqlClient
 
                         // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
                         // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
-
                         for (int index = 0; index < userParamCount; index++)
                         {
                             SqlParameter sqlParameter = rpc.userParams[index];
@@ -4718,7 +4727,6 @@ namespace Microsoft.Data.SqlClient
 
                 // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
                 // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
-
                 if (receivedMetadataCount != userParamCount)
                 {
                     for (int index = 0; index < userParamCount; index++)
@@ -4820,7 +4828,7 @@ namespace Microsoft.Data.SqlClient
                 completion: null,
                 timeout: CommandTimeout,
                 task: out unused,
-                usedCache: out bool _,
+                usedCache: out _,
                 method: method);
             
             Debug.Assert(unused == null, "returned task during synchronous execution");
@@ -6248,7 +6256,6 @@ namespace Microsoft.Data.SqlClient
             // 4-part name 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 + 1 + 1 + 128 + 1 = 523
             // each char takes 2 bytes. 523 * 2 = 1046
             int commandTextLength = ADP.CharSize * CommandText.Length;
-
             if (commandTextLength <= MaxRPCNameLength)
             {
                 rpc.rpcName = CommandText; // just get the raw command text
@@ -6270,8 +6277,8 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC BuildExecute(bool inSchema)
         {
             Debug.Assert((int)_prepareHandle != -1, "Invalid call to sp_execute without a valid handle!");
-            const int systemParameterCount = 1;
 
+            const int systemParameterCount = 1;
             int userParameterCount = CountSendableParameters(_parameters);
 
             _SqlRPC rpc = null;
@@ -6466,9 +6473,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder paramList = new StringBuilder();
             bool fAddSeparator = false;
 
-            int count = 0;
-
-            count = parameters.Count;
+            int count = parameters.Count;
             for (int i = 0; i < count; i++)
             {
                 SqlParameter sqlParam = parameters[i];
