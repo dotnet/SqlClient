@@ -989,16 +989,25 @@ namespace Microsoft.Data.SqlClient
         protected override System.Data.Common.DbCommand CreateDbCommand() { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*'/>
         public override System.Data.DataTable GetSchema() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*'/>
-        public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*'/>
         public override System.Data.DataTable GetSchema(string collectionName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*'/>
-        public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, System.Threading.CancellationToken cancellationToken = default) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*'/>
         public override System.Data.DataTable GetSchema(string collectionName, string[] restrictionValues) { throw null; }
+#if NET
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*'/>
+        public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*'/>
+        public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, System.Threading.CancellationToken cancellationToken = default) { throw null; }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*'/>
         public override System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, System.Threading.CancellationToken cancellationToken = default) { throw null; }
+#else
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaAsync/*'/>
+        public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameAsync/*'/>
+        public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, System.Threading.CancellationToken cancellationToken = default) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValuesAsync/*'/>
+        public System.Threading.Tasks.Task<System.Data.DataTable> GetSchemaAsync(string collectionName, string[] restrictionValues, System.Threading.CancellationToken cancellationToken = default) { throw null; }
+#endif
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*'/>
         public override void Open() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*'/>

@@ -1638,8 +1638,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTableAsync/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTableAsync/*' />
+#if NETFRAMEWORK
         internal Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+#else
+        public override Task<DataTable> GetSchemaTableAsync(CancellationToken cancellationToken = default)
+#endif
         {
             // This method wraps GetSchemaTable in a Task, introducing async-over-sync. It should not be publicly exposed until
             // this has been removed and replaced with an async path to guarantee that metadata has been read. Its purpose meanwhile
@@ -1659,7 +1663,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
         override public bool GetBoolean(int i)
         {
             ReadColumn(i);
