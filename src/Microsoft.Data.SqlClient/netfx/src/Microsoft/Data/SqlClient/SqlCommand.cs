@@ -7189,7 +7189,30 @@ namespace Microsoft.Data.SqlClient
             }
             return result;
         }
+        
+        private static void CancelIgnoreFailureCallback(object state)
+        {
+            SqlCommand command = (SqlCommand)state;
+            command.CancelIgnoreFailure();
+        }
 
+        private void CancelIgnoreFailure()
+        {
+            // This method is used to route CancellationTokens to the Cancel method.
+            // Cancellation is a suggestion, and exceptions should be ignored
+            // rather than allowed to be unhandled, as there is no way to route
+            // them to the caller.  It would be expected that the error will be
+            // observed anyway from the regular method.  An example is cancelling
+            // an operation on a closed connection.
+            try
+            {
+                Cancel();
+            }
+            catch (Exception)
+            {
+            }
+        }
+        
         private void WriteBeginExecuteEvent()
         {
             SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText, Connection?.ClientConnectionId);
@@ -7220,29 +7243,6 @@ namespace Microsoft.Data.SqlClient
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
                 SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault(), Connection?.ClientConnectionId);
-            }
-        }
-        
-        private static void CancelIgnoreFailureCallback(object state)
-        {
-            SqlCommand command = (SqlCommand)state;
-            command.CancelIgnoreFailure();
-        }
-
-        private void CancelIgnoreFailure()
-        {
-            // This method is used to route CancellationTokens to the Cancel method.
-            // Cancellation is a suggestion, and exceptions should be ignored
-            // rather than allowed to be unhandled, as there is no way to route
-            // them to the caller.  It would be expected that the error will be
-            // observed anyway from the regular method.  An example is cancelling
-            // an operation on a closed connection.
-            try
-            {
-                Cancel();
-            }
-            catch (Exception)
-            {
             }
         }
     }
