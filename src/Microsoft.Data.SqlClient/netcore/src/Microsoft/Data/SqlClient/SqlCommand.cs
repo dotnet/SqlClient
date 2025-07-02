@@ -3891,8 +3891,6 @@ namespace Microsoft.Data.SqlClient
         /// Executes the reader after checking to see if we need to encrypt input parameters and then encrypting it if required.
         /// TryFetchInputParameterEncryptionInfo() -> ReadDescribeEncryptionParameterResults()-> EncryptInputParameters() ->RunExecuteReaderTds()
         /// </summary>
-        /// <param name="cmdBehavior"></param>
-        /// <param name="returnStream"></param>
         /// <param name="isAsync"></param>
         /// <param name="timeout"></param>
         /// <param name="completion"></param>
@@ -3901,7 +3899,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="usedCache"></param>
         /// <param name="inRetry"></param>
         /// <returns></returns>
-        private void PrepareForTransparentEncryption(CommandBehavior cmdBehavior, bool returnStream, bool isAsync, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
+        private void PrepareForTransparentEncryption(bool isAsync, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
         {
             // Fetch reader with input params
             Task fetchInputParameterEncryptionInfoTask = null;
@@ -4210,13 +4208,14 @@ namespace Microsoft.Data.SqlClient
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"></param>
         /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         /// <returns></returns>
-        private SqlDataReader TryFetchInputParameterEncryptionInfo(int timeout,
-                                                                   bool isAsync,
-                                                                   bool asyncWrite,
-                                                                   out bool inputParameterEncryptionNeeded,
-                                                                   out Task task,
-                                                                   out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-                                                                   bool isRetry)
+        private SqlDataReader TryFetchInputParameterEncryptionInfo(
+            int timeout,
+            bool isAsync,
+            bool asyncWrite,
+            out bool inputParameterEncryptionNeeded,
+            out Task task, 
+            out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool isRetry)
         {
             inputParameterEncryptionNeeded = false;
             task = null;
@@ -4328,7 +4327,7 @@ namespace Microsoft.Data.SqlClient
                     timeout: timeout,
                     task: out task,
                     asyncWrite: asyncWrite,
-                    inRetry: false,
+                    isRetry: false,
                     ds: null,
                     describeParameterEncryptionRequest: true);
             }
@@ -4494,7 +4493,10 @@ namespace Microsoft.Data.SqlClient
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
         /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool isRetry)
+        private void ReadDescribeEncryptionParameterResults(
+            SqlDataReader ds,
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+            bool isRetry)
         {
             _SqlRPC rpc = null;
             int currentOrdinal = -1;
@@ -4888,15 +4890,24 @@ namespace Microsoft.Data.SqlClient
             if (IsColumnEncryptionEnabled)
             {
                 Task returnTask = null;
-                PrepareForTransparentEncryption(cmdBehavior, returnStream, isAsync, timeout, completion, out returnTask, asyncWrite && isAsync, out usedCache, inRetry);
+                PrepareForTransparentEncryption(isAsync, timeout, completion, out returnTask, asyncWrite && isAsync, out usedCache, inRetry);
                 Debug.Assert(usedCache || (isAsync == (returnTask != null)), @"if we didn't use the cache, returnTask should be null if and only if async is false.");
 
                 long firstAttemptStart = ADP.TimerCurrent();
 
                 try
                 {
-                    return RunExecuteReaderTdsWithTransparentParameterEncryption(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, inRetry: inRetry, ds: null,
-                        describeParameterEncryptionRequest: false, describeParameterEncryptionTask: returnTask);
+                    return RunExecuteReaderTdsWithTransparentParameterEncryption(
+                        cmdBehavior,
+                        runBehavior,
+                        returnStream,
+                        isAsync,
+                        timeout,
+                        out task,
+                        asyncWrite && isAsync,
+                        isRetry: inRetry,
+                        ds: null,
+                        describeParameterEncryptionTask: returnTask);
                 }
 
                 catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
@@ -4976,7 +4987,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, inRetry: inRetry);
+                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite && isAsync, isRetry: inRetry);
             }
         }
 
@@ -4989,9 +5000,8 @@ namespace Microsoft.Data.SqlClient
             int timeout,
             out Task task,
             bool asyncWrite,
-            bool inRetry,
+            bool isRetry,
             SqlDataReader ds = null,
-            bool describeParameterEncryptionRequest = false,
             Task describeParameterEncryptionTask = null)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
@@ -5011,7 +5021,7 @@ namespace Microsoft.Data.SqlClient
                         SqlCommand command = (SqlCommand)state;
                         Task subTask = null;
                         command.GenerateEnclavePackage();
-                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
+                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, isRetry, ds);
                         if (subTask == null)
                         {
                             completion.SetResult(null);
@@ -5041,7 +5051,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Synchronous execution.
                 GenerateEnclavePackage();
-                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite, inRetry, ds);
+                return RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, timeout, out task, asyncWrite, isRetry, ds);
             }
         }
 
@@ -5090,7 +5100,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private SqlDataReader RunExecuteReaderTds(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, out Task task, bool asyncWrite, bool inRetry, SqlDataReader ds = null, bool describeParameterEncryptionRequest = false)
+        private SqlDataReader RunExecuteReaderTds(
+            CommandBehavior cmdBehavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            bool isAsync,
+            int timeout,
+            out Task task,
+            bool asyncWrite,
+            bool isRetry,
+            SqlDataReader ds = null,
+            bool describeParameterEncryptionRequest = false)
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
 
@@ -5109,7 +5129,7 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                     _activeConnection.RegisterWaitingForReconnect(completion.Task);
                     _reconnectionCompletionSource = completion;
-                    RunExecuteReaderTdsSetupReconnectContinuation(cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite, inRetry, ds, reconnectTask, reconnectionStart, completion);
+                    RunExecuteReaderTdsSetupReconnectContinuation(cmdBehavior, runBehavior, returnStream, isAsync, timeout, asyncWrite, isRetry, ds, reconnectTask, reconnectionStart, completion);
                     task = completion.Task;
                     return ds;
                 }
