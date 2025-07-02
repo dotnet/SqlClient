@@ -204,6 +204,7 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
+        // @TODO: Make properties
         internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         internal bool requiresEnclaveComputations = false;
 
@@ -3897,9 +3898,16 @@ namespace Microsoft.Data.SqlClient
         /// <param name="returnTask"></param>
         /// <param name="asyncWrite"></param>
         /// <param name="usedCache"></param>
-        /// <param name="inRetry"></param>
+        /// <param name="isRetry"></param>
         /// <returns></returns>
-        private void PrepareForTransparentEncryption(bool isAsync, int timeout, TaskCompletionSource<object> completion, out Task returnTask, bool asyncWrite, out bool usedCache, bool inRetry)
+        private void PrepareForTransparentEncryption(
+            bool isAsync,
+            int timeout,
+            TaskCompletionSource<object> completion,
+            out Task returnTask,
+            bool asyncWrite,
+            out bool usedCache,
+            bool isRetry)
         {
             // Fetch reader with input params
             Task fetchInputParameterEncryptionInfoTask = null;
@@ -3919,7 +3927,7 @@ namespace Microsoft.Data.SqlClient
 
             // If we are not in Batch RPC and not already retrying, attempt to fetch the cipher MD for each parameter from the cache.
             // If this succeeds then return immediately, otherwise just fall back to the full crypto MD discovery.
-            if (!_batchRPCMode && !inRetry && (this._parameters != null && this._parameters.Count > 0) && SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
+            if (!_batchRPCMode && !isRetry && (this._parameters != null && this._parameters.Count > 0) && SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
             {
                 usedCache = true;
                 return;
@@ -3949,7 +3957,7 @@ namespace Microsoft.Data.SqlClient
                                                                                                  out describeParameterEncryptionNeeded,
                                                                                                  out fetchInputParameterEncryptionInfoTask,
                                                                                                  out describeParameterEncryptionRpcOriginalRpcMap,
-                                                                                                 inRetry);
+                                                                                                 isRetry);
 
                     Debug.Assert(describeParameterEncryptionNeeded || describeParameterEncryptionDataReader == null,
                         "describeParameterEncryptionDataReader should be null if we don't need to request describe parameter encryption request.");
@@ -3990,7 +3998,7 @@ namespace Microsoft.Data.SqlClient
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
                             describeParameterEncryptionNeeded,
-                            inRetry);
+                            isRetry);
 
                         decrementAsyncCountInFinallyBlock = false;
                     }
@@ -4007,7 +4015,7 @@ namespace Microsoft.Data.SqlClient
                                 describeParameterEncryptionDataReader,
                                 describeParameterEncryptionRpcOriginalRpcMap,
                                 describeParameterEncryptionNeeded,
-                                inRetry);
+                                isRetry);
 
                             decrementAsyncCountInFinallyBlock = false;
                         }
@@ -4017,7 +4025,7 @@ namespace Microsoft.Data.SqlClient
                             ReadDescribeEncryptionParameterResults(
                                 describeParameterEncryptionDataReader,
                                 describeParameterEncryptionRpcOriginalRpcMap,
-                                inRetry);
+                                isRetry);
                         }
 
 #if DEBUG

@@ -203,6 +203,19 @@ namespace Microsoft.Data.SqlClient
         // cut down on object creation and cache all these
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
+        
+        // @TODO: Make properties
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal bool requiresEnclaveComputations = false;
+        
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+            }
+        }
+        
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
@@ -243,15 +256,6 @@ namespace Microsoft.Data.SqlClient
             (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
                   IsColumnEncryptionEnabled;
 
-        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        internal bool requiresEnclaveComputations = false;
-        private bool ShouldCacheEncryptionMetadata
-        {
-            get
-            {
-                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
-            }
-        }
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 
         /// </summary> 
