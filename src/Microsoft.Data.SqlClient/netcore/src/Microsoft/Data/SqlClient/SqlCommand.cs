@@ -2654,13 +2654,16 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
-        public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
-                InternalExecuteNonQueryAsync(cancellationToken);
+        public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) =>
+            IsProviderRetriable
+                ? InternalExecuteNonQueryWithRetryAsync(cancellationToken)
+                : InternalExecuteNonQueryAsync(cancellationToken);
 
-        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
+        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken) =>
+            RetryLogicProvider.ExecuteAsync(
+                sender: this,
+                () => InternalExecuteNonQueryAsync(cancellationToken),
+                cancellationToken);
 
         private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
