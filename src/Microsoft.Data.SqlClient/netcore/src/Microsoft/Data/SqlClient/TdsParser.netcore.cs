@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient
         internal struct SNIErrorDetails
         {
             public string errorMessage;
-            public uint nativeError;
+            public int nativeError;
             public uint sniErrorNumber;
             public int provider;
             public uint lineNumber;
