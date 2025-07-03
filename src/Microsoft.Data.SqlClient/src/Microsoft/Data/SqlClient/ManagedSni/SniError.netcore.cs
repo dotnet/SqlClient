@@ -5,6 +5,8 @@
 #if NET
 
 using System;
+using System.ComponentModel;
+using System.Net.Sockets;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -40,7 +42,23 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             lineNumber = 0;
             function = string.Empty;
             this.provider = provider;
-            nativeError = nativeErrorCode;
+            if (nativeErrorCode == 0)
+            {
+                nativeError = nativeErrorCode;
+                if (sniException is SocketException socketException)
+                {
+                    // SocketErrorCode values are cross-plat consistent in .NET (matching native Windows error codes)
+                    nativeError = (uint)socketException.SocketErrorCode;
+                }
+                else if (sniException is Win32Exception win32Exception)
+                {
+                    nativeError = (uint)win32Exception.NativeErrorCode; // Replicates native SNI behavior
+                }
+            }
+            else
+            {
+                nativeError = nativeErrorCode;
+            }
             sniError = sniErrorCode;
             errorMessage = string.Empty;
             exception = sniException;

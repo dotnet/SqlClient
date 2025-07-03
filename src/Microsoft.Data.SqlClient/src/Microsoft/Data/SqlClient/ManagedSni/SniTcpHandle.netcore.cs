@@ -375,6 +375,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 IEnumerable<IPAddress> ipAddresses = GetHostAddressesSortedByPreference(serverName, ipPreference);
 
+                SocketException lastSocketException = null;
+
                 foreach (IPAddress ipAddress in ipAddresses)
                 {
                     bool isSocketSelected = false;
@@ -426,7 +428,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                             {
                                 if (timeout.IsExpired)
                                 {
-                                    return null;
+                                    throw new Win32Exception(258, "The operation has timed out.");
                                 }
 
                                 int socketSelectTimeout =
@@ -471,12 +473,21 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             "{0}.{1}{2}THIS EXCEPTION IS BEING SWALLOWED: {3}",
                             nameof(SniTcpHandle), nameof(Connect), EventType.ERR, e);
+                        lastSocketException = e;
                     }
                     finally
                     {
                         if (!isSocketSelected)
                             socket?.Dispose();
                     }
+                }
+
+                if (lastSocketException != null)
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        "{0}.{1}{2}Last Socket Exception: {3}",
+                        nameof(SniTcpHandle), nameof(Connect), EventType.ERR, lastSocketException);
+                    throw lastSocketException;
                 }
 
                 return null;
@@ -588,6 +599,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     {
                         SqlClientEventSource.Log.TryAdvancedTraceEvent(
                             "{0}.{1}{2}ParallelConnect timeout expired.", nameof(SniTcpHandle), nameof(ParallelConnect), EventType.INFO);
+                        // We will throw below after cleanup
                         break;
                     }
 
@@ -654,6 +666,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (connectedSocket == null)
                 {
+                    if (timeout.IsExpired)
+                    {
+                        throw new Win32Exception(258, "The operation has timed out.");
+                    }
+
                     SqlClientEventSource.Log.TryAdvancedTraceEvent(
                         "{0}.{1}{2}No socket connections succeeded. Last error: {3}",
                         nameof(SniTcpHandle), nameof(ParallelConnect), EventType.ERR, lastError);
