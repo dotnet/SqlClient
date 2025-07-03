@@ -268,6 +268,11 @@ namespace Microsoft.Data.SqlClient.Server
             // Allow values array longer than FieldCount, just ignore the extra cells.
             int copyLength = (values.Length > FieldCount) ? FieldCount : values.Length;
 
+            if (copyLength == 0)
+            {
+                return 0;
+            }
+
             ExtendedClrTypeCode[] typeCodes = new ExtendedClrTypeCode[copyLength];
 
             // Verify all data values as acceptable before changing current state.
@@ -285,8 +290,8 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
 
-            // Now move the data (it'll only throw if someone plays with the values array between
-            //      the validation loop and here, or if an invalid UDT was sent).
+            // Now move the data. We've already validated the element types above, so this will
+            // only throw if an invalid UDT was sent.
             for (int i = 0; i < copyLength; i++)
             {
                 ValueUtilsSmi.SetCompatibleValueV200(
