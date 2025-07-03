@@ -98,22 +98,14 @@ namespace Microsoft.Data.SqlClient
         {
             ADP.CheckArgumentNull(command, nameof(command));
             SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Append | API | Object Id {0}, Command '{1}', Parameter Count {2}", ObjectID, command.ObjectID, command.Parameters.Count);
+
+            // SqlCommandSet only supports commands of type Text or StoredProcedure. This aligns with SqlCommand (validated by its CommandType setter.)
+            Debug.Assert(command.CommandType is CommandType.Text or CommandType.StoredProcedure);
+
             string cmdText = command.CommandText;
             if (string.IsNullOrEmpty(cmdText))
             {
                 throw ADP.CommandTextRequired(nameof(Append));
-            }
-
-            CommandType commandType = command.CommandType;
-            switch (commandType)
-            {
-                case CommandType.Text:
-                case CommandType.StoredProcedure:
-                    break;
-                case CommandType.TableDirect:
-                    throw SQL.NotSupportedCommandType(commandType);
-                default:
-                    throw ADP.InvalidCommandType(commandType);
             }
 
             SqlParameterCollection parameters = null;

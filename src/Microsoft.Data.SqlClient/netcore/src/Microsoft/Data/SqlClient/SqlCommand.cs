@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private string _commandText;
-        internal CommandType _commandType;
+        private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;

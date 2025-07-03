@@ -43,36 +43,6 @@ public class SqlCommandSetTest
     }
 
     /// <summary>
-    /// Returns a set of invalid CommandType values.
-    /// </summary>
-    /// <see cref="AppendBadCommandType_Throws(CommandType)"/>
-    /// <remarks>
-    /// .NET Framework puts system enums in the Global Assembly Cache (GAC), and xUnit refuses to serialize enums that live there.
-    /// We make these system enum values a method, then disable enumeration of the test data to avoid warnings on the console when running tests.
-    /// </remarks>
-    public static TheoryData<CommandType> CommandTypeData()
-        => new(CommandType.TableDirect, (CommandType)5);
-
-    /// <summary>
-    /// Verifies that adding a SqlCommand with an invalid CommandType to a SqlCommandSet throws an ArgumentOutOfRangeException.
-    /// </summary>
-    [Theory]
-    [MemberData(
-        nameof(CommandTypeData)
-#if NETFRAMEWORK
-        , DisableDiscoveryEnumeration = true
-#endif
-        )]
-    public void AppendBadCommandType_Throws(CommandType commandType)
-    {
-        SqlCommandSet cmdSet = new();
-        using SqlCommand cmd = GenerateBadCommand(commandType);
-
-        ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.Append(cmd));
-        Assert.Contains("CommandType", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
     /// Verifies that adding a SqlCommand containing a SqlParameter with an invalid name to a SqlCommandSet throws an ArgumentException.
     /// </summary>
     [Fact]
@@ -163,14 +133,5 @@ public class SqlCommandSetTest
 
         ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmdSet.ValidateCommandBehavior("ExecuteNonQuery", CommandBehavior.KeyInfo));
         Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static SqlCommand GenerateBadCommand(CommandType cType)
-    {
-        SqlCommand cmd = new("Test");
-        // There's validation done on the CommandType property, but we need to create one that avoids the check for the test case.
-        cmd._commandType = cType;
-
-        return cmd;
     }
 }
