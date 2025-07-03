@@ -396,7 +396,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             SniError sniError = SniProxy.Instance.GetLastError();
 
-            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError, (int)sniError.provider, sniError.lineNumber, sniError.function, sniError.exception);
+            return new SniErrorDetails(sniError.errorMessage, sniError.nativeError, sniError.sniError,
+                (int)sniError.provider, sniError.lineNumber, sniError.function,
+                sniError.exception);
         }
 
         private SniHandle GetSessionSNIHandleHandleOrThrow()
