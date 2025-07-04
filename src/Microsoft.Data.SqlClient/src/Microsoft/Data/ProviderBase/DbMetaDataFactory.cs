@@ -176,18 +176,25 @@ namespace Microsoft.Data.ProviderBase
                     Locale = CultureInfo.InvariantCulture
                 };
 
-                cancellationToken.ThrowIfCancellationRequested();
-                DataTable schemaTable = isAsync ? await reader.GetSchemaTableAsync(cancellationToken).ConfigureAwait(false) : reader.GetSchemaTable();
+                // We would ordinarily call reader.GetSchemaTableAsync, but this waits synchronously for the reader to receive its type metadata.
+                // Instead, we invoke reader.ReadAsync outside of the while loop, which will implicitly ensure that the metadata is available.
+                // ReadAsync/Read will throw an exception if necessary, so we can trust that the list of fields is available if the call returns.
+                bool firstResultAvailable = isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read();
+                DataTable schemaTable = reader.GetSchemaTable();
 
                 foreach (DataRow row in schemaTable.Rows)
                 {
-                    resultTable.Columns.Add(row["ColumnName"] as string, (Type)row["DataType"] as Type);
+                    resultTable.Columns.Add((string)row["ColumnName"], (Type)row["DataType"]);
                 }
-                object[] values = new object[resultTable.Columns.Count];
-                while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read())
+
+                if (firstResultAvailable)
                 {
-                    reader.GetValues(values);
-                    resultTable.Rows.Add(values);
+                    object[] values = new object[resultTable.Columns.Count];
+                    do
+                    {
+                        reader.GetValues(values);
+                        resultTable.Rows.Add(values);
+                    } while (isAsync ? await reader.ReadAsync(cancellationToken).ConfigureAwait(false) : reader.Read());
                 }
             }
             finally

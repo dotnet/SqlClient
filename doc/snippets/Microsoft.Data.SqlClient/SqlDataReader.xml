@@ -794,26 +794,6 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
       </exception>
     </GetSchemaTable>
-    <GetSchemaTableAsync>
-      <param name="cancellationToken">
-        The cancellation token.
-      </param>
-      <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable()" />, which returns a <see cref="T:System.Data.DataTable" /> that describes the column metadata of the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
-      </summary>
-      <returns>
-        A task representing the asynchronous operation.
-      </returns>
-      <remarks>
-        <para>
-          For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
-        </para>
-      </remarks>
-      <exception cref="T:System.InvalidOperationException">
-        The <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is closed.
-      </exception>
-      <seealso cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable()" />
-    </GetSchemaTableAsync>
     <GetSqlBinary>
       <param name="i">
         The zero-based column ordinal.

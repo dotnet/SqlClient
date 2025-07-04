@@ -1357,7 +1357,7 @@ For more information on working with events, see [Connection Events](https://lea
     </FireInfoMessageEventOnUserErrors>
     <GetSchema2>
       <summary>
-        Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about scheme, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        Returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A <see cref="T:System.Data.DataTable" /> that contains schema information.
@@ -1368,7 +1368,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about scheme, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A task representing the asynchronous operation.

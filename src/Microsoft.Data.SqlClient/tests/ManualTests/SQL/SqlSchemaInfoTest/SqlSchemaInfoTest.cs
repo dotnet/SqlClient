@@ -23,22 +23,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
+                SqlTransaction transaction = null;
+
                 conn.Open();
-                DataTable dataBases;
-
-                if (openTransaction)
+                try
                 {
-                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    if (openTransaction)
                     {
-                        dataBases = conn.GetSchema("DATABASES");
+                        transaction = conn.BeginTransaction();
                     }
-                }
-                else
-                {
-                    dataBases = conn.GetSchema("DATABASES");
-                }
 
-                Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
+                    DataTable dataBases = conn.GetSchema("DATABASES");
+                    Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
+
+                    string firstDatabaseName = dataBases.Rows[0]["database_name"] as string;
+                    dataBases = conn.GetSchema("DATABASES", [firstDatabaseName]);
+
+                    Assert.Equal(1, dataBases.Rows.Count);
+                    Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
+
+                    string nonexistentDatabaseName = DataTestUtility.GenerateRandomCharacters("NonExistentDatabase_");
+                    dataBases = conn.GetSchema("DATABASES", [nonexistentDatabaseName]);
+
+                    Assert.Equal(0, dataBases.Rows.Count);
+                }
+                finally
+                {
+                    transaction?.Dispose();
+                }
 
                 DataTable metaDataCollections = conn.GetSchema(DbMetaDataCollectionNames.MetaDataCollections);
                 Assert.True(metaDataCollections != null && metaDataCollections.Rows.Count > 0);
@@ -64,22 +76,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
+                SqlTransaction transaction = null;
+
                 await conn.OpenAsync();
-                DataTable dataBases;
-
-                if (openTransaction)
+                try
                 {
-                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    if (openTransaction)
                     {
-                        dataBases = await conn.GetSchemaAsync("DATABASES");
+                        transaction = conn.BeginTransaction();
                     }
-                }
-                else
-                {
-                    dataBases = await conn.GetSchemaAsync("DATABASES");
-                }
 
-                Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
+                    DataTable dataBases = await conn.GetSchemaAsync("DATABASES");
+                    Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
+
+                    string firstDatabaseName = dataBases.Rows[0]["database_name"] as string;
+                    dataBases = await conn.GetSchemaAsync("DATABASES", [firstDatabaseName]);
+
+                    Assert.Equal(1, dataBases.Rows.Count);
+                    Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
+
+                    string nonexistentDatabaseName = DataTestUtility.GenerateRandomCharacters("NonExistentDatabase_");
+                    dataBases = await conn.GetSchemaAsync("DATABASES", [nonexistentDatabaseName]);
+
+                    Assert.Equal(0, dataBases.Rows.Count);
+                }
+                finally
+                {
+                    transaction?.Dispose();
+                }
 
                 DataTable metaDataCollections = await conn.GetSchemaAsync(DbMetaDataCollectionNames.MetaDataCollections);
                 Assert.True(metaDataCollections != null && metaDataCollections.Rows.Count > 0);
