@@ -1455,14 +1455,6 @@ namespace Microsoft.Data.Common
         {
             return Argument(StringsHelper.GetString(Strings.ADP_InvalidValue), parameterName);
         }
-        internal static ArgumentException InvalidMixedArgumentOfSecureCredentialAndContextConnection()
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection));
-        }
-        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndContextConnection()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndContextConnection));
-        }
         internal static Exception InvalidMixedUsageOfAccessTokenAndCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndCredential));

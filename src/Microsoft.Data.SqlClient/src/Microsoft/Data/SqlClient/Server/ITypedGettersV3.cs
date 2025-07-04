@@ -63,6 +63,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         // valid for UniqueIdentifier
         Guid GetGuid(int ordinal);
+        // valid for SqlDbType.Time
+        TimeSpan GetTimeSpan(int ordinal);
+        // valid for DateTimeOffset
+        DateTimeOffset GetDateTimeOffset(int ordinal);
     }
 }
 
