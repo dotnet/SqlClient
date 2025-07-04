@@ -18,7 +18,6 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    [PlatformSpecific(TestPlatforms.Windows)]
     public sealed class ConversionTests : IDisposable, IClassFixture<ColumnMasterKeyCertificateFixture>
     {
 
