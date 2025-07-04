@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
@@ -11,18 +12,19 @@ using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal sealed class SerializationHelperSql9
+    internal static class SerializationHelperSql9
     {
-        // Don't let anyone create an instance of this class.
-        private SerializationHelperSql9() { }
-
         // Get the m_size of the serialized stream for this type, in bytes.
         // This method creates an instance of the type using the public
         // no-argument constructor, serializes it, and returns the m_size
         // in bytes.
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int SizeInBytes(Type t) => SizeInBytes(Activator.CreateInstance(t));
+        internal static int SizeInBytes(
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t) => SizeInBytes(Activator.CreateInstance(t));
 
         // Get the m_size of the serialized stream for this type, in bytes.
         internal static int SizeInBytes(object instance)
@@ -41,7 +43,11 @@ namespace Microsoft.Data.SqlClient.Server
             GetSerializer(instance.GetType()).Serialize(s, instance);
         }
 
-        internal static object Deserialize(Stream s, Type resultType) => GetSerializer(resultType).Deserialize(s);
+        internal static object Deserialize(Stream s,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type resultType) => GetSerializer(resultType).Deserialize(s);
 
         private static Format GetFormat(Type t) => GetUdtAttribute(t).Format;
 
@@ -53,7 +59,11 @@ namespace Microsoft.Data.SqlClient.Server
         // issues when accessing cache entries from multiple threads.
         private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
-        private static Serializer GetSerializer(Type t)
+        private static Serializer GetSerializer(
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type t)
         {
             if (s_types2Serializers == null)
             {
@@ -70,7 +80,11 @@ namespace Microsoft.Data.SqlClient.Server
             return s;
         }
 
-        internal static int GetUdtMaxLength(Type t)
+        internal static int GetUdtMaxLength(
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t)
         {
             SqlUdtInfo udtInfo = SqlUdtInfo.GetFromType(t);
 
@@ -106,7 +120,11 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // Create a new serializer for the given type.
-        private static Serializer GetNewSerializer(Type t)
+        private static Serializer GetNewSerializer(
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type t)
         {
             SqlUserDefinedTypeAttribute udtAttr = GetUdtAttribute(t);
           
@@ -126,19 +144,30 @@ namespace Microsoft.Data.SqlClient.Server
     // The base serializer class.
     internal abstract class Serializer
     {
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
         protected Type _type;
 
         public abstract object Deserialize(Stream s);
         public abstract void Serialize(Stream s, object o);
 
-        protected Serializer(Type t) => _type = t;
+        protected Serializer(
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t) => _type = t;
     }
 
     internal sealed class NormalizedSerializer : Serializer
     {
         private readonly BinaryOrderedUdtNormalizer _normalizer;
    
-        internal NormalizedSerializer(Type t) : base(t)
+        internal NormalizedSerializer(
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
+#endif
+            Type t) : base(t)
         {
             _ = SerializationHelperSql9.GetUdtAttribute(t);
             _normalizer = new BinaryOrderedUdtNormalizer(t, true);
@@ -151,7 +180,11 @@ namespace Microsoft.Data.SqlClient.Server
 
     internal sealed class BinarySerializeSerializer : Serializer
     {
-        internal BinarySerializeSerializer(Type t) : base(t)
+        internal BinarySerializeSerializer(
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
+            Type t) : base(t)
         {
         }
 

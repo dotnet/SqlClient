@@ -128,7 +128,7 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// <summary>
         /// It is called when SQL batch request arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS message to respond with</returns>
         public override TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage request)
         {

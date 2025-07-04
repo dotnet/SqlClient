@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -13,37 +14,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly string s_cmdPrompt = "/bin/bash";
 
-        internal static void Init(string domain)
+        internal static void Init(string user, string password)
         {
-            RunKerberosCommand($"kinit {domain}", true);
+            RunKerberosCommand($"kinit {user}", password);
         }
 
         internal static void Destroy()
         {
-            RunKerberosCommand("kdestroy", false);
+            RunKerberosCommand("kdestroy", null);
         }
         internal static void List()
         {
-            RunKerberosCommand("klist", false);
+            RunKerberosCommand("klist", null);
         }
 
-        public static void RunKerberosCommand(string command, bool isInit)
+        public static void RunKerberosCommand(string command, string echoString)
         {
-            try
+            StringBuilder output = new StringBuilder();
+            var proc = new Process
             {
-                var proc = new Process
+                StartInfo =
                 {
-                    StartInfo =
-                    {
-                        FileName = s_cmdPrompt,
-                        Arguments = isInit? $"-c {command}" : $"-c {command} -p:{DataTestUtility.KerberosDomainPassword}"
-                    }
-                };
-                proc.Start();
-            }
-            catch (Exception e)
+                    FileName = s_cmdPrompt,
+                    Arguments = "-c \"" + (!string.IsNullOrEmpty(echoString) ? $"echo {echoString} | " : "") + $"{command}\"",
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                }
+            };
+            // Use async event handlers to avoid deadlocks
+            proc.OutputDataReceived += new DataReceivedEventHandler((sender, e) =>
             {
-                Console.WriteLine(e.Message);
+                output.AppendLine(e.Data);
+            });
+
+            proc.ErrorDataReceived += new DataReceivedEventHandler((sender, e) =>
+            {
+                output.AppendLine(e.Data);
+            });
+
+            proc.Start();
+            proc.BeginOutputReadLine();
+            proc.BeginErrorReadLine();
+            if (!proc.WaitForExit(10000))
+            {
+                proc.Kill();
+                // allow async output to process
+                proc.WaitForExit(2000);
+                throw new Exception($"Kerberos command `{command}` timed out. Output:{Environment.NewLine + output}");
             }
         }
     }

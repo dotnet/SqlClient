@@ -3,11 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
-using System.Runtime.Caching;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Pkcs;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -15,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Members
 
-        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache("RootSigningCertificateCache");
+        private static readonly MemoryCache rootSigningCertificateCache = new MemoryCache(new MemoryCacheOptions());
 
         #endregion
 
@@ -86,9 +87,9 @@ namespace Microsoft.Data.SqlClient
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(enclaveSessionParameters, false, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(enclaveSessionParameters, false, isRetry, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
@@ -161,8 +162,8 @@ namespace Microsoft.Data.SqlClient
                 X509Certificate2Collection signingCerts = GetSigningCertificate(attestationUrl, shouldForceUpdateSigningKeys);
 
                 // Verify SQL Health report root chain of trust is the HGS root signing cert
-                X509ChainStatusFlags chainStatus = VerifyHealthReportAgainstRootCertificate(signingCerts, healthReport.Certificate);
-                if (chainStatus != X509ChainStatusFlags.NoError)
+                if (!VerifyHealthReportAgainstRootCertificate(signingCerts, healthReport.Certificate, out X509ChainStatusFlags chainStatus) ||
+                    chainStatus != X509ChainStatusFlags.NoError)
                 {
                     // In cases if we fail to validate the health report, it might be possible that we are using old signing keys
                     // let's re-download the signing keys again and re-validate the health report
@@ -193,7 +194,7 @@ namespace Microsoft.Data.SqlClient
         private X509Certificate2Collection GetSigningCertificate(string attestationUrl, bool forceUpdate)
         {
             attestationUrl = GetAttestationUrl(attestationUrl);
-            X509Certificate2Collection signingCertificates = (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            X509Certificate2Collection signingCertificates = rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
             if (forceUpdate || signingCertificates == null || AnyCertificatesExpired(signingCertificates))
             {
                 byte[] data = MakeRequest(attestationUrl);
@@ -201,17 +202,23 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    certificateCollection.Import(data);
+                    SignedCms s = new SignedCms();
+                    s.Decode(data);
+                    certificateCollection.AddRange(s.Certificates);
                 }
                 catch (CryptographicException exception)
                 {
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
-                rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
+                };
+                rootSigningCertificateCache.Set<X509Certificate2Collection>(attestationUrl, certificateCollection, options);
             }
 
-            return (X509Certificate2Collection)rootSigningCertificateCache[attestationUrl];
+            return rootSigningCertificateCache.Get<X509Certificate2Collection>(attestationUrl);
         }
 
         // Return the endpoint for given attestation url
@@ -220,21 +227,46 @@ namespace Microsoft.Data.SqlClient
         // Checks if any certificates in the collection are expired
         private bool AnyCertificatesExpired(X509Certificate2Collection certificates)
         {
-            return certificates.OfType<X509Certificate2>().Any(c => c.NotAfter < DateTime.Now);
+            if (certificates != null)
+            {
+                foreach (object item in certificates)
+                {
+                    if (item is X509Certificate2 certificate && certificate.NotAfter < DateTime.Now)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
-        // Verifies that a chain of trust can be built from the health report provided
-        // by SQL Server and the attestation service's root signing certificate(s).
-        private X509ChainStatusFlags VerifyHealthReportAgainstRootCertificate(X509Certificate2Collection signingCerts, X509Certificate2 healthReportCert)
+        /// <summary>
+        /// Verifies that a chain of trust can be built from the health report provided
+        /// by SQL Server and the attestation service's root signing certificate(s).
+        /// 
+        /// If the method returns false, the value of chainStatus doesn't matter. The chain could not be validated.
+        /// </summary>
+        /// <param name="signingCerts"></param>
+        /// <param name="healthReportCert"></param>
+        /// <param name="chainStatus"></param>
+        /// <returns>A <see cref="T:System.Boolean" /> that indicates if the certificate was able to be verified.</returns>
+        private bool VerifyHealthReportAgainstRootCertificate(X509Certificate2Collection signingCerts, X509Certificate2 healthReportCert, out X509ChainStatusFlags chainStatus)
         {
             var chain = new X509Chain();
+            chainStatus = X509ChainStatusFlags.NoError;
 
             foreach (var cert in signingCerts)
             {
                 chain.ChainPolicy.ExtraStore.Add(cert);
             }
 
+            // An Always Encrypted-enabled driver doesn't verify an expiration date or a certificate authority chain.
+            // A certificate is simply used as a key pair consisting of a public and private key. This is by design.
+
+            #pragma warning disable IA5352
+            // CodeQL [SM00395] By design. Always Encrypted certificates should not be checked.
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            #pragma warning restore IA5352
 
             if (!chain.Build(healthReportCert))
             {
@@ -249,9 +281,14 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        return status.Status;
+                        chainStatus = status.Status;
+                        return true;
                     }
                 }
+                // The only ways past or out of the loop are:
+                // 1. untrustedRoot is true, in which case we want to continue to below
+                // 2. chainStatus is set to the first status in the chain and we return true
+                // 3. the ChainStatus is empty
 
                 // if the chain failed with untrusted root, this could be because the client doesn't have the root cert
                 // installed. If the chain's untrusted root cert has the same thumbprint as the signing cert, then we
@@ -268,24 +305,28 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (element.Certificate.Thumbprint == cert.Thumbprint)
                             {
-                                return X509ChainStatusFlags.NoError;
+                                return true;
                             }
                         }
                     }
 
                     // in the case where we didn't find matching thumbprint
-                    return X509ChainStatusFlags.UntrustedRoot;
+                    chainStatus = X509ChainStatusFlags.UntrustedRoot;
+                    return true;
                 }
+
+                // There was an unknown failure and X509Chain.Build() returned an empty ChainStatus.
+                return false;
             }
 
-            return X509ChainStatusFlags.NoError;
+            return true;
         }
 
         // Verifies the enclave report signature using the health report.
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
-            uint calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
+            uint calculatedSize = Convert.ToUInt32(EnclaveReportPackageHeader.SizeInPayload) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
@@ -325,7 +366,31 @@ namespace Microsoft.Data.SqlClient
         // Verifies a byte[] enclave policy property
         private void VerifyEnclavePolicyProperty(string property, byte[] actual, byte[] expected)
         {
-            if (!actual.SequenceEqual(expected))
+            bool different = false;
+            if (actual == null || expected == null)
+            {
+                different = true;
+            }
+            else
+            {
+                if (actual.Length != expected.Length)
+                {
+                    different = true;
+                }
+                else
+                {
+                    for (int index = 0; index < actual.Length; index++)
+                    {
+                        if (actual[index] != expected[index])
+                        {
+                            different = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (different)
             {
                 string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, BitConverter.ToString(actual), BitConverter.ToString(expected));
                 throw new ArgumentException(exceptionMessage);

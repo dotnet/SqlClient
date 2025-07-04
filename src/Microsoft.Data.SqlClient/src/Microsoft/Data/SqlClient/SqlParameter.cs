@@ -14,10 +14,12 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -116,7 +118,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     flags |= 4;
                 }
-                if (null != p.Value)
+                if (p.Value != null)
                 {
                     flags |= 8;
                 }
@@ -395,7 +397,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.SqlCompareOptions;
                 }
@@ -465,7 +467,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 MetaType metatype = _metaType;
-                if ((null == metatype) || (metatype.DbType != value))
+                if (metatype == null || (metatype.DbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromDbType(value);
@@ -513,7 +515,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlCollation collation = _collation;
-                if (null != collation)
+                if (collation != null)
                 {
                     return collation.LCID;
                 }
@@ -583,7 +585,17 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool ShouldSerializeScale() => _scale != 0; // V1.0 compat, ignore _hasScale
+        private bool ShouldSerializeScale_Legacy() => _scale != 0; // V1.0 compat, ignore _hasScale
+
+        private bool ShouldSerializeScale()
+        {
+            if (LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour)
+            {
+                return ShouldSerializeScale_Legacy();
+            }
+            return _scale != 0 || (GetMetaTypeOnly().IsVarTime && HasFlag(SqlParameterFlags.HasScale));
+        }
+
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
@@ -608,7 +620,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.InvalidSqlDbType(value);
                 }
-                if ((null == metatype) || (metatype.SqlDbType != value))
+                if (metatype == null || (metatype.SqlDbType != value))
                 {
                     PropertyTypeChanging();
                     _metaType = MetaType.GetMetaTypeFromSqlDbType(value, value == SqlDbType.Structured);
@@ -728,6 +740,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ParameterIsSqlType)
                     {
+                        if (_sqlBufferReturnValue.VariantInternalStorageType == SqlBuffer.StorageType.Vector)
+                        {
+                            return GetVectorReturnValue();
+                        }
                         return _sqlBufferReturnValue.SqlValue;
                     }
                     return _sqlBufferReturnValue.Value;
@@ -741,9 +757,33 @@ namespace Microsoft.Data.SqlClient
                 _coercedValue = null;
                 _valueAsINullable = _value as INullable;
                 SetFlag(SqlParameterFlags.IsSqlParameterSqlType, _valueAsINullable != null);
-                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
+                SetFlag(SqlParameterFlags.IsNull, _value == null || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
+            }
+        }
+
+        private object GetVectorReturnValue()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementType;
+            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._vectorInfo._elementCount;
+
+            if (IsNull)
+            {
+                switch (elementType)
+                {
+                    case MetaType.SqlVectorElementType.Float32:
+                        return new SqlVector<float>(elementCount);
+                    default:
+                        throw SQL.VectorTypeNotSupported(elementType.ToString());
+                }
+            }
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
         }
 
@@ -844,7 +884,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
         [ResCategory("DataCategory_Update")]
-#if !NETFRAMEWORK
+#if NET
         [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
 #endif
         public override bool SourceColumnNullMapping
@@ -897,7 +937,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null == _coercedValue)
+                if (_coercedValue == null)
                 {
                     GetCoercedValue();
                 }
@@ -950,7 +990,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert(null != _internalMetaType, "null InternalMetaType");
+                Debug.Assert(_internalMetaType != null, "null InternalMetaType");
                 return _internalMetaType;
             }
             set => _internalMetaType = value;
@@ -989,17 +1029,65 @@ namespace Microsoft.Data.SqlClient
             set => SetFlag(SqlParameterFlags.IsSqlParameterSqlType, value);
         }
 
-        internal string ParameterNameFixed
+        internal string GetPrefixedParameterName()
         {
-            get
+            string parameterName = ParameterName;
+            if ((parameterName.Length > 0) && (parameterName[0] != '@'))
             {
-                string parameterName = ParameterName;
-                if ((parameterName.Length > 0) && (parameterName[0] != '@'))
+                parameterName = "@" + parameterName;
+            }
+            Debug.Assert(parameterName.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH, "parameter name too long");
+            return parameterName;
+        }
+
+        /// <summary>
+        /// Checks the parameter name for the @ prefix and appends it if it is missing, then appends the parameter name
+        /// </summary>
+        /// <param name="builder"></param>
+        /// <param name="rawParameterName"></param>
+        internal static void AppendPrefixedParameterName(StringBuilder builder, string rawParameterName)
+        {
+            if (!string.IsNullOrEmpty(rawParameterName))
+            {
+                if (rawParameterName[0] != '@')
                 {
-                    parameterName = "@" + parameterName;
+                    builder.Append('@');
                 }
-                Debug.Assert(parameterName.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH, "parameter name too long");
-                return parameterName;
+                builder.Append(rawParameterName);
+            }
+        }
+
+        /// <summary>
+        /// Compares the two input names for equality discounting the @ prefix on either or both arguments
+        /// </summary>
+        /// <returns></returns>
+        internal static bool ParameterNamesEqual(string lhs, string rhs, StringComparison comparison = StringComparison.Ordinal)
+        {
+            if (!string.IsNullOrEmpty(lhs))
+            {
+                if (string.IsNullOrEmpty(rhs))
+                {
+                    return false;
+                }
+                else
+                {
+                    ReadOnlySpan<char> lhsSpan = lhs.AsSpan();
+                    if (lhs[0] == '@')
+                    {
+                        lhsSpan = lhsSpan.Slice(1);
+                    }
+                    ReadOnlySpan<char> rhsSpan = rhs.AsSpan();
+                    if (rhsSpan[0] == '@')
+                    {
+                        rhsSpan = rhsSpan.Slice(1);
+                    }
+                    return MemoryExtensions.Equals(lhsSpan, rhsSpan, comparison);
+                }
+            }
+            else
+            {
+                // lhs is null or empty so equality is only possible if the rhs is the same
+                return string.IsNullOrEmpty(rhs);
             }
         }
 
@@ -1167,7 +1255,7 @@ namespace Microsoft.Data.SqlClient
 
                 // set up primary key as unique key list
                 //  do this prior to general metadata loop to favor the primary key
-                if (null != dt.PrimaryKey && 0 < dt.PrimaryKey.Length)
+                if (dt.PrimaryKey != null && 0 < dt.PrimaryKey.Length)
                 {
                     foreach (DataColumn col in dt.PrimaryKey)
                     {
@@ -1298,7 +1386,7 @@ namespace Microsoft.Data.SqlClient
                             if (hasDefault)
                             {
                                 // May have already created props list in unique key handling
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1327,7 +1415,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 // May have already created props list
-                                if (null == props)
+                                if (props == null)
                                 {
                                     props = new SmiMetaDataPropertyCollection();
                                 }
@@ -1441,7 +1529,7 @@ namespace Microsoft.Data.SqlClient
                 // But assert no holes to be sure.
                 foreach (SmiExtendedMetaData md in fields)
                 {
-                    Debug.Assert(null != md, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
+                    Debug.Assert(md != null, "Shouldn't be able to have holes, since original loop algorithm prevents such.");
                 }
 #endif
 
@@ -1461,7 +1549,6 @@ namespace Microsoft.Data.SqlClient
                 return ScaleInternal;
             }
 
-            // issue: how could a user specify 0 as the actual scale?
             if (GetMetaTypeOnly().IsVarTime)
             {
                 return TdsEnums.DEFAULT_VARTIME_SCALE;
@@ -1515,6 +1602,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NVarChar:
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
+                        case SqlDbTypeExtensions.Json:
                             {
                                 coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType)) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
@@ -1544,6 +1632,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Image:
                         case SqlDbType.Timestamp:
+                        case SqlDbTypeExtensions.Vector:
                             coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                             _actualSize = (ShouldSerializeSize() ? Size : 0);
                             _actualSize = ((ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize);
@@ -1555,12 +1644,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Udt:
                             if (!IsNull)
                             {
-#if NETFRAMEWORK
-                                //call the static function
-                                coercedSize = AssemblyCache.GetLength(val);
-#else
                                 coercedSize = SerializationHelperSql9.SizeInBytes(val);
-#endif
                             }
                             break;
                         case SqlDbType.Structured:
@@ -1804,7 +1888,7 @@ namespace Microsoft.Data.SqlClient
                 SqlDbType.Structured == mt.SqlDbType,
                 fields,
                 extendedProperties,
-                ParameterNameFixed,
+                GetPrefixedParameterName(),
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
                 typeSpecificNamePart3,
@@ -1829,7 +1913,7 @@ namespace Microsoft.Data.SqlClient
         private SqlDbType GetMetaSqlDbTypeOnly()
         {
             MetaType metaType = _metaType;
-            if (null == metaType)
+            if (metaType == null)
             { // infer the type from the value
                 metaType = MetaType.GetDefaultMetaType();
             }
@@ -1842,9 +1926,16 @@ namespace Microsoft.Data.SqlClient
         {
             if (_metaType != null)
             {
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
+                    _direction == ParameterDirection.Input &&
+                    (_value == null || _value == DBNull.Value))
+                {
+                    _value = DBNull.Value;
+                    return MetaType.GetDefaultMetaType();
+                }
                 return _metaType;
             }
-            if (null != _value && DBNull.Value != _value)
+            if (_value != null && DBNull.Value != _value)
             {
                 // We have a value set by the user then just use that value
                 // char and char[] are not directly supported so we convert those values to string
@@ -1869,6 +1960,7 @@ namespace Microsoft.Data.SqlClient
                     return MetaType.GetMetaTypeFromType(valueType);
                 }
             }
+
             return MetaType.GetDefaultMetaType();
         }
 
@@ -1929,12 +2021,12 @@ namespace Microsoft.Data.SqlClient
                 !ADP.IsDirection(this, ParameterDirection.ReturnValue) &&
                 (!metaType.IsFixed) &&
                 !ShouldSerializeSize() &&
-                ((null == _value) || Convert.IsDBNull(_value)) &&
+                (_value == null || Convert.IsDBNull(_value)) &&
                 (SqlDbType != SqlDbType.Timestamp) &&
                 (SqlDbType != SqlDbType.Udt) &&
                 // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
                 // NOTE: (VSTFDevDiv - 479609): Not Fixed for TEXT, NTEXT, IMAGE as these are deprecated LOB types.
-                (SqlDbType != SqlDbType.Xml) &&
+                (SqlDbType != SqlDbType.Xml && SqlDbType != SqlDbTypeExtensions.Json) &&
                 !metaType.IsVarTime
             )
             {
@@ -1944,6 +2036,13 @@ namespace Microsoft.Data.SqlClient
             if (metaType.SqlDbType != SqlDbType.Udt && Direction != ParameterDirection.Output)
             {
                 GetCoercedValue();
+            }
+
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+                (_value == null || _value == DBNull.Value) &&
+                (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
+            {
+                throw ADP.NullOutputParameterValueForVector(_parameterName);
             }
 
             //check if the UdtTypeName is specified for Udt params
@@ -2095,6 +2194,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 return sqlString.Value.Length;
             }
+            if (value is ISqlVector sqlVector)
+            {
+                return sqlVector.Size;
+            }
             if (value is SqlChars sqlChars)
             {
                 if (sqlChars.IsNull)
@@ -2172,7 +2275,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
-            Debug.Assert(null != destinationType, "null destinationType");
+            Debug.Assert(destinationType != null, "null destinationType");
 
             coercedToDataFeed = false;
             typeChanged = false;
@@ -2197,6 +2300,10 @@ namespace Microsoft.Data.SqlClient
                         if (currentType == typeof(SqlXml))
                         {
                             value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                        }
+                        else if (currentType == typeof(SqlJson))
+                        {
+                            value = (value as SqlJson).Value;
                         }
                         else if (currentType == typeof(SqlString))
                         {
@@ -2251,6 +2358,31 @@ namespace Microsoft.Data.SqlClient
                     else if ((currentType == typeof(DateTime)) && (destinationType.SqlDbType == SqlDbType.DateTimeOffset))
                     {
                         value = new DateTimeOffset((DateTime)value);
+                    }
+#if NET
+                    else if ((currentType == typeof(DateOnly)) && (destinationType.SqlDbType == SqlDbType.Date))
+                    {
+                        value = ((DateOnly)value).ToDateTime(new TimeOnly(0, 0));
+                    }
+                    else if ((currentType == typeof(TimeOnly)) && (destinationType.SqlDbType == SqlDbType.Time))
+                    {
+                        value = ((TimeOnly)value).ToTimeSpan();
+                    }
+#endif
+                    else if (currentType == typeof(SqlVector<float>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
+                    {
+                        try
+                        {
+                            value = (new SqlVector<float>(JsonSerializer.Deserialize<float[]>(value as string)) as ISqlVector).VectorPayload;
+                        }
+                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+                        {
+                            throw ADP.InvalidJsonStringForVector(value as string, ex);
+                        }
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
@@ -2364,7 +2496,7 @@ namespace Microsoft.Data.SqlClient
         // of this and use a simple regex to do the parsing
         internal static string[] ParseTypeName(string typeName, bool isUdtTypeName)
         {
-            Debug.Assert(null != typeName, "null typename passed to ParseTypeName");
+            Debug.Assert(typeName != null, "null typename passed to ParseTypeName");
 
             try
             {

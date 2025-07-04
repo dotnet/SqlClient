@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -63,10 +64,6 @@ namespace Microsoft.Data.SqlClient.Server
         internal const int MinPrecision = 1;       // SqlDecimal defines max precision
         internal const int MinScale = 0;            // SqlDecimal defines max scale
         internal const int MaxTimeScale = 7;        // Max scale for time, datetime2, and datetimeoffset
-        internal static readonly DateTime MaxSmallDateTime = new DateTime(2079, 06, 06, 23, 59, 29, 998);
-        internal static readonly DateTime MinSmallDateTime = new DateTime(1899, 12, 31, 23, 59, 29, 999);
-        internal static readonly SqlMoney MaxSmallMoney = new SqlMoney(((decimal)int.MaxValue) / 10000);
-        internal static readonly SqlMoney MinSmallMoney = new SqlMoney(((decimal)int.MinValue) / 10000);
         internal const SqlCompareOptions DefaultStringCompareOptions = SqlCompareOptions.IgnoreCase
                                         | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth;
 
@@ -115,69 +112,12 @@ namespace Microsoft.Data.SqlClient.Server
         internal static readonly SmiMetaData DefaultDateTimeOffset = new SmiMetaData(SqlDbType.DateTimeOffset, 10, 0, 7, SqlCompareOptions.None);     // SqlDbType.DateTimeOffset
         // No default for generic UDT
 
-        // character defaults hook thread-local culture to get collation
-        internal static SmiMetaData DefaultChar =>
-            new SmiMetaData(
-                DefaultChar_NoCollation.SqlDbType,
-                DefaultChar_NoCollation.MaxLength,
-                DefaultChar_NoCollation.Precision,
-                DefaultChar_NoCollation.Scale,
-                CultureInfo.CurrentCulture.LCID,
-                SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null
-            );
-
-
-        internal static SmiMetaData DefaultNChar =>
-            new SmiMetaData(
-                DefaultNChar_NoCollation.SqlDbType,
-                DefaultNChar_NoCollation.MaxLength,
-                DefaultNChar_NoCollation.Precision,
-                DefaultNChar_NoCollation.Scale,
-                CultureInfo.CurrentCulture.LCID,
-                SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null
-            );
-
-        internal static SmiMetaData DefaultNText => 
-            new SmiMetaData(
-                DefaultNText_NoCollation.SqlDbType,
-                DefaultNText_NoCollation.MaxLength,
-                DefaultNText_NoCollation.Precision,
-                DefaultNText_NoCollation.Scale,
-                CultureInfo.CurrentCulture.LCID,
-                SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null
-            );
-
         internal static SmiMetaData DefaultNVarChar => 
             new SmiMetaData(
                 DefaultNVarChar_NoCollation.SqlDbType,
                 DefaultNVarChar_NoCollation.MaxLength,
                 DefaultNVarChar_NoCollation.Precision,
                 DefaultNVarChar_NoCollation.Scale,
-                CultureInfo.CurrentCulture.LCID,
-                SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null
-            );
-
-        internal static SmiMetaData DefaultText =>
-            new SmiMetaData(
-                DefaultText_NoCollation.SqlDbType,
-                DefaultText_NoCollation.MaxLength,
-                DefaultText_NoCollation.Precision,
-                DefaultText_NoCollation.Scale,
-                CultureInfo.CurrentCulture.LCID,
-                SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null
-            );
-
-        internal static SmiMetaData DefaultVarChar =>
-            new SmiMetaData(
-                DefaultVarChar_NoCollation.SqlDbType,
-                DefaultVarChar_NoCollation.MaxLength,
-                DefaultVarChar_NoCollation.Precision,
-                DefaultVarChar_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
                 null
@@ -228,6 +168,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType
         )
             : this(
@@ -253,6 +196,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldTypes,
@@ -282,6 +228,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -403,63 +352,6 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
         }
 
-        internal bool IsValidMaxLengthForCtorGivenType(SqlDbType dbType, long maxLength)
-        {
-            bool result = true;
-            switch (dbType)
-            {
-                case SqlDbType.BigInt:
-                case SqlDbType.Bit:
-                case SqlDbType.DateTime:
-                case SqlDbType.Float:
-                case SqlDbType.Image:
-                case SqlDbType.Int:
-                case SqlDbType.Money:
-                case SqlDbType.Real:
-                case SqlDbType.SmallDateTime:
-                case SqlDbType.SmallInt:
-                case SqlDbType.SmallMoney:
-                case SqlDbType.Timestamp:
-                case SqlDbType.TinyInt:
-                case SqlDbType.UniqueIdentifier:
-                case SqlDbType.Variant:
-                case SqlDbType.Xml:
-                case SqlDbType.NText:
-                case SqlDbType.Text:
-                case SqlDbType.Decimal:
-                case SqlDbType.Udt:
-                case SqlDbType.Structured:
-                case SqlDbType.Date:
-                case SqlDbType.Time:
-                case SqlDbType.DateTime2:
-                case SqlDbType.DateTimeOffset:
-                    break;
-                case SqlDbType.Binary:
-                    result = 0 < maxLength && MaxBinaryLength >= maxLength;
-                    break;
-                case SqlDbType.VarBinary:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxBinaryLength >= maxLength);
-                    break;
-                case SqlDbType.Char:
-                    result = 0 < maxLength && MaxANSICharacters >= maxLength;
-                    break;
-                case SqlDbType.NChar:
-                    result = 0 < maxLength && MaxUnicodeCharacters >= maxLength;
-                    break;
-                case SqlDbType.NVarChar:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxUnicodeCharacters >= maxLength);
-                    break;
-                case SqlDbType.VarChar:
-                    result = UnlimitedMaxLengthIndicator == maxLength || (0 < maxLength && MaxANSICharacters >= maxLength);
-                    break;
-                default:
-                    Debug.Fail("How in the world did we get here? :" + dbType);
-                    break;
-            }
-
-            return result;
-        }
-
         // Sql-style compare options for character types.
         internal SqlCompareOptions CompareOptions => _compareOptions;
 
@@ -483,62 +375,11 @@ namespace Microsoft.Data.SqlClient.Server
             get
             {
                 // Fault-in UDT clr types on access if have assembly-qualified name
-                if (null == _clrType && SqlDbType.Udt == _databaseType && _udtAssemblyQualifiedName != null)
+                if (_clrType == null && SqlDbType.Udt == _databaseType && _udtAssemblyQualifiedName != null)
                 {
                     _clrType = Type.GetType(_udtAssemblyQualifiedName, true);
                 }
                 return _clrType;
-            }
-        }
-
-        // Clr Type instance for user-defined types in cases where we don't want to throw if the assembly isn't available
-        internal Type TypeWithoutThrowing
-        {
-            get
-            {
-                // Fault-in UDT clr types on access if have assembly-qualified name
-                if (null == _clrType && SqlDbType.Udt == _databaseType && _udtAssemblyQualifiedName != null)
-                {
-                    _clrType = Type.GetType(_udtAssemblyQualifiedName, false);
-                }
-                return _clrType;
-            }
-        }
-
-        internal string TypeName
-        {
-            get
-            {
-                string result;
-                if (SqlDbType.Udt == _databaseType)
-                {
-                    Debug.Assert(string.Empty == s_typeNameByDatabaseType[(int)_databaseType], "unexpected udt?");
-                    result = Type.FullName;
-                }
-                else
-                {
-                    result = s_typeNameByDatabaseType[(int)_databaseType];
-                    Debug.Assert(result != null, "unknown type name?");
-                }
-                return result;
-            }
-        }
-
-        internal string AssemblyQualifiedName
-        {
-            get
-            {
-                string result = null;
-                if (SqlDbType.Udt == _databaseType)
-                {
-                    // Fault-in assembly-qualified name if type is available
-                    if (_udtAssemblyQualifiedName == null && _clrType != null)
-                    {
-                        _udtAssemblyQualifiedName = _clrType.AssemblyQualifiedName;
-                    }
-                    result = _udtAssemblyQualifiedName;
-                }
-                return result;
             }
         }
 
@@ -689,8 +530,6 @@ namespace Microsoft.Data.SqlClient.Server
             _extendedProperties = smdDflt._extendedProperties;  // This is ok due to immutability
         }
 
-        internal string TraceString() => TraceString(0);
-
         virtual internal string TraceString(int indent)
         {
             string indentStr = new string(' ', indent);
@@ -759,6 +598,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string name,
             string typeSpecificNamePart1,
@@ -792,6 +634,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -829,6 +674,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -853,7 +701,7 @@ namespace Microsoft.Data.SqlClient.Server
                 extendedProperties
             )
         {
-            Debug.Assert(null == name || MaxNameLength >= name.Length, "Name is too long");
+            Debug.Assert(name == null || MaxNameLength >= name.Length, "Name is too long");
 
             _name = name;
             _typeSpecificNamePart1 = typeSpecificNamePart1;
@@ -903,6 +751,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -942,6 +793,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -1020,6 +874,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string name,
             string typeSpecificNamePart1,
@@ -1069,6 +926,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -1123,6 +983,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -1187,8 +1050,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal bool IsIdentity => _isIdentity;
 
-        internal bool IsColumnSet => _isColumnSet;
-
         internal override string TraceString(int indent)
         {
             return string.Format(CultureInfo.InvariantCulture, "{0}"
@@ -1226,62 +1087,6 @@ namespace Microsoft.Data.SqlClient.Server
         private readonly SqlBoolean _isAliased;
         private readonly SqlBoolean _isHidden;
 
-        internal SmiQueryMetaData(
-            SqlDbType dbType,
-            long maxLength,
-            byte precision,
-            byte scale,
-            long localeId,
-            SqlCompareOptions compareOptions,
-            Type userDefinedType,
-            string name,
-            string typeSpecificNamePart1,
-            string typeSpecificNamePart2,
-            string typeSpecificNamePart3,
-            bool allowsDBNull,
-            string serverName,
-            string catalogName,
-            string schemaName,
-            string tableName,
-            string columnName,
-            SqlBoolean isKey,
-            bool isIdentity,
-            bool isReadOnly,
-            SqlBoolean isExpression,
-            SqlBoolean isAliased,
-            SqlBoolean isHidden
-        )
-            : this(
-                dbType,
-                maxLength,
-                precision,
-                scale,
-                localeId,
-                compareOptions,
-                userDefinedType,
-                false,
-                null,
-                null,
-                name,
-                typeSpecificNamePart1,
-                typeSpecificNamePart2,
-                typeSpecificNamePart3,
-                allowsDBNull,
-                serverName,
-                catalogName,
-                schemaName,
-                tableName,
-                columnName,
-                isKey,
-                isIdentity,
-                isReadOnly,
-                isExpression,
-                isAliased,
-                isHidden
-            )
-        {
-        }
-
         // SMI V200 ctor.
         internal SmiQueryMetaData(
             SqlDbType dbType,
@@ -1290,6 +1095,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldMetaData,
@@ -1352,6 +1160,9 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+#endif
             Type userDefinedType,
             string udtAssemblyQualifiedName,
             bool isMultiValued,
@@ -1407,8 +1218,6 @@ namespace Microsoft.Data.SqlClient.Server
             _isAliased = isAliased;
             _isHidden = isHidden;
         }
-
-        internal bool IsReadOnly => _isReadOnly;
 
         internal SqlBoolean IsExpression => _isExpression;
 

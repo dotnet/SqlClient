@@ -4,13 +4,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Runtime.Caching;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Protocols;
@@ -59,15 +59,15 @@ namespace Microsoft.Data.SqlClient
         // such as https://sql.azure.attest.com/.well-known/openid-configuration
         private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
 
-        private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache("OpenIdConnectConfigurationCache");
+        private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache(new MemoryCacheOptions());
         #endregion
 
         #region Internal methods
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
-        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
+        internal override void GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength)
         {
-            GetEnclaveSessionHelper(enclaveSessionParameters, generateCustomData, out sqlEnclaveSession, out counter, out customData, out customDataLength);
+            GetEnclaveSessionHelper(enclaveSessionParameters, generateCustomData, isRetry, out sqlEnclaveSession, out counter, out customData, out customDataLength);
         }
 
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
@@ -191,14 +191,12 @@ namespace Microsoft.Data.SqlClient
                     offset += sizeof(uint);
 
                     // Get the enclave public key
-                    byte[] identityBuffer = attestationInfo.Skip(offset).Take(identitySize).ToArray();
+                    byte[] identityBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, identitySize);
                     Identity = new EnclavePublicKey(identityBuffer);
-                    offset += identitySize;
 
                     // Get Azure attestation token
-                    byte[] attestationTokenBuffer = attestationInfo.Skip(offset).Take(attestationTokenSize).ToArray();
-                    AttestationToken = new AzureAttestationToken(attestationTokenBuffer);
-                    offset += attestationTokenSize;
+                    byte[] attestationTokenBuffer = EnclaveHelpers.TakeBytesAndAdvance(attestationInfo, ref offset, attestationTokenSize);
+                    AttestationToken = new AzureAttestationToken(attestationTokenBuffer);                    
 
                     uint secureSessionInfoResponseSize = BitConverter.ToUInt32(attestationInfo, offset);
                     offset += sizeof(uint);
@@ -206,10 +204,10 @@ namespace Microsoft.Data.SqlClient
                     SessionId = BitConverter.ToInt64(attestationInfo, offset);
                     offset += sizeof(long);
 
-                    int secureSessionBufferSize = Convert.ToInt32(secureSessionInfoResponseSize) - sizeof(uint);
-                    byte[] secureSessionBuffer = attestationInfo.Skip(offset).Take(secureSessionBufferSize).ToArray();
-                    EnclaveDHInfo = new EnclaveDiffieHellmanInfo(secureSessionBuffer);
-                    offset += Convert.ToInt32(EnclaveDHInfo.Size);
+                    EnclaveDHInfo = new EnclaveDiffieHellmanInfo(attestationInfo, offset);
+                    offset += EnclaveDHInfo.Size;
+
+                    Debug.Assert(offset == attestationInfo.Length);
                 }
                 catch (Exception exception)
                 {
@@ -334,7 +332,7 @@ namespace Microsoft.Data.SqlClient
         // It also caches that information for 1 day to avoid DDOS attacks.
         private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
         {
-            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache[url] as OpenIdConnectConfiguration;
+            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache.Get<OpenIdConnectConfiguration>(url);
             if (forceUpdate || openIdConnectConfig == null)
             {
                 // Compute the meta data endpoint
@@ -350,7 +348,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
-                OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
+                MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1)
+                };
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, options);
             }
 
             return openIdConnectConfig;
@@ -399,7 +401,7 @@ namespace Microsoft.Data.SqlClient
                     RequireExpirationTime = true,
                     ValidateLifetime = true,
                     ValidateIssuer = true,
-                    ValidateAudience = false,
+                    ValidateAudience = false, // CodeQL [SM04387] Required for an external standard: Microsoft Azure Attestation does not support the audience claim.
                     RequireSignedTokens = true,
                     ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
                     IssuerSigningKeys = issuerSigningKeys
@@ -407,9 +409,8 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                SecurityToken validatedToken;
                 JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-                var token = handler.ValidateToken(attestationToken, validationParameters, out validatedToken);
+                var token = handler.ValidateToken(attestationToken, validationParameters, out _);
                 isSignatureValid = true;
             }
             catch (SecurityTokenExpiredException securityException)
@@ -467,7 +468,7 @@ namespace Microsoft.Data.SqlClient
 
             // Get all the claims from the token
             Dictionary<string, string> claims = new Dictionary<string, string>();
-            foreach (Claim claim in token.Claims.ToList())
+            foreach (Claim claim in token.Claims)
             {
                 claims.Add(claim.Type, claim.Value);
             }

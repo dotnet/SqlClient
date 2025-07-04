@@ -4,14 +4,14 @@
 
 using System;
 using System.Diagnostics;
-using Microsoft.Data.SqlClient.SNI;
+using Interop.Windows.Sni;
+using Microsoft.Data.SqlClient.ManagedSni;
+using SniError = Microsoft.Data.SqlClient.ManagedSni.SniError;
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class TdsParser
     {
-        private static volatile bool s_fSSPILoaded = false; // bool to indicate whether library has been loaded
-
         internal void PostReadAsyncForMars()
         {
             if (TdsParserStateObjectFactory.UseManagedSNI)
@@ -26,6 +26,10 @@ namespace Microsoft.Data.SqlClient
 
             _pMarsPhysicalConObj.IncrementPendingCallbacks();
             SessionHandle handle = _pMarsPhysicalConObj.SessionHandle;
+            // we do not need to consider partial packets when making this read because we
+            // expect this read to pend. a partial packet should not exist at setup of the
+            // parser
+            Debug.Assert(_physicalStateObj.PartialPacket==null);
             temp = _pMarsPhysicalConObj.ReadAsync(handle, out error);
 
             Debug.Assert(temp.Type == PacketHandle.NativePointerType, "unexpected packet type when requiring NativePointer");
@@ -43,37 +47,7 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
-        }
-
-        private void LoadSSPILibrary()
-        {
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-                return;
-            // Outer check so we don't acquire lock once it's loaded.
-            if (!s_fSSPILoaded)
-            {
-                lock (s_tdsParserLock)
-                {
-                    // re-check inside lock
-                    if (!s_fSSPILoaded)
-                    {
-                        // use local for ref param to defer setting s_maxSSPILength until we know the call succeeded.
-                        uint maxLength = 0;
-
-                        if (0 != SNINativeMethodWrapper.SNISecInitPackage(ref maxLength))
-                            SSPIError(SQLMessage.SSPIInitializeError(), TdsEnums.INIT_SSPI_PACKAGE);
-
-                        s_maxSSPILength = maxLength;
-                        s_fSSPILoaded = true;
-                    }
-                }
-            }
-
-            if (s_maxSSPILength > int.MaxValue)
-            {
-                throw SQL.InvalidSSPIPacketSize();   // SqlBu 332503
-            }
-        }
+        }         
 
         private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
@@ -95,7 +69,7 @@ namespace Microsoft.Data.SqlClient
 
             if (TdsParserStateObjectFactory.UseManagedSNI)
             {
-                SNIError sniError = SNIProxy.Instance.GetLastError();
+                SniError sniError = SniProxy.Instance.GetLastError();
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;
@@ -106,7 +80,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
+                SniNativeWrapper.SniGetLastError(out Interop.Windows.Sni.SniError sniError);
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;

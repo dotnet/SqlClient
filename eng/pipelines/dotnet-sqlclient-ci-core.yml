@@ -1,0 +1,505 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: false
+
+- name: targetFrameworks
+  displayName: 'Target Frameworks on Windows'
+  type: object
+  default: [net462, net8.0, net9.0]
+
+- name: targetFrameworksLinux
+  displayName: 'Target Frameworks on Non-Windows'
+  type: object
+  default: [net8.0, net9.0]
+
+- name: netcoreVersionTestUtils
+  displayName: 'Netcore Version for Test Utilities'
+  type: object
+  default: net9.0
+
+- name: buildPlatforms
+  displayName: 'Build Platforms on Windows'
+  type: object
+  default: [AnyCPU]
+
+- name: testSets
+  displayName: 'Test Sets'
+  type: object
+  default: [1, 2, 3]
+
+- name: useManagedSNI
+  displayName: |
+    Use Managed/Native SNI on Windows,
+    values [false, true], [false] or [true] are allowed
+  type: object
+  default: [false, true]
+
+- name: SNIVersion
+  displayName: |
+    SNI Version Override
+  type: string
+  default: ''
+
+- name: SNIValidationFeed
+  displayName: |
+    SNI Version Override Nuget Feed
+  type: string
+  default: https://sqlclientdrivers.pkgs.visualstudio.com/ADO.Net/_packaging/SNIValidation/nuget/v3/index.json
+
+- name: codeCovTargetFrameworks
+  displayName: 'Code Coverage Target Frameworks'
+  type: object
+  default: [net462, net8.0]
+
+- name: buildType
+  displayName: 'Build Type'
+  default: Project
+  values:
+    - Project
+    - Package
+
+- name: defaultPoolName
+  type: string
+  default: $(ci_var_defaultPoolName)
+
+variables:
+  - template: libraries/ci-build-variables.yml@self
+  
+  - name: artifactName
+    value: Artifacts
+
+  - name: defaultHostedPoolName
+    value: 'Azure Pipelines'
+
+stages:
+  - stage: build_nugets
+    displayName: 'Build NuGet Packages'
+    jobs:
+    - template: common/templates/jobs/ci-build-nugets-job.yml@self
+      parameters:
+        artifactName: $(artifactName)
+        ${{if ne(parameters.SNIVersion, '')}}:
+          prebuildSteps:
+            - template: common/templates/steps/override-sni-version.yml@self
+              parameters:
+                SNIVersion: ${{parameters.SNIVersion}}
+                SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+
+  - template: common/templates/stages/ci-run-tests-stage.yml@self
+    parameters:
+      debug: ${{ parameters.debug }}
+      buildType: ${{ parameters.buildType }}
+      ${{ if eq(parameters.buildType, 'Package') }}:
+        dependsOn: build_nugets
+
+      ${{if ne(parameters.SNIVersion, '')}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/override-sni-version.yml@self
+            parameters:
+              SNIVersion: ${{parameters.SNIVersion}}
+              SNIValidationFeed: ${{parameters.SNIValidationFeed}}
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
+      ${{else}}:
+        prebuildSteps: # steps to run prior to building and running tests on each job
+          - template: common/templates/steps/ci-prebuild-step.yml@self
+            parameters:
+              debug: ${{ parameters.debug }}
+              artifactName: $(artifactName)
+              buildType: ${{ parameters.buildType }}
+
+      ${{ if eq(parameters.buildType, 'Project') }}: # only run the code coverage job if the build type is project
+        postTestJobs: # jobs to run after the tests are done
+        - template: common/templates/jobs/ci-code-coverage-job.yml@self
+          parameters:
+            debug: ${{ parameters.debug }}
+            downloadArtifactsSteps:
+              - ${{ each targetFramework in parameters.codeCovTargetFrameworks }}:
+                - task: DownloadPipelineArtifact@2
+                  displayName: 'Download Coverage Reports [${{ targetFramework }}]'
+                  inputs:
+                    itemPattern: '**\${{ targetFramework }}*'
+                    ${{ if contains(targetFramework, 'net4') }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetFx'
+                    ${{ else }}:
+                      targetPath: '$(Build.SourcesDirectory)\coverageNetCore'
+
+# test stages configurations
+  # self hosted SQL Server on Windows
+      testConfigurations:
+        windows_sql_19_x64: # configuration name
+          pool: ${{parameters.defaultPoolName }} # pool name
+          hostedPool: false # whether the pool is hosted or not
+          images: # list of images to run tests on
+            Win22_Sql19: ADO-MMS22-SQL19 # stage display name: image name from the pool
+          TargetFrameworks: ${{parameters.targetFrameworks }} #[net462, net8.0] # list of target frameworks to run
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
+          useManagedSNI: ${{parameters.useManagedSNI }} # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
+          configSqlFor: local # setup Sql Server (local | azure | enclave)
+          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            SQLRootPath: $(SQL19RootPath)
+            enableLocalDB: true
+            # instanceName: default: MSSQLSERVER
+            # user: default: $(user)
+            # saUser: default: $(saUser)
+            # fileStreamDirectory: default: ''
+            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
+            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
+            # SQLAliasName: default: $(SQLAliasName)
+            # SQLAliasPort: default: $(SQLAliasPort)
+            # databaseName: default: Northwind
+            # localDbAppName: default: $(LocalDbAppName)
+            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
+            # skipSqlConfiguration: # skips the SQL configuration step
+
+
+        windows_sql_19_x86: # configuration name
+          pool: ${{parameters.defaultPoolName }} # pool name
+          hostedPool: false # whether the pool is hosted or not
+          images: # list of images to run tests on
+            Win22_Sql19_x86: ADO-MMS22-SQL19 # stage display name: image name from the pool
+          TargetFrameworks: [net8.0] #[net462, net8.0] # list of target frameworks to run
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }} # [1, 2, 3] # list of test sets to run
+          useManagedSNI: [false] # can be used for .NET Core only tests on Windows: [false, true], [false] or [true] values are allowed
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }} # targeted frameworks that is going to participate in test result report generation
+          configSqlFor: local # setup Sql Server (local | azure | enclave)
+          operatingSystem: Windows # operating system to run tests on (Windows | Linux | Mac)
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            x86TestTargetFrameworks: [net8.0] # target frameworks should run tests on x86
+            SQLRootPath: $(SQL19RootPath)
+            enableLocalDB: true
+            # instanceName: default: MSSQLSERVER
+            # user: default: $(user)
+            # saUser: default: $(saUser)
+            # fileStreamDirectory: default: ''
+            # x64AliasRegistryPath: default: $(x64AliasRegistryPath)
+            # x86AliasRegistryPath: default: $(x86AliasRegistryPath)
+            # SQLAliasName: default: $(SQLAliasName)
+            # SQLAliasPort: default: $(SQLAliasPort)
+            # databaseName: default: Northwind
+            # localDbAppName: default: $(LocalDbAppName)
+            # localDbSharedInstanceName: default: $(LocalDbSharedInstanceName)
+            # skipSqlConfiguration: # skips the SQL configuration step
+
+
+        windows_sql_22_x64: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql22: ADO-MMS22-SQL22 
+          TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            SQLRootPath: $(SQL22RootPath)
+            enableLocalDB: true
+
+
+        windows_sql_22_x86: 
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql22_x86: ADO-MMS22-SQL22 
+          TargetFrameworks: [net462]
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [false]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            FileStreamDirectory: $(FileStreamDirectory)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+            # extra config properties
+            x86TestTargetFrameworks: [net462] # target frameworks should run tests on x86 as well
+            SQLRootPath: $(SQL22RootPath)
+            enableLocalDB: true
+
+
+        windows_sql_22_named_instance:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Win22_Sql22_named_instance: ADO-MMS22-SQL22-WITH-NAMED-INSTANCE
+          TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_INSTANCE_CONN_STRING)
+            NPConnectionString: $(SQL_NP_INSTANCE_CONN_STRING)
+            SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+            # extra config properties
+            SQLRootPath: $(SQL22RootPath)
+            instanceName: $(NamedInstance)
+
+
+    # Azure SQL Server - Windows
+        windows_azure_sql:
+          pool: ${{parameters.defaultPoolName }} 
+          images: 
+            Win22_Azure_Sql: ADO-MMS22-SQL19
+            win11_Azure_Sql: ADO-CI-Win11
+          TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: azure
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            AADAuthorityURL: $(AADAuthorityURL)
+            # Note: Using the isFork variable to determine if secrets are available is not ideal since
+            # it's an indirect association. But everything else (referencing secret variables various
+            # ways to detect if they were present) won't run consistently across forks and non-forks.
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: false
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        windows_azure_arm64_sql:
+          pool: ADO-CI-PUBLIC-ARM64-1ES-EUS-POOL
+          images: 
+            Win22_Azure_ARM64_Sql: ADO-WIN11-ARM64
+          TargetFrameworks: ${{parameters.targetFrameworks }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: ${{parameters.buildPlatforms }}
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: ${{parameters.useManagedSNI }}
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: azure
+          operatingSystem: Windows
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
+            NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
+            AADAuthorityURL: $(AADAuthorityURL)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
+            AADServicePrincipalId: $(AADServicePrincipalId)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: false
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId_eastus)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+          windows_enclave_sql:
+            pool: ADO-CI-AE-1ES-Pool
+            images: 
+              Win22_Enclave_Sql19: ADO-MMS22-SQL19
+            TargetFrameworks: ${{parameters.targetFrameworks }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: ${{parameters.buildPlatforms }}
+            testSets: [AE]
+            useManagedSNI: ${{parameters.useManagedSNI }}
+            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+            configSqlFor: enclave
+            operatingSystem: Windows
+            configProperties:
+              # config.json properties
+              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
+              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
+              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
+              EnclaveEnabled: true
+              AADAuthorityURL: $(AADAuthorityURL)
+              AADServicePrincipalId: $(AADServicePrincipalId)
+              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: $(SupportsIntegratedSecurity)
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              AliasName: $(SQLAliasName)            
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+    # self hosted SQL Server on Linux
+        linux_sql_19_22:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Ubuntu20_Sql22: ADO-UB20-SQL22
+          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Linux
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: false
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+            AliasName: $(SQLAliasName)
+
+    # Azure Sql Server - Linux
+        linux_azure_sql:
+          pool: ${{parameters.defaultPoolName }}
+          images:
+            Ubuntu20_Azure_Sql: ADO-UB20-Sql22
+          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: azure
+          operatingSystem: Linux
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
+            AADAuthorityURL: $(AADAuthorityURL)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
+            ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+              AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+            AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+            AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+            SupportsIntegratedSecurity: false
+            UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}: # only run enclave jobs if the password is available
+          linux_enclave_sql:
+            pool: ADO-CI-AE-1ES-Pool
+            images:
+              Ubuntu20_Enclave_Sql19: ADO-UB20-Sql22
+            TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: [AnyCPU]
+            testSets: [AE]
+            useManagedSNI: [true]
+            codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+            configSqlFor: enclave
+            operatingSystem: Linux
+            configProperties:
+              # config.json properties
+              TCPConnectionStringHGSVBS: $(SQL_TCP_CONN_STRING_HGSVBS)
+              TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
+              TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
+              EnclaveEnabled: true
+              AADServicePrincipalId: $(AADServicePrincipalId)
+              ${{ if eq(variables['system.pullRequest.isFork'], 'False') }}:
+                AADServicePrincipalSecret: $(AADServicePrincipalSecret)
+              AzureKeyVaultUrl: $(AzureKeyVaultUrl)
+              AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
+              SupportsIntegratedSecurity: false
+              UserManagedIdentityClientId: $(UserManagedIdentityClientId)
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+
+        # Self hosted SQL Server on Mac
+        mac_sql_22:
+          pool: $(defaultHostedPoolName)
+          hostedPool: true
+          images:
+            MacOSLatest_Sql22: macos-latest
+          TargetFrameworks: ${{parameters.targetFrameworksLinux }}
+          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+          buildPlatforms: [AnyCPU]
+          testSets: ${{parameters.testSets }}
+          useManagedSNI: [true]
+          codeCovTargetFrameworks: ${{parameters.codeCovTargetFrameworks }}
+          configSqlFor: local
+          operatingSystem: Mac
+          configProperties:
+            # config.json properties
+            TCPConnectionString: $(SQL_TCP_CONN_STRING)
+            NPConnectionString: $(SQL_NP_CONN_STRING)
+            SupportsIntegratedSecurity: false
+            ManagedIdentitySupported: false
+            LocalDbAppName: $(LocalDbAppName)
+            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)

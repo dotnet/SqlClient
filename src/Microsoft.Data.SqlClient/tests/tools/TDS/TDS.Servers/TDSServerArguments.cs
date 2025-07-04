@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.PreLogin;
 
@@ -70,6 +71,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public X509Certificate EncryptionCertificate { get; set; }
 
         /// <summary>
+        /// SSL/TLS protocols to use for transport encryption
+        /// </summary>
+        public SslProtocols EncryptionProtocols { get; set; }
+
+        /// <summary>
         /// Initialization constructor
         /// </summary>
         public TDSServerArguments()
@@ -87,7 +93,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             // By Default SQL authentication will be used.
             FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthNotRequired;
 
-            EncryptionCertificate = new X509Certificate2("TdsServerCertificate.pfx", "SecretPassword123456");
+            EncryptionCertificate = null;
+            EncryptionProtocols = SslProtocols.Tls12;
 
             ServerPrincipalName = AzureADServicePrincipalName;
             StsUrl = AzureADProductionTokenEndpoint;

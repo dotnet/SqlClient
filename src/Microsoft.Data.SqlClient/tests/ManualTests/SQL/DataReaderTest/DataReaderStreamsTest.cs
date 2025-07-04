@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Xml.Linq;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -16,10 +17,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class DataReaderStreamsTest
     {
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            // .NET Framework puts system enums in something called the Global
+            // Assembly Cache (GAC), and xUnit refuses to serialize enums that
+            // live there.  So for .NET Framework, we disable enumeration of the
+            // test data to avoid warnings on the console when running tests.
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
-            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
+            const int PacketSize = 512; // force minimum packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             byte[] originalData = CreateBinaryData(PacketSize, forcedPacketCount: 4);
             string query = CreateBinaryDataQuery(originalData);
@@ -52,7 +62,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
@@ -86,7 +101,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static async Task GetFieldValueAsync_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
@@ -120,7 +140,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static async Task GetFieldValueAsync_Char_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
@@ -153,9 +178,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
+        // Synapse: Cannot find data type 'XML'.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -188,8 +219,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -221,8 +257,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -255,8 +296,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetStream(CommandBehavior behavior, bool isExecuteAsync)
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -291,8 +337,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -325,8 +376,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
-        public static async void GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -359,7 +415,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
+        [MemberData(
+            nameof(GetCommandBehaviourAndAccessorTypes)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static void NullStreamProperties(CommandBehavior behavior, AccessorType accessorType)
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData, convert(varbinary(max),NULL) as StreamData";
@@ -444,7 +505,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
+        [MemberData(
+            nameof(GetCommandBehaviourAndAccessorTypes)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
         public static void InvalidCastExceptionStream(CommandBehavior behavior, AccessorType accessorType)
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData";
@@ -469,6 +535,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+#if !NETFRAMEWORK
+        [ConditionalFact(typeof(DataTestUtility),nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task ReadAsyncContentsCompletes()
+        {
+            string expectedXml = "<test>This is a test string</test>";
+            string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";
+
+            string returnedXml = null;
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                connection.Open();
+
+                await using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess).ConfigureAwait(false))
+                {
+                    while (await reader.ReadAsync().ConfigureAwait(false))
+                    {
+                        using (TextReader textReader = reader.GetTextReader(0))
+                        using (XmlReader xmlReader = XmlReader.Create(textReader, new XmlReaderSettings() { Async = true }))
+                        {
+                            XDocument xdoc = await XDocument.LoadAsync(xmlReader, LoadOptions.None, default).ConfigureAwait(false);
+                            returnedXml = xdoc.ToString();
+                        }
+                    }
+                }
+            }
+
+            Assert.Equal(expectedXml, returnedXml, StringComparer.Ordinal);
+        }
+#endif
 
         private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, CommandBehavior behavior, bool isExecuteAsync)
             => isExecuteAsync ? await command.ExecuteReaderAsync(behavior) : command.ExecuteReader(behavior);

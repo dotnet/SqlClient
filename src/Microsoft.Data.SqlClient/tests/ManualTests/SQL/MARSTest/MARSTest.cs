@@ -84,9 +84,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(connection.State == ConnectionState.Open, string.Format("Expected connection to be open after soft timeout, but it was {0}", connection.State));
 
                 Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-                FieldInfo field = type.GetField("_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
+                FieldInfo field = type.GetField("s_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
 
-                Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the _skipSendAttention test hook");
+                Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the s_skipSendAttention test hook");
 
                 field.SetValue(null, true);
                 try
@@ -132,9 +132,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(connection.State == ConnectionState.Open, string.Format("Expected connection to be open after soft timeout, but it was {0}", connection.State));
 
                 Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-                FieldInfo field = type.GetField("_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
+                FieldInfo field = type.GetField("s_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
 
-                Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the _skipSendAttention test hook");
+                Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the s_skipSendAttention test hook");
 
                 field.SetValue(null, true);
                 hitException = false;
@@ -162,8 +162,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 #endif
-
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parallel query execution on the same connection is not supported.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task MARSAsyncBusyReaderTest()
         {
             using SqlConnection con = new(_connStr);
@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteNonQueryTest()
+        public static async Task MARSAsyncExecuteNonQueryTest()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest1()
+        public static async Task MARSAsyncExecuteReaderTest1()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -412,7 +412,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest2()
+        public static async Task MARSAsyncExecuteReaderTest2()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -463,7 +463,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest3()
+        public static async Task MARSAsyncExecuteReaderTest3()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static async void MARSAsyncExecuteReaderTest4()
+        public static async Task MARSAsyncExecuteReaderTest4()
         {
             using SqlConnection con = new(_connStr);
             con.Open();
@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 catch (Exception e)
                 {
-                    Assert.False(true, "CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
+                    Assert.Fail("CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
                 }
                 finally
                 {

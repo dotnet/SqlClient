@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("ExecuteReaderAsync", 3)]
         [InlineData("ExecuteXmlReaderAsync", 3)]
         [InlineData("ExecuteNonQueryAsync", 3)]
-        public async void ValidateRetryCount_SqlCommand_Async(string methodName, int numOfTries)
+        public async Task ValidateRetryCount_SqlCommand_Async(string methodName, int numOfTries)
         {
             ErrorInfoRetryLogicProvider _errorInfoRetryProvider = new(
                 SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption()
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     default:
                         break;
                 }
-                Assert.False(true, "Exception did not occur.");
+                Assert.Fail("Exception did not occur.");
             }
             catch
             {
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     default:
                         break;
                 }
-                Assert.False(true, "Exception did not occur.");
+                Assert.Fail("Exception did not occur.");
             }
             catch
             {

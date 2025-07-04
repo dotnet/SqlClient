@@ -1,0 +1,142 @@
+﻿<docs>
+  <members name="SqlBatchCommand">
+    <SqlBatchCommand>
+      <summary>
+        SqlBatchCommand allows for the execution of multiple SQL commands in a SqlBatch.
+      </summary>
+    </SqlBatchCommand>
+    <ctor1>
+      <summary>
+        Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </summary>
+      <example>
+        The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a SqlBatch, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> . The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+
+                  var batch = new SqlBatch(connection);
+
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+
+                  // Optionally Prepare
+                  batch.Prepare();
+
+                  var results = new List&lt;int&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
+
+        </code>
+      </example>
+    </ctor1>
+    <ctor2>
+      <summary>
+        Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </summary>
+      <param name="commandText">
+        The text of the <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </param>
+      <param name="commandType">
+        Indicates how the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText" /> property is to be interpreted.
+      </param>
+      <param name="parameters">
+        A collection of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects is used to create the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
+      </param>
+      <param name="columnEncryptionSetting">
+        The encryption setting. For more information, see <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>.
+      </param>
+    </ctor2>
+    <Parameters>
+      <summary>
+        Gets the <see cref="T:Microsoft.Data.SqlClient.SqlParameterCollection" />.
+      </summary>
+      <value>
+        The parameters of the Transact-SQL statement or stored procedure. The default is an empty collection.
+      </value>
+    </Parameters>
+    <CommandBehavior>
+      <summary>
+        One of the <see cref="T:System.Data.CommandBehavior" /> values, indicating options for statement execution and data retrieval.
+      </summary>
+    </CommandBehavior>
+    <ColumnEncryptionSetting>
+      <summary>
+        Not currently implemented.
+        The encryption setting. For more information, see <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see>.
+      </summary>
+    </ColumnEncryptionSetting>
+    <CreateParameter>
+      <summary>
+        Creates a new instance of a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> object.
+      </summary>
+    </CreateParameter>
+    <CanCreateParameter>
+      <summary>
+        Returns whether the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CreateParameter" /> method is implemented.
+      </summary>
+    </CanCreateParameter>
+    <CommandText>
+      <summary>
+        Gets or sets the text command to run against the data source.
+      </summary>
+      <value>
+        The text command to execute. The default value is an empty string ("").
+      </value>
+    </CommandText>
+    <CommandType>
+      <summary>
+        Gets or sets how the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CommandText" /> property is interpreted.
+      </summary>
+      <value>
+        One of the enumeration values that specifies how a command string is interpreted. The default is <see cref="F:System.Data.CommandType.Text" />.
+      </value>
+    </CommandType>
+    <DbParameterCollection>
+      <summary>
+        Gets the collection of <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> objects.
+      </summary>
+      <value>
+        The parameters of the SQL statement or stored procedure.
+      </value>
+    </DbParameterCollection>
+    <RecordsAffected>
+      <summary>
+        Gets the number of rows changed, inserted, or deleted by execution of this specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" />.
+      </summary>
+      <value>
+        The number of rows changed, inserted, or deleted. -1 for SELECT statements; 0 if no rows were affected or the statement failed.
+      </value>
+    </RecordsAffected>
+  </members>
+</docs>

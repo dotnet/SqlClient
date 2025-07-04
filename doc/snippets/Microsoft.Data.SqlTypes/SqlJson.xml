@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<docs>
+  <members name="SqlJson">
+    <SqlJson>
+      <summary>Represents the JSON datatype in SQL Server.</summary>
+    </SqlJson>
+    <ctor1>
+      <summary>
+        Construct a new instance of the SqlJson class which represents a null
+        JSON value.
+      </summary>
+    </ctor1>
+    <ctor2>
+      <summary>
+        Construct a new instance of the SqlJson class with a serialized JSON
+        <see cref="string"/>.  The string is validated by parsing it with
+        <see cref="System.Text.Json.JsonDocument"/>.
+      </summary>
+      <param name="jsonString">
+        The serialized JSON string to use, or null.
+      </param>
+      <throw>
+        <exception cref="System.Text.Json.JsonException">
+          If the given string is not valid JSON.
+        </exception>
+      </throw>
+    </ctor2>
+    <ctor3>
+      <summary>
+        Construct a new instance of the SqlJson class with a
+        <see cref="System.Text.Json.JsonDocument"/>.  The serialized JSON string
+        from the document is saved.
+      </summary>
+      <param name="jsonDoc">
+        The document to use, or null.
+      </param>
+      <throw>
+        <exception cref="System.ObjectDisposedException">
+          If the given document has been disposed of.
+        </exception>
+      </throw>
+    </ctor3>
+    <IsNull>
+      <inheritdoc/>
+    </IsNull>
+    <Null>
+      <summary>
+        Represents a null instance of the <see cref="SqlJson"/> type.  This
+        instance is equivalent to calling the parameterless constructor, or
+        calling the other constructors with a null value.
+      </summary>
+    </Null>
+    <Value>
+      <summary>
+        Gets the serialized JSON string of this <see cref="SqlJson" /> instance.
+      </summary>
+      <throw>
+        <exception cref="System.Data.SqlTypes.SqlNullValueException">
+          If the JSON value is null.
+        </exception>
+      </throw>
+    </Value>
+    <ToString>
+      <summary>
+        Returns the serialized JSON string, or null.
+      </summary>
+    </ToString>
+  </members>
+</docs>

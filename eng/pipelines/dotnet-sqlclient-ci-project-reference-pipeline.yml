@@ -1,0 +1,86 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+name: $(DayOfYear)$(Rev:rr)
+trigger:
+  batch: true
+  branches:
+    include:
+    - main
+    - internal/main
+  paths:
+    include:
+    - src
+    - eng
+    - tools
+    - .config
+    - build.proj
+    - Nuget.config
+
+schedules:
+- cron: '0 5 * * Thu'
+  displayName: Weekly Wednesday 10:00 PM (UTC - 7) Build
+  branches:
+    include:
+    - internal/main
+  always: true
+
+parameters: # parameters are shown up in ADO UI in a build queue time
+- name: 'debug'
+  displayName: 'Enable debug output'
+  type: boolean
+  default: false
+
+- name: targetFrameworks
+  displayName: 'Target Frameworks on Windows'
+  type: object
+  default: [net462, net8.0, net9.0]
+
+- name: targetFrameworksLinux
+  displayName: 'Target Frameworks on Non-Windows'
+  type: object
+  default: [net8.0, net9.0]
+
+- name: buildPlatforms
+  displayName: 'Build Platforms on Windows'
+  type: object
+  default: [AnyCPU]
+
+- name: testSets
+  displayName: 'Test Sets'
+  type: object
+  default: [1, 2, 3]
+
+- name: useManagedSNI
+  displayName: |
+    Use Managed/Native SNI on Windows,
+    values [false, true], [false] or [true] are allowed
+  type: object
+  default: [false, true]
+
+- name: codeCovTargetFrameworks
+  displayName: 'Code Coverage Target Frameworks'
+  type: object
+  default: [net462, net8.0]
+
+- name: buildType
+  displayName: 'Build Type'
+  default: Project
+  values:
+    - Project
+    - Package
+
+extends:
+  template: dotnet-sqlclient-ci-core.yml@self
+  parameters:
+    debug: ${{ parameters.debug }}
+    targetFrameworks: ${{ parameters.targetFrameworks }}
+    targetFrameworksLinux: ${{ parameters.targetFrameworksLinux }}
+    buildPlatforms: ${{ parameters.buildPlatforms }}
+    testSets: ${{ parameters.testSets }}
+    useManagedSNI: ${{ parameters.useManagedSNI }}
+    codeCovTargetFrameworks: ${{ parameters.codeCovTargetFrameworks }}
+    buildType: ${{ parameters.buildType }}

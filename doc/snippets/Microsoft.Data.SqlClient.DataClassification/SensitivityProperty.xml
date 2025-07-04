@@ -1,44 +1,82 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SensitivityProperty">
-        <SensitivityProperty>
-            <summary>Represents the Data Classification Sensitivity Information for columns as configured in Database.</summary>
-        </SensitivityProperty>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> class.</summary>
-          <param name="label">Label for this SensitivityProperty.</param>
-          <param name="informationType">Information type for this SensitivityProperty.</param>
-          <param name="sensitivityRank">Sensitivity rank for this SensitivityProperty.</param>
-        </ctor>
-        <InformationType>
-            <summary>Returns the information type for this 'SensitivityProperty' Object</summary>
-            <value>Information type for this SensitivityProperty.</value>
-        </InformationType>
-        <Label>
-            <summary>Returns the label for this 'SensitivityProperty' Object</summary>
-            <value>Label for this SensitivityProperty.</value>
-        </Label>
-        <SensitivityRank>
-          <summary>Returns the sensitivity rank for this 'SensitivityProperty' Object</summary>
-          <value>Sensitivity rank for this SensitivityProperty.</value>
-          <remarks>
-            <format type="text/markdown">
-              <![CDATA[
-
-## Remarks
-A relative sensitivity ranking of a column that is part of percolumn data. Available values are as below:
-
-| Sensitivity Rank | Description |
-| --- | --- |
-| -1 | Not Defined (default) |
-| 0 | None |
-| 10 | Low |
-| 20 | Medium |
-| 30 | High |
-| 40 | Critical |
-]]>
-            </format>
-          </remarks>
-        </SensitivityRank>
-    </members>
+﻿<docs>
+  <members name="SensitivityProperty">
+    <SensitivityProperty>
+      <summary>
+        Represents the Data Classification Sensitivity Information for columns as configured in Database.
+      </summary>
+    </SensitivityProperty>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> class.
+      </summary>
+      <param name="label">
+        Label for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </param>
+      <param name="informationType">
+        Information type for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </param>
+      <param name="sensitivityRank">
+        Sensitivity rank for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </param>
+    </ctor>
+    <InformationType>
+      <summary>
+        Returns the information type for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> Object
+      </summary>
+      <value>
+        Information type for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </value>
+    </InformationType>
+    <Label>
+      <summary>
+        Returns the label for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> Object
+      </summary>
+      <value>
+        Label for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </value>
+    </Label>
+    <SensitivityRank>
+      <summary>
+        Returns the sensitivity rank for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" /> Object
+      </summary>
+      <value>
+        Sensitivity rank for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityProperty" />.
+      </value>
+      <remarks>
+        <para>
+          A relative sensitivity ranking of a column that is part of per column data. Available values are as below:
+        </para>
+        <list type="table">
+          <listheader>
+            <term>Sensitivity Rank</term>
+            <description>Description</description>
+          </listheader>
+          <item>
+            <term>-1</term>
+            <description>Not Defined (default)</description>
+          </item>
+          <item>
+            <term>0</term>
+            <description>None</description>
+          </item>
+          <item>
+            <term>10</term>
+            <description>Low</description>
+          </item>
+          <item>
+            <term>20</term>
+            <description>Medium</description>
+          </item>
+          <item>
+            <term>30</term>
+            <description>High</description>
+          </item>
+          <item>
+            <term>40</term>
+            <description>Critical</description>
+          </item>
+        </list>
+      </remarks>
+    </SensitivityRank>
+  </members>
 </docs>

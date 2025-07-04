@@ -11,7 +11,7 @@ insert_final_newline = true
 indent_style = space
 indent_size = 4
 
-[project.json]
+[*.{json,jsonc}]
 indent_size = 2
 
 # C# files
@@ -132,13 +132,25 @@ csharp_space_between_method_declaration_parameter_list_parentheses = false
 csharp_space_between_parentheses = false
 csharp_space_between_square_brackets = false
 
-# Xml project files
+# Analyzers
+
+dotnet_code_quality.ca1802.api_surface = private, internal
+
+# CA2000: Dispose objects before losing scope
+dotnet_diagnostic.CA2000.severity = suggestion
 
 # CA1063: Implement IDisposable Correctly
 dotnet_diagnostic.CA1063.severity = silent
 
 # CA2100: Review SQL queries for security vulnerabilities
 dotnet_diagnostic.CA2100.severity = silent
+
+# CA1416: Validate platform compatibility
+dotnet_diagnostic.CA1416.severity = silent
+
+dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*
+dotnet_diagnostic.xUnit1031.severity=none
+dotnet_diagnostic.xUnit1030.severity=none
 
 [*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
 indent_size = 2
@@ -160,9 +172,3 @@ indent_size = 2
 end_of_line = lf
 [*.{cmd, bat}]
 end_of_line = crlf
-
-# Analyzers
-dotnet_code_quality.ca1802.api_surface = private, internal
-
-[*.cs]
-dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*

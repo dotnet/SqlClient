@@ -1,47 +1,84 @@
 <docs>
-    <members name="SqlClientLogger">
-        <SqlClientLogger>
-            <summary>Represents a SQL client logger.</summary>
-            <remarks>To be added.</remarks>
-        </SqlClientLogger>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientLogger" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
-        <IsLoggingEnabled>
-            <summary>Gets a value that indicates whether bid tracing is enabled.</summary>
-            <value>
-            <see langword="true" /> if bid tracing is enabled; otherwise, <see langword="false" />.</value>
-            <remarks>To be added.</remarks>
-        </IsLoggingEnabled>
-        <LogAssert>
-            <param name="value"><see langword="false" /> to log the message; otherwise, <see langword="true" />.</param>
-            <param name="type">The type to be logged.</param>
-            <param name="method">The logging method.</param>
-            <param name="message">The message to be logged.</param>
-            <summary>Logs the specified message if <paramref name="value" /> is <see langword="false" />.</summary>
-            <returns><see langword="true" /> if the message is not logged; otherwise, <see langword="false" />.</returns>
-            <remarks>To be added.</remarks>
-        </LogAssert>
-        <LogError>
-            <param name="type">The type to be logged.</param>
-            <param name="method">The logging method.</param>
-            <param name="message">The message to be logged.</param>
-            <summary>Logs an error through a specified method of the current instance type.</summary>
-            <remarks>To be added.</remarks>
-        </LogError>
-        <LogInfo>
-            <param name="type">The type to be logged.</param>
-            <param name="method">The logging method.</param>
-            <param name="message">The message to be logged.</param>
-            <summary>Logs information through a specified method of the current instance type.</summary>
-            <remarks>To be added.</remarks>
-        </LogInfo>
-        <LogWarning>
-          <param name="type">The type to be logged.</param>
-          <param name="method">The logging method.</param>
-          <param name="message">The message to be logged.</param>
-          <summary>Logs warning through a specified method of the current instance type.</summary>
-        </LogWarning>
-    </members>
+  <members name="SqlClientLogger">
+    <SqlClientLogger>
+      <summary>
+        Represents a SQL client logger.
+      </summary>
+    </SqlClientLogger>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientLogger" /> class.
+      </summary>
+    </ctor>
+    <IsLoggingEnabled>
+      <summary>
+        Gets a value that indicates whether bid tracing is enabled.
+      </summary>
+      <value>
+        <see langword="true" /> if bid tracing is enabled; otherwise, <see langword="false" />.
+      </value>
+    </IsLoggingEnabled>
+    <LogAssert>
+      <param name="value">
+        <see langword="false" /> to log the message; otherwise, <see langword="true" />.
+      </param>
+      <param name="type">
+        The type to be logged.
+      </param>
+      <param name="method">
+        The logging method.
+      </param>
+      <param name="message">
+        The message to be logged.
+      </param>
+      <summary>
+        Logs the specified message if <paramref name="value" /> is <see langword="false" />.
+      </summary>
+      <returns>
+        <see langword="true" /> if the message is not logged; otherwise, <see langword="false" />.
+      </returns>
+    </LogAssert>
+    <LogError>
+      <param name="type">
+        The type to be logged.
+      </param>
+      <param name="method">
+        The logging method.
+      </param>
+      <param name="message">
+        The message to be logged.
+      </param>
+      <summary>
+        Logs an error through a specified method of the current instance type.
+      </summary>
+    </LogError>
+    <LogInfo>
+      <param name="type">
+        The type to be logged.
+      </param>
+      <param name="method">
+        The logging method.
+      </param>
+      <param name="message">
+        The message to be logged.
+      </param>
+      <summary>
+        Logs information through a specified method of the current instance type.
+      </summary>
+    </LogInfo>
+    <LogWarning>
+      <param name="type">
+        The type to be logged.
+      </param>
+      <param name="method">
+        The logging method.
+      </param>
+      <param name="message">
+        The message to be logged.
+      </param>
+      <summary>
+        Logs warning through a specified method of the current instance type.
+      </summary>
+    </LogWarning>
+  </members>
 </docs>

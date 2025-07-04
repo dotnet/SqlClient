@@ -18,6 +18,9 @@ namespace Microsoft.Data
             HResult = unchecked((int)0x80131936);
         }
 
+#if NET
+        [Obsolete]
+#endif
         private OperationAbortedException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }

@@ -12,6 +12,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Type s_sqlCommand = typeof(SqlCommand);
         private static MethodInfo s_completePendingReadWithSuccess = s_sqlCommand.GetMethod("CompletePendingReadWithSuccess", BindingFlags.NonPublic | BindingFlags.Instance);
         private static MethodInfo s_completePendingReadWithFailure = s_sqlCommand.GetMethod("CompletePendingReadWithFailure", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static MethodInfo s_invalidateEnclaveSession = s_sqlCommand.GetMethod("InvalidateEnclaveSession", BindingFlags.NonPublic | BindingFlags.Instance);
+#if DEBUG
+        private static FieldInfo s_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage =
+            s_sqlCommand.GetField(@"_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage", BindingFlags.NonPublic | BindingFlags.Static);
+#endif
         public static PropertyInfo s_debugForceAsyncWriteDelay = s_sqlCommand.GetProperty("DebugForceAsyncWriteDelay", BindingFlags.NonPublic | BindingFlags.Static);
         public static FieldInfo s_sleepDuringTryFetchInputParameterEncryptionInfo = s_sqlCommand.GetField(@"_sleepDuringTryFetchInputParameterEncryptionInfo", BindingFlags.Static | BindingFlags.NonPublic);
         public static PropertyInfo s_isDescribeParameterEncryptionRPCCurrentlyInProgress = s_sqlCommand.GetProperty(@"IsDescribeParameterEncryptionRPCCurrentlyInProgress", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -30,6 +35,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         {
             s_completePendingReadWithFailure.Invoke(command, new object[] { errorCode, resetForcePendingReadsToWait });
         }
+
+        internal static void InvalidateEnclaveSession(SqlCommand command)
+        {
+            s_invalidateEnclaveSession.Invoke(command, null);
+        }
+
+#if DEBUG
+        internal static void ForceThrowDuringGenerateEnclavePackage(SqlCommand command)
+        {
+            s_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage.SetValue(command, true);
+        }
+#endif
 
         internal static int ForceAsyncWriteDelay
         {

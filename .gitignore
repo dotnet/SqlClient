@@ -353,6 +353,9 @@ healthchecksdb
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 
+# JetBrains Rider (cross platform .NET IDE) working folder
+.idea/
+
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 

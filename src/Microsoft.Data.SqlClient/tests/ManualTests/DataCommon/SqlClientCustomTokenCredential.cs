@@ -3,23 +3,23 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.IdentityModel.Tokens.Jwt;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlClientCustomTokenCredential : TokenCredential
     {
+        private const string DEFAULT_PREFIX = "/.default";
+        private const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+
         string _authority = "";
         string _resource = "";
-        string _akvUrl = "";
 
         public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken) =>
             AcquireTokenAsync().GetAwaiter().GetResult();
@@ -31,11 +31,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // Added to reduce HttpClient calls.
             // For multi-user support, a better design can be implemented as needed.
-            if (_akvUrl != DataTestUtility.AKVUrl)
+            if (string.IsNullOrEmpty(_authority) || string.IsNullOrEmpty(_resource))
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    HttpResponseMessage response = await httpClient.GetAsync(DataTestUtility.AKVUrl);
+                    string akvUrl = new Uri(DataTestUtility.AKVBaseUri, $"/keys/{AKVKeyName}").AbsoluteUri;
+                    HttpResponseMessage response = await httpClient.GetAsync(akvUrl);
                     string challenge = response?.Headers.WwwAuthenticate.FirstOrDefault()?.ToString();
                     string trimmedChallenge = ValidateChallenge(challenge);
                     string[] pairs = trimmedChallenge.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
@@ -66,44 +67,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
-                // Since this is a test, we only create single-instance temp cache
-                _akvUrl = DataTestUtility.AKVUrl;
             }
 
-            string strAccessToken = await AzureActiveDirectoryAuthenticationCallback(_authority, _resource);
-            DateTime expiryTime = InterceptAccessTokenForExpiry(strAccessToken);
-            return new AccessToken(strAccessToken, new DateTimeOffset(expiryTime));
-        }
-
-        private DateTime InterceptAccessTokenForExpiry(string accessToken)
-        {
-            if (null == accessToken)
-            {
-                throw new ArgumentNullException(accessToken);
-            }
-
-            var jwtHandler = new JwtSecurityTokenHandler();
-            var jwtOutput = string.Empty;
-
-            // Check Token Format
-            if (!jwtHandler.CanReadToken(accessToken))
-                throw new FormatException(accessToken);
-
-            JwtSecurityToken token = jwtHandler.ReadJwtToken(accessToken);
-
-            // Re-serialize the Token Headers to just Key and Values
-            var jwtHeader = JsonConvert.SerializeObject(token.Header.Select(h => new { h.Key, h.Value }));
-            jwtOutput = $"{{\r\n\"Header\":\r\n{JToken.Parse(jwtHeader)},";
-
-            // Re-serialize the Token Claims to just Type and Values
-            var jwtPayload = JsonConvert.SerializeObject(token.Claims.Select(c => new { c.Type, c.Value }));
-            jwtOutput += $"\r\n\"Payload\":\r\n{JToken.Parse(jwtPayload)}\r\n}}";
-
-            // Output the whole thing to pretty JSON object formatted.
-            string jToken = JToken.Parse(jwtOutput).ToString(Formatting.Indented);
-            JToken payload = JObject.Parse(jToken).GetValue("Payload");
-
-            return new DateTime(1970, 1, 1).AddSeconds((long)payload[4]["Value"]);
+            AccessToken accessToken = await AzureActiveDirectoryAuthenticationCallback(_authority, _resource);
+            return accessToken;
         }
 
         private static string ValidateChallenge(string challenge)
@@ -114,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string trimmedChallenge = challenge.Trim();
 
-            if (!trimmedChallenge.StartsWith(Bearer))
+            if (!trimmedChallenge.StartsWith(Bearer, StringComparison.Ordinal))
                 throw new ArgumentException("Challenge is not Bearer", nameof(challenge));
 
             return trimmedChallenge.Substring(Bearer.Length);
@@ -127,16 +94,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="authority">Authorization URL</param>
         /// <param name="resource">Resource</param>
         /// <returns></returns>
-        public static async Task<string> AzureActiveDirectoryAuthenticationCallback(string authority, string resource)
+        public static async Task<AccessToken> AzureActiveDirectoryAuthenticationCallback(string authority, string resource)
         {
-            var authContext = new AuthenticationContext(authority);
-            ClientCredential clientCred = new ClientCredential(DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            AuthenticationResult result = await authContext.AcquireTokenAsync(resource, clientCred);
-            if (result == null)
-            {
-                throw new InvalidOperationException($"Failed to retrieve an access token for {resource}");
-            }
-            return result.AccessToken;
+            using CancellationTokenSource cts = new();
+            cts.CancelAfter(30000); // Hard coded for tests
+            string[] scopes = new string[] { resource + DEFAULT_PREFIX };
+            TokenRequestContext tokenRequestContext = new(scopes);
+            int separatorIndex = authority.LastIndexOf('/');
+            string authorityHost = authority.Remove(separatorIndex + 1);
+            string audience = authority.Substring(separatorIndex + 1);
+            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authorityHost) };
+            AccessToken accessToken = await DataTestUtility.GetTokenCredential().GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
+            return accessToken;
         }
     }
 }

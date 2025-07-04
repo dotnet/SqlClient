@@ -1,0 +1,67 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: symbolsFolder
+    type: string
+    default: symbols
+
+  - name: softwareFolder
+    type: string
+    default: software
+
+  - name: publishSymbols
+    type: boolean
+
+  - name: isPreview
+    type: boolean
+
+jobs:
+- job: build_signed_package
+  displayName: 'Build Signed MDS Package'
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    
+  variables:
+  - template: ../../../libraries/variables.yml@self
+  - ${{ if parameters.isPreview }}:
+    - name: NugetPackageVersion
+      value: $(PreviewNugetPackageVersion)
+
+  steps:
+  - script: SET
+    displayName: 'Print Environment Variables'
+
+  - powershell: |
+      Write-Host "##vso[task.setvariable variable=CDP_BUILD_TYPE_COPY;isOutput=true]$($env:CDP_BUILD_TYPE)"
+    name: GetBuildType
+  
+  - template: ../steps/build-all-configurations-signed-dlls-step.yml@self
+  
+  - template: ../steps/code-analyze-step.yml@self
+    parameters:
+      analyzeType: all
+  
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: dll
+  
+  - template: ../steps/generate-nuget-package-step.yml@self
+    parameters:
+      OutputDirectory: $(artifactDirectory)
+  
+  - template: ../steps/esrp-code-signing-step.yml@self
+    parameters:
+      artifactType: pkg
+  
+  - template: ../steps/copy-dlls-for-test-step.yml@self
+    parameters:
+      product: MDS
+
+  # Publish symbols to servers
+  - template: ../steps/publish-symbols-step.yml@self
+    parameters:
+      publishSymbols: ${{ parameters['PublishSymbols'] }}
+      symbolsArtifactName: mds_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_$(NuGetPackageVersion)_$(System.TimelineId)

@@ -1,22 +1,26 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlRowUpdatingEventHandler">
-        <SqlRowUpdatingEventHandler>
-            <param name="sender">The source of the event.</param>
-            <param name="e">The <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> that contains the event data.</param>
-            <summary>Represents the method that will handle the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event of a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The handler is not required to perform any action, and your code should avoid generating exceptions or allowing exceptions to propagate to the calling method. Any exceptions that do reach the caller are ignored.  
-  
- The handler may use the <xref:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs> to influence the processing of the updates. For example, the handler may opt to skip the update of the current row or skip the update of all remaining rows. Note that the rows are updated in the order that they were received from the data source.  
-  
- When you create a <xref:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see [Handling and Raising Events](/dotnet/standard/events/).  
-  
- ]]></format>
-            </remarks>
-        </SqlRowUpdatingEventHandler>
-    </members>
+﻿<docs>
+  <members name="SqlRowUpdatingEventHandler">
+    <SqlRowUpdatingEventHandler>
+      <param name="sender">
+        The source of the event.
+      </param>
+      <param name="e">
+        The <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> that contains the event data.
+      </param>
+      <summary>
+        Represents the method that will handle the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event of a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
+      </summary>
+      <remarks>
+        <para>
+          The handler is not required to perform any action, and your code should avoid generating exceptions or allowing exceptions to propagate to the calling method. Any exceptions that do reach the caller are ignored.
+        </para>
+        <para>
+          The handler may use the <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> to influence the processing of the updates. For example, the handler may opt to skip the update of the current row or skip the update of all remaining rows. Note that the rows are updated in the order that they were received from the data source.
+        </para>
+        <para>
+          When you create a <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> delegate, you identify the method that will handle the event. To associate the event with your event handler, add an instance of the delegate to the event. The event handler is called whenever the event occurs, unless you remove the delegate. For more information about event handler delegates, see <see href="https://learn.microsoft.com/dotnet/standard/events/">Handling and Raising Events</see>.
+        </para>
+      </remarks>
+    </SqlRowUpdatingEventHandler>
+  </members>
 </docs>

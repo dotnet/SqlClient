@@ -11,17 +11,25 @@ using System.Data.OleDb;
 #endif
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class MetaType
     {
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         internal readonly Type ClassType;   // com+ type
+#if NET
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
         internal readonly Type SqlType;
 
         internal readonly int FixedLength; // fixed length size in bytes (-1 for variable)
@@ -55,7 +63,24 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool Is90Supported;
         internal readonly bool Is100Supported;
 
-        public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName, Type classType, Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
+        // SqlVector Element Types
+        //
+        // These underlying values must match the vector "dimension type" values
+        // in the TDS protocol.
+        internal enum SqlVectorElementType : byte
+        {
+            Float32 = 0x00
+        }
+
+        public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+            Type classType,
+#if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+            Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
         {
             Precision = precision;
             Scale = scale;
@@ -108,6 +133,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char ||
             type == SqlDbType.VarChar ||
             type == SqlDbType.Text ||
+            type == SqlDbTypeExtensions.Json ||
             type == SqlDbType.Xml;
 
         private static bool _IsNCharType(SqlDbType type) =>
@@ -122,6 +148,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.VarBinary ||
             type == SqlDbType.Timestamp ||
             type == SqlDbType.Udt ||
+            type == SqlDbTypeExtensions.Vector ||
             (int)type == 24 /*SqlSmallVarBinary*/;
 
         private static bool _Is70Supported(SqlDbType type) =>
@@ -211,6 +238,10 @@ namespace Microsoft.Data.SqlClient
                     return MetaXml;
                 case SqlDbType.Udt:
                     return MetaUdt;
+                case SqlDbTypeExtensions.Json:
+                    return s_MetaJson;
+                case SqlDbTypeExtensions.Vector:
+                    return s_MetaVector;
                 case SqlDbType.Structured:
                     if (isMultiValued)
                     {
@@ -347,6 +378,10 @@ namespace Microsoft.Data.SqlClient
                         return s_metaReal;
                     else if (dataType == typeof(SqlXml))
                         return MetaXml;
+                    else if (dataType == typeof(SqlJson))
+                        return s_MetaJson;
+                    else if (dataType == typeof(SqlVector<float>))
+                        return s_MetaVector;
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -365,6 +400,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         return MetaDateTimeOffset;
                     }
+#if NET
+                    else if (dataType == typeof(DateOnly))
+                    {
+                        return s_metaDate;
+                    }
+                    else if (dataType == typeof(TimeOnly))
+                    {
+                        return MetaTime;
+                    }
+#endif
                     else
                     {
                         // UDT ?
@@ -578,7 +623,7 @@ namespace Microsoft.Data.SqlClient
         internal static object GetSqlValueFromComVariant(object comVal)
         {
             object sqlVal = null;
-            if ((null != comVal) && (DBNull.Value != comVal))
+            if (comVal != null && (DBNull.Value != comVal))
             {
                 switch (comVal)
                 {
@@ -630,6 +675,10 @@ namespace Microsoft.Data.SqlClient
                         break;
                     case TimeSpan:
                     case DateTimeOffset:
+#if NET
+                    case TimeOnly:
+                    case DateOnly:
+#endif
                         sqlVal = comVal;
                         break;
                     default:
@@ -739,7 +788,7 @@ namespace Microsoft.Data.SqlClient
                     break; // no direct mapping, just use SqlDbType.Variant;
             }
             return sqlType;
-#else 
+#else
             // OleDbTypes not supported
             return SqlDbType.Variant;
 #endif // NETFRAMEWORK
@@ -833,6 +882,10 @@ namespace Microsoft.Data.SqlClient
                     return s_metaDateTime2;
                 case TdsEnums.SQLDATETIMEOFFSET:
                     return MetaDateTimeOffset;
+                case TdsEnums.SQLJSON:
+                    return s_MetaJson;
+                case TdsEnums.SQLVECTOR:
+                    return s_MetaVector;
 
                 case TdsEnums.SQLVOID:
                 default:
@@ -939,6 +992,10 @@ namespace Microsoft.Data.SqlClient
 
         internal static readonly MetaType MetaDateTimeOffset = new(255, 7, -1, false, false, false, TdsEnums.SQLDATETIMEOFFSET, TdsEnums.SQLDATETIMEOFFSET, MetaTypeName.DATETIMEOFFSET, typeof(System.DateTimeOffset), typeof(System.DateTimeOffset), SqlDbType.DateTimeOffset, DbType.DateTimeOffset, 1);
 
+        internal static readonly MetaType s_MetaJson = new(255, 255, -1, false, true, true, TdsEnums.SQLJSON, TdsEnums.SQLJSON, MetaTypeName.JSON, typeof(string), typeof(string), SqlDbTypeExtensions.Json, DbType.String, 0);
+
+        internal static readonly MetaType s_MetaVector = new(255, 255, -1, false, false, false, TdsEnums.SQLVECTOR, TdsEnums.SQLVECTOR, MetaTypeName.VECTOR, typeof(byte[]), typeof(SqlBinary), SqlDbTypeExtensions.Vector, DbType.Binary, 2);
+
         public static TdsDateTime FromDateTime(DateTime dateTime, byte cb)
         {
             SqlDateTime sqlDateTime;
@@ -988,6 +1045,21 @@ namespace Microsoft.Data.SqlClient
             return 5;
         }
 
+        internal static int GetVectorElementSize(byte type)
+        {
+            switch (type)
+            {
+                case 0: return sizeof(float);
+                default:
+                    throw SQL.VectorTypeNotSupported(type.ToString());
+            }
+        }
+
+        internal static int GetVectorElementCount(int size, byte elementType)
+        {
+            return (size - TdsEnums.VECTOR_HEADER_SIZE) / GetVectorElementSize(elementType);
+        }
+
         //
         // please leave string sorted alphabetically
         // note that these names should only be used in the context of parameters.  We always send over BIG* and nullable types for SQL Server
@@ -1025,6 +1097,8 @@ namespace Microsoft.Data.SqlClient
             public const string TIME = "time";
             public const string DATETIME2 = "datetime2";
             public const string DATETIMEOFFSET = "datetimeoffset";
+            public const string JSON = "json";
+            public const string VECTOR = "vector";
         }
     }
 

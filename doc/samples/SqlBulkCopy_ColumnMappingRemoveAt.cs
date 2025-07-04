@@ -116,7 +116,7 @@ class Program
                     bulkCopy.DestinationTableName = "dbo.BulkCopyDemoOrderDetail";
 
                     // Rather than clearing mappings that are not necessary
-                    // for the next bulk copyo peration, the unneeded mappings
+                    // for the next bulk copy operation, the unneeded mappings
                     //  are removed with the RemoveAt method.
                     bulkCopy.ColumnMappings.RemoveAt(2);
                     bulkCopy.ColumnMappings.RemoveAt(1);

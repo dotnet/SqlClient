@@ -1,56 +1,313 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="Format">
-        <Format>
-            <summary>Used by <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> and <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute" /> to indicate the serialization format of a user-defined type (UDT) or aggregate.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-
-## Remarks 
-
-This enumeration is used by <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute> and <xref:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute> to indicate the serialization format of a user-defined type (UDT) or aggregate. Use of the `Native` and `UserDefined` enumeration members has special requirements.   
-
-- `Format.Native`
-   The requirements for the `Format.Native` format are:  
-
-   - The <xref:System.Runtime.InteropServices.StructLayoutAttribute> with a <xref:System.Runtime.InteropServices.StructLayoutAttribute.Value> property value of <xref:System.Runtime.InteropServices.LayoutKind.Sequential?displayProperty=nameWithType> must be applied to the aggregate or UDT if it is defined in a class and not a structure. This controls the physical layout of the data fields and is used to force the members to be laid out sequentially in the order they appear. SQL Server uses this attribute to determine the field order for UDTs with multiple fields.
-
-   - The type must contain at least one member (serialized values cannot be zero bytes in size).  
-
-   - All the fields of the aggregate must be *blittable*; that is, they must have a common representation in both managed and unmanaged memory and not require special handling by the interop marshaler.  
-
-   - All the fields of the UDT should be of one of the following types that can be serialized: `bool`, `byte`, `sbyte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `float`, `double`, <xref:System.Data.SqlTypes.SqlByte>, <xref:System.Data.SqlTypes.SqlInt16>, <xref:System.Data.SqlTypes.SqlInt32>, <xref:System.Data.SqlTypes.SqlInt64>, <xref:System.Data.SqlTypes.SqlDateTime>, <xref:System.Data.SqlTypes.SqlSingle>, <xref:System.Data.SqlTypes.SqlDouble>, <xref:System.Data.SqlTypes.SqlMoney>, or other value types defined by the user that contain fields of one of these types.  
-   - The aggregate must not specify a value for `MaxByteSize`.  
-
-   - The aggregate must not have any [NonSerialized] fields.  
-
-   - Fields must not be marked as an explicit layout (with a <xref:System.Runtime.InteropServices.StructLayoutAttribute.Value?displayProperty=nameWithType> of <xref:System.Runtime.InteropServices.LayoutKind.Explicit?displayProperty=nameWithType>).  
-- `Format.UserDefined`
-   The requirements for the `Format.UserDefined` format are:
-   - The aggregate must specify a value for `MaxByteSize`.  
-
-   - Specify the <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered%2A?displayProperty=nameWithType> attribute property. The default value is `false`.  
-
-   - If you omit any field in the <xref:Microsoft.SqlServer.Server.IBinarySerialize.Read%2A?displayProperty=nameWithType> or <xref:Microsoft.SqlServer.Server.IBinarySerialize.Write%2A?displayProperty=nameWithType> methods, the state of that field is not serialized.  
-
-## Examples  
-
-The following example shows the `UserDefinedType` attribute of the Point UDT.  The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.  
-
-[!code-csharp[SqlUserDefinedTypeAttribute Example#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/DataWorks_SqlUserDefinedTypeAttribute_Sample.cs#1)]
-[!code-vb[SqlUserDefinedTypeAttribute Example#1](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/visualbasic/DataWorks_SqlUserDefinedTypeAttribute_Sample.vb#1)]
-
- ]]></format>
-            </remarks>
-        </Format>
-        <Native>
-            <summary>This serialization format uses a very simple algorithm that enables SQL Server to store an efficient representation of the UDT on disk. Types marked for <see langword="Native" /> serialization can only have value types (structs in Microsoft Visual C# and structures in Microsoft Visual Basic .NET) as members. Members of reference types (such as classes in Visual C# and Visual Basic), either user-defined or those existing in .NET class libraries (such as <see cref="T:System.String" />), are not supported.</summary>
-        </Native>
-        <Unknown>
-            <summary>The serialization format is unknown.</summary>
-        </Unknown>
-        <UserDefined>
-            <summary>This serialization format gives the developer full control over the binary format through the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> and <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> methods.</summary>
-        </UserDefined>
-    </members>
+﻿<docs>
+  <members name="Format">
+    <Format>
+      <summary>
+        Used by <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> and <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute" /> to indicate the serialization format of a user-defined type (UDT) or aggregate.
+      </summary>
+      <remarks>
+        <para>
+          This enumeration is used by <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> and <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedAggregateAttribute" /> to indicate the serialization format of a user-defined type (UDT) or aggregate. Use of the <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> and <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" /> enumeration members has special requirements.
+        </para>
+        <para>
+          The requirements for the <see cref="F:Microsoft.SqlServer.Server.Format.Native" /> format are:
+        </para>
+        <list type="bullet">
+          <item><description>
+            The <see cref="T:System.Runtime.InteropServices.StructLayoutAttribute" /> with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> property value of <see cref="F:System.Runtime.InteropServices.LayoutKind.Sequential" /> must be applied to the aggregate or UDT if it is defined in a class and not a structure. This controls the physical layout of the data fields and is used to force the members to be laid out sequentially in the order they appear. SQL Server uses this attribute to determine the field order for UDTs with multiple fields.
+          </description></item>
+          <item><description>
+            The type must contain at least one member (serialized values cannot be zero bytes in size).
+          </description></item>
+          <item><description>
+            All the fields of the aggregate must be <i>blittable</i>; that is, they must have a common representation in both managed and unmanaged memory and not require special handling by the interop marshaller.
+          </description></item>
+          <item><description>
+            All the fields of the UDT should be of one of the following types that can be serialized: <c>bool</c>, <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>, <c>int</c>, <c>uint</c>, <c>long</c>, <c>ulong</c>, <c>float</c>, <c>double</c>, <see cref="T:System.Data.SqlTypes.SqlByte" />, <see cref="T:System.Data.SqlTypes.SqlInt16" />, <see cref="T:System.Data.SqlTypes.SqlInt32" />, <see cref="T:System.Data.SqlTypes.SqlInt64" />, <see cref="T:System.Data.SqlTypes.SqlDateTime" />, <see cref="T:System.Data.SqlTypes.SqlSingle" />, <see cref="T:System.Data.SqlTypes.SqlDouble" />, <see cref="T:System.Data.SqlTypes.SqlMoney" />, or other value types defined by the user that contain fields of one of these types.
+          </description></item>
+          <item><description>
+            The aggregate must not specify a value for <c>MaxByteSize</c>
+          </description></item>
+          <item><description>
+            The aggregate must not have any <c>[NonSerialized]</c> fields.
+          </description></item>
+          <item><description>
+            Fields must not be marked as an explicit layout (with a <see cref="P:System.Runtime.InteropServices.StructLayoutAttribute.Value" /> of <see cref="F:System.Runtime.InteropServices.LayoutKind.Explicit" /> ).
+          </description></item>
+        </list>
+        <para>
+          The requirements for the <see cref="F:Microsoft.SqlServer.Server.Format.UserDefined" /> format are:
+        </para>
+        <list type="bullet">
+          <item><description>
+            The aggregate must specify a value for <c>MaxByteSize</c>
+          </description></item>
+          <item><description>
+            Specify the <see cref="P:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered" /> attribute property. The default value is <see langword="false" />.
+          </description></item>
+          <item><description>
+            If you omit any field in the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> or <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> methods, the state of that field is not serialized.
+          </description></item>
+        </list>
+      </remarks>
+      <example>
+        <para>
+          The following example shows the <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> attribute of the Point UDT. The UDT is byte-ordered, is named "Point", has a validation method named "ValidatePoint", and uses the native serialization format.
+        </para>
+        <!-- DataWorks_SqlUserDefinedTypeAttribute -->
+        <code language="c#">
+          using System;
+          using System.Data.SqlTypes;
+          using Microsoft.SqlServer.Server;
+          using System.Text;
+          
+          [Serializable]
+          [Microsoft.SqlServer.Server.SqlUserDefinedType(
+               Format.Native,
+               IsByteOrdered=true,
+               Name="Point",ValidationMethodName = "ValidatePoint")]
+          public struct Point : INullable
+          {
+              private bool is_Null;
+              private int _x;
+              private int _y;
+          
+              public bool IsNull
+              {
+                  get
+                  {
+                      return (is_Null);
+                  }
+              }
+          
+              public static Point Null
+              {
+                  get
+                  {
+                      Point pt = new Point();
+                      pt.is_Null = true;
+                      return pt;
+                  }
+              }
+          
+              // Use StringBuilder to provide string representation of UDT.
+              public override string ToString()
+              {
+                  // Since InvokeIfReceiverIsNull defaults to 'true'
+                  // this test is unnecessary if Point is only being called
+                  // from SQL.
+                  if (this.IsNull)
+                  {
+                      return "NULL";
+                  }
+                  else
+                  {
+                      StringBuilder builder = new StringBuilder();
+                      builder.Append(_x);
+                      builder.Append(",");
+                      builder.Append(_y);
+                      return builder.ToString();
+                  }
+              }
+          
+              [SqlMethod(OnNullCall = false)]
+              public static Point Parse(SqlString s)
+              {
+                  // With OnNullCall=false, this check is unnecessary if
+                  // Point only called from SQL.
+                  if (s.IsNull)
+                      return Null;
+          
+                  // Parse input string to separate out points.
+                  Point pt = new Point();
+                  string[] xy = s.Value.Split(",".ToCharArray());
+                  pt.X = int.Parse(xy[0]);
+                  pt.Y = int.Parse(xy[1]);
+          
+                  // Call ValidatePoint to enforce validation
+                  // for string conversions.
+                  if (!pt.ValidatePoint())
+                      throw new ArgumentException("Invalid XY coordinate values.");
+                  return pt;
+              }
+          
+              // X and Y coordinates exposed as properties.
+              public int X
+              {
+                  get
+                  {
+                      return this._x;
+                  }
+                  // Call ValidatePoint to ensure valid range of Point values.
+                  set
+                  {
+                      int temp = _x;
+                      _x = value;
+                      if (!ValidatePoint())
+                      {
+                          _x = temp;
+                          throw new ArgumentException("Invalid X coordinate value.");
+                      }
+                  }
+              }
+          
+              public int Y
+              {
+                  get
+                  {
+                      return this._y;
+                  }
+                  set
+                  {
+                      int temp = _y;
+                      _y = value;
+                      if (!ValidatePoint())
+                      {
+                          _y = temp;
+                          throw new ArgumentException("Invalid Y coordinate value.");
+                      }
+                  }
+              }
+          
+              // Validation method to enforce valid X and Y values.
+              private bool ValidatePoint()
+              {
+                  return true;
+              }
+          }
+        </code>
+        <!-- DataWorks_SqlUserDefinedTypeAttribute_Sample -->
+        <code langugae="vb">
+          Option Explicit On
+          Option Strict On
+          
+          Imports System.Data.SqlTypes
+          Imports Microsoft.SqlServer.Server
+          Imports System.Text
+          
+          &lt;Serializable(), SqlUserDefinedTypeAttribute(_
+            Format.Native, _
+            IsByteOrdered:=True, _
+            Name:="Point", _
+            ValidationMethodName:="ValidatePoint")&gt; _
+            Public Structure Point
+              Implements INullable
+              Private is_Null As Boolean
+              Private _x As Integer
+              Private _y As Integer
+          
+              Public ReadOnly Property IsNull() As Boolean _
+                 Implements INullable.IsNull
+                  Get
+                      Return (is_Null)
+                  End Get
+              End Property
+          
+              Public Shared ReadOnly Property Null() As Point
+                  Get
+                      Dim pt As New Point
+                      pt.is_Null = True
+                      Return (pt)
+                  End Get
+              End Property
+          
+              ' Use StringBuilder to provide string representation of UDT.
+              Public Overrides Function ToString() As String
+                  ' Since InvokeIfReceiverIsNull defaults to 'true'
+                  ' this test is unnecessary if Point is only being called
+                  ' from SQL.
+                  If Me.IsNull Then
+                      Return "NULL"
+                  Else
+                      Dim builder As StringBuilder = New StringBuilder
+                      builder.Append(_x)
+                      builder.Append(",")
+                      builder.Append(_y)
+                      Return builder.ToString
+                  End If
+              End Function
+          
+              &lt;SqlMethod(OnNullCall:=False)&gt; _
+              Public Shared Function Parse(ByVal s As SqlString) As Point
+                  ' With OnNullCall=False, this check is unnecessary if
+                  ' Point only being called from SQL.
+                  If s.IsNull Then
+                      Return Null
+                  End If
+          
+                  ' Parse input string here to separate out points.
+                  Dim pt As New Point()
+                  Dim xy() As String = s.Value.Split(",".ToCharArray())
+                  pt.X = Integer.Parse(xy(0))
+                  pt.Y = Integer.Parse(xy(1))
+          
+                  ' Call ValidatePoint to enforce validation
+                  ' for string conversions.
+                  If Not pt.ValidatePoint() Then
+                      Throw New ArgumentException("Invalid XY coordinate values.")
+                  End If
+                  Return pt
+              End Function
+          
+              ' X and Y coordinates are exposed as properties.
+              Public Property X() As Integer
+                  Get
+                      Return (Me._x)
+                  End Get
+          
+                  Set(ByVal Value As Integer)
+                      Dim temp As Integer = _x
+                      _x = Value
+                      If Not ValidatePoint() Then
+                          _x = temp
+                          Throw New ArgumentException("Invalid X coordinate value.")
+                      End If
+                  End Set
+              End Property
+          
+              Public Property Y() As Integer
+                  Get
+                      Return (Me._y)
+                  End Get
+          
+                  Set(ByVal Value As Integer)
+                      Dim temp As Integer = _y
+                      _y = Value
+                      If Not ValidatePoint() Then
+                          _y = temp
+                          Throw New ArgumentException("Invalid Y coordinate value.")
+                      End If
+                  End Set
+              End Property
+          
+              ' Validation method to enforce valid X and Y values.
+              Private Function ValidatePoint() As Boolean
+                  ' Allow only zero or positive integers for X and Y coordinates.
+                  If (_x >= 0) And (_y >= 0) Then
+                      Return True
+                  Else
+                      Return False
+                  End If
+              End Function
+          
+          End Structure
+        </code>
+      </example>
+    </Format>
+    <Native>
+      <summary>
+        This serialization format uses a very simple algorithm that enables SQL Server to store an efficient representation of the UDT on disk. Types marked for
+        <b>Native</b> serialization can only have value types (structs in Microsoft Visual C# and structures in Microsoft Visual Basic .NET) as members. Members of reference types (such as classes in Visual C# and Visual Basic), either user-defined or those existing in .NET class libraries (such as <see cref="T:System.String" />), are not supported.
+      </summary>
+    </Native>
+    <Unknown>
+      <summary>
+        The serialization format is unknown.
+      </summary>
+    </Unknown>
+    <UserDefined>
+      <summary>
+        This serialization format gives the developer full control over the binary format through the <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Write(System.IO.BinaryWriter)" /> and <see cref="M:Microsoft.SqlServer.Server.IBinarySerialize.Read(System.IO.BinaryReader)" /> methods.
+      </summary>
+    </UserDefined>
+  </members>
 </docs>

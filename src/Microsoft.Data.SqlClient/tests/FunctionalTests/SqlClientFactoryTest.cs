@@ -21,40 +21,39 @@ namespace Microsoft.Data.SqlClient.Tests
 
         public static readonly object[][] FactoryMethodTestData =
         {
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateCommand), typeof(SqlCommand) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateCommandBuilder), typeof(SqlCommandBuilder) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnection), typeof(SqlConnection) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnectionStringBuilder), typeof(SqlConnectionStringBuilder) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateDataAdapter), typeof(SqlDataAdapter) },
-            new object[] { new Func<object>(SqlClientFactory.Instance.CreateParameter), typeof(SqlParameter) },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateCommand), typeof(SqlCommand), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateCommandBuilder), typeof(SqlCommandBuilder), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnection), typeof(SqlConnection), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateConnectionStringBuilder), typeof(SqlConnectionStringBuilder), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateDataAdapter), typeof(SqlDataAdapter), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateParameter), typeof(SqlParameter), false },
+            new object[] { new Func<object>(SqlClientFactory.Instance.CreateDataSourceEnumerator), typeof(Microsoft.Data.Sql.SqlDataSourceEnumerator), true },
         };
 
         [Theory]
-        [MemberData(nameof(FactoryMethodTestData))]
-        public void FactoryMethodTest(Func<object> factory, Type expectedType)
+        [MemberData(
+            nameof(FactoryMethodTestData),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
+        public void FactoryMethodTest(Func<object> factory, Type expectedType, bool singleton)
         {
             object value1 = factory();
             Assert.NotNull(value1);
             Assert.IsType(expectedType, value1);
 
-            object value2 = factory();
-            Assert.NotNull(value2);
-            Assert.IsType(expectedType, value2);
+            if (!singleton)
+            {
+                object value2 = factory();
+                Assert.NotNull(value2);
+                Assert.IsType(expectedType, value2);
 
-            Assert.NotSame(value1, value2);
+                Assert.NotSame(value1, value2);
+            }
         }
 
 #if NETFRAMEWORK
-        [Fact]
-        public void FactoryCreateDataSourceEnumerator()
-        {
-            // Unable to cover the in the FactoryMethodTest because the SqlDataSourceEnumerator is a singleton so, it's always the same.
-            object instance = SqlClientFactory.Instance.CreateDataSourceEnumerator();
-            // SqlDataSourceEnumerator is not available for .NET core 3.1 and above, so the type check is only for .NET Framework.
-            Assert.IsType<SqlDataSourceEnumerator>(instance);
-            Assert.NotNull(instance);
-        }
-
         [Fact]
         public void FactoryGetService()
         {

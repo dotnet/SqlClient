@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
             }
 
-            Debug.Assert(null != factory, "Null Algorithm Factory class detected");
+            Debug.Assert(factory != null, "Null Algorithm Factory class detected");
 
             // If the factory exists, following method will Create an algorithm object. If this fails,
             // it will raise an exception.

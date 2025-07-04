@@ -2,7 +2,7 @@
   <members name="ActiveDirectoryAuthenticationProvider">
     <ActiveDirectoryAuthenticationProvider>
       <summary>
-      This class implements <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> and is used for active directory federated authentication mechanisms.
+        This class implements <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> and is used for active directory federated authentication mechanisms.
       </summary>
     </ActiveDirectoryAuthenticationProvider>
     <ctor>
@@ -11,78 +11,165 @@
       </summary>
     </ctor>
     <ctor2>
-      <param name="applicationClientId">Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.</param>
+      <param name="applicationClientId">
+        Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id.
       </summary>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
+      <example>
+        The following example demonstrates providing a user-defined application client id to SqlClient for the "Active Directory Interactive" authentication method:
+        <code language="c#">
+          using System;
+          using Microsoft.Data.SqlClient;
 
-## Examples  
- The following example demonstrates providing a user-defined application client id to SqlClient for the "Active Directory Interactive" authentication method:
- 
- [!code-csharp[ActiveDirectory_ApplicationClientId Example#1](~/../sqlclient/doc/samples/ApplicationClientIdAzureAuthenticationProvider.cs#1)]
-  
- ]]>
-        </format>
-      </remarks>
+          namespace CustomAuthenticationProviderExamples
+          {
+            public class Program
+            {
+              public static void Main()
+              {
+                // Supported for all authentication modes supported by ActiveDirectoryAuthenticationProvider
+                ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider("&lt;application_client_id&gt;");
+                if (provider.IsSupported(SqlAuthenticationMethod.ActiveDirectoryInteractive))
+                {
+                  SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection("Server=&lt;myserver&gt;.database.windows.net;Authentication=Active Directory Interactive;Database=&gt;db&lt;;"))
+                {
+                  sqlConnection.Open();
+                  Console.WriteLine("Connected successfully!");
+                }
+              }
+            }
+          }
+        </code>
+      </example>
     </ctor2>
     <ctor3>
-      <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
-      <param name="applicationClientId">(Optional) Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.</param>
+      <param name="deviceCodeFlowCallbackMethod">
+        The callback method to be used with 'Active Directory Device Code Flow' authentication.
+      </param>
+      <param name="applicationClientId">
+        (Optional) Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.
+      </param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
     </ctor3>
     <AcquireTokenAsync>
-      <param name="parameters">The Active Directory authentication parameters passed to authentication providers.</param>
-      <summary>Acquires a security token from the authority.</summary>
-      <returns>Represents an asynchronous operation that returns the authentication token.</returns>
+      <param name="parameters">
+        The Active Directory authentication parameters passed to authentication providers.
+      </param>
+      <summary>
+        Acquires a security token from the authority.
+      </summary>
+      <returns>
+        Represents an asynchronous operation that returns the authentication token.
+      </returns>
     </AcquireTokenAsync>
     <ClearUserTokenCache>
-      <summary>Clears cached user tokens from the token provider.</summary>
-      <remarks>This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.</remarks>
+      <summary>
+        Clears cached user tokens from the token provider.
+      </summary>
+      <remarks>
+        This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.
+      </remarks>
     </ClearUserTokenCache>
     <SetDeviceCodeFlowCallback>
-      <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
-      <summary>Sets the callback method, overriding the default implementation that processes the result for 'Active Directory Device Code Flow' authentication.</summary>
-      <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-        
-## Examples  
-The following example demonstrates providing a custom device flow callback to SqlClient for the Device Code Flow authentication method:
+      <param name="deviceCodeFlowCallbackMethod">
+        The callback method to be used with 'Active Directory Device Code Flow' authentication.
+      </param>
+      <summary>
+        Sets the callback method, overriding the default implementation that processes the result for 'Active Directory Device Code Flow' authentication.
+      </summary>
+      <example>
+        The following example demonstrates providing a custom device flow callback to SqlClient for the Device Code Flow authentication method:
+        <code language="c#">
+          using System;
+          using System.Threading.Tasks;
+          using Microsoft.Identity.Client;
+          using Microsoft.Data.SqlClient;
 
-[!code-csharp[ActiveDirectory_DeviceCodeFlowCallback Example#1](~/../sqlclient/doc/samples/AADAuthenticationCustomDeviceFlowCallback.cs#1)]
- 
-]]>
-        </format>
-      </remarks>
+          namespace CustomAuthenticationProviderExamples
+          {
+            public class Program
+            {
+              public static void Main()
+              {
+                SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback);
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+                using (SqlConnection sqlConnection = new SqlConnection("Server=&lt;myserver&gt;.database.windows.net;Authentication=Active Directory Device Code Flow;Database=&lt;db&gt;;"))
+                {
+                  sqlConnection.Open();
+                  Console.WriteLine("Connected successfully!");
+                }
+              }
+
+              private static Task CustomDeviceFlowCallback(DeviceCodeResult result)
+              {
+                // Provide custom logic to process result information and read device code.
+                Console.WriteLine(result.Message);
+                return Task.FromResult(0);
+              }
+            }
+          }
+
+        </code>
+      </example>
     </SetDeviceCodeFlowCallback>
     <SetParentActivityOrWindowFunc>
-      <param name="parentActivityOrWindowFunc">The parent as an object, in order to be used from shared .NET Standard assemblies.</param>
-      <summary>Sets a reference to the ViewController (if using Xamarin.iOS), Activity (if using Xamarin.Android) IWin32Window or IntPtr (if using .NET Framework). Used for invoking the browser for Active Directory Interactive authentication.</summary>
-      <remarks>Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.</remarks>
+      <param name="parentActivityOrWindowFunc">
+        The parent as an object, in order to be used from shared .NET Standard assemblies.
+      </param>
+      <summary>
+        Sets a reference to the ViewController (if using Xamarin.iOS), Activity (if using Xamarin.Android) IWin32Window or IntPtr (if using .NET Framework). Used for invoking the browser for Active Directory Interactive authentication.
+      </summary>
+      <remarks>
+        Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.
+      </remarks>
     </SetParentActivityOrWindowFunc>
     <SetIWin32WindowFunc>
-      <param name="iWin32WindowFunc">A function to return the current window.</param>
-      <summary>Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window."</summary>
+      <param name="iWin32WindowFunc">
+        A function to return the current window.
+      </param>
+      <summary>
+        Sets a reference to the current <see cref="T:System.Windows.Forms.IWin32Window" /> that triggers the browser to be shown. Used to center the browser pop-up onto this window."
+      </summary>
     </SetIWin32WindowFunc>
     <SetAcquireAuthorizationCodeAsyncCallback>
-      <param name="acquireAuthorizationCodeAsyncCallback">The callback method to be called by MSAL.NET to delegate the Web user interface with the Secure Token Service (STS).</param>
-      <summary>Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.</summary>
-      <remarks>The "authorizationUri" is crafted to leverage PKCE in order to protect the token from a man in the middle attack. Only MSAL.NET can redeem the code. In the event of cancellation, the implementer should return <see cref="T:System.OperationCanceledException" />.</remarks>
+      <param name="acquireAuthorizationCodeAsyncCallback">
+        The callback method to be called by MSAL.NET to delegate the Web user interface with the Secure Token Service (STS).
+      </param>
+      <summary>
+        Sets a callback method which is invoked with a custom Web UI instance that will let the user sign-in with Azure Active Directory, present consent if needed, and get back the authorization code. Applicable when working with Active Directory Interactive authentication.
+      </summary>
+      <remarks>
+        The "authorizationUri" is crafted to leverage PKCE in order to protect the token from a man in the middle attack. Only MSAL.NET can redeem the code. In the event of cancellation, the implementer should return <see cref="T:System.OperationCanceledException" />.
+      </remarks>
     </SetAcquireAuthorizationCodeAsyncCallback>
     <BeforeLoad>
-      <param name="authentication">The authentication method.</param>
-      <summary>This method is called immediately before the provider is added to authentication provider registry. </summary>
-      <remarks>Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.</remarks>
+      <param name="authentication">
+        The authentication method.
+      </param>
+      <summary>
+        This method is called immediately before the provider is added to authentication provider registry.
+      </summary>
+      <remarks>
+        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
+      </remarks>
     </BeforeLoad>
     <BeforeUnload>
-      <param name="authentication">The authentication method.</param>
-      <summary>This method is called immediately before the provider is removed from the authentication provider registry. </summary>
-      <remarks>For example, this method is called when a different provider with the same authentication method overrides this provider in the authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.</remarks>
+      <param name="authentication">
+        The authentication method.
+      </param>
+      <summary>
+        This method is called immediately before the provider is removed from the authentication provider registry.
+      </summary>
+      <remarks>
+        For example, this method is called when a different provider with the same authentication method overrides this provider in the authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+      </remarks>
     </BeforeUnload>
     <IsSupported>
       <param name="authentication">The authentication method.</param>
@@ -91,23 +178,17 @@ The following example demonstrates providing a custom device flow callback to Sq
         <see langword="true" /> if the specified authentication method is supported; otherwise, <see langword="false" />.
       </returns>
       <remarks>
-        <format type="text/markdown">
-          <![CDATA[  
-  
-## Remarks  
- The supported authentication modes with <xref=Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider> are:
-
-- Active Directory Password
-- Active Directory Integrated
-- Active Directory Interactive
-- Active Directory Service Principal
-- Active Directory Device Code Flow
-- Active Directory Managed Identity
-- Active Directory MSI
-- Active Directory Default
-
- ]]>
-        </format>
+        The supported authentication modes with <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> are:
+        <list type="bullet">
+          <item><description>Active Directory Password</description></item>
+          <item><description>Active Directory Integrated</description></item>
+          <item><description>Active Directory Interactive</description></item>
+          <item><description>Active Directory Service Principal</description></item>
+          <item><description>Active Directory Device Code Flow</description></item>
+          <item><description>Active Directory Managed Identity</description></item>
+          <item><description>Active Directory MSI</description></item>
+          <item><description>Active Directory Default</description></item>
+        </list>
       </remarks>
     </IsSupported>
   </members>

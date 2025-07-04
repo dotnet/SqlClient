@@ -205,7 +205,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void VariousExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-
+            // Strip the password in connection string if Authentication=Active Directory Managed Identity as it can not be used with a Password
+            if (builder.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+            {
+                string[] removeKeys = { "Password", "PWD" };
+                string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys);
+                builder = new SqlConnectionStringBuilder(connStr);
+            }
 
             // Test 1 - A
             SqlConnectionStringBuilder badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { DataSource = badServer, ConnectTimeout = 1 };
@@ -219,11 +225,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             // Test 1 - B
-            badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false };
-            using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+            if (DataTestUtility.IsNotAzureServer())
             {
-                string errorMessage = string.Format(CultureInfo.InvariantCulture, logonFailedErrorMessage, badBuilder.UserID);
-                VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
+                badBuilder = new SqlConnectionStringBuilder(builder.ConnectionString) { Password = string.Empty, IntegratedSecurity = false };
+                using (var sqlConnection = new SqlConnection(badBuilder.ConnectionString))
+                {
+                    string errorMessage = string.Format(CultureInfo.InvariantCulture, logonFailedErrorMessage, badBuilder.UserID);
+                    VerifyConnectionFailure<SqlException>(() => sqlConnection.Open(), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
+                }
             }
         }
 

@@ -1,0 +1,31 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# @TODO: This can probably be made generic and pass in the command lines for msbuild
+#        BUT, they should be kept separate by now as we rebuild build.proj in parallel, we won't
+#        affect >1 project at a time.
+
+parameters:
+    - name: buildConfiguration
+      type: string
+
+    - name: mdsPackageVersion
+      type: string
+
+steps:
+    - task: securedevelopmentteam.vss-secure-development-tools.build-task-roslynanalyzers.RoslynAnalyzers@3
+      displayName: 'Roslyn Analyzers'
+      inputs:
+          msBuildArchitecture: x64
+          msBuildCommandLine: >-
+              msbuild
+              $(REPO_ROOT)/build.proj
+              -t:BuildAkv
+              -p:Configuration=${{ parameters.buildConfiguration }}
+              -p:NugetPackageVersion=${{ parameters.mdsPackageVersion }}
+              -p:ReferenceType=Package
+          msBuildVersion: 17.0
+          setupCommandLinePicker: vs2022

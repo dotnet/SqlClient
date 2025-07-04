@@ -19,16 +19,14 @@ namespace Microsoft.Data.Common
             internal readonly Guid Id;
             internal readonly uint Sequence;
 
-            internal ActivityId(uint sequence)
+            internal ActivityId(Guid? currentActivityId, uint sequence = 1)
             {
-                this.Id = Guid.NewGuid();
-                this.Sequence = sequence;
+                Id = currentActivityId ?? Guid.NewGuid();
+                Sequence = sequence;
             }
 
             public override string ToString()
-            {
-                return string.Format(CultureInfo.InvariantCulture, "{0}:{1}", this.Id, this.Sequence);
-            }
+                => string.Format(CultureInfo.InvariantCulture, "{0}:{1}", Id, Sequence);
         }
 
         // Declare the ActivityId which will be stored in TLS. The Id is unique for each thread.
@@ -40,27 +38,12 @@ namespace Microsoft.Data.Common
         /// <summary>
         /// Get the current ActivityId
         /// </summary>
-        internal static ActivityId Current
-        {
-            get
-            {
-                if (t_tlsActivity == null)
-                {
-                    t_tlsActivity = new ActivityId(1);
-                }
-                return t_tlsActivity;
-            }
-        }
+        internal static ActivityId Current => t_tlsActivity ??= new ActivityId(null);
 
         /// <summary>
         /// Increment the sequence number and generate the new ActivityId
         /// </summary>
         /// <returns>ActivityId</returns>
-        internal static ActivityId Next()
-        {
-            t_tlsActivity = new ActivityId( (t_tlsActivity?.Sequence ?? 0) + 1);
-
-            return t_tlsActivity;
-        }
+        internal static ActivityId Next() => t_tlsActivity = new ActivityId(t_tlsActivity?.Id, (t_tlsActivity?.Sequence ?? 0) + 1);
     }
 }

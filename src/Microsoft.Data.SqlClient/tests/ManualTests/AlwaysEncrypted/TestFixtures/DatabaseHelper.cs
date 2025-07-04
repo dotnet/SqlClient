@@ -31,6 +31,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             sqlCommand.ExecuteNonQuery();
         }
 
+#if !NETFRAMEWORK
+        /// <summary>
+        /// Insert CustomerDateOnly record into table
+        /// </summary>
+        internal static void InsertCustomerDateOnlyData(SqlConnection sqlConnection, SqlTransaction transaction, string tableName, CustomerDateOnly customer)
+        {
+            using SqlCommand sqlCommand = new(
+                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName, DateOfBirth, TimeOfDay) VALUES (@CustomerId, @FirstName, @LastName, @DateOfBirth, @TimeOfDay);",
+                connection: sqlConnection,
+                transaction: transaction,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+
+            sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
+            sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
+            sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
+            sqlCommand.Parameters.AddWithValue(@"DateOfBirth", customer.DateOfBirth);
+            sqlCommand.Parameters.AddWithValue(@"TimeOfDay", customer.TimeOfDay);
+            sqlCommand.ExecuteNonQuery();
+        }
+#endif
+
         /// <summary>
         /// Validates that the results are the ones expected.
         /// </summary>
@@ -155,9 +176,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     case "int":
                         Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
                         break;
+#if !NETFRAMEWORK
+                    case "DateOnly":
+                        Assert.True(sqlDataReader.GetFieldValue<DateOnly>(columnsRead) == new DateOnly(2001, 1, 31), "FAILED: read DateOnly value does not match.");
+                        break;
 
+                    case "TimeOnly":
+                        Assert.True(sqlDataReader.GetFieldValue<TimeOnly>(columnsRead) == new TimeOnly(18, 36, 45), "FAILED: read TimeOnly value does not match.");
+                        break;
+#endif
                     default:
-                        Assert.True(false, "FAILED: unexpected data type.");
+                        Assert.Fail("FAILED: unexpected data type.");
                         break;
                 }
 
@@ -184,6 +213,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal static string GenerateUniqueName(string baseName) => string.Concat("AE_", baseName, "_", Guid.NewGuid().ToString().Replace('-', '_'));
     }
 
+    public static class DataHelpers
+    {
+        public static IEnumerable<object[]> AEConnectionStringProviderWithSchemaType()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, SchemaType.Source };
+                yield return new object[] { connStrAE, SchemaType.Mapped };
+            }
+        }
+
+        public static IEnumerable<object[]> AEConnectionStringProviderWithCommandBehaviorSet1()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.SingleResult };
+                yield return new object[] { connStrAE, CommandBehavior.SingleRow };
+                yield return new object[] { connStrAE, CommandBehavior.CloseConnection };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+
+        public static IEnumerable<object[]> AEConnectionStringProviderWithCommandBehaviorSet2()
+        {
+            foreach (string connStrAE in DataTestUtility.AEConnStrings)
+            {
+                yield return new object[] { connStrAE, CommandBehavior.Default };
+                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
+            }
+        }
+    }
+
     public class AEConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()
@@ -205,47 +266,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             foreach (string connStrAE in DataTestUtility.AEConnStrings)
             {
                 yield return new object[] { connStrAE };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class AEConnectionStringProviderWithCommandBehaviorSet1 : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, CommandBehavior.SingleResult };
-                yield return new object[] { connStrAE, CommandBehavior.SingleRow };
-                yield return new object[] { connStrAE, CommandBehavior.CloseConnection };
-                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class AEConnectionStringProviderWithCommandBehaviorSet2 : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, CommandBehavior.Default };
-                yield return new object[] { connStrAE, CommandBehavior.SequentialAccess };
-            }
-        }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class AEConnectionStringProviderWithSchemaType : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
-        {
-            foreach (string connStrAE in DataTestUtility.AEConnStrings)
-            {
-                yield return new object[] { connStrAE, SchemaType.Source };
-                yield return new object[] { connStrAE, SchemaType.Mapped };
             }
         }
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// The pool of crypto providers to use for encrypt/decrypt operations.
         /// </summary>
-        private readonly ConcurrentQueue<AesCryptoServiceProvider> _cryptoProviderPool;
+        private readonly ConcurrentQueue<Aes> _cryptoProviderPool;
 
         /// <summary>
         /// Byte array with algorithm version used for authentication tag computation.
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient
         /// Root encryption key from which three other keys will be derived
         /// </param>
         /// <param name="encryptionType">Encryption Type, accepted values are Deterministic and Randomized. 
-        /// For Deterministic encryption, a synthetic IV will be genenrated during encryption
+        /// For Deterministic encryption, a synthetic IV will be generated during encryption
         /// For Randomized encryption, a random IV will be generated during encryption.
         /// </param>
         /// <param name="algorithmVersion">
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient
             _algorithmVersion = algorithmVersion;
             _version[0] = algorithmVersion;
 
-            Debug.Assert(null != encryptionKey, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
+            Debug.Assert(encryptionKey != null, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
             Debug.Assert(0x01 == algorithmVersion, "Unknown algorithm version passed to AeadAes256CbcHmac256");
 
             // Validate encryption type for this algorithm
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(SqlClientEncryptionType.Randomized == encryptionType, "Invalid Encryption Type detected in SqlAeadAes256CbcHmac256Algorithm, this should've been caught in factory class");
             }
 
-            _cryptoProviderPool = new ConcurrentQueue<AesCryptoServiceProvider>();
+            _cryptoProviderPool = new ConcurrentQueue<Aes>();
         }
 
         /// <summary>
@@ -178,13 +178,12 @@ namespace Microsoft.Data.SqlClient
             outBuffer[0] = _algorithmVersion;
             Buffer.BlockCopy(iv, 0, outBuffer, ivStartIndex, iv.Length);
 
-            AesCryptoServiceProvider aesAlg;
 
             // Try to get a provider from the pool.
             // If no provider is available, create a new one.
-            if (!_cryptoProviderPool.TryDequeue(out aesAlg))
+            if (!_cryptoProviderPool.TryDequeue(out Aes aesAlg))
             {
-                aesAlg = new AesCryptoServiceProvider();
+                aesAlg = Aes.Create();
 
                 try
                 {
@@ -342,13 +341,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((count + offset) <= cipherText.Length);
 
             byte[] plainText;
-            AesCryptoServiceProvider aesAlg;
 
             // Try to get a provider from the pool.
             // If no provider is available, create a new one.
-            if (!_cryptoProviderPool.TryDequeue(out aesAlg))
+            if (!_cryptoProviderPool.TryDequeue(out Aes aesAlg))
             {
-                aesAlg = new AesCryptoServiceProvider();
+                aesAlg = Aes.Create();
 
                 try
                 {

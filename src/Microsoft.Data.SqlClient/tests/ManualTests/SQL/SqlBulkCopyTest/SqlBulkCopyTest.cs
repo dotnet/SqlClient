@@ -105,6 +105,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void MissingTargetColumnsTest()
+        {
+            MissingTargetColumns.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_MissingTargetColumns"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug85007Test()
         {
             Bug85007.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Bug85007"));
@@ -297,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ActiveIssue(12219)]
+        [ActiveIssue("12219")]
         public void OrderHintIdentityColumnTest()
         {
             OrderHintIdentityColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));

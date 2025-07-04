@@ -181,13 +181,13 @@ namespace Microsoft.Data.SqlClient.Tests
             d.Clear();
 
             Assert.Empty(d);
-            Assert.Equal(0, d.Count);
+            Assert.Empty(d);
 
             Assert.Empty(d.Keys);
-            Assert.Equal(0, d.Keys.Count);
+            Assert.Empty(d.Keys);
 
             Assert.Empty(d.Values);
-            Assert.Equal(0, d.Values.Count);
+            Assert.Empty(d.Values);
         }
 
         [Fact]

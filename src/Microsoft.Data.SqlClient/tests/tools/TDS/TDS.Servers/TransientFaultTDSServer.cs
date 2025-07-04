@@ -132,7 +132,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             server._endpoint.EndpointName = methodName;
 
             // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = Console.Out;
+            server._endpoint.EventLog = enableLog ? Console.Out : null;
             server._endpoint.Start();
 
             server.Port = server._endpoint.ServerEndPoint.Port;
@@ -146,6 +146,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             if (isDisposing)
             {
                 _endpoint?.Stop();
+                RequestCounter = 0;
             }
         }
     }

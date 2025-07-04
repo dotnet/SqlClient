@@ -1,0 +1,82 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:  
+  - name: TargetNetCoreVersion
+    type: string
+    default: $(TargetNetCoreVersion)
+
+  - name: configuration
+    type: string
+    default: $(Configuration)
+
+  - name: referenceType
+    default: Project
+    values:
+      - Project
+      - Package
+
+  - name: NugetPackageVersion
+    type: string
+    default: $(NugetPackageVersion)
+
+  - name: platform
+    type: string
+    default: $(Platform)
+
+  - name: cleanFirst
+    type: boolean
+    default: false
+
+  - name: TestTargetOS
+    type: string
+    default: Windowsnetcoreapp
+    values:
+      - Windowsnetfx
+      - Windowsnetcoreapp
+      - Unixnetcoreapp
+
+  - name: retryCountOnManualTests
+    type: number
+    default: 2
+
+steps:
+- ${{ if eq(parameters.cleanFirst, true)}}:
+    - task: MSBuild@1
+      displayName: 'Clean artifacts folder'
+      inputs:
+        solution: build.proj
+        msbuildArguments: '-t:clean'
+
+- task: MSBuild@1
+  displayName: 'Build AKV Provider .NET'
+  inputs:
+    solution: build.proj
+    msbuildArchitecture: x64
+    msbuildArguments: '-p:Configuration=${{parameters.configuration }} -t:BuildAKVNetCore -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }}'
+
+- task: MSBuild@1
+  displayName: 'MSBuild Build Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    solution: build.proj
+    msbuildArchitecture: x64
+    msbuildArguments: '-t:BuildTestsNetCore -p:ReferenceType=${{parameters.referenceType }} -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} -p:Configuration=${{parameters.configuration }}'
+
+# Don't run unit tests using package reference. Unit tests are only run using project reference.
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Functional Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }}  -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Manual Tests for ${{parameters.TargetNetCoreVersion }}'
+  inputs:
+    command: test
+    projects: 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj'
+    arguments: '-p:Platform=${{parameters.platform }} -p:TestTargetOS="${{parameters.TestTargetOS }}" -p:TargetNetCoreVersion=${{parameters.TargetNetCoreVersion }} -p:ReferenceType=${{parameters.referenceType }} -p:Configuration=${{parameters.configuration }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.NugetPackageVersion }} --no-build -v n --filter  category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests  --collect "Code Coverage"'
+  retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}

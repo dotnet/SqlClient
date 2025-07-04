@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 get
                 {
-                    return null != _separateValueList;
+                    return _separateValueList != null;
                 }
             }
 

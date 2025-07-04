@@ -3,365 +3,160 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data.Common;
-using System.Diagnostics;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Text;
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class MultipleResultsTest
     {
-        private StringBuilder _globalBuilder = new StringBuilder();
-        private StringBuilder _outputBuilder;
-        private string[] _outputFilter;
+        private const string ResultSet1_Message = "0";
+        private const string ResultSet2_Message = "1";
+        private const string ResultSet2_Error = "Error 1";
+
+        private const string ResultSet3_Message = "3";
+        private const string ResultSet4_Message = "4";
+        private const string ResultSet4_Error = "Error 2";
+
+        private const string ResultSet5_Message = "5";
+        private const string ResultSet6_Message = "6";
+        private const string ResultSet6_Error = "Error 3";
+
+        private const string ResultSet7_Message = "7";
+        private const string ResultSet8_Message = "8";
+        private const string ResultSet8_Error = "Error 4";
+
+        private const string ResultSet9_Message = "9";
+        private const string ResultSet10_Message = "10";
+        private const string ResultSet10_Error = "Error 5";
+
+        private const string ResultSet11_Message = "11";
+
+        private readonly static string s_sqlStatement =
+            $"PRINT N'{ResultSet1_Message}'; SELECT num = 1, str = 'ABC';\n" +
+            $"PRINT N'{ResultSet2_Message}'; RAISERROR('{ResultSet2_Error}', 15, 1);\n" +
+            $"PRINT N'{ResultSet3_Message}'; SELECT num = 2, str = 'ABC';\n" +
+            $"PRINT N'{ResultSet4_Message}'; RAISERROR('{ResultSet4_Error}', 15, 1);\n" +
+            $"PRINT N'{ResultSet5_Message}'; SELECT num = 3, str = 'ABC';\n" +
+            $"PRINT N'{ResultSet6_Message}'; RAISERROR('{ResultSet6_Error}', 15, 1);\n" +
+            $"PRINT N'{ResultSet7_Message}'; SELECT num = 4, str = 'ABC';\n" +
+            $"PRINT N'{ResultSet8_Message}'; RAISERROR('{ResultSet8_Error}', 15, 1);\n" +
+            $"PRINT N'{ResultSet9_Message}'; SELECT num = 5, str = 'ABC';\n" +
+            $"PRINT N'{ResultSet10_Message}'; RAISERROR('{ResultSet10_Error}', 15, 1);\n" +
+            $"PRINT N'{ResultSet11_Message}';";
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void TestMain()
+        public void ExecuteNonQuery()
         {
-            Assert.True(RunTestCoreAndCompareWithBaseline());
+            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlCommand command = connection.CreateCommand();
+            ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
+
+            connection.InfoMessage += (object sender, SqlInfoMessageEventArgs args) =>
+                messages.Enqueue(args.Message);
+
+            connection.Open();
+
+            command.CommandText = s_sqlStatement;
+
+            // ExecuteNonQuery will drain every result set, info message and exception, collating these into a single exception.
+            Func<object> testCode = () => command.ExecuteNonQuery();
+            SqlException exNonQuery = Assert.Throws<SqlException>(testCode);
+
+            string expectedInfoMessages = string.Join(Environment.NewLine,
+                ResultSet2_Error, ResultSet4_Error, ResultSet6_Error, ResultSet8_Error, ResultSet10_Error,
+                ResultSet1_Message, ResultSet2_Message, ResultSet3_Message, ResultSet4_Message, ResultSet5_Message,
+                ResultSet6_Message, ResultSet7_Message, ResultSet8_Message, ResultSet9_Message, ResultSet10_Message,
+                ResultSet11_Message);
+
+            Assert.Equal(expectedInfoMessages, exNonQuery.Message);
+            Assert.Empty(messages);
         }
 
-        private void RunTest()
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void ExecuteScalar()
         {
-            MultipleErrorHandling(new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString));
+            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlCommand command = connection.CreateCommand();
+            ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
+
+            connection.InfoMessage += (object sender, SqlInfoMessageEventArgs args) =>
+                messages.Enqueue(args.Message);
+
+            connection.Open();
+
+            command.CommandText = s_sqlStatement;
+
+            // ExecuteScalar will select the first result set and the info message preceding it, then stop.
+            command.ExecuteScalar();
+            Assert.True(messages.TryDequeue(out string lastMessage));
+            Assert.Empty(messages);
+            Assert.Equal(ResultSet1_Message, lastMessage);
         }
 
-        private void MultipleErrorHandling(DbConnection connection)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void ExecuteReader()
         {
-            try
-            {
-                Console.WriteLine("MultipleErrorHandling {0}", connection.GetType().Name);
-                Type expectedException = null;
-                if (connection is SqlConnection)
-                {
-                    ((SqlConnection)connection).InfoMessage += delegate (object sender, SqlInfoMessageEventArgs args)
-                    {
-                        Console.WriteLine("*** SQL CONNECTION INFO MESSAGE : {0} ****", args.Message);
-                    };
-                    expectedException = typeof(SqlException);
-                }
-                connection.Open();
+            using SqlConnection connection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString);
+            using SqlCommand command = connection.CreateCommand();
+            ConcurrentQueue<string> messages = new ConcurrentQueue<string>();
 
-                using (DbCommand command = connection.CreateCommand())
-                {
-                    command.CommandText =
-                        "PRINT N'0';\n" +
-                        "SELECT num = 1, str = 'ABC';\n" +
-                        "PRINT N'1';\n" +
-                        "RAISERROR('Error 1', 15, 1);\n" +
-                        "PRINT N'3';\n" +
-                        "SELECT num = 2, str = 'ABC';\n" +
-                        "PRINT N'4';\n" +
-                        "RAISERROR('Error 2', 15, 1);\n" +
-                        "PRINT N'5';\n" +
-                        "SELECT num = 3, str = 'ABC';\n" +
-                        "PRINT N'6';\n" +
-                        "RAISERROR('Error 3', 15, 1);\n" +
-                        "PRINT N'7';\n" +
-                        "SELECT num = 4, str = 'ABC';\n" +
-                        "PRINT N'8';\n" +
-                        "RAISERROR('Error 4', 15, 1);\n" +
-                        "PRINT N'9';\n" +
-                        "SELECT num = 5, str = 'ABC';\n" +
-                        "PRINT N'10';\n" +
-                        "RAISERROR('Error 5', 15, 1);\n" +
-                        "PRINT N'11';\n";
+            connection.InfoMessage += (object sender, SqlInfoMessageEventArgs args) =>
+                messages.Enqueue(args.Message);
 
-                    try
-                    {
-                        Console.WriteLine("**** ExecuteNonQuery *****");
-                        command.ExecuteNonQuery();
-                    }
-                    catch (Exception e)
-                    {
-                        PrintException(expectedException, e);
-                    }
+            connection.Open();
 
-                    try
-                    {
-                        Console.WriteLine("**** ExecuteScalar ****");
-                        command.ExecuteScalar();
-                    }
-                    catch (Exception e)
-                    {
-                        PrintException(expectedException, e);
-                    }
+            command.CommandText = s_sqlStatement;
 
-                    try
-                    {
-                        Console.WriteLine("**** ExecuteReader ****");
-                        using (DbDataReader reader = command.ExecuteReader())
-                        {
-                            bool moreResults = true;
-                            do
-                            {
-                                try
-                                {
-                                    Console.WriteLine("NextResult");
-                                    moreResults = reader.NextResult();
-                                }
-                                catch (Exception e)
-                                {
-                                    PrintException(expectedException, e);
-                                }
-                            } while (moreResults);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        PrintException(null, e);
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                PrintException(null, e);
-            }
-            try
-            {
-                connection.Dispose();
-            }
-            catch (Exception e)
-            {
-                PrintException(null, e);
-            }
+            // SqlDataReader will drain every result set it's told to, throwing exceptions and printing messages as it goes.
+            using SqlDataReader reader = command.ExecuteReader();
+
+            // Result set 1: a result set and a message of '0'.
+            // Result set 2: a message of '1' and an exception.
+            AdvanceReader(reader, messages, ResultSet1_Message, ResultSet2_Message, ResultSet2_Error, finalBlock: false);
+
+            // Result set 3: a result set and a message of '3'.
+            // Result set 4: a message of '4' and an exception.
+            AdvanceReader(reader, messages, ResultSet3_Message, ResultSet4_Message, ResultSet4_Error, finalBlock: false);
+
+            // Result set 5: a result set and a message of '5'.
+            // Result set 6: a message of '6' and an exception.
+            AdvanceReader(reader, messages, ResultSet5_Message, ResultSet6_Message, ResultSet6_Error, finalBlock: false);
+
+            // Result set 7: a result set and a message of '7'.
+            // Result set 8: a message of '8' and an exception.
+            AdvanceReader(reader, messages, ResultSet7_Message, ResultSet8_Message, ResultSet8_Error, finalBlock: false);
+
+            // Result set 9: a result set and a message of '9'.
+            // Result set 10: a message of '10' and an exception.
+            AdvanceReader(reader, messages, ResultSet9_Message, ResultSet10_Message, ResultSet10_Error, finalBlock: true);
+
+            // One message following the final result set
+            Assert.True(messages.TryDequeue(out string lastMessage));
+            Assert.Empty(messages);
+            Assert.Equal(ResultSet11_Message, lastMessage);
         }
 
-        private bool RunTestCoreAndCompareWithBaseline()
+        private static void AdvanceReader(SqlDataReader reader, ConcurrentQueue<string> messageBuffer, string resultSet1Message, string resultSet2Message, string resultSet2ExceptionMessage, bool finalBlock)
         {
-            string outputPath = "MultipleResultsTest.out";
-            string baselinePath = "MultipleResultsTest.bsl";
+            bool moreResults = true;
 
-            var fstream = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read);
-            var swriter = new StreamWriter(fstream, Encoding.UTF8);
-            // Convert all string writes of '\n' to '\r\n' so output files can be 'text' not 'binary'
-            var twriter = new CarriageReturnLineFeedReplacer(swriter);
-            Console.SetOut(twriter); // "redirect" Console.Out
+            // This is a pair of result sets:
+            // Result set 1: an info message of something and a result set
+            // Result set 2: an info message of something and an exception
+            Assert.True(messageBuffer.TryDequeue(out string lastMessage));
+            Assert.Empty(messageBuffer);
+            Assert.Equal(resultSet1Message, lastMessage);
 
-            // Run Test
-            RunTest();
+            SqlException exReader = Assert.Throws<SqlException>(() => moreResults = reader.NextResult());
+            Assert.Equal(resultSet2ExceptionMessage, exReader.Message);
 
-            Console.Out.Flush();
-            Console.Out.Dispose();
+            Assert.True(messageBuffer.TryDequeue(out lastMessage));
+            Assert.Empty(messageBuffer);
+            Assert.Equal(resultSet2Message, lastMessage);
 
-            // Recover the standard output stream
-            StreamWriter standardOutput = new StreamWriter(Console.OpenStandardOutput());
-            standardOutput.AutoFlush = true;
-            Console.SetOut(standardOutput);
-
-            // Compare output file
-            var comparisonResult = FindDiffFromBaseline(baselinePath, outputPath);
-
-            if (string.IsNullOrEmpty(comparisonResult))
-            {
-                return true;
-            }
-
-            Console.WriteLine("Test Failed!");
-            Console.WriteLine("Please compare baseline : {0} with output :{1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
-            Console.WriteLine("Comparison Results : ");
-            Console.WriteLine(comparisonResult);
-            return false;
-        }
-
-        private void PrintException(Type expected, Exception e, params string[] values)
-        {
-            try
-            {
-                Debug.Assert(null != e, "PrintException: null exception");
-
-                _globalBuilder.Length = 0;
-                _globalBuilder.Append(e.GetType().Name).Append(": ");
-
-                if (e is COMException)
-                {
-                    _globalBuilder.Append("0x").Append((((COMException)e).HResult).ToString("X8"));
-                    if (expected != e.GetType())
-                    {
-                        _globalBuilder.Append(": ").Append(e.ToString());
-                    }
-                }
-                else
-                {
-                    _globalBuilder.Append(e.Message);
-                }
-                AssemblyFilter(_globalBuilder);
-                Console.WriteLine(_globalBuilder.ToString());
-
-                if (expected != e.GetType())
-                {
-                    Console.WriteLine(e.StackTrace);
-                }
-                if (null != values)
-                {
-                    foreach (string value in values)
-                    {
-                        Console.WriteLine(value);
-                    }
-                }
-                if (null != e.InnerException)
-                {
-                    PrintException(e.InnerException.GetType(), e.InnerException);
-                }
-                Console.Out.Flush();
-            }
-            catch (Exception f)
-            {
-                Console.WriteLine(f);
-            }
-        }
-
-        private string FindDiffFromBaseline(string baselinePath, string outputPath)
-        {
-            var expectedLines = File.ReadAllLines(baselinePath);
-            var outputLines = File.ReadAllLines(outputPath);
-
-            var comparisonSb = new StringBuilder();
-
-            // Start compare results
-            var expectedLength = expectedLines.Length;
-            var outputLength = outputLines.Length;
-            var findDiffLength = Math.Min(expectedLength, outputLength);
-
-            // Find diff for each lines
-            for (var lineNo = 0; lineNo < findDiffLength; lineNo++)
-            {
-                if (!expectedLines[lineNo].Equals(outputLines[lineNo]))
-                {
-                    comparisonSb.AppendFormat("** DIFF at line {0} \n", lineNo);
-                    comparisonSb.AppendFormat("A : {0} \n", outputLines[lineNo]);
-                    comparisonSb.AppendFormat("E : {0} \n", expectedLines[lineNo]);
-                }
-            }
-
-            var startIndex = findDiffLength - 1;
-            if (startIndex < 0)
-                startIndex = 0;
-
-            if (findDiffLength < expectedLength)
-            {
-                comparisonSb.AppendFormat("** MISSING \n");
-                for (var lineNo = startIndex; lineNo < expectedLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, expectedLines[lineNo]);
-                }
-            }
-            if (findDiffLength < outputLength)
-            {
-                comparisonSb.AppendFormat("** EXTRA \n");
-                for (var lineNo = startIndex; lineNo < outputLength; lineNo++)
-                {
-                    comparisonSb.AppendFormat("{0} : {1}", lineNo, outputLines[lineNo]);
-                }
-            }
-
-            return comparisonSb.ToString();
-        }
-
-        private string AssemblyFilter(StreamWriter writer)
-        {
-            if (null == _outputBuilder)
-            {
-                _outputBuilder = new StringBuilder();
-            }
-            _outputBuilder.Length = 0;
-
-            byte[] utf8 = ((MemoryStream)writer.BaseStream).ToArray();
-            string value = System.Text.Encoding.UTF8.GetString(utf8, 3, utf8.Length - 3); // skip 0xEF, 0xBB, 0xBF
-            _outputBuilder.Append(value);
-            AssemblyFilter(_outputBuilder);
-            return _outputBuilder.ToString();
-        }
-
-        private void AssemblyFilter(StringBuilder builder)
-        {
-            string[] filter = _outputFilter;
-            if (null == filter)
-            {
-                filter = new string[5];
-                string tmp = typeof(System.Guid).AssemblyQualifiedName;
-                filter[0] = tmp.Substring(tmp.IndexOf(','));
-                filter[1] = filter[0].Replace("mscorlib", "System");
-                filter[2] = filter[0].Replace("mscorlib", "System.Data");
-                filter[3] = filter[0].Replace("mscorlib", "System.Data.OracleClient");
-                filter[4] = filter[0].Replace("mscorlib", "System.Xml");
-                _outputFilter = filter;
-            }
-
-            for (int i = 0; i < filter.Length; ++i)
-            {
-                builder.Replace(filter[i], "");
-            }
-        }
-
-        /// <summary>
-        ///  special wrapper for the text writer to replace single "\n" with "\n"
-        /// </summary>
-        private sealed class CarriageReturnLineFeedReplacer : TextWriter
-        {
-            private TextWriter _output;
-            private int _lineFeedCount;
-            private bool _hasCarriageReturn;
-
-            internal CarriageReturnLineFeedReplacer(TextWriter output)
-            {
-                if (output == null)
-                    throw new ArgumentNullException(nameof(output));
-
-                _output = output;
-            }
-
-            public int LineFeedCount
-            {
-                get { return _lineFeedCount; }
-            }
-
-            public override Encoding Encoding
-            {
-                get { return _output.Encoding; }
-            }
-
-            public override IFormatProvider FormatProvider
-            {
-                get { return _output.FormatProvider; }
-            }
-
-            public override string NewLine
-            {
-                get { return _output.NewLine; }
-                set { _output.NewLine = value; }
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if (disposing)
-                {
-                    ((IDisposable)_output).Dispose();
-                }
-                _output = null;
-            }
-
-            public override void Flush()
-            {
-                _output.Flush();
-            }
-
-            public override void Write(char value)
-            {
-                if ('\n' == value)
-                {
-                    _lineFeedCount++;
-                    if (!_hasCarriageReturn)
-                    {   // X'\n'Y -> X'\r\n'Y
-                        _output.Write('\r');
-                    }
-                }
-                _hasCarriageReturn = '\r' == value;
-                _output.Write(value);
-            }
+            moreResults = reader.NextResult();
+            Assert.Equal(finalBlock, !moreResults);
         }
     }
 }

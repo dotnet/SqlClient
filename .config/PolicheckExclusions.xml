@@ -1,0 +1,5 @@
+<PoliCheckExclusions>
+    <Exclusion Type="FolderPathStart">SRC/MICROSOFT.DATA.SQLCLIENT/TESTS</Exclusion>
+    <Exclusion Type="FileType">.YML|.MD|.SQL</Exclusion>
+    <Exclusion Type="FileName">NOTICE.TXT|SQLDATAADAPTER.CS</Exclusion>
+</PoliCheckExclusions>

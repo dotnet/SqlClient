@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Current" DefaultTargets="Build" 
+<Project ToolsVersion="Current" DefaultTargets="Build"
   xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
-  
+
   <PropertyGroup>
     <OSGroup Condition="$(OSGroup) == ''">$(OS)</OSGroup>
     <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
@@ -14,17 +14,22 @@
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
   </PropertyGroup>
 
+  <!-- Audit Settings -->
+  <PropertyGroup>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp3.1</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
   </PropertyGroup>
 
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == ''">
       <PropertyGroup>
-        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetFxVersion);$(TargetNetCoreVersion);</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetCoreVersion);$(TargetNetFxVersion)</TargetFrameworks>
         <TargetFrameworks Condition="'$(TargetsUnix)' == 'true'">$(TargetNetCoreVersion);</TargetFrameworks>
       </PropertyGroup>
     </When>

@@ -11,7 +11,7 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlBuffer
+    internal sealed class SqlBuffer
     {
         internal enum StorageType
         {
@@ -36,6 +36,8 @@ namespace Microsoft.Data.SqlClient
             DateTime2,
             DateTimeOffset,
             Time,
+            Json,
+            Vector,
         }
 
         internal struct DateTimeInfo
@@ -75,6 +77,12 @@ namespace Microsoft.Data.SqlClient
             internal short _offset;
         }
 
+        internal struct VectorInfo
+        {
+            internal int _elementCount;
+            internal byte _elementType;
+        }
+
         [StructLayout(LayoutKind.Explicit)]
         internal struct Storage
         {
@@ -104,6 +112,8 @@ namespace Microsoft.Data.SqlClient
             internal DateTime2Info _dateTime2Info;
             [FieldOffset(0)]
             internal DateTimeOffsetInfo _dateTimeOffsetInfo;
+            [FieldOffset(0)]
+            internal VectorInfo _vectorInfo;
         }
 
         private bool _isNull;
@@ -131,6 +141,15 @@ namespace Microsoft.Data.SqlClient
         internal bool IsNull => _isNull;
 
         internal StorageType VariantInternalStorageType => _type;
+
+        internal Storage GetVectorInfo()
+        {
+            if (_type == StorageType.Vector)
+            {
+                return _value;
+            }
+            throw new InvalidOperationException();
+        }
 
         internal bool Boolean
         {
@@ -178,7 +197,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                ThrowIfNull();
+                if (_type != StorageType.Vector)
+                {
+                    ThrowIfNull();
+                }
                 return SqlBinary.Value;
             }
         }
@@ -219,16 +241,16 @@ namespace Microsoft.Data.SqlClient
                         // Only removing trailing zeros from a decimal part won't hit its value!
                         if (_value._numericInfo._scale > 0)
                         {
-                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2, 
-                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4, 
+                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2,
+                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4,
                                                                    _value._numericInfo._scale, out int precision);
 
                             int minScale = _value._numericInfo._scale - zeroCnt; // minimum possible sacle after removing the trailing zeros.
 
                             if (zeroCnt > 0 && minScale <= 28 && precision <= 29)
                             {
-                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive, 
-                                                          _value._numericInfo._data1, _value._numericInfo._data2, 
+                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive,
+                                                          _value._numericInfo._data1, _value._numericInfo._data2,
                                                           _value._numericInfo._data3, _value._numericInfo._data4);
 
                                 int integral = precision - minScale;
@@ -485,8 +507,18 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 ThrowIfNull();
-
-                if (StorageType.String == _type)
+                if (_type == StorageType.Vector)
+                {
+                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+                    switch (elementType)
+                    {
+                        case MetaType.SqlVectorElementType.Float32:
+                            return GetSqlVector<float>().GetString();
+                        default:
+                            throw SQL.VectorTypeNotSupported(elementType.ToString());
+                    }
+                }
+                if (StorageType.String == _type || StorageType.Json == _type)
                 {
                     return (string)_object;
                 }
@@ -596,6 +628,37 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NET
+        internal TimeOnly TimeOnly
+        {
+            get
+            {
+                ThrowIfNull();
+
+                if (StorageType.Time == _type)
+                {
+                    return new TimeOnly(_value._timeInfo._ticks);
+                }
+
+                return (TimeOnly)Value; // anything else we haven't thought of goes through boxing.
+            }
+        }
+
+        internal DateOnly DateOnly
+        {
+            get
+            {
+                ThrowIfNull();
+
+                if (StorageType.Date == _type)
+                {
+                    return DateOnly.MinValue.AddDays(_value._int32);
+                }
+                return (DateOnly)Value; // anything else we haven't thought of goes through boxing.
+            }
+        }
+#endif
+
         internal DateTimeOffset DateTimeOffset
         {
             get
@@ -622,7 +685,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.SqlBinary == _type)
+                if (_type is StorageType.SqlBinary or StorageType.Vector)
                 {
                     if (IsNull)
                     {
@@ -780,7 +843,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (StorageType.Guid == _type)
                 {
-                    return new SqlGuid(_value._guid);
+                    return IsNull ? SqlGuid.Null : new SqlGuid(_value._guid);
                 }
                 else if (StorageType.SqlGuid == _type)
                 {
@@ -855,7 +918,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
+#if NET
+                    return SqlMoney.FromTdsValue(_value._int64);
+#else
                     return SqlTypeWorkarounds.SqlMoneyCtor(_value._int64, 1/*ignored*/);
+#endif
                 }
                 return (SqlMoney)SqlValue; // anything else we haven't thought of goes through boxing.
             }
@@ -881,7 +948,23 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.String == _type)
+                if (_type is StorageType.Vector)
+                {
+                    if (IsNull)
+                    {
+                        return SqlString.Null;
+                    }
+                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+                    switch (elementType)
+                    {
+                        case MetaType.SqlVectorElementType.Float32:
+                            return new SqlString(GetSqlVector<float>().GetString());
+                        default:
+                            throw SQL.VectorTypeNotSupported(elementType.ToString());
+                    }
+                }
+                // String and Json storage type are both strings.
+                if (_type is StorageType.String or StorageType.Json)
                 {
                     if (IsNull)
                     {
@@ -900,6 +983,21 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }
+        }
+
+        internal SqlJson SqlJson => (StorageType.Json == _type) ? (IsNull ? SqlTypes.SqlJson.Null : new SqlJson((string)_object)) : (SqlJson)SqlValue;
+
+        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
+        {
+            if (_type is StorageType.Vector)
+            {
+                if (IsNull)
+                {
+                    return new SqlVector<T>(_value._vectorInfo._elementCount);
+                }
+                return new SqlVector<T>(SqlBinary.Value);
+            }
+            return (SqlVector<T>)SqlValue;
         }
 
         internal object SqlValue
@@ -934,7 +1032,17 @@ namespace Microsoft.Data.SqlClient
                         return SqlSingle;
                     case StorageType.String:
                         return SqlString;
-
+                    case StorageType.Json:
+                        return SqlJson;
+                    case StorageType.Vector:
+                        var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+                        switch (elementType)
+                        {
+                            case MetaType.SqlVectorElementType.Float32:
+                                return GetSqlVector<float>();
+                            default:
+                                throw SQL.VectorTypeNotSupported(elementType.ToString());
+                        }
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
@@ -954,7 +1062,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return SqlXml.Null;
                         }
-                        Debug.Assert(null != _object);
+                        Debug.Assert(_object != null);
                         return (SqlXml)_object;
 
                     case StorageType.Date:
@@ -1027,6 +1135,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.String:
                         return String;
                     case StorageType.SqlBinary:
+                    case StorageType.Vector:
                         return ByteArray;
                     case StorageType.SqlCachedBuffer:
                         {
@@ -1052,6 +1161,8 @@ namespace Microsoft.Data.SqlClient
                         return DateTimeOffset;
                     case StorageType.Time:
                         return Time;
+                    case StorageType.Json:
+                        return String;
                 }
                 return null; // need to return the value as an object of some CLS type
             }
@@ -1092,12 +1203,15 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.SqlCachedBuffer:
                         return typeof(SqlString);
                     case StorageType.SqlBinary:
+                    case StorageType.Vector:
                         return typeof(object);
                     case StorageType.SqlGuid:
                         return typeof(SqlGuid);
                     case StorageType.SqlXml:
                         return typeof(SqlXml);
-                        // Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
+                    case StorageType.Json:
+                        return typeof(SqlJson);
+                        // Time Date DateTime2 and DateTimeOffset have no direct Sql type to contain them
                 }
             }
             else
@@ -1144,6 +1258,14 @@ namespace Microsoft.Data.SqlClient
                         return typeof(DateTime);
                     case StorageType.DateTimeOffset:
                         return typeof(DateTimeOffset);
+                    case StorageType.Json:
+                        return typeof(string);
+                    case StorageType.Vector:
+                        return typeof(byte[]);
+#if NET
+                    case StorageType.Time:
+                        return typeof(TimeOnly);
+#endif
                 }
             }
 
@@ -1172,7 +1294,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void Clear(SqlBuffer[] values)
         {
-            if (null != values)
+            if (values != null)
             {
                 for (int i = 0; i < values.Length; ++i)
                 {
@@ -1188,6 +1310,25 @@ namespace Microsoft.Data.SqlClient
             _object = null;
         }
 
+        #if NETFRAMEWORK
+        internal void SetToDate(DateTime date)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.Date;
+            _value._int32 = date.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+#endif
+
+        internal void SetVectorInfo(int elementCount, byte elementType, bool isNull)
+        {
+            _value._vectorInfo._elementCount = elementCount;
+            _value._vectorInfo._elementType = elementType;
+            _type = StorageType.Vector;
+            _isNull = isNull;
+        }
+
         internal void SetToDateTime(int daypart, int timepart)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
@@ -1196,6 +1337,19 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.DateTime;
             _isNull = false;
         }
+
+#if NETFRAMEWORK
+        internal void SetToDateTime2(DateTime dateTime, byte scale)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+
+            _type = StorageType.DateTime2;
+            _value._dateTime2Info._timeInfo._ticks = dateTime.TimeOfDay.Ticks;
+            _value._dateTime2Info._timeInfo._scale = scale;
+            _value._dateTime2Info._date = dateTime.Subtract(DateTime.MinValue).Days;
+            _isNull = false;
+        }
+#endif
 
         internal void SetToDecimal(byte precision, byte scale, bool positive, int[] bits)
         {
@@ -1232,6 +1386,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(IsEmpty, "setting value a second time?");
             _object = value;
             _type = StorageType.String;
+            _isNull = false;
+        }
+
+        internal void SetToJson(string value)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+            _object = value;
+            _type = StorageType.Json;
             _isNull = false;
         }
 

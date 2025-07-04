@@ -9,8 +9,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
-
+using Microsoft.Data.SqlClient.ConnectionPool;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -54,7 +55,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 DbConnectionPoolGroup poolGroup = PoolGroup;
-                return ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
+                return poolGroup != null ? poolGroup.ConnectionOptions : null;
             }
         }
 
@@ -63,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.ConnectionString_Get|API> {0}", ObjectID);
             bool hidePassword = InnerConnection.ShouldHidePassword;
             DbConnectionOptions connectionOptions = UserConnectionOptions;
-            return ((null != connectionOptions) ? connectionOptions.UsersConnectionString(hidePassword) : "");
+            return connectionOptions != null ? connectionOptions.UsersConnectionString(hidePassword) : "";
         }
 
         private void ConnectionString_Set(DbConnectionPoolKey key)
@@ -108,7 +109,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                Debug.Assert(null != value, "null poolGroup");
+                Debug.Assert(value != null, "null poolGroup");
                 _poolGroup = value;
             }
         }
@@ -137,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             // will end the reliable try...
             if (e is OutOfMemoryException)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {'OutOfMemory'}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
             }
             else
             {
@@ -226,13 +227,13 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionClosedConnecting.SingletonInstance == _innerConnection, "not connecting");
             DbConnectionPoolGroup poolGroup = PoolGroup;
-            DbConnectionOptions connectionOptions = ((null != poolGroup) ? poolGroup.ConnectionOptions : null);
-            if ((null == connectionOptions) || connectionOptions.IsEmpty)
+            DbConnectionOptions connectionOptions = poolGroup != null ? poolGroup.ConnectionOptions : null;
+            if (connectionOptions == null || connectionOptions.IsEmpty)
             {
                 throw ADP.NoConnectionString();
             }
             DbConnectionOptions userConnectionOptions = UserConnectionOptions;
-            Debug.Assert(null != userConnectionOptions, "null UserConnectionOptions");
+            Debug.Assert(userConnectionOptions != null, "null UserConnectionOptions");
         }
 
         internal void RemoveWeakReference(object value)
@@ -242,8 +243,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetInnerConnectionEvent(DbConnectionInternal to)
         {
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
 
             ConnectionState originalState = _innerConnection.State & ConnectionState.Open;
             ConnectionState currentState = to.State & ConnectionState.Open;
@@ -276,17 +277,17 @@ namespace Microsoft.Data.SqlClient
 
         internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from)
         {
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != from, "from null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(from != null, "from null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
             bool result = (from == Interlocked.CompareExchange<DbConnectionInternal>(ref _innerConnection, to, from));
             return result;
         }
 
         internal void SetInnerConnectionTo(DbConnectionInternal to)
         {
-            Debug.Assert(null != _innerConnection, "null InnerConnection");
-            Debug.Assert(null != to, "to null InnerConnection");
+            Debug.Assert(_innerConnection != null, "null InnerConnection");
+            Debug.Assert(to != null, "to null InnerConnection");
             _innerConnection = to;
         }
     }

@@ -1,0 +1,135 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: targetFramework
+    type: string
+
+  - name: nugetPackageVersion
+    type: string
+    default: $(NugetPackageVersion)
+
+  - name: platform
+    type: string
+    default: $(Platform)
+  
+  - name: configuration
+    type: string
+    default: '$(Configuration)'
+
+  - name: referenceType
+    default: Package
+    values:
+      - Project
+      - Package
+
+  - name: testSet
+    type: string
+
+  - name: msbuildArchitecture
+    default: x64
+    values:
+      - x64
+      - x86
+  
+  - name: dotnetx86RootPath # full path to the x86 dotnet root folder with trailing slash
+    type: string
+    default: ''
+  
+  - name: operatingSystem
+    type: string
+    default: 'Windows'
+
+steps:
+- ${{ if parameters.debug }}:
+  - powershell: 'dotnet sdk check'
+    displayName: '.NET sdk check [debug]'
+    condition: succeededOrFailed()
+
+- ${{if eq(parameters.operatingSystem, 'Windows')}}:
+  - ${{if eq(parameters.referenceType, 'Project')}}:
+    - task: MSBuild@1
+      displayName: 'Run Unit Tests ${{parameters.msbuildArchitecture }}'
+      inputs:
+        solution: build.proj
+        msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+        platform: '${{parameters.platform }}'
+        configuration: '${{parameters.configuration }}'
+        ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:   
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+        ${{ else }}: # x86
+          msbuildArguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+        condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+        retryCountOnTaskFailure: 1
+
+  - task: MSBuild@1
+    displayName: 'Run Functional Tests ${{parameters.msbuildArchitecture }}'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+      platform: '${{parameters.platform }}'
+      configuration: '${{parameters.configuration }}'
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:      
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      ${{ else }}: # x86
+        msbuildArguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+    retryCountOnTaskFailure: 1
+
+  - task: MSBuild@1
+    displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
+    inputs:
+      solution: build.proj
+      msbuildArchitecture: ${{parameters.msbuildArchitecture }}
+      platform: '${{parameters.platform }}'
+      configuration: '${{parameters.configuration }}'
+      ${{ if eq(parameters.msbuildArchitecture, 'x64') }}:
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }}'
+      ${{ else }}: # x86
+        msbuildArguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:DotnetPath=${{parameters.dotnetx86RootPath }}'
+    condition: eq(variables['Agent.OS'], 'Windows_NT')
+    retryCountOnTaskFailure: 2
+
+- ${{ else }}: # Linux or macOS
+  - ${{if eq(parameters.referenceType, 'Project')}}:
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Unit Tests'
+      inputs:
+        command: custom
+        projects: build.proj
+        custom: msbuild
+        arguments: '-t:RunUnitTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+        verbosityRestore: Detailed
+        verbosityPack: Detailed
+      retryCountOnTaskFailure: 1
+      condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Functional Tests'
+    inputs:
+      command: custom
+      projects: build.proj
+      custom: msbuild
+      arguments: '-t:RunFunctionalTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+      verbosityRestore: Detailed
+      verbosityPack: Detailed
+    retryCountOnTaskFailure: 1
+    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Manual Tests'
+    inputs:
+      command: custom
+      projects: build.proj
+      custom: msbuild
+      arguments: '-t:RunManualTests -p:TF=${{parameters.targetFramework }} -p:TestSet=${{parameters.testSet }} -p:ReferenceType=${{parameters.referenceType }} -p:TestMicrosoftDataSqlClientVersion=${{parameters.nugetPackageVersion }} -p:platform=${{parameters.platform }} -p:Configuration=${{parameters.configuration }}'
+      verbosityRestore: Detailed
+      verbosityPack: Detailed
+    retryCountOnTaskFailure: 2
+    condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))

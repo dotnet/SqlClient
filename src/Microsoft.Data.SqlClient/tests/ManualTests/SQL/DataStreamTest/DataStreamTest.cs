@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ActiveIssue(5540)]
+        [ActiveIssue("5540")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void RunAllTestsForSingleServer_TCP()
         {
@@ -106,17 +106,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int sharedLength = Math.Min(inputData.Length, outputData.Length);
             if (sharedLength < outputData.Length)
             {
-                Assert.False(true, $"output is longer than input, input={inputData.Length} bytes, output={outputData.Length} bytes");
+                Assert.Fail($"output is longer than input, input={inputData.Length} bytes, output={outputData.Length} bytes");
             }
             if (sharedLength < inputData.Length)
             {
-                Assert.False(true, $"input is longer than output, input={inputData.Length} bytes, output={outputData.Length} bytes");
+                Assert.Fail($"input is longer than output, input={inputData.Length} bytes, output={outputData.Length} bytes");
             }
             for (int index = 0; index < sharedLength; index++)
             {
                 if (inputData[index] != outputData[index]) // avoid formatting the output string unless there is a difference
                 {
-                    Assert.True(false, $"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
+                    Assert.Fail($"input and output differ at index {index}, input={inputData[index]}, output={outputData[index]}");
                 }
             }
 
@@ -1515,8 +1515,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             // Basic case
                             using (stream = reader.GetStream(0))
                             {
-                                stream.Read(smallBuffer, 0, smallBuffer.Length);
-                                stream.Read(buffer, 2, 2);
+                                _ = stream.Read(smallBuffer, 0, smallBuffer.Length);
+                                _ = stream.Read(buffer, 2, 2);
 
                                 // Testing stream properties
                                 stream.Flush();
@@ -1540,7 +1540,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             }
 
                             // Once Stream is closed
-                            DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => stream.Read(buffer, 0, buffer.Length));
+                            DataTestUtility.AssertThrowsWrapper<ObjectDisposedException>(() => { _ = stream.Read(buffer, 0, buffer.Length); });
                         }
 
                         using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1548,25 +1548,25 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             reader.Read();
                             // Reading more than is there, and when there is nothing there
                             stream = reader.GetStream(0);
-                            stream.Read(buffer, 0, buffer.Length);
-                            stream.Read(buffer, 0, buffer.Length);
+                            _ = stream.Read(buffer, 0, buffer.Length);
+                            _ = stream.Read(buffer, 0, buffer.Length);
 
                             // Argument exceptions
-                            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => stream.Read(null, 0, 1));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, -1, 2));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, 2, -1));
+                            DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => { _ = stream.Read(null, 0, 1); });
+                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, -1, 2); });
+                            DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => { _ = stream.Read(buffer, 2, -1); });
 
-                            // ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
-                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
+                            // Prior to net6 comment:ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
+                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => { _ = stream.Read(buffer, buffer.Length, buffer.Length); });
                             Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
-                                        "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
-                            ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+                                      "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
+                            ex = Assert.ThrowsAny<ArgumentException>(() => { _ = stream.Read(buffer, int.MaxValue, int.MaxValue); });
                             Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException),
-                                        "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
+                                      "Expected: ArgumentException in net5 and earlier. ArgumentOutOfRangeException in net6 and later.");
                         }
 
                         // Once Reader is closed
-                        action = (() => stream.Read(buffer, 0, buffer.Length));
+                        action = (() => { _ = stream.Read(buffer, 0, buffer.Length); });
                         SeqAccessFailureWrapper<ObjectDisposedException>(action, behavior);
                     }
 
@@ -1579,7 +1579,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             stream = reader.GetStream(0);
                             reader.GetInt32(1);
 
-                            action = (() => stream.Read(buffer, 0, buffer.Length));
+                            action = (() => { _ = stream.Read(buffer, 0, buffer.Length); });
                             SeqAccessFailureWrapper<ObjectDisposedException>(action, behavior);
                         }
                     }
@@ -1593,7 +1593,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 // 0 byte read
                                 reader.Read();
                                 stream = reader.GetStream(1);
-                                stream.Read(largeBuffer, 0, 0);
+                                _ = stream.Read(largeBuffer, 0, 0);
                             }
 #if DEBUG
                             using (SqlDataReader reader = cmd.ExecuteReader(behavior))
@@ -1606,7 +1606,7 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                                 {
                                     // Read during async
                                     t = stream.ReadAsync(largeBuffer, 0, largeBuffer.Length);
-                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => stream.Read(largeBuffer, 0, largeBuffer.Length));
+                                    DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => { _ = stream.Read(largeBuffer, 0, largeBuffer.Length); });
                                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() => reader.Read());
                                 }
                                 t.Wait();
@@ -1913,12 +1913,14 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
 
         private static void TestXEventsStreaming(string connectionString)
         {
-            string sessionName = DataTestUtility.GenerateRandomCharacters("Session");
-
-            try
+            // Create XEvent
+            using (SqlConnection xEventManagementConnection = new SqlConnection(connectionString))
+            using (DataTestUtility.XEventScope xEventScope = new DataTestUtility.XEventScope(xEventManagementConnection,
+                "ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))",
+                "ADD TARGET package0.ring_buffer"))
             {
-                //Create XEvent
-                SetupXevent(connectionString, sessionName);
+                string sessionName = xEventScope.SessionName;
+
                 Task.Factory.StartNew(() =>
                 {
                     // Read XEvents
@@ -1956,52 +1958,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                         }
                     }
                 }).Wait(10000);
-            }
-            finally
-            {
-                //Delete XEvent 
-                DeleteXevent(connectionString, sessionName);
-            }
-        }
-
-        private static void SetupXevent(string connectionString, string sessionName)
-        {
-            string xEventCreateAndStartCommandText = @"CREATE EVENT SESSION [" + sessionName + @"] ON SERVER
-                        ADD EVENT sqlserver.user_event(ACTION(package0.event_sequence))
-                        ADD TARGET package0.ring_buffer
-                        WITH (
-                            MAX_MEMORY=4096 KB,
-                            EVENT_RETENTION_MODE=ALLOW_SINGLE_EVENT_LOSS,
-                            MAX_DISPATCH_LATENCY=30 SECONDS,
-                            MAX_EVENT_SIZE=0 KB,
-                            MEMORY_PARTITION_MODE=NONE,
-                            TRACK_CAUSALITY=ON,
-                            STARTUP_STATE=OFF)
-                            
-                        ALTER EVENT SESSION [" + sessionName + "] ON SERVER STATE = START ";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using (SqlCommand createXeventSession = new SqlCommand(xEventCreateAndStartCommandText, connection))
-                {
-                    createXeventSession.ExecuteNonQuery();
-                }
-            }
-        }
-
-        private static void DeleteXevent(string connectionString, string sessionName)
-        {
-            string deleteXeventSessionCommand = $"IF EXISTS (select * from sys.server_event_sessions where name ='{sessionName}')" +
-                    $" DROP EVENT SESSION [{sessionName}] ON SERVER";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using (SqlCommand deleteXeventSession = new SqlCommand(deleteXeventSessionCommand, connection))
-                {
-                    deleteXeventSession.ExecuteNonQuery();
-                }
             }
         }
 

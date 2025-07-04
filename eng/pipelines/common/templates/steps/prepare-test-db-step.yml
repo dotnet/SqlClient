@@ -1,0 +1,27 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: databaseName
+    type: string
+    default: $(Database)
+  
+  - name: targetFramework
+    type: string
+    default: net9.0
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Build Ext Utilities'
+  inputs:
+    command: build
+    arguments: '-f ${{parameters.targetFramework }}'
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+- task: DotNetCoreCLI@2
+  displayName: 'Create Test Database'
+  inputs:
+    command: run
+    arguments: '-f ${{parameters.targetFramework }} -- "CreateDatabase" ${{parameters.databaseName }} '
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities

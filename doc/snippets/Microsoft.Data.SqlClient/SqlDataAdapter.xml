@@ -1,501 +1,1279 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlDataAdapter">
-        <SqlDataAdapter>
-            <summary>Represents a set of data commands and a database connection that are used to fill the <see cref="T:System.Data.DataSet" /> and update a SQL Server database. This class cannot be inherited.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
+﻿<docs>
+  <members name="SqlDataAdapter">
+    <SqlDataAdapter>
+      <summary>
+        Represents a set of data commands and a database connection that are used to fill the <see cref="T:System.Data.DataSet" /> and update a SQL Server database. This class cannot be inherited.
+      </summary>
+      <remarks>
+        <format type="text/markdown"><![CDATA[
 ## Remarks  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter>, serves as a bridge between a <xref:System.Data.DataSet> and SQL Server for retrieving and saving data. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter> provides this bridge by mapping <xref:System.Data.Common.DbDataAdapter.Fill%2A>, which changes the data in the <xref:System.Data.DataSet> to match the data in the data source, and <xref:System.Data.Common.DbDataAdapter.Update%2A>, which changes the data in the data source to match the data in the <xref:System.Data.DataSet>, using the appropriate Transact-SQL statements against the data source. The update is performed on a by-row basis. For every inserted, modified, and deleted row, the <xref:System.Data.Common.DbDataAdapter.Update%2A> method determines the type of change that has been performed on it (`Insert`, `Update`, or `Delete`). Depending on the type of change, the `Insert`, `Update`, or `Delete` command template executes to propagate the modified row to the data source. When the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> fills a <xref:System.Data.DataSet>, it creates the necessary tables and columns for the returned data if they do not already exist. However, primary key information is not included in the implicitly created schema unless the <xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A> property is set to <xref:System.Data.MissingSchemaAction.AddWithKey>. You may also have the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> create the schema of the <xref:System.Data.DataSet>, including primary key information, before filling it with data using `FillSchema`. For more information, see [Adding Existing Constraints to a DataSet](/sql/connect/ado-net/add-existing-constraints-to-dataset).  
-  
- <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is used in conjunction with <xref:Microsoft.Data.SqlClient.SqlConnection> and <xref:Microsoft.Data.SqlClient.SqlCommand> to increase performance when connecting to a SQL Server database.  
-  
+The <xref:Microsoft.Data.SqlClient.SqlDataAdapter>, serves as a bridge between a <xref:System.Data.DataSet> and SQL Server for retrieving and saving data. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter> provides this bridge by mapping <xref:System.Data.Common.DbDataAdapter.Fill%2A>, which changes the data in the <xref:System.Data.DataSet> to match the data in the data source, and <xref:System.Data.Common.DbDataAdapter.Update%2A>, which changes the data in the data source to match the data in the <xref:System.Data.DataSet>, using the appropriate Transact-SQL statements against the data source. The update is performed on a by-row basis. For every inserted, modified, and deleted row, the <xref:System.Data.Common.DbDataAdapter.Update%2A> method determines the type of change that has been performed on it (`Insert`, `Update`, or `Delete`). Depending on the type of change, the `Insert`, `Update`, or `Delete` command template executes to propagate the modified row to the data source. When the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> fills a <xref:System.Data.DataSet>, it creates the necessary tables and columns for the returned data if they do not already exist. However, primary key information is not included in the implicitly created schema unless the <xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A> property is set to <xref:System.Data.MissingSchemaAction.AddWithKey>. You may also have the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> create the schema of the <xref:System.Data.DataSet>, including primary key information, before filling it with data using `FillSchema`. For more information, see [Adding Existing Constraints to a DataSet](https://learn.microsoft.com/sql/connect/ado-net/add-existing-constraints-to-dataset).  
+
+<xref:Microsoft.Data.SqlClient.SqlDataAdapter> is used in conjunction with <xref:Microsoft.Data.SqlClient.SqlConnection> and <xref:Microsoft.Data.SqlClient.SqlCommand> to increase performance when connecting to a SQL Server database.  
+
 > [!NOTE]
 >  If you are using SQL Server stored procedures to edit or delete data using a `DataAdapter`, make sure that you do not use SET NOCOUNT ON in the stored procedure definition. This causes the rows affected count returned to be zero, which the `DataAdapter` interprets as a concurrency conflict. In this event, a <xref:System.Data.DBConcurrencyException> will be thrown.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter> also includes the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:System.Data.Common.DataAdapter.TableMappings%2A> properties to facilitate the loading and updating of data.  
-  
- When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the read/write properties are set to initial values. For a list of these values, see the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> constructor.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> are generic templates that are automatically filled with individual values from every modified row through the parameters mechanism.  
-  
- For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to the `InsertCommand`, `UpdateCommand`, or `DeleteCommand`. The <xref:System.Data.Common.DbParameter.SourceColumn%2A> property of the <xref:System.Data.Common.DbParameter> object should be set to the name of the column. This setting indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.  
-  
-> [!NOTE]
->  An <xref:System.InvalidOperationException> will occur if the <xref:System.Data.Common.DbDataAdapter.Fill%2A> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see [CLR User-Defined Types](/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types).
-  
-   
-  
-## Examples  
- The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter>, and <xref:Microsoft.Data.SqlClient.SqlConnection> to select records from a database and populate a <xref:System.Data.DataSet> with the selected rows. The filled <xref:System.Data.DataSet> is then returned. To accomplish this, the method is passed an initialized <xref:System.Data.DataSet>, a connection string, and a query string that is a Transact-SQL SELECT statement.  
-  
- [!code-csharp[SqlDataAdapter_SelectCommand Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SelectCommand.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </SqlDataAdapter>
-        <ctor1>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class.</summary>
-        </ctor1>
-        <ctor2>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the following read/write properties are set to the following initial values.  
-  
-|Properties|Initial value|  
-|----------------|-------------------|  
-|<xref:System.Data.Common.DataAdapter.MissingMappingAction%2A>|`MissingMappingAction.Passthrough`|  
-|<xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A>|`MissingSchemaAction.Add`|  
-  
- You can change the value of any of these properties through a separate call to the property.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
-  
- [!code-csharp[SqlDataAdapter.SqlDataAdapter Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </ctor2>
-        <ctorSelectCommand>
-            <param name="selectCommand">A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that is a Transact-SQL SELECT statement or stored procedure and is set as the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with the specified <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> as the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This implementation of the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> constructor sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property to the value specified in the `selectCommand` parameter.  
-  
- When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the following read/write properties are set to the following initial values.  
-  
-|Properties|Initial value|  
-|----------------|-------------------|  
-|<xref:System.Data.Common.DataAdapter.MissingMappingAction%2A>|`MissingMappingAction.Passthrough`|  
-|<xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A>|`MissingSchemaAction.Add`|  
-  
- You can change the value of any of these properties through a separate call to the property.  
-  
- When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> (or any of the other command properties) is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
-  
- [!code-csharp[SqlDataAdapter_SqlDataAdapter1 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter1.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </ctorSelectCommand>
-        <ctorSelectCommandTextSelectConnection>
-            <param name="selectCommandText">A <see cref="T:System.String" /> that is a Transact-SQL SELECT statement or stored procedure to be used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.</param>
-            <param name="selectConnection">A <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> that represents the connection. If your connection string does not use <see langword="Integrated Security = true" />, you can use <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> to pass the user ID and password more securely than by specifying the user ID and password as text in the connection string.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with a <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This implementation of the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> opens and closes a <xref:Microsoft.Data.SqlClient.SqlConnection> if it is not already open. This can be useful in an application that must call the <xref:System.Data.Common.DbDataAdapter.Fill%2A> method for two or more <xref:Microsoft.Data.SqlClient.SqlDataAdapter> objects. If the <xref:Microsoft.Data.SqlClient.SqlConnection> is already open, you must explicitly call **Close** or **Dispose** to close it.  
-  
- When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the following read/write properties are set to the following initial values.  
-  
-|Properties|Initial value|  
-|----------------|-------------------|  
-|<xref:System.Data.Common.DataAdapter.MissingMappingAction%2A>|`MissingMappingAction.Passthrough`|  
-|<xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A>|`MissingSchemaAction.Add`|  
-  
- You can change the value of either of these properties through a separate call to the property.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
-  
- [!code-csharp[SqlDataAdapter_SqlDataAdapter3 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter3.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </ctorSelectCommandTextSelectConnection>
-        <ctorSelectCommandTextSelectConnectionString>
-            <param name="selectCommandText">A <see cref="T:System.String" /> that is a Transact-SQL SELECT statement or stored procedure to be used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.</param>
-            <param name="selectConnectionString">The connection string. If your connection string does not use <see langword="Integrated Security = true" />, you can use <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.#ctor(System.String,Microsoft.Data.SqlClient.SqlConnection)" /> and <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> to pass the user ID and password more securely than by specifying the user ID and password as text in the connection string.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with a <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> and a connection string.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This overload of the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> constructor uses the `selectCommandText` parameter to set the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter> will create and maintain the connection created with the `selectConnectionString` parameter.  
-  
- When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the following read/write properties are set to the following initial values.  
-  
-|Properties|Initial value|  
-|----------------|-------------------|  
-|<xref:System.Data.Common.DataAdapter.MissingMappingAction%2A>|`MissingMappingAction.Passthrough`|  
-|<xref:System.Data.Common.DataAdapter.MissingSchemaAction%2A>|`MissingSchemaAction.Add`|  
-  
- You can change the value of any of these properties through a separate call to the property.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets some of its properties.  
-  
- [!code-csharp[SqlDataAdapter_SqlDataAdapter2 Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SqlDataAdapter2.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </ctorSelectCommandTextSelectConnectionString>
-        <AddToBatch>
-            <param name="command">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </AddToBatch>
-        <ClearBatch>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </ClearBatch>
-        <CreateRowUpdatedEvent>
-            <param name="dataRow">To be added.</param>
-            <param name="command">To be added.</param>
-            <param name="statementType">To be added.</param>
-            <param name="tableMapping">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </CreateRowUpdatedEvent>
-        <CreateRowUpdatingEvent>
-            <param name="dataRow">To be added.</param>
-            <param name="command">To be added.</param>
-            <param name="statementType">To be added.</param>
-            <param name="tableMapping">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </CreateRowUpdatingEvent>
-        <DeleteCommand>
-            <summary>Gets or sets a Transact-SQL statement or stored procedure to delete records from the data set.</summary>
-            <value>A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to delete records in the database that correspond to deleted rows in the <see cref="T:System.Data.DataSet" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- During <xref:System.Data.Common.DbDataAdapter.Update%2A>, if this property is not set and primary key information is present in the <xref:System.Data.DataSet>, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> can be generated automatically if you set the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property and use the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. Then, any additional commands that you do not set are generated by the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. This generation logic requires key column information to be present in the <xref:System.Data.DataSet>. For more information, see [Generating Commands with CommandBuilders](/sql/connect/ado-net/generate-commands-with-commandbuilders).  
-  
- When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
- For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to the `InsertCommand`, `UpdateCommand`, or `DeleteCommand`. The `SourceColumn` property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-  
- [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </DeleteCommand>
-        <Dispose>
-            <param name="disposing">To be added.</param>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </Dispose>
-        <ExecuteBatch>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </ExecuteBatch>
-        <GetBatchedParameter>
-            <param name="commandIdentifier">To be added.</param>
-            <param name="parameterIndex">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </GetBatchedParameter>
-        <GetBatchedRecordsAffected>
-            <param name="commandIdentifier">To be added.</param>
-            <param name="recordsAffected">To be added.</param>
-            <param name="error">To be added.</param>
-            <summary>To be added.</summary>
-            <returns>To be added.</returns>
-            <remarks>To be added.</remarks>
-        </GetBatchedRecordsAffected>
-        <InitializeBatching>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </InitializeBatching>
-        <InsertCommand>
-            <summary>Gets or sets a Transact-SQL statement or stored procedure to insert new records into the data source.</summary>
-            <value>A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to insert records into the database that correspond to new rows in the <see cref="T:System.Data.DataSet" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- During <xref:System.Data.Common.DbDataAdapter.Update%2A>, if this property is not set and primary key information is present in the <xref:System.Data.DataSet>, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A> can be generated automatically if you set the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property and use the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. Then, any additional commands that you do not set are generated by the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. This generation logic requires key column information to be present in the <xref:System.Data.DataSet>. For more information, see [Generating Commands with CommandBuilders](/sql/connect/ado-net/generate-commands-with-commandbuilders).  
-  
- When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A> is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
- If execution of this command returns rows, these rows can be added to the <xref:System.Data.DataSet> depending on how you set the **UpdatedRowSource** property of the <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
- For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to `InsertCommand`, `UpdateCommand`, or `DeleteCommand`. The `SourceColumn` property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-  
- [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </InsertCommand>
-        <OnRowUpdated>
-            <param name="value">To be added.</param>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </OnRowUpdated>
-        <OnRowUpdating>
-            <param name="value">To be added.</param>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </OnRowUpdating>
-        <RowUpdated>
-            <summary>Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> after a command is executed against the data source. The attempt to update is made, so the event fires.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- When using <xref:System.Data.Common.DbDataAdapter.Update%2A>, there are two events that occur per data row updated. The order of execution is as follows:  
-  
-1.  The values in the <xref:System.Data.DataRow> are moved to the parameter values.  
-  
-2.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdating%2A> event is raised.  
-  
-3.  The command executes.  
-  
-4.  If the command is set to `FirstReturnedRecord`, the first returned result is placed in the <xref:System.Data.DataRow>.  
-  
-5.  If there are output parameters, they are placed in the <xref:System.Data.DataRow>.  
-  
-6.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdated%2A> event is raised.  
-  
-7.  <xref:System.Data.DataRow.AcceptChanges%2A> is called.  
-  
-   
-  
-## Examples  
- The following example shows how to use both the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> events.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
-  
- [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </RowUpdated>
-        <RowUpdating>
-            <summary>Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> before a command is executed against the data source. The attempt to update is made, so the event fires.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- When using <xref:System.Data.Common.DbDataAdapter.Update%2A>, there are two events that occur per data row updated. The order of execution is as follows:  
-  
-1.  The values in the <xref:System.Data.DataRow> are moved to the parameter values.  
-  
-2.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdating%2A> event is raised.  
-  
-3.  The command executes.  
-  
-4.  If the command is set to `FirstReturnedRecord`, the first returned result is placed in the <xref:System.Data.DataRow>.  
-  
-5.  If there are output parameters, they are placed in the <xref:System.Data.DataRow>.  
-  
-6.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdated%2A> event is raised.  
-  
-7.  <xref:System.Data.DataRow.AcceptChanges%2A> is called.  
-  
-   
-  
-## Examples  
- The following example shows how to use both the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> events.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
-  
- [!code-csharp[SqlDataAdapter_RowUpdated Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_RowUpdated.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </RowUpdating>
-        <SelectCommand>
-            <summary>Gets or sets a Transact-SQL statement or stored procedure used to select records in the data source.</summary>
-            <value>A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" /> to select records from the database for placement in the <see cref="T:System.Data.DataSet" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
- If the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> does not return any rows, no tables are added to the <xref:System.Data.DataSet>, and no exception is raised.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-  
- [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </SelectCommand>
-        <System.Data.IDbDataAdapter.DeleteCommand>
-            <summary>For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.DeleteCommand" />.</summary>
-            <value>An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to delete records in the data source for deleted rows in the data set.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This member is an explicit interface member implementation. It can be used only when the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> instance is cast to an <xref:System.Data.IDbDataAdapter> interface.  
-  
- ]]></format>
-            </remarks>
-        </System.Data.IDbDataAdapter.DeleteCommand>
-        <System.Data.IDbDataAdapter.InsertCommand>
-            <summary>For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.InsertCommand" />.</summary>
-            <value>An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to insert records in the data source for new rows in the data set.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This member is an explicit interface member implementation. It can be used only when the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> instance is cast to an <xref:System.Data.IDbDataAdapter> interface.  
-  
- ]]></format>
-            </remarks>
-        </System.Data.IDbDataAdapter.InsertCommand>
-        <System.Data.IDbDataAdapter.SelectCommand>
-            <summary>For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.SelectCommand" />.</summary>
-            <value>An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to select records from data source for placement in the data set.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This member is an explicit interface member implementation. It can be used only when the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> instance is cast to an <xref:System.Data.IDbDataAdapter> interface.  
-  
- ]]></format>
-            </remarks>
-        </System.Data.IDbDataAdapter.SelectCommand>
-        <System.Data.IDbDataAdapter.UpdateCommand>
-            <summary>For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.UpdateCommand" />.</summary>
-            <value>An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to update records in the data source for modified rows in the data set.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This member is an explicit interface member implementation. It can be used only when the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> instance is cast to an <xref:System.Data.IDbDataAdapter> interface.  
-  
- ]]></format>
-            </remarks>
-        </System.Data.IDbDataAdapter.UpdateCommand>
-        <System.ICloneable.Clone>
-            <summary>For a description of this member, see <see cref="M:System.ICloneable.Clone" />.</summary>
-            <returns>A new object that is a copy of the current instance.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This member is an explicit interface member implementation. It can be used only when the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> instance is cast to an <xref:System.ICloneable> interface.  
-  
- ]]></format>
-            </remarks>
-        </System.ICloneable.Clone>
-        <TerminateBatching>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </TerminateBatching>
-        <UpdateBatchSize>
-            <summary>Gets or sets the number of rows that are processed in each round-trip to the server.</summary>
-            <value>The number of rows to process per-batch.  
-  
- <list type="table"><listheader><term> Value is  
-  
- </term><description> Effect  
-  
- </description></listheader><item><term> 0  
-  
- </term><description> There is no limit on the batch size. 
-  
- </description></item><item><term> 1  
-  
- </term><description> Disables batch updating.  
-  
- </description></item><item><term> &gt;1  
-  
- </term><description> Changes are sent using batches of <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize" /> operations at a time.  
-  
- </description></item></list>  
 
- When setting this to a value other than 1, all the commands associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have to have their **UpdatedRowSource** property set to <see langword="None" /> or <see langword="OutputParameters" />. An exception is thrown otherwise.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
+The <xref:Microsoft.Data.SqlClient.SqlDataAdapter> also includes the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A>, and <xref:System.Data.Common.DataAdapter.TableMappings%2A> properties to facilitate the loading and updating of data.  
+
+When an instance of <xref:Microsoft.Data.SqlClient.SqlDataAdapter> is created, the read/write properties are set to initial values. For a list of these values, see the <xref:Microsoft.Data.SqlClient.SqlDataAdapter> constructor.  
+
+The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A>, and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> are generic templates that are automatically filled with individual values from every modified row through the parameters mechanism.  
+
+For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to the `InsertCommand`, `UpdateCommand`, or `DeleteCommand`. The <xref:System.Data.Common.DbParameter.SourceColumn%2A> property of the <xref:System.Data.Common.DbParameter> object should be set to the name of the column. This setting indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.  
+
+> [!NOTE]
+>  An <xref:System.InvalidOperationException> will occur if the <xref:System.Data.Common.DbDataAdapter.Fill%2A> method is called and the table contains a user-defined type that is not available on the client computer. For more information, see [CLR User-Defined Types](https://learn.microsoft.com/sql/relational-databases/clr-integration-database-objects-user-defined-types/clr-user-defined-types).
+
+## Examples  
+The following example uses the <xref:Microsoft.Data.SqlClient.SqlCommand>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter>, and <xref:Microsoft.Data.SqlClient.SqlConnection> to select records from a database and populate a <xref:System.Data.DataSet> with the selected rows. The filled <xref:System.Data.DataSet> is then returned. To accomplish this, the method is passed an initialized <xref:System.Data.DataSet>, a connection string, and a query string that is a Transact-SQL SELECT statement.  
+
+[!code-csharp[SqlDataAdapter_SelectCommand Example#1](~/../sqlclient/doc/samples/SqlDataAdapter_SelectCommand.cs#1)]
+
+]]></format>
+      </remarks>
+    </SqlDataAdapter>
+    <ctor2>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class.
+      </summary>
+      <remarks>
+        <para>
+          When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
+        </para>
+        <list type="table">
+          <listheader>
+            <term>
+              Properties
+            </term>
+            <description>
+              Initial value
+            </description>
+          </listheader>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
+          </item>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
+          </item>
+        </list>
+        <para>
+          You can change the value of these properties through a separate call to the property.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
+        </para>
+        <!-- SqlDataAdapter_SqlDataAdapter -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+
+              public static SqlDataAdapter CreateSqlDataAdapter(SqlConnection connection)
+              {
+                  // Assumes that connection is a valid SqlConnection object
+                  SqlDataAdapter adapter = new SqlDataAdapter();
+                  adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+          
+                  // Create the commands.
+                  adapter.SelectCommand = new SqlCommand(
+                      "SELECT CustomerID, CompanyName FROM CUSTOMERS", connection);
+                  adapter.InsertCommand = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+                  adapter.UpdateCommand = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+                  adapter.DeleteCommand = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Create the parameters.
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+          
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@oldCustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand.Parameters.Add(
+                    "@CustomerID",
+                    SqlDbType.Char,
+                    5,
+                    "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  return adapter;
+              }
+          
+              public static SqlDataAdapter CustomerUpdateCommand(SqlDataAdapter adapter)
+              {
+                  // Assumes that connection is a valid SqlAdapter object
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CompanyName", 
+                      SqlDbType.VarChar,
+                      15,
+                      "CompanyName");
+                  SqlParameter parameter = adapter.UpdateCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </ctor2>
+    <ctorSelectCommand>
+      <param name="selectCommand">
+        A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> that is a Transact-SQL SELECT statement or stored procedure and is set as the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with the specified <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> as the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property.
+      </summary>
+      <remarks>
+        <para>
+          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property to the value specified in the <paramref name="selectCommand" /> parameter. When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
+        </para>
+        <list type="table">
+          <listheader>
+            <term>Properties</term>
+            <description>Initial value</description>
+          </listheader>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
+          </item>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
+          </item>
+        </list>
+        <para>
+          You can change the value of these properties through a separate call to the property.
+        </para>
+        <para>
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> (or any of the other command properties) is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
+        </para>
+        <!-- SqlDataAdapter_SqlDataAdapter1 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+
+              public static SqlDataAdapter CreateSqlDataAdapter(SqlCommand selectCommand, SqlConnection connection)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter(selectCommand);
+                  adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+          
+                  // Create the other commands.
+                  adapter.InsertCommand = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+          
+                  adapter.UpdateCommand = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+          
+                  adapter.DeleteCommand = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Create the parameters.
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+          
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@oldCustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </ctorSelectCommand>
+    <ctorSelectCommandTextSelectConnection>
+      <param name="selectCommandText">
+        A <see cref="T:System.String" /> that is a Transact-SQL SELECT statement or stored procedure to be used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
+      </param>
+      <param name="selectConnection">
+        A <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> that represents the connection. If your connection string does not use <see langword="Integrated Security = true" />, you can use <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> to pass the user ID and password more securely than by specifying the user ID and password as text in the connection string.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with a <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+      </summary>
+      <remarks>
+        <para>
+          This implementation of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> opens and closes a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> if it is not already open. This can be useful in an application that must call the <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" /> method for two or more <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> objects. If the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is already open, you must explicitly call <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Close" /> or <see cref="M:System.IDisposable.Dispose" /> to close it.
+        </para>
+        <para>
+          When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
+        </para>
+        <list type="table">
+          <listheader>
+            <term>
+              Properties
+            </term>
+            <description>
+              Initial value
+            </description>
+          </listheader>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
+          </item>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
+          </item>
+        </list>
+        <para>
+          You can change the value of either of these properties through a separate call to the property.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
+        </para>
+        <!-- SqlDataAdapter_SqlDataAdapter3 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+            
+              public static SqlDataAdapter CreateSqlDataAdapter(string commandText, SqlConnection connection)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter(commandText, connection);
+          
+                  adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+          
+                  // Create the other commands.
+                  adapter.InsertCommand = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)");
+          
+                  adapter.UpdateCommand = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID");
+          
+                  adapter.DeleteCommand = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID");
+          
+                  // Create the parameters.
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+          
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@oldCustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </ctorSelectCommandTextSelectConnection>
+    <ctorSelectCommandTextSelectConnectionString>
+      <param name="selectCommandText">
+        A <see cref="T:System.String" /> that is a Transact-SQL SELECT statement or stored procedure to be used by the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" />.
+      </param>
+      <param name="selectConnectionString">
+        The connection string. If your connection string does not use <see langword="Integrated Security = true" />, you can use <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.#ctor(System.String,Microsoft.Data.SqlClient.SqlConnection)" /> and <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> to pass the user ID and password more securely than by specifying the user ID and password as text in the connection string.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> class with a <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> and a connection string.
+      </summary>
+      <remarks>
+        <para>
+          This overload of the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> constructor uses the <paramref name="selectCommandText" /> parameter to set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property. The <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> will create and maintain the connection created with the <paramref name="selectConnectionString" /> parameter.
+        </para>
+        <para>
+          When an instance of <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> is created, the following read/write properties are set to the following initial values.
+        </para>
+        <list type="table">
+          <listheader>
+            <term>
+              Properties
+            </term>
+            <description>
+              Initial value
+            </description>
+          </listheader>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingMappingAction" /></term>
+            <description><see cref="F:System.Data.MissingMappingAction.Passthrough" /></description>
+          </item>
+          <item>
+            <term><see cref="P:System.Data.Common.DataAdapter.MissingSchemaAction" /></term>
+            <description><see cref="F:System.Data.MissingSchemaAction.Add" /></description>
+          </item>
+        </list>
+        <para>
+          You can change the value of these properties through a separate call to the property.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets some of its properties.
+        </para>
+        <!-- SqlDataAdapter_SqlDataAdapter2 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+            
+              public static SqlDataAdapter CreateSqlDataAdapter(string commandText, string connectionString)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter(commandText, connectionString);
+                  SqlConnection connection = adapter.SelectCommand.Connection;
+          
+                  adapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+          
+                  // Create the commands.
+                  adapter.InsertCommand = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+          
+                  adapter.UpdateCommand = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+          
+                  adapter.DeleteCommand = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Create the parameters.
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.InsertCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+          
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@CompanyName",
+                      SqlDbType.VarChar,
+                      40,
+                      "CompanyName");
+                  adapter.UpdateCommand.Parameters.Add(
+                      "@oldCustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand.Parameters.Add(
+                      "@CustomerID",
+                      SqlDbType.Char,
+                      5,
+                      "CustomerID"
+                  ).SourceVersion = DataRowVersion.Original;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </ctorSelectCommandTextSelectConnectionString>
+    <AddToBatch>
+      <param name="command">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </AddToBatch>
+    <ClearBatch>
+      <summary>
+        To be added.
+      </summary>
+      <remarks>
+        To be added.
+      </remarks>
+    </ClearBatch>
+    <CreateRowUpdatedEvent>
+      <param name="dataRow">
+        To be added.
+      </param>
+      <param name="command">
+        To be added.
+      </param>
+      <param name="statementType">
+        To be added.
+      </param>
+      <param name="tableMapping">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </CreateRowUpdatedEvent>
+    <CreateRowUpdatingEvent>
+      <param name="dataRow">
+        To be added.
+      </param>
+      <param name="command">
+        To be added.
+      </param>
+      <param name="statementType">
+        To be added.
+      </param>
+      <param name="tableMapping">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </CreateRowUpdatingEvent>
+    <DeleteCommand>
+      <summary>
+        Gets or sets a Transact-SQL statement or stored procedure to delete records from the data set.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to delete records in the database that correspond to deleted rows in the <see cref="T:System.Data.DataSet" />.
+      </value>
+      <remarks>
+        <para>
+          During <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+        </para>
+        <para>
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+        </para>
+        <para>
+          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, or <b>DeleteCommand</b>. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+        </para>
+        <!-- SqlDataAdapter -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+
+              public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter();
+          
+                  // Create the SelectCommand.
+                  SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
+                      "WHERE Country = @Country AND City = @City", connection);
+          
+                  // Add the parameters for the SelectCommand.
+                  command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
+                  command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
+          
+                  adapter.SelectCommand = command;
+          
+                  // Create the InsertCommand.
+                  command = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+          
+                  // Add the parameters for the InsertCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+          
+                  adapter.InsertCommand = command;
+          
+                  // Create the UpdateCommand.
+                  command = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+          
+                  // Add the parameters for the UpdateCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+                  SqlParameter parameter = command.Parameters.Add(
+                      "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.UpdateCommand = command;
+          
+                  // Create the DeleteCommand.
+                  command = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Add the parameters for the DeleteCommand.
+                  parameter = command.Parameters.Add(
+                      "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand = command;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </DeleteCommand>
+    <ExecuteBatch>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </ExecuteBatch>
+    <GetBatchedParameter>
+      <param name="commandIdentifier">
+        To be added.
+      </param>
+      <param name="parameterIndex">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </GetBatchedParameter>
+    <GetBatchedRecordsAffected>
+      <param name="commandIdentifier">
+        To be added.
+      </param>
+      <param name="recordsAffected">
+        To be added.
+      </param>
+      <param name="error">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <returns>
+        To be added.
+      </returns>
+      <remarks>
+        To be added.
+      </remarks>
+    </GetBatchedRecordsAffected>
+    <InitializeBatching>
+      <summary>
+        To be added.
+      </summary>
+      <remarks>
+        To be added.
+      </remarks>
+    </InitializeBatching>
+    <InsertCommand>
+      <summary>
+        Gets or sets a Transact-SQL statement or stored procedure to insert new records into the data source.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to insert records into the database that correspond to new rows in the <see cref="T:System.Data.DataSet" />.
+      </value>
+      <remarks>
+        <para>
+          During <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, if this property is not set and primary key information is present in the <see cref="T:System.Data.DataSet" />, the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> can be generated automatically if you set the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> property and use the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. Then, any additional commands that you do not set are generated by the <see cref="T:Microsoft.Data.SqlClient.SqlCommandBuilder" />. This generation logic requires key column information to be present in the <see cref="T:System.Data.DataSet" />. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders">Generating Commands with CommandBuilders</see>.
+        </para>
+        <para>
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+        </para>
+        <para>
+          If execution of this command returns rows, these rows can be added to the <see cref="T:System.Data.DataSet" /> depending on how you set the <b>UpdatedRowSource</b> property of the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+        </para>
+        <para>
+          For every column that you propagate to the data source on <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, a parameter should be added to <b>InsertCommand</b>, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, or <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" />. The <c>SourceColumn</c> property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but is taken from the particular column in the currently processed row.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+        </para>
+        <!-- SqlDataAdapter -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+            
+              public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter();
+          
+                  // Create the SelectCommand.
+                  SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
+                      "WHERE Country = @Country AND City = @City", connection);
+          
+                  // Add the parameters for the SelectCommand.
+                  command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
+                  command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
+          
+                  adapter.SelectCommand = command;
+          
+                  // Create the InsertCommand.
+                  command = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+          
+                  // Add the parameters for the InsertCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+          
+                  adapter.InsertCommand = command;
+          
+                  // Create the UpdateCommand.
+                  command = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+          
+                  // Add the parameters for the UpdateCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+                  SqlParameter parameter = command.Parameters.Add(
+                      "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.UpdateCommand = command;
+          
+                  // Create the DeleteCommand.
+                  command = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Add the parameters for the DeleteCommand.
+                  parameter = command.Parameters.Add(
+                      "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand = command;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </InsertCommand>
+    <OnRowUpdated>
+      <param name="value">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <remarks>
+        To be added.
+      </remarks>
+    </OnRowUpdated>
+    <OnRowUpdating>
+      <param name="value">
+        To be added.
+      </param>
+      <summary>
+        To be added.
+      </summary>
+      <remarks>
+        To be added.
+      </remarks>
+    </OnRowUpdating>
+    <RowUpdated>
+      <summary>
+        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> after a command is executed against the data source. The attempt to update is made, so the event fires.
+      </summary>
+      <remarks>
+        <para>
+          When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
+        </para>
+        <list type="number">
+          <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The command executes.</description></item>
+          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
+        </list>
+      </remarks>
+      <example>
+        <para>
+          The following example shows how to use both the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
+        </para>
+        <!-- SqlDataAdapter_RowUpdated -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using System.Data.Common;
+          using System.Windows.Forms;
+          using System.Xml;
+          using Microsoft.Data.SqlClient;
+          
+          public class Form1 : Form
+          {
+              private DataSet DataSet1;
+              private DataGrid dataGrid1;
+          
+              // handler for RowUpdating event
+              private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              // handler for RowUpdated event
+              private static void OnRowUpdated(object sender, SqlRowUpdatedEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              public static int Main()
+              {
+                  const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
+                  const string queryString = "SELECT * FROMProducts";
+          
+                  // create DataAdapter
+                  SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);
+                  SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+          
+                  // Create and fill DataSet (select only first 5 rows)
+                  DataSet dataSet = new DataSet();
+                  adapter.Fill(dataSet, 0, 5, "Table");
+          
+                  // Modify DataSet
+                  DataTable table = dataSet.Tables["Table"];
+                  table.Rows[0][1] = "new product";
+          
+                  // add handlers
+                  adapter.RowUpdating += new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  adapter.RowUpdated += new SqlRowUpdatedEventHandler(OnRowUpdated);
+          
+                  // update, this operation fires two events 
+                  // (RowUpdating/RowUpdated) per changed row 
+                  adapter.Update(dataSet, "Table");
+          
+                  // remove handlers
+                  adapter.RowUpdating -= new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  adapter.RowUpdated -= new SqlRowUpdatedEventHandler(OnRowUpdated);
+                  return 0;
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatingEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdating");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " status=" + args.Status + ")");
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatedEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdated");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " recordsAffected=" + args.RecordsAffected +
+                      " status=" + args.Status + ")");
+              }
+          }
+        </code>
+        <para>
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)
+        </code>
+        <para>
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)
+        </code>
+      </example>
+    </RowUpdated>
+    <RowUpdating>
+      <summary>
+        Occurs during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> before a command is executed against the data source. The attempt to update is made, so the event fires.
+      </summary>
+      <remarks>
+        <para>
+          When using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur per data row updated. The order of execution is as follows:
+        </para>
+        <list type="number">
+          <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The command executes.</description></item>
+          <item><description>If the command is set to <c>FirstReturnedRecord</c>, the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>The <see cref="M:Microsoft.Data.SqlClient.SqlDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
+        </list>
+      </remarks>
+      <example>
+        <para>
+          The following example shows how to use both the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
+        </para>
+        <!-- SqlDataAdapter_RowUpdated -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using System.Data.Common;
+          using System.Windows.Forms;
+          using System.Xml;
+          using Microsoft.Data.SqlClient;
+          
+          public class Form1 : Form
+          {
+              private DataSet DataSet1;
+              private DataGrid dataGrid1;
+          
+              // handler for RowUpdating event
+              private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              // handler for RowUpdated event
+              private static void OnRowUpdated(object sender, SqlRowUpdatedEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              public static int Main()
+              {
+                  const string connectionString = "Integrated Security=SSPI;database=Northwind;server=MSSQL1";
+                  const string queryString = "SELECT * FROMProducts";
+          
+                  // create DataAdapter
+                  SqlDataAdapter adapter = new SqlDataAdapter(queryString, connectionString);
+                  SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
+          
+                  // Create and fill DataSet (select only first 5 rows)
+                  DataSet dataSet = new DataSet();
+                  adapter.Fill(dataSet, 0, 5, "Table");
+          
+                  // Modify DataSet
+                  DataTable table = dataSet.Tables["Table"];
+                  table.Rows[0][1] = "new product";
+          
+                  // add handlers
+                  adapter.RowUpdating += new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  adapter.RowUpdated += new SqlRowUpdatedEventHandler(OnRowUpdated);
+          
+                  // update, this operation fires two events 
+                  // (RowUpdating/RowUpdated) per changed row 
+                  adapter.Update(dataSet, "Table");
+          
+                  // remove handlers
+                  adapter.RowUpdating -= new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  adapter.RowUpdated -= new SqlRowUpdatedEventHandler(OnRowUpdated);
+                  return 0;
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatingEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdating");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " status=" + args.Status + ")");
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatedEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdated");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " recordsAffected=" + args.RecordsAffected +
+                      " status=" + args.Status + ")");
+              }
+          }
+        </code>
+        <para>
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 status=0)
+        </code>
+        <para>
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SqlCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)
+        </code>
+      </example>
+    </RowUpdating>
+    <SelectCommand>
+      <summary>
+        Gets or sets a Transact-SQL statement or stored procedure used to select records in the data source.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Fill(System.Data.DataSet)" /> to select records from the database for placement in the <see cref="T:System.Data.DataSet" />.
+      </value>
+      <remarks>
+        <para>
+          When <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> is assigned to a previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" />, the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> is not cloned. The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> maintains a reference to the previously created <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> object.
+        </para>
+        <para>
+          If the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" /> does not return any rows, no tables are added to the <see cref="T:System.Data.DataSet" />, and no exception is raised.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> and sets the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand" />, <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand" />, and <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand" /> properties. It assumes you have already created a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> object.
+        </para>
+        <!-- SqlDataAdapter -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+              }
+            
+              public static SqlDataAdapter CreateCustomerAdapter(SqlConnection connection)
+              {
+                  SqlDataAdapter adapter = new SqlDataAdapter();
+          
+                  // Create the SelectCommand.
+                  SqlCommand command = new SqlCommand("SELECT * FROM Customers " +
+                      "WHERE Country = @Country AND City = @City", connection);
+          
+                  // Add the parameters for the SelectCommand.
+                  command.Parameters.Add("@Country", SqlDbType.NVarChar, 15);
+                  command.Parameters.Add("@City", SqlDbType.NVarChar, 15);
+          
+                  adapter.SelectCommand = command;
+          
+                  // Create the InsertCommand.
+                  command = new SqlCommand(
+                      "INSERT INTO Customers (CustomerID, CompanyName) " +
+                      "VALUES (@CustomerID, @CompanyName)", connection);
+          
+                  // Add the parameters for the InsertCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+          
+                  adapter.InsertCommand = command;
+          
+                  // Create the UpdateCommand.
+                  command = new SqlCommand(
+                      "UPDATE Customers SET CustomerID = @CustomerID, CompanyName = @CompanyName " +
+                      "WHERE CustomerID = @oldCustomerID", connection);
+          
+                  // Add the parameters for the UpdateCommand.
+                  command.Parameters.Add("@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  command.Parameters.Add("@CompanyName", SqlDbType.NVarChar, 40, "CompanyName");
+                  SqlParameter parameter = command.Parameters.Add(
+                      "@oldCustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.UpdateCommand = command;
+          
+                  // Create the DeleteCommand.
+                  command = new SqlCommand(
+                      "DELETE FROM Customers WHERE CustomerID = @CustomerID", connection);
+          
+                  // Add the parameters for the DeleteCommand.
+                  parameter = command.Parameters.Add(
+                      "@CustomerID", SqlDbType.NChar, 5, "CustomerID");
+                  parameter.SourceVersion = DataRowVersion.Original;
+          
+                  adapter.DeleteCommand = command;
+          
+                  return adapter;
+              }
+          }
+        </code>
+      </example>
+    </SelectCommand>
+    <System.Data.IDbDataAdapter.DeleteCommand>
+      <summary>
+        For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.DeleteCommand" />.
+      </summary>
+      <value>
+        An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to delete records in the data source for deleted rows in the data set.
+      </value>
+      <remarks>
+        This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> instance is cast to an <see cref="T:System.Data.IDbDataAdapter" /> interface.
+      </remarks>
+    </System.Data.IDbDataAdapter.DeleteCommand>
+    <System.Data.IDbDataAdapter.InsertCommand>
+      <summary>
+        For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.InsertCommand" />.
+      </summary>
+      <value>
+        An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to insert records in the data source for new rows in the data set.
+      </value>
+      <remarks>
+        This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> instance is cast to an <see cref="T:System.Data.IDbDataAdapter" /> interface.
+      </remarks>
+    </System.Data.IDbDataAdapter.InsertCommand>
+    <System.Data.IDbDataAdapter.SelectCommand>
+      <summary>
+        For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.SelectCommand" />.
+      </summary>
+      <value>
+        An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to select records from data source for placement in the data set.
+      </value>
+      <remarks>
+        This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> instance is cast to an <see cref="T:System.Data.IDbDataAdapter" /> interface.
+      </remarks>
+    </System.Data.IDbDataAdapter.SelectCommand>
+    <System.Data.IDbDataAdapter.UpdateCommand>
+      <summary>
+        For a description of this member, see <see cref="P:System.Data.IDbDataAdapter.UpdateCommand" />.
+      </summary>
+      <value>
+        An <see cref="T:System.Data.IDbCommand" /> that is used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to update records in the data source for modified rows in the data set.
+      </value>
+      <remarks>
+        This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> instance is cast to an <see cref="T:System.Data.IDbDataAdapter" /> interface.
+      </remarks>
+    </System.Data.IDbDataAdapter.UpdateCommand>
+    <System.ICloneable.Clone>
+      <summary>
+        For a description of this member, see <see cref="M:System.ICloneable.Clone" />.
+      </summary>
+      <returns>
+        A new object that is a copy of the current instance.
+      </returns>
+      <remarks>
+        This member is an explicit interface member implementation. It can be used only when the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> instance is cast to an <see cref="T:System.ICloneable" /> interface.
+      </remarks>
+    </System.ICloneable.Clone>
+    <TerminateBatching>
+      <summary>
+        To be added.
+      </summary>
+      <remarks>
+        To be added.
+      </remarks>
+    </TerminateBatching>
+    <UpdateBatchSize>
+      <summary>
+        Gets or sets the number of rows that are processed in each round-trip to the server.
+      </summary>
+      <value>
+        <para>
+          The number of rows to process per-batch.
+        </para>
+        <list type="table">
+          <listheader>
+            <term>When value is</term>
+            <description>Effect</description>
+          </listheader>
+          <item>
+            <term>0</term>
+            <description>There is no limit on the batch size.</description>
+          </item>
+          <item>
+            <term>1</term>
+            <description>Disables batch updating.</description>
+          </item>
+          <item>
+            <term>&gt;1</term>
+            <description>
+              Changes are sent using batches of <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize" /> operations at a time.
+            </description>
+          </item>
+        </list>
+        <para>
+          When setting this to a value other than 1, all the commands associated with the <see cref="T:Microsoft.Data.SqlClient.SqlDataAdapter" /> have to have their <see cref="P:Microsoft.Data.SqlClient.SqlCommand.UpdatedRowSource" /> property set to <see cref="F:System.Data.UpdateRowSource.None" /> or <see cref="F:System.Data.UpdateRowSource.OutputParameters" />. An exception is thrown otherwise.
+        </para>
+      </value>
+      <remarks>
+        <para>
+          Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch.
+        </para>
+        <para>
+          Use the <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize" /> property to update a data source with changes from a <see cref="T:System.Data.DataSet" />. This can increase application performance by reducing the number of round-trips to the server.
+        </para>
+        <para>
+          Executing an extremely large batch could decrease performance. Therefore, you should test for the optimum batch size setting before implementing your application.
+        </para>
+        <para>
+          An <see cref="T:System.ArgumentOutOfRangeException" /> is thrown if the value is set to a number less than zero.
+        </para>
+      </remarks>
+    </UpdateBatchSize>
+    <UpdateCommand>
+      <summary>
+        Gets or sets a Transact-SQL statement or stored procedure used to update records in the data source.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to update records in the database that correspond to modified rows in the <see cref="T:System.Data.DataSet" />.
+      </value>
+      <remarks>
+        <format type="text/markdown"><![CDATA[
 ## Remarks  
- Gets or sets a value that enables or disables batch processing support, and specifies the number of commands that can be executed in a batch.  
-  
- Use the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateBatchSize%2A> property to update a data source with changes from a <xref:System.Data.DataSet>. This can increase application performance by reducing the number of round-trips to the server.  
-  
- Executing an extremely large batch could decrease performance. Therefore, you should test for the optimum batch size setting before implementing your application.  
-  
- An <xref:System.ArgumentOutOfRangeException> is thrown if the value is set to a number less than zero.  
-  
- ]]></format>
-            </remarks>
-        </UpdateBatchSize>
-        <UpdateCommand>
-            <summary>Gets or sets a Transact-SQL statement or stored procedure used to update records in the data source.</summary>
-            <value>A <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> used during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to update records in the database that correspond to modified rows in the <see cref="T:System.Data.DataSet" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- During <xref:System.Data.Common.DbDataAdapter.Update%2A>, if this property is not set and primary key information is present in the <xref:System.Data.DataSet>, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> can be generated automatically if you set the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property and use the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. Then, any additional commands that you do not set are generated by the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. This generation logic requires key column information to be present in the <xref:System.Data.DataSet>. For more information, see [Generating Commands with CommandBuilders](/sql/connect/ado-net/generate-commands-with-commandbuilders).  
-  
- When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
+During <xref:System.Data.Common.DbDataAdapter.Update%2A>, if this property is not set and primary key information is present in the <xref:System.Data.DataSet>, the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> can be generated automatically if you set the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A> property and use the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. Then, any additional commands that you do not set are generated by the <xref:Microsoft.Data.SqlClient.SqlCommandBuilder>. This generation logic requires key column information to be present in the <xref:System.Data.DataSet>. For more information, see [Generating Commands with CommandBuilders](https://learn.microsoft.com/sql/connect/ado-net/generate-commands-with-commandbuilders).  
+
+When <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> is assigned to a previously created <xref:Microsoft.Data.SqlClient.SqlCommand>, the <xref:Microsoft.Data.SqlClient.SqlCommand> is not cloned. The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> maintains a reference to the previously created <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
+
 > [!NOTE]
 >  If execution of this command returns rows, the updated rows may be merged with the <xref:System.Data.DataSet> depending on how you set the **UpdatedRowSource** property of the <xref:Microsoft.Data.SqlClient.SqlCommand> object.  
-  
- For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to `InsertCommand`, `UpdateCommand`, or `DeleteCommand`.  
-  
- The `SourceColumn` property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but taken from the particular column in the currently processed row.  
-  
-   
-  
+
+For every column that you propagate to the data source on <xref:System.Data.Common.DbDataAdapter.Update%2A>, a parameter should be added to `InsertCommand`, `UpdateCommand`, or `DeleteCommand`.  
+
+The `SourceColumn` property of the parameter should be set to the name of the column. This indicates that the value of the parameter is not set manually, but taken from the particular column in the currently processed row.  
+
 ## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-  
- [!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </UpdateCommand>
-    </members>
+The following example creates a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> and sets the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.SelectCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.InsertCommand%2A>, <xref:Microsoft.Data.SqlClient.SqlDataAdapter.UpdateCommand%2A> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.DeleteCommand%2A> properties. It assumes you have already created a <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
+
+[!code-csharp[SqlDataAdapter#1](~/../sqlclient/doc/samples/SqlDataAdapter.cs#1)]
+
+]]></format>
+        </remarks>
+    </UpdateCommand>
+  </members>
 </docs>

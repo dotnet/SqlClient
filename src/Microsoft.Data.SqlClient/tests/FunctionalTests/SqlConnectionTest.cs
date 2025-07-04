@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
 
             cn = new SqlConnection((string)null);
             Assert.Equal(string.Empty, cn.ConnectionString);
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
         }
 
         [Fact]
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
-            Assert.True(ex.ParamName.IndexOf("'newPassword'") != -1);
+            Assert.True(ex.ParamName.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -212,8 +212,8 @@ namespace Microsoft.Data.SqlClient.Tests
             // its limit of '128'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'newPassword'") != -1);
-            Assert.True(ex.Message.IndexOf("128") != -1);
+            Assert.True(ex.Message.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
+            Assert.True(ex.Message.IndexOf("128", StringComparison.Ordinal) != -1);
             Assert.Null(ex.ParamName);
         }
 
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
-            Assert.True(ex.ParamName.IndexOf("'newPassword'") != -1);
+            Assert.True(ex.ParamName.IndexOf("'newPassword'", StringComparison.Ordinal) != -1);
         }
 
         [Fact]
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);
             Assert.Equal(8000, cn.PacketSize);
-            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, StringComparison.OrdinalIgnoreCase) == 0);
             Assert.Equal(ConnectionState.Closed, cn.State);
             cn.Dispose();
 
@@ -518,6 +518,18 @@ namespace Microsoft.Data.SqlClient.Tests
             OverflowException oe = (OverflowException)ex.InnerException;
             Assert.Null(oe.InnerException);
             Assert.NotNull(oe.Message);
+        }
+
+        [Fact]
+        public void ConnectionString_ContextConnection_Invalid()
+        {
+            SqlConnection cn = new SqlConnection();
+
+            // context connection enabled
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.ConnectionString = "Context Connection=true");
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("connecting to the context connection using microsoft.data.sqlclient is not supported.", StringComparison.OrdinalIgnoreCase) != -1);
         }
 
         [Fact]
@@ -888,6 +900,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Encrypt=optional")]
         [InlineData("Host Name In Certificate=tds.test.com")]
         [InlineData("HostNameInCertificate=tds.test.com")]
+        [InlineData("Server Certificate=c:\\test.cer")]
+        [InlineData("ServerCertificate=c:\\test.cer")]
         [InlineData("Enlist=false")]
         [InlineData("Enlist=true")]
         [InlineData("Integrated Security=true")]
@@ -940,6 +954,15 @@ namespace Microsoft.Data.SqlClient.Tests
             // The ConnectionString property has not been
             // initialized
             Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+        }
+
+        [Fact]
+        public void Open_ConnectionString_UserInstance()
+        {
+            SqlConnection cn = new SqlConnection("User Instance=true;");
+            SqlException ex = Assert.Throws<SqlException>(() => cn.Open());
+            // Throws without access violation
             Assert.NotNull(ex.Message);
         }
 
@@ -1059,10 +1082,30 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(1, (int)field.GetValue(cn));
         }
 
+
+
         [Fact]
-        public void ConnectionRetryForAzureDbEndpoints()
+        public void ConnectionString_WithOnlyComma()
         {
-            SqlConnection cn = new SqlConnection("Data Source = someserver.database.windows.net");
+            // Test Case for https://github.com/dotnet/SqlClient/issues/3110
+            // Validates that a single-comma Data Source (e.g., "Data Source=,") no longer causes ArgumentOutOfRangeException
+            // Instead, it should throw a SqlException indicating a connection failure
+
+            SqlConnection cn = new SqlConnection("Data Source=,;Initial Catalog=master;Integrated Security=True");
+            Assert.Throws<SqlException>(() => { cn.Open(); });
+
+        }
+
+        [Theory]
+        [InlineData("myserver.database.windows.net")]
+        [InlineData("myserver.database.cloudapi.de")]
+        [InlineData("myserver.database.usgovcloudapi.net")]
+        [InlineData("myserver.DATABASE.usgovcloudapi.net")]
+        [InlineData("myserver.database.chinacloudapi.cn")]
+        [InlineData("myserver.database.fabric.microsoft.com")]
+        public void ConnectionRetryForAzureDbEndpoints(string serverName)
+        {
+            SqlConnection cn = new SqlConnection($"Data Source = {serverName}");
             FieldInfo field = typeof(SqlConnection).GetField("_connectRetryCount", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(field.GetValue(cn));
             Assert.Equal(2, (int)field.GetValue(cn));
@@ -1070,7 +1113,13 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData("myserver-ondemand.sql.azuresynapse.net")]
+        [InlineData("myserver-ondemand.SQL.azuresynapse.net")]
         [InlineData("someserver-ondemand.database.windows.net")]
+        [InlineData("datawarehouse.fabric.microsoft.com")]
+        [InlineData("datawarehouse.FABRIC.microsoft.com")]
+        [InlineData("datawarehouse.pbidedicated.microsoft.com")]
+        [InlineData("someserver.pbidedicated.microsoft.com")]
+        [InlineData("someserver.pbidedicated.windows.net")]
         public void ConnectionRetryForAzureOnDemandEndpoints(string serverName)
         {
             SqlConnection cn = new SqlConnection($"Data Source = {serverName}");

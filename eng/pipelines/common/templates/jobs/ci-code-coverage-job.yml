@@ -1,0 +1,162 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: upload
+    type: string
+    default: $(ci_var_uploadTestResult)
+
+  - name: poolName
+    type: string
+    default: $(defaultHostedPoolName)
+
+  - name: image
+    type: string
+    default: 'windows-2022'
+  
+  - name: downloadArtifactsSteps
+    type: stepList
+    default: []
+
+jobs:
+- job: CodeCoverage
+  displayName: 'Merge Code Coverage'
+
+  variables:
+    uploadTestResult: ${{ parameters.upload }}
+
+  pool: 
+    name: '${{ parameters.poolName }}'
+    vmImage: ${{ parameters.image }}
+
+  steps:
+  - ${{if eq(parameters.debug, true)}}:
+    - powershell: |
+        Get-ChildItem env: | Sort-Object Name
+      displayName: 'List Environment Variables [debug]'
+
+  - task: NuGetAuthenticate@1
+    displayName: 'NuGet Authenticate'
+
+  - template: ../steps/ensure-dotnet-version.yml@self
+    parameters:
+        packageType: 'sdk'
+        version: '8.0'
+
+  - ${{ parameters.downloadArtifactsSteps }}
+
+  - ${{ if eq(parameters.debug, true)}}:
+    - powershell: |
+        Get-ChildItem $(Build.SourcesDirectory)\coverageNetFx\ -Recurse -File -Filter *.coverage
+      displayName: 'List coverageNetFx files [debug]'
+    
+    - powershell: |
+        Get-ChildItem $(Build.SourcesDirectory)\coverageNetCore\ -Recurse -File -Filter *.coverage
+      displayName: 'List coverageNetCore files [debug]'
+
+  - pwsh: |
+      dotnet tool install --global dotnet-coverage
+
+      function MergeFiles {
+        param(
+        [string]$InputDirectoryPath,
+        [string]$OutputDirectoryName
+        )
+
+        $files = Get-ChildItem $InputDirectoryPath -Recurse -File -Filter *.coverage
+
+        # echo $files
+        mkdir $OutputDirectoryName
+        $counter=0
+
+        $toProcess = @()
+
+        foreach ($file in $files) {
+            $toProcess += @{ 
+                File = $file.FullName
+                OutputFile = "$OutputDirectoryName\$counter.coveragexml"
+            }
+
+            $counter++
+        }
+
+        $jobs = @()
+        foreach ($file in $toProcess){
+            $jobs += Start-ThreadJob -ScriptBlock { 
+                $params = $using:file
+                & dotnet-coverage merge $($params.File) --output $($params.OutputFile) --output-format xml 
+            } 
+        }
+
+        Write-Host "Merging started..."
+        Wait-Job -Job $jobs
+
+        foreach ($job in $jobs) {
+            Receive-Job -Job $job -Wait -AutoRemoveJob
+        }
+      }
+
+      MergeFiles -InputDirectoryPath "$(Build.SourcesDirectory)\coverageNetFx\" -OutputDirectoryName "coverageNetFxXml"
+      MergeFiles -InputDirectoryPath "$(Build.SourcesDirectory)\coverageNetCore\" -OutputDirectoryName "coverageNetCoreXml"
+      
+      # dir coverageNetFxXml\
+      # dir coverageNetCoreXml\
+
+      Write-Host "Clean up disk ... [removing coverageNetFx & coverageNetCore]"
+
+      Remove-Item $(Build.SourcesDirectory)\coverageNetFx -Recurse -Force
+      Remove-Item $(Build.SourcesDirectory)\coverageNetCore -Recurse -Force
+
+    displayName: 'Convert coverage files to xml'
+
+  - ${{ if eq(parameters.debug, true)}}:
+    - powershell: |
+        dir coverageNetFxXml\
+        dir coverageNetCoreXml\
+      displayName: 'List converted files [debug]'
+
+  - pwsh: |
+      dotnet tool install dotnet-reportgenerator-globaltool --tool-path tools
+
+      $jobs = @()
+      $jobs += Start-ThreadJob -ScriptBlock { 
+          & tools\reportgenerator "-reports:coverageNetFxXml\*.coveragexml" "-targetdir:coveragereportNetFx" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netfx\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
+      }
+
+      $jobs += Start-ThreadJob -ScriptBlock { 
+          & tools\reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportAddOns" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\add-ons\AzureKeyVaultProvider" "-classfilters:+Microsoft.Data.*"
+      }
+
+      $jobs += Start-ThreadJob -ScriptBlock { 
+          & tools\reportgenerator "-reports:coverageNetCoreXml\*.coveragexml" "-targetdir:coveragereportNetCore" "-reporttypes:Cobertura;" "-assemblyfilters:+microsoft.data.sqlclient.dll" "-sourcedirs:$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\netcore\src;$(Build.SourcesDirectory)\src\Microsoft.Data.SqlClient\src" "-classfilters:+Microsoft.Data.*"
+      }
+
+      Write-Host "Running ReportGenerator..."
+      Wait-Job -Job $jobs
+
+      foreach ($job in $jobs) {
+          Receive-Job -Job $job -Wait -AutoRemoveJob
+      }
+    displayName: 'Run ReportGenerator'
+
+  - task: PublishCodeCoverageResults@2
+    displayName: 'Publish code coverage from netcore'
+    inputs:
+      summaryFileLocation: '*\Cobertura.xml'
+
+  - powershell: |
+      #download Codecov CLI
+      $ProgressPreference = 'SilentlyContinue' 
+      Invoke-WebRequest -Uri https://cli.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
+      
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN) -f "coveragereportNetFx\Cobertura.xml" -F netfx
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN)  -f "coveragereportNetCore\Cobertura.xml" -F netcore
+      ./codecov --verbose upload-process --fail-on-error -t $(CODECOV_TOKEN)  -f "coveragereportAddOns\Cobertura.xml" -F addons
+    displayName: 'Upload to CodeCov'
+    condition: and(succeeded(), eq(variables['uploadTestResult'], 'true'))

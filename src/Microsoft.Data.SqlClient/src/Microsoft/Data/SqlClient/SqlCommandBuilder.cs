@@ -250,37 +250,19 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
-            if (null == command)
+            if (command == null)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
-#endif
+#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
-#if NETFRAMEWORK
-#if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
 
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try {
-                    tdsReliabilitySection.Start();
-#else
-                {
-#endif // DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
-#endif // NETFRAMEWORK
-                    command.DeriveParameters();
-#if NETFRAMEWORK
-                }
-#if DEBUG
-                finally {
-                    tdsReliabilitySection.Stop();
-                }
-#endif // DEBUG
-#endif // NETFRAMEWORK
+                command.DeriveParameters();
             }
             catch (OutOfMemoryException e)
             {

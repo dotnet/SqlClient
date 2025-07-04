@@ -4,7 +4,7 @@ Microsoft.Data.SqlClient library follows the latest .NET Core support policy for
 
 [View the .NET Core Support Policy](https://dotnet.microsoft.com/platform/support/policy/dotnet-core)
 
-[View SqlClient Support Policy on Microsoft Documentation](https://docs.microsoft.com/sql/connect/ado-net/sqlclient-driver-support-lifecycle)
+View GA released version LTS/Current status and support dates here: [SqlClient Support Policy on Microsoft Documentation](https://docs.microsoft.com/sql/connect/ado-net/sqlclient-driver-support-lifecycle)
 
 ## Microsoft.Data.SqlClient release cadence
 

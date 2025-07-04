@@ -15,13 +15,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlSchemaInfoTest
     {
         #region TestMethods
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TestGetSchema()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public static void TestGetSchema(bool openTransaction)
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
                 conn.Open();
-                DataTable dataBases = conn.GetSchema("DATABASES");
+                DataTable dataBases;
+
+                if (openTransaction)
+                {
+                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    {
+                        dataBases = conn.GetSchema("DATABASES");
+                    }
+                }
+                else
+                {
+                    dataBases = conn.GetSchema("DATABASES");
+                }
 
                 Assert.True(dataBases.Rows.Count > 0, "At least one database is expected");
 
@@ -85,13 +99,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
                 PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(builder);
                 PropertyDescriptor descriptor = properties["InitialCatalog"];
+                DescriptorContext descriptorContext = new DescriptorContext(descriptor, builder);
 
                 DataTestUtility.AssertEqualsWithDescription(
                     "SqlInitialCatalogConverter", descriptor.Converter.GetType().Name,
                     "Unexpected TypeConverter type.");
 
+                Assert.True(descriptor.Converter.GetStandardValuesSupported(descriptorContext));
+                Assert.False(descriptor.Converter.GetStandardValuesExclusive());
+
                 // GetStandardValues of this converter calls GetSchema("DATABASES")
-                var dbNames = descriptor.Converter.GetStandardValues(new DescriptorContext(descriptor, builder));
+                var dbNames = descriptor.Converter.GetStandardValues(descriptorContext);
                 HashSet<string> searchSet = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
                 foreach (string name in dbNames)
                 {

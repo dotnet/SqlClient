@@ -3,12 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
-using Azure.Identity;
 using Xunit;
 using Azure.Security.KeyVault.Keys;
 using System.Reflection;
 using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics.Tracing;
@@ -16,12 +14,19 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public static class AKVUnitTests
+    public class AKVUnitTests : IClassFixture<AzureKeyVaultKeyFixture>
     {
         const string EncryptionAlgorithm = "RSA_OAEP";
         public static readonly byte[] s_columnEncryptionKey = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
         private const string cekCacheName = "_columnEncryptionKeyCache";
         private const string signatureVerificationResultCacheName = "_columnMasterKeyMetadataSignatureVerificationCache";
+
+        private readonly AzureKeyVaultKeyFixture _fixture;
+
+        public AKVUnitTests(AzureKeyVaultKeyFixture fixture)
+        {
+            _fixture = fixture;
+        }
 
         private static void ValidateAKVTraces(List<EventWrittenEventArgs> eventData, Guid threadActivityId)
         {
@@ -59,44 +64,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                         break;
                     default:
-                        Assert.False(true, "Unexpected event occurred: " + item.Message);
+                        Assert.Fail("Unexpected event occurred: " + item.Message);
                         break;
                 }
             });
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void LegacyAuthenticationCallbackTest()
+        public void LegacyAuthenticationCallbackTest()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
             // SqlClientCustomTokenCredential implements legacy authentication callback to request access token at client-side.
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
-            byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
-            byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCek);
+            byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCek);
 
             Assert.Equal(s_columnEncryptionKey, decryptedCek);
             ValidateAKVTraces(AKVListener.EventData, activityId);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void TokenCredentialTest()
+        public void TokenCredentialTest()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
-            byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
-            byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCek);
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
+            byte[] encryptedCek = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] decryptedCek = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCek);
 
             Assert.Equal(s_columnEncryptionKey, decryptedCek);
             ValidateAKVTraces(AKVListener.EventData, activityId);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void TokenCredentialRotationTest()
+        public void TokenCredentialRotationTest()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
@@ -104,22 +108,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // SqlClientCustomTokenCredential implements a legacy authentication callback to request the access token from the client-side.
             SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-            SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+            SqlColumnEncryptionAzureKeyVaultProvider newAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
 
-            byte[] encryptedCekWithNewProvider = newAkvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
-            byte[] decryptedCekWithOldProvider = oldAkvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCekWithNewProvider);
+            byte[] encryptedCekWithNewProvider = newAkvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] decryptedCekWithOldProvider = oldAkvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCekWithNewProvider);
             Assert.Equal(s_columnEncryptionKey, decryptedCekWithOldProvider);
 
-            byte[] encryptedCekWithOldProvider = oldAkvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
-            byte[] decryptedCekWithNewProvider = newAkvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCekWithOldProvider);
+            byte[] encryptedCekWithOldProvider = oldAkvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, s_columnEncryptionKey);
+            byte[] decryptedCekWithNewProvider = newAkvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, EncryptionAlgorithm, encryptedCekWithOldProvider);
             Assert.Equal(s_columnEncryptionKey, decryptedCekWithNewProvider);
 
             ValidateAKVTraces(AKVListener.EventData, activityId);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void ReturnSpecifiedVersionOfKeyWhenItIsNotTheMostRecentVersion()
+        public void ReturnSpecifiedVersionOfKeyWhenItIsNotTheMostRecentVersion()
         {
             Uri keyPathUri = new Uri(DataTestUtility.AKVOriginalUrl);
             Uri vaultUri = new Uri(keyPathUri.GetLeftPart(UriPartial.Authority));
@@ -129,15 +132,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 string keyName = keyPathUri.Segments[2];
                 string keyVersion = keyPathUri.Segments[3];
-                ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
-                KeyClient keyClient = new KeyClient(vaultUri, clientSecretCredential);
+                KeyClient keyClient = new KeyClient(vaultUri, DataTestUtility.GetTokenCredential());
                 KeyVaultKey currentVersionKey = keyClient.GetKey(keyName);
                 KeyVaultKey specifiedVersionKey = keyClient.GetKey(keyName, keyVersion);
 
                 //If specified versioned key is the most recent version of the key then we cannot test.
                 if (!KeyIsLatestVersion(specifiedVersionKey, currentVersionKey))
                 {
-                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(DataTestUtility.GetTokenCredential());
                     // Perform an operation to initialize the internal caches
                     azureKeyProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVOriginalUrl, EncryptionAlgorithm, s_columnEncryptionKey);
 
@@ -166,7 +168,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void DecryptedCekIsCachedDuringDecryption()
+        public void DecryptedCekIsCachedDuringDecryption()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
@@ -175,23 +177,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] plaintextKey1 = { 1, 2, 3 };
             byte[] plaintextKey2 = { 1, 2, 3 };
             byte[] plaintextKey3 = { 0, 1, 2, 3 };
-            byte[] encryptedKey1 = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey1);
-            byte[] encryptedKey2 = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey2);
-            byte[] encryptedKey3 = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey3);
+            byte[] encryptedKey1 = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey1);
+            byte[] encryptedKey2 = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey2);
+            byte[] encryptedKey3 = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey3);
 
-            byte[] decryptedKey1 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey1);
+            byte[] decryptedKey1 = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey1);
             Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
             Assert.Equal(plaintextKey1, decryptedKey1);
 
-            decryptedKey1 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey1);
+            decryptedKey1 = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey1);
             Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
             Assert.Equal(plaintextKey1, decryptedKey1);
 
-            byte[] decryptedKey2 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey2);
+            byte[] decryptedKey2 = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey2);
             Assert.Equal(2, GetCacheCount(cekCacheName, akvProvider));
             Assert.Equal(plaintextKey2, decryptedKey2);
 
-            byte[] decryptedKey3 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey3);
+            byte[] decryptedKey3 = akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey3);
             Assert.Equal(3, GetCacheCount(cekCacheName, akvProvider));
             Assert.Equal(plaintextKey3, decryptedKey3);
 
@@ -199,33 +201,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void SignatureVerificationResultIsCachedDuringVerification()
+        public void SignatureVerificationResultIsCachedDuringVerification()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
 
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
-            byte[] signature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
-            byte[] signature2 = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
-            byte[] signatureWithoutEnclave = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false);
+            byte[] signature = akvProvider.SignColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true);
+            byte[] signature2 = akvProvider.SignColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true);
+            byte[] signatureWithoutEnclave = akvProvider.SignColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, false);
 
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true, signature));
             Assert.Equal(1, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
 
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true, signature));
             Assert.Equal(1, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
 
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature2));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, true, signature2));
             Assert.Equal(1, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
 
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false, signatureWithoutEnclave));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(_fixture.GeneratedKeyUri, false, signatureWithoutEnclave));
             Assert.Equal(2, GetCacheCount(signatureVerificationResultCacheName, akvProvider));
 
             ValidateAKVTraces(AKVListener.EventData, activityId);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void CekCacheEntryIsEvictedAfterTtlExpires()
+        public void CekCacheEntryIsEvictedAfterTtlExpires()
         {
             Guid activityId = Trace.CorrelationManager.ActivityId = Guid.NewGuid();
             using DataTestUtility.AKVEventListener AKVListener = new();
@@ -233,9 +235,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new(new SqlClientCustomTokenCredential());
             akvProvider.ColumnEncryptionKeyCacheTtl = TimeSpan.FromSeconds(5);
             byte[] plaintextKey = { 1, 2, 3 };
-            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey);
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey);
 
-            akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+            akvProvider.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey);
             Assert.True(CekCacheContainsKey(encryptedKey, akvProvider));
             Assert.Equal(1, GetCacheCount(cekCacheName, akvProvider));
 
@@ -247,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void CekCacheShouldBeDisabledWhenCustomProviderIsRegisteredGlobally()
+        public void CekCacheShouldBeDisabledWhenCustomProviderIsRegisteredGlobally()
         {
             if (SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
@@ -260,9 +262,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlColumnEncryptionAzureKeyVaultProvider akvProviderInGlobalCache =
                     globalProviders["AZURE_KEY_VAULT"] as SqlColumnEncryptionAzureKeyVaultProvider;
                 byte[] plaintextKey = { 1, 2, 3 };
-                byte[] encryptedKey = akvProviderInGlobalCache.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey);
+                byte[] encryptedKey = akvProviderInGlobalCache.EncryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", plaintextKey);
 
-                akvProviderInGlobalCache.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+                akvProviderInGlobalCache.DecryptColumnEncryptionKey(_fixture.GeneratedKeyUri, "RSA_OAEP", encryptedKey);
                 Assert.Equal(0, GetCacheCount(cekCacheName, akvProviderInGlobalCache));
             }
         }

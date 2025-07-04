@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
@@ -11,7 +13,7 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class AmbientTransactionFailureTest
     {
-
+        private static readonly bool s_isNotArmProcess = TestUtility.IsNotArmProcess;
         private static readonly string s_servername = Guid.NewGuid().ToString();
         private static readonly string s_connectionStringWithEnlistAsDefault = $"Data Source={s_servername}; Integrated Security=true; Connect Timeout=1;";
         private static readonly string s_connectionStringWithEnlistOff = $"Data Source={s_servername}; Integrated Security=true; Connect Timeout=1;Enlist=False";
@@ -73,8 +75,13 @@ namespace Microsoft.Data.SqlClient.Tests
             new object[] { EnlistConnectionInTransaction, s_connectionStringWithEnlistOff }
         };
 
-        [ConditionalTheory(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))] // https://github.com/dotnet/corefx/issues/21598
-        [MemberData(nameof(ExceptionTestDataForSqlException))]
+        [ConditionalTheory(nameof(s_isNotArmProcess))] // https://github.com/dotnet/corefx/issues/21598
+        [MemberData(
+            nameof(ExceptionTestDataForSqlException),
+            // xUnit can't consistently serialize the data for this test, so we
+            // disable enumeration of the test data to avoid warnings on the
+            // console.
+            DisableDiscoveryEnumeration = true)]
         public void TestSqlException(Action<string> connectAction, string connectionString)
         {
             Assert.Throws<SqlException>(() =>

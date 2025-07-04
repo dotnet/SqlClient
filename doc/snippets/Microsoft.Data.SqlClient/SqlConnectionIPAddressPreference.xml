@@ -1,40 +1,38 @@
-<docs>
-    <members name="SqlConnectionIPAddressPreference">
-        <SqlConnectionIPAddressPreferenceNetfx>
-            <summary>
-                Specifies a value for IP address preference during a TCP connection.
-            </summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[
-
-## Remarks
-If `Multi Subnet Failover` or "Transparent Network IP Resolution" is set to `true`, this setting has no effect.
-]]></format>
-            </remarks>
-        </SqlConnectionIPAddressPreferenceNetfx>
-        <SqlConnectionIPAddressPreference>
-            <summary>
-                Specifies a value for IP address preference during a TCP connection.
-            </summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[
-
-## Remarks
-If `Multi Subnet Failover` is set to `true`, this setting has no effect.
-]]></format>
-            </remarks>
-        </SqlConnectionIPAddressPreference>
-        <IPv4First>
-            <summary>Connects using IPv4 address(es) first. If the connection fails, try IPv6 address(es), if provided. This is the default value.</summary>
-            <value>0</value>
-        </IPv4First>
-        <IPv6First>
-            <summary>Connect using IPv6 address(es) first. If the connection fails, try IPv4 address(es), if available.</summary>
-            <value>1</value>
-        </IPv6First>
-        <UsePlatformDefault>
-            <summary>Connects with IP addresses in the order the underlying platform or operating system provides them.</summary>
-            <value>2</value>
-        </UsePlatformDefault>
-    </members>
+﻿<docs>
+  <members name="SqlConnectionIPAddressPreference">
+    <SqlConnectionIPAddressPreferenceNetfx>
+      <summary>
+        Specifies a value for IP address preference during a TCP connection.
+      </summary>
+      <remarks>
+        If <c>Multi Subnet Failover</c> or <c>Transparent Network IP Resolution</c> is set to <c>true</c>, this setting has no effect.
+      </remarks>
+    </SqlConnectionIPAddressPreferenceNetfx>
+    <SqlConnectionIPAddressPreference>
+      <summary>
+        Specifies a value for IP address preference during a TCP connection.
+      </summary>
+      <remarks>
+        If <c>Multi Subnet Failover</c> is set to <c>true</c>, this setting has no effect.
+      </remarks>
+    </SqlConnectionIPAddressPreference>
+    <IPv4First>
+      <summary>
+        Connects using IPv4 address(es) first. If the connection fails, try IPv6 address(es), if provided. This is the default value.
+      </summary>
+      <value>0</value>
+    </IPv4First>
+    <IPv6First>
+      <summary>
+        Connect using IPv6 address(es) first. If the connection fails, try IPv4 address(es), if available.
+      </summary>
+      <value>1</value>
+    </IPv6First>
+    <UsePlatformDefault>
+      <summary>
+        Connects with IP addresses in the order the underlying platform or operating system provides them.
+      </summary>
+      <value>2</value>
+    </UsePlatformDefault>
+  </members>
 </docs>

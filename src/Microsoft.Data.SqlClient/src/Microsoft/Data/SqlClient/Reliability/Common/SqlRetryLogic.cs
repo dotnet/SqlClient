@@ -68,12 +68,12 @@ namespace Microsoft.Data.SqlClient
                 RetryIntervalEnumerator.MoveNext();
                 intervalTime = RetryIntervalEnumerator.Current;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Next gap time will be '{2}' before the next retry number {3}",
-                                                       TypeName, MethodBase.GetCurrentMethod().Name, intervalTime, Current);
+                                                       TypeName, nameof(TryNextInterval), intervalTime, Current);
             }
             else
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached the maximum attempts (total attempts excluding the first run = {3}).",
-                                                       TypeName, MethodBase.GetCurrentMethod().Name, Current, NumberOfTries - 1);
+                                                       TypeName, nameof(TryNextInterval), Current, NumberOfTries - 1);
             }
             return result;
         }
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
                         && (PreCondition == null || PreCondition.Invoke(command.CommandText)); // if it contains an invalid command to retry
 
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> (retry condition = '{2}') Avoids retry if it runs in a transaction or is skipped in the command's statement checking.",
-                                                       TypeName, MethodBase.GetCurrentMethod().Name, result);
+                                                       TypeName, nameof(RetryCondition), result);
             }
             return result;
         }

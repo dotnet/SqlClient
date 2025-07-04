@@ -1,0 +1,199 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: TCPConnectionString
+    type: string
+    default: ''
+
+  - name: NPConnectionString
+    type: string
+    default: ''
+
+  - name: TCPConnectionStringHGSVBS
+    type: string
+    default: ''
+
+  - name: TCPConnectionStringNoneVBS
+    type: string
+    default: ''
+
+  - name: TCPConnectionStringAASSGX
+    type: string
+    default: ''
+
+  - name: EnclaveEnabled
+    type: boolean
+    default: false
+
+  - name: TracingEnabled
+    type: boolean
+    default: false
+    
+  - name: AADAuthorityURL
+    type: string
+    default: ''
+  
+  - name: AADPasswordConnectionString
+    type: string
+    default: ''
+
+  - name: AADServicePrincipalId
+    type: string
+    default: ''
+
+  - name: AADServicePrincipalSecret
+    type: string
+    default: ''
+
+  - name: AzureKeyVaultUrl
+    type: string
+    default: ''
+
+  - name: AzureKeyVaultTenantId
+    type: string
+    default: ''
+
+  - name: UseManagedSNIOnWindows
+    type: boolean
+    default: false
+
+  - name: UserManagedIdentityClientId
+    type: string
+    default: ''
+
+  - name: FileStreamDirectory
+    type: string
+    default: ''
+
+  - name: LocalDbAppName 
+    type: string
+    default: ''
+
+  - name: LocalDbSharedInstanceName 
+    type: string
+    default: ''
+
+  - name: AliasName 
+    type: string
+    default: ''
+
+  - name: SupportsIntegratedSecurity
+    type: boolean
+    default: false
+
+  - name: SupportsFileStream
+    type: boolean
+    default: false
+
+  - name: DNSCachingConnString 
+    type: string
+    default: ''
+
+  - name: DNSCachingServerCR 
+    type: string
+    default: ''
+
+  - name: DNSCachingServerTR 
+    type: string
+    default: ''
+
+  - name: EnclaveAzureDatabaseConnString 
+    type: string
+    default: ''
+
+  - name: IsDNSCachingSupportedCR
+    type: boolean
+    default: false
+
+  - name: IsDNSCachingSupportedTR
+    type: boolean
+    default: false
+
+  - name: IsAzureSynapse
+    type: boolean
+    default: false
+
+  - name: ManagedIdentitySupported
+    type: boolean
+    default: true
+
+steps:
+# All properties should be added here, and this template should be used for any manipulation of the config.json file.
+- pwsh: |
+    $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
+    foreach ($p in $jdata)
+    {
+        $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
+
+        $p.NPConnectionString="${{parameters.NPConnectionString }}"
+
+        $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
+
+        $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
+
+        $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
+
+        $p.AADServicePrincipalSecret="${{parameters.AADServicePrincipalSecret }}"
+
+        $p.AzureKeyVaultUrl="${{parameters.AzureKeyVaultUrl }}"
+
+        $p.AzureKeyVaultTenantId="${{parameters.AzureKeyVaultTenantId }}"
+
+        $p.UserManagedIdentityClientId="${{parameters.UserManagedIdentityClientId }}"
+
+        $p.FileStreamDirectory="${{parameters.FileStreamDirectory }}"
+
+        $p.LocalDbSharedInstanceName="${{parameters.LocalDbSharedInstanceName }}"
+
+        $p.AliasName="${{parameters.AliasName }}"
+
+        $p.EnclaveAzureDatabaseConnString="${{parameters.EnclaveAzureDatabaseConnString }}"
+
+        $p.DNSCachingServerTR="${{parameters.DNSCachingServerTR }}"
+
+        $p.DNSCachingServerCR="${{parameters.DNSCachingServerCR }}"
+
+        $p.DNSCachingConnString="${{parameters.DNSCachingConnString }}"
+
+        $p.SupportsFileStream="${{parameters.SupportsFileStream }}"
+
+        $p.LocalDbAppName="${{parameters.LocalDbAppName }}"
+
+        $p.TCPConnectionStringAASSGX="${{parameters.TCPConnectionStringAASSGX }}"
+
+        $p.TCPConnectionStringNoneVBS="${{parameters.TCPConnectionStringNoneVBS }}"
+
+        $p.TCPConnectionStringHGSVBS="${{parameters.TCPConnectionStringHGSVBS }}"
+
+        $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
+        $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
+        $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
+        $p.IsAzureSynapse=[System.Convert]::ToBoolean("${{parameters.IsAzureSynapse }}")
+        $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
+        $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
+        $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")
+        $p.EnclaveEnabled=[System.Convert]::ToBoolean("${{parameters.EnclaveEnabled }}")
+    }
+    $jdata | ConvertTo-Json | Set-Content "config.json"
+  workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+  displayName: 'Update config.json'
+
+- ${{ if eq(parameters.debug, true) }}:
+  - pwsh: |
+      $jdata = Get-Content -Raw "config.json" | ConvertFrom-Json
+      foreach ($p in $jdata)
+      {
+          foreach ($prop in $p.PSObject.Properties)
+          {
+              Write-Host "Property: $($prop.Name) Value: $($prop.Value)"
+          }
+      }
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+    displayName: 'Read config.json [debug]'

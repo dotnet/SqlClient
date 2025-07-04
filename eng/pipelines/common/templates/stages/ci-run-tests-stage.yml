@@ -1,0 +1,106 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: debug
+    type: boolean
+    default: false
+
+  - name: testConfigurations
+    type: object
+
+  - name: dependsOn
+    type: string
+    default: ''
+
+  - name: buildType
+    displayName: 'Build Type'
+    default: Project
+    values:
+      - Project
+      - Package
+
+  - name: prebuildSteps
+    type: stepList
+    default: []
+  
+  - name: postTestJobs
+    type: jobList
+    default: []
+
+stages:
+- ${{ each config in parameters.testConfigurations }}:
+  - ${{ each image in config.value.images }}:
+    - stage: ${{ image.key }}
+      ${{ if ne(parameters.dependsOn, '') }}:
+        dependsOn: ${{ parameters.dependsOn }}
+      ${{ else }}:
+        dependsOn: []
+      jobs:
+      - ${{ each targetFramework in config.value.TargetFrameworks }}:
+        - ${{ each platform in config.value.buildPlatforms }}:
+          - ${{ each testSet in config.value.TestSets }}:
+            - ${{ if contains(targetFramework, 'net4') }}: # .NET Framework
+              - template: ../jobs/ci-run-tests-job.yml@self
+                parameters:
+                  debug: ${{ parameters.debug }}
+                  buildType: ${{ parameters.buildType }}
+                  poolName: ${{ config.value.pool }}
+                  hostedPool: ${{ eq(config.value.hostedPool, true) }}
+                  image: ${{ image.value }}
+                  jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
+                  configProperties: ${{ config.value.configProperties }}
+                  prebuildSteps: ${{ parameters.prebuildSteps }}
+                  targetFramework: ${{ targetFramework }}
+                  netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
+                  testSet: ${{ testSet }}
+                  ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
+                    ${{ if eq(codeCoveTF, targetFramework) }}:
+                      publishTestResults: true
+                  configSqlFor: ${{ config.value.configSqlFor }}
+                  operatingSystem: ${{ config.value.operatingSystem }}
+                  ${{if ne(config.value.configProperties, '{}') }}:
+                    ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
+                      ${{ if eq(x86TF, targetFramework) }}:
+                        enableX86Test: true
+                        enableX64Test: false
+            - ${{ else }}: # .NET
+              - ${{ each useManagedSNI in config.value.useManagedSNI }}:
+                - template: ../jobs/ci-run-tests-job.yml@self
+                  parameters:
+                    debug: ${{ parameters.debug }}
+                    buildType: ${{ parameters.buildType }}
+                    poolName: ${{ config.value.pool }}
+                    hostedPool: ${{ eq(config.value.hostedPool, true) }}
+                    image: ${{ image.value }}
+                    ${{if eq(usemanagedSNI, 'true') }}:
+                      jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'ManagedSNI', testSet) }}
+                    ${{ else }}:
+                      jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'NativeSNI', testSet) }}
+                    configProperties: ${{ config.value.configProperties }}
+                    useManagedSNI: ${{ useManagedSNI }}
+                    prebuildSteps: ${{ parameters.prebuildSteps }}                  
+                    targetFramework: ${{ targetFramework }}
+                    netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
+                    testSet: ${{ testSet }}
+                    ${{ each codeCoveTF in config.value.codeCovTargetFrameworks }}:
+                      ${{ if eq(codeCoveTF, targetFramework) }}:
+                        publishTestResults: true
+                    configSqlFor: ${{ config.value.configSqlFor }}
+                    operatingSystem: ${{ config.value.operatingSystem }}
+                    ${{if and(eq(usemanagedSNI, false), ne(config.value.configProperties, '{}')) }}:
+                      ${{ each x86TF in config.value.configProperties.x86TestTargetFrameworks }}:
+                        ${{ if eq(x86TF, targetFramework) }}:
+                          enableX86Test: true
+                          enableX64Test: false
+
+- ${{ if ne(length(parameters.postTestJobs), 0) }}:
+  - stage: Post_Test
+    displayName: 'Post Test Jobs'
+    dependsOn: 
+      - ${{ each config in parameters.testConfigurations }}:
+        - ${{ each image in config.value.images }}:
+          - ${{ image.key }}
+    jobs: ${{ parameters.postTestJobs }}

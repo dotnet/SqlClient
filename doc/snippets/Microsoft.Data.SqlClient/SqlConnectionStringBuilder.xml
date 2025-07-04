@@ -1,20 +1,20 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlConnectionStringBuilder">
-        <SqlConnectionStringBuilder>
-            <summary>Provides a simple way to create and manage the contents of connection strings used by the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The connection string builder lets developers programmatically create syntactically correct connection strings, and parse and rebuild existing connection strings, using properties and methods of the class. The connection string builder provides strongly typed properties corresponding to the known key/value pairs allowed by SQL Server. Developers needing to create connection strings as part of applications can use the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to build and modify connection strings. The class also makes it easy to manage connection strings stored in an application configuration file.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> performs checks for valid key/value pairs. Therefore, you cannot use this class to create invalid connection strings; trying to add invalid pairs will throw an exception. The class maintains a fixed collection of synonyms and can translate from a synonym to the corresponding well-known key name.  
-  
- For example, when you use the **Item** property to retrieve a value, you can specify a string that contains any synonym for the key you need. For example, you can specify "Network Address", "addr", or any other acceptable synonym for this key within a connection string when you use any member that requires a string that contains the key name, such as the **Item** property or the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method. See the <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString%2A> property for a full list of acceptable synonyms.  
-  
- The **Item** property handles tries to insert malicious entries. For example, the following code, using the default Item property (the indexer, in C#) correctly escapes the nested key/value pair:  
-  
+﻿<docs>
+  <members name="SqlConnectionStringBuilder">
+    <SqlConnectionStringBuilder>
+      <summary>
+        Provides a simple way to create and manage the contents of connection strings used by the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> class.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+The connection string builder lets developers programmatically create syntactically correct connection strings, and parse and rebuild existing connection strings, using properties and methods of the class. The connection string builder provides strongly typed properties corresponding to the known key/value pairs allowed by SQL Server. Developers needing to create connection strings as part of applications can use the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to build and modify connection strings. The class also makes it easy to manage connection strings stored in an application configuration file.  
+
+The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> performs checks for valid key/value pairs. Therefore, you cannot use this class to create invalid connection strings; trying to add invalid pairs will throw an exception. The class maintains a fixed collection of synonyms and can translate from a synonym to the corresponding well-known key name.  
+
+For example, when you use the **Item** property to retrieve a value, you can specify a string that contains any synonym for the key you need. For example, you can specify "Network Address", "addr", or any other acceptable synonym for this key within a connection string when you use any member that requires a string that contains the key name, such as the **Item** property or the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method. See the <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString%2A> property for a full list of acceptable synonyms.  
+
+The **Item** property handles tries to insert malicious entries. For example, the following code, using the default Item property (the indexer, in C#) correctly escapes the nested key/value pair:  
+
 ```vb  
 Dim builder As New Microsoft.Data.SqlClient.SqlConnectionStringBuilder  
 builder("Data Source") = "(local)"  
@@ -22,403 +22,630 @@ builder("Integrated Security") = True
 builder("Initial Catalog") = "AdventureWorks;NewValue=Bad"  
 Console.WriteLine(builder.ConnectionString)  
 ```  
-  
+
 ```csharp  
 Microsoft.Data.SqlClient.SqlConnectionStringBuilder builder =  
-  new Microsoft.Data.SqlClient.SqlConnectionStringBuilder();  
+new Microsoft.Data.SqlClient.SqlConnectionStringBuilder();  
 builder["Data Source"] = "(local)";  
 builder["Integrated Security"] = true;  
 builder["Initial Catalog"] = "AdventureWorks;NewValue=Bad";  
 Console.WriteLine(builder.ConnectionString);  
-  
+
 ```  
-  
- The result is the following connection string that handles the invalid value in a safe manner:  
-  
+
+The result is the following connection string that handles the invalid value in a safe manner:  
+
 ```  
 Source=(local);Initial Catalog="AdventureWorks;NewValue=Bad";  
 Integrated Security=True  
-```  
-  
-   
-  
-## Examples  
- The following console application builds connection strings for a SQL Server database. The code uses a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to create the connection string, and then passes the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance to the constructor of the connection class. The example also parses an existing connection string and demonstrates various ways of manipulating the connection string's contents.  
-  
+```
+
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application builds connection strings for a SQL Server database. The code uses a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to create the connection string, and then passes the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance to the constructor of the connection class. The example also parses an existing connection string and demonstrates various ways of manipulating the connection string's contents.  
+
 > [!NOTE]
->  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
-  
- [!code-csharp[SqlConnectionStringBuilder#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </SqlConnectionStringBuilder>
-        <ctor1>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class.</summary>
-        </ctor1>
-        <ctor2>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor2>
-        <ctorConnectionString>
-            <param name="connectionString">The basis for the object's internal connection information. Parsed into name/value pairs. Invalid key names raise <see cref="T:System.Collections.Generic.KeyNotFoundException" />.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class. The provided connection string provides the data for the instance's internal connection information.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the `ConnectionString` property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.  
-  
-   
-  
-## Examples  
- The following example supplies a simple SQL Server connection string in the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object's constructor, and then iterates through all the key/value pairs within the object. Note that the collection provides default values for each item. Also note that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the well-known keys so that they are consistent with the well-known names.  
-  
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
+
+[!code-csharp[SqlConnectionStringBuilder#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder.cs#1)]
+
+]]></format>
+      </example>
+    </SqlConnectionStringBuilder>
+    <ctor2>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class.
+      </summary>
+    </ctor2>
+    <ctorConnectionString>
+      <param name="connectionString">
+        The basis for the object's internal connection information. Parsed into name/value pairs. Invalid key names raise <see cref="T:System.Collections.Generic.KeyNotFoundException" /> .
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class. The provided connection string provides the data for the instance's internal connection information.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class provides a fixed internal collection of key/value pairs. Even if you supply only a small subset of the possible connection string values in the constructor, the object always provides default values for each key/value pair. When the `ConnectionString` property of the object is retrieved, the string contains only key/value pairs in which the value is not the default value for the item.  
+
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example supplies a simple SQL Server connection string in the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object's constructor, and then iterates through all the key/value pairs within the object. Note that the collection provides default values for each item. Also note that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the well-known keys so that they are consistent with the well-known names.  
+
 > [!NOTE]
->  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
-  
- [!code-csharp[SqlConnectionStringBuilder3#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder3.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Invalid key name within the connection string.</exception>
-            <exception cref="T:System.FormatException">Invalid value within the connection string (specifically, when a Boolean or numeric value was expected but not supplied).</exception>
-            <exception cref="T:System.ArgumentException">The supplied <paramref name="connectionString" /> is not valid.</exception>
-        </ctorConnectionString>
-        <ApplicationIntent>
-            <summary>Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery).</summary>
-            <value>Returns the current value of the property.</value>
-             <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Application Intent" and "ApplicationIntent" keys within the connection string.  
+> This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
 
-The default value is `ApplicationIntent.ReadWrite`. 
-  
- ]]></format>
-            </remarks>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
-        </ApplicationIntent>
-        <ApplicationName>
-            <summary>Gets or sets the name of the application associated with the connection string.</summary>
-            <value>The name of the application. If no name has been supplied, "Framework Microsoft SqlClient Data Provider" when running on .NET Framework and "Core Microsoft SqlClient Data Provider" otherwise.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Application Name" and "app" keys within the connection string.  
+[!code-csharp[SqlConnectionStringBuilder3#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder3.cs#1)]
 
- An application name can be 128 characters or less.
-   
-  
-## Examples  
- The following example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> and assigns a connection string in the object's constructor. The code displays the parsed and recreated version of the connection string, and then modifies the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationName%2A> property of the object. Finally, the code displays the new connection string, including the new key/value pair.  
-  
- [!code-csharp[SqlConnectionStringBuilder.ApplicationName#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ApplicationName.cs#1)]
-  
- The sample displays the following text in the console window:  
-  
-```  
-Original: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
-ApplicationName="Core Microsoft SqlClient Data Provider"  
-Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True;Application Name="My Application"  
-```  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </ApplicationName>
-        <AttachDBFilename>
-            <summary>Gets or sets a string that contains the name of the primary data file. This includes the full path name of an attachable database.</summary>
-            <value>The value of the <see langword="AttachDBFilename" /> property, or <see langword="String.Empty" /> if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "AttachDBFilename", "extended properties", and "initial file name" keys within the connection string.  
-  
- `AttachDBFilename` is only supported for primary data files with an .mdf extension.  
+]]></format>
+      </example>
+      <exception cref="T:System.Collections.Generic.KeyNotFoundException">
+        Invalid key name within the connection string.
+      </exception>
+      <exception cref="T:System.FormatException">
+        Invalid value within the connection string (specifically, when a Boolean or numeric value was expected but not supplied).
+      </exception>
+      <exception cref="T:System.ArgumentException">
+        The supplied <paramref name="connectionString" /> is not valid.
+      </exception>
+    </ctorConnectionString>
+    <ApplicationIntent>
+      <summary>
+        Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
+      </summary>
+      <value>
+        Returns the current value of the property.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the <c>Application Intent</c> and <c>ApplicationIntent</c> keys within the connection string.
+        </para>
+        <para>
+          The default value is <c>ApplicationIntent.ReadWrite</c> .
+        </para>
+      </remarks>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
+        Overview of the SqlClient driver
+      </seealso>
+    </ApplicationIntent>
+    <ApplicationName>
+      <summary>
+        Gets or sets the name of the application associated with the connection string.
+      </summary>
+      <value>
+        The name of the application. If no name has been supplied, "Framework Microsoft SqlClient Data Provider" when running on .NET Framework and "Core Microsoft SqlClient Data Provider" otherwise.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Application Name" and "app" keys within the connection string.
+        </para>
+        <para>
+          An application name can be 128 characters or fewer.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and assigns a connection string in the object's constructor. The code displays the parsed and recreated version of the connection string, and then modifies the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ApplicationName" /> property of the object. Finally, the code displays the new connection string, including the new key/value pair.
+        </para>
+        <!-- SqlConnectionStringBuilder_ApplicationName -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  try
+                  {
+                      string connectString = "Server=(local);Initial Catalog=AdventureWorks;" +
+                          "Integrated Security=true";
+                      SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
+                      Console.WriteLine("Original: " + builder.ConnectionString);
+                      Console.WriteLine("ApplicationName={0}", builder.ApplicationName);
+          
+                      builder.ApplicationName = "My Application";
+                      Console.WriteLine("Modified: " + builder.ConnectionString);
+          
+                      Console.WriteLine("Press any key to finish.");
+                      Console.ReadLine();
+                  }
+                  catch (Exception ex)
+                  {
+                      Console.WriteLine(ex.Message);
+                  }
+              }
+          }
+        </code>
+        <para>
+          The sample displays the following text in the console window:
+        </para>
+        <code>
+          Original: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True;ApplicationName="Core Microsoft SqlClient Data Provider"
+          Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True;Application Name="My Application"
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </ApplicationName>
+    <AttachDBFilename>
+      <summary>
+        Gets or sets a string that contains the name of the primary data file. This includes the full path name of an attachable database.
+      </summary>
+      <value>
+        The value of the <see langword="AttachDBFilename" /> property, or <see cref="P:System.String.Empty" /> if no value has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "AttachDBFilename", "extended properties", and "initial file name" keys within the connection string. <c>AttachDBFilename</c> is only supported for primary data files with an .mdf extension.
+        </para>
+        <para>
+          If the value of the AttachDBFileName key is specified in the connection string, the database is attached and becomes the default database for the connection. If this key is not specified and if the database was previously attached, the database will not be reattached. The previously attached database will be used as the default database for the connection. If this key is specified together with the AttachDBFileName key, the value of this key will be used as the alias. However, if the name is already used in another attached database, the connection will fail.
+        </para>
+        <para>
+          The path may be absolute or relative by using the DataDirectory substitution string. If DataDirectory is used, the database file must exist within a subdirectory of the directory pointed to by the substitution string. <b>Note:</b> Remote server, HTTP, and UNC path names are not supported.
+        </para>
+        <para>
+          The database name must be specified with the keyword 'database' (or one of its aliases) as in the following: <c>"AttachDbFileName=&#124;DataDirectory&#124;\data\YourDB.mdf;integrated security=true;database=YourDatabase"</c> An error will be generated if a log file exists in the same directory as the data file and the 'database' keyword is used when attaching the primary data file. In this case, remove the log file. Once the database is attached, a new log file will be automatically generated based on the physical path.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance, and sets the <c>AttachDBFilename</c> property in order to specify the name of an attached data file.
+        </para>
+        <!-- SqlConnectionStringBuilder_AttachDBFilename -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  try
+                  {
+                      string connectString =
+                          "Server=(local);" +
+                          "Integrated Security=true";
+                      SqlConnectionStringBuilder builder =
+                          new SqlConnectionStringBuilder(connectString);
+                      Console.WriteLine("Original: " + builder.ConnectionString);
+                      Console.WriteLine("AttachDBFileName={0}", builder.AttachDBFilename);
+          
+                      builder.AttachDBFilename = @"C:\MyDatabase.mdf";
+                      Console.WriteLine("Modified: " + builder.ConnectionString);
+          
+                      using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                      {
+                          connection.Open();
+                          // Now use the open connection.
+                          Console.WriteLine("Database = " + connection.Database);
+                      }
+                      Console.WriteLine("Press any key to finish.");
+                      Console.ReadLine();
+                  }
+                  catch (Exception ex)
+                  {
+                      Console.WriteLine(ex.Message);
+                  }
+              }
+          }
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/connection-strings">
+        Working with Connection Strings
+      </seealso>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
+        Overview of the SqlClient driver
+      </seealso>
+    </AttachDBFilename>
+    <AttestationProtocol>
+      <summary>
+        Gets or sets the value of Attestation Protocol.
+      </summary>
+      <value>
+        The attestation protocol.
+      </value>
+      <remarks>
+        When no value is specified, secure enclaves are disabled on the connection.
+      </remarks>
+    </AttestationProtocol>
+    <Authentication>
+      <summary>
+        Gets or sets the authentication method used for <see href="https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview#connect-with-microsoft-entra-to-azure-sql-resources">Connect with Microsoft Entra to Azure SQL resources</see>.
+      </summary>
+      <value>
+        The authentication method of the connection string.
+      </value>
+      <remarks>
+        For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/azure-active-directory-authentication">Connect to Azure SQL with Microsoft Entra authentication and SqlClient</see>.
+      </remarks>
+    </Authentication>
+    <Clear>
+      <summary>
+        Clears the contents of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.
+      </summary>
+      <remarks>
+        The <see cref="M:System.Data.Common.DbConnectionStringBuilder.Clear" /> method removes all key/value pairs from the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> , and resets all corresponding properties. This includes setting the <see cref="P:System.Data.Common.DbConnectionStringBuilder.Count" /> property to 0, and setting the <see cref="P:System.Data.Common.DbConnectionStringBuilder.ConnectionString" /> property to an empty string.
+      </remarks>
+      <example>
+        <para>
+          The following example demonstrates calling the <see cref="M:System.Data.Common.DbConnectionStringBuilder.Clear" /> method. This example populates the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> with some key/value pairs, and then calls the <see cref="M:System.Data.Common.DbConnectionStringBuilder.Clear" /> method and shows the results.
+        </para>
+        <!-- SqlConnectionStringBuilder_Clear -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                  builder.DataSource = "(local)";
+                  builder.IntegratedSecurity = true;
+                  builder.InitialCatalog = "AdventureWorks";
+                  Console.WriteLine("Initial connection string: " + builder.ConnectionString);
+          
+                  builder.Clear();
+                  Console.WriteLine("After call to Clear, count = " + builder.Count);
+                  Console.WriteLine("Cleared connection string: " + builder.ConnectionString);
+                  Console.WriteLine();
+          
+                  Console.WriteLine("Press Enter to continue.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+    </Clear>
+    <ColumnEncryptionSetting>
+      <summary>
+        Gets or sets the column encryption settings for the connection string builder.
+      </summary>
+      <value>
+        The column encryption settings for the connection string builder.This property enables or disables <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted</see> functionality for the connection.
+      </value>
+    </ColumnEncryptionSetting>
+    <CommandTimeout>
+      <summary>
+        The default wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
+      </summary>
+      <value>
+        The time in seconds to wait for the command to execute. The default is 30 seconds.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the <c>Command Timeout</c> key within the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> connection string.
+        </para>
+        <para>
+          Valid values are greater than or equal to 0 and less than or equal to 2147483647.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        The value set is less than 0.
+      </exception>
+    </CommandTimeout>
+    <ConnectionReset>
+      <summary>
+        Obsolete. Gets or sets a Boolean value that indicates whether the connection is reset when drawn from the connection pool.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectionReset" /> property, or true if no value has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Connection Reset" key within the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> connection string, which has been removed from version 3.5 SP1 of the .NET Framework.
+      </remarks>
+    </ConnectionReset>
+    <ConnectRetryCount>
+      <summary>
+        The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. The default value for non Azure endpoints is 1. For Azure SQL endpoints, the default is 2. Starting in version 5.x, for Azure SQL serverless or on demand endpoints, the default is 5 to improve connection success for connections to an idle or paused instance. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside the allowed range.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
 
- If the value of the AttachDBFileName key is specified in the connection string, the database is attached and becomes the default database for the connection.
- 
- If this key is not specified and if the database was previously attached, the database will not be reattached. The previously attached database will be used as the default database for the connection.
- 
- If this key is specified together with the AttachDBFileName key, the value of this key will be used as the alias. However, if the name is already used in another attached database, the connection will fail.
- 
- The path may be absolute or relative by using the DataDirectory substitution string. If DataDirectory is used, the database file must exist within a subdirectory of the directory pointed to by the substitution string. **Note:**  Remote server, HTTP, and UNC path names are not supported. 
- 
- The database name must be specified with the keyword 'database' (or one of its aliases) as in the following:
- 
- `"AttachDbFileName=&#124;DataDirectory&#124;\data\YourDB.mdf;integrated security=true;database=YourDatabase"`
- 
- An error will be generated if a log file exists in the same directory as the data file and the 'database' keyword is used when attaching the primary data file. In this case, remove the log file. Once the database is attached, a new log file will be automatically generated based on the physical path.  
-   
-  
-## Examples  
- The following example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance, and sets the `AttachDBFilename` property in order to specify the name of an attached data file.  
-  
- [!code-csharp[DataWorks SqlConnectionStringBuilder_AttachDBFilename#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_AttachDBFilename.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-            <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
-        </AttachDBFilename>
-        <AttestationProtocol>
-            <summary>Gets or sets the value of Attestation Protocol.</summary>
-            <value>The attestation protocol.</value>
-        </AttestationProtocol>
-        <Authentication>
-            <summary>Gets or sets the authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).</summary>
-            <value>The authentication method of the connection string.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-
-When no value is specified, secure enclaves are disabled on the connection.
-
-For more information, see [Using Azure Active Directory authentication with SqlClient](/sql/connect/ado-net/sql/azure-active-directory-authentication).
-
- ]]></format>
-            </remarks>
-        </Authentication>
-        <Clear>
-            <summary>Clears the contents of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method removes all key/value pairs from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>, and resets all corresponding properties. This includes setting the <xref:System.Data.Common.DbConnectionStringBuilder.Count%2A> property to 0, and setting the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property to an empty string.  
-   
-  
-## Examples  
- The following example demonstrates calling the <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method. This example populates the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> with some key/value pairs, and then calls the <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method and shows the results.  
-  
- [!code-csharp[DataWorks SqlConnectionStringBuilder_Clear#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Clear.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </Clear>
-        <ColumnEncryptionSetting>
-            <summary>Gets or sets the column encryption settings for the connection string builder.</summary>
-            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine) functionality for the connection.</value>
-        </ColumnEncryptionSetting>
-		<CommandTimeout>
-			<summary>
-				The default wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
-			</summary>
-			<value>
-				The time in seconds to wait for the command to execute. The default is 30 seconds.
-			</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-   This property corresponds to the "Command Timeout" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
-
-   Valid values are greater than or equal to 0 and less than or equal to 2147483647.
-  
- ]]></format>
-            </remarks>
-			<exception cref="T:System.ArgumentException">The value set is less than 0.</exception>            
-		</CommandTimeout>
-        <ConnectionReset>
-            <summary>Obsolete. Gets or sets a Boolean value that indicates whether the connection is reset when drawn from the connection pool.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectionReset" /> property, or true if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Connection Reset" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string, which has been removed from version 3.5 SP1 of the .NET Framework.  
-  
- ]]></format>
-            </remarks>
-        </ConnectionReset>
-        <ConnectRetryCount>
-            <summary>The number of reconnections attempted after identifying that there was an idle connection failure. This must be an integer between 0 and 255. Default is 1. Set to 0 to disable reconnecting on idle connection failures. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
-            <value>The number of reconnections attempted after identifying that there was an idle connection failure.</value>
-            <remarks>
-              <format type="text/markdown">
-                <![CDATA[  
-  
-  ## Remarks  
-   This property corresponds to the "Connect Retry Count" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
-  
-   ]]>
-              </format>
-            </remarks>
-        </ConnectRetryCount>
-        <ConnectRetryInterval>
-            <summary>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure. This must be an integer between 1 and 60. The default is 10 seconds.</summary>
-            <value>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure.</value>
-			<exception cref="T:System.ArgumentException">Value is outside of the allowed range.</exception>            
-            <remarks>
-              <format type="text/markdown">
-                <![CDATA[  
-  
-    ## Remarks  
-     This property corresponds to the "Connect Retry Interval" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
-  
-This value is applied after the first reconnection attempt. When a broken connection is detected, the client immediately attempts to reconnect; this is the first reconnection attempt and only occurs if `ConnectRetryCount` is greater than 0. If the first reconnection attempt fails and `ConnectRetryCount` is greater than 1, the client waits `ConnectRetryInterval` to try the second and subsequent reconnection attempts.
-
-     ]]>
-              </format>
-            </remarks>
-        </ConnectRetryInterval>
-        <ConnectTimeout>
-            <summary>Gets or sets the length of time (in seconds) to wait for a connection to the server before terminating the attempt and generating an error.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectTimeout" /> property, or 15 seconds if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Connect Timeout", "connection timeout", and "timeout" keys within the connection string.  
-  
- When opening a connection to a Azure SQL Database, set the connection timeout to 30 seconds.  
-  
- Valid values are greater than or equal to 0 and less than or equal to 2147483647.
-   
-  
-## Examples  
- The following example first displays the contents of a connection string that does not specify the "Connect Timeout" value, sets the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectTimeout%2A> property, and then displays the new connection string.  
-  
- [!code-csharp[SqlConnectionStringBuilder_ConnectTimeout#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ConnectTimeout.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </ConnectTimeout>
-        <ContainsKey>
-            <param name="keyword">The key to locate in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</param>
-            <summary>Determines whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a specific key.</summary>
-            <returns>true if the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains an element that has the specified key; otherwise, false.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- Because the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> contains a fixed-size collection of key/value pairs, the <xref:System.Data.Common.DbConnectionStringBuilder.ContainsKey%2A> method determines only if a particular key name is valid.  
-  
-   
-  
-## Examples  
- The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance, sets some of its properties, and then tries to determine whether various keys exist within the object by calling the **ContainsKey** method.  
-  
- [!code-csharp[SqlConnectionStringBuilder_ContainsKey#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_ContainsKey.cs#1)]
-  
- The example displays the following output in the console window:  
-  
-```  
-Connection string = Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
-True  
-True  
-True  
-False  
-```  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">
-            <paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
-        </ContainsKey>
-        <ContextConnection>
-            <summary>Obsolete. Gets or sets a value that indicates whether a client/server or in-process connection to SQL Server should be made.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ContextConnection" /> property, or <see langword="False" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Context Connection" key within the connection string.  
-  
 > [!NOTE]
->  The <xref:Microsoft.Data.SqlClient.SqlConnection.DataSource%2A> property returns `null` if the connection string for the <xref:Microsoft.Data.SqlClient.SqlConnection> is "context connection=true".  
-  
- ]]></format>
-            </remarks>
-        </ContextConnection>
-        <CurrentLanguage>
-            <summary>Gets or sets the language used for database server warning or error messages..</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.CurrentLanguage" /> property, or <see langword="String.Empty" /> if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Current Language" and "language" keys within the connection string.  
+> Since version 5.x the default value for none Azure endpoints is 1 and for Azure SQL and Azure Synapse has increased to 2 and 5 to imporve the recovery against on high demand Azure endpoints. It should be detected first, and Synapse could be detected as a regular Azure SQL DB endpoint.
 
- The language name can be 128 characters or less.
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </CurrentLanguage>
-        <DataSource>
-            <summary>Gets or sets the name or network address of the instance of SQL Server to connect to.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.DataSource" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Data Source", "server", "address", "addr", and "network address" keys within the connection string. Regardless of which of these values has been supplied within the supplied connection string, the connection string created by the `SqlConnectionStringBuilder` will use the well-known "Data Source" key.  
-  
-The port number can be specified after the server name: `server=tcp:servername, portnumber`.
+]]>
+        </format>
+      </remarks>
+    </ConnectRetryCount>
+    <ConnectRetryInterval>
+      <summary>
+        Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure. This must be an integer between 1 and 60. The default is 10 seconds.
+      </summary>
+      <value>
+        Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure.
+      </value>
+      <exception cref="T:System.ArgumentException">
+        Value is outside the allowed range.
+      </exception>
+      <remarks>
+        <para>
+          This property corresponds to the "Connect Retry Interval" key within the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> connection string.
+        </para>
+        <para>
+          This value is applied after the first reconnection attempt. When a broken connection is detected, the client immediately attempts to reconnect; this is the first reconnection attempt and only occurs if <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectRetryCount" /> is greater than 0. If the first reconnection attempt fails and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectRetryCount" /> is greater than 1, the client waits <c>ConnectRetryInterval</c> to try the second and subsequent reconnection attempts.
+        </para>
+      </remarks>
+    </ConnectRetryInterval>
+    <ConnectTimeout>
+      <summary>
+        Gets or sets the length of time (in seconds) to wait for a connection to the server before terminating the attempt and generating an error.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectTimeout" /> property, or 15 seconds if no value has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Connect Timeout", "connection timeout", and "timeout" keys within the connection string.
+        </para>
+        <para>
+          When opening a connection to a Azure SQL Database, set the connection timeout to 30 seconds. Valid values are greater than or equal to 0 and less than or equal to 2147483647.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example first displays the contents of a connection string that does not specify the "Connect Timeout" value, sets the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ConnectTimeout" /> property, and then displays the new connection string.
+        </para>
+        <!-- SqlConnectionStringBuilder_ConnectTimeout -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  try
+                  {
+                      string connectString =
+                          "Server=(local);Initial Catalog=AdventureWorks;" +
+                          "Integrated Security=true";
+                      SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
+                      Console.WriteLine("Original: " + builder.ConnectionString);
+                      Console.WriteLine("ConnectTimeout={0}",
+                          builder.ConnectTimeout);
+                      builder.ConnectTimeout = 100;
+                      Console.WriteLine("Modified: " + builder.ConnectionString);
+          
+                      Console.WriteLine("Press any key to finish.");
+                      Console.ReadLine();
+                  }
+                  catch (Exception ex)
+                  {
+                      Console.WriteLine(ex.Message);
+                  }
+              }
+          }
+        </code>
+      </example>
+    </ConnectTimeout>
+    <ContainsKey>
+      <param name="keyword">
+        The key to locate in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> .
+      </param>
+      <summary>
+        Determines whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a specific key.
+      </summary>
+      <returns>
+        <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains an element that has the specified key; otherwise, <see langword="false" />.
+      </returns>
+      <remarks>
+        <para>
+          Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a fixed-size collection of key/value pairs, the <see cref="M:System.Data.Common.DbConnectionStringBuilder.ContainsKey(System.String)" /> method determines only if a particular key name is valid.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance, sets some of its properties, and then tries to determine whether various keys exist within the object by calling the <b>ContainsKey</b> method.
+        </para>
+        <!-- SqlConnectionStringBuilder_ContainsKey -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());
+                  Console.WriteLine("Connection string = " + builder.ConnectionString);
+          
+                  // Keys you have provided return true.
+                  Console.WriteLine(builder.ContainsKey("Server"));
+          
+                  // Comparison is case-insensitive, and synonyms
+                  // are automatically converted to their "well-known"
+                  // names.
+                  Console.WriteLine(builder.ContainsKey("Database"));
+          
+                  // Keys that are valid but have not been set return true.
+                  Console.WriteLine(builder.ContainsKey("Max Pool Size"));
+          
+                  // Keys that do not exist return false.
+                  Console.WriteLine(builder.ContainsKey("MyKey"));
+          
+                  Console.WriteLine("Press Enter to continue.");
+                  Console.ReadLine();
+              }
+          
+              private static string GetConnectionString()
+              {
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file. 
+                  return "Server=(local);Integrated Security=SSPI;" +
+                         "Initial Catalog=AdventureWorks";
+              }
+          }
+        </code>
+        <para>
+          The example displays the following output in the console window:
+        </para>
+        <code>
+          Connection string = Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True
+          True
+          True
+          True
+          False
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException"><paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
+    </ContainsKey>
+    <CurrentLanguage>
+      <summary>
+        Gets or sets the language used for database server warning or error messages..
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.CurrentLanguage" /> property, or <c>string.Empty</c> if no value has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Current Language" and "language" keys within the connection string.
+        </para>
+        <para>
+          The language name can be 128 characters or fewer.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </CurrentLanguage>
+    <DataSource>
+      <summary>
+        Gets or sets the name or network address of the instance of SQL Server to connect to.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.DataSource" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Data Source", "server", "address", "addr", and "network address" keys within the connection string. Regardless of which of these values has been supplied within the supplied connection string, the connection string created by the <c>SqlConnectionStringBuilder</c> will use the well-known "Data Source" key. The port number can be specified after the server name: <c>server=tcp:servername,portnumber</c> .
+        </para>
+        <para>
+          When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes: <c>np:(local),  tcp:(local), lpc:(local)</c> .
+        </para>
+        <para>
+          You can also connect to a LocalDB database as follows: <c>server=(localdb)\\myInstance</c> . For more information about LocalDB, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-localdb">SqlClient Support for LocalDB</see> . <b>Data Source</b> must use the TCP format or the Named Pipes format. TCP format is as follows:
+        </para>
+        <list type="bullet">
+          <item><description><c>tcp:\&lt;host name&gt;\\&lt;instance name&gt;</c></description></item>
+          <item><description><c>tcp:\&lt;host name&gt;,\&lt;TCP/IP port number&gt;</c></description></item>
+        </list>
+        <para>
+          The TCP format must start with the prefix "tcp:" and is followed by the database instance, as specified by a host name and an instance name. This format is not applicable when connecting to Azure SQL Database. TCP is automatically selected for connections to Azure SQL Database when no protocol is specified.
+        </para>
+        <para>
+          The host name MUST be specified in one of the following ways:   
+        </para>
+        <list type="bullet">
+          <item><description>NetBIOSName</description></item>
+          <item><description>IPv4Address</description></item>
+          <item><description>IPv6Address</description></item>
+        </list>
+        <para>
+          The instance name is used to resolve to a particular TCP/IP port number on which a database instance is hosted. Alternatively, specifying a TCP/IP port number directly is also allowed. If both instance name and port number are not present, the default database instance is used.
+        </para>
+        <para>
+          The Named Pipes format is as follows: -   
+        </para>
+        <list type="bullet">
+          <item><description><c>np:\\\\&lt;host name&gt;\pipe\\&lt;pipe name&gt;</c></description></item>
+        </list>
+        <para>
+          The Named Pipes format MUST start with the prefix "np:" and is followed by a named pipe name.
+        </para>
+        <para>
+          The host name MUST be specified in one of the following ways:
+        </para>
+        <list type="bullet">
+          <item><description>NetBIOSName</description></item>
+          <item><description>IPv4Address</description></item>
+          <item><description>IPv6Address</description></item>
+        </list>
+        <para>
+          The pipe name is used to identify the database instance to which the .NET application will connect.
+        </para>
+        <para>
+          If the value of the <b>Network</b> key is specified, the prefixes "tcp:" and "np:" should not be specified. <b>Note:</b> You can force the use of TCP instead of shared memory, either by prefixing <b>tcp:</b> to the server name in the connection string, or by using <b>localhost</b>.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example demonstrates that the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class converts synonyms for the "Data Source" connection string key into the well-known key:
+        </para>
+        <!-- SqlConnectionStringBuilder_DataSource -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(
+                      "Network Address=(local);Integrated Security=SSPI;" +
+                      "Initial Catalog=AdventureWorks");
+          
+                  // Display the connection string, which should now 
+                  // contain the "Data Source" key, as opposed to the 
+                  // supplied "Network Address".
+                  Console.WriteLine(builder.ConnectionString);
+          
+                  // Retrieve the DataSource property.
+                  Console.WriteLine("DataSource = " + builder.DataSource);
+          
+                  Console.WriteLine("Press any key to continue.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </DataSource>
+    <EnclaveAttestationUrl>
+      <summary>
+        Gets or sets the enclave attestation URL to be used with enclave based Always Encrypted.
+      </summary>
+      <value>
+        The enclave attestation URL.
+      </value>
+    </EnclaveAttestationUrl>
+    <Encrypt>
+      <summary>
+        Gets or sets a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> value since version 5.0 or a <see cref="T:System.Boolean" /> value for the earlier versions that indicates whether TLS encryption is required for all data sent between the client and server.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "Encrypt" key within the connection string.  
 
-When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes:`np:(local),  tcp:(local), lpc:(local)`.
-
-You can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
-**Data Source** must use the TCP format or the Named Pipes format. TCP format is as follows:
-
--   tcp:\<host name>\\<instance name\>
--   tcp:\<host name>,\<TCP/IP port number>
-
-The TCP format must start with the prefix "tcp:" and is followed by the database instance, as specified by a host name and an instance name. This format is not applicable when connecting to Azure SQL Database. TCP is automatically selected for connections to Azure SQL Database when no protocol is specified.
-
-The host name MUST be specified in one of the following ways:
--   NetBIOSName
--   IPv4Address
--   IPv6Address
-
-The instance name is used to resolve to a particular TCP/IP port number on which a database instance is hosted. Alternatively, specifying a TCP/IP port number directly is also allowed. If both instance name and port number are not present, the default database instance is used.
-
-The Named Pipes format is as follows:
--   np:\\\\<host name\>\pipe\\<pipe name\>
-
-The Named Pipes format MUST start with the prefix "np:" and is followed by a named pipe name.
-
-The host name MUST be specified in one of the following ways:
-
--   NetBIOSName
--   IPv4Address
--   IPv6Address
-
-The pipe name is used to identify the database instance to which the .NET application will connect. 
-
-If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" should not be specified. **Note:**  You can force the use of TCP instead of shared memory, either by prefixing **tcp:** to the server name in the connection string, or by using **localhost**.
-  
-  
-## Examples  
- The following example demonstrates that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the "Data Source" connection string key into the well-known key:  
-  
- [!code-csharp[SqlConnectionStringBuilder_DataSource#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_DataSource.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </DataSource>
-        <EnclaveAttestationUrl>
-            <summary>Gets or sets the enclave attestation URL to be used with enclave based Always Encrypted.</summary>
-            <value>The enclave attestation URL.</value>
-        </EnclaveAttestationUrl>
-        <Encrypt>
-            <summary>Gets or sets a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> value since version 5.0 or a <see cref="T:System.Boolean" /> value for the earlier versions that indicates whether TLS encryption is required for all data sent between the client and server.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Encrypt" key within the connection string.  
-  
-When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> or `true`, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
+When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>, <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> or `true`, the server name (or IP address) in a server's TLS certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](https://learn.microsoft.com/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
 
 > [!NOTE]
 > Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true` while it is `false` for earlier versions.
@@ -427,358 +654,582 @@ When `TrustServerCertificate` is false and `Encrypt` is <xref:Microsoft.Data.Sql
 > Starting from **version 5.0**, the data type is updated to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption>, and the default value of the `Encrypt` property is set to <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A>.
 
  ]]></format>
-            </remarks>
-            <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
-        </Encrypt>
-        <Enlist>
-            <summary>Gets or sets a Boolean value that indicates whether the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Enlist" /> property, or <see langword="true" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Enlist" key within the connection string.  
-  
- ]]></format>
-            </remarks>
-        </Enlist>
-        <FailoverPartner>
-            <summary>Gets or sets the name or address of the partner server to connect to if the primary server is down.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartner" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-If the value of this key is "", then **Initial Catalog** must be present, and its value must not be "".
-
-The server name can be 128 characters or less.
-
-If you specify a failover partner but the failover partner server is not configured for database mirroring and the primary server (specified with the Server keyword) is not available, then the connection will fail.
-
-If you specify a failover partner and the primary server is not configured for database mirroring, the connection to the primary server (specified with the Server keyword) will succeed if the primary server is available.
-
- ]]></format>
-            </remarks>
-        </FailoverPartner>
-        <FailoverPartnerSPN>
-          <summary>Gets or sets the service principal name (SPN) of the failover partner for the connection.</summary>
-          <value>
-            The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartnerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
-          </value>
-          <remarks>
-            <format type="text/markdown">
-              <![CDATA[  
-
-## Remarks  
+      </remarks>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/connection-strings">
+        Working with Connection Strings
+      </seealso>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
+        Overview of the SqlClient driver
+      </seealso>
+    </Encrypt>
+    <Enlist>
+      <summary>
+        Gets or sets a Boolean value that indicates whether the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Enlist" /> property, or <see langword="true" /> if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Enlist" key within the connection string.
+      </remarks>
+    </Enlist>
+    <FailoverPartner>
+      <summary>
+        Gets or sets the name or address of the partner server to connect to if the primary server is down.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartner" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+      <remarks>
+        <para>
+          If the value of this key is "", then <b>Initial Catalog</b> must be present, and its value must not be "".
+        </para>
+        <para>
+          The server name can be 128 characters or fewer.
+        </para>
+        <para>
+          If you specify a failover partner but the failover partner server is not configured for database mirroring and the primary server (specified with the Server keyword) is not available, then the connection will fail.
+        </para>
+        <para>
+          If you specify a failover partner and the primary server is not configured for database mirroring, the connection to the primary server (specified with the Server keyword) will succeed if the primary server is available.
+        </para>
+      </remarks>
+    </FailoverPartner>
+    <FailoverPartnerSPN>
+      <summary>
+        Gets or sets the service principal name (SPN) of the failover partner for the connection.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartnerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN" keys within the connection string.  
 
 > [!NOTE]
 > This property only applies when using Integrated Security mode, otherwise it is ignored.
 
- ]]>
-            </format>
-          </remarks>
-        </FailoverPartnerSPN>
-        <GetProperties>
-            <param name="propertyDescriptors">To be added.</param>
-            <summary>To be added.</summary>
-            <remarks>To be added.</remarks>
-        </GetProperties>
-        <InitialCatalog>
-            <summary>Gets or sets the name of the database associated with the connection.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Initial Catalog" and "database" keys within the connection string.  
-  
- The database name can be 128 characters or less.
-  
-## Examples  
- The following example creates a simple connection string and then uses the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to add the name of the database to the connection string. The code displays the contents of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog%2A> property, just to verify that the class was able to convert from the synonym ("Database") to the appropriate property value.  
-  
- [!code-csharp[SqlConnectionStringBuilder_InitialCatalog#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_InitialCatalog.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </InitialCatalog>
-        <IntegratedSecurity>
-            <summary>Gets or sets a Boolean value that indicates whether User ID and Password are specified in the connection (when <see langword="false" />) or whether the current Windows account credentials are used for authentication (when <see langword="true" />).</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity" /> property, or <see langword="false" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Integrated Security" and "trusted_connection" keys within the connection string.  
-  
- If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.
- 
- <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).
-   
-  
-## Examples  
- The following example converts an existing connection string from using SQL Server Authentication to using integrated security. The example does its work by removing the user name and password from the connection string and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
-  
-> [!NOTE]
->  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
-  
- [!code-csharp[SqlConnectionStringBuilder_IntegratedSecurity#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_IntegratedSecurity.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </IntegratedSecurity>
-        <IPAddressPreference>
-            <summary>Gets or sets the IP address family preference when establishing TCP connections.</summary>
-            <returns>Returns the IP address preference.</returns>
-            <remarks>
-                <format type="text/markdown"><![CDATA[
+]]>
+        </format>
+      </remarks>
+    </FailoverPartnerSPN>
+    <HostNameInCertificate>
+      <summary>
+        Gets or sets the host name to use when validating the server certificate for the connection. When not specified, the server name from the <c>Data Source</c> is used for certificate validation. (Only available in v5.0+)
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.HostNameInCertificate" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "HostNameInCertificiate" and "Host Name in Certificiate" keys within the connection string. 
 
-## Remarks
- If `Transparent Network IP Resolution` (in .NET Framework) or `Multi Subnet Failover` is set to true, this setting has no effect. 
+> [!NOTE]
+> This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
+
+]]>
+        </format>
+      </remarks>
+    </HostNameInCertificate>
+    <InitialCatalog>
+      <summary>
+        Gets or sets the name of the database associated with the connection.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog" /> property, or <c>string.Empty</c> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Initial Catalog" and "database" keys within the connection string.
+        </para>
+        <para>
+          The database name can be 128 characters or fewer.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example creates a simple connection string and then uses the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> class to add the name of the database to the connection string. The code displays the contents of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog" /> property, just to verify that the class was able to convert from the synonym ("Database") to the appropriate property value.
+        </para>
+        <!-- SqlConnectionStringBuilder_InitialCatalog -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  try
+                  {
+                      string connectString = "Data Source=(local);" +
+                          "Integrated Security=true";
+          
+                      SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectString);
+                      Console.WriteLine("Original: " + builder.ConnectionString);
+          
+                      // Normally, you could simply set the InitialCatalog
+                      // property of the SqlConnectionStringBuilder object. This
+                      // example uses the default Item property (the C# indexer)
+                      // and the "Database" string, simply to demonstrate that
+                      // setting the value in this way results in the same
+                      // connection string:
+                      builder["Database"] = "AdventureWorks";
+                      Console.WriteLine("builder.InitialCatalog = " + builder.InitialCatalog);
+                      Console.WriteLine("Modified: " + builder.ConnectionString);
+          
+                      using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                      {
+                          connection.Open();
+                          // Now use the open connection.
+                          Console.WriteLine("Database = " + connection.Database);
+                      }
+                  }
+                  catch (Exception ex)
+                  {
+                      Console.WriteLine(ex.Message);
+                  }
+          
+                  Console.WriteLine("Press any key to finish.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </InitialCatalog>
+    <IntegratedSecurity>
+      <summary>
+        Gets or sets a Boolean value that indicates whether User ID and Password are specified in the connection (when <see langword="false" /> ) or whether the current Windows account credentials are used for authentication (when <see langword="true" /> ).
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity" /> property, or <see langword="false" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "Integrated Security" and "trusted_connection" keys within the connection string.  
+
+If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.
+
+<xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).
 
 ]]></format>
-            </remarks>
-        </IPAddressPreference>
-        <IsFixedSize>
-            <summary>Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> has a fixed size.</summary>
-            <value>
-            <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.</value>
-            <remarks>To be added.</remarks>
-            <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
-        </IsFixedSize>
-        <Item>
-            <param name="keyword">The key of the item to get or set.</param>
-            <summary>Gets or sets the value associated with the specified key. In C#, this property is the indexer.</summary>
-            <value>The value associated with the specified key.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- Because the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> contains a fixed-size dictionary, trying to add a key that does not exist within the dictionary throws a <xref:System.Collections.Generic.KeyNotFoundException>.  
-  
-   
-  
-## Examples  
- The following code, in a console application, creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> and adds key/value pairs to its connection string, using the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item%2A> property.  
-  
- [!code-csharp[SqlConnectionStringBuilder2#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder2.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">
-            <paramref name="keyword" /> is a null reference (<see langword="Nothing" /> in Visual Basic).</exception>
-            <exception cref="T:System.Collections.Generic.KeyNotFoundException">Tried to add a key that does not exist within the available keys.</exception>
-            <exception cref="T:System.FormatException">Invalid value within the connection string (specifically, a Boolean or numeric value was expected but not supplied).</exception>
-        </Item>
-        <Keys>
-            <summary>Gets an <see cref="T:System.Collections.ICollection" /> that contains the keys in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</summary>
-            <value>An <see cref="T:System.Collections.ICollection" /> that contains the keys in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The order of the values in the <xref:System.Collections.ICollection> is unspecified, but it is the same order as the associated values in the <xref:System.Collections.ICollection> returned by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values%2A> property.  
-  
-   
-  
-## Examples  
- The following console application example creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>. The code loops through the <xref:System.Collections.ICollection> returned by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys%2A> property displaying the key/value pairs.  
-  
- [!code-csharp[SqlConnectionStringBuilder_Keys#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Keys.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" />
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" />
-        </Keys>
-        <LoadBalanceTimeout>
-            <summary>Gets or sets the minimum time, in seconds, for the connection to live in the connection pool before being destroyed.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" /> property, or 0 if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Load Balance Timeout" and "connection lifetime" keys within the connection string.  
-  
-When a connection is returned to the pool, its creation time is compared with the current time, and the connection is destroyed if that time span (in seconds) exceeds the value specified by `Connection Lifetime`. This is useful in clustered configurations to force load balancing between a running server and a server just brought online.
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example converts an existing connection string from using SQL Server Authentication to using integrated security. The example does its work by removing the user name and password from the connection string and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
 
-A value of zero (0) causes pooled connections to have the maximum connection timeout.
+> [!NOTE]
+>  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
 
- ]]></format>
-            </remarks>
-        </LoadBalanceTimeout>
-        <MaxPoolSize>
-            <summary>Gets or sets the maximum number of connections allowed in the connection pool for this specific connection string.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MaxPoolSize" /> property, or 100 if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Max Pool Size" key within the connection string.  
-  
- ]]></format>
-            </remarks>
-        </MaxPoolSize>
-        <MinPoolSize>
-            <summary>Gets or sets the minimum number of connections allowed in the connection pool for this specific connection string.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MinPoolSize" /> property, or 0 if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Min Pool Size" key within the connection string.  
-  
- ]]></format>
-            </remarks>
-        </MinPoolSize>
-        <MultipleActiveResultSets>
-            <summary>When true, an application can maintain multiple active result sets (MARS). When false, an application must process or cancel all result sets from one batch before it can execute any other batch on that connection. For more information, see [Multiple Active Result Sets (MARS)](https://msdn.microsoft.com//library/cfa084cz.aspx).</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MultipleActiveResultSets" /> property, or <see langword="false" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Multiple Active Result Sets" key within the connection string.  
-  
-   
-  
-## Examples  
- The following example explicitly enables the Multiple Active Result Sets feature.  
-  
- [!code-csharp[SqlConnectionStringBuilder_MultipleActiveResultSets.MARS#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_MultipleActiveResultSets.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </MultipleActiveResultSets>
-        <MultiSubnetFailover>
-            <summary>If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting MultiSubnetFailover=true provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery).</summary>
-            <value>Returns <see cref="T:System.Boolean" /> indicating the current value of the property.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-Always specify `multiSubnetFailover=True` when connecting to the availability group listener of a SQL Server 2012 (or later) availability group or a SQL Server 2012 (or later) Failover Cluster Instance. 
+[!code-csharp[SqlConnectionStringBuilder_IntegratedSecurity#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_IntegratedSecurity.cs#1)]
 
- ]]></format>
-            </remarks>
-        </MultiSubnetFailover>
-        <NetworkLibrary>
-            <summary>Gets or sets a string that contains the name of the network library used to establish a connection to the SQL Server.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.NetworkLibrary" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Network Library", "network", and "net" keys within the connection string.  
-  
- Supported values for this property include dbnmpntw (Named Pipes), dbmsrpcn (Multiprotocol), dbmsadsn (AppleTalk), dbmsgnet (VIA), dbmslpcn (Shared Memory) and dbmsspxn (IPX/SPX), and dbmssocn (TCP/IP). The corresponding network DLL must be installed on the system to which you connect. If you do not specify a network and you use a local server (for example, "." or "(local)"), Shared Memory is used.  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </NetworkLibrary>
-        <PacketSize>
-            <summary>Gets or sets the size in bytes of the network packets used to communicate with an instance of SQL Server.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PacketSize" /> property, or 8000 if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Packet Size" key within the connection string.  
-  
-The packet size can be greater than or equal to 512 and less than or equal to 32768.
+]]></format>
+      </example>
+    </IntegratedSecurity>
+    <IPAddressPreference>
+      <summary>
+        Gets or sets the IP address family preference when establishing TCP connections.
+      </summary>
+      <returns>
+        Returns the IP address preference.
+      </returns>
+      <remarks>
+        If <c>Transparent Network IP Resolution</c> (in .NET Framework) or <c>Multi Subnet Failover</c> is set to true, this setting has no effect.
+      </remarks>
+    </IPAddressPreference>
+    <IsFixedSize>
+      <summary>
+        Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> has a fixed size.
+      </summary>
+      <value>
+        <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.
+      </value>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/connection-strings">
+        Working with Connection Strings
+      </seealso>
+      <seealso href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">
+        Overview of the SqlClient driver
+      </seealso>
+    </IsFixedSize>
+    <Item>
+      <param name="keyword">
+        The key of the item to get or set.
+      </param>
+      <summary>
+        Gets or sets the value associated with the specified key. In C#, this property is the indexer.
+      </summary>
+      <value>
+        The value associated with the specified key.
+      </value>
+      <remarks>
+        Because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains a fixed-size dictionary, trying to add a key that does not exist within the dictionary throws a <see cref="T:System.Collections.Generic.KeyNotFoundException" />.
+      </remarks>
+      <example>
+        <para>
+          The following code, in a console application, creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> and adds key/value pairs to its connection string, using the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" /> property.
+        </para>
+        <!-- SqlConnectionStringBuilder2 -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                  builder["Data Source"] = "(local)";
+                  builder["Integrated Security"] = true;
+                  builder["Initial Catalog"] = "AdventureWorks";
+          
+                  // Overwrite the existing value for the Data Source value.
+                  builder["Data Source"] = ".";
+          
+                  Console.WriteLine(builder.ConnectionString);
+                  Console.WriteLine();
+                  Console.WriteLine("Press Enter to continue.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        <paramref name="keyword" /> is a null reference (<see langword="Nothing" /> in Visual Basic).
+      </exception>
+      <exception cref="T:System.Collections.Generic.KeyNotFoundException">
+        Tried to add a key that does not exist within the available keys.
+      </exception>
+      <exception cref="T:System.FormatException">
+        Invalid value within the connection string (specifically, a Boolean or numeric value was expected but not supplied).
+      </exception>
+    </Item>
+    <Keys>
+      <summary>
+        Gets an <see cref="T:System.Collections.ICollection" /> that contains the keys in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.
+      </summary>
+      <value>
+        An <see cref="T:System.Collections.ICollection" /> that contains the keys in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.
+      </value>
+      <remarks>
+        The order of the values in the <see cref="T:System.Collections.ICollection" /> is unspecified, but it is the same order as the associated values in the <see cref="T:System.Collections.ICollection" /> returned by the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" /> property.
+      </remarks>
+      <example>
+        <para>
+          The following console application example creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />. The code loops through the <see cref="T:System.Collections.ICollection" /> returned by the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" /> property displaying the key/value pairs.
+        </para>
+        <!-- SqlConnectionStringBuilder_Keys -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                  builder.DataSource = "(local)";
+                  builder.IntegratedSecurity = true;
+                  builder.InitialCatalog = "AdventureWorks";
+          
+                  // Loop through the collection of keys, displaying 
+                  // the key and value for each item:
+                  foreach (string key in builder.Keys)
+                  {
+                      Console.WriteLine("{0}={1}", key, builder[key]);
+                  }
+          
+                  Console.WriteLine();
+                  Console.WriteLine("Press Enter to continue.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" />
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Item(System.String)" />
+    </Keys>
+    <LoadBalanceTimeout>
+      <summary>
+        Gets or sets the minimum time, in seconds, for the connection to live in the connection pool before being destroyed.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.LoadBalanceTimeout" /> property, or 0 if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Load Balance Timeout" and "connection lifetime" keys within the connection string.
+        </para>
+        <para>
+          When a connection is returned to the pool, its creation time is compared with the current time, and the connection is destroyed if that time span (in seconds) exceeds the value specified by <c>Connection Lifetime</c>. This is useful in clustered configurations to force load balancing between a running server and a server just brought online.
+        </para>
+        <para>
+          A value of zero (0) causes pooled connections to have the maximum connection timeout.
+        </para>
+      </remarks>
+    </LoadBalanceTimeout>
+    <MaxPoolSize>
+      <summary>
+        Gets or sets the maximum number of connections allowed in the connection pool for this specific connection string.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MaxPoolSize" /> property, or 100 if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Max Pool Size" key within the connection string.
+      </remarks>
+    </MaxPoolSize>
+    <MinPoolSize>
+      <summary>
+        Gets or sets the minimum number of connections allowed in the connection pool for this specific connection string.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MinPoolSize" /> property, or 0 if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Min Pool Size" key within the connection string.
+      </remarks>
+    </MinPoolSize>
+    <MultipleActiveResultSets>
+      <summary>
+        When true, an application can maintain multiple active result sets (MARS). When false, an application must process or cancel all result sets from one batch before it can execute any other batch on that connection. For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/multiple-active-result-sets-mars">Multiple Active Result Sets (MARS)</see>.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.MultipleActiveResultSets" /> property, or <see langword="false" /> if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Multiple Active Result Sets" key within the connection string.
+      </remarks>
+      <example>
+        <para>
+          The following example explicitly enables the Multiple Active Result Sets feature.
+        </para>
+        <!-- SqlConnectionStringBuilder_MultipleActiveResultSets -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                  builder.DataSource = "(local)";
+                  builder.IntegratedSecurity = true;
+                  builder.InitialCatalog = "AdventureWorks";
+          
+                  // The connection does not allow multiple active result sets
+                  // by default, so this line of code explicitly
+                  // enables this feature. Note that this feature is 
+                  // only available when programming against SQL Server 2005
+                  // or later.
+                  builder.MultipleActiveResultSets = true;
+          
+                  Console.WriteLine(builder.ConnectionString);
+                  Console.WriteLine();
+          
+                  Console.WriteLine("Press Enter to continue.");
+                  Console.ReadLine();
+              }
+          }
+        </code>
+      </example>
+    </MultipleActiveResultSets>
+    <MultiSubnetFailover>
+      <summary>
+        If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting <c>MultiSubnetFailover=true</c> provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery">SqlClient Support for High Availability, Disaster Recovery</see>.
+      </summary>
+      <value>
+        Returns <see cref="T:System.Boolean" /> indicating the current value of the property.
+      </value>
+      <remarks>
+        Always specify <c>multiSubnetFailover=True</c> when connecting to the availability group listener of a SQL Server 2012 (or later) availability group or a SQL Server 2012 (or later) Failover Cluster Instance.
+      </remarks>
+    </MultiSubnetFailover>
+    <NetworkLibrary>
+      <summary>
+        Gets or sets a string that contains the name of the network library used to establish a connection to the SQL Server.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.NetworkLibrary" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Network Library", "network", and "net" keys within the connection string. Supported values for this property include:
+        </para>
+        <list type="bullet">
+          <item><description>dbnmpntw (Named Pipes)</description></item>
+          <item><description>dbmsrpcn (Multiprotocol)</description></item>
+          <item><description>dbmsadsn (AppleTalk)</description></item>
+          <item><description>dbmsgnet (VIA)</description></item>
+          <item><description>dbmslpcn (Shared Memory)</description></item>
+          <item><description>dbmsspxn (IPX/SPX)</description></item>
+          <item><description>dbmssocn (TCP/IP)</description></item>
+        </list>
+        <para>
+          The corresponding network DLL must be installed on the system to which you connect. If you do not specify a network and you use a local server (for example, "." or "(local)"), Shared Memory is used.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </NetworkLibrary>
+    <PacketSize>
+      <summary>
+        Gets or sets the size in bytes of the network packets used to communicate with an instance of SQL Server.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PacketSize" /> property, or 8000 if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Packet Size" key within the connection string.
+        </para>
+        <para>
+          The packet size can be greater than or equal to 512 and less than or equal to 32768.
+        </para>
+      </remarks>
+    </PacketSize>
+    <Password>
+      <summary>
+        Gets or sets the password for the SQL Server account.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Password" and "pwd" keys within the connection string.
+        </para>
+        <para>
+          Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the <c>Integrated Security</c> or <c>Trusted_Connection</c> keyword instead. <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
+        </para>
+        <para>
+          If <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password" /> has not been set, and you retrieve the value, the return value is <see cref="P:System.String.Empty" />. To reset the password for the connection string, pass null to the Item property.
+        </para>
+        <para>
+          The password must be 128 characters or fewer.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example shows how to set <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password" />.
+        </para>
+        <!-- SqlConnectionStringBuilder_Password -->
+        <code language="c#">
+          using System;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              public static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+          
+                  builder["Password"] = null;
+                  string aa = builder.Password;
+                  Console.WriteLine(aa.Length);
+          
+                  builder["Password"] = "??????";
+                  aa = builder.Password;
+                  Console.WriteLine(aa.Length);
+          
+                  try
+                  {
+                      builder.Password = null;
+                  }
+                  catch (ArgumentNullException e)
+                  {
+                      Console.WriteLine("{0}", e);
+                  }
+              }
+          }
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        The password was incorrectly set to null.
+      </exception>
+    </Password>
+    <PersistSecurityInfo>
+      <summary>
+        Gets or sets a Boolean value indicating if security-sensitive information, such as the password or access token, should be returned as part of the connection string on a connection created with this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> after that connection has ever been in an open state. This property should only be set to <see langword="true" /> if your application has a specific need to read the password out of an already-opened database connection. The default value of <see langword="false" /> is the more secure setting; using <see langword="true" /> for this property opens your application to security risks such as accidentally logging or tracing the database password.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PersistSecurityInfo" /> property, or <see langword="false" /> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Persist Security Info" and "persistsecurityinfo" keys within the connection string.
+        </para>
+        <para>
+          Resetting the connection string resets all connection string values including the password.
+        </para>
+      </remarks>
+    </PersistSecurityInfo>
+    <PoolBlockingPeriod>
+      <summary>
+        The blocking period behavior for a connection pool.
+      </summary>
+      <value>
+        The available blocking period settings.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Pool Blocking Period" key within the connection string.
+        </para>
+        <para>
+          When connection pooling is enabled and a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.
+        </para>
+        <para>
+          Attempting to connect to Azure SQL databases can fail with transient errors which are typically recovered within a few seconds. However, with the connection pool blocking period behavior, you may not be able to reach your database for extensive periods even though the database is  available. This is especially problematic for apps that need to render fast. The <b>PoolBlockingPeriod</b> enables you to select the blocking period best suited for your app. See the <see cref="T:Microsoft.Data.SqlClient.PoolBlockingPeriod" /> enumeration for available settings.
+        </para>
+      </remarks>
+    </PoolBlockingPeriod>
+    <Pooling>
+      <summary>
+        Gets or sets a Boolean value that indicates whether the connection will be pooled or explicitly opened every time that the connection is requested.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Pooling" /> property, or <see langword="true" /> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Pooling" key within the connection string.
+        </para>
+        <para>
+          Connections are considered the same if they have the same connection string. Different connections have different connection strings.
+        </para>
+      </remarks>
+    </Pooling>
+    <Remove>
+      <param name="keyword">
+        The key of the key/value pair to be removed from the connection string in this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.
+      </param>
+      <summary>
+        Removes the entry with the specified key from the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.
+      </summary>
+      <returns>
+        <see langword="true" /> if the key existed within the connection string and was removed; <see langword="false" /> if the key did not exist.
+      </returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+Because the **Remove** method returns a value that indicates its success, it is not required to look for a key before trying to remove the key/value pair from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance. Because the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> maintains a fixed-size collection of key/value pairs, calling the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method simply resets the value of the key/value pair back to its default value.  
 
- ]]></format>
-            </remarks>
-        </PacketSize>
-        <Password>
-            <summary>Gets or sets the password for the SQL Server account.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Password" and "pwd" keys within the connection string.  
+Because the collection of keys supported by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is fixed, every item within the collection has a known default value. The following table lists the keys, and the value for each when the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is first initialized, or after the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method has been called.  
 
-Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keyword instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
-  
- If <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password%2A> has not been set and you retrieve the value, the return value is <xref:System.String.Empty>. To reset the password for the connection string, pass null to the Item property.  
-  
-The password must be 128 characters or less.
-   
-  
-## Examples  
- The following example shows how to set <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password%2A>.  
-  
- [!code-csharp[SqlConnectionStringBuilder_Password#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Password.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">The password was incorrectly set to null.  See code sample below.</exception>
-        </Password>
-        <PersistSecurityInfo>
-            <summary>Gets or sets a Boolean value indicating if security-sensitive information, such as the password or access token, should be returned as part of the connection string on a connection created with this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> after that connection has ever been in an open state. This property should only be set to <see langword="true" /> if your application has a specific need to read the password out of an already-opened database connection. The default value of <see langword="false" /> is the more secure setting; using <see langword="true" /> for this property opens your application to security risks such as accidentally logging or tracing the database password.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PersistSecurityInfo" /> property, or <see langword="false" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Persist Security Info" and "persistsecurityinfo" keys within the connection string.  
-  
- Resetting the connection string resets all connection string values including the password. 
-
- ]]></format>
-            </remarks>
-        </PersistSecurityInfo>
-        <PoolBlockingPeriod>
-            <summary>The blocking period behavior for a connection pool.</summary>
-            <value>The available blocking period settings.</value>
-            <remarks>
-            <format type="text/markdown">
-              <![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Pool Blocking Period" key within the connection string.
- 
- When connection pooling is enabled and a timeout error or other login error occurs, an exception will be thrown and subsequent connection attempts will fail for the next five seconds, the "blocking period". If the application attempts to connect within the blocking period, the first exception will be thrown again. Subsequent failures after a blocking period ends will result in a new blocking period that is twice as long as the previous blocking period, up to a maximum of one minute.  
-  
- Attempting to connect to Azure SQL databases can fail with transient errors which are typically recovered within a few seconds. However, with the connection pool blocking period behavior, you may not be able to reach your database for extensive periods even though the database is  available. This is especially problematic for apps that need to render fast. The **PoolBlockingPeriod** enables you to select the blocking period best suited for your app. See the <xref:Microsoft.Data.SqlClient.PoolBlockingPeriod> enumeration for available settings.  
-  
- ]]></format>
-            </remarks>
-        </PoolBlockingPeriod>
-        <Pooling>
-            <summary>Gets or sets a Boolean value that indicates whether the connection will be pooled or explicitly opened every time that the connection is requested.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Pooling" /> property, or <see langword="true" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Pooling" key within the connection string.  
-  
-Connections are considered the same if they have the same connection string. Different connections have different connection strings.
-
- ]]></format>
-            </remarks>
-        </Pooling>
-        <Remove>
-            <param name="keyword">The key of the key/value pair to be removed from the connection string in this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</param>
-            <summary>Removes the entry with the specified key from the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.</summary>
-            <returns>
-            <see langword="true" /> if the key existed within the connection string and was removed; <see langword="false" /> if the key did not exist.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- Because the **Remove** method returns a value that indicates its success, it is not required to look for a key before trying to remove the key/value pair from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> instance. Because the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> maintains a fixed-size collection of key/value pairs, calling the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method simply resets the value of the key/value pair back to its default value.  
-  
- Because the collection of keys supported by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is fixed, every item within the collection has a known default value. The following table lists the keys, and the value for each when the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> is first initialized, or after the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Remove%2A> method has been called.  
-  
 |Key|Default value|  
 |---------|-------------------|  
 |Application Name|"Framework Microsoft SqlClient Data Provider" when running on .NET Framework. "Core Microsoft SqlClient Data Provider" otherwise.|  
@@ -787,7 +1238,7 @@ Connections are considered the same if they have the same connection string. Dif
 |Context Connection(Obsolete)|False|  
 |Current Language|Empty string|  
 |Data Source|Empty string|  
-|Encrypt|False|  
+|Encrypt|False in versions prior to 4.0, True in versions 4.0 and up|  
 |Enlist|True|  
 |Failover Partner|Empty string|  
 |Initial Catalog|Empty string|  
@@ -806,274 +1257,426 @@ Connections are considered the same if they have the same connection string. Dif
 |User ID|Empty string|  
 |User Instance|False|  
 |Workstation ID|Empty string|  
-  
-   
-  
-## Examples  
- The following example converts an existing connection string from using Windows Authentication to using integrated security. The example works by removing the user name and password from the connection string, and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
-  
+
+]]></format>
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
+The following example converts an existing connection string from using Windows Authentication to using integrated security. The example works by removing the user name and password from the connection string, and then setting the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.IntegratedSecurity%2A> property of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> object.  
+
 > [!NOTE]
 >  This example includes a password to demonstrate how <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> works with connection strings. In your applications, we recommend that you use Windows Authentication. If you must use a password, do not include a hard-coded password in your application.  
-  
- [!code-csharp[SqlConnectionStringBuilder_Remove#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Remove.cs#1)]
-  
- The example displays the following text in the console window:  
-  
+
+[!code-csharp[SqlConnectionStringBuilder_Remove#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Remove.cs#1)]
+
+The example displays the following text in the console window:  
+
 ```  
-Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password= a1Pass@@11  
+Original: Data Source=(local);Initial Catalog=AdventureWorks;User ID=ab;Password=********  
 Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
 Database = AdventureWorks  
 ```  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">
-            <paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)</exception>
-        </Remove>
-        <Replication>
-            <summary>Gets or sets a Boolean value that indicates whether replication is supported using the connection.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Replication" /> property, or false if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Replication" key within the connection string.  
-  
- ]]></format>
-            </remarks>
-        </Replication>
-        <ServerSPN>
-            <summary>Gets or sets the service principal name (SPN) of the data source.</summary>
-            <value>
-              The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
-            </value>
-            <remarks>
-              <format type="text/markdown">
-                <![CDATA[  
 
-## Remarks  
+]]></format>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        <paramref name="keyword" /> is null (<see langword="Nothing" /> in Visual Basic)
+      </exception>
+    </Remove>
+    <Replication>
+      <summary>
+        Gets or sets a Boolean value that indicates whether replication is supported using the connection.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Replication" /> property, or false if none has been supplied.
+      </value>
+      <remarks>
+        This property corresponds to the "Replication" key within the connection string.
+      </remarks>
+    </Replication>
+    <ServerCertificate>
+      <summary>
+        Gets or sets the path to a certificate file to match against the SQL Server TLS/SSL certificate for the connection. The accepted certificate formats are PEM, DER, and CER. If specified, the SQL Server certificate is checked by verifying if the `ServerCertificate` provided is an exact match. (Only available in v5.1+)
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" /> property, or <c>string.Empty</c> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
 This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
 
 > [!NOTE]
 > This property only applies when using Integrated Security mode, otherwise it is ignored.
 
- ]]>
-              </format>
-            </remarks>
-        </ServerSPN>
-        <ShouldSerialize>
-            <param name="keyword">The key to locate in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</param>
-            <summary>Indicates whether the specified key exists in this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.</summary>
-            <returns>
-            <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains an entry with the specified key; otherwise, <see langword="false" />.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This method behaves identically to the <xref:System.Data.Common.DbConnectionStringBuilder.ContainsKey%2A> method.  
-  
- ]]></format>
-            </remarks>
-        </ShouldSerialize>
-        <TransactionBinding>
-            <summary>Gets or sets a string value that indicates how the connection maintains its association with an enlisted <see langword="System.Transactions" /> transaction.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or `Implicit Unbind` if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The Transaction Binding keywords in a <xref:Microsoft.Data.SqlClient.SqlConnection.ConnectionString%2A> control how a <xref:Microsoft.Data.SqlClient.SqlConnection> binds to an enlisted <xref:System.Transactions.Transaction>.  
-  
- The following table shows the possible values for the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding%2A> property:  
-  
-|Value|Description|  
-|-----------|-----------------|  
-|Implicit Unbind|The default. Causes the connection to detach from the transaction when it ends. After detaching, additional requests on the connection are performed in autocommit mode. The <xref:System.Transactions.Transaction.Current%2A> property is not checked when executing requests while the transaction is active. After the transaction has ended, additional requests are performed in autocommit mode.|  
-|Explicit Unbind|Causes the connection to remain attached to the transaction until the connection is closed or until <xref:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction%2A> is called with a `null` (`Nothing` in Visual Basic) value. An <xref:System.InvalidOperationException> is thrown if <xref:System.Transactions.Transaction.Current%2A> is not the enlisted transaction or if the enlisted transaction is not active. This behavior enforces the strict scoping rules required for <xref:System.Transactions.TransactionScope> support.|  
-  
- ]]></format>
-            </remarks>
-        </TransactionBinding>
-        <TransparentNetworkIPResolution>
-            <summary>When the value of this key is set to <see langword="true" />, the application is required to retrieve all IP addresses for a particular DNS entry and attempt to connect with the first one in the list. If the connection is not established within 0.5 seconds, the application will try to connect to all others in parallel. When the first answers, the application will establish the connection with the respondent IP address.</summary>
-            <value>A boolean value.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- If the `Multi Subnet Failover` key is set to `true`, `Transparent Network IP Resolution` is ignored.  
-  
- If the `Failover Partner` key is set, `Transparent Network IP Resolution` is ignored.  
-  
- The value of this key must be `true`, `false`, `yes`, or `no`.  
-  
- A value of `yes` is treated the same as a value of `true`.  
-  
- A value of `no` is treated the same as a value of `false`.  
-  
- This key defaults to `false` when:  
-  
--   Connecting to Azure SQL Database where the data source ends with:  
-  
-    -   .database.chinacloudapi.cn  
-  
-    -   .database.usgovcloudapi.net  
-  
-    -   .database.cloudapi.de  
-  
-    -   .database.windows.net  
-  
--   `Authentication` is 'Active Directory Password' or 'Active Directory Integrated'  
-  
- Otherwise it defaults to `true`.  
-  
- ]]></format>
-            </remarks>
-        </TransparentNetworkIPResolution>
-        <TrustServerCertificate>
-            <summary>Gets or sets a value that indicates whether the channel will be encrypted while bypassing walking the certificate chain to validate trust.</summary>
-            <value>A boolean. The default is `false`.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Trust Server Certificate" and "TrustServerCertificate" keys within the connection string.  
+]]>
+        </format>
+      </remarks>
+    </ServerCertificate>
+    <ServerSPN>
+      <summary>
+        Gets or sets the service principal name (SPN) of the data source.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
 
- When `Trust Server Certificate` is set to `true`, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If `Trust Server Certificate` is set to `true` and encryption is enforced by target server, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.
-  
- For more information, see [Encryption Hierarchy](/sql/relational-databases/security/encryption/encryption-hierarchy) and [Using Encryption Without Validation](/sql/relational-databases/native-client/features/using-encryption-without-validation).
-  
- ]]></format>
-            </remarks>
-        </TrustServerCertificate>
-        <TryGetValue>
-            <param name="keyword">The key of the item to retrieve.</param>
-            <param name="value">The value corresponding to <paramref name="keyword" />.</param>
-            <summary>Retrieves a value corresponding to the supplied key from this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</summary>
-            <returns>
-            <see langword="true" /> if <paramref name="keyword" /> was found within the connection string; otherwise, <see langword="false" />.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue%2A> method lets developers safely retrieve a value from a <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> without needing to verify that the supplied key name is a valid key name. Because **TryGetValue** does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value.  Calling **TryGetValue** with a nonexistent key will place the value null (`Nothing` in Visual Basic) in the `value` parameter.
-  
-## Examples  
- The following example demonstrates the behavior of the **TryGetValue** method.  
-  
- [!code-csharp[SqlConnectionStringBuilder_TryGetValue#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_TryGetValue.cs#1)]
-  
- The sample displays the following results:  
-  
-```  
-Data Source=(local)  
-Trusted_Connection=True  
-Unable to retrieve value for 'InvalidKey'  
-Unable to retrieve value for null key.  
-```  
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">
-            <paramref name="keyword" /> contains a null value (<see langword="Nothing" /> in Visual Basic).</exception>
-        </TryGetValue>
-        <TypeSystemVersion>
-            <summary>Gets or sets a string value that indicates the type system the application expects.</summary>
-            <value>The following table shows the possible values for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TypeSystemVersion" /> property:  
-  
- <list type="table"><listheader><term> Value  
-  
- </term><description> Description  
-  
- </description></listheader><item><term> SQL Server 2005  
-  
- </term><description> Uses the SQL Server 2005 type system. No conversions are made for the current version of ADO.NET.  
-  
- </description></item><item><term> SQL Server 2008  
-  
- </term><description> Uses the SQL Server 2008 type system.  
-  
- </description></item><item><term> Latest  
-  
- </term><description> Use the latest version than this client-server pair can handle. This will automatically move forward as the client and server components are upgraded.  
-  
- </description></item></list></value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The `TypeSystemVersion` property can be used to specify a down-level version of SQL Server for applications written against that version. This avoids possible problems with incompatible types in a newer version of SQL Server that may cause the application to break.  
-  
- ]]></format>
-            </remarks>
-        </TypeSystemVersion>
-        <UserID>
-            <summary>Gets or sets the user ID to be used when connecting to SQL Server.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserID" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "User ID", "user", and "uid" keys within the connection string.  
-  
- Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keywords instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
- 
- The user ID must be 128 characters or less.
-
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </UserID>
-        <UserInstance>
-            <summary>Gets or sets a value that indicates whether to redirect the connection from the default SQL Server Express instance to a runtime-initiated instance running under the account of the caller.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserInstance" /> property, or <see langword="False" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "User Instance" key within the connection string.  
-  
 > [!NOTE]
->  This feature is available only with the SQL Server Express Edition. For more information on user instances, see [SQL Server Express User Instances](/sql/connect/ado-net/sql/sql-server-express-user-instances).
-  
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </UserInstance>
-        <Values>
-            <summary>Gets an <see cref="T:System.Collections.ICollection" /> that contains the values in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</summary>
-            <value>An <see cref="T:System.Collections.ICollection" /> that contains the values in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The order of the values in the <xref:System.Collections.ICollection> is unspecified, but it is the same order as the associated keys in the <xref:System.Collections.ICollection> returned by the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys%2A> property. Because each instance of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> always contains the same fixed set of keys, the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values%2A> property always returns the values corresponding to the fixed set of keys, in the same order as the keys.  
-  
-   
-  
-## Examples  
- The following example first creates a new <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>, and then iterates through all the values within the object.  
-  
- [!code-csharp[SqlConnectionStringBuilder_Values#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_Values.cs#1)]
-  
- ]]></format>
-            </remarks>
-            <altmember cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" />
-        </Values>
-        <WorkstationID>
-            <summary>Gets or sets the name of the workstation connecting to SQL Server.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.WorkstationID" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Workstation ID" and "wsid" keys within the connection string.  
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
 
- The ID must be 128 characters or less.
+]]>
+        </format>
+      </remarks>
+    </ServerSPN>
+    <ShouldSerialize>
+      <param name="keyword">
+        The key to locate in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> .
+      </param>
+      <summary>
+        Indicates whether the specified key exists in this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.
+      </summary>
+      <returns> <see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> contains an entry with the specified key; otherwise, <see langword="false" />.</returns>
+      <remarks>
+        This method behaves identically to the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ContainsKey(System.String)" /> method.
+      </remarks>
+    </ShouldSerialize>
+    <TransactionBinding>
+      <summary>
+        Gets or sets a string value that indicates how the connection maintains its association with an enlisted <see langword="System.Transactions" /> transaction.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or <c>Implicit Unbind</c> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          The Transaction Binding keywords in a <see cref="P:Microsoft.Data.SqlClient.SqlConnection.ConnectionString" /> control how a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> binds to an enlisted <see cref="T:System.Transactions.Transaction" />.
+        </para>
+        <para>
+          The following table shows the possible values for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property:
+        </para>
+        <list type="table">
+          <listheader>
+            <term>Value</term>
+            <description>Description</description>
+          </listheader>
+          <item>
+            <term>Implicit Unbind</term>
+            <description>
+              The default. Causes the connection to detach from the transaction when it ends. After detaching, additional requests on the connection are performed in autocommit mode. The <see cref="P:System.Transactions.Transaction.Current" /> property is not checked when executing requests while the transaction is active. After the transaction has ended, additional requests are performed in autocommit mode.
+            </description>
+          </item>
+          <item>
+            <term>Explicit Unbind</term>
+            <description>
+              Causes the connection to remain attached to the transaction until the connection is closed or until <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> is called with a <see langword="null" /> (<c>Nothing</c> in Visual Basic) value. An <see cref="T:System.InvalidOperationException" /> is thrown if <see cref="P:System.Transactions.Transaction.Current" /> is not the enlisted transaction or if the enlisted transaction is not active. This behavior enforces the strict scoping rules required for <see cref="T:System.Transactions.TransactionScope" /> support.
+            </description>
+          </item>
+        </list>
+      </remarks>
+    </TransactionBinding>
+    <TransparentNetworkIPResolution>
+      <summary>
+        When the value of this key is set to <see langword="true" />, the application is required to retrieve all IP addresses for a particular DNS entry and attempt to connect with the first one in the list. If the connection is not established within 0.5 seconds, the application will try to connect to all others in parallel. When the first answers, the application will establish the connection with the respondent IP address.
+      </summary>
+      <value>
+        A boolean value.
+      </value>
+      <remarks>
+        <para>
+          If the <c>Multi Subnet Failover</c> key is set to <c>true</c>, <c>Transparent Network IP Resolution</c> is ignored.
+        </para>
+        <para>
+          If the <c>Failover Partner</c> key is set, <c>Transparent Network IP Resolution</c> is ignored.
+        </para>
+        <para>
+          The value of this key must be <c>true</c>, <c>false</c>, <c>yes</c>, or <c>no</c>.
+        </para>
+        <para>
+          A value of <c>yes</c> is treated the same as a value of <c>true</c>. A value of <c>no</c> is treated the same as a value of <c>false</c>.
+        </para>
+        <para>
+          This key defaults to <c>false</c> when:
+        </para>
+        <list type="bullet">
+          <item>
+            <description>
+              Connecting to Azure SQL Database where the data source ends with:
+              <list type="bullet">
+                <item><description>.database.chinacloudapi.cn</description></item>
+                <item><description>.database.usgovcloudapi.net</description></item>
+                <item><description>.database.cloudapi.de</description></item>
+                <item><description>.database.windows.net</description></item>
+                <item><description>.database.fabric.microsoft.com</description></item>
+              </list>
+            </description>
+          </item>
+          <item><description>
+            <c>Authentication</c> is 'Active Directory Password' or 'Active Directory Integrated'
+          </description></item>
+          <item><description>Otherwise it defaults to <c>true</c>.</description></item>
+        </list>
+      </remarks>
+    </TransparentNetworkIPResolution>
+    <TrustServerCertificate>
+      <summary>
+        Gets or sets a value that indicates whether the channel will be encrypted while bypassing walking the certificate chain to validate trust.
+      </summary>
+      <value>
+        A boolean. The default is <see langword="false" />.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Trust Server Certificate" and "TrustServerCertificate" keys within the connection string.
+        </para>
+        <para>
+          When <c>Trust Server Certificate</c> is set to <see langword="true" />, the transport layer will use TLS to encrypt the channel and bypass walking the certificate chain to validate trust. If <c>Trust Server Certificate</c> is set to <see langword="true" /> and encryption is enforced by target server, the encryption level specified on the server will be used even if <c>Encrypt</c> is set to <see langword="false" /> . The connection will fail otherwise.
+        </para>
+        <para>
+          For more information, see <see href="https://learn.microsoft.com/sql/relational-databases/security/encryption/encryption-hierarchy">Encryption Hierarchy</see> and <see href="https://learn.microsoft.com/sql/relational-databases/native-client/features/using-encryption-without-validation">Using Encryption Without Validation</see>.
+        </para>
+      </remarks>
+    </TrustServerCertificate>
+    <TryGetValue>
+      <param name="keyword">
+        The key of the item to retrieve.
+      </param>
+      <param name="value">
+        The value corresponding to <paramref name="keyword" /> .
+      </param>
+      <summary>
+        Retrieves a value corresponding to the supplied key from this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> .
+      </summary>
+      <returns>
+        <see langword="true" /> if <paramref name="keyword" /> was found within the connection string; otherwise, <see langword="false" />.
+      </returns>
+      <remarks>
+        <para>
+          The <see cref="M:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TryGetValue(System.String,System.Object@)" /> method lets developers safely retrieve a value from a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> without needing to verify that the supplied key name is a valid key name. Because <b>TryGetValue</b> does not raise an exception when you call it, passing in a nonexistent key, you do not have to look for a key before retrieving its value. Calling <b>TryGetValue</b> with a nonexistent key will place the value null (<c>Nothing</c> in Visual Basic) in the <paramref name="value" /> parameter.
+        </para>
+      </remarks>
+      <example>
+        <para>
+          The following example demonstrates the behavior of the <b>TryGetValue</b> method.
+        </para>
+        <!-- SqlConnectionStringBuilder_TryGetValue -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+                  builder.ConnectionString = GetConnectionString();
+          
+                  // Call TryGetValue method for multiple
+                  // key names. Note that these keys are converted
+                  // to well-known synonynms for data retrieval.
+                  DisplayValue(builder, "Data Source");
+                  DisplayValue(builder, "Trusted_Connection");
+                  DisplayValue(builder, "InvalidKey");
+                  DisplayValue(builder, null);
+          
+                  Console.WriteLine("Press any key to continue.");
+                  Console.ReadLine();
+              }
+          
+              private static void DisplayValue(SqlConnectionStringBuilder builder, string key)
+              {
+                  object value = null;
+          
+                  // Although TryGetValue handles missing keys,
+                  // it doesn't handle passing in a null
+                  // key. This example traps for that particular error, but
+                  // passes any other unknown exceptions back out to the
+                  // caller. 
+                  try
+                  {
+                      if (builder.TryGetValue(key, out value))
+                      {
+                          Console.WriteLine("{0}='{1}'", key, value);
+                      }
+                      else
+                      {
+                          Console.WriteLine("Unable to retrieve value for '{0}'", key);
+                      }
+                  }
+                  catch (ArgumentNullException)
+                  {
+                      Console.WriteLine("Unable to retrieve value for null key.");
+                  }
+              }
+          
+              private static string GetConnectionString()
+              {
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file. 
+                  return "Server=(local);Integrated Security=SSPI;" +
+                         "Initial Catalog=AdventureWorks";
+              }
+          }
+        </code>
+        <para>
+          The sample displays the following results:
+        </para>
+        <code>
+          Data Source=(local)
+          Trusted_Connection=True
+          Unable to retrieve value for 'InvalidKey'
+          Unable to retrieve value for null key.
+        </code>
+      </example>
+      <exception cref="T:System.ArgumentNullException">
+        <paramref name="keyword" /> contains a null value (<see langword="Nothing" /> in Visual Basic).
+      </exception>
+    </TryGetValue>
+    <TypeSystemVersion>
+      <summary>
+        Gets or sets a string value that indicates the type system the application expects.
+      </summary>
+      <value>
+        The following table shows the possible values for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TypeSystemVersion" /> property:
+        <list type="table">
+          <listheader>
+            <term>Value</term>
+            <description>Description</description>
+          </listheader>
+          <item>
+            <term>SQL Server 2005</term>
+            <description>Uses the SQL Server 2005 type system. No conversions are made for the current version of ADO.NET.</description>
+          </item>
+          <item>
+            <term>SQL Server 2008</term>
+            <description>Uses the SQL Server 2008 type system.</description>
+          </item>
+          <item>
+            <term>Latest</term>
+            <description>
+              Use the latest version than this client-server pair can handle. This will automatically move forward as the client and server components are upgraded.
+            </description>
+          </item>
+        </list>
+      </value>
+      <remarks>
+        The <c>TypeSystemVersion</c> property can be used to specify a down-level version of SQL Server for applications written against that version. This avoids possible problems with incompatible types in a newer version of SQL Server that may cause the application to break.
+      </remarks>
+    </TypeSystemVersion>
+    <UserID>
+      <summary>
+        Gets or sets the user ID to be used when connecting to SQL Server.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserID" /> property, or <c>string.Empty</c> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "User ID", "user", and "uid" keys within the connection string.
+        </para>
+        <para>
+          Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the <c>Integrated Security</c> or <c>Trusted_Connection</c> keywords instead. <see cref="T:Microsoft.Data.SqlClient.SqlCredential" /> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
+        </para>
+        <para>
+            The user ID must be 128 characters or fewer.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" />.
+      </exception>
+    </UserID>
+    <UserInstance>
+      <summary>
+        Gets or sets a value that indicates whether to redirect the connection from the default SQL Server Express instance to a runtime-initiated instance running under the account of the caller.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.UserInstance" /> property, or <see langword="false" /> if none has been supplied.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+This property corresponds to the "User Instance" key within the connection string.  
 
- ]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
-        </WorkstationID>
-    </members>
+> [!NOTE]
+>  This feature is available only with the SQL Server Express Edition. For more information on user instances, see [SQL Server Express User Instances](https://learn.microsoft.com/sql/connect/ado-net/sql/sql-server-express-user-instances).
+
+]]></format>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </UserInstance>
+    <Values>
+      <summary>
+        Gets an <see cref="T:System.Collections.ICollection" /> that contains the values in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> .
+      </summary>
+      <value>
+        An <see cref="T:System.Collections.ICollection" /> that contains the values in the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> .
+      </value>
+      <remarks>
+        The order of the values in the <see cref="T:System.Collections.ICollection" /> is unspecified, but it is the same order as the associated keys in the <see cref="T:System.Collections.ICollection" /> returned by the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" /> property. Because each instance of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> always contains the same fixed set of keys, the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Values" /> property always returns the values corresponding to the fixed set of keys, in the same order as the keys.
+      </remarks>
+      <example>
+        <para>
+          The following example first creates a new <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" />, and then iterates through all the values within the object.
+        </para>
+        <!-- SqlConnectionStringBuilder_Values -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(GetConnectionString());
+          
+                  // Loop through each of the values, displaying the contents.
+                  foreach (object value in builder.Values)
+                  {
+                      Console.WriteLine(value);
+                  }
+          
+                  Console.WriteLine("Press any key to continue.");
+                  Console.ReadLine();
+              }
+          
+              private static string GetConnectionString()
+              {
+                  // To avoid storing the connection string in your code,
+                  // you can retrieve it from a configuration file. 
+                  return "Data Source=(local);Integrated Security=SSPI;" +
+                      "Initial Catalog=AdventureWorks";
+              }
+          }
+        </code>
+      </example>
+      <seealso cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Keys" />
+    </Values>
+    <WorkstationID>
+      <summary>
+        Gets or sets the name of the workstation connecting to SQL Server.
+      </summary>
+      <value>
+        The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.WorkstationID" /> property, or <c>string.Empty</c> if none has been supplied.
+      </value>
+      <remarks>
+        <para>
+          This property corresponds to the "Workstation ID" and "wsid" keys within the connection string.
+        </para>
+        <para>
+          The ID must be 128 characters or fewer.
+        </para>
+      </remarks>
+      <exception cref="T:System.ArgumentNullException">
+        To set the value to null, use <see cref="F:System.DBNull.Value" /> .
+      </exception>
+    </WorkstationID>
+  </members>
 </docs>

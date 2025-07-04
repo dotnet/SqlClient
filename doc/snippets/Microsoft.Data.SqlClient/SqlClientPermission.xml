@@ -1,59 +1,63 @@
 <docs>
-    <members name="SqlClientPermission">
-        <SqlClientPermission>
-            <summary>Enables the .NET Framework Data Provider for SQL Server to help make sure that a user has a security level sufficient to access a data source.</summary>
-                <remarks>
-                    <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The <xref:System.Data.Common.DBDataPermission.IsUnrestricted%2A> property takes precedence over the <xref:System.Data.Common.DBDataPermission.AllowBlankPassword%2A> property. 
-Therefore, if you set <xref:System.Data.Common.DBDataPermission.AllowBlankPassword%2A> to `false`, you must also set <xref:System.Data.Common.DBDataPermission.IsUnrestricted%2A> 
-to `false` to prevent a user from making a connection using a blank password.  
+  <members name="SqlClientPermission">
+    <SqlClientPermission>
+      <summary>
+        Enables the .NET Framework Data Provider for SQL Server to help make sure that a user has a security level sufficient to access a data source.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+The <xref:System.Data.Common.DBDataPermission.IsUnrestricted> property takes precedence over the <xref:System.Data.Common.DBDataPermission.AllowBlankPassword> property. Therefore, if you set <xref:System.Data.Common.DBDataPermission.AllowBlankPassword> to `false`, you must also set <xref:System.Data.Common.DBDataPermission.IsUnrestricted> to `false` to prevent a user from making a connection using a blank password.
 
 > [!NOTE]
-> When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that 
-are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then denying a specific permission, 
-is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection 
-string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are 
-holes in the permission set.  
-
-]]></format>
-                </remarks>
-        </SqlClientPermission>
-        <ctor name="default">
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
-        <ctor name="PermissionState">
-            <param name="state">One of the <see cref="T:System.Security.Permissions.PermissionState" /> values.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
-        <ctor name="PermissionStateAndallowBlankPasswordBool">
-            <param name="state">One of the <see cref="T:System.Security.Permissions.PermissionState" /> values.</param>
-            <param name="allowBlankPassword">Indicates whether a blank password is allowed.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The <xref:System.Security.Permissions.PermissionState> enumeration takes precedence over the <xref:System.Data.Common.DBDataPermission.AllowBlankPassword%2A> property. 
-Therefore, if you set <xref:System.Data.Common.DBDataPermission.AllowBlankPassword%2A> to `false`, you must also set <xref:System.Security.Permissions.PermissionState> to `None` to 
-prevent a user from making a connection using a blank password. For an example demonstrating how to use security demands, see [Code Access Security and 
-ADO.NET](/dotnet/framework/data/adonet/code-access-security).  
-
-]]></format>
-            </remarks>
-        </ctor>
-        <Add name="connectionStringAndrestrictionsStringAndBehavior">
-            <param name="connectionString">The connection string.</param>
-            <param name="restrictions">The key restrictions.</param>
-            <param name="behavior">One of the <see cref="T:System.Data.KeyRestrictionBehavior" /> enumerations.</param>
-            <summary>Adds a new connection string and a set of restricted keywords to the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> object.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
+> When using code access security permissions for ADO.NET, the correct pattern is to start with the most restrictive case (no permissions at all) and then add the specific permissions that are needed for the particular task that the code needs to perform. The opposite pattern, starting with all permissions and then denying a specific permission, is not secure, because there are many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.
+          ]]>
+        </format>
+      </remarks>
+    </SqlClientPermission>
+    <ctor name="default">
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.
+      </summary>
+    </ctor>
+    <ctor name="PermissionState">
+      <param name="state">
+        One of the <see cref="T:System.Security.Permissions.PermissionState" /> values.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.
+      </summary>
+    </ctor>
+    <ctor name="PermissionStateAndAllowBlankPasswordBool">
+      <param name="state">
+        One of the <see cref="T:System.Security.Permissions.PermissionState" /> values.
+      </param>
+      <param name="allowBlankPassword">
+        Indicates whether a blank password is allowed.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> class.
+      </summary>
+      <remarks>
+          The <see cref="T:System.Security.Permissions.PermissionState" /> enumeration takes precedence over the <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> property. Therefore, if you set <see cref="P:System.Data.Common.DBDataPermission.AllowBlankPassword" /> to <see langword="false" />, you must also set <see cref="T:System.Security.Permissions.PermissionState" /> to <c>None</c> to prevent a user from making a connection using a blank password. For an example demonstrating how to use security demands, see <see href='https://learn.microsoft.com/dotnet/framework/data/adonet/code-access-security'>Code Access Security and ADO.NET</see>.
+      </remarks>
+    </ctor>
+    <Add name="connectionStringAndRestrictionsStringAndBehavior">
+      <param name="connectionString">
+        The connection string.
+      </param>
+      <param name="restrictions">
+        The key restrictions.
+      </param>
+      <param name="behavior">
+        One of the <see cref="T:System.Data.KeyRestrictionBehavior" /> enumerations.
+      </param>
+      <summary>
+        Adds a new connection string and a set of restricted keywords to the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> object.
+      </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
 Use this method to configure which connection strings are allowed by a particular permission object. For example, use the following code fragment if you want to only allow a specific 
 connection string and nothing else:  
 
@@ -74,80 +78,90 @@ needed for the particular task that the code needs to perform. The opposite patt
 many ways of expressing the same connection string. For example, if you start with all permissions and then attempt to deny the use of the connection string "server=someserver", 
 the string "server=someserver.mycompany.com" would still be allowed. By always starting by granting no permissions at all, you reduce the chances that there are holes in the permission set.  
 
-                ]]></format>
-            </remarks>
-        </Add>
-        <Copy>
-            <summary>Returns the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> as an <see cref="T:System.Security.IPermission" />.</summary>
-            <returns>A copy of the current permission object.</returns>
-            <remarks>To be added.</remarks>
-        </Copy>
-        <ToXml>
-            <summary>Creates an XML encoding of the security object and its current state.</summary>
-            <returns>An XML encoding of the security object, including any state information.</returns>
-            <remarks>
-              <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-Custom code that extends security objects must implement the <xref:System.Data.Common.DBDataPermission.ToXml%2A> and <xref:System.Data.Common.DBDataPermission.FromXml%2A> methods to make the objects security encodable.  
-
-]]></format>
-            </remarks>
-        </ToXml>
-        <FromXml>
-            <param name="securityElement">The XML encoding to use to reconstruct the security object.</param>
-            <summary>Reconstructs a security object with a specified state from an XML encoding.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-Custom code that extends security objects needs to implement the `ToXml` and `FromXml` methods to make the objects security encodable.  
-
-]]></format>
-            </remarks>
-        </FromXml>
-        <Union>
-            <param name="target">A permission object to combine with the current permission object. It must be of the same type as the current permission object.</param>
-            <summary>Returns a new permission object that is the union of the current and specified permission objects.</summary>
-            <returns>A new permission object that represents the union of the current permission object and the specified permission object.</returns>
-            <remarks>
-              <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The result of a call to <xref:System.Data.Common.DBDataPermission.Union%2A> is a permission that represents all the operations permitted by both the current permission object and the specified permission object. Any demand that passes either permission passes their union.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentException">The <paramref name="target" /> object is not the same type as the current permission object.</exception>
-        </Union>
-        <IsSubsetOf>
-            <param name="target">A permission object that is to be tested for the subset relationship. This object must be of the same type as the current permission object.</param>
-            <summary>Returns a value indicating whether the current permission object is a subset of the specified permission object.</summary>
-            <returns>
-              <see langword="true" /> if the current permission object is a subset of the specified permission object, otherwise <see langword="false" />.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The current permission object is a subset of the specified permission object if the current permission object specifies a set of operations that is wholly contained by the specified permission object. For example, a permission that represents access to C:\example.txt is a subset of a permission that represents access to C:\\. If this method returns `true`, the current permission object represents no more access to the protected resource than does the specified permission object.  
-
-]]></format>
-            </remarks>
-            <exception cref="T:System.ArgumentException">The <paramref name="target" /> parameter is an object that is not of the same type as the current permission object.</exception>
-        </IsSubsetOf>
-        <Intersect>
-                <param name="target">A permission object to intersect with the current permission object. It must be of the same type as the current permission object.</param>
-                <summary>Returns a new permission object representing the intersection of the current permission object and the specified permission object.</summary>
-                <returns>A new permission object that represents the intersection of the current permission object and the specified permission object. This new permission object is a null reference (<see langword="Nothing" /> in Visual Basic) if the intersection is empty.</returns>
-                <remarks>
-                  <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-The intersection of two permissions is a permission that describes the set of operations they both describe. Only a demand that passes both original permissions will pass the intersection.  
-
-]]></format>
-                </remarks>
-                <exception cref="T:System.ArgumentException">The <paramref name="target" /> parameter is not a null reference (<see langword="Nothing" /> in Visual Basic) and is not an instance of the same class as the current permission object.</exception>
-            </Intersect>
-    </members>
+          ]]>
+        </format>
+      </remarks>
+    </Add>
+    <Copy>
+      <summary>
+        Returns the <see cref="T:Microsoft.Data.SqlClient.SqlClientPermission" /> as an <see cref="T:System.Security.IPermission" />.
+      </summary>
+      <returns>
+        A copy of the current permission object.
+      </returns>
+    </Copy>
+    <ToXml>
+      <summary>
+        Creates an XML encoding of the security object and its current state.
+      </summary>
+      <returns>
+        An XML encoding of the security object, including any state information.
+      </returns>
+      <remarks>
+        Custom code that extends security objects must implement the <see cref="M:System.Data.Common.DBDataPermission.ToXml" /> and <see cref="M:System.Data.Common.DBDataPermission.FromXml(System.Security.SecurityElement)" /> methods to make the objects security encodable.
+      </remarks>
+    </ToXml>
+    <FromXml>
+      <param name="securityElement">
+        The XML encoding to use to reconstruct the security object.
+      </param>
+      <summary>
+        Reconstructs a security object with a specified state from an XML encoding.
+      </summary>
+      <remarks>
+        Custom code that extends security objects needs to implement the <see cref="M:System.Data.Common.DBDataPermission.ToXml" /> and <see cref="M:System.Data.Common.DBDataPermission.FromXml(System.Security.SecurityElement)" /> methods to make the objects security encodable.
+      </remarks>
+    </FromXml>
+    <Union>
+      <param name="target">
+        A permission object to combine with the current permission object. It must be of the same type as the current permission object.
+      </param>
+      <summary>
+        Returns a new permission object that is the union of the current and specified permission objects.
+      </summary>
+      <returns>
+        A new permission object that represents the union of the current permission object and the specified permission object.
+      </returns>
+      <remarks>
+          The result of a call to <see cref="M:System.Data.Common.DBDataPermission.Union(System.Security.IPermission)" /> is a permission that represents all the operations permitted by both the current permission object and the specified permission object. Any demand that passes either permission passes their union.
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        The <paramref name="target" /> object is not the same type as the current permission object.
+      </exception>
+    </Union>
+    <IsSubsetOf>
+      <param name="target">
+        A permission object that is to be tested for the subset relationship. This object must be of the same type as the current permission object.
+      </param>
+      <summary>
+        Returns a value indicating whether the current permission object is a subset of the specified permission object.
+      </summary>
+      <returns>
+        <see langword="true" /> if the current permission object is a subset of the specified permission object, otherwise <see langword="false" />.
+      </returns>
+      <remarks>
+        The current permission object is a subset of the specified permission object if the current permission object specifies a set of operations that is wholly contained by the specified permission object. For example, a permission that represents access to <c>C:\example.txt</c> is a subset of a permission that represents access to <c>C:\</c>. If this method returns <see langword="true" />, the current permission object represents no more access to the protected resource than does the specified permission object.
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        The <paramref name="target" /> parameter is an object that is not of the same type as the current permission object.
+      </exception>
+    </IsSubsetOf>
+    <Intersect>
+      <param name="target">
+        A permission object to intersect with the current permission object. It must be of the same type as the current permission object.
+      </param>
+      <summary>
+        Returns a new permission object representing the intersection of the current permission object and the specified permission object.
+      </summary>
+      <returns>
+        A new permission object that represents the intersection of the current permission object and the specified permission object. This new permission object is a null reference (<see langword="Nothing" /> in Visual Basic) if the intersection is empty.
+      </returns>
+      <remarks>
+        The intersection of two permissions is a permission that describes the set of operations they both describe. Only a demand that passes both original permissions will pass the intersection.
+      </remarks>
+      <exception cref="T:System.ArgumentException">
+        The <paramref name="target" /> parameter is not a null reference (<see langword="Nothing" /> in Visual Basic) and is not an instance of the same class as the current permission object.
+      </exception>
+    </Intersect>
+  </members>
 </docs>

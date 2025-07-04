@@ -1,0 +1,115 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+# Windows only parameters
+  - name: instanceName
+    type: string
+    default: MSSQLSERVER
+
+  - name: user
+    type: string
+    default: $(user)
+
+  - name: saUser
+    type: string
+    default: $(saUser)
+
+  - name: SQLRootPath
+    type: string
+    default: ''
+
+  - name: fileStreamDirectory
+    type: string
+    default: ''
+
+  - name: x64AliasRegistryPath
+    type: string
+    default: $(x64AliasRegistryPath)
+
+  - name: x86AliasRegistryPath
+    type: string
+    default: $(x86AliasRegistryPath)
+
+  - name: SQLAliasName
+    type: string
+    default: $(SQLAliasName)
+
+  - name: SQLAliasPort
+    type: string
+    default: $(SQLAliasPort)
+
+  - name: enableLocalDB
+    type: boolean
+    default: false
+
+  - name: localDbAppName
+    type: string
+    default: $(LocalDbAppName)
+
+  - name: localDbSharedInstanceName
+    type: string
+    default: $(LocalDbSharedInstanceName)
+
+# Common parameters
+  - name: password
+    type: string
+    default: $(password)
+
+  - name: netcoreVersionTestUtils
+    type: string
+
+  - name: databaseName
+    type: string
+    default: Northwind
+  
+  - name: operatingSystem
+    type: string
+
+steps:
+- ${{ if eq(parameters.operatingSystem, 'Windows') }}:
+  # windows only steps
+  - template: configure-sql-server-win-step.yml@self
+    parameters:
+      instanceName: ${{parameters.instanceName}}
+      user: ${{parameters.user}}
+      saUser: ${{parameters.saUser}}
+      SQLRootPath: ${{parameters.SQLRootPath}}
+      fileStreamDirectory: ${{parameters.fileStreamDirectory}}
+      x64AliasRegistryPath: ${{parameters.x64AliasRegistryPath}}
+      x86AliasRegistryPath: ${{parameters.x86AliasRegistryPath}}
+      SQLAliasName: ${{parameters.SQLAliasName}}
+      SQLAliasPort: ${{parameters.SQLAliasPort}}
+      enableLocalDB: ${{parameters.enableLocalDB}}
+      localDbAppName: ${{parameters.localDbAppName}}
+      localDbSharedInstanceName: ${{parameters.localDbSharedInstanceName}}
+      password: ${{parameters.password}}
+
+- ${{ elseif eq(parameters.operatingSystem, 'Linux') }}:
+  # Linux only steps
+  - template: configure-sql-server-linux-step.yml@self
+    parameters:
+      password: ${{parameters.password}}
+
+- ${{ elseif eq(parameters.operatingSystem, 'Mac') }}:
+  # macOS only steps
+  - template: configure-sql-server-macos-step.yml@self
+    parameters:
+      password: ${{parameters.password}}
+
+# Common steps
+- task: DotNetCoreCLI@2
+  displayName: 'Build Ext Utilities'
+  inputs:
+    arguments: '-f ${{parameters.netcoreVersionTestUtils }}'
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities
+  retryCountOnTaskFailure: 1
+
+- task: DotNetCoreCLI@2
+  displayName: 'Create Test Database ${{parameters.databaseName }}'
+  inputs:
+    command: run
+    arguments: '-f ${{parameters.netcoreVersionTestUtils }} -- "CreateDatabase" ${{parameters.databaseName }} '
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.ExtUtilities

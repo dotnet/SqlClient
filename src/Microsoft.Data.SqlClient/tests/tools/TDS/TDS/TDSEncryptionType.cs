@@ -22,6 +22,11 @@ namespace Microsoft.SqlServer.TDS
         /// <summary>
         /// Encryption of the entire session
         /// </summary>
-        Full
+        Full,
+
+        /// <summary>
+        /// Excludes encryption option in Pre-Login response
+        /// </summary>
+        None
     }
 }

@@ -76,11 +76,11 @@ namespace Microsoft.Data.SqlClient
             int intCount = 0;
             int cBufferedData = 0;
 
-            if (null == _reader)
+            if (_reader == null)
             {
                 throw ADP.StreamClosed();
             }
-            if (null == buffer)
+            if (buffer == null)
             {
                 throw ADP.ArgumentNull(nameof(buffer));
             }
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (null == _cachedBytes)
+                if (_cachedBytes == null)
                 {
                     throw ADP.StreamClosed(ADP.ParameterSetPosition);
                 }
@@ -337,12 +337,12 @@ namespace Microsoft.Data.SqlClient
             int cb;
             int intCount = 0;
 
-            if (null == _cachedBytes)
+            if (_cachedBytes == null)
             {
                 throw ADP.StreamClosed();
             }
 
-            if (null == buffer)
+            if (buffer == null)
             {
                 throw ADP.ArgumentNull(nameof(buffer));
             }
@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient
         {
             long pos = 0;
 
-            if (null == _cachedBytes)
+            if (_cachedBytes == null)
             {
                 throw ADP.StreamClosed();
             }

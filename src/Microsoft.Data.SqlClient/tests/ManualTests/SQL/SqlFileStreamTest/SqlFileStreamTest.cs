@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 // Read the contents as bytes.
                                 retrievedValue = new byte[fileStream.Length];
-                                fileStream.Read(retrievedValue, 0, (int)(fileStream.Length));
+                                _ = fileStream.Read(retrievedValue, 0, (int)(fileStream.Length));
 
                                 // Reverse the byte array, if the system architecture is little-endian.
                                 if (BitConverter.IsLittleEndian)
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (fileStreamDir != null)
                 {
-                    if (!fileStreamDir.EndsWith("\\"))
+                    if (!fileStreamDir.EndsWith("\\", StringComparison.Ordinal))
                     {
                         fileStreamDir += "\\";
                     }
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 Console.WriteLine("File Stream database could not be setup. " + e.Message);
-                fileStreamDir = null;
+                throw;
             }
             return s_fileStreamDBName;
         }

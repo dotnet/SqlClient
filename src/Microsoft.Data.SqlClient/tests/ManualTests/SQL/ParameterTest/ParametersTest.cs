@@ -9,6 +9,12 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Threading;
 using Xunit;
+using System.Globalization;
+
+#if !NETFRAMEWORK
+using Microsoft.SqlServer.Types;
+using Microsoft.Data.SqlClient.Server;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -223,7 +229,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var cmd = new SqlCommand("select @foo", conn);
             cmd.Parameters.AddWithValue("@foo", new SqlDecimal(0.5));
             var result = (decimal)cmd.ExecuteScalar();
-            Assert.Equal(result, (decimal)0.5);
+            Assert.Equal((decimal)0.5, result);
         }
 
         // Synapse: Unsupported parameter type found while parsing RPC request. The request has been terminated.
@@ -240,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
             SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
@@ -306,6 +312,209 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+#if !NETFRAMEWORK
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestParametersWithSqlRecordsTVPInsert()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+            SqlGeography geog = SqlGeography.Point(43, -81, 4326);
+
+            SqlMetaData[] metadata = new SqlMetaData[]
+            {
+                new SqlMetaData("Id", SqlDbType.UniqueIdentifier),
+                new SqlMetaData("geom", SqlDbType.Udt, typeof(SqlGeography), "Geography")
+            };
+
+            SqlDataRecord record1 = new SqlDataRecord(metadata);
+            record1.SetValues(Guid.NewGuid(), geog);
+
+            SqlDataRecord record2 = new SqlDataRecord(metadata);
+            record2.SetValues(Guid.NewGuid(), geog);
+
+            IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+            {
+                record1,
+                record2,
+            };
+            
+            using SqlConnection connection = new(builder.ConnectionString);
+            string procName = DataTestUtility.GetUniqueNameForSqlServer("Proc");
+            string typeName = DataTestUtility.GetUniqueName("Type");
+            try
+            {
+                connection.Open();
+
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = $"CREATE TYPE {typeName} AS TABLE([Id] [uniqueidentifier] NULL, [geom] [geography] NULL)";
+                    cmd.ExecuteNonQuery();
+
+                    cmd.CommandText = @$"CREATE PROCEDURE {procName}
+                        @newRoads as {typeName} READONLY
+                        AS
+                        BEGIN
+                         SELECT* FROM @newRoads
+                        END";
+                    cmd.ExecuteNonQuery();
+
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    // Update Data Using TVPs
+                    cmd.CommandText = procName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlParameter param = new SqlParameter("@newRoads", SqlDbType.Structured);
+                    param.Value = featureInserts;
+                    param.TypeName = typeName;
+
+                    cmd.Parameters.Add(param);
+
+                    using var reader = cmd.ExecuteReader();
+
+                    Assert.True(reader.HasRows);
+
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        Assert.NotNull(reader[0]);
+                        Assert.NotNull(reader[1]);
+                        count++;
+                    }
+
+                    Assert.Equal(2, count);
+                }
+            }
+            finally
+            {
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.CommandText = "DROP PROCEDURE " + procName;
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "DROP TYPE " + typeName;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestDateOnlyTVPDataTable_CommandSP()
+        {
+            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlyTVP");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlyTVP");
+            SqlConnection connection = new(s_connString);
+            try
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
+                    cmd.ExecuteNonQuery();
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = spName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    
+                    DataTable dtTest = new();
+                    dtTest.Columns.Add(new DataColumn("DateColumn", typeof(DateOnly)));
+                    dtTest.Columns.Add(new DataColumn("TimeColumn", typeof(TimeOnly)));
+                    var dataRow = dtTest.NewRow();
+                    dataRow["DateColumn"] = new DateOnly(2023, 11, 15);
+                    dataRow["TimeColumn"] = new TimeOnly(12, 30, 45);
+                    dtTest.Rows.Add(dataRow);
+
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@dates",
+                        SqlDbType = SqlDbType.Structured,
+                        TypeName = tableTypeName,
+                        Value = dtTest,
+                    });
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropStoredProcedure(connection, spName);
+                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
+        {
+            string tableTypeName = "[dbo]." + DataTestUtility.GetUniqueNameForSqlServer("UDTTTestDateOnlySqlDataRecordTVP");
+            string spName = DataTestUtility.GetUniqueNameForSqlServer("spTestDateOnlySqlDataRecordTVP");
+            SqlConnection connection = new(s_connString);
+            try
+            {
+                connection.Open();
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = $"CREATE TYPE {tableTypeName} AS TABLE ([DateColumn] date NULL, [TimeColumn] time NULL)";
+                    cmd.ExecuteNonQuery();
+                    cmd.CommandText = $"CREATE PROCEDURE {spName} (@dates {tableTypeName} READONLY) AS SELECT COUNT(*) FROM @dates";
+                    cmd.ExecuteNonQuery();
+                }
+                using (SqlCommand cmd = connection.CreateCommand())
+                {
+                    cmd.CommandText = spName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    SqlMetaData[] metadata = new SqlMetaData[]
+                    {
+                        new SqlMetaData("DateColumn", SqlDbType.Date),
+                        new SqlMetaData("TimeColumn", SqlDbType.Time)
+                    };
+
+                    SqlDataRecord record1 = new SqlDataRecord(metadata);
+                    record1.SetValues(new DateOnly(2023, 11, 15), new TimeOnly(12, 30, 45));
+
+                    SqlDataRecord record2 = new SqlDataRecord(metadata);
+                    record2.SetValues(new DateOnly(2025, 11, 15), new TimeOnly(13, 31, 46));
+
+                    IList<SqlDataRecord> featureInserts = new List<SqlDataRecord>
+                    {
+                        record1,
+                        record2,
+                    };
+
+                    cmd.Parameters.Add(new SqlParameter
+                    {
+                        ParameterName = "@dates",
+                        SqlDbType = SqlDbType.Structured,
+                        TypeName = tableTypeName,
+                        Value = featureInserts,
+                    });
+
+                    using var reader = cmd.ExecuteReader();
+
+                    Assert.True(reader.HasRows);
+
+                    int count = 0;
+                    while (reader.Read())
+                    {
+                        Assert.NotNull(reader[0]);
+                        count++;
+                    }
+
+                    Assert.Equal(1, count);
+                }
+            }
+            finally
+            {
+                DataTestUtility.DropStoredProcedure(connection, spName);
+                DataTestUtility.DropUserDefinedType(connection, tableTypeName);
+            }
+        }
+#endif
+
         #region Scaled Decimal Parameter & TVP Test
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("CAST(1.0 as decimal(38, 37))", "1.0000000000000000000000000000")]
@@ -333,8 +542,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.Connection = cnn;
             using SqlDataReader rdr = cmd.ExecuteReader();
             Assert.True(rdr.Read(), "SqlDataReader must have a value");
-            decimal retrunValue = rdr.GetDecimal(0);
-            Assert.Equal(expectedDecimalValue, retrunValue.ToString());
+            decimal returnValue = rdr.GetDecimal(0);
+            Assert.Equal(expectedDecimalValue, returnValue.ToString(CultureInfo.InvariantCulture));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -761,7 +970,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                         catch (Exception e)
                         {
-                            Assert.False(true, $"Unexpected exception occurred: {e.Message}");
+                            Assert.Fail($"Unexpected exception occurred: {e.Message}");
                         }
                     }
                 });
@@ -804,7 +1013,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return;
             else if ((Guid)cm.Parameters["@id2"].Value != expectedGuid)
             {
-                Assert.False(true, "CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
+                Assert.Fail("CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
             }
         }
     }

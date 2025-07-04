@@ -24,14 +24,14 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// It is called when pre-login request arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS messages to be respond with</returns>
         TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage message);
 
         /// <summary>
         /// It is called when login request arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS message to respond with</returns>
         TDSMessageCollection OnLogin7Request(ITDSServerSession session, TDSMessage message);
 
@@ -47,21 +47,21 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// It is called when SSPI payload arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS message to respond with</returns>
         TDSMessageCollection OnSSPIRequest(ITDSServerSession session, TDSMessage message);
 
         /// <summary>
         /// It is called when SQL batch request arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS message to respond with</returns>
         TDSMessageCollection OnSQLBatchRequest(ITDSServerSession session, TDSMessage message);
 
         /// <summary>
         /// It is called when attention arrives
         /// </summary>
-        /// <param name="message">TDS message recieved</param>
+        /// <param name="message">TDS message received</param>
         /// <returns>TDS message to respond with</returns>
         TDSMessageCollection OnAttention(ITDSServerSession session, TDSMessage message);
     }

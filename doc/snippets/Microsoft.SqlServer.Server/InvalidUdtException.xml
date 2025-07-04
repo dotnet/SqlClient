@@ -1,39 +1,46 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="InvalidUdtException">
-        <InvalidUdtException>
-            <summary>Thrown when SQL Server or the ADO.NET <see cref="N:Microsoft.Data.SqlClient" /> provider detects an invalid user-defined type (UDT).</summary>
-            <remarks>To be added.</remarks>
-        </InvalidUdtException>
-        <GetObjectData>
-            <param name="si">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> object.</param>
-            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> object.</param>
-            <summary>Streams all the <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> properties into the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> class for the given <see cref="T:System.Runtime.Serialization.StreamingContext" />.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-This method is present in the <xref:Microsoft.SqlServer.Server.InvalidUdtException> class to make the class serializable.  
-
- ]]></format>
-            </remarks>
-        </GetObjectData>
-        <Create>
-            <param name="udtType">The <see cref="T:System.Type" /> object.</param>
-            <param name="resourceReason">The <see cref="T:System.String" /> object that represents a string in string resources. The default value is `SqlUdtReason_NoUdtAttribute` which looks up a localized string similar to "no UDT attribute".</param>
-            <summary>Creates a new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.</summary>
-            <returns>A new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.</returns>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-This method Looks up a localized string similar to "&apos;{0}&apos; is an invalid user defined type, reason: {1}.", and fills it in order with the corresponding `udtType` and `resourceReason` values.  
-
+﻿<docs>
+  <members name="InvalidUdtException">
+    <InvalidUdtException>
+      <summary>
+        Thrown when SQL Server or the ADO.NET <see cref="N:Microsoft.Data.SqlClient" /> provider detects an invalid user-defined type (UDT).
+      </summary>
+    </InvalidUdtException>
+    <GetObjectData>
+      <param name="si">
+        The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> object.
+      </param>
+      <param name="context">
+        The <see cref="T:System.Runtime.Serialization.StreamingContext" /> object.
+      </param>
+      <summary>
+        Streams all the <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> properties into the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> class for the given <see cref="T:System.Runtime.Serialization.StreamingContext" />.
+      </summary>
+      <remarks>
+        This method is present in the <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> class to make the class serializable.
+      </remarks>
+    </GetObjectData>
+    <Create>
+      <param name="udtType">
+        The <see cref="T:System.Type" /> object.
+      </param>
+      <param name="resourceReason">
+        The <see cref="T:System.String" /> object that represents a string in string resources. The default value is `SqlUdtReason_NoUdtAttribute` which looks up a localized string similar to "no UDT attribute".
+      </param>
+      <summary>
+        Creates a new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.
+      </summary>
+      <returns>
+        A new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.
+      </returns>
+      <remarks>
+        <para>
+          This method Looks up a localized string similar to <c>'{0}' is an invalid user defined type, reason: {1}.</c>, and fills it in order with the corresponding <paramref name="udtType" /> and <paramref name="resourceReason" /> values.
+        </para>
+        <format type="text/markdown">
 > [!IMPORTANT]
 > This function is exposed for backward compatibility and should be used with the default value for the `resourceReason` parameter.
-
- ]]></format>
-            </remarks>
-        </Create>
-    </members>
+        </format>
+      </remarks>
+    </Create>
+  </members>
 </docs>

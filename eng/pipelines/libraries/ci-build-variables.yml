@@ -1,0 +1,25 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  - group: 'ADO Build properties'
+  - group: 'ADO CI Packaging'
+  - group: 'ADO Test Configuration Properties'
+  
+  - name: buildNumber
+    value: '$(Build.BuildNumber)'
+  - name: TFNetCore
+    value: 'net8.0'
+  - name: SQLTarget
+    value: 'localhost'
+  - name: NugetPackageVersion
+    value: $(Major).$(Minor)$(Patch)-pull.1$(buildnumber)
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: runCodesignValidationInjection
+    value: false
+  - name: packagePath
+    value: '$(Build.SourcesDirectory)/packages'

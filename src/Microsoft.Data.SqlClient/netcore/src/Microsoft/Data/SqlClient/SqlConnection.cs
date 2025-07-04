@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -14,13 +13,15 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -67,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         // diagnostics listener
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
@@ -89,6 +90,8 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
+        private Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
@@ -97,7 +100,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
-        /// Global custom provider list can only supplied once per application.
+        /// Global custom provider list can only be supplied once per application.
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
 
@@ -162,7 +165,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*' />
         public SqlConnection(string connectionString, SqlCredential credential) : this()
         {
-            ConnectionString = connectionString;
+            ConnectionString = connectionString; // setting connection string first so that ConnectionOption is available
             if (credential != null)
             {
                 // The following checks are necessary as setting Credential property will call CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential
@@ -192,15 +195,19 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                 }
                 else if (UsesActiveDirectoryMSI(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                 }
                 else if (UsesActiveDirectoryDefault(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
+                }
+                else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                 }
 
                 Credential = credential;
@@ -223,6 +230,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _accessToken = connection._accessToken;
+            _accessTokenCallback = connection._accessTokenCallback;
             CacheConnectionStringProperties();
         }
 
@@ -266,11 +274,15 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
         {
-            return s_systemColumnEncryptionKeyStoreProviders.Keys.ToList();
+            if (s_systemColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
         }
 
         /// <summary>
-        /// This function returns a list of the names of the custom providers currently registered. If the 
+        /// This function returns a list of the names of the custom providers currently registered. If the
         /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
         /// <returns>Combined list of provider names</returns>
@@ -279,13 +291,13 @@ namespace Microsoft.Data.SqlClient
             if (_customColumnEncryptionKeyStoreProviders is not null &&
                 _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
-                return s_globalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return new List<string>(s_globalCustomColumnEncryptionKeyStoreProviders.Keys);
             }
-            return new List<string>();
+            return new List<string>(0);
         }
 
         /// <summary>
@@ -342,7 +354,7 @@ namespace Microsoft.Data.SqlClient
                 new(customProviders, StringComparer.OrdinalIgnoreCase);
 
             // Set the dictionary to the ReadOnly dictionary.
-            // This method can be called more than once. Re-registering a new collection will replace the 
+            // This method can be called more than once. Re-registering a new collection will replace the
             // old collection of providers.
             _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
         }
@@ -359,7 +371,6 @@ namespace Microsoft.Data.SqlClient
             foreach (string key in customProviders.Keys)
             {
                 // Validate the provider name
-                //
                 // Check for null or empty
                 if (string.IsNullOrWhiteSpace(key))
                 {
@@ -383,18 +394,17 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Get enclave attestation url to be used with enclave based Always Encrypted
         /// </summary>
-        internal string EnclaveAttestationUrl => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+        internal string EnclaveAttestationUrl
+        {
+            get => ((SqlConnectionString)ConnectionOptions).EnclaveAttestationUrl;
+        }
 
         /// <summary>
         /// Get attestation protocol
         /// </summary>
         internal SqlConnectionAttestationProtocol AttestationProtocol
         {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.AttestationProtocol;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).AttestationProtocol;
         }
 
         /// <summary>
@@ -458,7 +468,7 @@ namespace Microsoft.Data.SqlClient
                         // start
                         if (ConnectionState.Open == State)
                         {
-                            if (null == _statistics)
+                            if (_statistics == null)
                             {
                                 _statistics = new SqlStatistics();
                                 _statistics._openTimestamp = ADP.TimerCurrent();
@@ -472,7 +482,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // stop
-                        if (null != _statistics)
+                        if (_statistics != null)
                         {
                             if (ConnectionState.Open == State)
                             {
@@ -526,6 +536,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
+        private bool UsesActiveDirectoryWorkloadIdentity(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
@@ -541,7 +556,7 @@ namespace Microsoft.Data.SqlClient
         private bool UsesClearUserIdOrPassword(SqlConnectionString opt)
         {
             bool result = false;
-            if (null != opt)
+            if (opt != null)
             {
                 result = (!string.IsNullOrEmpty(opt.UserID) || !string.IsNullOrEmpty(opt.Password));
             }
@@ -582,7 +597,7 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_credential != null || _accessToken != null)
+                if (_credential != null || _accessToken != null || _accessTokenCallback != null)
                 {
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
@@ -605,25 +620,35 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                         }
                         else if (UsesActiveDirectoryMSI(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                         }
                         else if (UsesActiveDirectoryDefault(connectionOptions))
                         {
-                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
+                        }
+                        else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                        {
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
                     }
-                    else if (_accessToken != null)
+
+                    if (_accessToken != null)
                     {
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(connectionOptions);
                     }
+
+                    if (_accessTokenCallback != null)
+                    {
+                        CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(connectionOptions);
+                    }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken));
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _accessTokenCallback));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -632,12 +657,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
         [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override int ConnectionTimeout
         {
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return ((null != constr) ? constr.ConnectTimeout : SqlConnectionString.DEFAULT.Connect_Timeout);
+                return constr != null ? constr.ConnectTimeout : DbConnectionStringDefaults.ConnectTimeout;
             }
         }
 
@@ -649,7 +675,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return ((null != constr) ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout);
+                return constr != null ? constr.CommandTimeout : DbConnectionStringDefaults.CommandTimeout;
             }
         }
 
@@ -662,7 +688,6 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                string result = _accessToken;
                 // When a connection is connecting or is ever opened, make AccessToken available only if "Persist Security Info" is set to true
                 // otherwise, return null
                 SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
@@ -683,14 +708,38 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null));
                 _accessToken = value;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessTokenCallback/*' />
+        public Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback((SqlConnectionString)ConnectionOptions);
+                }
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value));
+                _accessTokenCallback = value;
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         [ResDescription(StringsHelper.ResourceNames.SqlConnection_Database)]
         [ResCategory(StringsHelper.ResourceNames.SqlConnection_DataSource)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public override string Database
         {
             // if the connection is open, we need to ask the inner connection what it's
@@ -701,14 +750,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.CurrentDatabase;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.InitialCatalog : SqlConnectionString.DEFAULT.Initial_Catalog);
+                    result = constr != null ? constr.InitialCatalog : DbConnectionStringDefaults.InitialCatalog;
                 }
                 return result;
             }
@@ -717,6 +766,7 @@ namespace Microsoft.Data.SqlClient
         ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching. This property is for internal testing only.
         ///
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedState
         {
             get
@@ -724,7 +774,7 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.IsSQLDNSCachingSupported ? "true" : "false";
                 }
@@ -740,6 +790,7 @@ namespace Microsoft.Data.SqlClient
         ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching before redirection. This property is for internal testing only.
         ///
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedStateBeforeRedirect
         {
             get
@@ -747,7 +798,7 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.IsDNSCachingBeforeRedirectSupported ? "true" : "false";
                 }
@@ -772,14 +823,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnection innerConnection = (InnerConnection as SqlInternalConnection);
                 string result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.CurrentDataSource;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.DataSource : SqlConnectionString.DEFAULT.Data_Source);
+                    result = constr != null ? constr.DataSource : DbConnectionStringDefaults.DataSource;
                 }
                 return result;
             }
@@ -799,14 +850,14 @@ namespace Microsoft.Data.SqlClient
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
                 int result;
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     result = innerConnection.PacketSize;
                 }
                 else
                 {
                     SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                    result = ((null != constr) ? constr.PacketSize : SqlConnectionString.DEFAULT.Packet_Size);
+                    result = constr != null ? constr.PacketSize : DbConnectionStringDefaults.PacketSize;
                 }
                 return result;
             }
@@ -822,7 +873,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
 
-                if (null != innerConnection)
+                if (innerConnection != null)
                 {
                     return innerConnection.ClientConnectionId;
                 }
@@ -831,7 +882,7 @@ namespace Microsoft.Data.SqlClient
                     Task reconnectTask = _currentReconnectionTask;
                     // Connection closed but previously open should return the correct ClientConnectionId
                     DbConnectionClosedPreviouslyOpened innerConnectionClosed = (InnerConnection as DbConnectionClosedPreviouslyOpened);
-                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || null != innerConnectionClosed)
+                    if ((reconnectTask != null && !reconnectTask.IsCompleted) || innerConnectionClosed != null)
                     {
                         return _originalConnectionId;
                     }
@@ -956,18 +1007,23 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryManagedIdentityString);
                     }
                     else if (UsesActiveDirectoryMSI(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryMSIString);
                     }
                     else if (UsesActiveDirectoryDefault(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryDefaultString);
+                    }
+                    else if (UsesActiveDirectoryWorkloadIdentity(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringUtilities.ActiveDirectoryWorkloadIdentityString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
+
                     if (_accessToken != null)
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
@@ -977,7 +1033,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback));
             }
         }
 
@@ -1024,6 +1080,33 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
             }
+
+            if (_accessTokenCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback: check if the usage of AccessTokenCallback has any conflict
+        //  with the keys used in connection string and credential
+        //  If there is any conflict, it throws InvalidOperationException
+        //  This is to be used setter of ConnectionString and AccessTokenCallback properties
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(SqlConnectionString connectionOptions)
+        {
+            if (UsesIntegratedSecurity(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity();
+            }
+
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenCallbackAndAuthentication();
+            }
+
+            if (_accessToken != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DbProviderFactory/*' />
@@ -1031,8 +1114,6 @@ namespace Microsoft.Data.SqlClient
         {
             get => SqlClientFactory.Instance;
         }
-
-        // SqlCredential: Pair User Id and password in SecureString which are to be used for SQL authentication
 
         //
         // PUBLIC EVENTS
@@ -1074,11 +1155,11 @@ namespace Microsoft.Data.SqlClient
         new public SqlTransaction BeginTransaction()
         {
             // this is just a delegate. The actual method tracks executiontime
-            return BeginTransaction(System.Data.IsolationLevel.Unspecified, null);
+            return BeginTransaction(IsolationLevel.Unspecified, null);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*' />
-        new public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso)
+        new public SqlTransaction BeginTransaction(IsolationLevel iso)
         {
             // this is just a delegate. The actual method tracks executiontime
             return BeginTransaction(iso, null);
@@ -1091,18 +1172,18 @@ namespace Microsoft.Data.SqlClient
             // BEGIN...COMMIT or BEGIN...ROLLBACK statements.  Transaction names
             // are ignored for nested BEGIN's.  The only way to rollback a nested
             // transaction is to have a save point from a SAVE TRANSACTION call.
-            return BeginTransaction(System.Data.IsolationLevel.Unspecified, transactionName);
+            return BeginTransaction(IsolationLevel.Unspecified, transactionName);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*' />
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
-        override protected DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
+        override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
             using (TryEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
-                //   InnerConnection doesn't maintain a ref on the outer connection (this) and
+                // VSTFDEVDIV# 560355 - InnerConnection doesn't maintain a ref on the outer connection (this) and
                 //   subsequently leaves open the possibility that the outer connection could be GC'ed before the SqlTransaction
                 //   is fully hooked up (leaving a DbTransaction with a null connection property). Ensure that this is reachable
                 //   until the completion of BeginTransaction with KeepAlive
@@ -1113,7 +1194,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*' />
-        public SqlTransaction BeginTransaction(System.Data.IsolationLevel iso, string transactionName)
+        public SqlTransaction BeginTransaction(IsolationLevel iso, string transactionName)
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
@@ -1153,10 +1234,34 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
             RepairInnerConnection();
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangeDatabase | API | Correlation | Object Id {0}, Activity Id {1}, Database {2}", ObjectID, ActivityCorrelator.Current, database);
+            TdsParser bestEffortCleanupTarget = null;
+
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
+                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
+            }
+            catch (System.OutOfMemoryException e)
+            {
+                Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e)
+            {
+                Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)
+            {
+                Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
+                throw;
             }
             finally
             {
@@ -1176,12 +1281,11 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connection, nameof(connection));
 
             DbConnectionOptions connectionOptions = connection.UserConnectionOptions;
-            if (null != connectionOptions)
+            if (connectionOptions != null)
             {
                 SqlConnectionFactory.SingletonInstance.ClearPool(connection);
             }
         }
-
 
         private void CloseInnerConnection()
         {
@@ -1221,10 +1325,15 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlStatistics statistics = null;
-
+                TdsParser bestEffortCleanupTarget = null;
                 Exception e = null;
+
+#if NETFRAMEWORK
+                RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     Task reconnectTask = _currentReconnectionTask;
@@ -1245,10 +1354,31 @@ namespace Microsoft.Data.SqlClient
                     CloseInnerConnection();
                     GC.SuppressFinalize(this);
 
-                    if (null != Statistics)
+                    if (Statistics != null)
                     {
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
+                }
+                catch (System.OutOfMemoryException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+                    throw;
+                }
+                catch (System.StackOverflowException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+                    throw;
+                }
+                catch (System.Threading.ThreadAbortException ex)
+                {
+                    e = ex;
+                    Abort(ex);
+#if NETFRAMEWORK
+                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
+                    throw;
                 }
                 catch (Exception ex)
                 {
@@ -1414,6 +1544,12 @@ namespace Microsoft.Data.SqlClient
                         if (attempt == retryCount - 1)
                         {
                             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ReconnectAsync | Info | Original Client Connection Id {0}, give up reconnection", _originalConnectionId);
+                            if (e.Class >= TdsEnums.FATAL_ERROR_CLASS)
+                            {
+                                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnection.ReconnectAsync|INFO> Original ClientConnectionID {0} - Fatal Error occured. Error Class: {1}", _originalConnectionId, e.Class);
+                                // Error Class: 20-25, usually terminates the database connection
+                                InnerConnection.CloseConnection(InnerConnection.Owner, ConnectionFactory);
+                            }
                             throw SQL.CR_AllAttemptsFailed(e, _originalConnectionId);
                         }
                         if (timeout > 0 && ADP.TimerRemaining(commandTimeoutExpiration) < ADP.TimerFromSeconds(ConnectRetryInterval))
@@ -1488,6 +1624,7 @@ namespace Microsoft.Data.SqlClient
                                             _originalConnectionId = ClientConnectionId;
                                             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.ValidateAndReconnect | Info | Connection Client Connection Id {0} is invalid, reconnecting", _originalConnectionId);
                                             _recoverySessionData = cData;
+
                                             if (beforeDisconnect != null)
                                             {
                                                 beforeDisconnect();
@@ -1576,16 +1713,20 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
-        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
-        public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsProviderRetriable ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
+        public override Task OpenAsync(CancellationToken cancellationToken) 
+            => OpenAsync(SqlConnectionOverrides.None, cancellationToken);
 
-        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsyncWithOverrides/*' />
+        public Task OpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => IsProviderRetriable ?
+                InternalOpenWithRetryAsync(overrides, cancellationToken) :
+                InternalOpenAsync(overrides, cancellationToken);
+
+        private Task InternalOpenWithRetryAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(overrides, cancellationToken), cancellationToken);
+
+        private Task InternalOpenAsync(SqlConnectionOverrides overrides, CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
@@ -1604,8 +1745,8 @@ namespace Microsoft.Data.SqlClient
                     TaskCompletionSource<DbConnectionInternal> completion = new TaskCompletionSource<DbConnectionInternal>(transaction);
                     TaskCompletionSource<object> result = new TaskCompletionSource<object>(state: this);
 
-                    if (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection) ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlErrorOpenConnection))
+                    if (s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name) ||
+                        s_diagnosticListener.IsEnabled(SqlClientConnectionOpenError.Name))
                     {
                         result.Task.ContinueWith(
                             continuationAction: s_openAsyncComplete,
@@ -1624,7 +1765,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        completed = TryOpen(completion);
+                        completed = TryOpen(completion, overrides);
                     }
                     catch (Exception e)
                     {
@@ -1644,7 +1785,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             registration = cancellationToken.Register(s_openAsyncCancel, completion);
                         }
-                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, registration);
+                        OpenAsyncRetry retry = new OpenAsyncRetry(this, completion, result, overrides, registration);
                         _currentCompletion = new Tuple<TaskCompletionSource<DbConnectionInternal>, Task>(completion, result.Task);
                         completion.Task.ContinueWith(retry.Retry, TaskScheduler.Default);
                         return result.Task;
@@ -1708,18 +1849,26 @@ namespace Microsoft.Data.SqlClient
             return InnerConnection.GetSchema(ConnectionFactory, PoolGroup, this, collectionName, restrictionValues);
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CanCreateBatch/*'/>
+        public override bool CanCreateBatch => true;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbBatch/*'/>
+        protected override DbBatch CreateDbBatch() => new SqlBatch(this);
+
         private class OpenAsyncRetry
         {
             private SqlConnection _parent;
             private TaskCompletionSource<DbConnectionInternal> _retry;
             private TaskCompletionSource<object> _result;
+            private SqlConnectionOverrides _overrides;
             private CancellationTokenRegistration _registration;
 
-            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, CancellationTokenRegistration registration)
+            public OpenAsyncRetry(SqlConnection parent, TaskCompletionSource<DbConnectionInternal> retry, TaskCompletionSource<object> result, SqlConnectionOverrides overrides, CancellationTokenRegistration registration)
             {
                 _parent = parent;
                 _retry = retry;
                 _result = result;
+                _overrides = overrides;
                 _registration = registration;
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OpenAsyncRetry | Info | Object Id {0}", _parent?.ObjectID);
             }
@@ -1728,6 +1877,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlConnection.Retry | Info | Object Id {0}", _parent?.ObjectID);
                 _registration.Dispose();
+
                 try
                 {
                     SqlStatistics statistics = null;
@@ -1754,7 +1904,7 @@ namespace Microsoft.Data.SqlClient
                             // protect continuation from races with close and cancel
                             lock (_parent.InnerConnection)
                             {
-                                result = _parent.TryOpen(_retry);
+                                result = _parent.TryOpen(_retry, _overrides);
                             }
                             if (result)
                             {
@@ -1786,10 +1936,10 @@ namespace Microsoft.Data.SqlClient
         private void PrepareStatisticsForNewConnection()
         {
             if (StatisticsEnabled ||
-                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) ||
-                s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterOpenConnection))
+                s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) ||
+                s_diagnosticListener.IsEnabled(SqlClientConnectionOpenAfter.Name))
             {
-                if (null == _statistics)
+                if (_statistics == null)
                 {
                     _statistics = new SqlStatistics();
                 }
@@ -1812,7 +1962,35 @@ namespace Microsoft.Data.SqlClient
                 // are not present. Throwing on open with a meaningful message helps identify the issue.
                 if (_cultureCheckState == CultureCheckState.Unknown)
                 {
-                    _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                    // check if invariant state has been set by appcontext switch directly 
+                    if (AppContext.TryGetSwitch("System.Globalization.Invariant", out bool isEnabled) && isEnabled)
+                    {
+                        _cultureCheckState = CultureCheckState.Invariant;
+                    }
+                    else
+                    {
+                        // check if invariant state has been set through environment variables
+                        string envValue = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_GLOBALIZATION_INVARIANT");
+                        if (string.Equals(envValue, bool.TrueString, StringComparison.OrdinalIgnoreCase) || string.Equals(envValue, "1", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _cultureCheckState = CultureCheckState.Invariant;
+                        }
+                        else
+                        {
+                            // if it hasn't been manually set it could still apply if the os doesn't have
+                            //  icu libs installed or is a native binary with icu support trimmed away
+                            // netcore 3.1 to net5 do not throw in attempting to create en-us in inariant mode
+                            // net6 and greater will throw so catch and infer invariant mode from the exception
+                            try
+                            {
+                                _cultureCheckState = CultureInfo.GetCultureInfo("en-US").EnglishName.Contains("Invariant") ? CultureCheckState.Invariant : CultureCheckState.Standard;
+                            }
+                            catch (CultureNotFoundException)
+                            {
+                                _cultureCheckState = CultureCheckState.Invariant;
+                            }
+                        }
+                    }
                 }
                 if (_cultureCheckState == CultureCheckState.Invariant)
                 {
@@ -1820,7 +1998,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
+            _applyTransientFaultHandling = (!overrides.HasFlag(SqlConnectionOverrides.OpenWithoutRetry) && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
 
             if (connectionOptions != null &&
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
@@ -1848,9 +2026,6 @@ namespace Microsoft.Data.SqlClient
             }
             // does not require GC.KeepAlive(this) because of ReRegisterForFinalize below.
 
-            // Set future transient fault handling based on connection options
-            _applyTransientFaultHandling = (retry == null && connectionOptions != null && connectionOptions.ConnectRetryCount > 0);
-
             var tdsInnerConnection = (SqlInternalConnectionTds)InnerConnection;
 
             Debug.Assert(tdsInnerConnection.Parser != null, "Where's the parser?");
@@ -1864,7 +2039,7 @@ namespace Microsoft.Data.SqlClient
             // The _statistics can change with StatisticsEnabled. Copying to a local variable before checking for a null value.
             SqlStatistics statistics = _statistics;
             if (StatisticsEnabled ||
-                (s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand) && statistics != null))
+                (s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name) && statistics != null))
             {
                 _statistics._openTimestamp = ADP.TimerCurrent();
                 tdsInnerConnection.Parser.Statistics = _statistics;
@@ -1904,7 +2079,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         internal bool Is2008OrNewer
         {
             get
@@ -1925,7 +2099,6 @@ namespace Microsoft.Data.SqlClient
                 return tdsConnection.Parser;
             }
         }
-
 
         //
         // INTERNAL METHODS
@@ -1978,7 +2151,6 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(exception != null && exception.Errors.Count != 0, "SqlConnection: OnError called with null or empty exception!");
 
-
             if (breakConnection && (ConnectionState.Open == State))
             {
                 if (wrapCloseInAction != null)
@@ -2024,7 +2196,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection()
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.ClosedConnectionError();
             }
@@ -2034,7 +2206,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlInternalConnectionTds GetOpenTdsConnection(string method)
         {
             SqlInternalConnectionTds innerConnection = (InnerConnection as SqlInternalConnectionTds);
-            if (null == innerConnection)
+            if (innerConnection == null)
             {
                 throw ADP.OpenConnectionRequired(method, InnerConnection.State);
             }
@@ -2043,15 +2215,14 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent)
         {
-            bool notified;
-            OnInfoMessage(imevent, out notified);
+            OnInfoMessage(imevent, out _);
         }
 
         internal void OnInfoMessage(SqlInfoMessageEventArgs imevent, out bool notified)
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlConnection.OnInfoMessage | API | Info | Object Id {0}, Message '{1}'", ObjectID, imevent.Message);
             SqlInfoMessageEventHandler handler = InfoMessage;
-            if (null != handler)
+            if (handler != null)
             {
                 notified = true;
                 try
@@ -2092,7 +2263,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newPassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity)
@@ -2101,7 +2272,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
@@ -2141,7 +2312,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength(nameof(newSecurePassword), TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2158,7 +2329,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!string.IsNullOrEmpty(connectionOptions.AttachDBFilename))
                 {
-                    throw SQL.ChangePasswordUseOfUnallowedKey(SqlConnectionString.KEY.AttachDBFilename);
+                    throw SQL.ChangePasswordUseOfUnallowedKey(DbConnectionStringKeywords.AttachDbFilename);
                 }
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
@@ -2177,35 +2348,54 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                if (con != null)
-                    con.Dispose();
+                con?.Dispose();
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, accessTokenCallback: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }
 
-        //
-        // SQL DEBUGGING SUPPORT
-        //
-
-        // this only happens once per connection
-        // SxS: using named file mapping APIs
-
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag)
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
+
+            object state = null;
+            if (outerTask.AsyncState == this)
+            {
+                // if the caller created the TaskCompletionSource for outerTask with this connection
+                // as the state parameter (which is immutable) we can use task.AsyncState and state
+                // to carry the two pieces of state that we need into the continuation avoiding the
+                // allocation of a new state object to carry them
+                state = value;
+            }
+            else
+            {
+                // otherwise we need to create a Tuple to carry the two pieces of state
+                state = Tuple.Create(this, value);
+            }
+
             return outerTask.ContinueWith(
                 continuationFunction: static (task, state) =>
                 {
-                    Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
-                    SqlConnection connection = parameters.Item1;
-                    object obj = parameters.Item2;
+                    SqlConnection connection = null;
+                    object obj = null;
+                    if (state is Tuple<SqlConnection, object> tuple)
+                    {
+                        // special state tuple, unpack it
+                        connection = tuple.Item1;
+                        obj = tuple.Item2;
+                    }
+                    else
+                    {
+                        // use state on task and state object
+                        connection = (SqlConnection)task.AsyncState;
+                        obj = state;
+                    }
 
                     connection.RemoveWeakReference(obj);
                     return task;
                 },
-                state: Tuple.Create(this, value),
+                state: state,
                 scheduler: TaskScheduler.Default
            ).Unwrap();
         }
@@ -2213,7 +2403,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*' />
         public void ResetStatistics()
         {
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 Statistics.Reset();
                 if (ConnectionState.Open == State)
@@ -2227,7 +2417,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*' />
         public IDictionary RetrieveStatistics()
         {
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 UpdateStatistics();
                 return Statistics.GetDictionary();
@@ -2291,6 +2481,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 asmRef.Version = TypeSystemAssemblyVersion;
             }
+
             try
             {
                 return Assembly.Load(asmRef);
@@ -2304,7 +2495,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     return null;
-                };
+                }
             }
         }
 
@@ -2354,12 +2545,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal byte[] GetBytes(object o)
-        {
-            Format format = Format.Native;
-            return GetBytes(o, out format, out int maxSize);
-        }
-
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
         {
             SqlUdtInfo attr = GetInfoFromType(o.GetType());
@@ -2383,7 +2568,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlUdtInfo GetInfoFromType(Type t)
         {
-            Debug.Assert(t != null, "Type object cant be NULL");
+            Debug.Assert(t != null, "Type object can't be NULL");
             Type orig = t;
             do
             {
@@ -2392,10 +2577,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return attr;
                 }
-                else
-                {
-                    t = t.BaseType;
-                }
+
+                t = t.BaseType;
             }
             while (t != null);
 

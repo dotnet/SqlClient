@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.SqlServer.TDS.EndPoint.SSPI;
 
@@ -69,6 +70,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         X509Certificate EncryptionCertificate { get; }
 
         /// <summary>
+        /// SSL/TLS protocols to use for transport encryption
+        /// </summary>
+        SslProtocols EncryptionProtocols { get; }
+
+        /// <summary>
         /// Counter of connection reset requests for this session
         /// </summary>
         int ConnectionResetRequestCount { get; set; }
@@ -77,5 +83,15 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Indicates whether this session supports transport-level recovery
         /// </summary>
         bool IsSessionRecoveryEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether the client supports Json column type
+        /// </summary>
+        bool IsJsonSupportEnabled { get; set; }
+
+        /// <summary>
+        /// Indicates whether the client supports Vector column type
+        /// </summary>
+        bool IsVectorSupportEnabled { get; set; }
     }
 }

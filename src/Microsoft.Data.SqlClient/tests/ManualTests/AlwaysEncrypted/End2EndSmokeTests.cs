@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         // tests
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsData))]
         public void TestSelectOnEncryptedNonEncryptedColumns(string connString, string selectQuery, int totalColumnsInSelect, string[] types)
         {
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParametersData))]
         public void TestSelectOnEncryptedNonEncryptedColumnsWithEncryptedParameters(string connString,
                                                                                     bool sync,
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                 break;
 
                             default:
-                                Assert.True(false, "FAILED: No other data type is supported.");
+                                Assert.Fail("FAILED: No other data type is supported.");
                                 break;
                         }
 

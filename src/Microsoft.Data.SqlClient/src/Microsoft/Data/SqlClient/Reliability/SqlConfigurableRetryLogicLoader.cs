@@ -3,10 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
-#if !NETFRAMEWORK
+
+#if NET
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Runtime.Loader;
 #endif
 
@@ -17,9 +20,9 @@ namespace Microsoft.Data.SqlClient
     /// This class shouldn't throw exceptions;
     /// All exceptions should be handled internally and logged with Event Source.
     /// </summary>
-    internal sealed partial class SqlConfigurableRetryLogicLoader
+    internal sealed class SqlConfigurableRetryLogicLoader
     {
-#if !NETFRAMEWORK
+#if NET
         static SqlConfigurableRetryLogicLoader()
         {
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += OnUnloading;
@@ -53,25 +56,28 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlRetryLogicBaseProvider CommandProvider { get; private set; }
 
-        public SqlConfigurableRetryLogicLoader(ISqlConfigurableRetryConnectionSection connectionRetryConfigs,
-                                               ISqlConfigurableRetryCommandSection commandRetryConfigs,
-                                               string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
-                                               string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
+        public SqlConfigurableRetryLogicLoader(
+            ISqlConfigurableRetryConnectionSection connectionRetryConfigs,
+            ISqlConfigurableRetryCommandSection commandRetryConfigs,
+            string cnnSectionName = SqlConfigurableRetryConnectionSection.Name,
+            string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
         {
-#if !NETFRAMEWORK
+            #if NET
             // Just only one subscription to this event is required.
             // This class isn't supposed to be called more than one time;
             // SqlConfigurableRetryLogicManager manages a single instance of this class.
+
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving -= Default_Resolving;
             AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Resolving += Default_Resolving;
-#endif
+            #endif
+
             AssignProviders(connectionRetryConfigs == null ? null : CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
                             commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
         }
 
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             try
@@ -88,7 +94,7 @@ namespace Microsoft.Data.SqlClient
                 // Prepare the transient error lists
                 if (!string.IsNullOrEmpty(configSection.TransientErrors))
                 {
-                    retryOption.TransientErrors = configSection.TransientErrors.Split(',').Select(x => Convert.ToInt32(x)).ToList();
+                    retryOption.TransientErrors = SplitErrorNumberList(configSection.TransientErrors);
                 }
 
                 // Prepare the authorized SQL statement just for SqlCommands
@@ -118,7 +124,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider ResolveRetryLogicProvider(string configurableRetryType, string retryMethod, SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(ResolveRetryLogicProvider);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (string.IsNullOrEmpty(retryMethod))
@@ -170,9 +176,15 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        private static object CreateInstance(Type type, string retryMethodName, SqlRetryLogicOption option)
+        private static object CreateInstance(
+            #if NET
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor | DynamicallyAccessedMemberTypes.PublicMethods)]
+            #endif
+            Type type,
+            string retryMethodName,
+            SqlRetryLogicOption option)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(CreateInstance);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (type == typeof(SqlConfigurableRetryFactory) || type == null)
@@ -231,11 +243,24 @@ namespace Microsoft.Data.SqlClient
         private static object[] PrepareParamValues(ParameterInfo[] parameterInfos, SqlRetryLogicOption option, string retryMethod)
         {
             // The retry method must have at least one `SqlRetryLogicOption`
-            if (parameterInfos.FirstOrDefault(x => x.ParameterType == typeof(SqlRetryLogicOption)) == null)
+            if (parameterInfos != null && parameterInfos.Length > 0)
             {
-                string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {retryMethod}'s parameters." +
-                    $"{Environment.NewLine}The function must have a paramter of type '{nameof(SqlRetryLogicOption)}'.";
-                throw new InvalidOperationException(message);
+                bool found = false;
+                for (int index = 0; index < parameterInfos.Length; index++)
+                {
+                    if (parameterInfos[index].ParameterType == typeof(SqlRetryLogicOption))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    string message = $"Failed to create {nameof(SqlRetryLogicBaseProvider)} object because of invalid {retryMethod}'s parameters." +
+                        $"{Environment.NewLine}The function must have a paramter of type '{nameof(SqlRetryLogicOption)}'.";
+                    throw new InvalidOperationException(message);
+                }
             }
 
             object[] funcParams = new object[parameterInfos.Length];
@@ -254,9 +279,21 @@ namespace Microsoft.Data.SqlClient
                 // or there isn't another parameter with the same type and without a default value.
                 else if (paramInfo.ParameterType == typeof(SqlRetryLogicOption))
                 {
-                    if (!paramInfo.HasDefaultValue
-                        || (paramInfo.HasDefaultValue
-                            && parameterInfos.FirstOrDefault(x => x != paramInfo && !x.HasDefaultValue && x.ParameterType == typeof(SqlRetryLogicOption)) == null))
+                    bool foundOptionsParamWithNoDefaultValue = false;
+                    for (int index = 0; index < parameterInfos.Length; index++)
+                    {
+                        if (
+                            parameterInfos[index] != paramInfo && 
+                            parameterInfos[index].ParameterType == typeof(SqlRetryLogicOption) &&
+                            !parameterInfos[index].HasDefaultValue
+                        )
+                        {
+                            foundOptionsParamWithNoDefaultValue = true;
+                            break;
+                        }
+                    }
+
+                    if (!paramInfo.HasDefaultValue || (paramInfo.HasDefaultValue && !foundOptionsParamWithNoDefaultValue))
                     {
                         funcParams[i] = option;
                     }
@@ -273,7 +310,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Parameters are prepared to invoke the `{2}.{3}()` method."
-                                                  , TypeName, MethodBase.GetCurrentMethod().Name, typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
+                                                  , TypeName, nameof(PrepareParamValues), typeof(SqlConfigurableRetryFactory).FullName, retryMethod);
             return funcParams;
         }
 
@@ -289,5 +326,139 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("{0}, Last exception:<{1}>", msg, lastException.Message);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<ADV>{0}, Last exception: {1}", msg, lastException);
         }
+
+        private static ICollection<int> SplitErrorNumberList(string list)
+        {
+            if (!string.IsNullOrEmpty(list))
+            {
+                string[] parts = list.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts != null && parts.Length > 0)
+                {
+                    HashSet<int> set = new HashSet<int>();
+                    for (int index = 0; index < parts.Length; index++)
+                    {
+                        if (int.TryParse(parts[index], System.Globalization.NumberStyles.Integer, null, out int value))
+                        {
+                            set.Add(value);
+                        }
+                    }
+                    return set;
+                }
+            }
+            return new HashSet<int>();
+        }
+        
+        #region Type Resolution
+        
+        #if NET
+        private static Assembly AssemblyResolver(AssemblyName arg)
+        {
+            string methodName = nameof(AssemblyResolver);
+
+            string fullPath = MakeFullPath(Environment.CurrentDirectory, arg.Name);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
+                , TypeName, methodName, arg, fullPath);
+
+            return fullPath == null ? null : AssemblyLoadContext.Default.LoadFromAssemblyPath(fullPath);
+        }
+        
+        /// <summary>
+        /// Load assemblies on request.
+        /// </summary>
+        private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
+        {
+            string methodName = nameof(Default_Resolving);
+
+            string target = MakeFullPath(Environment.CurrentDirectory, arg2.Name);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly that is requested by '{3}' ALC from '{4}' path."
+                , TypeName, methodName, arg2, arg1, target);
+
+            return target == null ? null : arg1.LoadFromAssemblyPath(target);
+        }
+        
+        /// <summary>
+        /// Performs a case-sensitive search to resolve the specified type name 
+        /// and its related assemblies in default assembly load context if they aren't loaded yet.
+        /// </summary>
+        /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
+        private static Type LoadType(string fullyQualifiedName)
+        {
+            string methodName = nameof(LoadType);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
+
+            var result = Type.GetType(fullyQualifiedName, AssemblyResolver, TypeResolver);
+            if (result != null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved.",
+                                                        TypeName, methodName, result.FullName);
+            }
+            else
+            {
+                result = typeof(SqlConfigurableRetryFactory);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Couldn't resolve the requested type by '{2}'; The internal `{3}` type is returned.",
+                                                        TypeName, methodName, fullyQualifiedName, result.FullName);
+            }
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Exit point.", TypeName, methodName);
+            return result;
+        }
+
+        /// <summary>
+        /// If the caller does not have sufficient permissions to read the specified file, 
+        /// no exception is thrown and the method returns null regardless of the existence of path.
+        /// </summary>
+        private static string MakeFullPath(string directory, string assemblyName, string extension = ".dll")
+        {
+            string methodName = nameof(MakeFullPath);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly in '{3}' directory."
+                                                    , TypeName, methodName, assemblyName, directory);
+            string fullPath = Path.Combine(directory, assemblyName);
+            fullPath = string.IsNullOrEmpty(Path.GetExtension(fullPath)) ? fullPath + extension : fullPath;
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
+                                                    , TypeName, methodName, assemblyName, fullPath);
+            return File.Exists(fullPath) ? fullPath : null;
+        }
+
+        private static Type TypeResolver(Assembly arg1, string arg2, bool arg3)
+        {
+            IEnumerable<Type> types = arg1?.ExportedTypes;
+            Type result = null;
+            if (types != null)
+            {
+                foreach (Type type in types)
+                {
+                    if (type.FullName == arg2)
+                    {
+                        if (result != null)
+                        {
+                            throw new InvalidOperationException("Sequence contains more than one matching element");
+                        }
+                        result = type;
+                    }
+                }
+            }
+            if (result == null)
+            {
+                throw new InvalidOperationException("Sequence contains no matching element");
+            }
+            return result;
+        }
+        #else
+        /// <summary>
+        /// Performs a case-sensitive search to resolve the specified type name.
+        /// </summary>
+        /// <param name="fullyQualifiedName"></param>
+        /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
+        private static Type LoadType(string fullyQualifiedName)
+        {
+            string methodName = nameof(LoadType);
+
+            var result = Type.GetType(fullyQualifiedName);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved."
+                , TypeName, methodName, result?.FullName);
+            return result != null ? result : typeof(SqlConfigurableRetryFactory);
+        }
+        #endif
+        
+        #endregion
     }
 }

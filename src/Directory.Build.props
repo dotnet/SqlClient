@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <LangVersion>9.0</LangVersion>
     <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
     <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
@@ -15,10 +14,8 @@
 
       "Project" => Build and run tests with Microsoft.Data.SqlClient as Project Reference
       "Package" => Build and run tests with Microsoft.Data.SqlClient as Package Reference with configured "TestMicrosoftDataSqlClientVersion" in "Versions.props" file.
-      "NetStandard" => Build and run tests with Microsoft.Data.SqlClient as Project Reference via .NET Standard Library
-      "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
-      ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
+      ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" REFERENCE TYPE ***************
       CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
       > msbuild -p:configuration=Release
     -->
@@ -29,8 +26,8 @@
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/"/>
-    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG</DefineConstants>
@@ -43,10 +40,15 @@
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
     <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
+    <NetCoreResources>$(ManagedSourceCode)src\Resources\</NetCoreResources>
+    <ResxFileName>Strings</ResxFileName>
+    <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
+    <GeneratedSourceFileName>$(ResxFileName).ResourceNames.cs</GeneratedSourceFileName>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
-    <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
+    <NetFxResources>$(ManagedSourceCode)src\Resources\</NetFxResources>
     <AddOnsPath>$(ManagedSourceCode)add-ons\</AddOnsPath>
     <SqlServerSource>$(RepoRoot)src\Microsoft.SqlServer.Server\</SqlServerSource>
+    <CommonsourceRoot>$(RepoRoot)src\Microsoft.Data.SqlClient\src\</CommonsourceRoot>
     <ObjFolder>$(Artifacts)obj\</ObjFolder>
     <CommonPath>$(NetCoreSource)src\Common\src</CommonPath>
     <CommonTestPath>$(NetCoreSource)src\Common\tests</CommonTestPath>
@@ -61,10 +63,39 @@
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>
     <!-- Respect environment variable for the .NET install directory if set; otherwise, use the current default location -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904;NU1905</WarningsNotAsErrors>
     <BuildSimulator Condition="'$(BuildSimulator)' != 'true'">false</BuildSimulator>
   </PropertyGroup>
   <PropertyGroup Condition="'$(BuildSimulator)' == 'true'">
     <DefineConstants>$(DefineConstants);ENCLAVE_SIMULATOR</DefineConstants>
+  </PropertyGroup>
+
+  <!-- NuGet Audit Settings -->
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <!--
+      ADO does not support audit/vulnerability feeds, so the audit feed is specified (in
+      nuget.config) as nuget.org. OneBranch default network isolation does not allow connections
+      to nuget.org. To avoid this issue, we will disable auditing for official builds, but leave it
+      enabled for local builds.
+      @TODO: If/when auditing is enabled for central feeds services, this can be removed. 
+    -->
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuGetAuditMode>all</NuGetAuditMode>
+  </PropertyGroup>
+
+  <!-- Packaging  for source link-->
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUnTrackedSources>true</EmbedUnTrackedSources>
+    <DisableSourceLinkTranslation Condition="'$(DisableSourceLinkTranslation)' == ''">false</DisableSourceLinkTranslation>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <!-- Provides Version properties -->
@@ -72,6 +103,33 @@
   <!-- Provides Tool properties -->
   <Import Project="$(ToolsDir)props\Tools.props" />
   <!-- Provides Build properties -->
-  <Import Project="$(ToolsDir)props\AssemblyInfo.props" /> 
-  <Import Project="$(ToolsDir)props\AssemblyRef.props" />  
+  <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
+  <Import Project="$(ToolsDir)props\AssemblyRef.props" />
+  <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
+
+  <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->
+  <PropertyGroup>
+    <AddSyntheticProjectReferencesForSolutionDependencies>false</AddSyntheticProjectReferencesForSolutionDependencies>
+  </PropertyGroup>
+
+  <!--
+    For non-.NET, we explicitly set the C# language version to 13.  This matches
+    the language version used by the .NET 9 SDK, and provides helpful modern
+    language features.  While this isn't strictly supported by .NET in general,
+    it works well in practice.  There are very few C# language features that
+    depend on SDK APIs, and we avoid them.
+
+    For .NET, we omit this property entirely, which results in the SDK choosing
+    the C# language version that matches the .NET version.
+
+    Details here:
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-versioning
+
+    https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/configure-language-version
+  -->
+  <PropertyGroup
+    Condition="'$([MSBuild]::GetTargetFrameworkIdentifier($(TargetFramework)))' != '.NETCoreApp'">
+    <LangVersion>13.0</LangVersion>
+  </PropertyGroup>
 </Project>

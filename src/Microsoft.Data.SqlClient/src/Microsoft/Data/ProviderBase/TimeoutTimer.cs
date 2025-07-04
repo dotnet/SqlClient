@@ -138,7 +138,7 @@ namespace Microsoft.Data.ProviderBase
         }
 
         // Special accessor for TimerExpire for use when thunking to legacy timeout methods.
-        internal long LegacyTimerExpire
+        public long LegacyTimerExpire
         {
             get
             {
@@ -180,6 +180,42 @@ namespace Microsoft.Data.ProviderBase
                 return milliseconds;
             }
         }
+
+        // Returns milliseconds remaining trimmed to zero for none remaining
+        internal int MillisecondsRemainingInt
+        {
+            get
+            {
+                //-------------------
+                // Method Body
+                int milliseconds;
+                if (_isInfiniteTimeout)
+                {
+                    milliseconds = int.MaxValue;
+                }
+                else
+                {
+                    long longMilliseconds = ADP.TimerRemainingMilliseconds(_timerExpire);
+                    if (0 > longMilliseconds)
+                    {
+                        milliseconds = 0;
+                    }
+                    else if (longMilliseconds > int.MaxValue)
+                    {
+                        milliseconds = int.MaxValue;
+                    }
+                    else
+                    {
+                        milliseconds = checked((int)longMilliseconds);
+                    }
+                }
+
+                //--------------------
+                // Postconditions
+                Debug.Assert(0 <= milliseconds);
+
+                return milliseconds;
+            }
+        }
     }
 }
-

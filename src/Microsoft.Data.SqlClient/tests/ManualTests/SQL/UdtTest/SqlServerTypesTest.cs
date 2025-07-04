@@ -2,20 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETFRAMEWORK
 using System;
-using System.Globalization;
-using Microsoft.SqlServer.Types;
-#else
-using System.Collections.ObjectModel;
-using System.Data.Common;
-#endif
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Microsoft.SqlServer.Types;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -43,33 +39,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription($"{db}.sys.hierarchyid".ToUpper(), dataTypeName.ToUpper(), "Unexpected data type name.");
 
                     string udtAssemblyName = (string)schemaTable.Rows[0][schemaTable.Columns["UdtAssemblyQualifiedName"]];
-                    Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId"), "Unexpected UDT assembly name: " + udtAssemblyName);
+                    Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId", StringComparison.Ordinal), "Unexpected UDT assembly name: " + udtAssemblyName);
                 }
             }
         }
 
         // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void GetValueTestThrowsExceptionOnNetCore()
-        {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
-            {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    Assert.True(reader.Read());
-
-                    // SqlHierarchyId is part of Microsoft.SqlServer.Types, which is not supported in Core
-                    Assert.Throws<FileNotFoundException>(() => reader.GetValue(0));
-                    Assert.Throws<FileNotFoundException>(() => reader.GetSqlValue(0));
-                }
-            }
-        }
-
-        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTest()
         {
@@ -274,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#if NETCOREAPP
+
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
@@ -286,34 +261,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 command.CommandText = "select hierarchyid::Parse('/1/1/3/') as col0, geometry::Parse('LINESTRING (100 100, 20 180, 180 180)') as col1, geography::Parse('LINESTRING(-122.360 47.656, -122.343 47.656)') as col2";
                 using (SqlDataReader reader = command.ExecuteReader(CommandBehavior.SchemaOnly))
                 {
-                    ReadOnlyCollection<DbColumn> columns = reader.GetColumnSchema();
+                    ReadOnlyCollection<System.Data.Common.DbColumn> columns = reader.GetColumnSchema();
 
-                    DbColumn column = null;
+                    System.Data.Common.DbColumn column = null;
 
                     // Validate Microsoft.SqlServer.Types.SqlHierarchyId, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91
                     column = columns[0];
                     Assert.Equal("col0", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".hierarchyid"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".hierarchyid", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlHierarchyId");
 
                     // Validate Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version = 11.0.0.0, Culture = neutral, PublicKeyToken = 89845dcd8080cc91
                     column = columns[1];
                     Assert.Equal("col1", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".geometry"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".geometry", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlGeometry");
 
                     // Validate Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version = 11.0.0.0, Culture = neutral, PublicKeyToken = 89845dcd8080cc91
                     column = columns[2];
                     Assert.Equal("col2", column.ColumnName);
-                    Assert.True(column.DataTypeName.EndsWith(".geography"), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
+                    Assert.True(column.DataTypeName.EndsWith(".geography", StringComparison.Ordinal), $"Unexpected DataTypeName \"{column.DataTypeName}\"");
                     Assert.NotNull(column.UdtAssemblyQualifiedName);
                     AssertSqlUdtAssemblyQualifiedName(column.UdtAssemblyQualifiedName, "Microsoft.SqlServer.Types.SqlGeography");
                 }
             }
         }
-#endif
+
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtParameterSetSqlByteValue()
@@ -411,7 +386,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return hex.ToString();
         }
 
-#if NETFRAMEWORK
         private static string GetUdtName(Type udtClrType)
         {
             if (typeof(SqlHierarchyId) == udtClrType)
@@ -518,6 +492,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.DropTable(conn, tableName);
             }
         }
-#endif
     }
 }

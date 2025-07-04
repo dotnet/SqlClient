@@ -1,0 +1,36 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  - template: common-variables.yml@self
+  - template: mds-variables.yml@self
+
+  - name: TempFolderName # extract the nuget package here
+    value: temp
+  - name: extractedNugetRootPath
+    value: $(Build.SourcesDirectory)\$(TempFolderName)\Microsoft.Data.SqlClient
+  - name: extractedNugetPath
+    value: $(extractedNugetRootPath).$(NugetPackageVersion)
+  - name: expectedFolderNames
+    value: lib,ref,runtimes
+  - name: expectedDotnetVersions
+    value: netstandard2.0,net462,net8.0,net9.0
+  - name: Database
+    value: Northwind
+  - name: platform
+    value: AnyCPU
+  - name: TargetNetFxVersion
+    value: net481
+  - name: TargetNetCoreVersion
+    value: net9.0
+  - name: SQLTarget
+    value: localhost
+  - name: encrypt
+    value: false
+  - name: SQL_NP_CONN_STRING
+    value: Data Source=np:$(SQLTarget);Initial Catalog=$(Database);Integrated Security=true;Encrypt=$(ENCRYPT);TrustServerCertificate=true;
+  - name: SQL_TCP_CONN_STRING
+    value: Data Source=tcp:$(SQLTarget);Initial Catalog=$(Database);Integrated Security=true;Encrypt=$(ENCRYPT);TrustServerCertificate=true;

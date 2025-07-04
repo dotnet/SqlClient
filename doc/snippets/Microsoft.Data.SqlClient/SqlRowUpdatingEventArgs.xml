@@ -1,65 +1,155 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SqlRowUpdatingEventArgs">
-        <SqlRowUpdatingEventArgs>
-            <summary>Provides data for the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event.</summary>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> event is raised before an <xref:System.Data.Common.DbDataAdapter.Update%2A> to a row.  
-  
- When you are using <xref:System.Data.Common.DbDataAdapter.Update%2A>, there are two events that occur for each data row updated. The order of execution is as follows:  
-  
-1.  The values in the <xref:System.Data.DataRow> are moved to the parameter values.  
-  
-2.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdating%2A> event is raised.  
-  
-3.  The command executes.  
-  
-4.  If the command is set to `FirstReturnedRecord`, and the first returned result is placed in the <xref:System.Data.DataRow>.  
-  
-5.  If there are output parameters, they are placed in the <xref:System.Data.DataRow>.  
-  
-6.  The <xref:System.Data.Common.DbDataAdapter.OnRowUpdated%2A> event is raised.  
-  
-7.  <xref:System.Data.DataRow.AcceptChanges%2A> is called.  
-  
-   
-  
-## Examples  
- The following example shows how to use both the <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> and <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> events.  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SQLCommand commandType=2 status=0)  
-  
- The <xref:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated> event returns this output:  
-  
- event args: (command=Microsoft.Data.SqlClient.SQLCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)  
-  
- [!code-csharp[SqlRowUpdatingEventArgs Example#1](~/../sqlclient/doc/samples/SqlRowUpdatingEventArgs.cs#1)]
-  
- ]]></format>
-            </remarks>
-        </SqlRowUpdatingEventArgs>
-        <ctor>
-            <param name="row">The <see cref="T:System.Data.DataRow" /> to <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.</param>
-            <param name="command">The <see cref="T:System.Data.IDbCommand" /> to execute during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.</param>
-            <param name="statementType">One of the <see cref="T:System.Data.StatementType" /> values that specifies the type of query executed.</param>
-            <param name="tableMapping">The <see cref="T:System.Data.Common.DataTableMapping" /> sent through an <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> class.</summary>
-            <remarks>To be added.</remarks>
-        </ctor>
-        <BaseCommand>
-            <summary>To be added.</summary>
-            <value>To be added.</value>
-            <remarks>To be added.</remarks>
-        </BaseCommand>
-        <Command>
-            <summary>Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to execute when performing the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.</summary>
-            <value>The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to execute when performing the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.</value>
-            <remarks>To be added.</remarks>
-        </Command>
-    </members>
+﻿<docs>
+  <members name="SqlRowUpdatingEventArgs">
+    <SqlRowUpdatingEventArgs>
+      <summary>
+        Provides data for the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event.
+      </summary>
+      <remarks>
+        <para>
+          The <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event is raised before an <see cref="E:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" /> to a row.
+        </para>
+        <para>
+          When you are using <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />, there are two events that occur for each data row updated. The order of execution is as follows:
+        </para>
+        <list type="number">
+          <item><description>The values in the <see cref="T:System.Data.DataRow" /> are moved to the parameter values.</description></item>
+          <item><description>The <see cref="M:System.Data.Common.DbDataAdapter.OnRowUpdating(System.Data.Common.RowUpdatingEventArgs)" /> event is raised.</description></item>
+          <item><description>The command executes.</description></item>
+          <item><description>If the command is set to <c>FirstReturnedRecord</c>, and the first returned result is placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>If there are output parameters, they are placed in the <see cref="T:System.Data.DataRow" />.</description></item>
+          <item><description>The <see cref="M:System.Data.Common.DbDataAdapter.OnRowUpdated(System.Data.Common.RowUpdatedEventArgs)" /> event is raised.</description></item>
+          <item><description><see cref="M:System.Data.DataRow.AcceptChanges" /> is called.</description></item>
+        </list>
+      </remarks>
+      <example>
+        <para>
+          The following example shows how to use both the <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> and <see cref="E:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> events.
+        </para>
+        <!-- SqlRowUpdatingEventArgs -->
+        <code language="c#">
+          using System;
+          using System.Data;
+          using System.Data.Common;
+          using System.Windows.Forms;
+          using System.Xml;
+          using Microsoft.Data.SqlClient;
+          
+          public class Form1 : Form
+          {
+              private DataSet DataSet1;
+              private DataGrid dataGrid1;
+          
+          
+              // handler for RowUpdating event
+              private static void OnRowUpdating(object sender, SqlRowUpdatingEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              //Handler for RowUpdated event.
+              private static void OnRowUpdated(object sender, SqlRowUpdatedEventArgs e)
+              {
+                  PrintEventArgs(e);
+              }
+          
+              public static int Main()
+              {
+                  const string CONNECTION_STRING = "Persist Security Info=False;Integrated Security=SSPI;database=northwind;server=mySQLServer";
+                  const string SELECT_ALL = "select * from Products";
+          
+                  //Create DataAdapter.
+                  SqlDataAdapter rAdapter = new SqlDataAdapter(SELECT_ALL, CONNECTION_STRING);
+          
+                  //Create and fill DataSet (Select only first 5 rows.).
+                  DataSet rDataSet = new DataSet();
+                  rAdapter.Fill(rDataSet, 0, 5, "Table");
+          
+                  //Modify DataSet.
+                  DataTable rTable = rDataSet.Tables["Table"];
+                  rTable.Rows[0][1] = "new product";
+          
+                  //Add handlers.
+                  rAdapter.RowUpdating += new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  rAdapter.RowUpdated += new SqlRowUpdatedEventHandler(OnRowUpdated);
+          
+                  //Update--this operation fires two events (RowUpdating and RowUpdated) for each changed row. 
+                  rAdapter.Update(rDataSet, "Table");
+          
+                  //Remove handlers.
+                  rAdapter.RowUpdating -= new SqlRowUpdatingEventHandler(OnRowUpdating);
+                  rAdapter.RowUpdated -= new SqlRowUpdatedEventHandler(OnRowUpdated);
+                  return 0;
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatingEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdating");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " status=" + args.Status + ")");
+              }
+          
+              private static void PrintEventArgs(SqlRowUpdatedEventArgs args)
+              {
+                  Console.WriteLine("OnRowUpdated");
+                  Console.WriteLine("  event args: (" +
+                      " command=" + args.Command +
+                      " commandType=" + args.StatementType +
+                      " recordsAffected=" + args.RecordsAffected +
+                      " status=" + args.Status + ")");
+              }
+          }
+        </code>
+        <para>
+          The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdating" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SQLCommand commandType=2 status=0)
+        </code>
+        <para>
+          The <see cref="P:Microsoft.Data.SqlClient.SqlDataAdapter.RowUpdated" /> event returns this output:
+        </para>
+        <code>
+          event args: (command=Microsoft.Data.SqlClient.SQLCommand commandType=2 recordsAffected=1 row=System.Data.DataRow[37] status=0)
+        </code>
+      </example>
+    </SqlRowUpdatingEventArgs>
+    <ctor>
+      <param name="row">
+        The <see cref="T:System.Data.DataRow" /> to <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
+      </param>
+      <param name="command">
+        The <see cref="T:System.Data.IDbCommand" /> to execute during <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
+      </param>
+      <param name="statementType">
+        One of the <see cref="T:System.Data.StatementType" /> values that specifies the type of query executed.
+      </param>
+      <param name="tableMapping">
+        The <see cref="T:System.Data.Common.DataTableMapping" /> sent through an <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
+      </param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs" /> class.
+      </summary>
+    </ctor>
+    <BaseCommand>
+      <summary>
+        To be added.
+      </summary>
+      <value>
+        To be added.
+      </value>
+      <remarks>
+        To be added.
+      </remarks>
+    </BaseCommand>
+    <Command>
+      <summary>
+        Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to execute when performing the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
+      </summary>
+      <value>
+        The <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> to execute when performing the <see cref="M:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)" />.
+      </value>
+    </Command>
+  </members>
 </docs>

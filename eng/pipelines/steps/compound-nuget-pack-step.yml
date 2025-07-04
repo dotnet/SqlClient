@@ -1,0 +1,59 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+    - name: buildConfiguration
+      type: string
+
+    - name: generateSymbolsPackage
+      type: boolean
+
+    - name: packageVersion
+      type: string
+
+    - name: nuspecPath
+      type: string
+
+    - name: outputDirectory
+      type: string
+
+    - name: referenceType
+      type: string
+      values:
+          - Package
+          - Project
+
+steps:
+    - task: NuGetToolInstaller@1
+      displayName: 'Install Latest Nuget'
+      inputs:
+          checkLatest: true
+
+    - ${{ if parameters.generateSymbolsPackage }}:
+          - task: NuGetCommand@2
+            displayName: 'Generate NuGet Package and Symbols Package'
+            inputs:
+                command: custom
+                arguments: >-
+                    pack
+                    ${{ parameters.nuspecPath }}
+                    -Symbols
+                    -SymbolPackageFormat snupkg
+                    -Version ${{ parameters.packageVersion }}
+                    -OutputDirectory ${{ parameters.outputDirectory }}
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+    - ${{ else }}:
+          - task: NuGetCommand@2
+            displayName: 'Generate NuGet Package'
+            inputs:
+                command: custom
+                arguments: >- 
+                    pack
+                    ${{ parameters.nuspecPath }}
+                    -Version ${{ parameters.packageVersion }}
+                    -OutputDirectory ${{ parameters.outputDirectory }}
+                    -Properties "COMMITID=$(Build.SourceVersion);Configuration=${{ parameters.buildConfiguration }};ReferenceType=${{ parameters.referenceType }}"
+

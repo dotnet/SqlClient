@@ -1,25 +1,41 @@
-<docs>
-    <members name="SqlConnectionAttestationProtocol">
-        <SqlConnectionAttestationProtocol>
-            <summary>
-                Specifies a value for Attestation Protocol.
-            </summary>
-        </SqlConnectionAttestationProtocol>
-        <NotSpecified>
-            <summary>If the attestation protocol is not specified. Use this as default value.</summary>
-            <value>0</value>
-        </NotSpecified>
-        <AAS>
-            <summary>Attestation portocol for Azure Attestation Service</summary>
-            <value>1</value>
-        </AAS>
-        <None>
-            <summary>Attestation protocol for no attestation. Only compatible with Virtualization-based security (VBS) enclaves. An Enclave Attestation Url is not required when using this protocol.</summary>
-            <value>2</value>
-        </None>
-        <HGS>
-            <summary>Attestation protocol for Host Guardian Service</summary>
-             <value>3</value>
-        </HGS>
-    </members>
+﻿<docs>
+  <members name="SqlConnectionAttestationProtocol">
+    <SqlConnectionAttestationProtocol>
+      <summary>
+        Specifies a value for Attestation Protocol.
+      </summary>
+    </SqlConnectionAttestationProtocol>
+    <NotSpecified>
+      <summary>
+        If the attestation protocol is not specified. Use this as default value.
+      </summary>
+      <value>
+        0
+      </value>
+    </NotSpecified>
+    <AAS>
+      <summary>
+        Attestation protocol for Azure Attestation Service
+      </summary>
+      <value>
+        1
+      </value>
+    </AAS>
+    <None>
+      <summary>
+        Attestation protocol for no attestation. Only compatible with Virtualization-based security (VBS) enclaves. An Enclave Attestation Url is not required when using this protocol.
+      </summary>
+      <value>
+        2
+      </value>
+    </None>
+    <HGS>
+      <summary>
+        Attestation protocol for Host Guardian Service
+      </summary>
+      <value>
+        3
+      </value>
+    </HGS>
+  </members>
 </docs>

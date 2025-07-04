@@ -1,0 +1,30 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+steps:
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+    packageType: 'sdk'
+    version: '9.0'
+
+- template: ./ensure-dotnet-version.yml@self
+  parameters:
+    packageType: 'runtime'
+    version: '8.0'
+
+- script: SET
+  displayName: 'Print Environment Variables'
+
+- powershell: |
+    # use sqlcmd to try to connect to localdb
+    $svc_name = "SQLBrowser"
+    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+    Set-Service -StartupType Automatic $svc_name
+    net start $svc_name
+    Get-Service $svc_name | Select-Object -Property Name, StartType, Status
+  displayName: 'Start SQLBrowser'
+
+- task: NuGetToolInstaller@1
+  displayName: 'Use NuGet'

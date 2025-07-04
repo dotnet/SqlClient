@@ -11,14 +11,13 @@
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
 
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
-    <TargetNetStandardVersion Condition="'$(TargetNetStandardVersion)' == ''">netstandard2.0</TargetNetStandardVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp3.1</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net8.0;net9.0</TargetNetCoreVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,15 +27,14 @@
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == ''">
       <PropertyGroup>
-        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetFxVersion);$(TargetNetCoreVersion);$(TargetNetStandardVersion)</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TargetsUnix)' == 'true'">$(TargetNetCoreVersion);$(TargetNetStandardVersion)</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetCoreVersion);$(TargetNetFxVersion)</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsUnix)' == 'true'">$(TargetNetCoreVersion)</TargetFrameworks>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <Otherwise>
       <PropertyGroup>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0;netstandard2.1</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">net8.0;net9.0</TargetFrameworks>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net462</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>

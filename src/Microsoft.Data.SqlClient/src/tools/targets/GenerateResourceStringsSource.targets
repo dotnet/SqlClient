@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Target Name="GenerateResourceStringsSource" BeforeTargets="CoreCompile">
+      <Exec Command="powershell.exe -NonInteractive -executionpolicy Unrestricted ^
+      -command &quot;&amp;$(NetFxSource)..\src\tools\scripts\GenerateResourceStringsSource.ps1 -ResxFileDir '$(NetFxResources)' -ResxFileName '$(ResxFileName)' -OutputPath '$(IntermediateOutputPath)' -GeneratedSourceFileName '$(GeneratedSourceFileName)'&quot;" Condition=" '$(OS)' == 'Windows_NT' "/>
+      <Exec Command="pwsh -NonInteractive -executionpolicy Unrestricted -command &quot;&amp;$(NetFxSource)..\src\tools\scripts\GenerateResourceStringsSource.ps1 -ResxFileDir '$(NetFxResources)' -ResxFileName '$(ResxFileName)' -OutputPath '$(IntermediateOutputPath)' -GeneratedSourceFileName '$(GeneratedSourceFileName)'&quot;" Condition=" '$(OS)' != 'Windows_NT' "/>	  
+      <MakeDir Directories="$(IntermediateOutputPath)" />
+      <ItemGroup>
+        <Compile Include="$(IntermediateOutputPath)$(GeneratedSourceFileName)" />
+      </ItemGroup>
+  </Target>
+</Project>

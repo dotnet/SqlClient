@@ -25,9 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class DiagnosticTest
     {
         private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
-        private static readonly string s_tcpConnStr = DataTestUtility.TCPConnectionString ?? string.Empty;
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteScalarTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -41,14 +40,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
                         conn.Open();
-                        var output = cmd.ExecuteScalar();
+                        cmd.ExecuteScalar();
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteScalarErrorTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -59,19 +58,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select 1 / 0;";
+                        cmd.CommandText = "SELECT 1 / 0;";
 
                         conn.Open();
-                        try
-                        { var output = cmd.ExecuteScalar(); }
-                        catch { }
+                        Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteNonQueryTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -85,14 +82,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
                         conn.Open();
-                        var output = cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteNonQueryErrorTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -100,29 +97,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CollectStatisticsDiagnostics(connectionString =>
                 {
                     using (SqlConnection conn = new SqlConnection(connectionString))
+                    using (SqlCommand cmd = new SqlCommand())
                     {
-                        using (SqlCommand cmd = new SqlCommand())
-                        {
-                            cmd.Connection = conn;
-                            cmd.CommandText = "select 1 / 0;";
+                        cmd.Connection = conn;
+                        cmd.CommandText = "SELECT 1 / 0;";
 
-                            // Limiting the command timeout to 3 seconds. This should be lower than the Process timeout.
-                            cmd.CommandTimeout = 3;
-                            conn.Open();
-                            Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Connection Open Successful");
+                        // Limiting the command timeout to 3 seconds. This should be lower than the Process timeout.
+                        cmd.CommandTimeout = 3;
+                        conn.Open();
 
-                            SqlException ex = Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                            Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Command Executed");
-                        }
-                        Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Command Disposed");
+                        Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                     }
-                    Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Connection Disposed");
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteReaderTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -138,14 +129,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader();
                         while (reader.Read())
-                        { }
+                        {
+                            // Read until end.
+                        }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteReaderErrorTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -156,22 +149,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select 1 / 0;";
+                        cmd.CommandText = "SELECT 1 / 0;";
 
-                        try
-                        {
-                            SqlDataReader reader = cmd.ExecuteReader();
-                            while (reader.Read())
-                            { }
-                        }
-                        catch { }
+                        conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteReader, it should throw on reader.Read
+                        Assert.Throws<SqlException>(() => cmd.ExecuteReader());
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteReaderWithCommandBehaviorTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -187,7 +176,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.Default);
                         while (reader.Read())
-                        { }
+                        {
+                            // Read to end
+                        }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
@@ -198,24 +189,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ExecuteXmlReaderTest()
         {
-            RemoteExecutor.Invoke(cs =>
+            RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnostics(_ =>
                 {
-                    using (SqlConnection conn = new SqlConnection(cs))
+                    // @TODO: Test TDS server doesn't support ExecuteXmlReader, so connect to real server as workaround
+                    using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select top 10 * from sys.objects for xml auto, xmldata;";
+                        cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
                         conn.Open();
                         XmlReader reader = cmd.ExecuteXmlReader();
                         while (reader.Read())
-                        { }
+                        {
+                            // Read to end
+                        }
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
-            }, s_tcpConnStr).Dispose();
+            }).Dispose();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -229,119 +223,110 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
+                        cmd.CommandText = "SELECT *, baddata = 1 / 0 FROM sys.objects FOR xml auto, xmldata;";
 
-                        try
-                        {
-                            XmlReader reader = cmd.ExecuteXmlReader();
-                            while (reader.Read())
-                            { }
-                        }
-                        catch { }
+                        conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteXmlReader, should throw on reader.Read
+                        Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteScalarAsyncTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
                         conn.Open();
-                        var output = await cmd.ExecuteScalarAsync();
+                        await cmd.ExecuteScalarAsync();
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteScalarAsyncErrorTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select 1 / 0;";
+                        cmd.CommandText = "SELECT 1 / 0;";
 
                         conn.Open();
-
-                        try
-                        { var output = await cmd.ExecuteScalarAsync(); }
-                        catch { }
+                        await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteScalarAsync());
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteNonQueryAsyncTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
 
                         conn.Open();
-                        var output = await cmd.ExecuteNonQueryAsync();
+                        await cmd.ExecuteNonQueryAsync();
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteNonQueryAsyncErrorTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select 1 / 0;";
+                        cmd.CommandText = "SELECT 1 / 0;";
 
                         conn.Open();
-                        try
-                        { var output = await cmd.ExecuteNonQueryAsync(); }
-                        catch { }
+                        await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteNonQueryAsync());
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteReaderAsyncTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "SELECT [name], [state] FROM [sys].[databases] WHERE [name] = db_name();";
@@ -349,35 +334,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         conn.Open();
                         SqlDataReader reader = await cmd.ExecuteReaderAsync();
                         while (reader.Read())
-                        { }
+                        {
+                            // Read to end
+                        }
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteReaderAsyncErrorTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(connectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select 1 / 0;";
+                        cmd.CommandText = "SELECT 1 / 0;";
 
-                        try
-                        {
-                            SqlDataReader reader = await cmd.ExecuteReaderAsync();
-                            while (reader.Read())
-                            { }
-                        }
-                        catch { }
+                        conn.Open();
+                        // @TODO: TestTdsServer should not throw on ExecuteReader, should throw on reader.Read
+                        await Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync());
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
@@ -386,53 +369,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ExecuteXmlReaderAsyncTest()
         {
-            RemoteExecutor.Invoke(cs =>
+            // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
+            RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    using (SqlConnection conn = new SqlConnection(cs))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select TOP 10 * from sys.objects for xml auto, xmldata;";
+                        cmd.CommandText = "SELECT TOP 10 * FROM sys.objects FOR xml auto, xmldata;";
 
                         conn.Open();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();
                         while (reader.Read())
-                        { }
+                        {
+                            // Read to end
+                        }
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }, s_tcpConnStr).Dispose();
+            }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ExecuteXmlReaderAsyncErrorTest()
         {
-            RemoteExecutor.Invoke(cs =>
+            // @TODO: TestTdsServer does not handle xml reader, so connect to a real server as a workaround
+            RemoteExecutor.Invoke(() =>
             {
+
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    using (SqlConnection conn = new SqlConnection(cs))
-                    using (SqlCommand cmd = new SqlCommand())
+                    await using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    await using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
                         cmd.CommandText = "select *, baddata = 1 / 0 from sys.objects for xml auto, xmldata;";
 
-                        try
-                        {
-                            XmlReader reader = await cmd.ExecuteXmlReaderAsync();
-                            while (reader.Read())
-                            { }
-                        }
-                        catch { }
+                        // @TODO: Since this test uses a real database connection, the exception is
+                        //     thrown during reader.Read. (ie, TestTdsServer does not obey proper
+                        //     exception behavior)
+                        await conn.OpenAsync();
+                        XmlReader reader = await cmd.ExecuteXmlReaderAsync();
+                        await Assert.ThrowsAsync<SqlException>(() => reader.ReadAsync());
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
-            }, s_tcpConnStr).Dispose();
+            }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ConnectionOpenTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -442,17 +429,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlConnection sqlConnection = new SqlConnection(connectionString))
                     {
                         sqlConnection.Open();
-                        Console.WriteLine("SqlClient.DiagnosticsTest.ConnectionOpenTest:: Connection Opened ");
                     }
-                    Console.WriteLine("SqlClient.DiagnosticsTest.ConnectionOpenTest:: Connection Should Be Disposed");
-                }, true);
-
-                Console.WriteLine("SqlClient.DiagnosticsTest.ConnectionOpenTest:: Done with Diagnostics collection");
+                });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ConnectionOpenErrorTest()
         {
             RemoteExecutor.Invoke(() =>
@@ -461,45 +444,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
-                        try
-                        { sqlConnection.Open(); }
-                        catch { }
+                        Assert.Throws<SqlException>(() => sqlConnection.Open());
                     }
                 });
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ConnectionOpenAsyncTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async connectionString =>
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+                    await using (SqlConnection sqlConnection = new SqlConnection(connectionString))
                     {
                         await sqlConnection.OpenAsync();
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [Fact]
         public void ConnectionOpenAsyncErrorTest()
         {
             RemoteExecutor.Invoke(() =>
             {
                 CollectStatisticsDiagnosticsAsync(async _ =>
                 {
-                    using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
+                    await using (SqlConnection sqlConnection = new SqlConnection(BadConnectionString))
                     {
-                        try
-                        { await sqlConnection.OpenAsync(); }
-                        catch { }
+                        await Assert.ThrowsAsync<SqlException>(() => sqlConnection.OpenAsync());
                     }
-                }).GetAwaiter().GetResult();
+                }).Wait();
                 return RemoteExecutor.SuccessExitCode;
             }).Dispose();
         }

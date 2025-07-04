@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 await outputSemaphore.WaitAsync();
                                 
                                 DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 5, "Unexpected number of rows.");
+                                DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied64, (long)5, "Unexpected number of rows.");
                             }
                             Helpers.VerifyResults(dstConn, dstTable, 3, 5);
                         }

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers.Binary;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
@@ -249,7 +250,7 @@ namespace Microsoft.Data.SqlClient
             // ANSI types must convert to byte[] because that's the tool we have.
             if (MetaDataUtilsSmi.IsAnsiType(_metaData.SqlDbType))
             {
-                if (null == _encoder)
+                if (_encoder == null)
                 {
                     _encoder = _stateObj.Parser._defaultEncoding.GetEncoder();
                 }
@@ -361,7 +362,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                Debug.Assert(null != _variantType && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
+                Debug.Assert(_variantType != null && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
 
                 SqlCollation collation = SqlCollation.FromLCIDAndSort(checked((int)_variantType.LocaleId), _variantType.CompareOptions);
 
@@ -451,7 +452,7 @@ namespace Microsoft.Data.SqlClient
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetInt64));
             if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                if (null == _variantType)
+                if (_variantType == null)
                 {
                     _stateObj.Parser.WriteSqlVariantHeader(10, TdsEnums.SQLINT8, 0, _stateObj);
                     _stateObj.Parser.WriteLong(value, _stateObj);
@@ -586,9 +587,21 @@ namespace Microsoft.Data.SqlClient
                     if (SqlDbType.DateTime2 == _metaData.SqlDbType)
                     {
                         long time = value.TimeOfDay.Ticks / TdsEnums.TICKS_FROM_SCALE[_metaData.Scale];
+#if NET
+                        Span<byte> result_time = stackalloc byte[8];
+                        BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
+                        _stateObj.WriteByteSpan(result_time.Slice(0, (int)_metaData.MaxLength - 3));
+#else
                         _stateObj.WriteByteArray(BitConverter.GetBytes(time), (int)_metaData.MaxLength - 3, 0);
+#endif
                     }
+#if NET
+                    Span<byte> result_date = stackalloc byte[4];
+                    BinaryPrimitives.WriteInt32LittleEndian(result_date, days);
+                    _stateObj.WriteByteSpan(result_date.Slice(0, 3));
+#else
                     _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0);
+#endif
                 }
             }
         }
@@ -599,7 +612,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetGuid));
 
-#if NETCOREAPP
+#if NET
 
             Span<byte> bytes = stackalloc byte[16];
             value.TryWriteBytes(bytes);
@@ -618,7 +631,7 @@ namespace Microsoft.Data.SqlClient
 
                 _stateObj.WriteByte((byte)_metaData.MaxLength);
             }
-#if NETCOREAPP
+#if NET
             _stateObj.WriteByteSpan(bytes);
 #else
             _stateObj.WriteByteArray(bytes, bytes.Length, 0);
@@ -646,7 +659,13 @@ namespace Microsoft.Data.SqlClient
                 _stateObj.WriteByte(length);
             }
             long time = value.Ticks / TdsEnums.TICKS_FROM_SCALE[scale];
+#if NET
+            Span<byte> result_time = stackalloc byte[8];
+            BinaryPrimitives.WriteInt64LittleEndian(result_time, time);
+            _stateObj.WriteByteSpan(result_time.Slice(0, length));
+#else
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length, 0);
+#endif
         }
 
         // valid for DateTimeOffset
@@ -677,15 +696,46 @@ namespace Microsoft.Data.SqlClient
             int days = utcDateTime.Subtract(DateTime.MinValue).Days;
             short offset = (short)value.Offset.TotalMinutes;
 
+#if NET
+            // In TDS protocol: 
+            // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-tds/786f5b8a-f87d-4980-9070-b9b7274c681d
+            //
+            //   date is represented as one 3 - byte unsigned integer that represents the number of days since January 1, year 1.
+            //
+            //   time(n) is represented as one unsigned integer that represents the number of 10^-n,
+            //   (10 to the power of negative n), second increments since 12 AM within a day.
+            //     The length, in bytes, of that integer depends on the scale n as follows:
+            //       3 bytes if 0 <= n < = 2.
+            //       4 bytes if 3 <= n < = 4.
+            //       5 bytes if 5 <= n < = 7.
+            //     For example:
+            //       DateTimeOffset dateTimeOffset = new DateTimeOffset(2024, 1, 1, 23, 59, 59, TimeSpan.Zero);  // using scale of 0
+            //       time = 23:59:59, scale is 1, is represented as 863990 in 3 bytes or { 246, 46, 13, 0, 0, 0, 0, 0 } in bytes array
+
+            Span<byte> result = stackalloc byte[8];
+
+            // https://learn.microsoft.com/en-us/dotnet/api/system.buffers.binary.binaryprimitives.writeint64bigendian?view=net-8.0
+            // WriteInt64LittleEndian requires 8 bytes to write the value.
+            BinaryPrimitives.WriteInt64LittleEndian(result, time);
+            // The DateTimeOffset length is variable depending on the scale, 1 to 7, used.
+            // If length = 8, 8 - 5 = 3 bytes is used for time.
+            // If length = 10, 10 - 5 = 5 bytes is used for time.
+            _stateObj.WriteByteSpan(result.Slice(0, length - 5)); // this writes the time value to the state object using dynamic length based on the scale.
+            
+            // Date is represented as 3 bytes. So, 3 bytes are written to the state object.
+            BinaryPrimitives.WriteInt32LittleEndian(result, days);
+            _stateObj.WriteByteSpan(result.Slice(0, 3));
+#else
             _stateObj.WriteByteArray(BitConverter.GetBytes(time), length - 5, 0); // time
             _stateObj.WriteByteArray(BitConverter.GetBytes(days), 3, 0); // date
+#endif
             _stateObj.WriteByte((byte)(offset & 0xff)); // offset byte 1
             _stateObj.WriteByte((byte)((offset >> 8) & 0xff)); // offset byte 2
         }
 
         internal void SetVariantType(SmiMetaData value)
         {
-            Debug.Assert(null == _variantType, "Variant type can only be set once");
+            Debug.Assert(_variantType == null, "Variant type can only be set once");
             Debug.Assert(value != null &&
                 (value.SqlDbType == SqlDbType.Money ||
                 value.SqlDbType == SqlDbType.NVarChar ||

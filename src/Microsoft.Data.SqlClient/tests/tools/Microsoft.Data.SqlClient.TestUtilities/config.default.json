@@ -1,8 +1,14 @@
 {
-    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;",
-    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;",
+    // Typical Windows SQL Server on the local host via TCP.
+    "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+
+    // Typical Linux SQL Server on the local host, WSL, or a container, via TCP.
+    // "TCPConnectionString": "Data Source=tcp:127.0.0.1;User Id=sa;Password=;Database=Northwind;Encrypt=false;TrustServerCertificate=true",
+
+    // Typical Windows SQL Server on the local host via Named Pipes.
+    "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+
     "TCPConnectionStringHGSVBS": "",
-    "TCPConnectionStringAASVBS": "",
     "TCPConnectionStringNoneVBS": "",
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
@@ -13,8 +19,6 @@
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
     "AzureKeyVaultTenantId": "",
-    "AzureKeyVaultClientId": "",
-    "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
@@ -28,6 +32,9 @@
     "IsDNSCachingSupportedTR": false,
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
+    "ManagedIdentitySupported": true,
     "UserManagedIdentityClientId": "",
-    "MakecertPath": ""
+    "PowerShellPath": "",
+    "AliasName": "",
+    "IsJsonSupported": false
 }

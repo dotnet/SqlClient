@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private string _connStr;
 
-        [ActiveIssue(5535)]
+        [ActiveIssue("5535")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void RunCopyTest()
         {

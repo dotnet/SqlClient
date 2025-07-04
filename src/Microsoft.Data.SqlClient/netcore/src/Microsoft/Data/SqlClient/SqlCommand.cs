@@ -12,7 +12,6 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -20,6 +19,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Server;
 
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
@@ -35,16 +35,7 @@ namespace Microsoft.Data.SqlClient
     {
         private static int _objectTypeCount; // EventSource Counter
         private const int MaxRPCNameLength = 1046;
-        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
-
-        private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteReaderAsync = BeginExecuteReaderAsyncCallback;
-        private static readonly Func<IAsyncResult, SqlDataReader> s_endExecuteReaderAsync = EndExecuteReaderAsyncCallback;
-        private static readonly Action<Task<SqlDataReader>> s_cleanupExecuteReaderAsync = CleanupExecuteReaderAsyncCallback;
-        private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteNonQuery = InternalEndExecuteNonQueryCallback;
-        private static readonly Func<SqlCommand, IAsyncResult, bool, string, object> s_internalEndExecuteReader = InternalEndExecuteReaderCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteReaderInternal = BeginExecuteReaderInternalCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteXmlReaderInternal = BeginExecuteXmlReaderInternalCallback;
-        private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteNonQueryInternal = BeginExecuteNonQueryInternalCallback;
+        internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount);
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader, CancellationTokenRegistration>
         {
@@ -81,7 +72,7 @@ namespace Microsoft.Data.SqlClient
 
             public TaskCompletionSource<int> TaskCompletionSource => _source;
 
-            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable,  Guid operationID)
+            public void Set(SqlCommand command, TaskCompletionSource<int> source, CancellationTokenRegistration disposable, Guid operationID)
             {
                 base.Set(command, source, disposable);
                 OperationID = operationID;
@@ -94,10 +85,35 @@ namespace Microsoft.Data.SqlClient
 
             protected override void AfterCleared(SqlCommand owner)
             {
-            
+                owner?.SetCachedCommandExecuteNonQueryAsyncContext(this);
             }
         }
 
+        internal sealed class ExecuteXmlReaderAsyncCallContext : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
+        {
+            public Guid OperationID;
+
+            public SqlCommand Command => _owner;
+            public TaskCompletionSource<XmlReader> TaskCompletionSource => _source;
+
+            public void Set(SqlCommand command, TaskCompletionSource<XmlReader> source, CancellationTokenRegistration disposable, Guid operationID)
+            {
+                base.Set(command, source, disposable);
+                OperationID = operationID;
+            }
+
+            protected override void Clear()
+            {
+                OperationID = default;
+            }
+
+            protected override void AfterCleared(SqlCommand owner)
+            {
+                owner?.SetCachedCommandExecuteXmlReaderContext(this);
+            }
+        }
+
+        private string _commandText;
         private CommandType _commandType;
         private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
@@ -137,9 +153,14 @@ namespace Microsoft.Data.SqlClient
         /// Internal flag for testing purposes that forces all queries to internally end async calls.
         /// </summary>
         private static bool _forceInternalEndQuery = false;
+
+        /// <summary>
+        /// Internal flag for testing purposes that forces one RetryableEnclaveQueryExecutionException during GenerateEnclavePackage
+        /// </summary>
+        private static bool _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
 #endif
 
-        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
+        private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener();
         private bool _parentOperationStarted = false;
 
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
@@ -230,9 +251,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool ShouldUseEnclaveBasedWorkflow => 
-            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) && 
-                    IsColumnEncryptionEnabled; 
+        internal bool ShouldUseEnclaveBasedWorkflow =>
+            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
+                    IsColumnEncryptionEnabled;
 
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 
@@ -271,7 +292,7 @@ namespace Microsoft.Data.SqlClient
             }
             internal bool PendingAsyncOperation
             {
-                get { return (null != _cachedAsyncResult); }
+                get { return _cachedAsyncResult != null; }
             }
             internal string EndMethodName
             {
@@ -372,9 +393,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _batchRPCMode;
         private List<_SqlRPC> _RPCList;
-        private _SqlRPC[] _SqlRPCBatchArray;
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
-        private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
@@ -478,7 +497,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Check to see if the currently set transaction has completed.  If so,
                 // null out our local reference.
-                if (null != _transaction && _transaction.Connection == null)
+                if (_transaction != null && _transaction.Connection == null)
                 {
                     _transaction = null;
                 }
@@ -576,10 +595,10 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null != _activeConnection)
+                if (_activeConnection != null)
                 {
                     if (_activeConnection.StatisticsEnabled ||
-                        s_diagnosticListener.IsEnabled(SqlClientDiagnosticListenerExtensions.SqlAfterExecuteCommand))
+                        s_diagnosticListener.IsEnabled(SqlClientCommandAfter.Name))
                     {
                         return _activeConnection.Statistics;
                     }
@@ -597,7 +616,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 // if the transaction object has been zombied, just return null
-                if ((null != _transaction) && (null == _transaction.Connection))
+                if (_transaction != null && _transaction.Connection == null)
                 {
                     _transaction = null;
                 }
@@ -765,7 +784,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (null == _parameters)
+                if (_parameters == null)
                 {
                     // delay the creation of the SqlParameterCollection
                     // until user actually uses the Parameters property
@@ -831,7 +850,7 @@ namespace Microsoft.Data.SqlClient
             if (0 <= recordCount)
             {
                 StatementCompletedEventHandler handler = _statementCompletedEventHandler;
-                if (null != handler)
+                if (handler != null)
                 {
                     try
                     {
@@ -875,7 +894,7 @@ namespace Microsoft.Data.SqlClient
                         || ((System.Data.CommandType.Text == this.CommandType)
                                 && (0 == GetParameterCount(_parameters))))
                     {
-                        if (null != Statistics)
+                        if (Statistics != null)
                         {
                             Statistics.SafeIncrement(ref Statistics._prepares);
                         }
@@ -893,7 +912,7 @@ namespace Microsoft.Data.SqlClient
                             GetStateObject();
 
                             // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                            if (null != _parameters)
+                            if (_parameters != null)
                             {
                                 int count = _parameters.Count;
                                 for (int i = 0; i < count; ++i)
@@ -940,8 +959,8 @@ namespace Microsoft.Data.SqlClient
             }
             Debug.Assert(_execType != EXECTYPE.PREPARED, "Invalid attempt to Prepare already Prepared command!");
             Debug.Assert(_activeConnection != null, "must have an open connection to Prepare");
-            Debug.Assert(null != _stateObj, "TdsParserStateObject should not be null");
-            Debug.Assert(null != _stateObj.Parser, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_stateObj != null, "TdsParserStateObject should not be null");
+            Debug.Assert(_stateObj.Parser != null, "TdsParser class should not be null in Command.Execute!");
             Debug.Assert(_stateObj.Parser == _activeConnection.Parser, "stateobject parser not same as connection parser");
             Debug.Assert(false == _inPrepare, "Already in Prepare cycle, this.inPrepare should be false!");
 
@@ -951,7 +970,7 @@ namespace Microsoft.Data.SqlClient
             _preparedConnectionCloseCount = _activeConnection.CloseCount;
             _preparedConnectionReconnectCount = _activeConnection.ReconnectCount;
 
-            if (null != Statistics)
+            if (Statistics != null)
             {
                 Statistics.SafeIncrement(ref Statistics._prepares);
             }
@@ -1010,12 +1029,12 @@ namespace Microsoft.Data.SqlClient
                     // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
                     // this model is implementable because we only allow one active command at any one time.  This code
                     // will have to change we allow multiple outstanding batches
-                    if (null == _activeConnection)
+                    if (_activeConnection == null)
                     {
                         return;
                     }
                     SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                    if (null == connection)
+                    if (connection == null)
                     {  // Fail with out locking
                         return;
                     }
@@ -1032,11 +1051,10 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         TdsParser parser = connection.Parser;
-                        if (null == parser)
+                        if (parser == null)
                         {
                             return;
                         }
-
 
                         if (!_pendingCancel)
                         { // Do nothing if already pending.
@@ -1048,7 +1066,7 @@ namespace Microsoft.Data.SqlClient
                             _pendingCancel = true;
 
                             TdsParserStateObject stateObj = _stateObj;
-                            if (null != stateObj)
+                            if (stateObj != null)
                             {
                                 stateObj.Cancel(this);
                             }
@@ -1123,7 +1141,7 @@ namespace Microsoft.Data.SqlClient
                         RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
                     success = true;
-                    return CompleteExecuteScalar(ds, false);
+                    return CompleteExecuteScalar(ds, _batchRPCMode);
                 }
                 catch (Exception ex)
                 {
@@ -1142,26 +1160,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private object CompleteExecuteScalar(SqlDataReader ds, bool returnSqlValue)
+        private object CompleteExecuteScalar(SqlDataReader ds, bool returnLastResult)
         {
             object retResult = null;
 
             try
             {
-                if (ds.Read())
+                do
                 {
-                    if (ds.FieldCount > 0)
+                    if (ds.Read())
                     {
-                        if (returnSqlValue)
-                        {
-                            retResult = ds.GetSqlValue(0);
-                        }
-                        else
+                        if (ds.FieldCount > 0)
                         {
                             retResult = ds.GetValue(0);
                         }
                     }
-                }
+                } while (returnLastResult && ds.NextResult());
             }
             finally
             {
@@ -1303,7 +1317,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteNonQuery, s_beginExecuteNonQueryInternal, nameof(EndExecuteNonQuery)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        nameof(EndExecuteNonQuery)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1312,7 +1346,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -1368,7 +1402,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _stateObj.Parser.State = TdsParserState.Broken; // We failed to respond to attention, we have to quit!
                     _stateObj.Parser.Connection.BreakConnection();
-                    _stateObj.Parser.ThrowExceptionAndWarning(_stateObj);
+                    _stateObj.Parser.ThrowExceptionAndWarning(_stateObj, this);
                 }
                 else
                 {
@@ -1571,11 +1605,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        bool dataReady;
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj,
-                            out dataReady);
-                        if (!result)
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                        if (result != TdsOperationStatus.Done)
                         {
                             throw SQL.SynchronousCallMayNotPend();
                         }
@@ -1593,7 +1625,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // otherwise, use a full-fledged execute that can handle params and stored procs
                     SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-                    if (null != reader)
+                    if (reader != null)
                     {
                         reader.Close();
                     }
@@ -1612,7 +1644,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(null == _stateObj, "non-null state object in EndExecuteNonQuery");
+            Debug.Assert(_stateObj == null, "non-null state object in EndExecuteNonQuery");
             return _rowsAffected;
         }
 
@@ -1620,7 +1652,7 @@ namespace Microsoft.Data.SqlClient
         {
             SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
                                                         _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
-            bool isAsync = (null != completion);
+            bool isAsync = completion != null;
             usedCache = false;
 
             SqlStatistics statistics = Statistics;
@@ -1639,11 +1671,11 @@ namespace Microsoft.Data.SqlClient
 
             // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
             // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
-            if (!ShouldUseEnclaveBasedWorkflow && !BatchRPCMode && (CommandType.Text == CommandType) && (0 == GetParameterCount(_parameters)))
+            if (!ShouldUseEnclaveBasedWorkflow && !_batchRPCMode && (CommandType.Text == CommandType) && (0 == GetParameterCount(_parameters)))
             {
                 Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
 
-                if (null != statistics)
+                if (statistics != null)
                 {
                     if (!IsDirty && IsPrepared)
                     {
@@ -1668,7 +1700,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, inRetry {3}", ObjectID, methodName, isAsync, inRetry);
 
                 SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, completion, timeout, out task, out usedCache, asyncWrite, inRetry, methodName);
-                if (null != reader)
+                if (reader != null)
                 {
                     if (task != null)
                     {
@@ -1684,7 +1716,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(isAsync || null == _stateObj, "non-null state object in InternalExecuteNonQuery");
+            Debug.Assert(isAsync || _stateObj == null, "non-null state object in InternalExecuteNonQuery");
             return task;
         }
 
@@ -1813,7 +1845,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteReader, s_beginExecuteXmlReaderInternal, endMethod: nameof(EndExecuteXmlReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        endMethod: nameof(EndExecuteXmlReader)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1822,7 +1874,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     localCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -1949,9 +2001,9 @@ namespace Microsoft.Data.SqlClient
             XmlReader xr = null;
 
             SmiExtendedMetaData[] md = ds.GetInternalSmiMetaData();
-            bool isXmlCapable = (null != md && md.Length == 1 && (md[0].SqlDbType == SqlDbType.NText
-                                                         || md[0].SqlDbType == SqlDbType.NVarChar
-                                                         || md[0].SqlDbType == SqlDbType.Xml));
+            bool isXmlCapable = (md != null && md.Length == 1 && (md[0].SqlDbType == SqlDbType.NText
+                                                                  || md[0].SqlDbType == SqlDbType.NVarChar
+                                                                  || md[0].SqlDbType == SqlDbType.Xml));
 
             if (isXmlCapable)
             {
@@ -2175,29 +2227,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static IAsyncResult BeginExecuteReaderAsyncCallback(AsyncCallback callback, object stateObject)
-        {
-            ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)stateObject;
-            return args.Command.BeginExecuteReaderInternal(args.CommandBehavior, callback, stateObject, args.Command.CommandTimeout, inRetry: false, asyncWrite: true);
-        }
-
-        private static SqlDataReader EndExecuteReaderAsyncCallback(IAsyncResult asyncResult)
-        {
-            ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)asyncResult.AsyncState;
-            return args.Command.EndExecuteReaderAsync(asyncResult);
-        }
-
-        private static void CleanupExecuteReaderAsyncCallback(Task<SqlDataReader> task)
-        {
-            ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
-            SqlCommand command = context.Command;
-            Guid operationId = context.OperationID;
-            TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
-            context.Dispose();
-
-            command.CleanupExecuteReaderAsync(task, source, operationId);
-        }
-
         private IAsyncResult BeginExecuteReaderInternal(CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite = false)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
@@ -2221,7 +2250,7 @@ namespace Microsoft.Data.SqlClient
                                             // back into pool when we should not.
                 }
 
-                bool usedCache;
+                bool usedCache = false;
                 Task writeTask = null;
                 try
                 {
@@ -2238,7 +2267,10 @@ namespace Microsoft.Data.SqlClient
 
                     // For async, RunExecuteReader will never put the stateObj back into the pool, so do so now.
                     ReliablePutStateObject();
-                    throw;
+                    if (inRetry || e is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+                    {
+                        throw;
+                    }
                 }
 
                 if (writeTask != null)
@@ -2259,7 +2291,27 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, s_internalEndExecuteReader, s_beginExecuteReaderInternal, nameof(EndExecuteReader)))
+                if (
+                    !TriggerInternalEndAndRetryIfNecessary(
+                        behavior,
+                        stateObject,
+                        timeout,
+                        usedCache,
+                        inRetry,
+                        asyncWrite,
+                        globalCompletion,
+                        localCompletion,
+                        endFunc: static (SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod) =>
+                        {
+                            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
+                        },
+                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite) =>
+                        {
+                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
+                        },
+                        nameof(EndExecuteReader)
+                    )
+                )
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2268,7 +2320,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        static (task, state) => ((AsyncCallback)state)(task),
+                        static (Task<object> task, object state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -2279,42 +2331,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
             }
-        }
-
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static SqlDataReader InternalEndExecuteReaderCallback(SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod)
-        {
-            return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteReaderInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteXmlReaderInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static object InternalEndExecuteNonQueryCallback(SqlCommand command, IAsyncResult asyncResult, bool isInternal, string endMethod)
-        {
-            return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
-        }
-        /// <summary>
-        /// used to convert an invocation through a cached static delegate back to an instance call
-        /// </summary>
-        private static IAsyncResult BeginExecuteNonQueryInternalCallback(SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool inRetry, bool asyncWrite)
-        {
-            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, inRetry, asyncWrite);
         }
 
         private bool TriggerInternalEndAndRetryIfNecessary(
@@ -2425,26 +2441,28 @@ namespace Microsoft.Data.SqlClient
                         if (!shouldRetry)
                         {
                             // If we cannot retry, Reset the async state to make sure we leave a clean state.
-                            if (null != _cachedAsyncState)
+                            if (_cachedAsyncState != null)
                             {
                                 _cachedAsyncState.ResetAsyncState();
                             }
 
-                            _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                            try
+                            {
+                                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
 
-                            globalCompletion.TrySetException(e);
+                                globalCompletion.TrySetException(e);
+                            }
+                            catch (Exception e2)
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
                         }
                         else
                         {
                             // Remove the entry from the cache since it was inconsistent.
                             SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                            if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                            {
-                                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                                EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                                    enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                            }
+                            InvalidateEnclaveSession();
 
                             try
                             {
@@ -2454,21 +2472,26 @@ namespace Microsoft.Data.SqlClient
                                     TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), true /*inRetry*/,
                                     asyncWrite);
 
-                                retryTask.ContinueWith(retryTsk =>
-                                {
-                                    if (retryTsk.IsFaulted)
+                                retryTask.ContinueWith(
+                                    static (Task<object> retryTask, object state) =>
                                     {
-                                        globalCompletion.TrySetException(retryTsk.Exception.InnerException);
-                                    }
-                                    else if (retryTsk.IsCanceled)
-                                    {
-                                        globalCompletion.TrySetCanceled();
-                                    }
-                                    else
-                                    {
-                                        globalCompletion.TrySetResult(retryTsk.Result);
-                                    }
-                                }, TaskScheduler.Default);
+                                        TaskCompletionSource<object> completion = (TaskCompletionSource<object>)state;
+                                        if (retryTask.IsFaulted)
+                                        {
+                                            completion.TrySetException(retryTask.Exception.InnerException);
+                                        }
+                                        else if (retryTask.IsCanceled)
+                                        {
+                                            completion.TrySetCanceled();
+                                        }
+                                        else
+                                        {
+                                            completion.TrySetResult(retryTask.Result);
+                                        }
+                                    }, 
+                                    state: globalCompletion,
+                                    TaskScheduler.Default
+                                );
                             }
                             catch (Exception e2)
                             {
@@ -2478,6 +2501,26 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }, TaskScheduler.Default);
+        }
+
+        private void InvalidateEnclaveSession()
+        {
+            if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
+            {
+                EnclaveDelegate.Instance.InvalidateEnclaveSession(
+                    this._activeConnection.AttestationProtocol,
+                    this._activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(),
+                    this.enclavePackage.EnclaveSession);
+            }
+        }
+
+        private EnclaveSessionParameters GetEnclaveSessionParameters()
+        {
+            return new EnclaveSessionParameters(
+                this._activeConnection.DataSource,
+                this._activeConnection.EnclaveAttestationUrl,
+                this._activeConnection.Database);
         }
 
         private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
@@ -2533,7 +2576,7 @@ namespace Microsoft.Data.SqlClient
             CheckThrowSNIException();
 
             SqlDataReader reader = CompleteAsyncExecuteReader(isInternal);
-            Debug.Assert(null == _stateObj, "non-null state object in InternalEndExecuteReader");
+            Debug.Assert(_stateObj == null, "non-null state object in InternalEndExecuteReader");
             return reader;
         }
 
@@ -2551,7 +2594,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            TaskCompletionSource<int> source = new TaskCompletionSource<int>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<int> source = new TaskCompletionSource<int>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2572,41 +2618,27 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Task<int>.Factory.FromAsync(
-                    static (AsyncCallback callback, object stateObject) => ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject),
-                    static (IAsyncResult result) => ((ExecuteNonQueryAsyncCallContext)result.AsyncState).Command.EndExecuteNonQueryAsync(result),
-                    state: context
-                ).ContinueWith(
-                    static (Task<int> task, object state) =>
+                    beginMethod: static (AsyncCallback callback, object stateObject) => // with c# 10/NET6 add [StackTraceHidden] to this
                     {
-                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)state;
-
-                        Guid operationId = context.OperationID;
-                        SqlCommand command = context.Command;
-                        TaskCompletionSource<int> source = context.TaskCompletionSource;
-
-                        context.Dispose();
-                        context = null;
-
-                        if (task.IsFaulted)
-                        {
-                            Exception e = task.Exception.InnerException;
-                            s_diagnosticListener.WriteCommandError(operationId, command, command._transaction, e);
-                            source.SetException(e);
-                        }
-                        else
-                        {
-                            if (task.IsCanceled)
-                            {
-                                source.SetCanceled();
-                            }
-                            else
-                            {
-                                source.SetResult(task.Result);
-                            }
-                            s_diagnosticListener.WriteCommandAfter(operationId, command, command._transaction);
-                        }
+                        return ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(callback, stateObject);
                     },
-                    state: context,
+                    endMethod: static (IAsyncResult asyncResult) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        return ((ExecuteNonQueryAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteNonQueryAsync(asyncResult);
+                    },
+                    state: context
+                )
+                .ContinueWith(
+                    static (Task<int> task) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        ExecuteNonQueryAsyncCallContext context = (ExecuteNonQueryAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<int> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupAfterExecuteNonQueryAsync(task, source, operationId);
+                    },
                     scheduler: TaskScheduler.Default
                 );
             }
@@ -2618,6 +2650,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception.InnerException;
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                source.SetException(e);
+            }
+            else
+            {
+                if (task.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else
+                {
+                    source.SetResult(task.Result);
+                }
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
@@ -2675,7 +2729,10 @@ namespace Microsoft.Data.SqlClient
                 operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             }
 
-            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2705,12 +2762,29 @@ namespace Microsoft.Data.SqlClient
                 context.Set(this, source, registration, behavior, operationId);
 
                 Task<SqlDataReader>.Factory.FromAsync(
-                    beginMethod: s_beginExecuteReaderAsync,
-                    endMethod: s_endExecuteReaderAsync,
+                    beginMethod: static (AsyncCallback callback, object stateObject) =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)stateObject;
+                        return args.Command.BeginExecuteReaderInternal(args.CommandBehavior, callback, stateObject, args.Command.CommandTimeout, inRetry: false, asyncWrite: true);
+                    },
+                    endMethod: static (IAsyncResult asyncResult) =>
+                    {
+                        ExecuteReaderAsyncCallContext args = (ExecuteReaderAsyncCallContext)asyncResult.AsyncState;
+                        return args.Command.EndExecuteReaderAsync(asyncResult);
+                    },
                     state: context
                 ).ContinueWith(
-                    continuationAction: s_cleanupExecuteReaderAsync,
-                    TaskScheduler.Default
+                    continuationAction: static (Task<SqlDataReader> task) =>
+                    {
+                        ExecuteReaderAsyncCallContext context = (ExecuteReaderAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<SqlDataReader> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupExecuteReaderAsync(task, source, operationId);
+                    },
+                    scheduler: TaskScheduler.Default
                 );
             }
             catch (Exception e)
@@ -2721,7 +2795,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 source.SetException(e);
-                context.Dispose();
+                context?.Dispose();
             }
 
             return returnedTask;
@@ -2732,6 +2806,22 @@ namespace Microsoft.Data.SqlClient
             if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
             {
                 Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteReaderAsyncContext, instance, null);
+            }
+        }
+
+        private void SetCachedCommandExecuteNonQueryAsyncContext(ExecuteNonQueryAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteNonQueryAsyncContext, instance, null);
+            }
+        }
+
+        private void SetCachedCommandExecuteXmlReaderContext(ExecuteXmlReaderAsyncCallContext instance)
+        {
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                Interlocked.CompareExchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, instance, null);
             }
         }
 
@@ -2818,13 +2908,101 @@ namespace Microsoft.Data.SqlClient
                                 // exception thrown by Dispose...
                                 source.SetException(e);
                             }
-                        }, 
+                        },
                         TaskScheduler.Default
                     );
                 }
                 _parentOperationStarted = false;
                 return source.Task;
             }, TaskScheduler.Default).Unwrap();
+        }
+
+        internal Task<object> ExecuteScalarBatchAsync(CancellationToken cancellationToken)
+        {
+            _parentOperationStarted = true;
+            Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
+
+            return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
+            {
+                TaskCompletionSource<object> source = new TaskCompletionSource<object>();
+                if (executeTask.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else if (executeTask.IsFaulted)
+                {
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
+                    source.SetException(executeTask.Exception.InnerException);
+                }
+                else
+                {
+                    SqlDataReader reader = executeTask.Result;
+                    ExecuteScalarUntilEndAsync(reader, cancellationToken).ContinueWith(
+                        (readTask) =>
+                        {
+                            try
+                            {
+                                if (readTask.IsCanceled)
+                                {
+                                    reader.Dispose();
+                                    source.SetCanceled();
+                                }
+                                else if (readTask.IsFaulted)
+                                {
+                                    reader.Dispose();
+                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
+                                    source.SetException(readTask.Exception.InnerException);
+                                }
+                                else
+                                {
+                                    Exception exception = null;
+                                    object result = null;
+                                    try
+                                    {
+                                        result = readTask.Result;
+                                    }
+                                    finally
+                                    {
+                                        reader.Dispose();
+                                    }
+                                    if (exception != null)
+                                    {
+                                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                        source.SetException(exception);
+                                    }
+                                    else
+                                    {
+                                        s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                        source.SetResult(result);
+                                    }
+                                }
+                            }
+                            catch (Exception e)
+                            {
+                                // exception thrown by Dispose...
+                                source.SetException(e);
+                            }
+                        },
+                        TaskScheduler.Default
+                    );
+                }
+                _parentOperationStarted = false;
+                return source.Task;
+            }, TaskScheduler.Default).Unwrap();
+        }
+
+        private async Task<object> ExecuteScalarUntilEndAsync(SqlDataReader reader, CancellationToken cancellationToken)
+        {
+            object retval = null;
+            do
+            {
+                if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
+                {
+                    retval = reader.GetValue(0); // no async untyped value getter, this will work ok as long as the value is in the current packet
+                }
+            }
+            while (_batchRPCMode && !cancellationToken.IsCancellationRequested && await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
+            return retval;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
@@ -2847,7 +3025,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2860,35 +3041,43 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
+            ExecuteXmlReaderAsyncCallContext context = null;
+            if (_activeConnection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+            {
+                context = Interlocked.Exchange(ref sqlInternalConnection.CachedCommandExecuteXmlReaderAsyncContext, null);
+            }
+            if (context is null)
+            {
+                context = new ExecuteXmlReaderAsyncCallContext();
+            }
+            context.Set(this, source, registration, operationId);
+
             Task<XmlReader> returnedTask = source.Task;
             try
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null)
-                    .ContinueWith((Task<XmlReader> task) =>
+                Task<XmlReader>.Factory.FromAsync(
+                    beginMethod: static (AsyncCallback callback, object stateObject) => // with c# 10/NET6 add [StackTraceHidden] to this
                     {
-                        registration.Dispose();
-                        if (task.IsFaulted)
-                        {
-                            Exception e = task.Exception.InnerException;
-                            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                            source.SetException(e);
-                        }
-                        else
-                        {
-                            s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                            if (task.IsCanceled)
-                            {
-                                source.SetCanceled();
-                            }
-                            else
-                            {
-                                source.SetResult(task.Result);
-                            }
- 
-                        }
-                    }, 
+                        return ((ExecuteXmlReaderAsyncCallContext)stateObject).Command.BeginExecuteXmlReaderAsync(callback, stateObject);
+                    },
+                    endMethod: static (IAsyncResult asyncResult) => // with c# 10/NET6 add [StackTraceHidden] to this
+                    {
+                        return ((ExecuteXmlReaderAsyncCallContext)asyncResult.AsyncState).Command.EndExecuteXmlReaderAsync(asyncResult);
+                    },
+                    state: context
+                ).ContinueWith(
+                    static (Task<XmlReader> task) =>
+                    {
+                        ExecuteXmlReaderAsyncCallContext context = (ExecuteXmlReaderAsyncCallContext)task.AsyncState;
+                        SqlCommand command = context.Command;
+                        Guid operationId = context.OperationID;
+                        TaskCompletionSource<XmlReader> source = context.TaskCompletionSource;
+                        context.Dispose();
+
+                        command.CleanupAfterExecuteXmlReaderAsync(task, source, operationId);
+                    },
                     TaskScheduler.Default
                 );
             }
@@ -2899,6 +3088,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        private void CleanupAfterExecuteXmlReaderAsync(Task<XmlReader> task, TaskCompletionSource<XmlReader> source, Guid operationId)
+        {
+            if (task.IsFaulted)
+            {
+                Exception e = task.Exception.InnerException;
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                source.SetException(e);
+            }
+            else
+            {
+                if (task.IsCanceled)
+                {
+                    source.SetCanceled();
+                }
+                else
+                {
+                    source.SetResult(task.Result);
+                }
+                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
@@ -2966,7 +3177,11 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
         {
-            return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+            if (_customColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return new List<string>(_customColumnEncryptionKeyStoreProviders.Keys);
+            }
+            return new List<string>(0);
         }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
@@ -2974,7 +3189,7 @@ namespace Microsoft.Data.SqlClient
         // with the function below, ideally we should have support from the server for this.
         private static string UnquoteProcedurePart(string part)
         {
-            if ((null != part) && (2 <= part.Length))
+            if (part != null && (2 <= part.Length))
             {
                 if ('[' == part[0] && ']' == part[part.Length - 1])
                 {
@@ -2994,7 +3209,7 @@ namespace Microsoft.Data.SqlClient
             groupNumber = null; // Out param - initialize value to no value.
             string sproc = name;
 
-            if (null != sproc)
+            if (sproc != null)
             {
                 if (char.IsDigit(sproc[sproc.Length - 1]))
                 { // If last char is a digit, parse.
@@ -3093,7 +3308,7 @@ namespace Microsoft.Data.SqlClient
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
-            if (null == parsedSProc[3] || string.IsNullOrEmpty(parsedSProc[3]))
+            if (string.IsNullOrEmpty(parsedSProc[3]))
             {
                 throw ADP.NoStoredProcedureExists(CommandText);
             }
@@ -3158,7 +3373,7 @@ namespace Microsoft.Data.SqlClient
             paramsCmd.Parameters.Add(new SqlParameter("@procedure_name", SqlDbType.NVarChar, 255));
             paramsCmd.Parameters[0].Value = UnquoteProcedureName(parsedSProc[3], out groupNumber); // ProcedureName is 4rd element in parsed array
 
-            if (null != groupNumber)
+            if (groupNumber != null)
             {
                 SqlParameter param = paramsCmd.Parameters.Add(new SqlParameter("@group_number", SqlDbType.Int));
                 param.Value = groupNumber;
@@ -3382,11 +3597,11 @@ namespace Microsoft.Data.SqlClient
 
             // There is a variance in order between Start(), SqlDependency(), and Execute.  This is the
             // best way to solve that problem.
-            if (null != Notification)
+            if (Notification != null)
             {
                 if (_sqlDep != null)
                 {
-                    if (null == _sqlDep.Options)
+                    if (_sqlDep.Options == null)
                     {
                         // If null, SqlDependency was not created with options, so we need to obtain default options now.
                         // GetDefaultOptions can and will throw under certain conditions.
@@ -3474,11 +3689,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
             }
             catch (Exception e)
@@ -3595,7 +3811,7 @@ namespace Microsoft.Data.SqlClient
             if (closeDataReader)
             {
                 // Close the data reader to reset the _stateObj
-                if (null != describeParameterEncryptionDataReader)
+                if (describeParameterEncryptionDataReader != null)
                 {
                     describeParameterEncryptionDataReader.Close();
                 }
@@ -3636,7 +3852,7 @@ namespace Microsoft.Data.SqlClient
 
             // If we are not in Batch RPC and not already retrying, attempt to fetch the cipher MD for each parameter from the cache.
             // If this succeeds then return immediately, otherwise just fall back to the full crypto MD discovery.
-            if (!BatchRPCMode && !inRetry && (this._parameters != null && this._parameters.Count > 0) && SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
+            if (!_batchRPCMode && !inRetry && (this._parameters != null && this._parameters.Count > 0) && SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
             {
                 usedCache = true;
                 return;
@@ -3651,7 +3867,7 @@ namespace Microsoft.Data.SqlClient
             // Flag to indicate if exception is caught during the execution, to govern clean up.
             bool exceptionCaught = false;
 
-            // Used in BatchRPCMode to maintain a map of describe parameter encryption RPC requests (Keys) and their corresponding original RPC requests (Values).
+            // Used in _batchRPCMode to maintain a map of describe parameter encryption RPC requests (Keys) and their corresponding original RPC requests (Values).
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap = null;
 
 
@@ -3660,7 +3876,13 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // Fetch the encryption information that applies to any of the input parameters.
-                    describeParameterEncryptionDataReader = TryFetchInputParameterEncryptionInfo(timeout, isAsync, asyncWrite, out describeParameterEncryptionNeeded, out fetchInputParameterEncryptionInfoTask, out describeParameterEncryptionRpcOriginalRpcMap);
+                    describeParameterEncryptionDataReader = TryFetchInputParameterEncryptionInfo(timeout,
+                                                                                                 isAsync,
+                                                                                                 asyncWrite,
+                                                                                                 out describeParameterEncryptionNeeded,
+                                                                                                 out fetchInputParameterEncryptionInfoTask,
+                                                                                                 out describeParameterEncryptionRpcOriginalRpcMap,
+                                                                                                 inRetry);
 
                     Debug.Assert(describeParameterEncryptionNeeded || describeParameterEncryptionDataReader == null,
                         "describeParameterEncryptionDataReader should be null if we don't need to request describe parameter encryption request.");
@@ -3668,16 +3890,16 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(fetchInputParameterEncryptionInfoTask == null || isAsync,
                         "Task returned by TryFetchInputParameterEncryptionInfo, when in sync mode, in PrepareForTransparentEncryption.");
 
-                    Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == BatchRPCMode,
-                        "describeParameterEncryptionRpcOriginalRpcMap can be non-null if and only if it is in BatchRPCMode.");
+                    Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == _batchRPCMode,
+                        "describeParameterEncryptionRpcOriginalRpcMap can be non-null if and only if it is in _batchRPCMode.");
 
                     // If we didn't have parameters, we can fall back to regular code path, by simply returning.
                     if (!describeParameterEncryptionNeeded)
                     {
-                        Debug.Assert(null == fetchInputParameterEncryptionInfoTask,
+                        Debug.Assert(fetchInputParameterEncryptionInfoTask == null,
                             "fetchInputParameterEncryptionInfoTask should not be set if describe parameter encryption is not needed.");
 
-                        Debug.Assert(null == describeParameterEncryptionDataReader,
+                        Debug.Assert(describeParameterEncryptionDataReader == null,
                             "SqlDataReader created for describe parameter encryption params when it is not needed.");
 
                         return;
@@ -3695,7 +3917,13 @@ namespace Microsoft.Data.SqlClient
                         // Mark that we should not process the finally block since we have async execution pending.
                         // Note that this should be done outside the task's continuation delegate.
                         processFinallyBlock = false;
-                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(out returnTask, fetchInputParameterEncryptionInfoTask, describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, describeParameterEncryptionNeeded);
+                        describeParameterEncryptionDataReader = GetParameterEncryptionDataReader(
+                            out returnTask,
+                            fetchInputParameterEncryptionInfoTask,
+                            describeParameterEncryptionDataReader,
+                            describeParameterEncryptionRpcOriginalRpcMap,
+                            describeParameterEncryptionNeeded,
+                            inRetry);
 
                         decrementAsyncCountInFinallyBlock = false;
                     }
@@ -3707,14 +3935,22 @@ namespace Microsoft.Data.SqlClient
                             // Mark that we should not process the finally block since we have async execution pending.
                             // Note that this should be done outside the task's continuation delegate.
                             processFinallyBlock = false;
-                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(out returnTask, describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, describeParameterEncryptionNeeded);
+                            describeParameterEncryptionDataReader = GetParameterEncryptionDataReaderAsync(
+                                out returnTask,
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                describeParameterEncryptionNeeded,
+                                inRetry);
 
                             decrementAsyncCountInFinallyBlock = false;
                         }
                         else
                         {
                             // For synchronous execution, read the results of describe parameter encryption here.
-                            ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                            ReadDescribeEncryptionParameterResults(
+                                describeParameterEncryptionDataReader,
+                                describeParameterEncryptionRpcOriginalRpcMap,
+                                inRetry);
                         }
 
 #if DEBUG
@@ -3761,7 +3997,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader GetParameterEncryptionDataReader(out Task returnTask, Task fetchInputParameterEncryptionInfoTask,
             SqlDataReader describeParameterEncryptionDataReader,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded)
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded, bool inRetry)
         {
             returnTask = AsyncHelper.CreateContinuationTaskWithState(fetchInputParameterEncryptionInfoTask, this,
                 (object state) =>
@@ -3769,8 +4005,9 @@ namespace Microsoft.Data.SqlClient
                     SqlCommand command = (SqlCommand)state;
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
-
+#if NETFRAMEWORK 
                     RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         // Check for any exceptions on network write, before reading.
@@ -3787,10 +4024,10 @@ namespace Microsoft.Data.SqlClient
 
                         // Complete executereader.
                         describeParameterEncryptionDataReader = command.CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                        Debug.Assert(null == command._stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                        Debug.Assert(command._stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
 
                         // Read the results of describe parameter encryption.
-                        command.ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+                        command.ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap, inRetry);
 
 #if DEBUG
                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -3835,14 +4072,16 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader GetParameterEncryptionDataReaderAsync(out Task returnTask,
             SqlDataReader describeParameterEncryptionDataReader,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded)
+            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded, bool inRetry)
         {
             returnTask = Task.Run(() =>
             {
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
+#if NETFRAMEWORK
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     // Check for any exceptions on network write, before reading.
@@ -3859,11 +4098,11 @@ namespace Microsoft.Data.SqlClient
 
                     // Complete executereader.
                     describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                    Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
+                    Debug.Assert(_stateObj == null, "non-null state object in PrepareForTransparentEncryption.");
 
                     // Read the results of describe parameter encryption.
                     ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap);
+                        describeParameterEncryptionRpcOriginalRpcMap, inRetry);
 #if DEBUG
                     // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                     if (_sleepAfterReadDescribeEncryptionParameterResults)
@@ -3900,13 +4139,15 @@ namespace Microsoft.Data.SqlClient
         /// <param name="inputParameterEncryptionNeeded"></param>
         /// <param name="task"></param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"></param>
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
         /// <returns></returns>
         private SqlDataReader TryFetchInputParameterEncryptionInfo(int timeout,
                                                                    bool isAsync,
                                                                    bool asyncWrite,
                                                                    out bool inputParameterEncryptionNeeded,
                                                                    out Task task,
-                                                                   out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap)
+                                                                   out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
+                                                                   bool isRetry)
         {
             inputParameterEncryptionNeeded = false;
             task = null;
@@ -3918,10 +4159,10 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                 string enclaveType = this._activeConnection.Parser.EnclaveType;
 
-                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                EnclaveSessionParameters enclaveSessionParameters = GetEnclaveSessionParameters();
 
                 SqlEnclaveSession sqlEnclaveSession = null;
-                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, out sqlEnclaveSession, out customData, out customDataLength);
+                EnclaveDelegate.Instance.GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, true, isRetry, out sqlEnclaveSession, out customData, out customDataLength);
                 if (sqlEnclaveSession == null)
                 {
                     enclaveAttestationParameters = EnclaveDelegate.Instance.GetAttestationParameters(attestationProtocol, enclaveType, enclaveSessionParameters.AttestationUrl, customData, customDataLength);
@@ -3929,32 +4170,32 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
                 // Count the rpc requests that need to be transparently encrypted
                 // We simply look for any parameters in a request and add the request to be queried for parameter encryption
                 Dictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcDictionary = new Dictionary<_SqlRPC, _SqlRPC>();
 
-                for (int i = 0; i < _SqlRPCBatchArray.Length; i++)
+                for (int i = 0; i < _RPCList.Count; i++)
                 {
                     // In BatchRPCMode, the actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-BatchRPCMode.
                     // So input parameters start at parameters[1]. parameters[0] is the actual T-SQL Statement. rpcName is sp_executesql.
-                    if (_SqlRPCBatchArray[i].systemParams.Length > 1)
+                    if (_RPCList[i].systemParams.Length > 1)
                     {
-                        _SqlRPCBatchArray[i].needsFetchParameterEncryptionMetadata = true;
+                        _RPCList[i].needsFetchParameterEncryptionMetadata = true;
 
                         // Since we are going to need multiple RPC objects, allocate a new one here for each command in the batch.
                         _SqlRPC rpcDescribeParameterEncryptionRequest = new _SqlRPC();
 
                         // Prepare the describe parameter encryption request.
-                        PrepareDescribeParameterEncryptionRequest(_SqlRPCBatchArray[i], ref rpcDescribeParameterEncryptionRequest, i == 0 ? serializedAttestationParameters : null);
+                        PrepareDescribeParameterEncryptionRequest(_RPCList[i], ref rpcDescribeParameterEncryptionRequest, i == 0 ? serializedAttestationParameters : null);
                         Debug.Assert(rpcDescribeParameterEncryptionRequest != null, "rpcDescribeParameterEncryptionRequest should not be null, after call to PrepareDescribeParameterEncryptionRequest.");
 
                         Debug.Assert(!describeParameterEncryptionRpcOriginalRpcDictionary.ContainsKey(rpcDescribeParameterEncryptionRequest),
                             "There should not already be a key referring to the current rpcDescribeParameterEncryptionRequest, in the dictionary describeParameterEncryptionRpcOriginalRpcDictionary.");
 
                         // Add the describe parameter encryption RPC request as the key and its corresponding original rpc request to the dictionary.
-                        describeParameterEncryptionRpcOriginalRpcDictionary.Add(rpcDescribeParameterEncryptionRequest, _SqlRPCBatchArray[i]);
+                        describeParameterEncryptionRpcOriginalRpcDictionary.Add(rpcDescribeParameterEncryptionRequest, _RPCList[i]);
                     }
                 }
 
@@ -3970,10 +4211,11 @@ namespace Microsoft.Data.SqlClient
                     inputParameterEncryptionNeeded = true;
                 }
 
-                _sqlRPCParameterEncryptionReqArray = describeParameterEncryptionRpcOriginalRpcMap.Keys.ToArray();
+                _sqlRPCParameterEncryptionReqArray = new _SqlRPC[describeParameterEncryptionRpcOriginalRpcMap.Count];
+                describeParameterEncryptionRpcOriginalRpcMap.Keys.CopyTo(_sqlRPCParameterEncryptionReqArray, 0);
 
                 Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length > 0, "There should be at-least 1 describe parameter encryption rpc request.");
-                Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length <= _SqlRPCBatchArray.Length,
+                Debug.Assert(_sqlRPCParameterEncryptionReqArray.Length <= _RPCList.Count,
                                 "The number of decribe parameter encryption RPC requests is more than the number of original RPC requests.");
             }
             //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
@@ -4044,17 +4286,18 @@ namespace Microsoft.Data.SqlClient
             // Prepare @tsql parameter
             string text;
 
-            // In BatchRPCMode, The actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-BatchRPCMode.
-            if (BatchRPCMode)
+            // In _batchRPCMode, The actual T-SQL query is in the first parameter and not present as the rpcName, as is the case with non-_batchRPCMode.
+            if (_batchRPCMode)
             {
                 Debug.Assert(originalRpcRequest.systemParamCount > 0,
-                    "originalRpcRequest didn't have at-least 1 parameter in BatchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
+                    "originalRpcRequest didn't have at-least 1 parameter in _batchRPCMode, in PrepareDescribeParameterEncryptionRequest.");
                 text = (string)originalRpcRequest.systemParams[0].Value;
                 //@tsql
                 SqlParameter tsqlParam = describeParameterEncryptionRequest.systemParams[0];
                 tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 tsqlParam.Value = text;
                 tsqlParam.Size = text.Length;
+                tsqlParam.Direction = ParameterDirection.Input;
             }
             else
             {
@@ -4072,6 +4315,7 @@ namespace Microsoft.Data.SqlClient
                     tsqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                     tsqlParam.Value = text;
                     tsqlParam.Size = text.Length;
+                    tsqlParam.Direction = ParameterDirection.Input;
                 }
             }
 
@@ -4080,7 +4324,7 @@ namespace Microsoft.Data.SqlClient
 
             // In BatchRPCMode, the input parameters start at parameters[1]. parameters[0] is the T-SQL statement. rpcName is sp_executesql.
             // And it is already in the format expected out of BuildParamList, which is not the case with Non-BatchRPCMode.
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
                 // systemParamCount == 2 when user parameters are supplied to BuildExecuteSql
                 if (originalRpcRequest.systemParamCount > 1)
@@ -4148,13 +4392,15 @@ namespace Microsoft.Data.SqlClient
             paramsParam.SqlDbType = ((parameterList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             paramsParam.Size = parameterList.Length;
             paramsParam.Value = parameterList;
+            paramsParam.Direction = ParameterDirection.Input;
 
             if (attestationParameters != null)
             {
                 SqlParameter attestationParametersParam = describeParameterEncryptionRequest.systemParams[2];
-                attestationParametersParam.Direction = ParameterDirection.Input;
+                attestationParametersParam.SqlDbType = SqlDbType.VarBinary;
                 attestationParametersParam.Size = attestationParameters.Length;
                 attestationParametersParam.Value = attestationParameters;
+                attestationParametersParam.Direction = ParameterDirection.Input;
             }
         }
 
@@ -4163,15 +4409,16 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
         /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap)
+        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
+        private void ReadDescribeEncryptionParameterResults(SqlDataReader ds, ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool isRetry)
         {
             _SqlRPC rpc = null;
             int currentOrdinal = -1;
             SqlTceCipherInfoEntry cipherInfoEntry;
             Dictionary<int, SqlTceCipherInfoEntry> columnEncryptionKeyTable = new Dictionary<int, SqlTceCipherInfoEntry>();
 
-            Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == BatchRPCMode,
-                "describeParameterEncryptionRpcOriginalRpcMap should be non-null if and only if it is BatchRPCMode.");
+            Debug.Assert((describeParameterEncryptionRpcOriginalRpcMap != null) == _batchRPCMode,
+                "describeParameterEncryptionRpcOriginalRpcMap should be non-null if and only if it is _batchRPCMode.");
 
             // Indicates the current result set we are reading, used in BatchRPCMode, where we can have more than 1 result set.
             int resultSetSequenceNumber = 0;
@@ -4187,12 +4434,12 @@ namespace Microsoft.Data.SqlClient
 
             do
             {
-                if (BatchRPCMode)
+                if (_batchRPCMode)
                 {
                     // If we got more RPC results from the server than what was requested.
                     if (resultSetSequenceNumber >= _sqlRPCParameterEncryptionReqArray.Length)
                     {
-                        Debug.Assert(false, "Server sent back more results than what was expected for describe parameter encryption requests in BatchRPCMode.");
+                        Debug.Assert(false, "Server sent back more results than what was expected for describe parameter encryption requests in _batchRPCMode.");
                         // Ignore the rest of the results from the server, if for whatever reason it sends back more than what we expect.
                         break;
                     }
@@ -4309,7 +4556,7 @@ namespace Microsoft.Data.SqlClient
 
 
                 // Find the RPC command that generated this tce request
-                if (BatchRPCMode)
+                if (_batchRPCMode)
                 {
                     Debug.Assert(_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] != null, "_sqlRPCParameterEncryptionReqArray[resultSetSequenceNumber] should not be null.");
 
@@ -4331,7 +4578,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(rpc != null, "rpc should not be null here.");
 
                 int userParamCount = rpc.userParams?.Count ?? 0;
-                int recievedMetadataCount = 0;
+                int receivedMetadataCount = 0;
                 if (!enclaveMetadataExists || ds.NextResult())
                 {
 
@@ -4352,11 +4599,11 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter sqlParameter = rpc.userParams[index];
                             Debug.Assert(sqlParameter != null, "sqlParameter should not be null.");
 
-                            if (sqlParameter.ParameterNameFixed.Equals(parameterName, StringComparison.Ordinal))
+                            if (SqlParameter.ParameterNamesEqual(sqlParameter.ParameterName, parameterName, StringComparison.Ordinal))
                             {
                                 Debug.Assert(sqlParameter.CipherMetadata == null, "param.CipherMetadata should be null.");
                                 sqlParameter.HasReceivedMetadata = true;
-                                recievedMetadataCount += 1;
+                                receivedMetadataCount += 1;
                                 // Found the param, setup the encryption info.
                                 byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
                                 if ((byte)SqlClientEncryptionType.PlainText != columnEncryptionType)
@@ -4382,8 +4629,8 @@ namespace Microsoft.Data.SqlClient
                                     Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
                                     SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
 
-                                    // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
-                                    // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
+                                    // This is effective only for _batchRPCMode even though we set it for non-_batchRPCMode also,
+                                    // since for non-_batchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
                                     int options = (int)(rpc.userParamMap[index] >> 32);
                                     options |= TdsEnums.RPC_PARAM_ENCRYPTED;
                                     rpc.userParamMap[index] = ((((long)options) << 32) | (long)index);
@@ -4398,7 +4645,7 @@ namespace Microsoft.Data.SqlClient
                 // When the RPC object gets reused, the parameter array has more parameters that the valid params for the command.
                 // Null is used to indicate the end of the valid part of the array. Refer to GetRPCObject().
 
-                if (recievedMetadataCount != userParamCount)
+                if (receivedMetadataCount != userParamCount)
                 {
                     for (int index = 0; index < userParamCount; index++)
                     {
@@ -4442,9 +4689,16 @@ namespace Microsoft.Data.SqlClient
 
                         SqlConnectionAttestationProtocol attestationProtocol = this._activeConnection.AttestationProtocol;
                         string enclaveType = this._activeConnection.Parser.EnclaveType;
-                        EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
 
-                        EnclaveDelegate.Instance.CreateEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, attestationInfo, enclaveAttestationParameters, customData, customDataLength);
+                        EnclaveDelegate.Instance.CreateEnclaveSession(
+                            attestationProtocol,
+                            enclaveType,
+                            GetEnclaveSessionParameters(),
+                            attestationInfo,
+                            enclaveAttestationParameters,
+                            customData,
+                            customDataLength,
+                            isRetry);
                         enclaveAttestationParameters = null;
                         attestationInfoRead = true;
                     }
@@ -4460,19 +4714,19 @@ namespace Microsoft.Data.SqlClient
             } while (ds.NextResult());
 
             // Verify that we received response for each rpc call needs tce
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
-                for (int i = 0; i < _SqlRPCBatchArray.Length; i++)
+                for (int i = 0; i < _RPCList.Count; i++)
                 {
-                    if (_SqlRPCBatchArray[i].needsFetchParameterEncryptionMetadata)
+                    if (_RPCList[i].needsFetchParameterEncryptionMetadata)
                     {
-                        throw SQL.ProcEncryptionMetadataMissing(_SqlRPCBatchArray[i].rpcName);
+                        throw SQL.ProcEncryptionMetadataMissing(_RPCList[i].rpcName);
                     }
                 }
             }
 
             // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
+            if (!_batchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
@@ -4489,7 +4743,7 @@ namespace Microsoft.Data.SqlClient
         // task is created in case of pending asynchronous write, returned SqlDataReader should not be utilized until that task is complete
         internal SqlDataReader RunExecuteReader(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, TaskCompletionSource<object> completion, int timeout, out Task task, out bool usedCache, bool asyncWrite = false, bool inRetry = false, [CallerMemberName] string method = "")
         {
-            bool isAsync = (null != completion);
+            bool isAsync = completion != null;
             usedCache = false;
 
             task = null;
@@ -4513,7 +4767,7 @@ namespace Microsoft.Data.SqlClient
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
 
             SqlStatistics statistics = Statistics;
-            if (null != statistics)
+            if (statistics != null)
             {
                 if ((!this.IsDirty && this.IsPrepared && !_hiddenPrepare)
                     || (this.IsPrepared && _execType == EXECTYPE.PREPAREPENDING))
@@ -4545,7 +4799,7 @@ namespace Microsoft.Data.SqlClient
 
                 catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                 {
-                    if (inRetry || isAsync)
+                    if (inRetry)
                     {
                         throw;
                     }
@@ -4554,22 +4808,16 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption MD.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                    if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                    {
-                        EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                        EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                            enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                    }
+                    InvalidateEnclaveSession();
 
-                    return RunExecuteReader(cmdBehavior, runBehavior, returnStream, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
+                    return RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
                 }
 
                 catch (SqlException ex)
                 {
                     // We only want to retry once, so don't retry if we are already in retry.
                     // If we didn't use the cache, we don't want to retry.
-                    // The async retried are handled separately, handle only sync calls here.
-                    if (inRetry || isAsync || (!usedCache && !ShouldUseEnclaveBasedWorkflow))
+                    if (inRetry || (!usedCache && !ShouldUseEnclaveBasedWorkflow))
                     {
                         throw;
                     }
@@ -4598,14 +4846,9 @@ namespace Microsoft.Data.SqlClient
                         // First invalidate the entry from the cache, so that we refresh our encryption MD.
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
 
-                        if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
-                        {
-                            EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
-                            EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
-                              enclaveSessionParameters, this.enclavePackage.EnclaveSession);
-                        }
+                        InvalidateEnclaveSession();
 
-                        return RunExecuteReader(cmdBehavior, runBehavior, returnStream, null, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
+                        return RunExecuteReader(cmdBehavior, runBehavior, returnStream, completion, TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart), out task, out usedCache, isAsync, inRetry: true, method: method);
                     }
                 }
             }
@@ -4687,7 +4930,7 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) && 
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) &&
                 Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
             {
                 throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
@@ -4705,9 +4948,15 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+#if DEBUG
+                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+                {
+                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+                }
+#endif
                 this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, enclaveSessionParameters, _activeConnection, this);
+                    this.CommandText, enclaveType, GetEnclaveSessionParameters(), _activeConnection, this);
             }
             catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
@@ -4752,7 +5001,7 @@ namespace Microsoft.Data.SqlClient
             // make sure we have good parameter information
             // prepare the command
             // execute
-            Debug.Assert(null != _activeConnection.Parser, "TdsParser class should not be null in Command.Execute!");
+            Debug.Assert(_activeConnection.Parser != null, "TdsParser class should not be null in Command.Execute!");
 
             bool inSchema = (0 != (cmdBehavior & CommandBehavior.SchemaOnly));
 
@@ -4765,8 +5014,7 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             bool decrementAsyncCountOnFailure = false;
 
-            // If we are in retry, don't increment the Async count. This should have already been set.
-            if (isAsync && !inRetry)
+            if (isAsync)
             {
                 _activeConnection.GetOpenTdsConnection().IncrementAsyncCount();
                 decrementAsyncCountOnFailure = true;
@@ -4794,13 +5042,13 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_sqlRPCParameterEncryptionReqArray != null, "RunExecuteReader rpc array not provided for describe parameter encryption request.");
                     writeTask = _stateObj.Parser.TdsExecuteRPC(this, _sqlRPCParameterEncryptionReqArray, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
-                else if (BatchRPCMode)
+                else if (_batchRPCMode)
                 {
                     Debug.Assert(inSchema == false, "Batch RPC does not support schema only command behavior");
                     Debug.Assert(!IsPrepared, "Batch RPC should not be prepared!");
                     Debug.Assert(!IsDirty, "Batch RPC should not be marked as dirty!");
-                    Debug.Assert(_SqlRPCBatchArray != null, "RunExecuteReader rpc array not provided");
-                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _SqlRPCBatchArray, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
+                    Debug.Assert(_RPCList != null, "RunExecuteReader rpc array not provided");
+                    writeTask = _stateObj.Parser.TdsExecuteRPC(this, _RPCList, timeout, inSchema, this.Notification, _stateObj, CommandType.StoredProcedure == CommandType, sync: !asyncWrite);
                 }
                 else if ((CommandType.Text == this.CommandType) && (0 == GetParameterCount(_parameters)))
                 {
@@ -4893,14 +5141,16 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // turn set options ON
-                    if (null != optionSettings)
+                    if (optionSettings != null)
                     {
                         Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(optionSettings, timeout, this.Notification, _stateObj, sync: true);
                         Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
                         Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                        bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
-                        if (!result)
-                        { throw SQL.SynchronousCallMayNotPend(); }
+                        TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out bool dataReady);
+                        if (result != TdsOperationStatus.Done)
+                        {
+                            throw SQL.SynchronousCallMayNotPend();
+                        }
                         // and turn OFF when the ds exhausts the stream on Close()
                         optionSettings = GetResetOptionsString(cmdBehavior);
                     }
@@ -4936,7 +5186,7 @@ namespace Microsoft.Data.SqlClient
                 if (decrementAsyncCountOnFailure)
                 {
                     SqlInternalConnectionTds innerConnectionTds = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                    if (null != innerConnectionTds)
+                    if (innerConnectionTds != null)
                     { // it may be closed
                         innerConnectionTds.DecrementAsyncCount();
                     }
@@ -4952,7 +5202,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Debug.Assert(isAsync || null == _stateObj, "non-null state object in RunExecuteReader");
+            Debug.Assert(isAsync || _stateObj == null, "non-null state object in RunExecuteReader");
             return ds;
         }
 
@@ -5056,11 +5306,12 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    bool dataReady;
                     Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-                    bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out dataReady);
-                    if (!result)
-                    { throw SQL.SynchronousCallMayNotPend(); }
+                    TdsOperationStatus result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, ds, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        throw SQL.SynchronousCallMayNotPend();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -5076,7 +5327,7 @@ namespace Microsoft.Data.SqlClient
                             _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
                         }
 
-                        if (null != ds)
+                        if (ds != null)
                         {
                             try
                             {
@@ -5169,7 +5420,7 @@ namespace Microsoft.Data.SqlClient
         // throws exception for error case, returns false if the commandText is empty
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
-            if (null == _activeConnection)
+            if (_activeConnection == null)
             {
                 throw ADP.ConnectionRequired(method);
             }
@@ -5180,8 +5431,8 @@ namespace Microsoft.Data.SqlClient
             // Ensure that if column encryption override was used then server supports its
             if (((SqlCommandColumnEncryptionSetting.UseConnectionSetting == ColumnEncryptionSetting && _activeConnection.IsColumnEncryptionSettingEnabled)
                  || (ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled || ColumnEncryptionSetting == SqlCommandColumnEncryptionSetting.ResultSetOnly))
-                && null != tdsConnection
-                && null != tdsConnection.Parser
+                && tdsConnection != null
+                && tdsConnection.Parser != null
                 && !tdsConnection.Parser.IsColumnEncryptionSupported)
             {
                 throw SQL.TceNotSupported();
@@ -5215,22 +5466,30 @@ namespace Microsoft.Data.SqlClient
             _activeConnection.ValidateConnectionForExecute(method, this);
             // Check to see if the currently set transaction has completed.  If so,
             // null out our local reference.
-            if (null != _transaction && _transaction.Connection == null)
+            if (_transaction != null && _transaction.Connection == null)
+            {
                 _transaction = null;
+            }
 
             // throw if the connection is in a transaction but there is no
             // locally assigned transaction object
-            if (_activeConnection.HasLocalTransactionFromAPI && (null == _transaction))
+            if (_activeConnection.HasLocalTransactionFromAPI && _transaction == null)
+            {
                 throw ADP.TransactionRequired(method);
+            }
 
             // if we have a transaction, check to ensure that the active
             // connection property matches the connection associated with
             // the transaction
-            if (null != _transaction && _activeConnection != _transaction.Connection)
+            if (_transaction != null && _activeConnection != _transaction.Connection)
+            {
                 throw ADP.TransactionConnectionMismatch();
+            }
 
             if (string.IsNullOrEmpty(this.CommandText))
+            {
                 throw ADP.CommandTextRequired(method);
+            }
         }
 
         private void ValidateAsyncCommand()
@@ -5251,8 +5510,8 @@ namespace Microsoft.Data.SqlClient
 
         private void GetStateObject(TdsParser parser = null)
         {
-            Debug.Assert(null == _stateObj, "StateObject not null on GetStateObject");
-            Debug.Assert(null != _activeConnection, "no active connection?");
+            Debug.Assert(_stateObj == null, "StateObject not null on GetStateObject");
+            Debug.Assert(_activeConnection != null, "no active connection?");
 
             if (_pendingCancel)
             {
@@ -5303,7 +5562,7 @@ namespace Microsoft.Data.SqlClient
             TdsParserStateObject stateObj = _stateObj;
             _stateObj = null;
 
-            if (null != stateObj)
+            if (stateObj != null)
             {
                 stateObj.CloseSession();
             }
@@ -5312,28 +5571,28 @@ namespace Microsoft.Data.SqlClient
         internal void OnDoneDescribeParameterEncryptionProc(TdsParserStateObject stateObj)
         {
             // called per rpc batch complete
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
                 OnDone(stateObj, _currentlyExecutingDescribeParameterEncryptionRPC, _sqlRPCParameterEncryptionReqArray, _rowsAffected);
                 _currentlyExecutingDescribeParameterEncryptionRPC++;
             }
         }
 
-        internal void OnDoneProc()
+        internal void OnDoneProc(TdsParserStateObject stateObject)
         {
             // called per rpc batch complete
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
-                OnDone(_stateObj, _currentlyExecutingBatch, _SqlRPCBatchArray, _rowsAffected);
+                OnDone(stateObject, _currentlyExecutingBatch, _RPCList, _rowsAffected);
                 _currentlyExecutingBatch++;
-                Debug.Assert(_parameterCollectionList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
+                Debug.Assert(_RPCList.Count >= _currentlyExecutingBatch, "OnDoneProc: Too many DONEPROC events");
             }
         }
 
-        private static void OnDone(TdsParserStateObject stateObj, int index, _SqlRPC[] array, int rowsAffected)
+        private static void OnDone(TdsParserStateObject stateObj, int index, IList<_SqlRPC> rpcList, int rowsAffected)
         {
-            _SqlRPC current = array[index];
-            _SqlRPC previous = (index > 0) ? array[index - 1] : null;
+            _SqlRPC current = rpcList[index];
+            _SqlRPC previous = (index > 0) ? rpcList[index - 1] : null;
 
             // track the records affected for the just completed rpc batch
             // _rowsAffected is cumulative for ExecuteNonQuery across all rpc batches
@@ -5343,6 +5602,11 @@ namespace Microsoft.Data.SqlClient
                 (((previous != null) && (0 <= rowsAffected))
                     ? (rowsAffected - Math.Max(previous.cumulativeRecordsAffected, 0))
                     : rowsAffected);
+
+            if (current.batchCommand != null)
+            {
+                current.batchCommand.SetRecordAffected(current.recordsAffected.GetValueOrDefault());
+            }
 
             // track the error collection (not available from TdsParser after ExecuteNonQuery)
             // and the which errors are associated with the just completed rpc batch
@@ -5366,11 +5630,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlParameterCollection parameters = _parameters;
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
-                if (_parameterCollectionList.Count > _currentlyExecutingBatch)
+                if (_RPCList.Count > _currentlyExecutingBatch)
                 {
-                    parameters = _parameterCollectionList[_currentlyExecutingBatch];
+                    parameters = _RPCList[_currentlyExecutingBatch].userParams;
                 }
                 else
                 {
@@ -5388,7 +5652,7 @@ namespace Microsoft.Data.SqlClient
                     object v = parameter.Value;
 
                     // if the user bound a sqlint32 (the only valid one for status, use it)
-                    if ((null != v) && (v.GetType() == typeof(SqlInt32)))
+                    if (v != null && (v.GetType() == typeof(SqlInt32)))
                     {
                         parameter.Value = new SqlInt32(status); // value type
                     }
@@ -5400,7 +5664,7 @@ namespace Microsoft.Data.SqlClient
                     // If we are not in Batch RPC mode, update the query cache with the encryption MD.
                     // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
                     // Read comment in AddQueryMetadata() for more details.
-                    if (!BatchRPCMode && CachingQueryMetadataPostponed &&
+                    if (!_batchRPCMode && CachingQueryMetadataPostponed &&
                         ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
                     {
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
@@ -5434,7 +5698,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlParameter thisParam = GetParameterForOutputValueExtraction(parameters, rec.parameter, count);
 
-            if (null != thisParam)
+            if (thisParam != null)
             {
                 // If the parameter's direction is InputOutput, Output or ReturnValue and it needs to be transparently encrypted/decrypted
                 // then simply decrypt, deserialize and set the value.
@@ -5446,7 +5710,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (rec.tdsType != TdsEnums.SQLBIGVARBINARY)
                     {
-                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.ParameterNameFixed, rec.tdsType, TdsEnums.SQLBIGVARBINARY);
+                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.tdsType, TdsEnums.SQLBIGVARBINARY);
                     }
 
                     // Decrypt the ciphertext
@@ -5476,7 +5740,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e)
                         {
-                            throw SQL.ParamDecryptionFailed(thisParam.ParameterNameFixed, null, e);
+                            throw SQL.ParamDecryptionFailed(thisParam.GetPrefixedParameterName(), null, e);
                         }
                     }
                     else
@@ -5554,7 +5818,7 @@ namespace Microsoft.Data.SqlClient
                     else if (rec.type == SqlDbType.Xml)
                     {
                         SqlCachedBuffer cachedBuffer = (thisParam.Value as SqlCachedBuffer);
-                        if (null != cachedBuffer)
+                        if (cachedBuffer != null)
                         {
                             thisParam.Value = cachedBuffer.ToString();
                         }
@@ -5573,11 +5837,11 @@ namespace Microsoft.Data.SqlClient
 
         private SqlParameterCollection GetCurrentParameterCollection()
         {
-            if (BatchRPCMode)
+            if (_batchRPCMode)
             {
-                if (_parameterCollectionList.Count > _currentlyExecutingBatch)
+                if (_RPCList.Count > _currentlyExecutingBatch)
                 {
-                    return _parameterCollectionList[_currentlyExecutingBatch];
+                    return _RPCList[_currentlyExecutingBatch].userParams;
                 }
                 else
                 {
@@ -5597,7 +5861,7 @@ namespace Microsoft.Data.SqlClient
             SqlParameter thisParam = null;
             bool foundParam = false;
 
-            if (null == paramName)
+            if (paramName == null)
             {
                 // rec.parameter should only be null for a return value from a function
                 for (int i = 0; i < paramCount; i++)
@@ -5617,7 +5881,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     thisParam = parameters[i];
                     // searching for Output or InputOutput or ReturnValue with matching name
-                    if (thisParam.Direction != ParameterDirection.Input && thisParam.Direction != ParameterDirection.ReturnValue && paramName == thisParam.ParameterNameFixed)
+                    if (
+                        thisParam.Direction != ParameterDirection.Input &&
+                        thisParam.Direction != ParameterDirection.ReturnValue &&
+                        SqlParameter.ParameterNamesEqual(paramName, thisParam.ParameterName, StringComparison.Ordinal)
+                    )
                     {
                         foundParam = true;
                         break; // found it
@@ -5722,12 +5990,12 @@ namespace Microsoft.Data.SqlClient
                     // set default value bit
                     if (parameter.Direction != ParameterDirection.Output)
                     {
-                        // remember that null == Convert.IsEmpty, DBNull.Value is a database null!
+                        // remember that Convert.IsEmpty is null, DBNull.Value is a database null!
 
                         // Don't assume a default value exists for parameters in the case when
                         // the user is simply requesting schema.
                         // TVPs use DEFAULT and do not allow NULL, even for schema only.
-                        if (null == parameter.Value && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
+                        if (parameter.Value == null && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
                         {
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
@@ -5788,6 +6056,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Value = paramList;
             sqlParam.Size = paramList.Length;
+            sqlParam.Direction = ParameterDirection.Input;
 
             //@batch_text
             string text = GetCommandText(behavior);
@@ -5795,6 +6064,7 @@ namespace Microsoft.Data.SqlClient
             sqlParam.SqlDbType = ((text.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
             sqlParam.Size = text.Length;
             sqlParam.Value = text;
+            sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, false, _parameters);
             return rpc;
@@ -5822,7 +6092,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private int CountSendableParameters(SqlParameterCollection parameters)
+        private static int CountSendableParameters(SqlParameterCollection parameters)
         {
             int cParams = 0;
 
@@ -5841,9 +6111,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Returns total number of parameters
-        private int GetParameterCount(SqlParameterCollection parameters)
+        private static int GetParameterCount(SqlParameterCollection parameters)
         {
-            return (null != parameters) ? parameters.Count : 0;
+            return parameters != null ? parameters.Count : 0;
         }
 
         //
@@ -5896,6 +6166,7 @@ namespace Microsoft.Data.SqlClient
             //@handle
             SqlParameter sqlParam = rpc.systemParams[0];
             sqlParam.SqlDbType = SqlDbType.Int;
+            sqlParam.Size = 4;
             sqlParam.Value = _prepareHandle;
             sqlParam.Direction = ParameterDirection.Input;
 
@@ -5943,11 +6214,12 @@ namespace Microsoft.Data.SqlClient
 
             if (userParamCount > 0)
             {
-                string paramList = BuildParamList(_stateObj.Parser, BatchRPCMode ? parameters : _parameters);
+                string paramList = BuildParamList(_stateObj.Parser, _batchRPCMode ? parameters : _parameters);
                 sqlParam = rpc.systemParams[1];
                 sqlParam.SqlDbType = ((paramList.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText;
                 sqlParam.Size = paramList.Length;
                 sqlParam.Value = paramList;
+                sqlParam.Direction = ParameterDirection.Input;
 
                 bool inSchema = (0 != (behavior & CommandBehavior.SchemaOnly));
                 SetUpRPCParameters(rpc, inSchema, parameters);
@@ -5984,11 +6256,11 @@ namespace Microsoft.Data.SqlClient
 
             // Find the return value parameter (if any).
             SqlParameter returnValueParameter = null;
-            foreach (SqlParameter parameter in parameters)
+            foreach (SqlParameter param in parameters)
             {
-                if (parameter.Direction == ParameterDirection.ReturnValue)
+                if (param.Direction == ParameterDirection.ReturnValue)
                 {
-                    returnValueParameter = parameter;
+                    returnValueParameter = param;
                     break;
                 }
             }
@@ -5997,7 +6269,8 @@ namespace Microsoft.Data.SqlClient
             // EXEC @returnValue = moduleName [parameters]
             if (returnValueParameter != null)
             {
-                execStatement.AppendFormat(@"{0}=", returnValueParameter.ParameterNameFixed);
+                SqlParameter.AppendPrefixedParameterName(execStatement, returnValueParameter.ParameterName);
+                execStatement.Append('=');
             }
 
             execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
@@ -6008,6 +6281,7 @@ namespace Microsoft.Data.SqlClient
             // Append the first parameter
             int index = 0;
             int count = parameters.Count;
+            SqlParameter parameter;
             if (count > 0)
             {
                 // Skip the return value parameters.
@@ -6018,15 +6292,19 @@ namespace Microsoft.Data.SqlClient
 
                 if (index < count)
                 {
+                    parameter = parameters[index];
                     // Possibility of a SQL Injection issue through parameter names and how to construct valid identifier for parameters.
                     // Since the parameters comes from application itself, there should not be a security vulnerability.
                     // Also since the query is not executed, but only analyzed there is no possibility for elevation of privilege, but only for
                     // incorrect results which would only affect the user that attempts the injection.
-                    execStatement.AppendFormat(@" {0}={0}", parameters[index].ParameterNameFixed);
+                    execStatement.Append(' ');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
 
                     // InputOutput and Output parameters need to be marked as such.
-                    if (parameters[index].Direction == ParameterDirection.Output ||
-                        parameters[index].Direction == ParameterDirection.InputOutput)
+                    if (parameter.Direction == ParameterDirection.Output ||
+                        parameter.Direction == ParameterDirection.InputOutput)
                     {
                         execStatement.AppendFormat(@" OUTPUT");
                     }
@@ -6039,14 +6317,18 @@ namespace Microsoft.Data.SqlClient
             // Append the rest of parameters
             for (; index < count; index++)
             {
-                if (parameters[index].Direction != ParameterDirection.ReturnValue)
+                parameter = parameters[index];
+                if (parameter.Direction != ParameterDirection.ReturnValue)
                 {
-                    execStatement.AppendFormat(@", {0}={0}", parameters[index].ParameterNameFixed);
+                    execStatement.Append(", ");
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
+                    execStatement.Append('=');
+                    SqlParameter.AppendPrefixedParameterName(execStatement, parameter.ParameterName);
 
                     // InputOutput and Output parameters need to be marked as such.
                     if (
-                        parameters[index].Direction == ParameterDirection.Output ||
-                        parameters[index].Direction == ParameterDirection.InputOutput
+                        parameter.Direction == ParameterDirection.Output ||
+                        parameter.Direction == ParameterDirection.InputOutput
                     )
                     {
                         execStatement.AppendFormat(@" OUTPUT");
@@ -6080,9 +6362,11 @@ namespace Microsoft.Data.SqlClient
 
                 // add our separator for the ith parameter
                 if (fAddSeparator)
+                {
                     paramList.Append(',');
+                }
 
-                paramList.Append(sqlParam.ParameterNameFixed);
+                SqlParameter.AppendPrefixedParameterName(paramList, sqlParam.ParameterName);
 
                 MetaType mt = sqlParam.InternalMetaType;
 
@@ -6105,7 +6389,7 @@ namespace Microsoft.Data.SqlClient
                     string typeName = sqlParam.TypeName;
                     if (string.IsNullOrEmpty(typeName))
                     {
-                        throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.ParameterNameFixed);
+                        throw SQL.MustSetTypeNameForParam(mt.TypeName, sqlParam.GetPrefixedParameterName());
                     }
                     paramList.Append(ParseAndQuoteIdentifier(typeName, false /* is not UdtTypeName*/));
 
@@ -6151,6 +6435,16 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(scale);
                     paramList.Append(')');
                 }
+                else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
+                {
+                    // The validate function for SqlParameters would
+                    // have already thrown InvalidCastException if an incompatible
+                    // value is specified for SqlDbType Vector.
+                    var sqlVectorProps = (ISqlVector)sqlParam.Value;
+                    paramList.Append('(');
+                    paramList.Append(sqlVectorProps.Length);
+                    paramList.Append(')');
+                }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType != SqlDbType.Timestamp && mt.SqlDbType != SqlDbType.Udt && SqlDbType.Structured != mt.SqlDbType)
                 {
                     int size = sqlParam.Size;
@@ -6164,10 +6458,10 @@ namespace Microsoft.Data.SqlClient
                         string s = null;
 
                         // deal with the sql types
-                        if ((null != val) && (DBNull.Value != val))
+                        if (val != null && (DBNull.Value != val))
                         {
                             s = (val as string);
-                            if (null == s)
+                            if (s == null)
                             {
                                 SqlString sval = val is SqlString ? (SqlString)val : SqlString.Null;
                                 if (!sval.IsNull)
@@ -6177,7 +6471,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        if (null != s)
+                        if (s != null)
                         {
                             int actualBytes = parser.GetEncodingCharLength(s, sqlParam.GetActualSize(), sqlParam.Offset, null);
                             // if actual number of bytes is greater than the user given number of chars, use actual bytes
@@ -6194,7 +6488,7 @@ namespace Microsoft.Data.SqlClient
                     paramList.Append(size);
                     paramList.Append(')');
                 }
-                else if (mt.IsPlp && (mt.SqlDbType != SqlDbType.Xml) && (mt.SqlDbType != SqlDbType.Udt))
+                else if (mt.IsPlp && (mt.SqlDbType != SqlDbType.Xml) && (mt.SqlDbType != SqlDbType.Udt) && (mt.SqlDbType != SqlDbTypeExtensions.Json))
                 {
                     paramList.Append("(max) ");
                 }
@@ -6229,7 +6523,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     bld.Append('.');
                 }
-                if (null != strings[i] && 0 != strings[i].Length)
+                if (strings[i] != null && 0 != strings[i].Length)
                 {
                     ADP.AppendQuotedString(bld, "[", "]", strings[i]);
                 }
@@ -6348,7 +6642,7 @@ namespace Microsoft.Data.SqlClient
                 // only mark the command as dirty if it is already prepared
                 // but always clear the value if it we are clearing the dirty flag
                 _dirty = value ? IsPrepared : false;
-                if (null != _parameters)
+                if (_parameters != null)
                 {
                     _parameters.IsDirty = _dirty;
                 }
@@ -6411,46 +6705,33 @@ namespace Microsoft.Data.SqlClient
 
         internal void ClearBatchCommand()
         {
-            List<_SqlRPC> rpcList = _RPCList;
-            if (null != rpcList)
-            {
-                rpcList.Clear();
-            }
-            if (null != _parameterCollectionList)
-            {
-                _parameterCollectionList.Clear();
-            }
-
-            _SqlRPCBatchArray = null;
+            _RPCList?.Clear();
             _currentlyExecutingBatch = 0;
         }
 
-        internal bool BatchRPCMode
+        internal void SetBatchRPCMode(bool value, int commandCount = 1)
         {
-            get
+            _batchRPCMode = value;
+            ClearBatchCommand();
+            if (_batchRPCMode)
             {
-                return _batchRPCMode;
-            }
-            set
-            {
-                _batchRPCMode = value;
-
-                if (_batchRPCMode == false)
+                if (_RPCList == null)
                 {
-                    ClearBatchCommand();
+                    _RPCList = new List<_SqlRPC>(commandCount);
                 }
                 else
                 {
-                    if (_RPCList == null)
-                    {
-                        _RPCList = new List<_SqlRPC>();
-                    }
-                    if (_parameterCollectionList == null)
-                    {
-                        _parameterCollectionList = new List<SqlParameterCollection>();
-                    }
+                    _RPCList.Capacity = commandCount;
                 }
             }
+        }
+
+        internal void SetBatchRPCModeReadyToExecute()
+        {
+            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
+            Debug.Assert(_RPCList != null, "No batch commands specified");
+
+            _currentlyExecutingBatch = 0;
         }
 
         /// <summary>
@@ -6470,71 +6751,86 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void AddBatchCommand(string commandText, SqlParameterCollection parameters, CommandType cmdType, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+        internal void AddBatchCommand(SqlBatchCommand batchCommand)
         {
-            Debug.Assert(BatchRPCMode, "Command is not in batch RPC Mode");
+            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
             Debug.Assert(_RPCList != null);
-            Debug.Assert(_parameterCollectionList != null);
 
-            _SqlRPC rpc = new _SqlRPC();
+            _SqlRPC rpc = new _SqlRPC
+            {
+                batchCommand = batchCommand
+            };
+            string commandText = batchCommand.CommandText;
+            CommandType cmdType = batchCommand.CommandType;
 
             CommandText = commandText;
             CommandType = cmdType;
 
             // Set the column encryption setting.
-            SetColumnEncryptionSetting(columnEncryptionSetting);
+            SetColumnEncryptionSetting(batchCommand.ColumnEncryptionSetting);
 
             GetStateObject();
             if (cmdType == CommandType.StoredProcedure)
             {
-                BuildRPC(false, parameters, ref rpc);
+                BuildRPC(false, batchCommand.Parameters, ref rpc);
             }
             else
             {
                 // All batch sql statements must be executed inside sp_executesql, including those without parameters
-                BuildExecuteSql(CommandBehavior.Default, commandText, parameters, ref rpc);
+                BuildExecuteSql(CommandBehavior.Default, commandText, batchCommand.Parameters, ref rpc);
             }
 
             _RPCList.Add(rpc);
-            // Always add a parameters collection per RPC, even if there are no parameters.
-            _parameterCollectionList.Add(parameters);
 
             ReliablePutStateObject();
         }
 
-        internal int ExecuteBatchRPCCommand()
-        {
-            Debug.Assert(BatchRPCMode, "Command is not in batch RPC Mode");
-            Debug.Assert(_RPCList != null, "No batch commands specified");
-
-            _SqlRPCBatchArray = _RPCList.ToArray();
-            _currentlyExecutingBatch = 0;
-            return ExecuteNonQuery();       // Check permissions, execute, return output params
-        }
-
         internal int? GetRecordsAffected(int commandIndex)
         {
-            Debug.Assert(BatchRPCMode, "Command is not in batch RPC Mode");
-            Debug.Assert(_SqlRPCBatchArray != null, "batch command have been cleared");
-            return _SqlRPCBatchArray[commandIndex].recordsAffected;
+            Debug.Assert(_batchRPCMode, "Command is not in batch RPC Mode");
+            Debug.Assert(_RPCList != null, "batch command have been cleared");
+            return _RPCList[commandIndex].recordsAffected;
+        }
+
+        internal SqlBatchCommand GetCurrentBatchCommand()
+        {
+            if (_batchRPCMode)
+            {
+                return _RPCList[_currentlyExecutingBatch].batchCommand;
+            }
+            else
+            {
+                return _rpcArrayOf1?[0].batchCommand;
+            }
+        }
+
+        internal SqlBatchCommand GetBatchCommand(int index)
+        {
+            return _RPCList[index].batchCommand;
+        }
+
+        internal int GetCurrentBatchIndex()
+        {
+            return _batchRPCMode ? _currentlyExecutingBatch : -1;
         }
 
         internal SqlException GetErrors(int commandIndex)
         {
             SqlException result = null;
-            int length = (_SqlRPCBatchArray[commandIndex].errorsIndexEnd - _SqlRPCBatchArray[commandIndex].errorsIndexStart);
+            _SqlRPC rpc = _RPCList[commandIndex];
+            int length = (rpc.errorsIndexEnd - rpc.errorsIndexStart);
             if (0 < length)
             {
                 SqlErrorCollection errors = new SqlErrorCollection();
-                for (int i = _SqlRPCBatchArray[commandIndex].errorsIndexStart; i < _SqlRPCBatchArray[commandIndex].errorsIndexEnd; ++i)
+                for (int i = rpc.errorsIndexStart; i < rpc.errorsIndexEnd; ++i)
                 {
-                    errors.Add(_SqlRPCBatchArray[commandIndex].errors[i]);
+                    errors.Add(rpc.errors[i]);
                 }
-                for (int i = _SqlRPCBatchArray[commandIndex].warningsIndexStart; i < _SqlRPCBatchArray[commandIndex].warningsIndexEnd; ++i)
+                for (int i = rpc.warningsIndexStart; i < rpc.warningsIndexEnd; ++i)
                 {
-                    errors.Add(_SqlRPCBatchArray[commandIndex].warnings[i]);
+                    errors.Add(rpc.warnings[i]);
                 }
-                result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId);
+                result = SqlException.CreateException(errors, Connection.ServerVersion, Connection.ClientConnectionId, innerException: null, batchCommand: null);
             }
             return result;
         }

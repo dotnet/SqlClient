@@ -8,8 +8,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Tests if connections in a distributed transaction are put into a transaction pool. Also checks that clearallpools 
         /// does not clear transaction connections and that the transaction root is put into "stasis" when closed
+        /// Synapse: only supports local transaction request.
         /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
         public static void BasicTransactionPoolTest(string connectionString)
         {
@@ -63,9 +64,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Checks that connections in the transaction pool are not cleaned out, and the root transaction is put into "stasis" when it ages
+        /// Synapse: only supports local transaction request.
         /// </summary>
         /// <param name="connectionString"></param>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
         public static void TransactionCleanupTest(string connectionString)
         {

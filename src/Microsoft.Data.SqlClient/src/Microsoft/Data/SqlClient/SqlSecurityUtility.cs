@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -81,7 +80,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>returns true if both the arrays have the same byte values else returns false</returns>
         internal static bool CompareBytes(byte[] buffer1, byte[] buffer2, int buffer2Index, int lengthToCompare)
         {
-            if (null == buffer1 || null == buffer2)
+            if (buffer1 == null || buffer2 == null)
             {
                 return false;
             }
@@ -141,7 +140,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (TdsEnums.CustomCipherAlgorithmId == cipherAlgorithmId)
             {
-                if (null == cipherAlgorithmName)
+                if (cipherAlgorithmName == null)
                 {
                     throw SQL.NullColumnEncryptionAlgorithm(SqlClientEncryptionAlgorithmFactoryList.GetInstance().GetRegisteredCipherAlgorithmNames());
                 }
@@ -179,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
             byte[] cipherText = md.CipherAlgorithm.EncryptData(plainText); // this call succeeds or throws.
-            if (null == cipherText || 0 == cipherText.Length)
+            if (cipherText == null || 0 == cipherText.Length)
             {
                 throw SQL.NullCipherText();
             }
@@ -218,7 +217,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 byte[] plainText = md.CipherAlgorithm.DecryptData(cipherText); // this call succeeds or throws.
-                if (null == plainText)
+                if (plainText == null)
                 {
                     throw SQL.NullPlainText();
                 }
@@ -375,8 +374,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
-                    if (signatureVerificationResult is null)
+                    bool signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    if (signatureVerificationResult == false)
                     {
                         // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
                         isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
@@ -386,7 +385,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        isValidSignature = signatureVerificationResult.Value;
+                        isValidSignature = signatureVerificationResult;
                     }
                 }
             }
@@ -407,7 +406,7 @@ namespace Microsoft.Data.SqlClient
         private static bool ShouldUseInstanceLevelProviderFlow(string keyStoreName, SqlConnection connection, SqlCommand command)
         {
             return InstanceLevelProvidersAreRegistered(connection, command) &&
-                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix);
+                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.Ordinal);
         }
 
         private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
@@ -421,8 +420,21 @@ namespace Microsoft.Data.SqlClient
             if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out IList<string> trustedKeyPaths))
             {
                 // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
-                if (trustedKeyPaths is null || trustedKeyPaths.Count() == 0 ||
-                    trustedKeyPaths.Any(trustedKeyPath => trustedKeyPath.Equals(keyPath, StringComparison.InvariantCultureIgnoreCase)) == false)
+
+                bool pathIsKnown = false;
+                if (trustedKeyPaths != null)
+                {
+                    foreach (string candidate in trustedKeyPaths)
+                    {
+                        if (string.Equals(keyPath, candidate, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            pathIsKnown = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!pathIsKnown)
                 {
                     // throw an exception since the key path is not in the trusted key paths list for this server
                     throw SQL.UntrustedKeyPath(keyPath, serverName);

@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
 using System.Text;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
@@ -229,16 +228,20 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 }
 
                 // Get ciphertext
-                byte[] cipherText = encryptedColumnEncryptionKey.Skip(currentIndex).Take(cipherTextLength).ToArray();
+                byte[] cipherText = new byte[cipherTextLength];
+                Array.Copy(encryptedColumnEncryptionKey, currentIndex, cipherText, 0, cipherTextLength);
+                
                 currentIndex += cipherTextLength;
 
                 // Get signature
-                byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
+                byte[] signature = new byte[signatureLength];
+                Buffer.BlockCopy(encryptedColumnEncryptionKey, currentIndex, signature, 0, signatureLength);
 
                 // Compute the message to validate the signature
-                byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
+                byte[] message = new byte[encryptedColumnEncryptionKey.Length - signatureLength];
+                Buffer.BlockCopy(encryptedColumnEncryptionKey, 0, message, 0, encryptedColumnEncryptionKey.Length - signatureLength);
 
-                if (null == message)
+                if (message == null)
                 {
                     throw ADP.NullHashFound();
                 }
@@ -294,7 +297,24 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             // Compute message
             // SHA-2-256(version + keyPathLength + ciphertextLength + keyPath + ciphertext) 
-            byte[] message = s_firstVersion.Concat(keyPathLength).Concat(cipherTextLength).Concat(masterKeyPathBytes).Concat(cipherText).ToArray();
+            int messageLength = s_firstVersion.Length + keyPathLength.Length + cipherTextLength.Length + masterKeyPathBytes.Length + cipherText.Length;
+            byte[] message = new byte[messageLength];
+            int position = 0;
+
+            Buffer.BlockCopy(s_firstVersion, 0, message, position, s_firstVersion.Length);
+            position += s_firstVersion.Length;
+
+            Buffer.BlockCopy(keyPathLength, 0, message, position, keyPathLength.Length);
+            position += keyPathLength.Length;
+
+            Buffer.BlockCopy(cipherTextLength, 0, message, position, cipherTextLength.Length);
+            position += cipherTextLength.Length;
+
+            Buffer.BlockCopy(masterKeyPathBytes, 0, message, position, masterKeyPathBytes.Length);
+            position += masterKeyPathBytes.Length;
+
+            Buffer.BlockCopy(cipherText, 0, message, position, cipherText.Length);
+            position += cipherText.Length;
 
             // Sign the message
             byte[] signature = KeyCryptographer.SignData(message, masterKeyPath);
@@ -306,7 +326,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             ValidateSignature(masterKeyPath, message, signature);
 
-            return message.Concat(signature).ToArray();
+            byte[] retval = new byte[message.Length + signature.Length];
+            Buffer.BlockCopy(message, 0, retval, 0, message.Length);
+            Buffer.BlockCopy(signature, 0, retval, message.Length, signature.Length);
+
+            return retval;
         }
 
         #endregion
@@ -345,7 +369,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             // Return an error indicating that the AKV url is invalid.
             AKVEventSource.Log.TryTraceEvent("Master Key Path could not be validated as it does not end with trusted endpoints: {0}", masterKeyPath);
-            throw ADP.InvalidAKVUrlTrustedEndpoints(masterKeyPath, string.Join(", ", TrustedEndPoints.ToArray()));
+            throw ADP.InvalidAKVUrlTrustedEndpoints(masterKeyPath, string.Join(", ", TrustedEndPoints));
         }
 
         private void ValidateSignature(string masterKeyPath, byte[] message, byte[] signature)

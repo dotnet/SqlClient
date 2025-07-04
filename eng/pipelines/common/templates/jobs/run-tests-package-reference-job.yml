@@ -1,0 +1,68 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+parameters:
+  - name: downloadPackageStep
+    type: step
+    default:
+      script: echo <empty step>
+
+  - name: packageFolderName
+    type: string
+    default: drop_build_build_signed_package
+
+  - name: dependsOn
+    type: string
+    default: empty
+
+  - name: isPreview
+    type: boolean
+
+jobs:
+- job: run_tests_package_reference
+  displayName: 'Run tests with package reference'
+  ${{ if ne(parameters.dependsOn, 'empty')}}:
+    dependsOn: '${{parameters.dependsOn }}'
+  pool:
+    type: windows  # read more about custom job pool types at https://aka.ms/obpipelines/yaml/jobs
+    isCustom: true
+    name: ADO-1ES-Pool
+    vmImage: 'ADO-MMS22-SQL19'
+    
+  variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
+  - template: ../../../libraries/mds-validation-variables.yml@self
+
+  steps:
+  - template: ../steps/pre-build-step.yml
+ 
+  - ${{parameters.downloadPackageStep }}
+
+  - template: ../steps/update-nuget-config-local-feed-step.yml
+    parameters:
+      downloadedNugetPath: $(Pipeline.Workspace)\${{parameters.packageFolderName }}
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)
+
+  - template: ../steps/update-config-file-step.yml
+    parameters: 
+      TCPConnectionString: $(SQL_TCP_CONN_STRING)
+      NPConnectionString: $(SQL_NP_CONN_STRING)
+      SupportsIntegratedSecurity: false
+
+  - template: ../steps/prepare-test-db-step.yml
+
+# build & test
+  - template: ../steps/build-and-run-tests-netfx-step.yml
+    parameters:
+      referenceType: Package
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)
+
+  - template: ../steps/build-and-run-tests-netcore-step.yml
+    parameters:
+      referenceType: Package
+      cleanFirst: true
+      ${{ if parameters.isPreview }}:
+        nugetPackageVersion: $(PreviewNugetPackageVersion)

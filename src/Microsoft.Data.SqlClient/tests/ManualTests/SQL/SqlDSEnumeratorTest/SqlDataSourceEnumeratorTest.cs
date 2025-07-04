@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.ServiceProcess;
 using Microsoft.Data.Sql;
@@ -10,12 +11,22 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-#if NET50_OR_LATER
+#if !NETFRAMEWORK
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
     public class SqlDataSourceEnumeratorTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows))]
+        private static bool IsEnvironmentAvailable()
+        {
+            ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
+            ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
+
+            return DataTestUtility.IsNotUsingManagedSNIOnWindows() &&
+                service != null &&
+                service.Status == ServiceControllerStatus.Running;
+        }
+
+        [ConditionalFact(nameof(IsEnvironmentAvailable))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_NativeSNI()
         {
@@ -31,6 +42,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // After adding the managed SNI support, this test should have the same result as SqlDataSourceEnumerator_NativeSNI
             Assert.Throws<NotImplementedException>(() => GetDSEnumerator().GetDataSources());
+        }
+
+        // This test validates behavior of SqlDataSourceConverter used to present instance names in PropertyGrid
+        // with the SqlConnectionStringBuilder object presented in the control underneath.
+        [ConditionalFact(nameof(IsEnvironmentAvailable))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TestDataSourceConverterGetStandardValues()
+        {
+            PropertyDescriptorCollection csbDescriptor = TypeDescriptor.GetProperties(typeof(SqlConnectionStringBuilder));
+            PropertyDescriptor dataSourceDescriptor = csbDescriptor.Find(nameof(SqlConnectionStringBuilder.DataSource), false);
+            TypeConverter converter = dataSourceDescriptor?.Converter;
+
+            Assert.NotNull(dataSourceDescriptor);
+            Assert.NotNull(converter);
+
+            Assert.True(converter.GetStandardValuesSupported());
+            Assert.False(converter.GetStandardValuesExclusive());
+
+            System.Collections.ICollection dataSources = converter.GetStandardValues();
+            int count = dataSources.Count;
+
+            Assert.InRange(count, 0, 65536);
         }
 
         private SqlDataSourceEnumerator GetDSEnumerator()

@@ -1,16 +1,25 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="ColumnSensitivity">
-        <ColumnSensitivity>
-            <summary>Represents the Data Classification Sensitivity Information for columns as configured in Database.</summary>
-        </ColumnSensitivity>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity" /> class.</summary>
-            <param name="sensitivityProperties">List of sensitivity properties.</param>
-        </ctor>
-        <GetSensitivityProperties>
-            <summary>Returns the list of sensitivity properties as received from Server for this 'ColumnSensitivity' information</summary>
-            <value>List of sensitivity properties.</value>
-        </GetSensitivityProperties>
-    </members>
+﻿<docs>
+  <members name="ColumnSensitivity">
+    <ColumnSensitivity>
+      <summary>
+        Represents the Data Classification Sensitivity Information for columns as configured in Database.
+      </summary>
+    </ColumnSensitivity>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity" /> class.
+      </summary>
+      <param name="sensitivityProperties">
+        List of sensitivity properties.
+      </param>
+    </ctor>
+    <GetSensitivityProperties>
+      <summary>
+        Returns the list of sensitivity properties as received from Server for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity" /> information.
+      </summary>
+      <value>
+        List of sensitivity properties.
+      </value>
+    </GetSensitivityProperties>
+  </members>
 </docs>

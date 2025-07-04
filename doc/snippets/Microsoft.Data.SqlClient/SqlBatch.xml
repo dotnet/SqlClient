@@ -1,0 +1,439 @@
+﻿<docs>
+  <members name="SqlBatch">
+    <SqlBatch>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+          
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+          
+                  using var batch = new SqlBatch(connection);
+          
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+          
+                  var results = new List&lt;int&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
+        </code>
+      </example>
+    </SqlBatch>
+    <ctor1>
+      <summary>Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.</summary>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
+        
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+          
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+          
+                  using var batch = new SqlBatch(connection);
+          
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+          
+                  var results = new List&lt;lint&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
+        </code>
+      </example>
+    </ctor1>
+    <ctor2>
+      <summary>Initializes a new <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.</summary>
+      <param name="connection">
+        A <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> that represents the connection to an instance of SQL Server.
+      </param>
+      <param name="transaction">
+        The <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> in which the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> executes.
+      </param>
+    </ctor2>
+    <Connection>
+      <summary>
+        Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> used by this instance of the <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+      </summary>
+    </Connection>
+    <Transaction>
+      <summary>
+        Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> within which the <see cref="T:Microsoft.Data.SqlClient.SqlBatch" /> commands execute.
+      </summary>
+    </Transaction>
+    <BatchCommands>
+      <summary>
+        The list of commands contained in the batch in a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommandCollection" />.
+      </summary>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+          
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+          
+                  using var batch = new SqlBatch(connection);
+          
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+          
+                  var results = new List&lt;int&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
+        </code>
+      </example>
+    </BatchCommands>
+    <Commands>
+      <summary>
+        The list of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> contained in the batch in a <see cref="T:System.Collections.Generic.List`1" />.
+      </summary>
+    </Commands>
+    <ExecuteReader>
+      <summary>
+        Sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+      </summary>
+      <example>
+        <para>
+          The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+          
+          class Program
+          {
+              static void Main()
+              {
+                  string str = "Data Source=(local);Initial Catalog=Northwind;"
+                             + "Integrated Security=SSPI;Encrypt=False";
+                  RunBatch(str);
+              }
+          
+              static void RunBatch(string connString)
+              {
+                  using var connection = new SqlConnection(connString);
+                  connection.Open();
+          
+                  using var batch = new SqlBatch(connection);
+          
+                  const int count = 10;
+                  const string parameterName = "parameter";
+                  for (int i = 0; i &lt; count; i++)
+                  {
+                      var batchCommand = new SqlBatchCommand($"SELECT @{parameterName} as value");
+                      batchCommand.Parameters.Add(new SqlParameter(parameterName, i));
+                      batch.BatchCommands.Add(batchCommand);
+                  }
+          
+                  var results = new List&lt;int&gt;(count);
+                  using (SqlDataReader reader = batch.ExecuteReader())
+                  {
+                      do
+                      {
+                          while (reader.Read())
+                          {
+                              results.Add(reader.GetFieldValue&lt;int&gt;(0));
+                          }
+                      } while (reader.NextResult());
+                  }
+                  Console.WriteLine(string.Join(", ", results));
+              }
+          }
+          </code>
+      </example>
+    </ExecuteReader>
+    <ExecuteReaderAsync>
+      <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader" />, which sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+        Exceptions will be reported via the returned Task object.
+      </summary>
+      <returns>A task representing the asynchronous operation.</returns>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        An error occurred while executing the batch.
+      </exception>
+      <exception cref="T:System.ArgumentException">
+        The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+      </exception>
+      <exception cref="T:System.OperationCanceledException">
+        The cancellation token was canceled. This exception is stored into the returned task.
+      </exception>
+    </ExecuteReaderAsync>
+    <DbBatchCommands>
+      <summary>Gets the collection of <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects.</summary>
+      <value>The commands contained within the batch.</value>
+    </DbBatchCommands>
+    <DbConnection>
+      <summary>
+        Gets or sets the <see cref="T:System.Data.Common.DbConnection" /> used by this <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+      </summary>
+      <value>The connection to the data source.</value>
+    </DbConnection>
+    <DbTransaction>
+      <summary>
+        Gets or sets the <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> within which this <see cref="T:Microsoft.Data.SqlClient.SqlBatch" /> object executes.
+      </summary>
+      <value>
+        The transaction within which a batch of a ADO.NET data provider executes. The default value is a null reference (<see langword="Nothing" /> in Visual Basic).
+      </value>
+    </DbTransaction>
+    <Timeout>
+      <summary>
+        Gets or sets the wait time (in seconds) before terminating the attempt to execute the batch and generating an error.
+      </summary>
+      <value>
+        The time in seconds to wait for the batch to execute, which is in contract with the underlying <see cref="P:Microsoft.Data.SqlClient.SqlConnection.CommandTimeout" />
+      </value>
+      <remarks>
+        <para>
+          An <see cref="T:System.ArgumentException" /> is generated if the assigned <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Timeout" /> property value is less than 0.
+        </para>
+        <para>
+          Note to implementers: it's recommended that 0 mean no timeout.
+        </para>
+      </remarks>
+    </Timeout>
+    <Cancel>
+      <summary>
+        Attempts to cancel the execution of a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />.
+      </summary>
+      <remarks>
+        If there is nothing to cancel, nothing happens. However, if there is a batch in process, and the attempt to cancel fails, no exception is generated.
+      </remarks>
+    </Cancel>
+    <CreateDbBatchCommand>
+      <summary>Creates a new instance of a <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> object.</summary>
+      <returns>A <see cref="T:System.Data.Common.DbBatchCommand" /> object.</returns>
+    </CreateDbBatchCommand>
+    <Dispose>
+      <summary>
+        Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+      </summary>
+    </Dispose>
+    <ExecuteDbDataReader>
+      <param name="behavior">
+        An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
+      </param>
+      <summary>
+        Executes the batch against its connection, returning a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> which can be used to access the results.
+      </summary>
+      <returns>A <see cref="T:System.Data.Common.DbDataReader" /> object.</returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+When the batch returns multiple result sets from different commands, <xref:Microsoft.Data.SqlClient.SqlDataReader.NextResult> can be used to advance the reader to the next result set.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader(System.Data.CommandBehavior)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
+      </remarks>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        An error occurred while executing the batch.
+      </exception>
+      <exception cref="T:System.ArgumentException">
+        The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+      </exception>
+    </ExecuteDbDataReader>
+    <ExecuteDbDataReaderAsync>
+      <param name="behavior">One of the enumeration values that specifies options for batch execution and data retrieval.</param>
+      <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+      <summary>
+        This implementation invokes the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync" /> method and returns a completed task. The default implementation will return a cancelled task if passed an already cancelled cancellation token. This method accepts a cancellation token that can be used to request the operation to be cancelled early.
+      </summary>
+      <returns>A task representing the asynchronous operation.</returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)>.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
+      </remarks>
+      <exception cref="T:System.OperationCanceledException">
+        The cancellation token was canceled. This exception is stored into the returned task.
+      </exception>
+    </ExecuteDbDataReaderAsync>
+    <ExecuteNonQuery>
+      <summary>
+        Executes the batch against its connection object, returning the total number of rows affected across all the batch commands.
+      </summary>
+      <returns>The total number of rows affected across all the batch commands.</returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+You can use <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> to perform catalog operations (for example, querying the structure of a database or creating database objects such as tables), or to change the data in a database by executing UPDATE, INSERT, or DELETE statements. Although <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery> does not return any rows, any output parameters or return values mapped to parameters are populated with data. For UPDATE, INSERT, and DELETE statements, the return value is the total number of rows affected by the batch. If no UPDATE, INSERT, or DELETE statements are included in the batch, the return value is -1.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
+      </remarks>
+    </ExecuteNonQuery>
+    <ExecuteNonQueryAsync>
+      <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+      <summary>
+        This is the asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteNonQuery" />.
+        The implementation invokes the <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)" /> method and returns a completed task. The default implementation will return a cancelled task if passed an already cancelled cancellation token.
+        Do not invoke other methods and properties of the <see langword="DbCommand" /> object until the returned Task is complete.
+      </summary>
+      <returns>A task representing the asynchronous operation.</returns>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
+
+If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously.
+
+> [!NOTE]
+> This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
+          ]]>
+        </format>
+      </remarks>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">An error occurred while executing the batch.</exception>
+      <related type="Article" href="https://learn.microsoft.com/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
+      <exception cref="T:System.OperationCanceledException">
+        The cancellation token was canceled. This exception is stored into the returned task.
+      </exception>
+    </ExecuteNonQueryAsync>
+    <ExecuteScalar>
+      <summary>
+        Executes the batch and returns the first column of the first row in the first returned result set. All other columns, rows and resultsets are ignored.
+      </summary>
+      <returns>The first column of the first row in the first result set.</returns>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        An error occurred while executing the batch.
+      </exception>
+    </ExecuteScalar>
+    <ExecuteScalarAsync>
+      <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+      <summary>
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteScalar" />, which executes the batch and returns the first column of the first row in the first returned result set. All other columns, rows and result sets are ignored.
+      </summary>
+      <returns>The first column of the first row in the first result set.</returns>
+      <remarks>
+        This method benefits from <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteScalarAsync(System.Threading.CancellationToken)" />, and all the expected exceptions of that method also apply here. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously.
+      </remarks>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        An error occurred while executing the batch.
+      </exception>
+      <exception cref="T:System.OperationCanceledException">
+        The cancellation token was canceled. This exception is stored into the returned task.
+      </exception>
+    </ExecuteScalarAsync>
+    <Prepare>
+      <summary>
+        Creates a prepared (or compiled) version of the batch, or of each of its commands, on the data source.
+      </summary>
+    </Prepare>
+    <PrepareAsync>
+      <param name="cancellationToken">
+        An optional token to cancel the asynchronous operation. The default value is <see cref="P:System.Threading.CancellationToken.None" />.
+      </param>
+      <summary>
+        Asynchronously creates a prepared (or compiled) version of the batch, or of each of its commands, on the data source.
+      </summary>
+      <returns>A <see cref="T:System.Threading.Tasks.Task" /> representing the asynchronous operation.</returns>
+      <remarks>
+        This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <see cref="T:System.ArgumentException" />, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <see cref="M:Microsoft.Data.SqlClient.SqlBatch.Prepare" />.
+      </remarks>
+      <exception cref="T:System.OperationCanceledException">
+        The cancellation token was canceled. This exception is stored into the returned task.
+      </exception>
+    </PrepareAsync>
+  </members>
+</docs>

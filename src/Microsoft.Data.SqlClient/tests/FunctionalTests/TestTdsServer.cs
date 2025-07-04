@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Engine = engine;
         }
 
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, Version serverVersion = null, [CallerMemberName] string methodName = "")
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -36,28 +36,41 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 args.FedAuthRequiredPreLoginOption = SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
             }
+            if (excludeEncryption)
+            {
+                args.Encryption = SqlServer.TDS.PreLogin.TDSPreLoginTokenEncryptionType.None;
+            }
+            if (serverVersion != null)
+            {
+                args.ServerVersion = serverVersion;
+            }
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
             server._endpoint = new TDSServerEndPoint(server) { ServerEndPoint = new IPEndPoint(IPAddress.Any, 0) };
             server._endpoint.EndpointName = methodName;
             // The server EventLog should be enabled as it logs the exceptions.
-            server._endpoint.EventLog = Console.Out;
+            server._endpoint.EventLog = enableLog ? Console.Out : null;
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
-            server._connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
+            server._connectionStringBuilder = excludeEncryption
+                // Allow encryption to be set when encryption is to be excluded from pre-login response.
+                ? new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Mandatory }
+                : new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = SqlConnectionEncryptOption.Optional };
             server.ConnectionString = server._connectionStringBuilder.ConnectionString;
+            server.Endpoint = server._endpoint.ServerEndPoint;
             return server;
         }
 
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, bool excludeEncryption = false, Version serverVersion = null, [CallerMemberName] string methodName = "")
         {
-            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName);
+            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, excludeEncryption, serverVersion, methodName);
         }
 
         public void Dispose() => _endpoint?.Stop();
 
         public string ConnectionString { get; private set; }
 
+        public IPEndPoint Endpoint { get; private set; }
     }
 }

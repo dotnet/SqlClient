@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{0CC4817A-12F3-4357-912C-09315FAAD008}"
 EndProject
@@ -11,14 +11,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TDS.Servers", "Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj", "{978063D3-FBB5-4E10-8C45-67C90BE1B931}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TDS", "Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj", "{8DC9D1A0-351B-47BC-A90F-B9DA542550E9}"
-	ProjectSection(ProjectDependencies) = postProject
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {FDA6971D-9F57-4DA4-B10A-261C91684CFC}
-	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Tests", "Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj", "{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}"
-	ProjectSection(ProjectDependencies) = postProject
-		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.FunctionalTests", "Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.FunctionalTests.csproj", "{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netcore\src\Microsoft.Data.SqlClient.csproj", "{37431336-5307-4184-9356-C4B7E47DC714}"
 EndProject
@@ -28,7 +22,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netfx", "netfx", "{3FDD425C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Address", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj", "{D1392B54-998A-4F27-BC17-4CE149117BCC}"
 	ProjectSection(ProjectDependencies) = postProject
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {FDA6971D-9F57-4DA4-B10A-261C91684CFC}
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 		{407890AC-9876-4FEF-A6F1-F36A876BAADE} = {407890AC-9876-4FEF-A6F1-F36A876BAADE}
 	EndProjectSection
@@ -40,13 +33,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Ma
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Circle", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Circle\Circle.csproj", "{6C88F00F-9597-43AD-9E5F-9B344DA3B16F}"
 	ProjectSection(ProjectDependencies) = postProject
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {FDA6971D-9F57-4DA4-B10A-261C91684CFC}
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shapes", "Microsoft.Data.SqlClient\tests\ManualTests\SQL\UdtTest\UDTs\Shapes\Shapes.csproj", "{B73A7063-37C3-415D-AD53-BB3DA20ABD6E}"
 	ProjectSection(ProjectDependencies) = postProject
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {FDA6971D-9F57-4DA4-B10A-261C91684CFC}
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
@@ -70,10 +61,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Al
 		{412BCCC8-19F6-489A-B594-E9A506816155} = {412BCCC8-19F6-489A-B594-E9A506816155}
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "add-ons", "add-ons", "{C9726AED-D6A3-4AAC-BA04-92DD1F079594}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.DotNet.XUnitExtensions", "Microsoft.Data.SqlClient\tests\tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj", "{FDA6971D-9F57-4DA4-B10A-261C91684CFC}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{ED952CF7-84DF-437A-B066-F516E9BE1C2C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "snippets", "snippets", "{71F356DC-DFA3-4163-8BFE-D268722CE189}"
@@ -81,10 +68,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data", "Microsoft.Data", "{908C7DD3-C999-40A6-9433-9F5ACA7C36F5}"
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data\OperationAbortedException.xml = ..\doc\snippets\Microsoft.Data\OperationAbortedException.xml
+		..\doc\snippets\Microsoft.Data\SqlDbTypeExtensions.xml = ..\doc\snippets\Microsoft.Data\SqlDbTypeExtensions.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.Sql", "Microsoft.Data.Sql", "{0CE216CE-8072-4985-B248-61F0D0BE9C2E}"
 	ProjectSection(SolutionItems) = preProject
+		..\doc\snippets\Microsoft.Data.Sql\SqlDataSourceEnumerator.xml = ..\doc\snippets\Microsoft.Data.Sql\SqlDataSourceEnumerator.xml
 		..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml = ..\doc\snippets\Microsoft.Data.Sql\SqlNotificationRequest.xml
 	EndProjectSection
 EndProject
@@ -100,10 +89,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationParameters.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationProvider.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationToken.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlAuthenticationToken.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlBatch.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBatch.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlBatchCommand.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBatchCommand.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlBatchCommandCollection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBatchCommandCollection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopy.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopy.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnMapping.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnMapping.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnMappingCollection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnMappingCollection.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHint.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHint.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHintCollection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyColumnOrderHintCollection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyOptions.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlBulkCopyOptions.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientDiagnostic.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientDiagnostic.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientFactory.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientFactory.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientLogger.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientLogger.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlClientMetaDataCollectionNames.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlClientMetaDataCollectionNames.xml
@@ -117,15 +112,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCommand.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCommand.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandBuilder.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandBuilder.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCommandColumnEncryptionSetting.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlConfigurableRetryFactory.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConfigurableRetryFactory.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionEncryptOption.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionEncryptOption.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionIPAddressPreference.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionIPAddressPreference.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionOverrides.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionOverrides.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml
-		..\doc\snippets\Microsoft.Data.SqlClient\SQLDebugging.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SQLDebugging.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml
@@ -140,6 +137,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlNotificationType.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlNotificationType.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlParameter.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlParameterCollection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlParameterCollection.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryingEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryingEventArgs.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryIntervalBaseEnumerator.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryIntervalBaseEnumerator.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicBase.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicBase.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicBaseProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicBaseProvider.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicOption.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRetryLogicOption.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowsCopiedEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowsCopiedEventArgs.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowsCopiedEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowsCopiedEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatedEventArgs.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlRowUpdatedEventArgs.xml
@@ -156,36 +158,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.Da
 		..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\Label.xml = ..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\Label.xml
 		..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityClassification.xml = ..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityClassification.xml
 		..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml = ..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityProperty.xml
+		..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityRank.xml = ..\doc\snippets\Microsoft.Data.SqlClient.DataClassification\SensitivityRank.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.Server", "Microsoft.Data.SqlClient.Server", "{650EB7FA-EB0D-4F8E-AB2C-161C3AD8E363}"
 	ProjectSection(SolutionItems) = preProject
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\DataAccessKind.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\DataAccessKind.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\Format.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\IBinarySerialize.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\IBinarySerialize.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\InvalidUdtException.xml
 		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlDataRecord.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlDataRecord.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFacetAttribute.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFacetAttribute.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlFunctionAttribute.xml
 		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMetaData.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlMethodAttribute.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedAggregateAttribute.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedAggregateAttribute.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlUserDefinedTypeAttribute.xml
-		..\doc\snippets\Microsoft.Data.SqlClient.Server\SystemDataAccessKind.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\SystemDataAccessKind.xml
 		..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml = ..\doc\snippets\Microsoft.Data.SqlClient.Server\TriggerAction.xml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "Microsoft.Data.SqlTypes", "{5A7600BD-AED8-44AB-8F2A-7CB33A8D9C02}"
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml
-	EndProjectSection
-EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.NSLibrary", "Microsoft.Data.SqlClient\tests\NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj", "{E7336BFB-8521-423A-A140-3123F9065C5D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
-		{407890AC-9876-4FEF-A6F1-F36A876BAADE} = {407890AC-9876-4FEF-A6F1-F36A876BAADE}
+		..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlJson.xml
+		..\doc\snippets\Microsoft.Data.SqlTypes\SqlVector.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlVector.xml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.TestUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj", "{89D6D382-9B36-43C9-A912-03802FDA8E36}"
@@ -197,13 +184,124 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomRetryLogicProvider", 
 		{37431336-5307-4184-9356-C4B7E47DC714} = {37431336-5307-4184-9356-C4B7E47DC714}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.DockerLinuxTest", "Microsoft.Data.SqlClient\tests\Docker\DockerLinuxTest\Microsoft.Data.SqlClient.DockerLinuxTest.csproj", "{B93A3149-67E8-491E-A1E5-19D65F9D9E98}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.PerformanceTests", "Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj", "{599A336B-2A5F-473D-8442-1223ED37C93E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E6-4D6D-9466-97D78A56BE45}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server", "{869A9BCC-D303-4365-9BF7-958CD6387916}"
+	ProjectSection(SolutionItems) = preProject
+		..\doc\snippets\Microsoft.SqlServer.Server\DataAccessKind.xml = ..\doc\snippets\Microsoft.SqlServer.Server\DataAccessKind.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\Format.xml = ..\doc\snippets\Microsoft.SqlServer.Server\Format.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\IBinarySerialize.xml = ..\doc\snippets\Microsoft.SqlServer.Server\IBinarySerialize.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\InvalidUdtException.xml = ..\doc\snippets\Microsoft.SqlServer.Server\InvalidUdtException.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SqlFacetAttribute.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SqlFacetAttribute.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SqlFunctionAttribute.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SqlFunctionAttribute.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SqlMethodAttribute.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SqlMethodAttribute.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SqlUserDefinedAggregateAttribute.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SqlUserDefinedAggregateAttribute.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SqlUserDefinedTypeAttribute.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SqlUserDefinedTypeAttribute.xml
+		..\doc\snippets\Microsoft.SqlServer.Server\SystemDataAccessKind.xml = ..\doc\snippets\Microsoft.SqlServer.Server\SystemDataAccessKind.xml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestClr", "TestClr", "{CDE508A5-F5D0-4A59-A4EF-978833830727}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj", "{9A8996A8-6484-4AA7-B50F-F861430EDE2F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eng", "eng", "{4600328C-C134-499F-AAE2-964E8AD5472C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{4CAE9195-4F1A-4D48-854C-1C9FBC512C66}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\akv-official-pipeline.yml = ..\eng\pipelines\akv-official-pipeline.yml
+		..\eng\pipelines\dotnet-sqlclient-ci-core.yml = ..\eng\pipelines\dotnet-sqlclient-ci-core.yml
+		..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-package-reference-pipeline.yml
+		..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-ci-project-reference-pipeline.yml
+		..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml = ..\eng\pipelines\dotnet-sqlclient-signing-pipeline.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{FD4D7A96-79B1-4F89-B64D-29FACCC9232F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{E76A4ED5-9137-4E4B-AE91-7AEDB2683823}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{3850810F-535E-443A-A9B4-7EE85B327E0A}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\build-signed-package-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml = ..\eng\pipelines\common\templates\jobs\ci-build-nugets-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml = ..\eng\pipelines\common\templates\jobs\ci-code-coverage-job.yml
+		..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml = ..\eng\pipelines\common\templates\jobs\ci-run-tests-job.yml
+		..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml = ..\eng\pipelines\common\templates\jobs\run-tests-package-reference-job.yml
+		..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml = ..\eng\pipelines\common\templates\jobs\validate-signed-package-job.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{01FA4774-E594-4A2D-B839-EA7A56D09A8B}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\stages\ci-run-tests-stage.yml = ..\eng\pipelines\common\templates\stages\ci-run-tests-stage.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml = ..\eng\pipelines\common\templates\steps\build-all-configurations-signed-dlls-step.yml
+		..\eng\pipelines\common\templates\steps\build-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\build-all-tests-step.yml
+		..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netcore-step.yml
+		..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml = ..\eng\pipelines\common\templates\steps\build-and-run-tests-netfx-step.yml
+		..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml = ..\eng\pipelines\common\templates\steps\ci-prebuild-step.yml
+		..\eng\pipelines\common\templates\steps\ci-project-build-step.yml = ..\eng\pipelines\common\templates\steps\ci-project-build-step.yml
+		..\eng\pipelines\common\templates\steps\code-analyze-step.yml = ..\eng\pipelines\common\templates\steps\code-analyze-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-linux-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-macos-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-step.yml
+		..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml = ..\eng\pipelines\common\templates\steps\configure-sql-server-win-step.yml
+		..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml = ..\eng\pipelines\common\templates\steps\copy-dlls-for-test-step.yml
+		..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml = ..\eng\pipelines\common\templates\steps\ensure-dotnet-version.yml
+		..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml = ..\eng\pipelines\common\templates\steps\esrp-code-signing-step.yml
+		..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml = ..\eng\pipelines\common\templates\steps\generate-nuget-package-step.yml
+		..\eng\pipelines\common\templates\steps\override-sni-version.yml = ..\eng\pipelines\common\templates\steps\override-sni-version.yml
+		..\eng\pipelines\common\templates\steps\pre-build-step.yml = ..\eng\pipelines\common\templates\steps\pre-build-step.yml
+		..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml = ..\eng\pipelines\common\templates\steps\prepare-test-db-step.yml
+		..\eng\pipelines\common\templates\steps\publish-symbols-step.yml = ..\eng\pipelines\common\templates\steps\publish-symbols-step.yml
+		..\eng\pipelines\common\templates\steps\publish-test-results-step.yml = ..\eng\pipelines\common\templates\steps\publish-test-results-step.yml
+		..\eng\pipelines\common\templates\steps\run-all-tests-step.yml = ..\eng\pipelines\common\templates\steps\run-all-tests-step.yml
+		..\eng\pipelines\common\templates\steps\update-config-file-step.yml = ..\eng\pipelines\common\templates\steps\update-config-file-step.yml
+		..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml = ..\eng\pipelines\common\templates\steps\update-nuget-config-local-feed-step.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\libraries\build-variables.yml = ..\eng\pipelines\libraries\build-variables.yml
+		..\eng\pipelines\libraries\ci-build-variables.yml = ..\eng\pipelines\libraries\ci-build-variables.yml
+		..\eng\pipelines\libraries\common-variables.yml = ..\eng\pipelines\libraries\common-variables.yml
+		..\eng\pipelines\libraries\mds-validation-variables.yml = ..\eng\pipelines\libraries\mds-validation-variables.yml
+		..\eng\pipelines\libraries\mds-variables.yml = ..\eng\pipelines\libraries\mds-variables.yml
+		..\eng\pipelines\libraries\variables.yml = ..\eng\pipelines\libraries\variables.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{1C796A8E-3529-481B-9D4F-88C67D03DCA2}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\variables\akv-official-variables.yml = ..\eng\pipelines\variables\akv-official-variables.yml
+		..\eng\pipelines\variables\common-variables.yml = ..\eng\pipelines\variables\common-variables.yml
+		..\eng\pipelines\variables\esrp-signing-variables.yml = ..\eng\pipelines\variables\esrp-signing-variables.yml
+		..\eng\pipelines\variables\onebranch-variables.yml = ..\eng\pipelines\variables\onebranch-variables.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "jobs", "jobs", "{09352F1D-878F-4F55-8AA2-6E47F1AD37D5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8}"
+	ProjectSection(SolutionItems) = preProject
+		..\eng\pipelines\steps\compound-build-akv-step.yml = ..\eng\pipelines\steps\compound-build-akv-step.yml
+		..\eng\pipelines\steps\compound-esrp-code-signing-step.yml = ..\eng\pipelines\steps\compound-esrp-code-signing-step.yml
+		..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml = ..\eng\pipelines\steps\compound-extract-akv-apiscan-files-step.yml
+		..\eng\pipelines\steps\compound-nuget-pack-step.yml = ..\eng\pipelines\steps\compound-nuget-pack-step.yml
+		..\eng\pipelines\steps\compound-publish-symbols-step.yml = ..\eng\pipelines\steps\compound-publish-symbols-step.yml
+		..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml = ..\eng\pipelines\steps\roslyn-analyzers-akv-step.yml
+		..\eng\pipelines\steps\script-output-environment-variables-step.yml = ..\eng\pipelines\steps\script-output-environment-variables-step.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient.UnitTests", "Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj", "{4461063D-2F2B-274C-7E6F-F235119D258E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Microsoft.Data.SqlClient\tests\Common\Common.csproj", "{67128EC0-30F5-6A98-448B-55F88A1DE707}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -265,16 +363,16 @@ Global
 		{8DC9D1A0-351B-47BC-A90F-B9DA542550E9}.Release|x86.Build.0 = Release|Any CPU
 		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x64.Build.0 = Debug|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x86.Build.0 = Debug|Any CPU
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x64.ActiveCfg = Debug|x64
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x64.Build.0 = Debug|x64
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x86.ActiveCfg = Debug|x86
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Debug|x86.Build.0 = Debug|x86
 		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x64.ActiveCfg = Release|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x64.Build.0 = Release|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x86.ActiveCfg = Release|Any CPU
-		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x86.Build.0 = Release|Any CPU
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x64.ActiveCfg = Release|x64
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x64.Build.0 = Release|x64
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x86.ActiveCfg = Release|x86
+		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9}.Release|x86.Build.0 = Release|x86
 		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{37431336-5307-4184-9356-C4B7E47DC714}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -383,40 +481,6 @@ Global
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x64.Build.0 = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.ActiveCfg = Release|Any CPU
 		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}.Release|x86.Build.0 = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x64.Build.0 = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Debug|x86.Build.0 = Debug|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x64.ActiveCfg = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x64.Build.0 = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x86.ActiveCfg = Release|Any CPU
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC}.Release|x86.Build.0 = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x64.Build.0 = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Debug|x86.Build.0 = Debug|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x64.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x64.Build.0 = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x86.ActiveCfg = Release|Any CPU
-		{F5DF2FDC-C860-4CB3-8B24-7C903C6FC076}.Release|x86.Build.0 = Release|Any CPU
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|x64.ActiveCfg = Debug|x64
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|x64.Build.0 = Debug|x64
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|x86.ActiveCfg = Debug|x86
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Debug|x86.Build.0 = Debug|x86
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|x64.ActiveCfg = Release|x64
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|x64.Build.0 = Release|x64
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|x86.ActiveCfg = Release|x86
-		{E7336BFB-8521-423A-A140-3123F9065C5D}.Release|x86.Build.0 = Release|x86
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89D6D382-9B36-43C9-A912-03802FDA8E36}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -453,18 +517,6 @@ Global
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x64.Build.0 = Release|x64
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x86.ActiveCfg = Release|x86
 		{B499E477-C9B1-4087-A5CF-5C762D90E433}.Release|x86.Build.0 = Release|x86
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x64.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Debug|x86.Build.0 = Debug|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x64.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x64.Build.0 = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x86.ActiveCfg = Release|Any CPU
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98}.Release|x86.Build.0 = Release|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Debug|x64.ActiveCfg = Debug|x64
@@ -489,6 +541,36 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F}.Release|x86.ActiveCfg = Release|Any CPU
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|x64.ActiveCfg = Debug|x64
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|x64.Build.0 = Debug|x64
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|x86.ActiveCfg = Debug|x86
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Debug|x86.Build.0 = Debug|x86
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x64.ActiveCfg = Release|x64
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x64.Build.0 = Release|x64
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x86.ActiveCfg = Release|x86
+		{4461063D-2F2B-274C-7E6F-F235119D258E}.Release|x86.Build.0 = Release|x86
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x64.ActiveCfg = Debug|x64
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x64.Build.0 = Debug|x64
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x86.ActiveCfg = Debug|x86
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Debug|x86.Build.0 = Debug|x86
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.ActiveCfg = Release|x64
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x64.Build.0 = Release|x64
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.ActiveCfg = Release|x86
+		{67128EC0-30F5-6A98-448B-55F88A1DE707}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -500,17 +582,18 @@ Global
 		{8DC9D1A0-351B-47BC-A90F-B9DA542550E9} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{D2D1E2D1-B6E0-489F-A36D-1F3047AB87B9} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{37431336-5307-4184-9356-C4B7E47DC714} = {28E5EFE6-C9DD-4FF9-9FEC-532F72DFFA6E}
-		{D1392B54-998A-4F27-BC17-4CE149117BCC} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{28E5EFE6-C9DD-4FF9-9FEC-532F72DFFA6E} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{3FDD425C-FE01-4B56-863E-1FCDD0677CF5} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{D1392B54-998A-4F27-BC17-4CE149117BCC} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
 		{45DB5F86-7AE3-45C6-870D-F9357B66BDB5} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{6C88F00F-9597-43AD-9E5F-9B344DA3B16F} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{B73A7063-37C3-415D-AD53-BB3DA20ABD6E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{E0A6BB21-574B-43D9-890D-6E1144F2EE9E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{6C88F00F-9597-43AD-9E5F-9B344DA3B16F} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
+		{B73A7063-37C3-415D-AD53-BB3DA20ABD6E} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
+		{E0A6BB21-574B-43D9-890D-6E1144F2EE9E} = {CDE508A5-F5D0-4A59-A4EF-978833830727}
 		{A2E7E470-5EFF-4828-B55E-FCBA3650F51C} = {28E5EFE6-C9DD-4FF9-9FEC-532F72DFFA6E}
 		{1C9FC4B8-54BC-4B6C-BB3A-F5CD59D80A9B} = {A2E7E470-5EFF-4828-B55E-FCBA3650F51C}
 		{771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D} = {3FDD425C-FE01-4B56-863E-1FCDD0677CF5}
 		{412BCCC8-19F6-489A-B594-E9A506816155} = {771F3F1E-7A68-4A9D-ADA8-A24F1D5BE71D}
-		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7} = {C9726AED-D6A3-4AAC-BA04-92DD1F079594}
-		{FDA6971D-9F57-4DA4-B10A-261C91684CFC} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 		{71F356DC-DFA3-4163-8BFE-D268722CE189} = {ED952CF7-84DF-437A-B066-F516E9BE1C2C}
 		{908C7DD3-C999-40A6-9433-9F5ACA7C36F5} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
 		{0CE216CE-8072-4985-B248-61F0D0BE9C2E} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
@@ -518,13 +601,26 @@ Global
 		{5D1F0032-7B0D-4FB6-A969-FCFB25C9EA1D} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
 		{650EB7FA-EB0D-4F8E-AB2C-161C3AD8E363} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
 		{5A7600BD-AED8-44AB-8F2A-7CB33A8D9C02} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
-		{E7336BFB-8521-423A-A140-3123F9065C5D} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{89D6D382-9B36-43C9-A912-03802FDA8E36} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{B499E477-C9B1-4087-A5CF-5C762D90E433} = {0CC4817A-12F3-4357-912C-09315FAAD008}
-		{B93A3149-67E8-491E-A1E5-19D65F9D9E98} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{599A336B-2A5F-473D-8442-1223ED37C93E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{A314812A-7820-4565-A2A8-ABBE391C11E4} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{869A9BCC-D303-4365-9BF7-958CD6387916} = {71F356DC-DFA3-4163-8BFE-D268722CE189}
+		{CDE508A5-F5D0-4A59-A4EF-978833830727} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{9A8996A8-6484-4AA7-B50F-F861430EDE2F} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
+		{4CAE9195-4F1A-4D48-854C-1C9FBC512C66} = {4600328C-C134-499F-AAE2-964E8AD5472C}
+		{FD4D7A96-79B1-4F89-B64D-29FACCC9232F} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{E76A4ED5-9137-4E4B-AE91-7AEDB2683823} = {FD4D7A96-79B1-4F89-B64D-29FACCC9232F}
+		{3850810F-535E-443A-A9B4-7EE85B327E0A} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
+		{01FA4774-E594-4A2D-B839-EA7A56D09A8B} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
+		{EABE3A3E-D505-418A-B1B8-1B0AC4872F3D} = {E76A4ED5-9137-4E4B-AE91-7AEDB2683823}
+		{75BAE755-3A1F-41F2-9176-9F8FF9FEE2DD} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{1C796A8E-3529-481B-9D4F-88C67D03DCA2} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{09352F1D-878F-4F55-8AA2-6E47F1AD37D5} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{AD738BD4-6A02-4B88-8F93-FBBBA49A74C8} = {4CAE9195-4F1A-4D48-854C-1C9FBC512C66}
+		{4461063D-2F2B-274C-7E6F-F235119D258E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{67128EC0-30F5-6A98-448B-55F88A1DE707} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

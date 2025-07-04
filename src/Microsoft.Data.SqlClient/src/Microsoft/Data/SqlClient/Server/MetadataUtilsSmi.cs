@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Server
     ///  These are all based off of knowing the clr type of the value
     ///  as an ExtendedClrTypeCode enum for rapid access.
     /// </summary>
-    internal class MetaDataUtilsSmi
+    internal static class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
@@ -75,6 +75,10 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.Structured,           // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
             SqlDbType.Time,                 // System.TimeSpan
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
+#if NET
+            SqlDbType.Date,                 // System.DateOnly
+            SqlDbType.Time,                 // System.TimeOnly  
+#endif
         };
 
 
@@ -86,7 +90,11 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
         {
+#if NET
+            int Count = 44;
+#else
             int Count = 42;
+#endif
             // Keep this initialization list in the same order as ExtendedClrTypeCode for ease in validating!
             var dictionary = new Dictionary<Type, ExtendedClrTypeCode>(Count)
             {
@@ -132,6 +140,10 @@ namespace Microsoft.Data.SqlClient.Server
                 { typeof(IEnumerable<SqlDataRecord>), ExtendedClrTypeCode.IEnumerableOfSqlDataRecord },
                 { typeof(TimeSpan), ExtendedClrTypeCode.TimeSpan },
                 { typeof(DateTimeOffset), ExtendedClrTypeCode.DateTimeOffset },
+#if NET
+                { typeof(DateOnly), ExtendedClrTypeCode.DateOnly },
+                { typeof(TimeOnly), ExtendedClrTypeCode.TimeOnly },
+#endif
             };
             return dictionary;
         }
@@ -150,10 +162,6 @@ namespace Microsoft.Data.SqlClient.Server
         internal static bool IsAnsiType(SqlDbType type) => type == SqlDbType.Char ||
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
-
-        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
-                    type == SqlDbType.VarBinary ||
-                    type == SqlDbType.Image;
 
         // Does this type use PLP format values?
         internal static bool IsPlpFormat(SmiMetaData metaData) => 
@@ -175,19 +183,15 @@ namespace Microsoft.Data.SqlClient.Server
         //      must instantiate a Type object.  The typecode switch also degenerates into a large if-then-else for
         //      all but the primitive clr types.
         internal static ExtendedClrTypeCode DetermineExtendedTypeCodeForUseWithSqlDbType(
-                SqlDbType dbType,
-                bool isMultiValued,
-                object value,
-                Type udtType
-#if NETFRAMEWORK
-                ,ulong smiVersion
-#endif
-            )
+            SqlDbType dbType,
+            bool isMultiValued,
+            object value,
+            Type udtType)
         {
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
             // fast-track null, which is valid for all types
-            if (null == value)
+            if (value == null)
             {
                 extendedCode = ExtendedClrTypeCode.Empty;
             }
@@ -244,15 +248,18 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Char;
                         break;
                     case SqlDbType.Date:
-                    case SqlDbType.DateTime2:
-#if NETFRAMEWORK
-                        if (smiVersion >= SmiContextFactory.Sql2008Version)
-                        {
-                            goto case SqlDbType.DateTime;
-                        }
+#if NET
+                        if (value.GetType() == typeof(DateOnly))
+                            extendedCode = ExtendedClrTypeCode.DateOnly;
+                        else if (value.GetType() == typeof(DateTime))
+                            extendedCode = ExtendedClrTypeCode.DateTime;
+                        else if (value.GetType() == typeof(SqlDateTime))
+                            extendedCode = ExtendedClrTypeCode.SqlDateTime;
+
                         break;
 #endif
                     case SqlDbType.DateTime:
+                    case SqlDbType.DateTime2:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
                             extendedCode = ExtendedClrTypeCode.DateTime;
@@ -321,7 +328,7 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Udt:
                         // Validate UDT type if caller gave us a type to validate against
-                        if (null == udtType || value.GetType() == udtType)
+                        if (udtType == null || value.GetType() == udtType)
                         {
                             extendedCode = ExtendedClrTypeCode.Object;
                         }
@@ -330,20 +337,21 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Invalid;
                         }
                         break;
+#if NET
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
-#endif
-                            )
+                        if (value.GetType() == typeof(TimeOnly))
+                            extendedCode = ExtendedClrTypeCode.TimeOnly;
+                        else if (value.GetType() == typeof(TimeSpan))
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
-                    case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset)
-#if NETFRAMEWORK
-                        && smiVersion >= SmiContextFactory.Sql2008Version
+#else
+                    case SqlDbType.Time:
+                        if (value.GetType() == typeof(TimeSpan))
+                            extendedCode = ExtendedClrTypeCode.TimeSpan;
+                        break;
 #endif
-                            )
+                    case SqlDbType.DateTimeOffset:
+                        if (value.GetType() == typeof(DateTimeOffset))
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
                         break;
                     case SqlDbType.Xml:
@@ -461,7 +469,7 @@ namespace Microsoft.Data.SqlClient.Server
                 // Split the input name. UdtTypeName is specified as single 3 part name.
                 // NOTE: ParseUdtTypeName throws if format is incorrect
                 string typeName = source.ServerTypeName;
-                if (null != typeName)
+                if (typeName != null)
                 {
                     string[] names = SqlParameter.ParseTypeName(typeName, true /* isUdtTypeName */);
 
@@ -500,11 +508,7 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Scale,
                                             source.LocaleId,
                                             source.CompareOptions,
-#if NETFRAMEWORK
                                             source.Type,
-#else
-                                            null,
-#endif
                                             source.Name,
                                             typeSpecificNamePart1,
                                             typeSpecificNamePart2,
@@ -545,7 +549,7 @@ namespace Microsoft.Data.SqlClient.Server
             if (column.DataType == typeof(SqlDecimal))
             {
                 // Must scan all values in column to determine best-fit precision & scale
-                Debug.Assert(null != parent);
+                Debug.Assert(parent != null);
                 scale = 0;
                 byte nonFractionalPrecision = 0; // finds largest non-Fractional portion of precision
                 foreach (DataRow row in parent.Rows)
@@ -590,7 +594,7 @@ namespace Microsoft.Data.SqlClient.Server
             else if (dbType == SqlDbType.Decimal)
             {
                 // Must scan all values in column to determine best-fit precision & scale
-                Debug.Assert(null != parent);
+                Debug.Assert(parent != null);
                 scale = 0;
                 byte nonFractionalPrecision = 0; // finds largest non-Fractional portion of precision
                 foreach (DataRow row in parent.Rows)
@@ -631,7 +635,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             // In Net Core, since DataColumn.Locale is not accessible because it is internal and in a separate assembly, 
             // we try to get the Locale from the parent
-            CultureInfo columnLocale = ((null != parent) ? parent.Locale : CultureInfo.CurrentCulture);
+            CultureInfo columnLocale = parent != null ? parent.Locale : CultureInfo.CurrentCulture;
 
             return new SmiExtendedMetaData(
                                         dbType,
@@ -958,27 +962,5 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
-
-#if NETFRAMEWORK
-
-        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
-        {
-            if (SmiContextFactory.LatestVersion == smiVersion)
-            {
-                return true;
-            }
-            else
-            {
-                // 2005 doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
-                return md.SqlDbType != SqlDbType.Structured &&
-                        md.SqlDbType != SqlDbType.Date &&
-                        md.SqlDbType != SqlDbType.DateTime2 &&
-                        md.SqlDbType != SqlDbType.DateTimeOffset &&
-                        md.SqlDbType != SqlDbType.Time;
-            }
-        }
-
-#endif
     }
 }

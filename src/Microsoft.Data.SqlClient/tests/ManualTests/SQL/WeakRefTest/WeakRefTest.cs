@@ -119,6 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             weak = OpenNullifyReader(cmd);
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
+                            GC.Collect();
                             Assert.False(weak.IsAlive, "Reader is still alive!");
                             break;
 
@@ -132,6 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             weak = OpenNullifyReader(cmd);
                             GC.Collect();
                             GC.WaitForPendingFinalizers();
+                            GC.Collect();
 
                             Assert.False(weak.IsAlive, "Reader is still alive!");
                             con.Close();
@@ -147,13 +149,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 rdr.Read();
                                 Assert.Equal(1, rdr.FieldCount);
-                                Assert.Equal(rdr.GetName(0), COLUMN_NAME_2);
+                                Assert.Equal(COLUMN_NAME_2, rdr.GetName(0));
                             }
                             break;
 
                         case ReaderVerificationType.ChangeDatabase:
                             con.ChangeDatabase(CHANGE_DATABASE_NAME);
-                            Assert.Equal(con.Database, CHANGE_DATABASE_NAME);
+                            Assert.Equal(CHANGE_DATABASE_NAME, con.Database);
                             break;
 
                         case ReaderVerificationType.BeginTransaction:
@@ -202,6 +204,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         weak = OpenNullifyTransaction(con);
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
+                        GC.Collect();
 
                         Assert.False(weak.IsAlive, "Transaction is still alive!");
                         break;
@@ -215,6 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         weak = OpenNullifyTransaction(con);
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
+                        GC.Collect();
 
                         Assert.False(weak.IsAlive, "Transaction is still alive!");
                         con.Close();

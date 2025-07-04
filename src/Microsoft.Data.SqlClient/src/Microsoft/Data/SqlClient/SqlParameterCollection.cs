@@ -28,6 +28,11 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
+        internal SqlParameterCollection(int capacity)
+            : this()
+        {
+            _items = new List<SqlParameter>(Math.Max(capacity, 1));
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemIndex/*' />
         public new SqlParameter this[int index]

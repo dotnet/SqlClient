@@ -3,11 +3,14 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
+    [TypeConverter(typeof(SqlConnectionEncryptOptionConverter))]
     public sealed class SqlConnectionEncryptOption
     {
         private const string TRUE = "True";
@@ -39,8 +42,13 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Encrypt);
             }
+        }
+
+        internal static SqlConnectionEncryptOption Parse(bool value)
+        {
+            return value ? Mandatory : Optional;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/TryParse/*' />

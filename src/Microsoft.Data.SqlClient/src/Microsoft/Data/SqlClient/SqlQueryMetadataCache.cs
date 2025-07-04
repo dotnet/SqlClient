@@ -7,9 +7,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Runtime.Caching;
 using System.Text;
 using System.Threading;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlQueryMetadataCache()
         {
-            _cache = new MemoryCache("SqlQueryMetadataCache");
+            _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
         internal static SqlQueryMetadataCache GetInstance()
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
+            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = _cache.Get<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey);
 
             // If we had a cache miss just return false.
             if (cipherMetadataDictionary is null)
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient
             // Iterate over all the parameters and try to get their cipher MD.
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
-                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out SqlCipherMetadata paramCiperMetadata);
+                bool found = cipherMetadataDictionary.TryGetValue(param.GetPrefixedParameterName(), out SqlCipherMetadata paramCiperMetadata);
 
                 // If we failed to identify the encryption for a specific parameter, clear up the cipher MD of all parameters and exit.
                 if (!found)
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = 
-                _cache.Get(enclaveLookupKey) as ConcurrentDictionary<int, SqlTceCipherInfoEntry>;
+                _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey);
             if (enclaveKeys is not null)
             {
                 sqlCommand.keysToBeSentToEnclave = CreateCopyOfEnclaveKeys(enclaveKeys);
@@ -211,11 +211,11 @@ namespace Microsoft.Data.SqlClient
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
                 Debug.Assert(cipherMdCopy is null || !cipherMdCopy.IsAlgorithmInitialized());
 
-                cipherMetadataDictionary.Add(param.ParameterNameFixed, cipherMdCopy);
+                cipherMetadataDictionary.Add(param.GetPrefixedParameterName(), cipherMdCopy);
             }
 
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
-            long currentCacheSize = _cache.GetCount();
+            long currentCacheSize = _cache.Count;
             if ((currentCacheSize > CacheSize + CacheTrimThreshold) && (0 == Interlocked.CompareExchange(ref _inTrim, 1, 0)))
             {
                 try
@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
                         Thread.Sleep(TimeSpan.FromSeconds(10));
                     }
 #endif
-                    _cache.Trim((int)(((double)(currentCacheSize - CacheSize) / (double)currentCacheSize) * 100));
+                    _cache.Compact((int)(((double)(currentCacheSize - CacheSize) / (double)currentCacheSize) * 100));
                 }
                 finally
                 {
@@ -235,11 +235,15 @@ namespace Microsoft.Data.SqlClient
             }
 
             // By default evict after 10 hours.
-            _cache.Set(cacheLookupKey, cipherMetadataDictionary, DateTimeOffset.UtcNow.AddHours(10));
+            MemoryCacheEntryOptions options = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(10)
+            };
+            _cache.Set<Dictionary<string, SqlCipherMetadata>>(cacheLookupKey, cipherMetadataDictionary, options);
             if (sqlCommand.requiresEnclaveComputations)
             {
                 ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
-                _cache.Set(enclaveLookupKey, keysToBeCached, DateTimeOffset.UtcNow.AddHours(10));
+                _cache.Set<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(enclaveLookupKey, keysToBeCached, options);
             }
         }
 

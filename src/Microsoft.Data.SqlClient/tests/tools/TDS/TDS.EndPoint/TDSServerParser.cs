@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS.EndPoint
 {
@@ -68,8 +69,19 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 {
                     case TDSMessageType.PreLogin:
                         {
+                            if (Session.Encryption == TDSEncryptionType.None)
+                            {
+                                (MessageBeingReceived[0] as TDSPreLoginToken).Encryption = TDSPreLoginTokenEncryptionType.None;
+                            }
+
                             // Call into the subscriber to process the packet
                             responseMessages = Server.OnPreLoginRequest(Session, MessageBeingReceived);
+
+                            if (Session.Encryption == TDSEncryptionType.None)
+                            {
+                                DisableTransportEncryption();
+                            }
+
                             break;
                         }
                     case TDSMessageType.TDS7Login:
@@ -134,7 +146,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     if (Session.Encryption == TDSEncryptionType.LoginOnly || Session.Encryption == TDSEncryptionType.Full)
                     {
                         // Enable server side encryption
-                        EnableServerTransportEncryption(Session.EncryptionCertificate);
+                        EnableServerTransportEncryption(Session.EncryptionCertificate, Session.EncryptionProtocols);
                     }
                 }
 

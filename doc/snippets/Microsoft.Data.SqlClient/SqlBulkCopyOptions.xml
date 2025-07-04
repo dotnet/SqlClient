@@ -1,67 +1,72 @@
-<docs>
-    <members name="SqlBulkCopyOptions">
-        <SqlBulkCopyOptions>
-            <summary>Bitwise flag that specifies one or more options to use with an instance of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-You can use the <xref:Microsoft.Data.SqlClient.SqlBulkCopyOptions> enumeration when you construct a <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to change how the 
-<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> methods for that instance behave.  
+﻿<docs>
+  <members name="SqlBulkCopyOptions">
+    <SqlBulkCopyOptions>
+      <summary>
+        Bitwise flag that specifies one or more options to use with an instance of <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />.
+      </summary>
+      <remarks>
+        You can use the <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyOptions" /> enumeration when you construct a <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> instance to change how the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.Common.DbDataReader)" /> methods for that instance behave.  
+      </remarks>
+      <example>
+        <format type="text/markdown">
+          <![CDATA[  
+The following console application demonstrates how to perform a bulk load that copies the value in the identity column of the source table to the corresponding column in the destination table, instead of generating a new value for each row's identity column.  
 
-## Examples  
-The following console application demonstrates how to perform a bulk load that copies the value in the identity column of the source table to the corresponding column in the destination table, 
-instead of generating a new value for each row's identity column.  
-
-To see how the option changes the way the bulk load works, run the sample with the **dbo.BulkCopyDemoMatchingColumns** table empty. All rows load from the source. 
-Next, run the sample again without emptying the table. An exception is thrown, and the code writes a message to the console window notifying you that rows were not added because of 
-primary key violations.  
+To see how the option changes the way the bulk load works, run the sample with the **dbo.BulkCopyDemoMatchingColumns** table empty. All rows load from the source. Next, run the sample again without emptying the table. An exception is thrown, and the code writes a message to the console window notifying you that rows were not added because of primary key violations.  
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
-This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
-it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](https://learn.microsoft.com/sql/connect/ado-net/sql/bulk-copy-example-setup). This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
 [!code-csharp[SqlBulkCopy.KeepIdentity#1](~/../sqlclient/doc/samples/SqlBulkCopy_KeepIdentity.cs)]
 
-]]></format>
-            </remarks>
-        </SqlBulkCopyOptions>
-        <AllowEncryptedValueModifications>
-            <summary>
-                <format type="text/markdown"><![CDATA[
-
-When specified, **AllowEncryptedValueModifications** enables bulk copying of encrypted data between tables or databases, without decrypting the data. Typically, 
-an application would select data from encrypted columns from one table without decrypting the data (the app would connect to the database with the column encryption setting keyword set 
-to disabled) and then would use this option to bulk insert the data, which is still encrypted.
-
-Use caution when specifying **AllowEncryptedValueModifications** as this may lead to corrupting the database because the driver does not check if the data is indeed encrypted, 
-or if it is correctly encrypted using the same encryption type, algorithm and key as the target column.
-]]></format>
-            </summary>
-        </AllowEncryptedValueModifications>
-        <CheckConstraints>
-            <summary>Check constraints while data is being inserted. By default, constraints are not checked.</summary>
-        </CheckConstraints>
-        <Default>
-            <summary>Use the default values for all options.</summary>
-        </Default>
-        <FireTriggers>
-            <summary>When specified, cause the server to fire the insert triggers for the rows being inserted into the database.</summary>
-        </FireTriggers>
-        <KeepIdentity>
-            <summary>Preserve source identity values. When not specified, identity values are assigned by the destination.</summary>
-        </KeepIdentity>
-        <KeepNulls>
-            <summary>Preserve null values in the destination table regardless of the settings for default values. When not specified, null values are replaced by default values where applicable.</summary>
-        </KeepNulls>
-        <TableLock>
-            <summary>Obtain a bulk update lock for the duration of the bulk copy operation. When not specified, row locks are used.</summary>
-        </TableLock>
-        <UseInternalTransaction>
-            <summary>When specified, each batch of the bulk-copy operation will occur within a transaction. If you indicate this option and also provide a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> 
-                    object to the constructor, an <see cref="T:System.ArgumentException" /> occurs.
-            </summary>
-        </UseInternalTransaction>
-    </members>
+          ]]>
+        </format>
+      </example>
+    </SqlBulkCopyOptions>
+    <AllowEncryptedValueModifications>
+      <summary>
+        <para>
+          When specified, <b>AllowEncryptedValueModifications</b> enables bulk copying of encrypted data between tables or databases, without decrypting the data. Typically, an application would select data from encrypted columns from one table without decrypting the data (the app would connect to the database with the column encryption setting keyword set to disabled) and then would use this option to bulk insert the data, which is still encrypted.
+        </para>
+        <para>
+          Use caution when specifying <b>AllowEncryptedValueModifications</b> as this may lead to corrupting the database because the driver does not check if the data is indeed encrypted, or if it is correctly encrypted using the same encryption type, algorithm and key as the target column.
+        </para>
+      </summary>
+    </AllowEncryptedValueModifications>
+    <CheckConstraints>
+      <summary>
+        Check constraints while data is being inserted. By default, constraints are not checked.
+      </summary>
+    </CheckConstraints>
+    <Default>
+      <summary>
+        Use the default values for all options.
+      </summary>
+    </Default>
+    <FireTriggers>
+      <summary>
+        When specified, cause the server to fire the insert triggers for the rows being inserted into the database.
+      </summary>
+    </FireTriggers>
+    <KeepIdentity>
+      <summary>
+        Preserve source identity values. When not specified, identity values are assigned by the destination.
+      </summary>
+    </KeepIdentity>
+    <KeepNulls>
+      <summary>
+        Preserve null values in the destination table regardless of the settings for default values. When not specified, null values are replaced by default values where applicable.
+      </summary>
+    </KeepNulls>
+    <TableLock>
+      <summary>
+        Obtain a bulk update lock for the duration of the bulk copy operation. When not specified, row locks are used.
+      </summary>
+    </TableLock>
+    <UseInternalTransaction>
+      <summary>
+        When specified, each batch of the bulk-copy operation will occur within a transaction. If you indicate this option and also provide a <see cref="T:Microsoft.Data.SqlClient.SqlTransaction" /> object to the constructor, an <see cref="T:System.ArgumentException" /> occurs.
+      </summary>
+    </UseInternalTransaction>
+  </members>
 </docs>

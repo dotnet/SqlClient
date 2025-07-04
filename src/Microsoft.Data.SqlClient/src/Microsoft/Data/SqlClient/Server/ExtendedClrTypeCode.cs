@@ -49,6 +49,10 @@ namespace Microsoft.Data.SqlClient.Server
         IEnumerableOfSqlDataRecord, // System.Collections.Generic.IEnumerable<Microsoft.Data.SqlClient.Server.SqlDataRecord>
         TimeSpan,                   // System.TimeSpan
         DateTimeOffset,             // System.DateTimeOffset
+#if NET
+        DateOnly,                   // System.DateOnly
+        TimeOnly,                   // System.TimeOnly
+#endif
         Stream,                     // System.IO.Stream
         TextReader,                 // System.IO.TextReader
         XmlReader,                  // System.Xml.XmlReader

@@ -1,17 +1,12 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="OperationAbortedException">
-        <OperationAbortedException>
-            <summary>This exception is thrown when an ongoing operation is aborted by the user.</summary>
-            <remarks>
-                <format type="text/markdown"><![CDATA[  
-
-## Remarks  
-This exception indicates that an operation has been aborted by the consumer of an API. 
-For example, if the event handler of the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied> event sets the **Abort** property to `true` in the <xref:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs> object passed to the handler, the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method stops sending rows to the server and throws an <xref:Microsoft.Data.OperationAbortedException>.  
-
-]]></format>
-            </remarks>
-        </OperationAbortedException>
-    </members>
+﻿<docs>
+  <members name="OperationAbortedException">
+    <OperationAbortedException>
+      <summary>
+        This exception is thrown when an ongoing operation is aborted by the user.
+      </summary>
+      <remarks>
+        This exception indicates that an operation has been aborted by the consumer of an API.  For example, if the event handler of the <see cref="E:Microsoft.Data.SqlClient.SqlBulkCopy.SqlRowsCopied" /> event sets the <see cref="P:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs.Abort" />  property to <see langword="true" /> in the <see cref="T:Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs" /> object passed to the handler, the <see cref="M:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer(System.Data.DataTable)" /> method stops sending rows to the server and throws an <see cref="T:Microsoft.Data.OperationAbortedException" /> .
+      </remarks>
+    </OperationAbortedException>
+  </members>
 </docs>

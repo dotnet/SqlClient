@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Security.Cryptography;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -15,7 +14,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     {
         internal static void ValidateNotNull(object parameter, string name)
         {
-            if (null == parameter)
+            if (parameter == null)
             {
                 throw ADP.NullArgument(name);
             }
@@ -31,16 +30,22 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static void ValidateNotNullOrWhitespaceForEach(string[] parameters, string name)
         {
-            if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
+            if (parameters != null && parameters.Length > 0)
             {
-                throw ADP.NullOrWhitespaceForEach(name);
+                for (int index = 0; index < parameters.Length; index++)
+                {
+                    if (string.IsNullOrWhiteSpace(parameters[index]))
+                    {
+                        throw ADP.NullOrWhitespaceForEach(name);
+                    }
+                }
             }
         }
 
         internal static void ValidateEncryptionAlgorithm(string encryptionAlgorithm, bool isSystemOp)
         {
             // This validates that the encryption algorithm is RSA_OAEP
-            if (null == encryptionAlgorithm)
+            if (encryptionAlgorithm == null)
             {
                 throw ADP.NullAlgorithm(isSystemOp);
             }
@@ -119,8 +124,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static ArgumentException InvalidAKVPath(string masterKeyPath, bool isSystemOp)
         {
-            string errorMessage = null == masterKeyPath ? Strings.NullAkvPath
-                                                        : string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvPathTemplate, masterKeyPath);
+            string errorMessage = masterKeyPath == null
+                ? Strings.NullAkvPath
+                : string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvPathTemplate, masterKeyPath);
             if (isSystemOp)
             {
                 return new ArgumentNullException(Constants.AeParamMasterKeyPath, errorMessage);

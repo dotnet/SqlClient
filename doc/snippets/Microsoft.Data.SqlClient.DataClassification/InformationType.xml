@@ -1,21 +1,36 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="InformationType">
-        <InformationType>
-            <summary>Represents the Data Classification Information Types as received from SQL Server for the active 'SqlDataReader'</summary>
-        </InformationType>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" /> class.</summary>
-          <param name="name">Name of Information Type.</param>
-          <param name="id">ID of Information Type.</param>
-        </ctor>
-        <Id>
-            <summary>Gets the ID for this 'InformationType' object</summary>
-            <value>ID of Information Type.</value>
-        </Id>
-        <Name>
-            <summary>Gets the name for this 'InformationType' object</summary>
-            <value>Name of Information Type.</value>
-        </Name>
-    </members>
+﻿<docs>
+  <members name="InformationType">
+    <InformationType>
+      <summary>
+        Represents the Data Classification Information Types as received from SQL Server for the active <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" />
+      </summary>
+    </InformationType>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" /> class.
+      </summary>
+      <param name="name">
+        Name of Information Type.
+      </param>
+      <param name="id">
+        ID of Information Type.
+      </param>
+    </ctor>
+    <Id>
+      <summary>
+        Gets the ID for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" /> object
+      </summary>
+      <value>
+        ID of Information Type.
+      </value>
+    </Id>
+    <Name>
+      <summary>
+        Gets the name for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.InformationType" /> object
+      </summary>
+      <value>
+        Name of Information Type.
+      </value>
+    </Name>
+  </members>
 </docs>

@@ -4,7 +4,6 @@
 
 using System;
 using System.Configuration;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -21,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>The specified `T` object or default value of `T` if the section doesn't exist.</returns>
         public static T FetchConfigurationSection<T>(string name)
         {
-            string methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = nameof(FetchConfigurationSection);
 
             object section = null;
             try

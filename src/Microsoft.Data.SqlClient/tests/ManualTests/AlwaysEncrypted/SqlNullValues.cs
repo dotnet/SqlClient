@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(NullValueTestsData))]
         public void NullValueTests(string connString, ConnStringColumnEncryptionSetting connStringSetting, SqlCommandColumnEncryptionSetting commandSetting, ReturnValueSetting nullReturnValue)
         {

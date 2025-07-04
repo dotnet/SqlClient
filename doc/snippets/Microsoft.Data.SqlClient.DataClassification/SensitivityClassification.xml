@@ -1,49 +1,93 @@
-<?xml version="1.0"?>
-<docs>
-    <members name="SensitivityClassification">
-        <SensitivityClassification>
-            <summary>Provides the functionlity to retrieve Sensitivity Classification data as received from SQL Server for the active 'SqlDataReader'</summary>
-        </SensitivityClassification>
-        <ColumnSensitivities>
-            <summary>Returns the column sensitivity for this 'SensitivityClassification' Object</summary>
-            <value>List of column sensitivities.</value>
-        </ColumnSensitivities>
-        <InformationTypes>
-            <summary>Returns the information types collection for this 'SensitivityClassification' Object</summary>
-            <value>List of information types.</value>
-        </InformationTypes>
-        <Labels>
-            <summary>Returns the labels collection for this 'SensitivityClassification' Object</summary>
-            <value>List of labels.</value>
-        </Labels>
-        <SensitivityRank>
-          <summary>Returns the relative sensitivity rank for the query associated with the active 'SqlDataReader'.</summary>
-          <value>Relative sensitivity ranking for this query.</value>
-          <remarks>
-            <format type="text/markdown">
-              <![CDATA[
-
-## Remarks
-A relative sensitivity ranking of the query. Available values are as below:
-
-| Sensitivity Rank | Description |
-| --- | --- |
-| -1 | Not Defined (default) |
-| 0 | None |
-| 10 | Low |
-| 20 | Medium |
-| 30 | High |
-| 40 | Critical |
-]]>
-            </format>
-          </remarks>
-        </SensitivityRank>
-        <ctor>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> class.</summary>
-            <param name="labels">List of labels.</param>
-            <param name="informationTypes">List of information types.</param>
-            <param name="columnSensitivity">List of column sensitivities.</param>
-            <param name="sensitivityRank">Relative sensitivity rank for the query associated with the active 'SqlDataReader'.</param>
-        </ctor>
-    </members>
+﻿<docs>
+  <members name="SensitivityClassification">
+    <SensitivityClassification>
+      <summary>
+        Provides the functionality to retrieve Sensitivity Classification data as received from SQL Server for the active <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+      </summary>
+    </SensitivityClassification>
+    <ColumnSensitivities>
+      <summary>
+        Returns the column sensitivity for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> Object
+      </summary>
+      <value>
+        List of column sensitivities.
+      </value>
+    </ColumnSensitivities>
+    <InformationTypes>
+      <summary>
+        Returns the information types collection for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> Object
+      </summary>
+      <value>
+        List of information types.
+      </value>
+    </InformationTypes>
+    <Labels>
+      <summary>
+        Returns the labels collection for this <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> Object
+      </summary>
+      <value>
+        List of labels.
+      </value>
+    </Labels>
+    <SensitivityRank>
+      <summary>
+        Returns the relative sensitivity rank for the query associated with the active <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+      </summary>
+      <value>
+        Relative sensitivity ranking for this query.
+      </value>
+      <remarks>
+        <para>
+          A relative sensitivity ranking of the query. Available values are as below:
+        </para>
+        <list type="table">
+          <listheader>
+            <term>Sensitivity Rank</term>
+            <description>Description</description>
+          </listheader>
+          <item>
+            <term>-1</term>
+            <description>Not Defined (default)</description>
+          </item>
+          <item>
+            <term>0</term>
+            <description>None</description>
+          </item>
+          <item>
+            <term>10</term>
+            <description>Low</description>
+          </item>
+          <item>
+            <term>20</term>
+            <description>Medium</description>
+          </item>
+          <item>
+            <term>30</term>
+            <description>High</description>
+          </item>
+          <item>
+            <term>40</term>
+            <description>Critical</description>
+          </item>
+        </list>
+      </remarks>
+    </SensitivityRank>
+    <ctor>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.DataClassification.SensitivityClassification" /> class.
+      </summary>
+      <param name="labels">
+        List of labels.
+      </param>
+      <param name="informationTypes">
+        List of information types.
+      </param>
+      <param name="columnSensitivity">
+        List of column sensitivities.
+      </param>
+      <param name="sensitivityRank">
+        Relative sensitivity rank for the query associated with the active <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
+      </param>
+    </ctor>
+  </members>
 </docs>

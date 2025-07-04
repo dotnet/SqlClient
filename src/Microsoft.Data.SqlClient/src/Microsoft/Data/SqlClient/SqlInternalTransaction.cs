@@ -52,11 +52,11 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalTransaction(SqlInternalConnection innerConnection, TransactionType type, SqlTransaction outerTransaction, long transactionId)
         {
-            SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.ctor | RES | CPOOL | Object Id {0}, Created for connection {1}, outer transaction {2}, Type {3}", ObjectID, innerConnection.ObjectID, outerTransaction?.ObjectID, (int)type);
+            SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.ctor | RES | CPOOL | Object Id {0}, Created for connection {1}, outer transaction {2}, Type {3}", ObjectID, innerConnection.ObjectID, outerTransaction?.ObjectId, (int)type);
             _innerConnection = innerConnection;
             _transactionType = type;
 
-            if (null != outerTransaction)
+            if (outerTransaction != null)
             {
                 _parent = new WeakReference<SqlTransaction>(outerTransaction);
             }
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_transactionType == TransactionType.LocalFromTSQL, "invalid state");
                     result = false;
                 }
-                else if (!_parent.TryGetTarget(out SqlTransaction _))
+                else if (!_parent.TryGetTarget(out _))
                 {
                     // We had a parent, but parent was GC'ed.
                     result = true;
@@ -203,9 +203,6 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-#if NETFRAMEWORK
-                TdsParser.ReliabilitySection.Assert("unreliable call to CloseFromConnection");  // you need to setup for a thread abort somewhere before you call this method
-#endif
                 if (processFinallyBlock)
                 {
                     // Always ensure we're zombied; 2005 will send an EnvChange that
@@ -234,21 +231,7 @@ namespace Microsoft.Data.SqlClient
                     // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
-#if NETFRAMEWORK
-                    // SQL BU DT 291159 - perform full Zombie on pre-2005, but do not actually
-                    // complete internal transaction until informed by server in the case of 2005
-                    // or later.
-                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
-                    {
-                        // Since nested transactions are no longer allowed, set flag to false.
-                        // This transaction has been completed.
-                        Zombie();
-                    }
-                    else
-#endif
-                    {
-                        ZombieParent();
-                    }
+                    ZombieParent();
                 }
                 catch (Exception e)
                 {
@@ -398,15 +381,6 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
-#if NETFRAMEWORK
-                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
-                    {
-                        // Check if Zombied before making round-trip to server.
-                        // Against 2005 we receive an envchange on the ExecuteTransaction above on the
-                        // parser that calls back into SqlTransaction for the Zombie() call.
-                        CheckTransactionLevelAndZombie();
-                    }
-#endif
                 }
                 catch (Exception e)
                 {
@@ -477,7 +451,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection innerConnection = _innerConnection;
             _innerConnection = null;
 
-            if (null != innerConnection)
+            if (innerConnection != null)
             {
                 innerConnection.DisconnectTransaction(this);
             }

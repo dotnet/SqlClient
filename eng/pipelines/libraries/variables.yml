@@ -1,0 +1,17 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+variables:
+  - template: build-variables.yml@self
+  # onebranch template variables
+  - name: ob_outputDirectory
+    value: '$(artifactDirectory)' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
+  - name: ob_sdl_binskim_break
+    value: true # https://aka.ms/obpipelines/sdl
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: WindowsContainerImage
+    value: 'onebranch.azurecr.io/windows/ltsc2022/vse2022:latest' # Docker image which is used to build the project https://aka.ms/obpipelines/containers

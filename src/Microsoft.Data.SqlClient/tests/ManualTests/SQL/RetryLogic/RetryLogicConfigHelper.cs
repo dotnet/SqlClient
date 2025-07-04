@@ -28,6 +28,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private const string SqlRetryLogicTypeName = "Microsoft.Data.SqlClient.SqlRetryLogic";
 
+        private const string CreateExceptionMethodName = "CreateException";
+        private const string AddMethodName = "Add";
+
         public const string DefaultTransientErrors = "1204, 1205, 1222, 49918, 49919, 49920, 4060, 4221, 40143, 40613, 40501, 40540, 40197, 42108, 42109, 10929, 10928, 10060, 10054, 10053, 997, 233, 64, 20, 0, -2, 207, 102, 2812";
 
         private static readonly Random s_random = new Random();
@@ -36,13 +39,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly Type s_appContextSwitchManagerType = s_sqlClientAssembly.GetType(AppContextSwitchManagerTypeName);
         private static readonly Type s_sqlretrylogicType = s_sqlClientAssembly.GetType(SqlRetryLogicTypeName);
         private static readonly Type s_configurationLoaderType = s_sqlClientAssembly.GetType(ConfigurationLoaderTypeName);
+        private static readonly Type s_sqlErrorType = typeof(SqlError);
+        private static readonly Type s_sqlErrorCollectionType = typeof(SqlErrorCollection);
         private static readonly Type[] s_cfgLoaderParamsType = new Type[]
         {
             s_sqlClientAssembly.GetType(InterfaceCnnCfgTypeName),
             s_sqlClientAssembly.GetType(InterfaceCmdCfgTypeName),
             typeof(string), typeof(string)
         };
+        private static readonly Type[] s_sqlErrorParamsType = new Type[]
+        {
+            typeof(int), typeof(byte), typeof(byte),
+            typeof(string), typeof(string), typeof(string),
+            typeof(int), typeof(Exception)
+        };
         private static readonly ConstructorInfo s_loaderCtorInfo = s_configurationLoaderType.GetConstructor(s_cfgLoaderParamsType);
+        private static readonly ConstructorInfo s_sqlErrorCtorInfo = s_sqlErrorType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, s_sqlErrorParamsType, null);
+        private static readonly ConstructorInfo s_sqlErrorCollectionCtorInfo = s_sqlErrorCollectionType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
 
         public static object CreateLoader(RetryLogicConfigs cnnConfig, RetryLogicConfigs cmdConfig)
         {
@@ -73,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void ApplyContextSwitchByManager(string name, bool value)
         {
-#if NETCOREAPP
+#if !NETFRAMEWORK
             var appCtxType = s_sqlClientAssembly.GetType(AppCtxCfgTypeName);
             var appCtxObj = Activator.CreateInstance(appCtxType);
             SetValue(appCtxObj, appCtxType, "Value", string.Concat(name, "=", value));
@@ -162,6 +175,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TransientErrors = transientErrors,
                 RetryMethodName = method
             };
+        }
+
+        public static SqlException CreateSqlException(int errorNumber)
+        {
+            MethodInfo addSqlErrorMethod = typeof(SqlErrorCollection).GetMethod(AddMethodName, BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo createExceptionMethod = typeof(SqlException).GetMethod(CreateExceptionMethodName, BindingFlags.Static | BindingFlags.NonPublic,
+                null, new Type[] { typeof(SqlErrorCollection), typeof(string) }, null);
+
+            SqlError sqlError = s_sqlErrorCtorInfo.Invoke(new object[] { errorNumber, (byte)0, (byte)0, string.Empty, string.Empty, string.Empty, 0, null }) as SqlError;
+            SqlErrorCollection sqlErrorCollection = s_sqlErrorCollectionCtorInfo.Invoke(new object[0] { }) as SqlErrorCollection;
+
+            addSqlErrorMethod.Invoke(sqlErrorCollection, new object[] { sqlError });
+
+            SqlException sqlException = createExceptionMethod.Invoke(null, new object[] { sqlErrorCollection, string.Empty }) as SqlException;
+
+            return sqlException;
         }
 
         private static TimeSpan GenerateTimeSpan(TimeSpan start, TimeSpan end)

@@ -8,17 +8,18 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Xml;
+using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.ConnectionPool;
+
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using System.Security.Principal;
-using Microsoft.Data;
+using Microsoft.Data.SqlClient.LocalDb;
 #endif
-using System.Threading;
-using System.Xml;
-using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
-using Microsoft.Data.SqlClient;
 
 // This class is the process wide dependency dispatcher.  It contains all connection listeners for the entire process and 
 // receives notifications on those connections to dispatch to the corresponding AppDomain dispatcher to notify the
@@ -100,7 +101,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 if (connStringObj.LocalDBInstance != null)
                 {
                     // If it is LocalDB, we demanded LocalDB permissions too
-                    LocalDBAPI.AssertLocalDBPermissions();
+                    LocalDbApi.AssertLocalDbPermissions();
                 }
 #endif
                 _con.Open();
@@ -410,7 +411,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
                             try
                             { // Since the failure will result in a rollback, rollback our object.
-                                if (null != trans)
+                                if (trans != null)
                                 {
                                     trans.Rollback();
                                     trans = null;
@@ -426,7 +427,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                             }
                         }
 
-                        if (null == trans)
+                        if (trans == null)
                         { // Create a new transaction for next operations.
                             trans = _con.BeginTransaction();
                             com.Transaction = trans;
@@ -472,7 +473,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 }
                 finally
                 {
-                    if (null != trans)
+                    if (trans != null)
                     {
                         try
                         {
@@ -556,10 +557,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         if (string.Equals(msgType, "http://schemas.microsoft.com/SQL/Notifications/QueryNotification", StringComparison.OrdinalIgnoreCase))
                         {
                             SqlXml payload = reader.GetSqlXml(2);
-                            if (null != payload)
+                            if (payload != null)
                             {
                                 SqlNotification notification = SqlNotificationParser.ProcessMessage(payload);
-                                if (null != notification)
+                                if (notification != null)
                                 {
                                     string key = notification.Key;
                                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer.ProcessNotificationResults|DEP> Key: '{0}'", key);
@@ -573,7 +574,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                         {
                                             dispatcher = s_staticInstance._sqlDependencyPerAppDomainDispatchers[appDomainKey];
                                         }
-                                        if (null != dispatcher)
+                                        if (dispatcher != null)
                                         {
                                             try
                                             {
@@ -687,7 +688,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         if (!_stop)
                         {
 #if NETFRAMEWORK
-                            if (null != _hashHelper.Identity)
+                            if (_hashHelper.Identity != null)
                             { // Only impersonate if Integrated Security.
                                 WindowsImpersonationContext context = null;
                                 RuntimeHelpers.PrepareConstrainedRegions(); // CER for context.Undo.
@@ -838,7 +839,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // Dictionary used to track how many times start has been called per app domain.
                 // For each decrement, subtract from count, and delete if we reach 0.
 
-                if (null != appDomainKey)
+                if (appDomainKey != null)
                 {
                     // If null, then this was called from SqlDependencyProcessDispatcher, we ignore appDomainKeyHash.
                     lock (_appDomainKeyHash)
@@ -1281,7 +1282,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
             // Ignore SqlConnectionStringBuilder, since it is present largely for debug purposes.
 
-            if (null == temp)
+            if (temp == null)
             { // If passed value null - false.
                 result = false;
             }
@@ -1330,12 +1331,12 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         {
             int hashValue = 0;
 
-            if (null != _identity)
+            if (_identity != null)
             {
                 hashValue = _identity.GetHashCode();
             }
 
-            if (null != _queue)
+            if (_queue != null)
             {
                 hashValue = unchecked(_connectionString.GetHashCode() + _queue.GetHashCode() + hashValue);
             }
@@ -1363,7 +1364,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // Private constructor - only called by public constructor for static initialization.
     private SqlDependencyProcessDispatcher(object dummyVariable)
     {
-        Debug.Assert(null == s_staticInstance, "Real constructor called with static instance already created!");
+        Debug.Assert(s_staticInstance == null, "Real constructor called with static instance already created!");
         long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyProcessDispatcher|DEP> {0}", ObjectID);
         try
         {
@@ -1424,7 +1425,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 Enlist = false,
                 ConnectRetryCount = 0
             };
-            if (null != queue)
+            if (queue != null)
             { // User provided!
                 connectionStringBuilder.ApplicationName = queue; // ApplicationName will be set to queue name.
             }
@@ -1451,6 +1452,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     }
 
     // Needed for remoting to prevent lifetime issues and default GC cleanup.
+#if NET
+    [Obsolete("InitializeLifetimeService() is not supported after .Net5.0 and throws PlatformNotSupportedException.")]
+#endif
     public override object InitializeLifetimeService()
     {
         return null;
