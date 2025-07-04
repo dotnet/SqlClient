@@ -52,6 +52,28 @@ namespace Microsoft.Data.SqlClient
             AttentionReceived = 1 << 5    // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
         }
 
+        internal readonly struct SniErrorDetails
+        {
+            public readonly string ErrorMessage;
+            public readonly uint NativeError;
+            public readonly uint SniErrorNumber;
+            public readonly int Provider;
+            public readonly uint LineNumber;
+            public readonly string Function;
+            public readonly Exception Exception;
+
+            internal SniErrorDetails(string errorMessage, uint nativeError, uint sniErrorNumber, int provider, uint lineNumber, string function, Exception exception = null)
+            {
+                ErrorMessage = errorMessage;
+                NativeError = nativeError;
+                SniErrorNumber = sniErrorNumber;
+                Provider = provider;
+                LineNumber = lineNumber;
+                Function = function;
+                Exception = exception;
+            }
+        }
+
         private sealed class TimeoutState
         {
             public const int Stopped = 0;
@@ -520,6 +542,8 @@ namespace Microsoft.Data.SqlClient
         internal abstract uint SetConnectionBufferSize(ref uint unsignedPacketSize);
 
         internal abstract void DisposePacketCache();
+
+        internal abstract SniErrorDetails GetErrorDetails();
 
         internal int GetTimeoutRemaining()
         {

@@ -4,9 +4,6 @@
 
 using System;
 using System.Diagnostics;
-using Interop.Windows.Sni;
-using Microsoft.Data.SqlClient.ManagedSni;
-using SniError = Microsoft.Data.SqlClient.ManagedSni.SniError;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -62,34 +59,5 @@ namespace Microsoft.Data.SqlClient
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
         }
-
-        private SNIErrorDetails GetSniErrorDetails()
-        {
-            SNIErrorDetails details = new SNIErrorDetails();
-
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-            {
-                SniError sniError = SniProxy.Instance.GetLastError();
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
-                details.exception = sniError.exception;
-            }
-            else
-            {
-                SniNativeWrapper.SniGetLastError(out Interop.Windows.Sni.SniError sniError);
-                details.sniErrorNumber = sniError.sniError;
-                details.errorMessage = sniError.errorMessage;
-                details.nativeError = sniError.nativeError;
-                details.provider = (int)sniError.provider;
-                details.lineNumber = sniError.lineNumber;
-                details.function = sniError.function;
-            }
-            return details;
-        }
-
     }    // tdsparser
 }//namespace
