@@ -9,20 +9,17 @@ namespace Microsoft.Data.SqlClient.Server
 {
     internal class SmiGettersStream : Stream
     {
-        private SmiEventSink_Default _sink;
         private ITypedGettersV3 _getters;
         private int _ordinal;
         private long _readPosition;
         private SmiMetaData _metaData;
 
-        internal SmiGettersStream(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
+        internal SmiGettersStream(ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
         {
-            Debug.Assert(sink != null);
             Debug.Assert(getters != null);
             Debug.Assert(0 <= ordinal);
             Debug.Assert(metaData != null);
 
-            _sink = sink;
             _getters = getters;
             _ordinal = ordinal;
             _readPosition = 0;
@@ -58,7 +55,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                return ValueUtilsSmi.GetBytesInternal(_sink, _getters, _ordinal, _metaData, 0, null, 0, 0, false);
+                return ValueUtilsSmi.GetBytesInternal(_getters, _ordinal, _metaData, 0, null, 0, 0, false);
             }
         }
 
@@ -91,7 +88,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            long bytesRead = ValueUtilsSmi.GetBytesInternal(_sink, _getters, _ordinal, _metaData, _readPosition, buffer, offset, count, false);
+            long bytesRead = ValueUtilsSmi.GetBytesInternal(_getters, _ordinal, _metaData, _readPosition, buffer, offset, count, false);
             _readPosition += bytesRead;
 
             return checked((int)bytesRead);

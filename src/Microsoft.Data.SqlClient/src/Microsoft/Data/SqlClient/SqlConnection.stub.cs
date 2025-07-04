@@ -5,23 +5,31 @@
 // @TODO: This is only a stub class for clearing errors while merging other files.
 
 using System;
-using System.Data;
+using System.Data.Common;
 using System.Threading.Tasks;
+using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
-    public class SqlConnection
+    public class SqlConnection : DbConnection
     {
+        internal bool _applyTransientFaultHandling = false;
         internal Task _currentReconnectionTask = null;
+        internal SessionData _recoverySessionData = null;
         
         #region Constructors
+        
         internal SqlConnection() {}
         
         internal SqlConnection(string connectionString) {} 
+        
         #endregion
         
         #region Properties
+        
         internal Guid ClientConnectionId { get; set; }
 
         #if NETFRAMEWORK
@@ -30,28 +38,32 @@ namespace Microsoft.Data.SqlClient
 
         internal bool HasLocalTransaction { get; set; }
         
+        internal DbConnectionInternal InnerConnection { get; set; }
+        
         internal bool Is2008OrNewer { get; set; }
 
+        internal int ObjectID { get; set; }
+        
         internal TdsParser Parser { get; set; }
         
-        internal ConnectionState State { get; set; }
+        internal DbConnectionPoolGroup PoolGroup { get; set; }
         
         internal SqlStatistics Statistics { get; set; }
         
         internal bool StatisticsEnabled { get; set; }
+        
+        internal DbConnectionOptions UserConnectionOptions { get; set; }
+        
         #endregion
         
         #region Methods
+        
         internal void Abort(Exception e) { }
 
-        internal void AddWeakReference(object value, int tag)
-        {
-        }
+        internal void AddWeakReference(object value, int tag) { }
         
         internal SqlTransaction BeginTransaction() =>
             null;
-        
-        internal void Dispose() { }
 
         internal byte[] GetBytes(object o, out Format format, out int maxSize)
         {
@@ -61,11 +73,18 @@ namespace Microsoft.Data.SqlClient
         }
         
         internal SqlInternalConnectionTds GetOpenTdsConnection() => null;
-        
-        internal void Open() { }
 
+        internal void PermissionDemand() { }
+        
         internal Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outerTask, object value, int tag) =>
             Task.FromResult<T>(default);
+        
+        internal void SetInnerConnectionEvent(DbConnectionInternal to) { }
+
+        internal bool SetInnerConnectionFrom(DbConnectionInternal to, DbConnectionInternal from) =>
+            false;
+        
+        internal void SetInnerConnectionTo(DbConnectionInternal to) { }
 
         internal void ValidateConnectionForExecute(string method, SqlCommand command) { }
 

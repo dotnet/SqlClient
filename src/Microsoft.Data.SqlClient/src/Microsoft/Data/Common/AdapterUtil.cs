@@ -1141,6 +1141,15 @@ namespace Microsoft.Data.Common
             return e;
         }
 
+        internal static Exception NullOutputParameterValueForVector(string paramName)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_NullOutputParameterValueForVector, paramName));
+
+        internal static ArgumentException InvalidVectorHeader()
+            => Argument(StringsHelper.GetString(Strings.ADP_InvalidVectorHeader));
+
+        internal static Exception InvalidJsonStringForVector(string value, Exception inner)
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidJsonStringForVector, value), inner);
+
         internal static Exception DeriveParametersNotSupported(IDbCommand value)
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 
