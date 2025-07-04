@@ -1492,8 +1492,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQueryAsync[@name="IAsyncResult"]/*'/>
-        public int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
