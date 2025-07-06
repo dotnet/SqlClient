@@ -41,9 +41,6 @@ namespace Microsoft.Data.SqlClient.Server
         private int _size;
         private readonly byte[] _padBuffer;
         private readonly object _nullInstance;
-        //a boolean that tells us if a udt is a "top-level" udt,
-        //i.e. one that does not require a null byte header.
-        private readonly bool _isTopLevelUdt;
 
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
@@ -64,18 +61,6 @@ namespace Microsoft.Data.SqlClient.Server
             Type t, bool isTopLevelUdt)
         {
             _skipNormalize = false;
-            if (_skipNormalize)
-            {
-                // if skipping normalization, dont write the null
-                // byte header for IsNull
-                _isTopLevelUdt = true;
-            }
-
-            // top level udt logic is disabled until we decide
-            // what to do about nested udts
-            _isTopLevelUdt = true;
-            //      else
-            //        this._isTopLevelUdt = isTopLevelUdt;
 
             FieldInfo[] fields = GetFields(t);
 
@@ -91,37 +76,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             //sort by offset
             Array.Sort(_fieldsToNormalize);
-            //if this is not a top-level udt, do setup for null values.
-            //null values need to compare less than all other values,
-            //so prefix a null byte indicator.
-            if (!_isTopLevelUdt)
-            {
-                //get the null value for this type, special case for sql types, which
-                //have a null field
-                if (typeof(INullable).IsAssignableFrom(t))
-                {
-                    PropertyInfo pi = t.GetProperty("Null",
-                    BindingFlags.Public | BindingFlags.Static);
-                    if (pi == null || pi.PropertyType != t)
-                    {
-                        FieldInfo fi = t.GetField("Null", BindingFlags.Public | BindingFlags.Static);
-                        if (fi == null || fi.FieldType != t)
-                        {
-                            throw new Exception("could not find Null field/property in nullable type " + t);
-                        }
-                        else
-                        {
-                            _nullInstance = fi.GetValue(null);
-                        }
-                    }
-                    else
-                    {
-                        _nullInstance = pi.GetValue(null, null);
-                    }
-
-                    _padBuffer = new byte[Size - 1];
-                }
-            }
         }
 
         internal bool IsNullable => _nullInstance != null;
@@ -144,23 +98,8 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
             Type t, Stream s)
         {
-            object result = null;
-            //if nullable and not the top object, read the null marker
-            if (!_isTopLevelUdt && typeof(INullable).IsAssignableFrom(t))
-            {
-                byte nullByte = (byte)s.ReadByte();
-                if (nullByte == 0)
-                {
-                    result = _nullInstance;
-                    s.ReadExactly(_padBuffer, 0, _padBuffer.Length);
+            object result = Activator.CreateInstance(t);
 
-                    return result;
-                }
-            }
-            if (result == null)
-            {
-                result = Activator.CreateInstance(t);
-            }
             foreach (FieldInfoEx field in _fieldsToNormalize)
             {
                 field.Normalizer.DeNormalize(field.FieldInfo, result, s);
@@ -180,21 +119,6 @@ namespace Microsoft.Data.SqlClient.Server
                 inner = GetValue(fi, obj);
             }
 
-            // If nullable and not the top object, write a null indicator
-            if (inner is INullable nullable && !_isTopLevelUdt)
-            {
-                if (nullable.IsNull)
-                {
-                    s.WriteByte(0);
-                    s.Write(_padBuffer, 0, _padBuffer.Length);
-                    return;
-                }
-                else
-                {
-                    s.WriteByte(1);
-                }
-            }
-
             foreach (FieldInfoEx field in _fieldsToNormalize)
             {
                 field.Normalizer.Normalize(field.FieldInfo, inner, s);
@@ -210,10 +134,6 @@ namespace Microsoft.Data.SqlClient.Server
                 if (_size != 0)
                 {
                     return _size;
-                }
-                if (IsNullable && !_isTopLevelUdt)
-                {
-                    _size = 1;
                 }
                 foreach (FieldInfoEx field in _fieldsToNormalize)
                 {
