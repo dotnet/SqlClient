@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.Server
 #if NET
             [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.NonPublicFields | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.NonPublicProperties)]
 #endif
-            Type t, bool isTopLevelUdt)
+            Type t)
         {
             FieldInfo[] fields = GetFields(t);
 
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else if (t.IsValueType)
             {
-                n = new BinaryOrderedUdtNormalizer(t, false);
+                n = new BinaryOrderedUdtNormalizer(t);
             }
             if (n == null)
             {

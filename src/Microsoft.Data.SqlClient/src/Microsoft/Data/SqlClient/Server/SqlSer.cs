@@ -170,7 +170,7 @@ namespace Microsoft.Data.SqlClient.Server
             Type t) : base(t)
         {
             _ = SerializationHelperSql9.GetUdtAttribute(t);
-            _normalizer = new BinaryOrderedUdtNormalizer(t, true);
+            _normalizer = new BinaryOrderedUdtNormalizer(t);
         }
 
         public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);
