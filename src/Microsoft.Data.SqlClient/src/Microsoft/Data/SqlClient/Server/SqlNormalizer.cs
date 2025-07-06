@@ -39,8 +39,6 @@ namespace Microsoft.Data.SqlClient.Server
     {
         private readonly FieldInfoEx[] _fieldsToNormalize;
         private int _size;
-        private readonly byte[] _padBuffer;
-        private readonly object _nullInstance;
 
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
@@ -77,8 +75,6 @@ namespace Microsoft.Data.SqlClient.Server
             //sort by offset
             Array.Sort(_fieldsToNormalize);
         }
-
-        internal bool IsNullable => _nullInstance != null;
 
         // Normalize the top-level udt
         internal void NormalizeTopObject(object udt, Stream s) => Normalize(null, udt, s);
