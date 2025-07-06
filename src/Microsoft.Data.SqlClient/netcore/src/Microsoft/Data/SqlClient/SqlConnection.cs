@@ -2545,11 +2545,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal byte[] GetBytes(object o, out Format format, out int maxSize)
+        internal byte[] GetBytes(object o, out int maxSize)
         {
             SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
-            format = attr.SerializationFormat;
 
             if (maxSize < -1 || maxSize >= ushort.MaxValue)
             {
