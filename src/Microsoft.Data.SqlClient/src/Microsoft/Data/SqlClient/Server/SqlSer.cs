@@ -50,9 +50,6 @@ namespace Microsoft.Data.SqlClient.Server
         // Cache the relationship between a type and its serializer.
         // This is expensive to compute since it involves traversing the
         // custom attributes of the type using reflection.
-        //
-        // Use a per-thread cache, so that there are no synchronization
-        // issues when accessing cache entries from multiple threads.
         private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
         private static Serializer GetSerializer(
