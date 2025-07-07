@@ -13,25 +13,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 {
     public class TdsParserInternalsTest
     {
-        // Selects and returns the first non-public instance constructor for TdsParser 
-        private static TdsParser CreateParserInstance()
-        {
-            Type parserType = typeof(TdsParser);
+        private readonly TdsParser _parser = new(false, false);
 
-            ConstructorInfo ctor = parserType
-                .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic)
-                .First();
-
-            // build default args for each parameter
-            object?[] ctorArgs = ctor.GetParameters()
-                .Select(p => p.ParameterType.IsValueType
-                    ? Activator.CreateInstance(p.ParameterType)
-                    : null)
-                .ToArray();
-
-            return (TdsParser)ctor.Invoke(ctorArgs);
-        }
-
+        // TODO(ADO-37888): Avoid reflection by exposing a way for tests to intercept outbound TDS packets.
         // Helper function to extract private _physicalStateObj fields raw buffer and no. of bytes written so far 
         private static (byte[] buffer, int count) ExtractOutputBuffer(TdsParser parser)
         {
@@ -63,28 +47,33 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void WriteUserAgentFeatureRequest_WriteFalse_LengthOnlyReturn()
         {
             byte[] payload = Encoding.UTF8.GetBytes("{\"kel\":\"sier\"}");
-            var parser = CreateParserInstance();
+            var (_, countBefore) = ExtractOutputBuffer(_parser);
 
-            int lengthOnly = parser.WriteUserAgentFeatureRequest(payload, write: false);
+            int lengthOnly = _parser.WriteUserAgentFeatureRequest(payload, write: false);
+
+            var (_, countAfter) = ExtractOutputBuffer(_parser);
 
             // assert: total = 1 (feat-ID) + 4 (len field) + [1 (version) + payload.Length]
             int expectedDataLen = 1 + payload.Length;
             int expectedTotalLen = 1 + 4 + expectedDataLen;
             Assert.Equal(expectedTotalLen, lengthOnly);
+
+            // assert: no bytes were written when write == false
+            Assert.Equal(countBefore, countAfter);
         }
 
         [Fact]
         public void WriteUserAgentFeatureRequest_WriteTrue_AppendsOnlyExtensionBytes()
         {
             byte[] payload = Encoding.UTF8.GetBytes("{\"kel\":\"sier\"}");
-            var parser = CreateParserInstance();
+            var (bufferBefore, countBefore) = ExtractOutputBuffer(_parser);
 
-            var (bufferBefore, countBefore) = ExtractOutputBuffer(parser);
+            int returnedLength = _parser.WriteUserAgentFeatureRequest(payload, write: true);
 
-            int returnedLength = parser.WriteUserAgentFeatureRequest(payload, write: true);
+            var (bufferAfter, countAfter) = ExtractOutputBuffer(_parser);
 
-            var (bufferAfter, countAfter) = ExtractOutputBuffer(parser);
-
+            // We expect both of these to be the same object
+            Assert.Same(bufferBefore, bufferAfter);
             int appended = countAfter - countBefore;
             Assert.Equal(returnedLength, appended);
 
@@ -102,13 +91,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 TdsEnums.SUPPORTED_USER_AGENT_VERSION,
                 bufferAfter[start + 5]);
 
-            byte[] writtenPayload = bufferAfter
-                .Skip(start + 6)
-                .Take(payload.Length)
-                .ToArray();
-            Assert.Equal(payload, writtenPayload);
+            // slice into the existing buffer
+            ReadOnlySpan<byte> writtenSpan = new ReadOnlySpan<byte>(
+                bufferAfter,
+                start + 6,
+                appended - 6);
 
-            Assert.Equal(returnedLength, appended);
+            Assert.True(
+                writtenSpan.SequenceEqual(payload),
+                "Payload bytes did not match");
+
         }
 
     }
