@@ -320,7 +320,10 @@ namespace Microsoft.Data.SqlClient
         
         internal SqlString Sql2008DateTimeSqlString
         {
-            get => _type is StorageType.Date or StorageType.DateTime2 or StorageType.DateTimeOffset or StorageType.Time
+            get => _type is StorageType.Date 
+                         or StorageType.DateTime2
+                         or StorageType.DateTimeOffset
+                         or StorageType.Time
                 ? IsNull ? SqlString.Null : new SqlString(Sql2008DateTimeString)
                 : (SqlString)SqlValue;
         }
@@ -652,28 +655,12 @@ namespace Microsoft.Data.SqlClient
         
         internal T SingleAs<T>() =>
             GetValueAs<float, T>(_value._single);
-        
-        internal SqlVector<T> GetSqlVector<T>() where T : unmanaged
-        {
-            if (_type is StorageType.Vector)
-            {
-                if (IsNull)
-                {
-                    return new SqlVector<T>(_value._vectorInfo._elementCount);
-                }
-                return new SqlVector<T>(SqlBinary.Value);
-            }
-            return (SqlVector<T>)SqlValue;
-        }
-        
-        internal VectorInfo GetVectorInfo()
-        {
-            if (_type == StorageType.Vector)
-            {
-                return _value._vectorInfo;
-            }
-            throw new InvalidOperationException();
-        }
+
+        internal SqlVector<T> GetSqlVector<T>()
+            where T : unmanaged =>
+            _type is StorageType.Vector
+                ? IsNull ? _value._vectorInfo.ToNull<T>() : new SqlVector<T>((byte[])_object)
+                : (SqlVector<T>)SqlValue;
         
         #endregion
         
@@ -1266,7 +1253,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Used to store TIME information.
         /// </summary>
-        internal struct TimeInfo
+        private struct TimeInfo
         {
             internal long _ticks;
             internal byte _scale;
@@ -1307,10 +1294,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
         
-        internal struct VectorInfo
+        private struct VectorInfo
         {
             internal int _elementCount;
             internal byte _elementType;
+
+            /// <summary>
+            /// Constructs a new (null contents) SqlVector of the given type. Instance will have
+            /// count equal to <see cref="_elementCount"/>.
+            /// </summary>
+            internal SqlVector<T> ToNull<T>()
+                where T : unmanaged =>
+                new SqlVector<T>(_elementCount);
         }
         
         #endregion

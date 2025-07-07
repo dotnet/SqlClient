@@ -736,18 +736,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     return _value;
                 }
-                else if (_sqlBufferReturnValue != null)
+
+                if (_sqlBufferReturnValue != null)
                 {
-                    if (ParameterIsSqlType)
-                    {
-                        if (_sqlBufferReturnValue.VariantInternalStorageType == SqlBuffer.StorageType.Vector)
-                        {
-                            return GetVectorReturnValue();
-                        }
-                        return _sqlBufferReturnValue.SqlValue;
-                    }
-                    return _sqlBufferReturnValue.Value;
+                    return ParameterIsSqlType
+                        ? _sqlBufferReturnValue.SqlValue
+                        : _sqlBufferReturnValue.Value;
                 }
+                
                 return null;
             }
             set
@@ -760,30 +756,6 @@ namespace Microsoft.Data.SqlClient
                 SetFlag(SqlParameterFlags.IsNull, _value == null || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
-            }
-        }
-
-        private object GetVectorReturnValue()
-        {
-            var elementType = (MetaType.SqlVectorElementType)_sqlBufferReturnValue.GetVectorInfo()._elementType;
-            int elementCount = _sqlBufferReturnValue.GetVectorInfo()._elementCount;
-
-            if (IsNull)
-            {
-                switch (elementType)
-                {
-                    case MetaType.SqlVectorElementType.Float32:
-                        return new SqlVector<float>(elementCount);
-                    default:
-                        throw SQL.VectorTypeNotSupported(elementType.ToString());
-                }
-            }
-            switch (elementType)
-            {
-                case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
-                default:
-                    throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
         }
 
