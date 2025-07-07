@@ -86,10 +86,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public ConcurrentDictionary<
             DbConnectionPoolAuthenticationContextKey, 
-            DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; init; }
+            DbConnectionPoolAuthenticationContext> AuthenticationContexts { get; }
 
         /// <inheritdoc />
-        public DbConnectionFactory ConnectionFactory { get; init; }
+        public DbConnectionFactory ConnectionFactory { get; }
 
         /// <inheritdoc />
         public int Count => _connectionSlots.ReservationCount;
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public int Id => _instanceId;
 
         /// <inheritdoc />
-        public DbConnectionPoolIdentity Identity { get; init; }
+        public DbConnectionPoolIdentity Identity { get; }
 
         /// <inheritdoc />
         public bool IsRunning => State == Running;
@@ -110,13 +110,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public TimeSpan LoadBalanceTimeout => PoolGroupOptions.LoadBalanceTimeout;
 
         /// <inheritdoc />
-        public DbConnectionPoolGroup PoolGroup { get; init; }
+        public DbConnectionPoolGroup PoolGroup { get; }
 
         /// <inheritdoc />
-        public DbConnectionPoolGroupOptions PoolGroupOptions { get; init; }
+        public DbConnectionPoolGroupOptions PoolGroupOptions { get; }
 
         /// <inheritdoc />
-        public DbConnectionPoolProviderInfo ProviderInfo { get; init; }
+        public DbConnectionPoolProviderInfo ProviderInfo { get; }
 
         /// <inheritdoc />
         public DbConnectionPoolState State { get; private set; }
@@ -152,11 +152,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection? owningObject)
         {
-            // Calling PrePush prevents the object from being reclaimed
-            // once we leave the lock, because it sets _pooledCount such
-            // that it won't appear to be out of the pool.  What that
-            // means, is that we're now responsible for this connection:
-            // it won't get reclaimed if it gets lost.
             ValidateOwnershipAndSetPoolingState(connection, owningObject);
 
             if (!IsLiveConnection(connection))
@@ -274,14 +269,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         // We were able to get a connection, but the task was cancelled out from under us.
                         // This can happen if the caller's CancellationToken is cancelled while we're waiting for a connection.
                         // Check the success to avoid an unnecessary exception.
-                        this.ReturnInternalConnection(connection, owningObject);
+                        ReturnInternalConnection(connection, owningObject);
                     }
                 }
                 catch (Exception e)
                 {
                     if (connection != null)
                     {
-                        this.ReturnInternalConnection(connection, owningObject);
+                        ReturnInternalConnection(connection, owningObject);
                     }
 
                     // It's possible to fail to set an exception on the TaskCompletionSource if the task is already
@@ -392,13 +387,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Closes the provided connection and removes it from the pool.
         /// </summary>
         /// <param name="connection">The connection to be closed.</param>
-        /// <param name="trackedInSlots">Indicates whether the connection is currently pooled. May be false
-        /// if we just created the connection and it's not tracked in the pool slots.</param>
-        private void RemoveConnection(DbConnectionInternal connection, bool trackedInSlots = true)
+        private void RemoveConnection(DbConnectionInternal connection)
         {
-            if (trackedInSlots) {
-                _connectionSlots.TryRemove(connection);
-            }
+            _connectionSlots.TryRemove(connection);
             
             _connectionSlots.ReleaseReservation();
             // Closing a connection opens a free spot in the pool.
@@ -463,16 +454,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     connection ??= GetIdleConnection();
 
 
-                    // We didn't find an idle connection, try to open a new one.  
+                    // If we didn't find an idle connection, try to open a new one.  
                     connection ??= await OpenNewInternalConnection(
                         owningConnection,
                         userOptions,
                         async,
                         cancellationToken).ConfigureAwait(false);
 
-                    // We're at max capacity. Block on the idle channel with a timeout.
-                    // Note that Channels guarantee fair FIFO behavior to callers of ReadAsync (first-come first-
-                    // served), which is crucial to us.
+                    // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
+                    // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
+                    // (first-come, first-served), which is crucial to us.
                     if (async)
                     {
                         connection ??= await _idleConnectionReader.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -562,7 +553,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // At this point, the connection is "out of the pool" (the call to postpop). If we hit a transient
                 // error anywhere along the way when enlisting the connection in the transaction, we need to get
                 // the connection back into the pool so that it isn't leaked.
-                this.ReturnInternalConnection(connection, owningObject);
+                ReturnInternalConnection(connection, owningObject);
                 throw;
             }
         }
@@ -576,6 +567,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             lock (connection)
             {
+                // Calling PrePush prevents the object from being reclaimed
+                // once we leave the lock, because it sets _pooledCount such
+                // that it won't appear to be out of the pool.  What that
+                // means, is that we're now responsible for this connection:
+                // it won't get reclaimed if it gets lost.
                 connection.PrePush(owningObject);
             }
         }

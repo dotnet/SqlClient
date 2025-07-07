@@ -328,11 +328,18 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 Assert.NotNull(internalConnection);
             }
 
+            // Use ManualResetEventSlim to synchronize the tasks
+            // and force the request queueing order.
+            using ManualResetEventSlim mresQueueOrder = new ManualResetEventSlim();
+            using CountdownEvent allRequestsQueued = new CountdownEvent(2);
+
             // Act
             var recycledTask = Task.Run(() =>
             {
                 DbConnectionInternal recycledConnection = null;
-                var exceeded = pool.TryGetConnection(
+                mresQueueOrder.Set();
+                allRequestsQueued.Signal();
+                pool.TryGetConnection(
                     new SqlConnection(""),
                     null,
                     new DbConnectionOptions("", null),
@@ -343,7 +350,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             var failedTask = Task.Run(() =>
             {
                 DbConnectionInternal failedConnection = null;
-                var exceeded2 = pool.TryGetConnection(
+                // Force this request to be second in the queue.
+                mresQueueOrder.Wait();
+                allRequestsQueued.Signal();
+                pool.TryGetConnection(
                     new SqlConnection("Timeout=1"),
                     null,
                     new DbConnectionOptions("", null),
@@ -352,6 +362,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 return failedConnection;
             });
 
+            allRequestsQueued.Wait();
             pool.ReturnInternalConnection(firstConnection, firstOwningConnection);
             var recycledConnection = await recycledTask;
 

@@ -12,7 +12,7 @@ using Microsoft.Data.ProviderBase;
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
-    /// A thread-safe array that allows reservations.
+    /// A thread-safe collection with a fixed capacity that allows reservations.
     /// A reservation *must* be made before adding a connection to the collection.
     /// Exceptions *must* be handled by the caller when trying to add connections
     /// and the caller *must* release the reservation.
@@ -26,6 +26,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     ///     try {
     ///         var connection = OpenConnection();
     ///         slots.Add(connection);
+    ///     }
     ///     catch (InvalidOperationException ex)
     ///     {
     ///         slots.ReleaseReservation();
@@ -43,18 +44,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ConnectionPoolSlots
     {
         private readonly DbConnectionInternal?[] _connections;
-        private readonly int _capacity;
+        private readonly uint _capacity;
         private volatile int _reservations;
 
         /// <summary>
-        /// Constructs a ConnectionPoolSlots instance with the given capacity.
+        /// Constructs a ConnectionPoolSlots instance with the given fixed capacity.
         /// </summary>
-        /// <param name="capacity">The capacity of the collection.</param>
-        internal ConnectionPoolSlots(int capacity)
+        /// <param name="fixedCapacity">The fixed capacity of the collection.</param>
+        internal ConnectionPoolSlots(uint fixedCapacity)
         {
-            _capacity = capacity;
+            _capacity = fixedCapacity;
             _reservations = 0;
-            _connections = new DbConnectionInternal?[capacity];
+            _connections = new DbConnectionInternal?[fixedCapacity];
         }
 
         /// <summary>
