@@ -69,6 +69,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             ProviderInfo = connectionPoolProviderInfo;
             Identity = identity;
             AuthenticationContexts = new();
+            MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
 
             _connectionSlots = new(MaxPoolSize);
 
@@ -124,7 +125,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
-        private int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
+        private uint MaxPoolSize { get; }
         #endregion
 
         #region Methods
@@ -353,7 +354,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // attempts on the idle connection channel.
                     if (newConnection is not null)
                     {
-                        RemoveConnection(newConnection, trackedInSlots: false);
+                        RemoveConnection(newConnection);
                     }
 
                     throw;
