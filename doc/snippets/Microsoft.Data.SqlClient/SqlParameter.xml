@@ -447,9 +447,9 @@ The following example creates multiple instances of <xref:Microsoft.Data.SqlClie
           The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlParameter" /> and sets some of its properties.
         </para>
         <list type="bullet">
-          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see></item>
-          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see></item>
-          <item><see href="https://learn.microsoft.com/sql/connect/ado-net/sql/">SQL Server and ADO.NET</see></item>
+          <item><description><see href="https://learn.microsoft.com/sql/connect/ado-net/commands-parameters">Commands and Parameters</see></description></item>
+          <item><description><see href="https://learn.microsoft.com/sql/connect/ado-net/dataadapter-parameters">DataAdapter Parameters</see></description></item>
+          <item><description><see href="https://learn.microsoft.com/sql/connect/ado-net/sql/">SQL Server and ADO.NET</see></description></item>
         </list>
       </example>
       <exception cref="T:System.ArgumentException">

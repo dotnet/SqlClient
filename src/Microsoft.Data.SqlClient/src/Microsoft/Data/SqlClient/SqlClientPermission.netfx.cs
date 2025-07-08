@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
             if (constr != null)
             {
                 AllowBlankPassword = constr.HasBlankPassword; // MDAC 84563
-                AddPermissionEntry(new DBConnectionString(constr));
+                AddPermissionEntry(new DbConnectionString(constr));
             }
             
             if (constr == null || constr.IsEmpty)
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add[@name="connectionStringAndrestrictionsStringAndBehavior"]/*' />
         public override void Add(string connectionString, string restrictions, KeyRestrictionBehavior behavior)
         {
-            DBConnectionString constr = new DBConnectionString(connectionString, restrictions, behavior, SqlConnectionString.GetParseSynonyms(), false);
+            DbConnectionString constr = new DbConnectionString(connectionString, restrictions, behavior, SqlConnectionString.KeywordMap, false);
             AddPermissionEntry(constr);
         }
         
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
                     subset = true;
                     if (_keyvalues != null)
                     {
-                        foreach (DBConnectionString kventry in _keyvalues)
+                        foreach (DbConnectionString kventry in _keyvalues)
                         {
                             if (!superset._keyvaluetree.CheckValueForKeyPermit(kventry))
                             {
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_keyvalues != null)
                 {
-                    foreach (DBConnectionString value in _keyvalues)
+                    foreach (DbConnectionString value in _keyvalues)
                     {
                         SecurityElement valueElement = new SecurityElement(XmlStr._add);
                         string tmp;
@@ -342,7 +342,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (_keyvalues != null)
                 {
-                    foreach (DBConnectionString entry in _keyvalues)
+                    foreach (DbConnectionString entry in _keyvalues)
                     {
                         newPermission.AddPermissionEntry(entry);
                     }
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient
             return newPermission.IsEmpty() ? null : newPermission;
         }
         
-        internal void AddPermissionEntry(DBConnectionString entry)
+        internal void AddPermissionEntry(DbConnectionString entry)
         {
             if (_keyvaluetree == null)
             {
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient
             private readonly string _value;
 
             // value node with (_restrictions != null) are allowed to match connection strings
-            private DBConnectionString _entry;
+            private DbConnectionString _entry;
 
             private NameValuePermission[] _tree; // with branches
 
@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient
                 _value = keyword;
             }
 
-            private NameValuePermission(string value, DBConnectionString entry)
+            private NameValuePermission(string value, DbConnectionString entry)
             {
                 _value = value;
                 _entry = entry;
@@ -451,9 +451,9 @@ namespace Microsoft.Data.SqlClient
             int IComparable.CompareTo(object other) =>
                 string.CompareOrdinal(_value, ((NameValuePermission)other)._value);
 
-            internal static void AddEntry(NameValuePermission kvtree, ArrayList entries, DBConnectionString entry)
+            internal static void AddEntry(NameValuePermission kvtree, ArrayList entries, DbConnectionString entry)
             {
-                Debug.Assert(entry != null, "null DBConnectionString");
+                Debug.Assert(entry != null, "null DbConnectionString");
 
                 if (entry.KeyChain != null)
                 {
@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
                         kv = kvtree.CheckKeyForValue(keychain.Value);
                         if (kv == null)
                         {
-                            DBConnectionString insertValue = keychain.Next != null ? null : entry;
+                            DbConnectionString insertValue = keychain.Next != null ? null : entry;
                             kv = new NameValuePermission(keychain.Value, insertValue);
                             kvtree.Add(kv); // add directly into live tree
                             if (insertValue != null)
@@ -500,7 +500,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // global restrictions
-                    DBConnectionString kentry = kvtree._entry;
+                    DbConnectionString kentry = kvtree._entry;
                     if (kentry != null)
                     {
                         Debug.Assert(entries.Contains(kentry), "entries doesn't contain entry");
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            internal bool CheckValueForKeyPermit(DBConnectionString parsetable)
+            internal bool CheckValueForKeyPermit(DbConnectionString parsetable)
             {
                 if (parsetable == null)
                 {
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient
                     // partial chain match, either leaf-node by shorter chain or fail mid-chain if ( _restrictions == null)
                 }
 
-                DBConnectionString entry = _entry;
+                DbConnectionString entry = _entry;
                 if (entry != null)
                 {
                     // also checking !hasMatch is tempting, but wrong

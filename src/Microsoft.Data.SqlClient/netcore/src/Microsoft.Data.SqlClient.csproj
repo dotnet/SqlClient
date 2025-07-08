@@ -17,8 +17,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn> 
+    <NoWarn>$(NoWarn);IL2026;IL2057;IL2072;IL2075</NoWarn>
     <RootNamespace />
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>
   <!--Generating Strong Name-->
   <PropertyGroup Condition="$(CDP_BUILD_TYPE)==Official">
@@ -32,10 +33,13 @@
   <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFramework)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
+  <ItemGroup Condition="$(CDP_BUILD_TYPE)!=Official">
+    <InternalsVisibleTo Include="UnitTests" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
     <EmbeddedFiles Include="$(TargetFrameworkMonikerAssemblyAttributesPath)" />
-  </ItemGroup>  
+  </ItemGroup>
   <!-- Contains common items shared between Unix and Windows -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="$(CommonSourceRoot)\Interop\Common\Sni\SniErrors.cs">
@@ -52,6 +56,12 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\AttestationProtocolUtilities.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs">
+      <Link>Microsoft\Data\Common\ConnectionString\DbConnectionOptions.Debug.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs">
       <Link>Microsoft\Data\Common\ConnectionString\DbConnectionStringDefaults.cs</Link>
@@ -70,9 +80,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs">
       <Link>Microsoft\Data\Common\ConnectionString\PoolBlockingUtilities.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\DbConnectionOptions.Common.cs">
-      <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Common\MultipartIdentifier.cs">
       <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
@@ -95,8 +102,8 @@
     <Compile Include="$(CommonSourceRoot)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\ChannelDbConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolAuthenticationContext.cs</Link>
@@ -125,8 +132,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\DbConnectionPoolState.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs">
-      <Link>Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\IDbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\IDbConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolGroupProviderInfo.cs</Link>
@@ -136,6 +143,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\ConnectionPool\SqlConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs">
+      <Link>Microsoft\Data\SqlClient\ConnectionPool\WaitHandleDbConnectionPool.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
@@ -178,7 +188,7 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
-    </Compile>    
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
@@ -272,6 +282,69 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\ConcurrentQueueSemaphore.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniAsyncCallback.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniError.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniCommon.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniCommon.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniLoadHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniMarsConnection.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniMarsConnection.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniMarsHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniNetworkStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniNpHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniPacket.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniPhysicalHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniProviders.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniProxy.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSmuxFlags.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSmuxFlags.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSmuxHeader.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSmuxHeader.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniSslStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SniTcpHandle.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.netcore.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SslOverTdsStream.NetCoreApp.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\SsrpClient.netcore.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
     </Compile>
@@ -338,14 +411,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedGetters.cs">
-      <Link>Microsoft\Data\SqlClient\Server\ITypedGetters.cs</Link>
-    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedGettersV3.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedSetters.cs">
-      <Link>Microsoft\Data\SqlClient\Server\ITypedSetters.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ITypedSettersV3.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedSettersV3.cs</Link>
@@ -355,12 +422,6 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\SmiGettersStream.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiGettersStream.cs</Link>
@@ -407,6 +468,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ISqlVector.cs">
+      <Link>Microsoft\Data\SqlClient\ISqlVector.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -421,6 +485,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAppContextSwitchManager.netcore.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
@@ -448,6 +515,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBuffer.cs">
       <Link>Microsoft\Data\SqlClient\SqlBuffer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBulkCopy.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopy.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs</Link>
@@ -515,6 +585,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionEncryptOptionConverter.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionFactory.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionString.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionString.cs</Link>
     </Compile>
@@ -535,7 +608,7 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDbColumn.cs">
       <Link>Microsoft\Data\SqlClient\SqlDbColumn.cs</Link>
-    </Compile>  
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs</Link>
     </Compile>
@@ -590,8 +663,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
       <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetadataFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlMetadataFactory.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlMetaDataFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
@@ -719,6 +792,9 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlJson.cs">
       <Link>Microsoft\Data\SqlTypes\SqlJson.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlVector.cs">
+      <Link>Microsoft\Data\SqlTypes\SqlVector.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -728,31 +804,9 @@
     <Compile Include="$(CommonSourceRoot)System\Diagnostics\CodeAnalysis.cs">
       <Link>System\Diagnostics\CodeAnalysis.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\ResolvedServerSpn.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIError.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNILoadHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsConnection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
+    
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
@@ -879,8 +933,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.netcore.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\PacketHandle.netcore.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\PacketHandle.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.Windows.cs</Link>
@@ -907,7 +964,6 @@
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
@@ -925,6 +981,9 @@
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs">
       <Link>Microsoft\Data\SqlClient\LocalDb\LocalDbApi.Unix.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs</Link>
@@ -947,8 +1006,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
-    
-    <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Unix.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
 
@@ -974,25 +1032,28 @@
       <Link>Resources\%(RecursiveDir)%(Filename)%(Extension)</Link>
       <LogicalName>Microsoft.Data.SqlClient.Resources.%(Filename).resources</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
+    <EmbeddedResource Include="$(CommonSourceRoot)Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
+      <Link>Resources\Microsoft.Data.SqlClient.SqlMetaData.xml</Link>
     </EmbeddedResource>
   </ItemGroup>
 
   <!-- Package References Etc -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
-    <!-- Enable the project reference for debugging purposes. -->
-    <!-- <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" /> -->
-    <PackageReference Include="Microsoft.SqlServer.Server" Version="$(MicrosoftSqlServerServerVersion)" />
-    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcsVersion)" />
-    <PackageReference Include="Microsoft.Bcl.Cryptography" Version="$(MicrosoftBclCryptographyVersion)" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+
+    <!-- Transitive dependencies that would otherwise bring in older, vulnerable versions. -->
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
+
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
   <Import Project="$(ToolsDir)targets\ResolveContract.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
   <Import Project="$(ToolsDir)targets\NotSupported.targets" Condition="'$(OSGroup)' == 'AnyOS'" />
