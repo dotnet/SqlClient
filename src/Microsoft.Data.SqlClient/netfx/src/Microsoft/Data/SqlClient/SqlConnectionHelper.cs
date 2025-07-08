@@ -203,8 +203,7 @@ namespace Microsoft.Data.SqlClient
         {
             using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
-                DbProviderFactory providerFactory = SqlConnectionFactory.ProviderFactory;
-                DbCommand command = providerFactory.CreateCommand();
+                DbCommand command = SqlClientFactory.Instance.CreateCommand();
                 command.Connection = this;
                 return command;
             }
@@ -212,8 +211,8 @@ namespace Microsoft.Data.SqlClient
 
         private static System.Security.CodeAccessPermission CreateExecutePermission()
         {
-            DBDataPermission p = (DBDataPermission)SqlConnectionFactory.ProviderFactory.CreatePermission(System.Security.Permissions.PermissionState.None);
-            p.Add(String.Empty, String.Empty, KeyRestrictionBehavior.AllowOnly);
+            DBDataPermission p = (DBDataPermission)SqlClientFactory.Instance.CreatePermission(System.Security.Permissions.PermissionState.None);
+            p.Add(string.Empty, string.Empty, KeyRestrictionBehavior.AllowOnly);
             return p;
         }
 

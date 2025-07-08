@@ -156,9 +156,7 @@ namespace Microsoft.Data.SqlClient
         {
             using (TryEventScope.Create("<prov.DbConnectionHelper.CreateDbCommand|API> {0}", ObjectID))
             {
-                DbCommand command = null;
-                DbProviderFactory providerFactory = SqlConnectionFactory.ProviderFactory;
-                command = providerFactory.CreateCommand();
+                DbCommand command = SqlClientFactory.Instance.CreateCommand();
                 command.Connection = this;
                 return command;
             }
