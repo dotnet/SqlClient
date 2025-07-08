@@ -35,9 +35,12 @@ stages:
   - ${{ each image in config.value.images }}:
     - stage: ${{ image.key }}
       ${{ if ne(parameters.dependsOn, '') }}:
-        dependsOn: ${{ parameters.dependsOn }}
+        dependsOn:
+          - build_extensions_package_stage
+          - ${{ parameters.dependsOn }}
       ${{ else }}:
-        dependsOn: []
+        dependsOn:
+          - build_extensions_package_stage
       jobs:
       - ${{ each targetFramework in config.value.TargetFrameworks }}:
         - ${{ each platform in config.value.buildPlatforms }}:

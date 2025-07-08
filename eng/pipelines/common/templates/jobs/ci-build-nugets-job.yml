@@ -28,6 +28,11 @@ parameters:
     type: stepList
     default: []
 
+  - name: extensionsPackageVersion
+    displayName: Extensions Package Version Override
+    type: string
+    default: ''
+
 jobs:
 - job: build_nugets
 
@@ -44,12 +49,22 @@ jobs:
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
+  # Download the Extensions package artifacts and put them in the packages/
+  # directory in the repo root.  This is where the MDS NuGet.config file will
+  # look for local packages.
+  - task: DownloadPipelineArtifact@2
+    displayName: Download Extensions Package Artifacts
+    inputs:
+      artifactName: ExtensionsPackageArtifacts
+      targetPath: $(Build.SourcesDirectory)/packages
+
   - template: ../steps/ci-project-build-step.yml@self
     parameters:
       platform: ${{ parameters.platform }}
       configuration: ${{ parameters.configuration }}
       operatingSystem: Windows
       build: all
+      extensionsPackageVersion: ${{parameters.extensionsPackageVersion}}
 
   - template: ../steps/generate-nuget-package-step.yml@self
     parameters:

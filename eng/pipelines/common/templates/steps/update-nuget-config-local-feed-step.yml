@@ -34,7 +34,7 @@ steps:
     [Xml] $nugetConfig = Get-Content -Path "NuGet.config"
     $Value = Resolve-Path ${{parameters.downloadedNugetPath }}
     $newAdd = $nugetConfig.CreateElement("add")
-    $newAdd.SetAttribute("key","Package source")
+    $newAdd.SetAttribute("key","pipeline")
     $newAdd.SetAttribute("value", "$Value/" )
     $nugetConfig.configuration.packageSources.AppendChild($newAdd)
     $nugetConfig.Save("$rootFolder/NuGet.config")

@@ -1,0 +1,177 @@
+################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET
+# Foundation licenses this file to you under the MIT license.  See the LICENSE
+# file in the project root for more information.
+################################################################################
+
+# This stage builds the Extensions package, runs tests, and publishes the
+# resulting NuGet packages as a pipeline artifact.
+#
+# The NuGet package has the following properties:
+#
+#   Name:     Microsoft.Data.SqlClient.Extensions
+#   Version:  <packageVersion>.$(Build.BuildNumber)
+#
+#     Where <packageVersion> is the value of the 'packageVersion' parameter, and
+#     $(Build.BuildNumber) is the build number of the pipeline.
+#
+# The pipeline artifact name is the value of the 'pipelineArtifactsName'
+# parameter.
+#
+# This exposes a stage named 'build_extensions_package_stage' that can be
+# depended on by downstream stages.
+
+parameters:
+  # The type of build to produce (Release or Debug)
+  - name: buildConfiguration
+    displayName: Build Configuration
+    type: string
+    default: Release
+    values:
+    - Release
+    - Debug
+
+  # The version to apply to the package.
+  - name: packageVersion
+    displayName: Package Version Override
+    type: string
+    default: ''
+
+  # The name of the pipeline artifacts that will contain the package.
+  - name: pipelineArtifactsName
+    type: string
+    default: ExtensionsPackageArtifacts
+
+  # The verbosity level for the dotnet CLI commands.
+  - name: verbosity
+    displayName: Dotnet CLI verbosity
+    type: string
+    default: normal
+    values:
+    - quiet
+    - minimal
+    - normal
+    - detailed
+    - diagnostic
+
+stages:
+  - stage: build_extensions_package_stage
+    displayName: Build Extensions Package
+
+    jobs:
+
+    - job: build_extensions_package_job
+      displayName: Build Extensions Package
+      pool:
+        name: Azure Pipelines
+        vmImage: ubuntu-latest
+
+      variables:
+        # The directory where dotnet artifacts will be staged.  Not to be
+        # confused with pipeline artifacts.
+        - name: dotnetArtifactsDir
+          value: $(Build.StagingDirectory)/dotnetArtifacts
+
+        # The directory where the NuGet packages will be staged before being
+        # published as pipeline artifacts.
+        - name: dotnetPackagesDir
+          value: $(Build.StagingDirectory)/dotnetPackages
+
+        # The Extensions solution file to use for all dotnet CLI commands.
+        - name: project
+          value: src/Microsoft.Data.SqlClient.Extensions/Extensions/Extensions.slnx
+
+        # dotnet CLI arguments common to all commands.
+        - name: commonArguments
+          value: >-
+            --verbosity ${{parameters.verbosity}}
+            --artifacts-path $(dotnetArtifactsDir)
+
+        # dotnet CLI arguments for build/test/pack commands
+        - name: buildArguments
+          value: >-
+            $(commonArguments)
+            --configuration ${{parameters.buildConfiguration}}
+            -p:BuildNumber=$(Build.BuildNumber)
+            -p:ExtensionsPackageVersion=${{parameters.packageVersion}}
+
+        # Explicitly unset the $PLATFORM environment variable that is set by the
+        # 'ADO Build properties' Library in the ADO SqlClientDrivers public
+        # project.  This is defined with a non-standard dotnet platform of
+        # 'AnyCPU', and will fail the builds if left defined.  The Extensions
+        # package does not require any specific dotnet Platform, and so its
+        # solution file doesn't support any non-standard platforms.
+        #
+        # Note that Azure Pipelines will inject this variable as PLATFORM into
+        # the environment of all tasks in this job.
+        #
+        # See: https://learn.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=azure-devops&tabs=yaml%2Cbatch
+        #
+        - name: Platform
+          value: ''
+
+        # Do the same for $CONFIGURATION since we explicitly set it using the
+        # 'buildConfiguration' parameter.
+        - name: Configuration
+          value: ''
+
+      steps:
+
+      - task: UseDotNet@2
+        displayName: Install .NET 9.0 SDK
+        inputs:
+          packageType: sdk
+          version: 9.x
+
+      - task: UseDotNet@2
+        displayName: Install .NET 8.0 Runtime
+        inputs:
+          packageType: sdk
+          version: 8.x
+
+      - task: DotNetCoreCLI@2
+        displayName: Restore Solution
+        inputs:
+          command: custom
+          custom: restore
+          projects: $(project)
+          arguments: $(commonArguments)
+
+      - task: DotNetCoreCLI@2
+        displayName: Build Solution
+        inputs:
+          command: custom
+          custom: build
+          projects: $(project)
+          arguments: $(buildArguments) --no-restore
+
+      - task: DotNetCoreCLI@2
+        displayName: Test .NET 9.0
+        inputs:
+          command: custom
+          custom: test
+          projects: $(project)
+          arguments: $(buildArguments) --no-build -f net9.0
+
+      - task: DotNetCoreCLI@2
+        displayName: Test .NET 8.0
+        inputs:
+          command: custom
+          custom: test
+          projects: $(project)
+          arguments: $(buildArguments) --no-build -f net8.0
+
+      - task: DotNetCoreCLI@2
+        displayName: Create NuGet Package
+        inputs:
+          command: custom
+          custom: pack
+          projects: $(project)
+          arguments: $(buildArguments) --no-build -o $(dotnetPackagesDir)
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Pipeline Artifacts
+        inputs:
+          targetPath: $(dotnetPackagesDir)
+          artifactName: $(pipelineArtifactsName)
+          publishLocation: pipeline
